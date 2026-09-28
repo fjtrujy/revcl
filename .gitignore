@@ -53,3 +53,6 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Local reverse-engineering scratch extracted from archived payloads.
+analysis/work/
