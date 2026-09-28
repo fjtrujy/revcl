@@ -55,6 +55,8 @@ public:
     bool evalFloat(float *out);
     bool evalInt(int *out);
     bool rec_Eval(xpNode *n);
+    int func_0804f8f0();
+    void func_0804f920(xpNode *n);
 
     inline bool clear();
 };
