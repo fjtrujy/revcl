@@ -8,7 +8,7 @@
 class xpNode {
 public:
     char unk_00;
-    char unk_01;
+    unsigned char unk_01;
     char unk_02;  // non-literal flag? (see 0x0804e80c)
     char unk_03;
     unsigned char unk_04;
@@ -56,7 +56,11 @@ public:
     bool dispose(xpNode *n);
     bool reset();
     void calcDepths();
-    void setDepth(xpNode *n, int depth);
+    inline void setDepth(xpNode *n, int depth);
+    void func_0804ea8c(xpNode *n);
+    void func_0804ead0();
+    void dumpNode(xpNode *n);
+    void dump();
 
     bool clear()
     {
@@ -71,5 +75,17 @@ public:
         return true;
     }
 };
+
+// Expression operator table entry (name guessed).
+struct xpOp {
+    const char *name;
+    unsigned char type;   // -> xpNode::unk_02
+    unsigned char arity;  // -> xpNode::unk_04
+    unsigned char prec;   // -> xpNode::unk_03
+};
+
+extern xpOp opTable_080b30a0[20];
+
+const char *func_0804ec74(const char *s, xpNode *node, bool binary);
 
 #endif
