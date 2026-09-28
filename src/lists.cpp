@@ -2,6 +2,7 @@
 
 #include "Block.h"
 #include "Instr.h"
+#include "mValue.h"
 #include "os.h"
 
 bool UnlinkFromToDo(Block *blk, Instr *n)
@@ -467,4 +468,120 @@ char *dupString(const char *s)
         *q++ = *s++;
     *q = 0;
     return d;
+}
+
+char *dupLabelString(const char *s)
+{
+    if (!s) {
+        func_0804ad38("dupLabelString: null ptr input\n");
+        return 0;
+    }
+    const char *e = s;
+    while (*e)
+        e++;
+    char *d = new char[e - s + 1];
+    if (!d) {
+        func_0804ad38("dupLabelString: failed to get ram input\n");
+        return 0;
+    }
+    char *q = d;
+    while (*s && *s != ':')
+        *q++ = *s++;
+    *q = 0;
+    return d;
+}
+
+void func_0804c220(char *p, int n)
+{
+    if (!p) {
+        func_0804ad38("asked to zero memory location 0\n");
+        func_0804adf0(-1);
+    }
+    if (n < 0) {
+        func_0804ad38("asked to zero -ve size\n");
+        func_0804adf0(-1);
+    }
+    char *q = p;
+    for (; n; n--)
+        *q++ = 0;
+}
+
+int mstrlen(const char *s)
+{
+    if (!s) {
+        func_0804ad38("mstrlen passed null ptr\n");
+        func_0804adf0(-1);
+    }
+    const char *e = s;
+    while (*e)
+        e++;
+    return e - s;
+}
+
+char *mstrcpy(char *dst, const char *src)
+{
+    if (!dst) {
+        func_0804ad38("mstrcpy passed null dst ptr\n");
+        func_0804adf0(-1);
+    }
+    if (!src) {
+        func_0804ad38("mstrcpy passed null src ptr\n");
+        func_0804adf0(-1);
+    }
+    const char *s = src;
+    char *d = dst;
+    while (*s)
+        *d++ = *s++;
+    *d = 0;
+    return dst;
+}
+
+char *mprefix_del(const char *a, const char *b)
+{
+    if (!a || !b) {
+        func_0804ad38("mprefix_del - not str\n");
+        return 0;
+    }
+    const char *e = a;
+    while (*e)
+        e++;
+    int la = e - a;
+    if (!b) {
+        func_0804ad38("mstrlen passed null ptr\n");
+        func_0804adf0(-1);
+    }
+    e = b;
+    while (*e)
+        e++;
+    char *r = new char[la + (e - b) + 2];
+    const char *s = a;
+    char *p = r;
+    if (!r) {
+        func_0804ad38("failed to get a string\n");
+        return 0;
+    }
+    while (*s)
+        *p++ = *s++;
+    *p++ = '_';
+    s = b;
+    while (*s)
+        *p++ = *s++;
+    *p = 0;
+    return r;
+}
+
+mValue::mValue()
+{
+    str = 0;
+    type = 0;
+}
+
+mValue::~mValue()
+{
+    if (type == 4) {
+        if (str)
+            delete[] str;
+        str = 0;
+    }
+    type = 0;
 }
