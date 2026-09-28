@@ -573,15 +573,75 @@ char *mprefix_del(const char *a, const char *b)
 mValue::mValue()
 {
     str = 0;
-    type = 0;
+    type = NONE;
 }
 
 mValue::~mValue()
 {
-    if (type == 4) {
+    if (type == STRING) {
         if (str)
             delete[] str;
         str = 0;
     }
-    type = 0;
+    type = NONE;
+}
+
+void mValue::clear()
+{
+    if (type == STRING) {
+        if (str)
+            delete[] str;
+        str = 0;
+    }
+    type = NONE;
+}
+
+int func_0804c4e8(int a, int b)
+{
+    if (b > a)
+        a = b;
+    return a;
+}
+
+int func_0804c4f8(int a, int b)
+{
+    int t = a;
+    if (b > a)
+        t = b;
+    if (t == mValue::FLOAT)
+        return mValue::NONE;
+    return t;
+}
+
+bool mValue::getFloat(float *out)
+{
+    switch (type) {
+    case UINT: *out = (float)u; break;
+    case INT: *out = (float)i; break;
+    case FLOAT: *out = f; break;
+    default: return false;
+    }
+    return true;
+}
+
+bool mValue::getUInt(unsigned int *out)
+{
+    switch (type) {
+    case UINT: *out = u; break;
+    case INT: *out = i; break;
+    case FLOAT: *out = (unsigned int)f; break;
+    default: return false;
+    }
+    return true;
+}
+
+bool mValue::getInt(int *out)
+{
+    switch (type) {
+    case UINT: *out = u; break;
+    case INT: *out = i; break;
+    case FLOAT: *out = (int)f; break;
+    default: return false;
+    }
+    return true;
 }
