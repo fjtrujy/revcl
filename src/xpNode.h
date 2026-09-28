@@ -9,7 +9,7 @@ class xpNode {
 public:
     char unk_00;
     unsigned char unk_01;
-    char unk_02;  // non-literal flag? (see 0x0804e80c)
+    unsigned char unk_02;  // operator type (xpOp::type), 0 = literal
     unsigned char unk_03;  // precedence
     unsigned char unk_04;
     unsigned char unk_05;
@@ -62,6 +62,11 @@ public:
     void dumpNode(xpNode *n);
     void dump();
     bool evalExp(const char *s);
+    bool evaluate(mValue *out, unsigned int type);
+    bool evalUInt(unsigned int *out);
+    bool evalFloat(float *out);
+    bool evalInt(int *out);
+    bool rec_Eval(xpNode *n);
 
     bool clear()
     {

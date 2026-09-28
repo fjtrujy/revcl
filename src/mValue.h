@@ -46,4 +46,17 @@ public:
     char *asChars();
 };
 
+bool func_0804ca94(mValue *dst, mValue *a, mValue *b);
+bool func_0804cd68(mValue *dst, mValue *a, mValue *b);
+bool func_0804d040(mValue *dst, mValue *a, mValue *b);
+bool func_0804d314(mValue *dst, mValue *a, mValue *b);
+bool func_0804d5ec(mValue *dst, mValue *a, mValue *b);
+bool func_0804d7d4(mValue *dst, mValue *a, mValue *b);
+bool func_0804d9c0(mValue *dst, mValue *a, mValue *b);
+bool func_0804dbac(mValue *dst, mValue *a, mValue *b);
+bool func_0804ddc0(mValue *dst, mValue *a, mValue *b);
+bool func_0804dfd4(mValue *dst, mValue *a, mValue *b);
+bool func_0804e050(mValue *dst, mValue *a, mValue *b);
+bool func_0804e0cc(mValue *dst, mValue *a, mValue *b);
+
 #endif

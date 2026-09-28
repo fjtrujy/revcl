@@ -337,3 +337,148 @@ fail:
     clear();
     return false;
 }
+
+bool xpTree::evaluate(mValue *out, unsigned int type)
+{
+    out->clear();
+    bool ok = false;
+    unsigned int u;
+    float f;
+    int i;
+    int r;
+    switch (type) {
+    case mValue::UINT: {
+        u = 0;
+        if (!rec_Eval(root))
+            r = false;
+        else
+            r = root->val.getUInt(&u);
+        if (r)
+            ok = out->setUInt(u);
+        break;
+    }
+    case mValue::FLOAT: {
+        if (!rec_Eval(root))
+            r = false;
+        else
+            r = root->val.getFloat(&f);
+        if (r)
+            ok = out->setFloat(f);
+        break;
+    }
+    case mValue::INT: {
+        if (!rec_Eval(root))
+            r = false;
+        else
+            r = root->val.getInt(&i);
+        if (r)
+            ok = out->setInt(i);
+        break;
+    }
+    case mValue::STRING:
+        func_0804ad38("asked to evaluate a tree as a literal!\n");
+        func_0804ad38("code this later\n");
+        break;
+    }
+    return ok;
+}
+
+bool xpTree::evalUInt(unsigned int *out)
+{
+    if (!rec_Eval(root))
+        return false;
+    return root->val.getUInt(out);
+}
+
+bool xpTree::evalFloat(float *out)
+{
+    if (!rec_Eval(root))
+        return false;
+    return root->val.getFloat(out);
+}
+
+bool xpTree::evalInt(int *out)
+{
+    if (!rec_Eval(root))
+        return false;
+    return root->val.getInt(out);
+}
+
+bool xpTree::rec_Eval(xpNode *n)
+{
+    if (!n)
+        return false;
+    mValue *v = &n->val;
+    if (!v->isValid()) {
+        func_0804ad38("rec_Eval::invalid xpValue\n");
+        return false;
+    }
+    int i;
+    for (i = 0; i != n->unk_04; i++)
+        if (!rec_Eval(n->child[i]))
+            return false;
+    if (n->unk_05 != n->unk_04) {
+        printf("tree is incomplete\n");
+        return false;
+    }
+    for (i = 0; i != n->unk_04; i++) {
+        if (!n->child[i] || !n->child[i]->val.isNumeric()) {
+            printf("invalid arg\n");
+            return false;
+        }
+    }
+    switch (n->unk_04) {
+    case 2: {
+        mValue *a = &n->child[0]->val;
+        mValue *b = &n->child[1]->val;
+        switch (n->unk_02) {
+        case 2:  return func_0804ca94(v, a, b);
+        case 3:  return func_0804cd68(v, a, b);
+        case 4:  return func_0804d040(v, a, b);
+        case 5:  return func_0804d314(v, a, b);
+        case 6:  return func_0804d5ec(v, a, b);
+        case 8:  return func_0804d9c0(v, a, b);
+        case 9:  return func_0804d7d4(v, a, b);
+        case 10: return func_0804dfd4(v, a, b);
+        case 11: return func_0804ddc0(v, a, b);
+        case 12: return func_0804e050(v, a, b);
+        case 13: return func_0804dbac(v, a, b);
+        default:
+            printf("unknown binary operation\n");
+            return false;
+        case 16: return func_0804e0cc(v, a, b);
+        }
+    }
+    case 0: {
+        int ok;
+        if (n->unk_02) {
+            printf("can't decode a non-literal\n");
+            ok = false;
+        } else if (!v->makeNumeric()) {
+            func_0804ad38("couldn't convert to arithmetic\n");
+            ok = false;
+        } else
+            ok = true;
+        if (!ok)
+            return false;
+        return v->isNumeric();
+    }
+    case 1: {
+        mValue *a = &n->child[0]->val;
+        switch (n->unk_02) {
+        case 1:
+        case 14: return v->set(a);
+        case 7:  return v->bitNot(a);
+        case 15: return v->negate(a);
+        default:
+            printf("bad unary operand\n");
+            return false;
+        case 17: return v->logicalNot(a);
+        case 18: return v->abs(a);
+        }
+    }
+    default:
+        printf("unknownn n-ary operation\n");
+        return false;
+    }
+}
