@@ -645,3 +645,131 @@ bool mValue::getInt(int *out)
     }
     return true;
 }
+
+bool mValue::set(mValue *src)
+{
+    if (!src) {
+        func_0804ad38("xpVal::set() - source is null ptr\n");
+        return false;
+    }
+    if (src->type < UINT || src->type > STRING) {
+        func_0804ad38("xpVal::set() - source is invalid\n");
+        return false;
+    }
+    if (type == STRING) {
+        if (str)
+            delete[] str;
+        str = 0;
+    }
+    type = NONE;
+    type = src->type;
+    if (type == STRING) {
+        str = dupString(src->str);
+        if (!str) {
+            func_0804ad38("failed to dup literal\n");
+            if (type == STRING) {
+                if (str)
+                    delete[] str;
+                str = 0;
+            }
+            type = NONE;
+            return false;
+        }
+    } else
+        u = src->u;
+    return true;
+}
+
+bool mValue::setInt(int v)
+{
+    if (type == STRING) {
+        if (str)
+            delete[] str;
+        str = 0;
+    }
+    type = NONE;
+    i = v;
+    type = INT;
+    return true;
+}
+
+bool mValue::setString(const char *s)
+{
+    if (type == STRING) {
+        if (str)
+            delete[] str;
+        str = 0;
+    }
+    type = NONE;
+    type = STRING;
+    str = dupString(s);
+    if (!str) {
+        func_0804ad38("failed to dup string for set str\n");
+        type = NONE;
+        return false;
+    }
+    return true;
+}
+
+bool mValue::setString(const char *s, int n)
+{
+    if (type == STRING) {
+        if (str)
+            delete[] str;
+        str = 0;
+    }
+    type = NONE;
+    if (!s)
+        return false;
+    type = STRING;
+    str = new char[n + 1];
+    if (!str) {
+        func_0804ad38("failed to new chars for set str\n");
+        type = NONE;
+        return false;
+    }
+    const char *p = s;
+    char *d = str;
+    while (n && *p) {
+        *d++ = *p++;
+        n--;
+    }
+    *d = 0;
+    return true;
+}
+
+bool mValue::setUInt(unsigned int v)
+{
+    if (type == STRING) {
+        if (str)
+            delete[] str;
+        str = 0;
+    }
+    type = NONE;
+    u = v;
+    type = UINT;
+    return true;
+}
+
+bool mValue::setFloat(float v)
+{
+    if (type == STRING) {
+        if (str)
+            delete[] str;
+        str = 0;
+    }
+    type = NONE;
+    type = FLOAT;
+    f = v;
+    return true;
+}
+
+bool mValue::isValid()
+{
+    return type >= UINT && type <= STRING;
+}
+
+bool mValue::isNumeric()
+{
+    return type >= UINT && type <= FLOAT;
+}

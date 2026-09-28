@@ -19,6 +19,14 @@ public:
     bool getFloat(float *out);
     bool getUInt(unsigned int *out);
     bool getInt(int *out);
+    bool set(mValue *src);
+    bool setInt(int v);
+    bool setString(const char *s);
+    bool setString(const char *s, int n);
+    bool setUInt(unsigned int v);
+    bool setFloat(float v);
+    bool isValid();
+    bool isNumeric();
 };
 
 #endif
