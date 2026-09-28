@@ -2,6 +2,8 @@
 #ifndef XPNODE_H
 #define XPNODE_H
 
+#pragma interface
+
 #include "mValue.h"
 #include "os.h"
 
@@ -18,7 +20,7 @@ public:
     mValue val;
 
     xpNode();
-    ~xpNode();
+    ~xpNode() { val.clear(); }
     bool func_0804e778();
     void func_0804e794();
     void reset();
@@ -26,22 +28,8 @@ public:
     bool decode();
     const char *getLiteral();
 
-    void clearValue() { val.clear(); }
-
-    void init()
-    {
-        unk_01 = 0;
-        unk_02 = 0;
-        unk_00 = 0;
-        unk_04 = 0;
-        unk_05 = 0;
-        unk_03 = 0;
-        val.clear();
-        parent = 0;
-        child[0] = 0;
-        child[1] = 0;
-        val.clear();
-    }
+    inline void clearValue();
+    inline void init();
 };
 
 // Owner of an expression tree (class name guessed), sizeof 0x10, no vptr.
@@ -68,18 +56,7 @@ public:
     bool evalInt(int *out);
     bool rec_Eval(xpNode *n);
 
-    bool clear()
-    {
-        if (!dispose(root)) {
-            func_0804ad38("failed to dispose xn\n");
-            return false;
-        }
-        unk_08 = 0;
-        unk_0c = 0;
-        root = 0;
-        cur = 0;
-        return true;
-    }
+    inline bool clear();
 };
 
 // Expression operator table entry (name guessed).

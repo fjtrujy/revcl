@@ -1,16 +1,44 @@
 #include <stdio.h>
+#pragma implementation
 #include "xpNode.h"
 #include "os.h"
+
+inline void xpNode::clearValue()
+{
+    val.clear();
+}
+
+inline void xpNode::init()
+{
+    unk_01 = 0;
+    unk_02 = 0;
+    unk_00 = 0;
+    unk_04 = 0;
+    unk_05 = 0;
+    unk_03 = 0;
+    val.clear();
+    parent = 0;
+    child[0] = 0;
+    child[1] = 0;
+    val.clear();
+}
+
+inline bool xpTree::clear()
+{
+    if (!dispose(root)) {
+        func_0804ad38("failed to dispose xn\n");
+        return false;
+    }
+    unk_08 = 0;
+    unk_0c = 0;
+    root = 0;
+    cur = 0;
+    return true;
+}
 
 xpNode::xpNode()
 {
     init();
-}
-
-
-xpNode::~xpNode()
-{
-    val.clear();
 }
 
 bool xpNode::func_0804e778()
@@ -223,6 +251,14 @@ const char *func_0804ec74(const char *s, xpNode *node, bool binary)
     return p;
 }
 
+static inline xpOp *findOp(unsigned char type)
+{
+    for (int i = 0; i != 20; i++)
+        if (opTable_080b30a0[i].type == type)
+            return &opTable_080b30a0[i];
+    return 0;
+}
+
 bool xpTree::evalExp(const char *s)
 {
     const char *p;
@@ -240,13 +276,7 @@ bool xpTree::evalExp(const char *s)
         puts("couldn't get rootnode");
         return false;
     }
-    xpOp *op = 0;
-    for (int i = 0; i != 20; i++) {
-        if (opTable_080b30a0[i].type == 1) {
-            op = &opTable_080b30a0[i];
-            break;
-        }
-    }
+    xpOp *op = findOp(1);
     if (!op) {
         puts("no xor for equality");
         goto fail;
@@ -329,10 +359,10 @@ bool xpTree::evalExp(const char *s)
             }
         }
     }
-    while (cur && cur->unk_00 == 0)
-        cur = cur->parent;
-    if (!cur)
-        return true;
+    for (; cur; cur = cur->parent)
+        if (cur->unk_00 != 0)
+            goto fail;
+    return true;
 fail:
     clear();
     return false;
