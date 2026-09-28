@@ -27,6 +27,12 @@ public:
     bool setFloat(float v);
     bool isValid();
     bool isNumeric();
+    bool isInt();
+    bool isFloat();
+    bool negate(mValue *src);
+    bool abs(mValue *src);
+    bool logicalNot(mValue *src);
+    bool bitNot(mValue *src);
 };
 
 #endif

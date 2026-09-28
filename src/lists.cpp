@@ -1,5 +1,6 @@
 // Instruction list helpers: ToDo / Done / Linear lists (CIE group 1, after mList.cpp).
 
+#include <stdio.h>
 #include "Block.h"
 #include "Instr.h"
 #include "mValue.h"
@@ -772,4 +773,155 @@ bool mValue::isValid()
 bool mValue::isNumeric()
 {
     return type >= UINT && type <= FLOAT;
+}
+
+bool mValue::isInt()
+{
+    return type >= UINT && type <= INT;
+}
+
+bool mValue::isFloat()
+{
+    return type == FLOAT;
+}
+
+bool mValue::negate(mValue *src)
+{
+    if (!set(src))
+        return false;
+    switch (type) {
+    case UINT: u = -u; break;
+    case INT: i = -i; break;
+    case FLOAT: f = -f; break;
+    }
+    return true;
+}
+
+bool mValue::abs(mValue *src)
+{
+    if (!set(src))
+        return false;
+    switch (type) {
+    case UINT: break;
+    case INT: if (i < 0) i = -i; break;
+    case FLOAT: if (f < 0) f = -f; break;
+    }
+    return true;
+}
+
+bool mValue::logicalNot(mValue *src)
+{
+    if (!set(src))
+        return false;
+    switch (type) {
+    case UINT: u = !u; break;
+    case INT: i = !i; break;
+    case FLOAT: return false;
+    }
+    return true;
+}
+
+bool mValue::bitNot(mValue *src)
+{
+    if (!set(src))
+        return false;
+    switch (type) {
+    case UINT: u = ~u; break;
+    case INT: i = ~i; break;
+    case FLOAT: return false;
+    }
+    return true;
+}
+
+const char *func_0804ca58(int type)
+{
+    switch (type) {
+    case 3: return "EXP_DATATYPE_FLOAT";
+    case 0: return "EXP_DATATYPE_NULL";
+    case 1: return "EXP_DATATYPE_UINT";
+    case 2: return "EXP_DATATYPE_SINT";
+    case 4: return "EXP_DATATTYPE_LITERAL";
+    }
+    return "EXP_DATATYPE_UNKNOWN";
+}
+
+static inline bool getUIntInl(mValue *v, unsigned int *out)
+{
+    switch (v->type) {
+    case mValue::UINT: *out = v->u; break;
+    case mValue::INT: *out = v->i; break;
+    case mValue::FLOAT: *out = (unsigned int)v->f; break;
+    default: return false;
+    }
+    return true;
+}
+
+static inline bool getIntInl(mValue *v, int *out)
+{
+    switch (v->type) {
+    case mValue::UINT: *out = v->u; break;
+    case mValue::INT: *out = v->i; break;
+    case mValue::FLOAT: *out = (int)v->f; break;
+    default: return false;
+    }
+    return true;
+}
+
+static inline bool getFloatInl(mValue *v, float *out)
+{
+    switch (v->type) {
+    case mValue::UINT: *out = (float)v->u; break;
+    case mValue::INT: *out = (float)v->i; break;
+    case mValue::FLOAT: *out = v->f; break;
+    default: return false;
+    }
+    return true;
+}
+
+bool func_0804ca94(mValue *dst, mValue *a, mValue *b)
+{
+    float fa, fb;
+    int ia, ib;
+    unsigned int ua, ub;
+    if (!a)
+        return false;
+    if (!b)
+        return false;
+    if (a->type < mValue::UINT || a->type > mValue::FLOAT)
+        return false;
+    if (b->type < mValue::UINT || b->type > mValue::FLOAT)
+        return false;
+    int t = a->type;
+    if ((int)b->type > t)
+        t = b->type;
+    dst->type = t;
+    if (t == mValue::NONE)
+        return false;
+    switch (t) {
+    case mValue::UINT:
+        if (!getUIntInl(a, &ua) || !getUIntInl(b, &ub)) {
+            printf("failed to get args\n");
+            return false;
+        }
+        dst->u = ua + ub;
+        break;
+    case mValue::INT:
+        if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
+            func_0804ad38("failed to get args\n");
+            return false;
+        }
+        dst->i = ia + ib;
+        break;
+    case mValue::FLOAT:
+        if (getFloatInl(a, &fa) && getFloatInl(b, &fb)) {
+            dst->f = fa + fb;
+            break;
+        }
+        func_0804ad38("failed to get args\n");
+        return false;
+    default:
+        printf("bad type to expr\n");
+        return false;
+    }
+    return true;
 }
