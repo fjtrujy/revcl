@@ -37,8 +37,7 @@ void usage()
     func_0804ac50("options:\n");
     func_0804ac50("\tvcl [-v] [-D<modules>] [-h] [-o<outputfile>] [-g] <inputfile>\n");
     func_0804ac50("\t-o<outputfile>\tset output file.. if not specified, then write to stdout\n");
-    // Literal split only so the tooling's inline-assembly check does not trip on the word.
-    func_0804ac50("\t-j<headerfile>\tgenerate a" "sm header file of labels\n");
+    func_0804ac50("\t-j<headerfile>\tgenerate asm header file of labels\n");
     func_0804ac50("\t<inputfile>\tinput filename, if not end in vcl, stop. if not specified, read stdin\n");
     func_0804ac50("\t-h\t\tprint this help\n");
     func_0804ac50("\t-t<nseconds>\tset timeout for optimiser to <nseconds>, default is 4,minimum is 1\n");

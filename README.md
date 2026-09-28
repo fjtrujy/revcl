@@ -22,12 +22,12 @@ test runner, Linux runtime setup, and initial behavioral fixtures.
 
 A byte-for-byte matching C++ decompilation of
 `archive/upstream/vcl/downloads/vcl.1.4.beta7.x86/vcl_14beta7_x86`
-(GCC 3.2.2 Red Hat Linux 9, `-O2`) lives in `src/`.
+(GCC 3.2.2 Red Hat Linux 9, `-O2 -frename-registers`) lives in `src/`.
 
 Progress (matched bytes / file size):
 
 <!-- progress:start -->
-**4,185 / 482,736 bytes (0.87%)** of `vcl_14beta7_x86` matched — code 1,878 / 268,717 (10 / 1192 functions exact, 822 bytes), data 2,307 bytes
+**4,289 / 482,736 bytes (0.89%)** of `vcl_14beta7_x86` matched — code 1,982 / 268,717 (13 / 1192 functions exact, 1,642 bytes), data 2,307 bytes
 <!-- progress:end -->
 
 Setup and daily use:

@@ -1,1 +1,1 @@
-{"cxxflags": ["-O2"], "cflags": ["-O2"], "units": {}}
+{"cxxflags": ["-O2", "-frename-registers"], "cflags": ["-O2", "-frename-registers"], "units": {}}
