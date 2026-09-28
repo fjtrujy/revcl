@@ -1242,3 +1242,127 @@ bool func_0804dbac(mValue *dst, mValue *a, mValue *b)
     }
     return true;
 }
+
+bool func_0804ddc0(mValue *dst, mValue *a, mValue *b)
+{
+    int ia, ib;
+    unsigned int ua, ub;
+    if (!a || !b) {
+        printf("xpVal::logand null arg passed\n");
+        return false;
+    }
+    if (!isNumType(a->type) || !isNumType(b->type)) {
+        printf("xpVal::logand invalid arg\n");
+        return false;
+    }
+    int t = promoteIntType(a->type, b->type);
+    dst->type = t;
+    if (t == mValue::NONE) {
+        printf("xpVal::logand type promote failed\n");
+        return false;
+    }
+    if (t == mValue::UINT) {
+        if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
+            dst->u = ua && ub;
+            return true;
+        }
+        printf("failed to get args\n");
+        return false;
+    } else if (t == mValue::INT) {
+        if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
+            dst->i = ia && ib;
+            return true;
+        }
+        printf("failed to get args\n");
+        return false;
+    }
+    printf("bad type to expr\n");
+    return false;
+}
+
+static inline int promoteType(int a, int b)
+{
+    int t = a;
+    if (b > a)
+        t = b;
+    return t;
+}
+
+bool func_0804dfd4(mValue *dst, mValue *a, mValue *b)
+{
+    if (!a || !b) {
+        printf("xpVal::bitand null arg passed\n");
+        return false;
+    }
+    if (!isNumType(a->type) || !isNumType(b->type)) {
+        printf("xpVal::bitand invalid arg\n");
+        return false;
+    }
+    int t = promoteType(a->type, b->type);
+    dst->type = t;
+    if (t == mValue::NONE) {
+        printf("xpVal::bitand type promote failed\n");
+        return false;
+    }
+    dst->u = a->u & b->u;
+    return true;
+}
+
+bool func_0804e050(mValue *dst, mValue *a, mValue *b)
+{
+    if (!a || !b) {
+        printf("xpVal::bitor null arg passed\n");
+        return false;
+    }
+    if (!isNumType(a->type) || !isNumType(b->type)) {
+        printf("xpVal::bitor invalid arg\n");
+        return false;
+    }
+    int t = promoteType(a->type, b->type);
+    dst->type = t;
+    if (t == mValue::NONE) {
+        printf("xpVal::bitor type promote failed\n");
+        return false;
+    }
+    dst->u = a->u | b->u;
+    return true;
+}
+
+bool func_0804e0cc(mValue *dst, mValue *a, mValue *b)
+{
+    if (!a || !b) {
+        printf("xpVal::bitxor null arg passed\n");
+        return false;
+    }
+    if (!isNumType(a->type) || !isNumType(b->type)) {
+        printf("xpVal::bitxor invalid arg\n");
+        return false;
+    }
+    int t = promoteType(a->type, b->type);
+    dst->type = t;
+    if (t == mValue::NONE) {
+        printf("xpVal::bitxor type promote failed\n");
+        return false;
+    }
+    dst->u = a->u ^ b->u;
+    return true;
+}
+
+extern const char *g_080b308c;
+
+bool func_0804e148(const char *s)
+{
+    if (!s)
+        return false;
+    for (; *s; s++) {
+        const char *p = g_080b308c;
+        while (*p) {
+            if (*p == *s)
+                break;
+            p++;
+        }
+        if (!*p)
+            return false;
+    }
+    return true;
+}
