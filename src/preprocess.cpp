@@ -135,7 +135,7 @@ char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
     bool ok = false;
     Tool *t = &tools_080b301c[tool];
 
-    func_0804acb0("..processing with %s\n", tools_080b301c[tool].name);
+    func_0804acb0("..processing with %s\n", t->name);
     inPath[0] = 0;
     outPath[0] = 0;
 
@@ -146,7 +146,7 @@ char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
         if (n == 0) {
             func_0804ad38("in buffer is null length\n");
         } else {
-            sprintf(inName, "vcli_%s", tools_080b301c[tool].name);
+            sprintf(inName, "vcli_%s", t->name);
             fdIn = func_0804ab6c(inName, inPath);
             if (fdIn < 0) {
                 func_0804ad38("failed to make temp in file\n");
@@ -158,7 +158,7 @@ char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
                 fdIn = -1;
                 delete[] buf;
                 buf = 0;
-                sprintf(outName, "vclo_%s", tools_080b301c[tool].name);
+                sprintf(outName, "vclo_%s", t->name);
                 fdOut = func_0804ab6c(outName, outPath);
                 if (fdOut < 0) {
                     func_0804ad38("failed to make tmp outfile\n");
