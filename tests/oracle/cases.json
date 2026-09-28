@@ -64,5 +64,17 @@
     "input": "bad_operand.vcl",
     "flags": [],
     "success": false
+  },
+  {
+    "name": "archived_basic",
+    "archive": "vcl-samples.tar",
+    "input": "./vcl-samples/basic3d/vu1_vcl/basic.vcl",
+    "companions": [
+      "./vcl-samples/basic3d/vu1_vcl/vumacros.m"
+    ],
+    "flags": [
+      "-g"
+    ],
+    "success": true
   }
 ]
