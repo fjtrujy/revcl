@@ -7,4 +7,3 @@
 lq value
 --exit
 --endexit
-.END

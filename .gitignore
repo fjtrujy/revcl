@@ -60,3 +60,6 @@ analysis/work/
 # Local oracle captures and Python caches.
 analysis/oracle-results/
 __pycache__/
+
+tmp/
+tools/rh9/

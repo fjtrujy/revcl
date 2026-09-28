@@ -9,4 +9,3 @@ add.xyz value, value, vf00
 sq value, 1(vi00)
 --exit
 --endexit
-.END

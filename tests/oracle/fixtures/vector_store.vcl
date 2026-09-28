@@ -7,4 +7,3 @@
 sq vf00, 0(vi00)
 --exit
 --endexit
-.END

@@ -8,4 +8,3 @@ iaddiu address, vi00, 4
 isw.x address, 0(vi00)
 --exit
 --endexit
-.END

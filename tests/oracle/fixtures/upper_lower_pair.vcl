@@ -9,4 +9,3 @@ iaddiu address, vi00, 4
 sq value, 0(address)
 --exit
 --endexit
-.END

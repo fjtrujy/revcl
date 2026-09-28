@@ -10,4 +10,3 @@ add result, doubled, value
 sq result, 1(vi00)
 --exit
 --endexit
-.END

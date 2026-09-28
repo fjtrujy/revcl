@@ -6,4 +6,3 @@
 --endenter
 --exit
 --endexit
-.END

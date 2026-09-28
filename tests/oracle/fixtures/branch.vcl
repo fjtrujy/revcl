@@ -11,4 +11,3 @@ ibne count, vi00, loop
 isw.x count, 0(vi00)
 --exit
 --endexit
-.END

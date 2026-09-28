@@ -8,4 +8,3 @@ lq renamed, 0(vi00)
 sq renamed, 1(vi00)
 --exit
 --endexit
-.END

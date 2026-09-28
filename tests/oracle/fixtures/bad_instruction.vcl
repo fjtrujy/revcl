@@ -7,4 +7,3 @@
 not_an_instruction vf00
 --exit
 --endexit
-.END
