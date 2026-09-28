@@ -1,6 +1,7 @@
 // Instruction list helpers: ToDo / Done / Linear lists (CIE group 1, after mList.cpp).
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "Block.h"
 #include "Instr.h"
 #include "mValue.h"
@@ -1365,4 +1366,179 @@ bool func_0804e148(const char *s)
             return false;
     }
     return true;
+}
+
+extern bool g_080b3088;
+extern const char *g_080b3090[];
+
+bool mValue::parse(const char *s)
+{
+    if (type == STRING) {
+        if (str)
+            delete[] str;
+        str = 0;
+    }
+    type = NONE;
+    if (!s)
+        return false;
+    int dots = 0;
+    int digits = 0;
+    int rtype = INT;
+    int base = 0;
+    int value = 0;
+    int radix = 10;
+    bool isFlt = false;
+    bool hasExp = false;
+    int expSign = 0;
+    const char *p = s;
+    if (s[0] == '0' && s[1]) {
+        switch (s[1]) {
+        case 'b':
+        case 'B':
+            radix = 2;
+            base = 2;
+            p = s + 2;
+            break;
+        case 'x':
+        case 'X':
+            base = 1;
+            radix = 16;
+            rtype = g_080b3088 ? FLOAT : UINT;
+            p = s + 2;
+            break;
+        case 'z':
+        case 'Z':
+            base = 1;
+            radix = 16;
+            rtype = FLOAT;
+            p = s + 2;
+            break;
+        }
+    }
+    int skip = 0;
+    if (!*p) {
+        printf("badly formed literal %s\n", s);
+        return false;
+    }
+    for (; *p; p++) {
+        char c = *p;
+        if (c >= 'A' && c <= 'Z')
+            c += 32;
+        if (base == 0) {
+            if (c == '.') {
+                dots++;
+                if (isFlt) {
+                    printf("error in floating point expression '%s'\n", s);
+                    return false;
+                }
+                if (dots > 1) {
+                    printf("unexpected '.' in number\n");
+                    return false;
+                }
+                rtype = FLOAT;
+                isFlt = true;
+                value = 0;
+                digits = 0;
+                skip = 1;
+            }
+            if (c == 'e' && (p[1] == '+' || p[1] == '-')) {
+                rtype = FLOAT;
+                if (expSign) {
+                    printf("already found exponent in %s\n", s);
+                    return false;
+                }
+                if (hasExp) {
+                    printf("error in float expression %s\n", s);
+                    return false;
+                }
+                hasExp = true;
+                if (!isFlt)
+                    isFlt = true;
+                value = 0;
+                digits = 0;
+                expSign = (p[1] == '+') ? 1 : -1;
+                skip = 2;
+            }
+        }
+        if (c == '_')
+            skip = 1;
+        if (!skip) {
+            const char *d = g_080b3090[base];
+            int idx = 0;
+            while (*d) {
+                if (c == *d)
+                    break;
+                d++;
+                idx++;
+            }
+            if (!*d)
+                return false;
+            value = value * radix + idx;
+        }
+        if (skip)
+            skip--;
+        else
+            digits++;
+    }
+    if (skip || !digits) {
+        func_0804ad38("error parsing literal %s\n", s);
+        return false;
+    }
+    if (isFlt)
+        f = strtod(s, 0);
+    else
+        i = value;
+    type = rtype;
+    return true;
+}
+
+void mValue::dump()
+{
+}
+
+char *mValue::getString()
+{
+    if (type == STRING)
+        return str;
+    return 0;
+}
+
+bool mValue::makeNumeric()
+{
+    if (type == STRING) {
+        mValue tmp(str);
+        if (isNumType(tmp.type))
+            set(&tmp);
+    }
+    return isNumType(type);
+}
+
+char g_080bbda0[4096];
+int g_080bcda0;
+
+char *mValue::asChars()
+{
+    if (g_080bcda0 > 2048)
+        g_080bcda0 = 0;
+    char *p = g_080bbda0 + g_080bcda0;
+    switch (type) {
+    case UINT:
+        func_0804adbc(p, "%u", u);
+        break;
+    case INT:
+        func_0804adbc(p, "%d", i);
+        break;
+    case FLOAT:
+        func_0804adbc(p, "%1.9e", f);
+        break;
+    case STRING:
+        if (!str) {
+            func_0804ad38("asChars - but no str for a literal\n");
+            return 0;
+        }
+        func_0804adbc(p, "%s", str);
+        break;
+    }
+    g_080bcda0 += mstrlen(p) + 1;
+    return p;
 }

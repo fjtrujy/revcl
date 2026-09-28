@@ -14,6 +14,12 @@ public:
     };
 
     mValue();
+    mValue(const char *s)
+    {
+        str = 0;
+        type = NONE;
+        parse(s);
+    }
     ~mValue();
     void clear();
     bool getFloat(float *out);
@@ -33,6 +39,11 @@ public:
     bool abs(mValue *src);
     bool logicalNot(mValue *src);
     bool bitNot(mValue *src);
+    bool parse(const char *s);
+    void dump();
+    char *getString();
+    bool makeNumeric();
+    char *asChars();
 };
 
 #endif
