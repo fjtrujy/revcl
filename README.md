@@ -13,3 +13,7 @@ clean implementation:
 
 Historical third-party files retain their original licenses and are not
 relicensed by this repository's MIT license.
+
+The first implementation milestone is underway: see
+[`reverse/oracle/README.md`](reverse/oracle/README.md) for the historical VCL
+test runner, Linux runtime setup, and initial behavioral fixtures.

@@ -1,0 +1,68 @@
+[
+  {
+    "name": "empty",
+    "input": "empty.vcl",
+    "flags": [],
+    "success": true
+  },
+  {
+    "name": "vector_store",
+    "input": "vector_store.vcl",
+    "flags": [],
+    "success": true
+  },
+  {
+    "name": "integer_literal",
+    "input": "integer_literal.vcl",
+    "flags": [],
+    "success": true
+  },
+  {
+    "name": "virtual_vector",
+    "input": "virtual_vector.vcl",
+    "flags": [],
+    "success": true
+  },
+  {
+    "name": "virtual_renamed",
+    "input": "virtual_renamed.vcl",
+    "flags": [],
+    "success": true
+  },
+  {
+    "name": "upper_lower_pair",
+    "input": "upper_lower_pair.vcl",
+    "flags": [],
+    "success": true
+  },
+  {
+    "name": "latency_chain",
+    "input": "latency_chain.vcl",
+    "flags": [],
+    "success": true
+  },
+  {
+    "name": "component_mask",
+    "input": "component_mask.vcl",
+    "flags": [],
+    "success": true
+  },
+  {
+    "name": "branch",
+    "input": "branch.vcl",
+    "flags": [],
+    "success": true
+  },
+  {
+    "name": "bad_instruction",
+    "input": "bad_instruction.vcl",
+    "flags": [],
+    "success": false
+  },
+  {
+    "name": "bad_operand",
+    "input": "bad_operand.vcl",
+    "flags": [],
+    "success": false
+  }
+]

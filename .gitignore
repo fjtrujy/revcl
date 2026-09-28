@@ -56,3 +56,7 @@ dkms.conf
 
 # Local reverse-engineering scratch extracted from archived payloads.
 analysis/work/
+
+# Local oracle captures and Python caches.
+analysis/oracle-results/
+__pycache__/
