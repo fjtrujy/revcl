@@ -1069,3 +1069,98 @@ bool func_0804d314(mValue *dst, mValue *a, mValue *b)
     }
     return true;
 }
+
+static inline bool isNumType(unsigned int t)
+{
+    return t >= mValue::UINT && t <= mValue::FLOAT;
+}
+
+static inline int promoteIntType(int a, int b)
+{
+    int t = a;
+    if (b > a)
+        t = b;
+    if (t == mValue::FLOAT)
+        return mValue::NONE;
+    return t;
+}
+
+bool func_0804d5ec(mValue *dst, mValue *a, mValue *b)
+{
+    int ia, ib;
+    unsigned int ua, ub;
+    if (!a || !b) {
+        printf("xpVal::mod null arg passed\n");
+        return false;
+    }
+    if (!isNumType(a->type) || !isNumType(b->type)) {
+        printf("xpVal::mod invalid arg\n");
+        return false;
+    }
+    int t = promoteIntType(a->type, b->type);
+    dst->type = t;
+    if (t == mValue::NONE) {
+        printf("xpVal::mod type promote failed\n");
+        return false;
+    }
+    switch (t) {
+    case mValue::UINT:
+        if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
+            dst->u = ua % ub;
+            break;
+        }
+        printf("failed to get args\n");
+        return false;
+    case mValue::INT:
+        if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
+            dst->i = ia % ib;
+            break;
+        }
+        printf("failed to get args\n");
+        return false;
+    default:
+        printf("bad type to expr\n");
+        return false;
+    }
+    return true;
+}
+
+bool func_0804d7d4(mValue *dst, mValue *a, mValue *b)
+{
+    int ia, ib;
+    unsigned int ua, ub;
+    if (!a || !b) {
+        printf("xpVal::shfl null arg passed\n");
+        return false;
+    }
+    if (!isNumType(a->type) || !isNumType(b->type)) {
+        printf("xpVal::shfl invalid arg\n");
+        return false;
+    }
+    int t = promoteIntType(a->type, b->type);
+    dst->type = t;
+    if (t == mValue::NONE) {
+        printf("xpVal::shfl type promote failed\n");
+        return false;
+    }
+    switch (t) {
+    case mValue::UINT:
+        if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
+            dst->u = ua << ub;
+            break;
+        }
+        printf("failed to get args\n");
+        return false;
+    case mValue::INT:
+        if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
+            dst->i = ia << ib;
+            break;
+        }
+        printf("failed to get args\n");
+        return false;
+    default:
+        printf("bad type to expr\n");
+        return false;
+    }
+    return true;
+}
