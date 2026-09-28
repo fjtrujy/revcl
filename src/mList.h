@@ -17,6 +17,9 @@ public:
     bool func_0804b38c(mNode *node);
     bool func_0804b3e8(mNode *node);
     bool func_0804b4d0(mList *other);
+    void func_0804b534();
+    char *func_0804b550();
+    char *func_0804b574(char *buf);
 
     int unk_04;
     int unk_08;     // node count

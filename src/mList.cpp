@@ -172,3 +172,32 @@ bool mList::func_0804b4d0(mList *other)
     }
     return true;
 }
+
+void mList::func_0804b534()
+{
+    for (mNode *node = unk_0c; node; node = node->unk_04)
+        ;
+}
+
+char *mList::func_0804b550()
+{
+    for (mNode *node = unk_0c; node; node = node->unk_04)
+        if (node->unk_14)
+            return node->unk_14;
+    return 0;
+}
+
+char *mList::func_0804b574(char *buf)
+{
+    for (mNode *node = unk_0c; node; node = node->unk_04)
+        if (node->unk_14)
+            buf += func_0804adbc(buf, "%s:\n", node->unk_14);
+    return buf;
+}
+
+mNode::~mNode()
+{
+    if (unk_14)
+        delete[] unk_14;
+    unk_14 = 0;
+}
