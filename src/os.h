@@ -9,7 +9,7 @@ struct Tool {
 
 extern Tool tools_080b301c[3];
 
-int OS_Init();
+bool OS_Init();
 int setWatchdog(char *flag, unsigned int seconds);
 int clearWatchdog();
 

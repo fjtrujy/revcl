@@ -26,11 +26,11 @@ int func_0804aaa8()
     return ++osTime_080bbd8c;
 }
 
-int OS_Init()
+bool OS_Init()
 {
     func_0804acb0("OS_Init(Linux)\n");
     osTime_080bbd8c = time(0);
-    return 1;
+    return true;
 }
 
 int setWatchdog(char *flag, unsigned int seconds)
