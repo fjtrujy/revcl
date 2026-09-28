@@ -58,7 +58,7 @@ const char *xpNode::getLiteral()
 xpTree::xpTree()
 {
     root = 0;
-    unk_00 = 0;
+    cur = 0;
     clear();
 }
 
@@ -82,7 +82,7 @@ bool xpTree::reset()
     unk_08 = 0;
     unk_0c = 0;
     root = 0;
-    unk_00 = 0;
+    cur = 0;
     return true;
 }
 
@@ -221,4 +221,119 @@ const char *func_0804ec74(const char *s, xpNode *node, bool binary)
     node->unk_03 = found->prec;
     node->unk_04 = found->arity;
     return p;
+}
+
+bool xpTree::evalExp(const char *s)
+{
+    const char *p;
+
+    if (!s) {
+        puts("evalExp - null string");
+        return false;
+    }
+    if (!clear()) {
+        puts("failed to dispose");
+        return false;
+    }
+    root = new xpNode;
+    if (!root) {
+        puts("couldn't get rootnode");
+        return false;
+    }
+    xpOp *op = 0;
+    for (int i = 0; i != 20; i++) {
+        if (opTable_080b30a0[i].type == 1) {
+            op = &opTable_080b30a0[i];
+            break;
+        }
+    }
+    if (!op) {
+        puts("no xor for equality");
+        goto fail;
+    }
+    root->unk_04 = op->arity;
+    root->unk_03 = op->prec;
+    root->unk_02 = op->type;
+    if (!root->val.setString("=")) {
+        func_0804ad38("not set equ op\n");
+        return false;
+    }
+    cur = root;
+    p = s;
+    while (*p) {
+        if (*p == '(') {
+            if (cur->unk_00 == -1) {
+                func_0804ad38("too many open brackets!\n");
+                goto fail;
+            }
+            cur->unk_00++;
+            p++;
+        } else if (*p == ')') {
+            if (cur->unk_05 < cur->unk_04) {
+                func_0804ad38("unexpected close bracket\n");
+                return false;
+            }
+            while (cur && cur->unk_00 == 0)
+                cur = cur->parent;
+            if (!cur) {
+                func_0804ad38("unbalanced brackets\n");
+                return false;
+            }
+            cur->unk_00--;
+            p++;
+        } else {
+            xpNode *n = new xpNode;
+            if (!n) {
+                func_0804ad38("failed to get new xn .. bah\n");
+                goto fail;
+            }
+            p = func_0804ec74(p, n, cur->unk_05 >= cur->unk_04);
+            if (!p) {
+                delete n;
+                goto fail;
+            }
+            if (cur->unk_05 >= cur->unk_04) {
+                if (n->unk_04 <= 1) {
+                    func_0804ad38("evalExp: syntax error at : nArgs=%d\n", n->unk_04);
+                    n->val.dump();
+                    delete n;
+                    goto fail;
+                }
+                while (cur && n->unk_03 <= cur->unk_03 && cur->unk_00 == 0)
+                    cur = cur->parent;
+                if (!cur || cur->unk_05 == 0) {
+                    delete n;
+                    goto fail;
+                }
+                xpNode *last = cur->child[cur->unk_05 - 1];
+                if (last->parent != cur) {
+                    delete n;
+                    goto fail;
+                }
+                n->parent = cur;
+                n->child[0] = last;
+                n->unk_05 = 1;
+                last->parent = n;
+                cur->child[cur->unk_05 - 1] = n;
+                cur = n;
+            } else {
+                if (n->unk_04 > 1) {
+                    delete n;
+                    goto fail;
+                }
+                cur->child[cur->unk_05] = n;
+                cur->unk_05++;
+                n->parent = cur;
+                if (n->unk_04)
+                    cur = n;
+            }
+        }
+    }
+    while (cur && cur->unk_00 == 0)
+        cur = cur->parent;
+    if (!cur)
+        return true;
+fail:
+    clear();
+    return false;
 }

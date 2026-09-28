@@ -10,10 +10,10 @@ public:
     char unk_00;
     unsigned char unk_01;
     char unk_02;  // non-literal flag? (see 0x0804e80c)
-    char unk_03;
+    unsigned char unk_03;  // precedence
     unsigned char unk_04;
     unsigned char unk_05;
-    int unk_08;
+    xpNode *parent;
     xpNode *child[2];
     mValue val;
 
@@ -37,7 +37,7 @@ public:
         unk_05 = 0;
         unk_03 = 0;
         val.clear();
-        unk_08 = 0;
+        parent = 0;
         child[0] = 0;
         child[1] = 0;
         val.clear();
@@ -47,7 +47,7 @@ public:
 // Owner of an expression tree (class name guessed), sizeof 0x10, no vptr.
 class xpTree {
 public:
-    int unk_00;
+    xpNode *cur;
     xpNode *root;
     int unk_08;
     int unk_0c;
@@ -61,6 +61,7 @@ public:
     void func_0804ead0();
     void dumpNode(xpNode *n);
     void dump();
+    bool evalExp(const char *s);
 
     bool clear()
     {
@@ -71,7 +72,7 @@ public:
         unk_08 = 0;
         unk_0c = 0;
         root = 0;
-        unk_00 = 0;
+        cur = 0;
         return true;
     }
 };
