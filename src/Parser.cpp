@@ -129,6 +129,11 @@ static inline bool isEol(char c)
     return c == '\n' || c == '\r';
 }
 
+static inline bool isNewline(const char *p)
+{
+    return *p == '\n';
+}
+
 static inline bool isWhite(const char *s)
 {
     const char *q = g_080b3148;
@@ -158,7 +163,7 @@ bool Parser::func_0804fd80(bool gasp, bool cpp)
     }
     int nlines = 0;
     for (char *p = unk_10090; *p; p++)
-        if (*p == '\n')
+        if (isNewline(p))
             nlines++;
     unk_1009c = new LocTag[nlines];
     if (!unk_1009c) {
