@@ -75,6 +75,18 @@ void func_0804a2a4()
     errorOccurred = 1;
 }
 
+static inline void reportErrors(Program *p)
+{
+    func_0804ad84("vcl thinks it found problem(s) in the input source:\n");
+    func_0806c3ac(p);
+}
+
+static inline void reportWarnings(Program *p)
+{
+    func_0804ac7c("vcl thinks it found problem(s) in the input source:\n");
+    func_0806c3e0(p);
+}
+
 bool func_0804a2b4(Program *p, bool a, bool b, bool c)
 {
     if (!func_08060018(p, a)) {
@@ -83,16 +95,13 @@ bool func_0804a2b4(Program *p, bool a, bool b, bool c)
     }
     if (p->unk_70) {
         if (!c) {
-            func_0804ad84("vcl thinks it found problem(s) in the input source:\n");
-            func_0806c3ac(p);
+            reportErrors(p);
             return false;
         }
         func_0804acb0("on the final pass, was detected, but , it should be ok\n");
     }
-    if (b && p->unk_7c) {
-        func_0804ac7c("vcl thinks it found problem(s) in the input source:\n");
-        func_0806c3e0(p);
-    }
+    if (b && p->unk_7c)
+        reportWarnings(p);
     return true;
 }
 
