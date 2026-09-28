@@ -17,3 +17,32 @@ relicensed by this repository's MIT license.
 The first implementation milestone is underway: see
 [`reverse/oracle/README.md`](reverse/oracle/README.md) for the historical VCL
 test runner, Linux runtime setup, and initial behavioral fixtures.
+
+## Matching decompilation of VCL 1.4 beta 7 (Linux x86)
+
+A byte-for-byte matching C++ decompilation of
+`archive/upstream/vcl/downloads/vcl.1.4.beta7.x86/vcl_14beta7_x86`
+(GCC 3.2.2 Red Hat Linux 9, `-O2`) lives in `src/`.
+
+Progress (matched bytes / file size):
+
+<!-- progress:start -->
+**1,169 / 482,736 bytes (0.24%)** of `vcl_14beta7_x86` matched — code 1,095 / 268,717 (7 / 1192 functions exact, 353 bytes), data 74 bytes
+<!-- progress:end -->
+
+Setup and daily use:
+
+```sh
+docker build --platform linux/386 -t revcl-rh9 tools/rh9   # toolchain image
+python3 -m venv .venv && .venv/bin/pip install -r scripts/requirements.txt
+scripts/decomp status                  # totals + next targets
+scripts/decomp diff 0x08058dd8         # incremental build + diff vs original
+scripts/decomp score --readme --html   # refresh this block and tmp/progress.html
+.venv/bin/python scripts/iterate.py --rounds 5   # LLM agent loop
+```
+
+Open `tmp/progress.html` for the visual comparison of the original and the
+rebuilt bytes. Details: [`docs/decompilation.md`](docs/decompilation.md)
+(approach, toolchain, scoring), [`docs/workflow.md`](docs/workflow.md) (agent
+loop), [`docs/matching-notes.md`](docs/matching-notes.md) (compiler idioms),
+[`AGENTS.md`](AGENTS.md) (rules for agents).
