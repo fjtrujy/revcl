@@ -22,6 +22,12 @@ int func_0804ac7c(const char *fmt, ...);
 int func_0804acb0(const char *fmt, ...);
 int func_0804acf4(const char *fmt, ...);
 int func_0804ad38(const char *fmt, ...);
+int func_0804ad84(const char *fmt, ...);
+int func_0804adbc(char *buf, const char *fmt, ...);
+int func_0804add4(const char *s);
+void func_0804adf0(int status);
+void func_0804ae34(const char *fmt, ...);
+void func_0804aeb0();
 
 char *mstrcpy(char *dst, const char *src);
 
