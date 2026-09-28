@@ -22,6 +22,8 @@ public:
     void func_0804b534();
     char *func_0804b550();
     char *func_0804b574(char *buf);
+    int func_0804b794();
+    int func_0804b7b4();
 
     int unk_04;
     int unk_08;     // node count
@@ -40,12 +42,7 @@ public:
         unk_10 = 0;
         unk_18 = 0;
     }
-    virtual ~mNode()
-    {
-        if (unk_14)
-            delete[] unk_14;
-        unk_14 = 0;
-    }
+    virtual ~mNode();
     virtual bool func_0804b75c();
 
     bool detach()
@@ -54,6 +51,7 @@ public:
             return unk_0c->func_0804b3e8(this);
         return false;
     }
+    bool setName(const char *name);
 
     mNode *unk_04;  // next
     mNode *unk_08;  // prev

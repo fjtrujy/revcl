@@ -7,6 +7,7 @@
 bool func_0804bfcc(const char *a, const char *b);
 bool func_0804c03c(const char *a, const char *b);
 char *dupString(const char *s);
+int mstrlen(const char *s);
 
 mList::mList()
 {
@@ -194,4 +195,53 @@ char *mList::func_0804b574(char *buf)
         if (node->unk_14)
             buf += func_0804adbc(buf, "%s:\n", node->unk_14);
     return buf;
+}
+
+mNode::~mNode()
+{
+    if (unk_14)
+        delete[] unk_14;
+    unk_14 = 0;
+}
+
+bool mNode::setName(const char *name)
+{
+    if (unk_14) {
+        delete[] unk_14;
+        unk_14 = 0;
+    }
+    if (name) {
+        unk_14 = new char[mstrlen(name) + 1];
+        if (!unk_14)
+            return false;
+        mstrcpy(unk_14, name);
+    }
+    return true;
+}
+
+bool mNode::func_0804b75c()
+{
+    if (unk_14)
+        delete[] unk_14;
+    unk_14 = 0;
+    unk_0c = 0;
+    return true;
+}
+
+int mList::func_0804b794()
+{
+    int flags = 0;
+    for (mNode *node = unk_0c; node; node = node->unk_04)
+        flags |= node->unk_18;
+    return flags;
+}
+
+int mList::func_0804b7b4()
+{
+    int flags = 0;
+    for (mNode *node = unk_0c; node; node = node->unk_04) {
+        flags |= node->unk_18;
+        node->unk_18 = 0;
+    }
+    return flags;
 }
