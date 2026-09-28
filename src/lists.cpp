@@ -1393,17 +1393,17 @@ bool mValue::parse(const char *s)
     const char *p = s;
     if (s[0] == '0' && s[1]) {
         switch (s[1]) {
-        case 'b':
-        case 'B':
-            radix = 2;
-            base = 2;
-            p = s + 2;
-            break;
         case 'x':
         case 'X':
             base = 1;
             radix = 16;
             rtype = g_080b3088 ? FLOAT : UINT;
+            p = s + 2;
+            break;
+        case 'b':
+        case 'B':
+            radix = 2;
+            base = 2;
             p = s + 2;
             break;
         case 'z':
@@ -1451,9 +1451,12 @@ bool mValue::parse(const char *s)
                     printf("error in float expression %s\n", s);
                     return false;
                 }
-                hasExp = true;
-                if (!isFlt)
+                if (isFlt)
+                    hasExp = true;
+                else {
                     isFlt = true;
+                    hasExp = true;
+                }
                 value = 0;
                 digits = 0;
                 expSign = (p[1] == '+') ? 1 : -1;
@@ -1464,14 +1467,12 @@ bool mValue::parse(const char *s)
             skip = 1;
         if (!skip) {
             const char *d = g_080b3090[base];
-            int idx = 0;
-            while (*d) {
-                if (c == *d)
+            int idx;
+            char ch;
+            for (idx = 0; (ch = *d) != 0; d++, idx++)
+                if (c == ch)
                     break;
-                d++;
-                idx++;
-            }
-            if (!*d)
+            if (!ch)
                 return false;
             value = value * radix + idx;
         }
