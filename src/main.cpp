@@ -3,10 +3,25 @@
 #define TDEBUG_LOCKS 0
 #define TDEBUG_MOVES 0
 
+#include "Program.h"
+
 int func_0804ac50(const char *fmt, ...);
+int func_0804ac7c(const char *fmt, ...);
+int func_0804acb0(const char *fmt, ...);
+int func_0804ad38(const char *fmt, ...);
+int func_0804ad84(const char *fmt, ...);
 void func_0804adf0(int status);
 
+bool func_08060018(Program *p, bool a);
+bool func_0806a74c(Program *p);
+bool func_0806ae58(Program *p);
+bool func_0806b234(Program *p);
+void func_0806c3ac(Program *p);
+void func_0806c3e0(Program *p);
+
 extern int errorOccurred;
+extern bool flag_080b300d;
+extern bool flag_080b3018;
 
 void func_08048c30()
 {
@@ -58,4 +73,48 @@ void usage()
 void func_0804a2a4()
 {
     errorOccurred = 1;
+}
+
+bool func_0804a2b4(Program *p, bool a, bool b, bool c)
+{
+    if (!func_08060018(p, a)) {
+        func_0804ad38("vcl found a bug in itself while chasing dependencies\n");
+        return false;
+    }
+    if (p->unk_70) {
+        if (!c) {
+            func_0804ad84("vcl thinks it found problem(s) in the input source:\n");
+            func_0806c3ac(p);
+            return false;
+        }
+        func_0804acb0("on the final pass, was detected, but , it should be ok\n");
+    }
+    if (b && p->unk_7c) {
+        func_0804ac7c("vcl thinks it found problem(s) in the input source:\n");
+        func_0806c3e0(p);
+    }
+    return true;
+}
+
+bool func_0804a358(Program *p)
+{
+    if (flag_080b3018 && !func_0806a74c(p)) {
+        func_0804ad38("failed to collapse instructions\n");
+        return false;
+    }
+    if (!func_0806b234(p)) {
+        func_0804ad38("failed to detect moves!\n");
+        return false;
+    }
+    if (!func_0804a2b4(p, flag_080b300d, false, false)) {
+        func_0804ad38("generic dependency code decided to die\n");
+        return false;
+    }
+    if (!func_0806ae58(p)) {
+        func_0804ad38("failed to prune moves\n");
+        return false;
+    }
+    if (!func_0804a2b4(p, flag_080b300d, false, false))
+        return false;
+    return true;
 }
