@@ -247,3 +247,49 @@ char *func_0804aef0(const char *path, int *len, bool nulTerm)
         *len = size;
     return buf;
 }
+
+char *func_0804aff0(int fd, int *len, bool nulTerm)
+{
+    int ok = 0;
+    int used = 0;
+    char *buf = (char *)malloc(0x10000);
+
+    if (!buf) {
+        func_0804ad38("failed to alloc initial read buffer\n");
+    } else {
+        int size = 0x10000;
+        for (;;) {
+            if (size - used < 0x10000) {
+                size += 0x10000;
+                char *nbuf = (char *)realloc(buf, size);
+                if (!nbuf) {
+                    func_0804ad38("nReadFile - failed to extend buffer\n");
+                    break;
+                }
+                buf = nbuf;
+            }
+            int n = read(fd, buf + used, 0xffff);
+            if (n < 0) {
+                func_0804ad38("read returned <0\n");
+                break;
+            }
+            if (n == 0) {
+                ok = 1;
+                break;
+            }
+            used += n;
+        }
+        if (nulTerm && buf)
+            buf[used] = 0;
+    }
+    if (!ok && buf) {
+        free(buf);
+        buf = 0;
+        used = 0;
+    }
+    if (fd > 0)
+        close(fd);
+    if (len)
+        *len = used;
+    return buf;
+}

@@ -1,14 +1,41 @@
 #ifndef MLIST_H
 #define MLIST_H
 
+class mNode;
+
 class mList {
 public:
+    mList();
     virtual ~mList();
+    virtual bool func_0804b1b0();
+    virtual mNode *func_0804b444(const char *s);
+    mNode *func_0804b20c(void *data);
+    bool func_0804b3e8(mNode *node);
 
     int unk_04;
-    int unk_08;
-    int unk_0c;
-    int unk_10;
+    int unk_08;     // node count
+    mNode *unk_0c;  // head
+    mNode *unk_10;  // tail
+};
+
+class mNode {
+public:
+    virtual ~mNode();
+    virtual bool func_0804b75c();
+
+    bool detach()
+    {
+        if (unk_0c)
+            return unk_0c->func_0804b3e8(this);
+        return false;
+    }
+
+    mNode *unk_04;  // next
+    mNode *unk_08;  // prev
+    mList *unk_0c;  // owning list
+    void *unk_10;   // data/key
+    char *unk_14;
+    int unk_18;
 };
 
 #endif
