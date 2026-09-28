@@ -925,3 +925,51 @@ bool func_0804ca94(mValue *dst, mValue *a, mValue *b)
     }
     return true;
 }
+
+bool func_0804cd68(mValue *dst, mValue *a, mValue *b)
+{
+    float fa, fb;
+    int ia, ib;
+    unsigned int ua, ub;
+    if (!a)
+        return false;
+    if (!b)
+        return false;
+    if (a->type < mValue::UINT || a->type > mValue::FLOAT)
+        return false;
+    if (b->type < mValue::UINT || b->type > mValue::FLOAT)
+        return false;
+    int t = a->type;
+    if ((int)b->type > t)
+        t = b->type;
+    dst->type = t;
+    if (t == mValue::NONE)
+        return false;
+    switch (t) {
+    case mValue::UINT:
+        if (!getUIntInl(a, &ua) || !getUIntInl(b, &ub)) {
+            printf("failed to get args\n");
+            return false;
+        }
+        dst->u = ua - ub;
+        break;
+    case mValue::INT:
+        if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
+            func_0804ad38("failed to get args\n");
+            return false;
+        }
+        dst->i = ia - ib;
+        break;
+    case mValue::FLOAT:
+        if (getFloatInl(a, &fa) && getFloatInl(b, &fb)) {
+            dst->f = fa - fb;
+            break;
+        }
+        func_0804ad38("failed to get args\n");
+        return false;
+    default:
+        printf("bad type to expr\n");
+        return false;
+    }
+    return true;
+}
