@@ -1027,9 +1027,7 @@ bool func_0804d314(mValue *dst, mValue *a, mValue *b)
     float fa, fb;
     int ia, ib;
     unsigned int ua, ub;
-    if (!a)
-        return false;
-    if (!b)
+    if (!a || !b)
         return false;
     if (a->type < mValue::UINT || a->type > mValue::FLOAT)
         return false;
