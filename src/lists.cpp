@@ -1542,3 +1542,26 @@ char *mValue::asChars()
     g_080bcda0 += mstrlen(p) + 1;
     return p;
 }
+
+bool func_0804e5c0(mValue *a, mValue *b)
+{
+    unsigned int za = 0;
+    unsigned int zb = 0;
+    unsigned int *pa = &za;
+    unsigned int *pb = &zb;
+    if (a && b) {
+        if (a->type != b->type)
+            return false;
+        if (a->type == mValue::STRING)
+            return func_0804bfcc(a->str, b->str);
+    }
+    if (a && a->type == mValue::STRING)
+        return false;
+    if (b && b->type == mValue::STRING)
+        return false;
+    if (a && isNumType(a->type))
+        pa = &a->u;
+    if (b && isNumType(b->type))
+        pb = &b->u;
+    return *pa == *pb;
+}
