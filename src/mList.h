@@ -1,6 +1,8 @@
 #ifndef MLIST_H
 #define MLIST_H
 
+#pragma interface
+
 class mNode;
 
 class mList {
@@ -38,7 +40,12 @@ public:
         unk_10 = 0;
         unk_18 = 0;
     }
-    virtual ~mNode();
+    virtual ~mNode()
+    {
+        if (unk_14)
+            delete[] unk_14;
+        unk_14 = 0;
+    }
     virtual bool func_0804b75c();
 
     bool detach()

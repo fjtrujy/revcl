@@ -1,5 +1,6 @@
 // Intrusive doubly linked list (CIE group 1, after os.cpp).
 
+#pragma implementation
 #include "mList.h"
 #include "os.h"
 
@@ -193,11 +194,4 @@ char *mList::func_0804b574(char *buf)
         if (node->unk_14)
             buf += func_0804adbc(buf, "%s:\n", node->unk_14);
     return buf;
-}
-
-mNode::~mNode()
-{
-    if (unk_14)
-        delete[] unk_14;
-    unk_14 = 0;
 }
