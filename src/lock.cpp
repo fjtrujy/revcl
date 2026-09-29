@@ -1258,3 +1258,117 @@ bool func_0805db74(int s1, int e1, int s2, int e2)
         return e1 >= s2;
     return s1 <= e2;
 }
+
+bool cls0805c244::catLocks(cls0805bcc4 *a, cls0805bcc4 *b, int *s, int *e, int *end)
+{
+    bool found = false;
+    int lsz = g_080b336c;
+    if (a->unk_2e) {
+        *s = a->unk_36 + lsz;
+        *e = a->unk_3a + lsz;
+        *end = a->unk_4e + lsz;
+        found = true;
+    }
+    int bs = b->unk_36;
+    int be = b->unk_3a;
+    int bend = b->unk_4e;
+    if (!found) {
+        *s = bs;
+        *e = be;
+        *end = bend;
+    } else {
+        *s = bs;
+        *e = be;
+        if (bend > *end)
+            *end = bend;
+    }
+    return true;
+}
+
+int cls0805c244::canMoveInputLock(cls0805bcc4 *in, short *pos, int *minPos)
+{
+    int p = *pos;
+    cls0805bcc4 *lk = unk_1c;
+    int lsz = g_080b336c;
+    if (unk_29)
+        return 0;
+    if (in->unk_19 == 2) {
+        func_0804ad38("canMoveInputLock - aa input\n");
+        func_0804aeb0();
+    } else {
+    cls0805bcc4 *par = in->getParent();
+    bool cat = false;
+    int s, e, end;
+    if (lsz && par->unk_2d == 2) {
+        cls0805bcc4 *x = unk_0c[0];
+        if (x->unk_2c) {
+            if (in->unk_24 == x->unk_24)
+                return 0;
+            p += lsz;
+            if (!catLocks(par, x, &s, &e, &end)) {
+                func_0804ad38("failed to concatenate reg ref with xo\n");
+                func_0804adf0(-1);
+            }
+            cat = true;
+            par = x;
+        } else if (par->unk_2e) {
+            s = par->unk_36;
+            e = par->unk_3a;
+            end = par->unk_4e;
+            if (p - in->unk_18 < s)
+                s = p - in->unk_18;
+            if (p - in->unk_18 < e)
+                e = p - in->unk_18;
+            if (p > end)
+                end = p;
+            if (end - s >= lsz)
+                return 0x2000;
+        } else {
+            s = p - in->unk_18;
+            e = p;
+            end = p;
+        }
+    } else if (lsz && unk_28 && par->unk_16) {
+        if (!catLocks(unk_20, par, &s, &e, &end)) {
+            func_0804ad38("case B failed to cat xo\n");
+            checkCounts();
+            func_0804ad38("we are :\n");
+            in->print();
+            func_0804adf0(-1);
+        }
+        cat = true;
+    } else {
+        s = par->unk_36;
+        e = par->unk_3a;
+        end = par->unk_4e;
+    }
+
+    if (p - in->unk_18 < e)
+        return 8;
+    if (p <= end)
+        return 0;
+    end = p;
+    if (lsz && p - s >= lsz)
+        return 0x40000;
+    int ws = s, we = p;
+    wrapRange(ws, we);
+    for (; lk; lk = lk->unk_08) {
+        lk->print();
+        if (lk == par)
+            continue;
+        if (lk->unk_24 == in->unk_24)
+            continue;
+        if (cat && lk->unk_2d == 2)
+            continue;
+        int ls = lk->unk_34;
+        int le = lk->unk_4c;
+        wrapRange(ls, le);
+        if (lk->unk_22) {
+            if (ws < le && we >= ls)
+                return 0x10;
+        } else if (func_0805db74(ws, we, ls, le))
+            return 0x20;
+    }
+    }
+    return 0;
+}
