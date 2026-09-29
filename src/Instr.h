@@ -345,7 +345,10 @@ public:
     short unk_00, unk_02, unk_04, unk_06;
     int unk_08, unk_0c, unk_10, unk_14;
     short unk_18, unk_1a, unk_1c, unk_1e;
-    char unk_20[8];
+    short unk_20;   // fdep "has extra pre deps" flag
+    short unk_22;   // slot mask read of reg idx 48
+    short unk_24;   // slot mask written of reg idx 48
+    char unk_26[2];
 
     cls0805e2e4();
     ~cls0805e2e4();
