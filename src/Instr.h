@@ -40,7 +40,9 @@ public:
     unsigned char unk_18;
     unsigned char unk_19;
     unsigned char unk_1a;   // branch target operand index + 1
-    char unk_1b[0x44 - 0x1b];
+    char unk_1b[5];
+    int (*unk_20)(void *, Instr *);     // per-opcode handler
+    char unk_24[0x44 - 0x24];
     iOpDesc unk_44[1];      // operand descriptors
 
     char func_0806ffb4();

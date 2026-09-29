@@ -9,6 +9,7 @@
 #include "instStream.h"
 #include "workTable.h"
 #include "Instr.h"
+#include "VUStr.h"
 
 inline bool initPrune(instStream *s);
 inline bool initPrune(Instr *in);
@@ -228,6 +229,120 @@ inline bool doPrune(instStream *s)
         }
     }
     return true;
+}
+
+int func_08087860(void *, Instr *in);
+
+inline int doPrune(Instr *in)
+{
+    unsigned char any = 0;
+    if (in->unk_13cc)
+        return 1;
+    for (int i = 0;; i++) {
+        Operand *op = in->getOp(i);
+        if (!op)
+            break;
+        any |= op->unk_2a;
+    }
+    if (!any)
+        return 0;
+    iInfo *info = in->unk_34;
+    if (!info) {
+        func_0804ad38("Instruction::doPrune() - had no iInfo\n");
+        return -1;
+    }
+    if (in->unk_142c && in->unk_38[0].unk_18 == in->unk_38[1].unk_18)
+        return 0;
+    if (info->unk_0c == 1) {
+        int m, nIn = 0, inOR = 0, outOR = 0, nOut = 0;
+        for (int i = 0;; i++) {
+            Operand *op = in->getOp(i);
+            if (!op)
+                break;
+            if (op->unk_04 != 1 && op->unk_04 != 9)
+                continue;
+            if (!op->unk_18) {
+                func_0804ad38("couldn't get a register for V_FL4 or V_ACC operand\n");
+                return -1;
+            }
+            if (op->unk_09 == 1) {
+                inOR |= op->unk_2a;
+                nIn++;
+            }
+            if (op->unk_09 == 2) {
+                if (nOut && op->unk_2a != outOR) {
+                    func_0804ad38("prune - found two inputs with different pBits state for FL4/ACC\n");
+                    return -1;
+                }
+                outOR |= op->unk_2a;
+                nOut++;
+            }
+        }
+        if (!nOut && !nIn) {
+            func_0804ad38("MD_ANY set - but couldn't find any fl4 or acc operands for %s\n", info->unk_04);
+            return -1;
+        }
+        if (nOut > 1) {
+            func_0804ad38("nOut >2! for fl4/acc\n ");
+            in->leDump();
+            return -1;
+        }
+        if (info->unk_20 == func_08087860)
+            inOR = (inOR >> 1) | ((inOR & 1) << 3);
+        if (nIn) {
+            if (outOR & ~inOR) {
+                func_0804ad38("doPrune:: output had larger extent than input.. out=%x vs in=%x\n", outOR, inOR);
+                in->leDump();
+                return -1;
+            }
+            m = inOR;
+        } else if (outOR)
+            m = outOR;
+        else
+            m = in->unk_138f;
+        if (m & ~in->unk_138f) {
+            func_0804ad38("inOR was out of range of instruction mod bits nb=%x,mb=%x!\n", m, in->unk_138f);
+            in->func_08054008(false);
+            return -1;
+        }
+        if (m != in->unk_138f) {
+            func_0804acf4("PRUNE FIELD: [%s->%s]  ", func_08052064(in->unk_138f), func_08052064(m));
+            int saved = errorOccurred;
+            errorOccurred = quiet_080bbd98;
+            in->leDump();
+            errorOccurred = saved;
+        }
+        in->unk_138f = m;
+        for (int i = 0;; i++) {
+            Operand *op = in->getOp(i);
+            if (!op)
+                break;
+            if (op->unk_04 == 1 || op->unk_04 == 9)
+                op->unk_07 = m;
+        }
+        if (info->unk_20 == func_08087860)
+            in->unk_38[1].unk_07 = ((m << 1) | ((m & 8) >> 3)) & 0xf;
+    }
+    Operand *op;
+    for (int i = 0; (op = in->getOp(i)) != 0; i++) {
+        RegPoolEntry *r = op->getReg2();
+        if (!r || op->unk_2a || !r->unk_14)
+            continue;
+        RegPool *pool = r->unk_04;
+        if (!pool) {
+            func_0804ad38("register had no regpool\n");
+            return -1;
+        }
+        if (pool->unk_10 && !op->unk_0d) {
+            func_0804acf4("ZERO FIX   : ");
+            int saved = errorOccurred;
+            errorOccurred = quiet_080bbd98;
+            in->leDump(i);
+            errorOccurred = saved;
+            op->unk_18 = pool->unk_10;
+        }
+    }
+    return 1;
 }
 
 #endif
