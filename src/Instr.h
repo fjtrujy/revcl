@@ -200,7 +200,12 @@ public:
     cls08058718();
     ~cls08058718();
     void func_080586e0();
+    void func_08058744();
+    void func_0805874c(short v);
+    void func_0805878c(char c);
 };
+
+extern int g_080b336c;
 
 class cls0805e2e4 {
 public:
