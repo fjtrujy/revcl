@@ -144,3 +144,77 @@ int func_0805219c(const char *s)
     }
     return r;
 }
+
+int func_080521f0(char *s)
+{
+    int mods = 0;
+    if (s) {
+        char *dst = s;
+        char *src = s;
+        while (*src) {
+            if (*src == '[') {
+                char *p = src + 1;
+                int m = 0;
+                bool ok = true;
+                while (*p && *p != ']') {
+                    switch (*p) {
+                    case 'E': case 'e': m |= 2; break;
+                    case 'D': case 'd': m |= 4; break;
+                    case 'M': case 'm': m |= 1; break;
+                    case 'T': case 't': m |= 8; break;
+                    default: ok = false; break;
+                    }
+                    p++;
+                }
+                if (*p != ']')
+                    ok = false;
+                if (ok) {
+                    mods |= m;
+                    src = p + 1;
+                } else {
+                    func_0804ac7c("possibly misformed instruction modifier detected\n");
+                    *dst++ = *src++;
+                }
+            } else {
+                *dst++ = *src++;
+            }
+        }
+        *dst = 0;
+    }
+    return mods;
+}
+
+int func_080522c4(int mods, unsigned char mode, bool flag)
+{
+    int allowed = 0;
+    switch (mode) {
+    case 1:
+        allowed = flag ? 13 : 12;
+        break;
+    case 3:
+        allowed = 13;
+        break;
+    default:
+        func_0804ac7c("bad mode to ask about mods\n");
+        break;
+    }
+    bool ok = (mods & ~allowed) == 0;
+    return ok;
+}
+
+char g_080bce00[32];
+
+char *func_08052314(int mods)
+{
+    char *p = g_080bce00;
+    if (mods)
+        *p++ = '[';
+    if (mods & 4) *p++ = 'D';
+    if (mods & 2) *p++ = 'E';
+    if (mods & 8) *p++ = 'T';
+    if (mods & 1) *p++ = 'M';
+    if (mods & ~15) *p++ = '?';
+    if (mods) *p++ = ']';
+    *p = 0;
+    return g_080bce00;
+}

@@ -8,6 +8,8 @@ public:
     Instr *unk_20;  // linear list link
     Instr *unk_24;  // ToDo/Done list next
     Instr *unk_28;  // ToDo/Done list prev
+
+    void leDump(int opnd, int mask);
 };
 
 #endif
