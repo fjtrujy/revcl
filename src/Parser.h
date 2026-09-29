@@ -32,7 +32,22 @@ public:
     char *func_0805086c(int *commentMode, char *in);
     void func_08050c40(int);
     char *func_08050be4(int i, char *type);
+    bool func_08050eec();
+    bool func_08050f18(int i);
     bool func_08050f48();
+    bool func_08050f7c(int i);
+
+    bool isValid() {
+        return (unk_00 && unk_8c) || (!unk_00 && !unk_8c);
+    }
+    bool inComment(int i) {
+        if (i >= 0 && i < unk_8c) {
+            if (unk_090[i].unk_03)
+                return true;
+            return false;
+        }
+        return true;
+    }
 };
 
 // Source parser living on main's stack (CIE group 2). Name is a guess.
