@@ -1,3 +1,4 @@
+#pragma implementation "iGroupList.h"
 #include "Instr.h"
 #include "os.h"
 
@@ -55,4 +56,14 @@ bool iGroupList::add(void *p, int sz)
     n->next = head;
     head = n;
     return 1;
+}
+
+void iGroupList::dump()
+{
+    iGroupNode *n;
+    int i = 0;
+    for (n = head; n; n = n->next, i++)
+        func_0804acb0(" [%4d ] [%d sz=%d]\n", i, n->unk_04, n->unk_08);
+    if (i)
+        func_0804acb0(" .. %d nodes\n", i);
 }

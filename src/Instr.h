@@ -310,29 +310,7 @@ struct iLink {
     }
 };
 
-struct iGroupNode {
-    iGroupNode *next;
-    void *unk_04;
-    int unk_08;     // size
-
-    iGroupNode()
-    {
-        unk_04 = 0;
-        unk_08 = 0;
-    }
-};
-
-// "igrouplist::init - first set!"
-class iGroupList {
-public:
-    iGroupNode *head;
-
-    iGroupList();
-    ~iGroupList();
-    void init();
-    void clear();
-    bool add(void *p, int sz);
-};
+#include "iGroupList.h"
 
 class cls08058718 {
 public:
