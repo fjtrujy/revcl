@@ -74,12 +74,14 @@ public:
 };
 
 // Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).
+class cls0805c244;
+
 class cls0805bcc4 {
 public:
-    char unk_00;
-    char unk_01;
-    char unk_02;
-    int unk_04;
+    unsigned char unk_00;
+    unsigned char unk_01;
+    unsigned char unk_02;
+    cls0805c244 *unk_04;    // owning locklist
     cls0805bcc4 *unk_08;    // next sibling in parent's child list
     cls0805bcc4 *unk_0c;    // input: parent output lock; output: child list head
     int unk_10;
@@ -139,18 +141,24 @@ class cls0805c244 {
 public:
     short unk_00;
     int unk_04;
-    int unk_08;
+    cls0805c244 *unk_08;    // next locklist
     int unk_0c[4];
-    int unk_1c;
+    cls0805bcc4 *unk_1c;    // output lock list (linked by lock->unk_08)
     int unk_20;
-    short unk_24;
-    short unk_26;
+    short unk_24;           // nOutLocks
+    short unk_26;           // nToGo
     char unk_28;
     char unk_29;
     char unk_2a;
     char unk_2b;
 
     cls0805c244();
+    cls0805c244(cls0805c244 *next);
+    ~cls0805c244();
+    void checkCounts();
+    bool reset();
+    bool addInput(cls0805bcc4 *out, cls0805bcc4 *in, char a, unsigned char b);
+    bool addOutput(cls0805bcc4 *lk, int a, int b, unsigned char c);
 };
 
 int func_08070300(unsigned char);

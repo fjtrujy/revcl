@@ -243,3 +243,87 @@ cls0805c244::cls0805c244()
     unk_20 = 0;
     unk_00 = 0;
 }
+
+cls0805c244::cls0805c244(cls0805c244 *next)
+{
+    unk_08 = next;
+    unk_04 = 0;
+    for (int i = 0; i != 4; i++)
+        unk_0c[i] = 0;
+    unk_2a = 0;
+    unk_2b = 0;
+    unk_1c = 0;
+    unk_24 = 0;
+    unk_26 = 0;
+    unk_28 = 0;
+    unk_29 = 1;
+    unk_20 = 0;
+    unk_00 = 0;
+}
+
+cls0805c244::~cls0805c244()
+{
+}
+
+void cls0805c244::checkCounts()
+{
+    int n = 0;
+    for (cls0805bcc4 *o = unk_1c; o; o = o->unk_08) {
+        o->printOwner();
+        for (cls0805bcc4 *c = o->unk_0c; c; c = c->unk_08)
+            c->printOwner();
+        n++;
+    }
+    if (unk_24 != unk_26 + n)
+        func_0804ad38("ERROR - nOutLocks != nToGo + nDone\n");
+}
+
+bool cls0805c244::reset()
+{
+    for (int i = 0; i != 4; i++)
+        unk_0c[i] = 0;
+    unk_2a = 0;
+    unk_2b = 0;
+    unk_1c = 0;
+    unk_24 = 0;
+    unk_26 = 0;
+    unk_28 = 0;
+    unk_29 = 1;
+    unk_20 = 0;
+    unk_00 = 0;
+    return true;
+}
+
+bool cls0805c244::addInput(cls0805bcc4 *out, cls0805bcc4 *in, char a, unsigned char b)
+{
+    in->unk_14 = 1;
+    in->unk_04 = this;
+    out->unk_15 = b;
+    in->unk_18 = a;
+    out->unk_46 += in->unk_02;
+    out->unk_48 += in->unk_01;
+    out->unk_20++;
+    out->unk_22++;
+    in->unk_0c = out;
+    out->unk_4a += in->unk_00;
+    return true;
+}
+
+static inline bool isRegLock(cls0805bcc4 *lk)
+{
+    return lk->unk_2d == 2;
+}
+
+bool cls0805c244::addOutput(cls0805bcc4 *lk, int a, int b, unsigned char c)
+{
+    if (isRegLock(lk))
+        unk_28 = 1;
+    lk->unk_14 = 2;
+    lk->unk_17 = a;
+    lk->unk_18 = b;
+    lk->unk_04 = this;
+    lk->unk_15 = c;
+    unk_26++;
+    unk_24++;
+    return true;
+}
