@@ -127,3 +127,30 @@ bool catOnTo(workTable *t1, workTable *t2)
     }
     return 1;
 }
+
+bool appendStream(Program *p, instStream *a, instStream *b)
+{
+    if (!a || !b) {
+        func_0804ad38("cat streams - passed a null pointer\n");
+        return 0;
+    }
+    if (b->unk_2d4) {
+        func_0804ad38("dbgTop set for ist_2 ->>>>>>>>>>>>>>please code this!\n");
+        return 0;
+    }
+    if (a->unk_2d5) {
+        func_0804ad38("dbgEnd set for ist_1 ->>>>>>>>>>>>>>please code this!\n");
+        return 0;
+    }
+    workTable *t1 = a->getWorkTable();
+    workTable *t2 = b->getWorkTable();
+    if (!catOnTo(t1, t2)) {
+        func_0804ad38("failed to cat table2 onto table1\n");
+        return 0;
+    }
+    a->unk_2cd = b->unk_2cd;
+    a->unk_2ce = b->unk_2ce;
+    a->unk_2d5 = b->unk_2d5;
+    a->unk_2d7 = b->unk_2d7;
+    return 1;
+}

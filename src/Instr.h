@@ -310,13 +310,28 @@ struct iLink {
     }
 };
 
-// Singly linked list of heap nodes (class name guessed).
-class ptrList {
-public:
-    void *unk_00;   // head
+struct iGroupNode {
+    iGroupNode *next;
+    void *unk_04;
+    int unk_08;     // size
 
-    ptrList();
-    ~ptrList();
+    iGroupNode()
+    {
+        unk_04 = 0;
+        unk_08 = 0;
+    }
+};
+
+// "igrouplist::init - first set!"
+class iGroupList {
+public:
+    iGroupNode *head;
+
+    iGroupList();
+    ~iGroupList();
+    void init();
+    void clear();
+    bool add(void *p, int sz);
 };
 
 class cls08058718 {
@@ -383,7 +398,7 @@ public:
     unsigned char unk_0e_0 : 1;
     unsigned char unk_0e_1 : 1;
     char unk_0f;
-    ptrList unk_10;
+    iGroupList unk_10;
     LocTag *unk_14;
     short unk_18;
     short unk_1a;
