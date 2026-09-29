@@ -58,7 +58,7 @@ public:
     char unk_229[0x22c - 0x229];
     int unk_22c;                // dependency length used by back trace
     short unk_230;
-    char unk_232[2];
+    short unk_232;
     regUse *unk_234;
     unsigned *unk_238;          // m_tStore
     int unk_23c;                // dst key

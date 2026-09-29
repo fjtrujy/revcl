@@ -1,4 +1,4 @@
-// VisitCache members that only flowMon.cpp inlines; other units (backTrace.cpp) see just
+// VisitCache members (init/release/Extend/startRecord/setBit/endRecord) that only flowMon.cpp inlines; other units (backTrace.cpp) see just
 // the declarations in VisitCache.h and call the out-of-line copies.
 #ifndef VISITCACHE_INLINE_H
 #define VISITCACHE_INLINE_H
@@ -67,6 +67,13 @@ inline bool VisitCache::startRecord()
     unk_14 = true;
     for (int i = 0; i != unk_04; i++)
         *row++ = 0;
+    return true;
+}
+
+inline bool VisitCache::setBit(int bit)
+{
+    unsigned *row = unk_00 + unk_10 * unk_04;
+    row[bit / 32] |= 1 << (bit & 31);
     return true;
 }
 

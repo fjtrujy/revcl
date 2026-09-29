@@ -32,12 +32,7 @@ public:
     bool release();
     bool Extend(int rows);
     bool startRecord();
-    bool setBit(int bit)
-    {
-        unsigned *row = unk_00 + unk_10 * unk_04;
-        row[bit / 32] |= 1 << (bit & 31);
-        return true;
-    }
+    bool setBit(int bit);
     int endRecord();
     bool testBit(int rec, int bit)
     {
