@@ -1066,3 +1066,51 @@ OpSlot::OpSlot()
 OpSlot::~OpSlot()
 {
 }
+
+void OpSlot::func_080560bc()
+{
+}
+
+bool OpSlot::func_080560c4()
+{
+    func_0805bcc4();
+    unk_50 = 0;
+    unk_52[0] = 0;
+    return true;
+}
+
+int OpSlot::func_080560e8()
+{
+    return unk_54.clear();
+}
+
+Operand::Operand()
+{
+    unk_26 = -1;
+    unk_18 = 0;
+    unk_08 = 0;
+    unk_04 = 0;
+    unk_07 = 0;
+    unk_29 = 0;
+    unk_10 = 0;
+    unk_00 = 0;
+    unk_25 = -1;
+    unk_24 = -1;
+    unk_0d = 0;
+    unk_14 = 0;
+    unk_28 = 0;
+    unk_06 = 0;
+    unk_27 = 0;
+    unk_2b = 0;
+    int i;
+    for (i = 0; i != 4; i++) {
+        if (!unk_2c[i].unk_54.clear()) {
+            func_0804ad38("failed to flow reset part %d\n", i);
+            break;
+        }
+    }
+}
+
+Operand::~Operand()
+{
+}

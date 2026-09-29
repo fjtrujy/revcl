@@ -83,10 +83,13 @@ struct OpSlot : public cls0805bcc4 {
 
     OpSlot();
     ~OpSlot();
+    void func_080560bc();
+    bool func_080560c4();
+    int func_080560e8();
 };
 
 struct Operand {
-    char unk_00[4];
+    int unk_00;
     char unk_04;            // operand kind
     char unk_05;
     char unk_06;
