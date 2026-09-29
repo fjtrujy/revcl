@@ -13,7 +13,10 @@ struct Program {
     bool func_0806ea5c(CpuDef *cpu, const char *uniqueName, bool uniqueAll);
     bool func_0806efc4(Parser *parser, bool a, bool newSyntax);
 
-    char unk_00[4];
+    bool func_0806c9b8(const char *name);
+
+    bool unk_00;        // new syntax
+    char unk_01[3];
     mList unk_04;
     char *unk_18;       // global name (dupString)
     char *unk_1c;       // "Nameless"

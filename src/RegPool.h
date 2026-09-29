@@ -22,7 +22,17 @@ struct RegPoolEntry {
     int unk_00;
     int unk_04;
     RegPoolEntry* next;
-    int unk_0c[(0x44 - 0x0c) / 4];
+    const char* func_0805a8e0();
+
+    int unk_0c;
+    int unk_10;
+    bool unk_14;        // virtual
+    bool unk_15;        // allocable
+    bool unk_16;
+    char unk_17;
+    int unk_18[(0x30 - 0x18) / 4];
+    int unk_30;         // register index
+    int unk_34[(0x44 - 0x34) / 4];
     RegPoolSlot unk_44[4];
     int unk_2b4;
     mList unk_2b8;
@@ -32,6 +42,8 @@ class RegPool {
 public:
     RegPool();
     virtual ~RegPool();
+    RegPoolEntry* func_080593e0(int index);
+    RegPoolEntry* func_08059418(const char* name);
     bool func_08059c00();
 
     RegPoolEntry* unk_04;

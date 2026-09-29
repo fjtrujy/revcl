@@ -11,7 +11,15 @@ bool func_0804bfcc(const char *a, const char *b);
 RegPool *GetRP(unsigned t);
 bool func_080519f8(LocTag *t, RegPool *pool, bool b);
 bool func_08051d6c(Program *prog, LocTag *t, int v);
+bool func_08051e34(Program *prog, LocTag *t, int v);
 bool func_08088f20(RegPool *pool, const char *name, int size);
+int mstrlen(const char *s);
+
+struct Directive {
+    const char *name;
+    int (*fn)(Program *, LocTag *);
+};
+extern Directive directives_080b3160[28];
 
 int func_0805116c(Parser *p, LocTag *t)
 {
@@ -265,4 +273,143 @@ int func_08051830(Program *prog, LocTag *t)
 int func_08051848(Program *prog, LocTag *t)
 {
     return func_08051d6c(prog, t, 1);
+}
+
+int func_08051860(Program *prog, LocTag *t)
+{
+    return func_08051e34(prog, t, 0);
+}
+
+int func_08051878(Program *prog, LocTag *t)
+{
+    return func_08051e34(prog, t, 1);
+}
+
+int func_08051890(Program *prog, LocTag *t)
+{
+    char *name = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    if (name) {
+        if (mstrlen(name) > 128) {
+            func_0804ad84("unique name too long\n");
+            return 0;
+        }
+        prog->func_0806c9b8(name);
+    }
+    prog->unk_60 = 1;
+    return 1;
+}
+
+int func_08051908(Program *prog, LocTag *t)
+{
+    char *arg = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    if (!arg) {
+        func_0804ad84("must specify an argument to '.syntax', valid ones are 'new' or 'old'\n");
+        return 0;
+    }
+    if (func_0804bfcc(arg, "new")) {
+        prog->unk_00 = true;
+        return 1;
+    }
+    if (func_0804bfcc(arg, "old")) {
+        prog->unk_00 = false;
+        return 1;
+    }
+    func_0804ad84("invalid argument to .syntax, options are 'new' or 'old'\n");
+    return 0;
+}
+
+Directive *func_080519a0(LocTag *t)
+{
+    if (!t)
+        return 0;
+    char *name = t->func_08050be4(0, 0);
+    Directive *d = directives_080b3160;
+    for (int i = 0; i != 28; i++, d++)
+        if (func_0804bfcc(name, d->name))
+            return d;
+    return 0;
+}
+
+bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
+{
+    char buf[2][0x800];
+    int i = 1;
+    if (!pool) {
+        func_0804ad38("ExecRP_init_reg: passed a null pool\n");
+        return false;
+    }
+    for (; i < func_0805085c(t); i++) {
+        char *tok = t->func_08050f18(i) ? 0 : t->func_08050be4(i, 0);
+        if (!tok)
+            continue;
+        int range = 0;
+        char *d = buf[0];
+        for (char *s = tok; *s; s++) {
+            if (*s == '-') {
+                if (range) {
+                    func_0804ad84("too many '-' chars in %s\n", tok);
+                    return false;
+                }
+                range = 1;
+                *d = 0;
+                d = buf[1];
+            } else
+                *d++ = *s;
+        }
+        *d = 0;
+        int first = -1, last;
+        int j;
+        for (j = 0; j <= range; j++) {
+            RegPoolEntry *r = pool->func_08059418(buf[j]);
+            if (!r) {
+                func_0804ad38("not find %s\n", tok);
+                return false;
+            }
+            if (!r->unk_15) {
+                func_0804ad38("init_reg: %s is not allocable\n", r->func_0805a8e0());
+                return false;
+            }
+            if (r->unk_14) {
+                func_0804ad38("init_reg: reg is virtual! %s\n", r->func_0805a8e0());
+                return false;
+            }
+            if (j == 0)
+                first = last = r->unk_30;
+            else
+                last = r->unk_30;
+        }
+        if (last < first) {
+            func_0804ac7c("range %s decreasing\n", tok);
+            int tmp = last;
+            last = first;
+            first = tmp;
+        }
+        for (j = first; j <= last; j++) {
+            RegPoolEntry *r = pool->func_080593e0(j);
+            if (!r) {
+                func_0804ad38("not find %s\n", tok);
+                return false;
+            }
+            if (!r->unk_15) {
+                func_0804ad38("init_reg: %s is not allocable\n", r->func_0805a8e0());
+                return false;
+            }
+            if (r->unk_14) {
+                func_0804ad38("init_reg: reg is virtual! %s\n", r->func_0805a8e0());
+                return false;
+            }
+            r->unk_16 = flag;
+        }
+    }
+    return true;
+}
+
+int func_08051c30(Program *prog, LocTag *t)
+{
+    return func_080519f8(t, GetRP(1), true);
+}
+
+int func_08051c50(Program *prog, LocTag *t)
+{
+    return func_080519f8(t, GetRP(2), true);
 }
