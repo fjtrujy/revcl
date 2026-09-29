@@ -1,16 +1,14 @@
 // iHolder and infoList, CIE group 3.
+#pragma implementation
 #include "infoList.h"
 #include "Instr.h"
 #include "os.h"
 
-int iHolder::func_08052380(ol_s *ol)
+inline iHolder::iHolder()
 {
-    if (!ol || !unk_00)
-        return 0;
-    int r = 0;
-    if (unk_00 == ol->unk_04 && unk_04 == ol->unk_10)
-        r = 1;
-    return r;
+    unk_00 = 0;
+    unk_04 = 0;
+    unk_08 = 0;
 }
 
 void iHolder::func_080523b8()
@@ -48,4 +46,66 @@ infoList::infoList()
 {
     unk_04 = 0;
     unk_08 = 0;
+}
+
+infoList::~infoList()
+{
+    infoNode *p = unk_04;
+    while (p) {
+        infoNode *n = p->unk_04;
+        delete p;
+        p = n;
+    }
+    unk_04 = 0;
+    unk_08 = 0;
+}
+
+bool infoList::clear()
+{
+    infoNode *p = unk_04;
+    while (p) {
+        infoNode *n = p->unk_04;
+        delete p;
+        p = n;
+    }
+    unk_04 = 0;
+    unk_08 = 0;
+    return true;
+}
+
+void infoList::func_080525c8()
+{
+    for (infoNode *p = unk_04; p; p = p->unk_04)
+        p->dump();
+}
+
+bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
+{
+    stallNode *p = (stallNode *)unk_04;
+    if (!a || !b) {
+        func_0804ad38("infoList:: addStall - null input ptr\n");
+        return false;
+    }
+    if (val <= 0) {
+        func_0804ad38("infoList:: add stall - val <=0\n");
+        return false;
+    }
+    for (; p; p = (stallNode *)p->unk_04)
+        if ((char)p->unk_0c.func_08052380(a) && (char)p->unk_18.func_08052380(b))
+            break;
+    if (!p) {
+        p = new stallNode;
+        if (!p) {
+            func_0804ad38("infoList::addStall - failed to get new stall\n");
+            return false;
+        }
+        p->unk_04 = unk_04;
+        unk_08++;
+        unk_04 = p;
+    }
+    if (!p->catStall(a, b, x, val)) {
+        func_0804ad38("infoList::addStall - failed to cat a stall\n");
+        return false;
+    }
+    return true;
 }
