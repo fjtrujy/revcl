@@ -32,6 +32,7 @@ class RegPool {
 public:
     RegPool();
     virtual ~RegPool();
+    bool func_08059c00();
 
     RegPoolEntry* unk_04;
     int unk_08;
