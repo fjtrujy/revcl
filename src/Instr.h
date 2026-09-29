@@ -205,7 +205,9 @@ public:
     void func_0805878c(char c);
 };
 
-extern int g_080b336c;
+extern int g_080b336c;  // range lsz
+extern int g_080b3370;  // range start
+extern int g_080b3374;  // range end
 
 class cls0805e2e4 {
 public:
