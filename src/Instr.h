@@ -125,7 +125,10 @@ struct Operand {
     bool func_080569cc();
     bool func_08056a24();
     Instr *getOwner();
+    OpSlot *getPart(int part);
     char *func_08057b90(bool flag, char *buf);
+    int getRegFrom(Operand *src);
+    const char *func_08057e40();
     bool isZero()
     {
         int z = 0;
@@ -380,5 +383,9 @@ struct ImplicitOp {
 bool buildImplicitOperand(int kind, ImplicitOp *out, bool);
 const char *opKindName(int kind);
 int func_08057a34(int kind);
+bool func_08057d60(int kind);
+bool func_08057d9c(int kind);
+const char *func_0806a33c(unsigned char);
+extern ol_s *olFreeList;
 
 #endif

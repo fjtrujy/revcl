@@ -1,6 +1,7 @@
 // Operand, CIE group 4. Separate TU from Instr.cpp: its .rodata (strings from
 // 0x08090848, jump tables from 0x080915e4) follows Instr's jump tables.
 #include "Instr.h"
+#include "infoList.h"
 #include "os.h"
 
 Operand::Operand()
@@ -563,4 +564,130 @@ Instr *Operand::getOwner()
         owner = p;
     }
     return owner;
+}
+
+OpSlot *Operand::getPart(int part)
+{
+    if (part < 0 || part > 3) {
+        func_0804ad38("failed to get operand part - out of range!!\n", part);
+        func_0804adf0(-1);
+    }
+    if (!unk_18) {
+        func_0804ad38("operand had no register for get part\n");
+        func_0804adf0(-1);
+    }
+    if (part >= unk_18->unk_28) {
+        func_0804ad38("operand::getPart: out of range for register\n");
+        func_0804adf0(-1);
+    }
+    bool has = (unk_07 >> part) & 1;
+    if (has)
+        return &unk_2c[part];
+    return 0;
+}
+
+char *Operand::func_08057b90(bool flag, char *buf)
+{
+    if (!buf)
+        return 0;
+    if (unk_08)
+        return buf;
+    switch (unk_04) {
+    case 38: buf += func_0804adbc(buf, "vec_reg"); break;
+    case 1:
+        if (flag)
+            buf += func_0804adbc(buf, "vf_reg");
+        else
+            buf += func_0804adbc(buf, "vf_reg[xyzw]");
+        break;
+    case 2: buf += func_0804adbc(buf, "vi_reg"); break;
+    case 3: buf += func_0804adbc(buf, "vf_reg[x/y/z/w]"); break;
+    case 4: buf += func_0804adbc(buf, "I"); break;
+    case 5: buf += func_0804adbc(buf, "P"); break;
+    case 7: buf += func_0804adbc(buf, "Q"); break;
+    case 8: buf += func_0804adbc(buf, "R"); break;
+    case 9: buf += func_0804adbc(buf, "ACC"); break;
+    case 10: buf += func_0804adbc(buf, "ACCxyz"); break;
+    case 11: buf += func_0804adbc(buf, "vf_regxyz"); break;
+    case 13: buf += func_0804adbc(buf, "vf_regx"); break;
+    case 14: buf += func_0804adbc(buf, "vf_regy"); break;
+    case 15: buf += func_0804adbc(buf, "vf_regz"); break;
+    case 16: buf += func_0804adbc(buf, "vf_regw"); break;
+    case 27: buf += func_0804adbc(buf, "IMMEDIATE(%s)", func_0806a33c(unk_05)); break;
+    case 28: buf += func_0804adbc(buf, "(vi_reg)"); break;
+    case 29: buf += func_0804adbc(buf, "OFFSET(vi_reg)"); break;
+    case 30: buf += func_0804adbc(buf, "(vi_reg)[x/y/z/w]"); break;
+    case 31: buf += func_0804adbc(buf, "OFFSET(vi_reg)[x/y/z/w]"); break;
+    case 32: buf += func_0804adbc(buf, "(vi_reg++)"); break;
+    case 33: buf += func_0804adbc(buf, "(--vi_reg)"); break;
+    case 34: buf += func_0804adbc(buf, "vi01"); break;
+    case 35: buf += func_0804adbc(buf, "vf_reg[.xyzw][(base_reg)]"); break;
+    case 36: buf += func_0804adbc(buf, "vi_reg[(base_reg)]"); break;
+    case 39: case 40: case 41: buf += func_0804adbc(buf, "gpr"); break;
+    case 42: buf += func_0804adbc(buf, "gpr(reg)"); break;
+    case 43: buf += func_0804adbc(buf, "fpr"); break;
+    case 44: buf += func_0804adbc(buf, "fpr(reg)"); break;
+    case 46: buf += func_0804adbc(buf, "OFFSET(gpr)"); break;
+    case 54: buf += func_0804adbc(buf, "$ra"); break;
+    default: break;
+    }
+    return buf;
+}
+
+bool func_08057d60(int kind)
+{
+    return kind == 43 || kind == 3 || kind == 13 || kind == 14 ||
+           kind == 15 || kind == 16 || kind == 5 || kind == 7;
+}
+
+bool func_08057d9c(int kind)
+{
+    return kind == 1 || kind == 9;
+}
+
+int Operand::getRegFrom(Operand *src)
+{
+    int a = func_08057a34(unk_04);
+    int b = func_08057a34(src->unk_04);
+    if (b != a) {
+        func_0804ad38("incompatible type request getting type for operand\n");
+        return 0;
+    }
+    unk_18 = src->unk_18;
+    unk_14 = src->unk_14;
+    unk_10 = src->unk_10;
+    if (!unk_18) {
+        func_0804ad38("no register set in get reg from\n");
+        return 0;
+    }
+    if (unk_18->unk_24 != b) {
+        func_0804ad38("register not of correct type\n");
+        return 0;
+    }
+    return func_080563f8();
+}
+
+const char *Operand::func_08057e40()
+{
+    if (!unk_18)
+        return "NO_REG";
+    return unk_18->func_0805a8e0();
+}
+
+bool olList::clear()
+{
+    ol_s *p = unk_00;
+    if (p) {
+        ol_s *f = olFreeList;
+        do {
+            ol_s *n = p->unk_00;
+            p->unk_00 = f;
+            f = p;
+            p = n;
+        } while (p);
+        olFreeList = f;
+    }
+    unk_00 = 0;
+    unk_04 = 0;
+    return true;
 }

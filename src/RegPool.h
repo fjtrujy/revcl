@@ -32,7 +32,8 @@ struct RegPoolEntry {
     bool unk_15;        // allocable
     bool unk_16;
     char unk_17;
-    int unk_18[4];
+    int unk_18[3];
+    int unk_24;         // register class
     int unk_28;         // slot count
     int unk_2c;
     int unk_30;         // register index
