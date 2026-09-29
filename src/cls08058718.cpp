@@ -1,7 +1,7 @@
 #pragma implementation "tPair.h"
 #include "Instr.h"
 #include "tPairList.h"
-#include "cls0807411c.h"
+#include "workTable.h"
 
 void cls08058718::func_080586e0()
 {
@@ -60,7 +60,7 @@ void resetRange()
 
 bool setRange(int start, int end, int lsz);
 
-int setRangeFrom(cls0807411c *t)
+int setRangeFrom(workTable *t)
 {
     if (!t) {
         func_0804ad38("setRangeFrom - null ptr\n");

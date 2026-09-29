@@ -78,15 +78,34 @@ public:
     regUse *unk_08;  // tail
 };
 
+struct wtRow {
+    int unk_00[2];
+    char unk_08[8];
+
+    bool func_080721f8();  // clears unk_00
+};
+
 class workTable {
 public:
     char unk_00[9];
     unsigned char unk_09;   // code mode
     char unk_0a[0x14 - 0x0a];
     regUseList unk_14;
+    char unk_20[8];
+    int unk_28;             // row count
+    wtRow *unk_2c;          // rows
+    int unk_30;             // range start
+    int unk_34;             // range end (one past)
+    int unk_38;             // lsz
 
+    wtRow *func_080724f0(int i);
     int func_08072eec();
     int getLogicalLen();
+    int getPhysicalLen();
+    bool func_08073854();
+    int func_0807411c();    // range start
+    int func_080741b4();    // lsz
+    int func_080741c0();    // range end
 };
 
 #endif

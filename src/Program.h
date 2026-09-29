@@ -54,6 +54,8 @@ struct Program {
     instStream *unk_e0; // chained via unk_258
     instStream *unk_e4; // chained via unk_25c
     char unk_e8[8];
+
+    bool unLinkStreams(instStream *from, instStream *to, int type);
 };
 
 #endif
