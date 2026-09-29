@@ -502,3 +502,123 @@ int cls0805c244::func_0805c938(int n)
     }
     return best;
 }
+
+bool cls0805bcc4::isOk(int type, bool inserted)
+{
+    int loopSize = g_080b336c;
+    bool ok = true;
+    regUse *rf = unk_2d == 2 ? (regUse *)unk_24 : 0;
+    Operand *op = unk_2d == 1 ? &((Instr *)unk_24)->unk_38[unk_29] : 0;
+
+    if (rf) {
+        if (op) {
+            func_0804ad38("rLock::isOk() - both reg ref and op ok\n");
+            ok = false;
+        }
+    } else if (!op) {
+        func_0804ad38("rLock::isOk() - neither op nor regref set\n");
+        ok = false;
+    }
+    if (type >= 0 && unk_14 != type) {
+        func_0804ad38("isOk - unexpected type for is ok\n");
+        ok = false;
+    }
+    if ((unk_2c != 0) != inserted) {
+        func_0804ad38("isOK - insert state was unexpected!\n");
+        ok = false;
+    }
+    switch (unk_14) {
+    case 1:
+        if (!getParent()) {
+            func_0804ad38("input lock has no parent\n");
+            ok = false;
+        }
+        break;
+    case 2: {
+        if (!inserted && unk_20 != unk_22) {
+            func_0804ad38("output lock - ref count mismatch\n");
+            return false;
+        }
+        regUse *orf = unk_2d == 2 ? (regUse *)unk_24 : 0;
+        if (orf && loopSize) {
+            if (unk_18 > 1) {
+                func_0804ad38("external input had latency for loop\n");
+                ok = false;
+            }
+            if (unk_17 > 1) {
+                func_0804ad38("external input had thruput for loop\n");
+                ok = false;
+            }
+        }
+        if (loopSize) {
+            if (unk_18 > loopSize && unk_15 && unk_20) {
+                func_0804ad38("latency bigger than loop!\n");
+                ok = false;
+            }
+            if (unk_17 > loopSize) {
+                func_0804ad38("thruput bigger than loop!\n");
+                ok = false;
+            }
+        }
+        break;
+    }
+    default:
+        func_0804ad38("rLock::isOk() - bad lock type\n");
+        ok = false;
+        break;
+    }
+    if (!ok) {
+        func_0804ad38("rLock::isOk - failed\n");
+        print();
+        func_0804adf0(-1);
+    }
+    return ok;
+}
+
+bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
+{
+    if (!lk) {
+        func_0804ad38("rLockList::isOk  -passed a null lock\n");
+        func_0804adf0(-1);
+    }
+    bool ok = lk->isOk(type, inserted);
+    if (lk->unk_14 == 0) {
+        cls0805bcc4 *parent = lk->getParent();
+        cls0805bcc4 *p;
+        for (p = unk_1c; p; p = p->unk_08)
+            if (p == parent)
+                break;
+        if (!p) {
+            func_0804ad38("rLockList::isOk - parent is not on insert list\n");
+            ok = false;
+        }
+    }
+    if (lk->unk_04 != this) {
+        func_0804ad38("isok - I don't own it\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (lk->unk_14 == 2) {
+        if (unk_24 <= 0) {
+            func_0804ad38("isOk - output, but no outputs! - <=0 output locks!\n");
+            ok = false;
+        }
+        if (unk_26 < !inserted) {
+            func_0804ad38("isOk - output, but no outputs! - <=0 output locks to go!\n");
+            ok = false;
+        }
+    }
+    if (!ok)
+        func_0804adf0(-1);
+    return ok;
+}
+
+short cls0805bcc4::func_0805ccc8()
+{
+    return unk_42;
+}
+
+short cls0805bcc4::func_0805ccd4()
+{
+    return unk_3e;
+}

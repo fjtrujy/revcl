@@ -135,6 +135,9 @@ public:
     bool incRef();
     bool decRef();
     void print();
+    bool isOk(int type, bool inserted);
+    short func_0805ccc8();
+    short func_0805ccd4();
     bool calcStats(int);
     void resetStats()
     {
@@ -180,6 +183,7 @@ public:
     bool undoInputLock(cls0805bcc4 *in);
     bool undoOutputLock(cls0805bcc4 *lk);
     int func_0805c938(int n);
+    bool isOk(cls0805bcc4 *lk, int type, bool inserted);
 };
 
 int func_08070300(unsigned char);
