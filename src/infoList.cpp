@@ -3,6 +3,9 @@
 #include "infoList.h"
 #include "Instr.h"
 #include "instStream.h"
+#include "RegPool.h"
+#include "workTable.h"
+#include "ubsList.h"
 #include "os.h"
 
 extern char *stallNames_080b3244[3];
@@ -182,5 +185,115 @@ bool stallNode::catStall(ol_s *a, ol_s *b, int type, int val)
     }
     if (val > unk_24[type])
         unk_24[type] = val;
+    return true;
+}
+
+ubsNode::ubsNode()
+{
+    unk_08 = 0;
+    unk_0c = 0;
+    unk_10 = 0;
+    unk_14 = 0;
+}
+
+void ubsNode::dump()
+{
+    struct ubsEntry {
+        Instr *inst;
+        int opnd;
+        int mask;
+    } list[64];
+    int n, opnd;
+    func_0804acb0("Used before set : ");
+    n = 0;
+    workTable *wt = unk_14->getWorkTable();
+    regUse *ru;
+    if (!wt || !(ru = wt->unk_14.func_0805b5dc(unk_08))) {
+        func_0804acb0("register %s is used before set at \n",
+                      unk_08->func_0805a8e0(), opnd, unk_14->func_0806d674());
+        return;
+    }
+    func_0804acb0("register %s is used before set at instruction(s) :\n",
+                  unk_08->func_0805a8e0());
+    for (int i = 0; i != unk_08->unk_28; i++) {
+        if ((unk_0c >> i) & 1) {
+            for (ol_s *p = ru->unk_20[i].unk_00; p; p = p->unk_00) {
+                Instr *inst = p->unk_04;
+                int bit = 1 << p->unk_11;
+                opnd = p->unk_10;
+                int j = 0;
+                ubsEntry *e = list;
+                for (; j < n; j++, e++)
+                    if (e->inst == inst && e->opnd == opnd)
+                        break;
+                if (j == n) {
+                    e = 0;
+                    if (n < 64) {
+                        e = &list[n];
+                        e->mask = 0;
+                        n++;
+                    }
+                }
+                e->inst = inst;
+                e->mask |= bit;
+                e->opnd = opnd;
+            }
+        }
+    }
+    for (int k = 0; k != n; k++) {
+        func_0804acb0("   ");
+        list[k].inst->leDump(list[k].opnd, list[k].mask);
+    }
+}
+
+bool ubsNode::catInit(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits)
+{
+    if (!entry) {
+        func_0804ad38("catInit - entry point not set\n");
+        return false;
+    }
+    if (!use) {
+        func_0804ad38("catInit - use point not set\n");
+        return false;
+    }
+    if (!reg) {
+        func_0804ad38("ubs::catInit - register not set\n");
+        return false;
+    }
+    if (!bits) {
+        func_0804ad38("ubs::catInit - bits was null in cat init\n");
+        return false;
+    }
+    unk_10 = entry;
+    unk_14 = use;
+    unk_08 = reg;
+    unk_0c |= bits;
+    return true;
+}
+
+bool ubsList::addUBS(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits)
+{
+    ubsNode *p = (ubsNode *)unk_04;
+    if (!entry || !use || !reg || !bits) {
+        func_0804ad38("ubsList: addUBS - passed bad args\n");
+        return false;
+    }
+    for (; p; p = (ubsNode *)p->unk_04)
+        if (reg == p->unk_08 && entry == p->unk_10 && use == p->unk_14)
+            break;
+    if (!p) {
+        p = new ubsNode;
+        if (!p) {
+            func_0804ad38("infoList::addStall - failed to get new ubs\n");
+            return false;
+        }
+        unk_08++;
+        p->unk_04 = unk_04;
+        unk_04 = p;
+    }
+    if (!p->catInit(entry, use, reg, bits)) {
+        func_0804ad38("failed to cat init a used-before-set operand\n");
+        return false;
+    }
     return true;
 }

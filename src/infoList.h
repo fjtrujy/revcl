@@ -9,7 +9,7 @@
 class infoNode;
 
 struct ol_s {
-    char unk_00[4];
+    ol_s *unk_00;   // next
     Instr *unk_04;  // instruction
     char unk_08[8];
     char unk_10;    // operand index
@@ -63,14 +63,15 @@ class RegPoolEntry;
 
 class ubsNode : public infoNode {
 public:
-    ubsNode() { unk_08 = 0; unk_0c = 0; unk_10 = 0; unk_14 = 0; }
+    ubsNode();
     virtual ~ubsNode() {}
     virtual void dump();
+    bool catInit(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits);
 
-    RegPoolEntry *unk_08;
-    unsigned char unk_0c;  // mask
-    void *unk_10;
-    void *unk_14;
+    RegPoolEntry *unk_08;   // register
+    unsigned char unk_0c;   // slot mask
+    instStream *unk_10;     // entry point
+    instStream *unk_14;     // use point
 };
 
 class infoList {
