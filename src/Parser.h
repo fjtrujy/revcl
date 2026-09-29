@@ -9,6 +9,13 @@ struct LocRef {
     int unk_04;
 };
 
+// Token entry of a lineEntry, 4 bytes.
+struct TokenEntry {
+    unsigned short unk_00;  // offset of token text from LocTag::unk_00
+    char unk_02;            // separator after token: 0 = space, 1 = comma, 2 = end of line
+    bool unk_03;            // token started inside a comment
+};
+
 // Line table entry (probably "lineEntry", see Tokenise error string), sizeof 0x3b0.
 class LocTag {
 public:
@@ -17,14 +24,14 @@ public:
     char unk_08;            // 1 = raw macro block
     short unk_0a;           // loctag depth, -1 = none
     LocRef unk_0c[16];
-    int unk_8c;
-    char unk_090[0x320];
+    int unk_8c;             // token count
+    TokenEntry unk_090[200];
 
     LocTag() { unk_00 = 0; unk_8c = 0; unk_08 = 0; unk_0a = 0; }
     ~LocTag() {}
     char *func_0805086c(int *commentMode, char *in);
     void func_08050c40(int);
-    char *func_08050be4(int, int);
+    char *func_08050be4(int i, char *type);
     bool func_08050f48();
 };
 
