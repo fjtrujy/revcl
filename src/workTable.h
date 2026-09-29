@@ -113,6 +113,8 @@ public:
     int func_0807411c();    // range start
     int func_080741b4();    // lsz
     int func_080741c0();    // range end
+    bool grow(int n);
+    bool prepRawTable();
 };
 
 #endif

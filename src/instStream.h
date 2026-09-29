@@ -20,8 +20,10 @@ struct linkNode {
 
 struct linkList {
     linkNode *unk_00;           // head
-    char unk_04[8];
+    char unk_04[4];
+    int unk_08;                 // count
     linkNode *func_0806dff4(instStream *s, int type);
+    instStream *getStream(int type);
 };
 
 class instStream {
@@ -43,6 +45,10 @@ public:
     unsigned char func_0806d968(); // work table mode
     const char *func_0806d934();  // code mode name
     Instr *getBranch();
+    ~instStream();
+    bool dump(bool);
+    bool func_0806d9a0();         // raw-mode work table
+    bool disposeInputTable();
 
     char unk_00[0x108];
     instStream *unk_108;         // next in Program::unk_a0
@@ -78,10 +84,16 @@ public:
     char unk_265;      // collapse into successor (tidy)
     char unk_266[0x2c0 - 0x266];
     short unk_2c0;     // stream id
-    char unk_2c2[0x2cd - 0x2c2];
+    char unk_2c2[0x2cc - 0x2c2];
+    char unk_2cc;
     char unk_2cd;      // code mode (2 adds 1000 to back trace dep length)
     char unk_2ce;
-    char unk_2cf[0x2e0 - 0x2cf];
+    char unk_2cf[0x2d4 - 0x2cf];
+    char unk_2d4;      // dbgTop
+    char unk_2d5;      // dbgEnd
+    char unk_2d6;
+    char unk_2d7;
+    char unk_2d8[0x2e0 - 0x2d8];
     int unk_2e0;       // dependency length
     int unk_2e4;
 
