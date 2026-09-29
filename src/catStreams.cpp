@@ -12,7 +12,6 @@ bool appendStream(Program *p, instStream *a, instStream *b);
 
 bool func_08063154(Program *p)
 {
-    instStream *n;
     instStream *s = p->unk_a0;
     while (s) {
         if (s->func_0806d908() != 4 && !s->disposeInputTable()) {
@@ -24,48 +23,48 @@ bool func_08063154(Program *p)
             s->dump(0);
             return 0;
         }
-        n = s->unk_108;
-        if (!n || n->unk_2d6 || s->unk_2d7
-            || s->unk_134.unk_08 != 1 || n->unk_128.unk_08 != 1
-            || !s->func_0806d9a0() || !n->func_0806d9a0()
-            || s->unk_2cd != 1 || n->unk_2cc != 1
-            || s->getBranch()
-            || s->unk_134.getStream(0) != n
-            || n->unk_2d4 || s->unk_2d5
-            || func_0806f4a0(p, n)) {
-            s = s->unk_108;
-            continue;
-        }
-        if (!appendStream(p, s, n)) {
-            func_0804ad38("failed to append %s onto %s\n", n->func_0806d674(), s->func_0806d674());
-            return 0;
-        }
-        if (!p->unlinkStreams(s, n, 0)) {
-            func_0804ad38("failed to unlink streams\n");
-            return 0;
-        }
-        if (s->unk_134.unk_08) {
-            func_0804ad38("there's still out ist's after unlink\n");
-            return 0;
-        }
-        linkNode *l;
-        while ((l = n->unk_134.unk_00) != 0) {
-            instStream *to = l->unk_0c;
-            int type = l->unk_14;
-            if (!p->unlinkStreams(n, to, type)) {
+        instStream *n = s->unk_108;
+        if (n && !n->unk_2d6 && !s->unk_2d7
+            && s->unk_134.unk_08 == 1 && n->unk_128.unk_08 == 1
+            && s->func_0806d9a0() && n->func_0806d9a0()
+            && s->unk_2cd == 1 && n->unk_2cc == 1
+            && !s->getBranch()
+            && s->unk_134.getStream(0) == n
+            && !n->unk_2d4 && !s->unk_2d5
+            && !func_0806f4a0(p, n)) {
+            if (!appendStream(p, s, n)) {
+                func_0804ad38("failed to append %s onto %s\n", n->func_0806d674(), s->func_0806d674());
+                return 0;
+            }
+            if (!p->unlinkStreams(s, n, 0)) {
                 func_0804ad38("failed to unlink streams\n");
                 return 0;
             }
-            if (!p->linkStreams(s, to, type)) {
-                func_0804ad38("failed to link together streams\n");
+            if (s->unk_134.unk_08) {
+                func_0804ad38("there's still out ist's after unlink\n");
                 return 0;
             }
+            linkNode *l;
+            while ((l = n->unk_134.unk_00) != 0) {
+                instStream *to = l->unk_0c;
+                int type = l->unk_14;
+                if (!p->unlinkStreams(n, to, type)) {
+                    func_0804ad38("failed to unlink streams\n");
+                    return 0;
+                }
+                if (!p->linkStreams(s, to, type)) {
+                    func_0804ad38("failed to link together streams\n");
+                    return 0;
+                }
+            }
+            if (!p->removeStream(n)) {
+                func_0804ad38("failed to unlink ist_n\n");
+                return 0;
+            }
+            delete n;
+        } else {
+            s = s->unk_108;
         }
-        if (!p->removeStream(n)) {
-            func_0804ad38("failed to unlink ist_n\n");
-            return 0;
-        }
-        delete n;
     }
     return 1;
 }
