@@ -9,7 +9,9 @@ public:
 
     Line();
     ~Line();
+    bool func_08051054(const char *s, int n);
     void func_0805109c();
+    void func_080510cc();
 };
 
 #endif

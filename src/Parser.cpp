@@ -7,6 +7,7 @@
 #include "os.h"
 
 int mstrlen(const char *s);
+bool func_0804c03c(const char *a, const char *b);
 
 int g_080b3140 = 0;
 
@@ -269,4 +270,64 @@ bool func_080501c0(const char *p)
 bool func_080501d4(char c)
 {
     return c == '\n' || c == '\r';
+}
+
+void Parser::Dump()
+{
+    if (!unk_1009c) {
+        func_0804ad38("Parse::Dump() - line table was not set\n");
+        return;
+    }
+    for (int i = 0; i != unk_10098; i++)
+        unk_1009c[i].func_08050c40(-1);
+    func_0804ac50("parser::DumpLocTags..\n");
+    for (int i = 0; i != unk_10000; i++) {
+        func_0804ac50("%4d : ", i);
+        lines[i].func_080510cc();
+        func_0804ac50("\n");
+    }
+}
+
+void Parser::DumpLocTags()
+{
+    func_0804ac50("parser::DumpLocTags..\n");
+    for (int i = 0; i != unk_10000; i++) {
+        func_0804ac50("%4d : ", i);
+        lines[i].func_080510cc();
+        func_0804ac50("\n");
+    }
+}
+
+int Parser::func_0805030c(const char *name, int n)
+{
+    int idx;
+    for (int i = 0; i < unk_10000; i++) {
+        if (lines[i].unk_04 == n && func_0804c03c(lines[i].unk_00, name)) {
+            idx = i;
+            goto found;
+        }
+    }
+    idx = -1;
+found:
+    if (idx < 0) {
+        if (unk_10000 >= 0x2000) {
+            func_0804ad38("AddLocTag: ran out of loctags\n");
+            return -1;
+        }
+        Line *l = &lines[unk_10000];
+        if (!l->func_08051054(name, n)) {
+            func_0804ad38("failed to set up a loc tag!\n");
+            return 0;
+        }
+        idx = unk_10000++;
+    }
+    return idx;
+}
+
+int Parser::FindLocTag(const char *name, int n)
+{
+    for (int i = 0; i < unk_10000; i++)
+        if (lines[i].unk_04 == n && func_0804c03c(lines[i].unk_00, name))
+            return i;
+    return -1;
 }

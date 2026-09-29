@@ -36,7 +36,10 @@ public:
     bool func_0804fd80(bool gasp, bool cpp);
     int func_0805017c();
     LocTag *func_0805018c(int i);
+    void Dump();
+    void DumpLocTags();
     int func_0805030c(const char *name, int n);
+    int FindLocTag(const char *name, int n);
     bool func_0805041c(char *line);
 
     Line lines[0x2000];
