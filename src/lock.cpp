@@ -1372,3 +1372,132 @@ int cls0805c244::canMoveInputLock(cls0805bcc4 *in, short *pos, int *minPos)
     }
     return 0;
 }
+
+int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
+{
+    int ret;
+    int lsz = g_080b336c;
+    int p = *pos;
+    int sz = pos[2];
+    int mp = p;
+    ret = checkOverlap(out, pos, &mp);
+    if (ret)
+        return ret;
+    int first = out->unk_15 ? p + 1 : out->unk_18 + p;
+    int last = out->unk_18 + p;
+
+    int lim;
+    if (out->unk_20) {
+        int a = out->unk_48, b = out->unk_4a;
+        int hi = a, lo = b;
+        if (a < b) {
+            hi = b;
+            lo = a;
+        }
+        int d = out->unk_46 - (hi - lo);
+        if (d > 0)
+            hi += (d + 1) >> 1;
+        int off = hi;
+        if (hi > 0)
+            off = hi - 1;
+        lim = last + off;
+    } else
+        lim = first;
+
+    if (out->unk_2e) {
+        if (out->unk_42 > lim)
+            lim = out->unk_42;
+        if (last > out->unk_3e)
+            return 2;
+    }
+
+    bool ext = false;
+    if (out->unk_16) {
+        for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
+            if (lk == out)
+                continue;
+            if (first <= lk->unk_4e)
+                return 0x1000;
+        }
+        if (lsz && unk_28) {
+            cls0805bcc4 *h = unk_20;
+            ext = true;
+            if (h->unk_2e) {
+                int hs = h->unk_36 + lsz;
+                int he = h->unk_4e + lsz;
+                if (hs < last)
+                    return 2;
+                if (he > lim)
+                    lim = he;
+            }
+        }
+    } else if (lsz && unk_28) {
+        cls0805bcc4 *h = unk_20;
+        if (h->unk_2e) {
+            if (first < h->unk_4e)
+                return 0x4000;
+        } else
+            ext = true;
+    }
+    if (lsz && lim - first > lsz)
+        return 0x2000;
+
+    int s = first + (sz - p);
+    int e = lim + (sz - p);
+    wrapRange(s, e);
+    for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
+        if (lk == out)
+            continue;
+        if (ext && lk->unk_2d == 2)
+            continue;
+        int ls = lk->unk_34;
+        int le = lk->unk_4c;
+        wrapRange(ls, le);
+        if (func_0805db74(s, e, ls, le))
+            return 2;
+    }
+    if (!ret && unk_2a && !lsz && !out->unk_15) {
+        cls0805bcc4 *x = unk_0c[0];
+        if (!x) {
+            func_0804ad38("external lock not set \n");
+            func_0804aeb0();
+        }
+        if (x->unk_2c) {
+            if (out->unk_32 == p)
+                return 0;
+            if (p > x->unk_32)
+                return 0x200000;
+        }
+    }
+    return 0;
+}
+
+cls0805e2e4::cls0805e2e4()
+{
+}
+
+cls0805e2e4::~cls0805e2e4()
+{
+}
+
+void cls0805e2e4::func_0805e2fc()
+{
+}
+
+void cls0805e2e4::func_0805e304()
+{
+    unk_00 = unk_02 = -1;
+    unk_04 = unk_06 = -1;
+    unk_08 = unk_0c = -1;
+    unk_10 = -1;
+    unk_14 = -1;
+}
+
+void cls0805e2e4::func_0805e340()
+{
+    unk_00 = unk_02 = 0;
+    unk_04 = unk_06 = 0;
+    unk_08 = unk_0c = 0;
+    unk_10 = 0;
+    unk_14 = 0;
+}

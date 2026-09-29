@@ -203,6 +203,7 @@ public:
     int checkOverlap(cls0805bcc4 *out, short *pos, int *minPos);
     bool catLocks(cls0805bcc4 *a, cls0805bcc4 *b, int *s, int *e, int *end);
     int canMoveInputLock(cls0805bcc4 *in, short *pos, int *minPos);
+    int canMoveOutputLock(cls0805bcc4 *out, short *pos, int *minPos);
 };
 
 bool freeLockLists(cls0805c244 *p);
@@ -342,10 +343,15 @@ extern int g_080b3374;  // range end
 
 class cls0805e2e4 {
 public:
-    char unk_00[0x28];
+    short unk_00, unk_02, unk_04, unk_06;
+    int unk_08, unk_0c, unk_10, unk_14;
+    char unk_18[0x10];
 
     cls0805e2e4();
     ~cls0805e2e4();
+    void func_0805e2fc();
+    void func_0805e304();
+    void func_0805e340();
     void func_0805e37c(cls0805e2e4 *src);
 };
 
