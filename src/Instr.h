@@ -76,6 +76,8 @@ public:
     bool func_0805bcc4();
 };
 
+int func_08070300(unsigned char);
+
 struct OpSlot : public cls0805bcc4 {
     short unk_50;
     char unk_52[2];
@@ -119,6 +121,7 @@ struct Operand {
     ~Operand();
     bool func_080563f8();
     void func_0805665c(int);
+    char *Emit(char *buf, bool, bool symbolic);
     bool func_080569cc();
     bool func_08056a24();
     char *func_08057b90(bool flag, char *buf);

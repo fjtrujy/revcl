@@ -36,7 +36,10 @@ struct RegPoolEntry {
     int unk_28;         // slot count
     int unk_2c;
     int unk_30;         // register index
-    int unk_34[(0x44 - 0x34) / 4];
+    char unk_34;
+    unsigned char unk_35;   // used slot mask
+    char unk_36[2];
+    int unk_38[(0x44 - 0x38) / 4];
     RegPoolSlot unk_44[4];
     int unk_2b4;
     mList unk_2b8;
