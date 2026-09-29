@@ -625,3 +625,125 @@ char *Instr::func_080552a8(bool flag, char *buf)
     }
     return buf;
 }
+
+int Instr::func_080553b4(RegPoolEntry *reg, int mask)
+{
+    int result = 0;
+    if (reg) {
+        for (int i = 0; i != unk_138b; i++) {
+            Operand *op = &unk_38[i];
+            if (op->getReg2() == reg)
+                result |= op->unk_07;
+        }
+    }
+    return result & mask;
+}
+
+int Instr::func_0805544c(RegPoolEntry *reg, int mask)
+{
+    int result = 0;
+    if (reg) {
+        for (int i = 0; i != unk_138b; i++) {
+            Operand *op = &unk_38[i];
+            if (op->getReg() == reg)
+                result |= op->unk_07;
+        }
+    }
+    return result & mask;
+}
+
+const char *func_080554e4(int t)
+{
+    const char *s = "SYNTH_UNKNOWN";
+    switch (t) {
+    case 0: s = "SYNTH_NULL"; break;
+    case 1: s = "SYNTH_ENTER"; break;
+    case 2: s = "SYNTH_ENDENTER"; break;
+    case 3: s = "SYNTH_EXIT"; break;
+    case 4: s = "SYNTH_ENDEXIT"; break;
+    case 5: s = "SYNTH_CONT"; break;
+    case 6: s = "SYNTH_XINPUT"; break;
+    case 7: s = "SYNTH_XOUTPUT"; break;
+    case 8: s = "SYNTH_LOOP_MINSAFE"; break;
+    case 9: s = "SYNTH_LOOP_EXTRA"; break;
+    case 10: s = "SYNTH_BARRIER"; break;
+    }
+    return s;
+}
+
+bool Instr::func_08055548()
+{
+    if (unk_00)
+        return true;
+    if (unk_30)
+        return unk_30->unk_09 == 3;
+    return false;
+}
+
+char *Instr::getBranchTargetImmediate()
+{
+    iInfo *ii = unk_34;
+    if (!unk_1388)
+        return 0;
+    if (!ii) {
+        func_0804ad38("branch type set - but no ii\n");
+        func_0804adf0(-1);
+    }
+    int n = ii->unk_1a;
+    if (!n) {
+        func_0804ad38("getBranchTargetImmediate - branch target operand not set\n");
+        func_0804adf0(-1);
+    }
+    Operand *op = &unk_38[n - 1];
+    if (op->unk_09 != 1) {
+        func_0804ad38("alleged branch target immediate wasn't an input\n");
+        func_0804adf0(-1);
+    }
+    if (op->unk_04 == 0x1b)
+        return op->unk_1c.getString();
+    return 0;
+}
+
+RegPoolEntry *Instr::getBranchTargetRegister()
+{
+    iInfo *ii = unk_34;
+    if (!(unk_1388 & 2))
+        return 0;
+    if (!ii) {
+        func_0804ad38("branch type set - but no ii\n");
+        func_0804adf0(-1);
+    }
+    int n = ii->unk_1a;
+    if (!n) {
+        func_0804ad38("getBranchTargetRegister - branch target operand not set\n");
+        func_0804adf0(-1);
+    }
+    Operand *op = &unk_38[n - 1];
+    if (op->unk_09 != 1) {
+        func_0804ad38("alleged branch target register wasn't an input\n");
+        func_0804adf0(-1);
+    }
+    if (op->unk_04 == 0x1b)
+        return 0;
+    RegPoolEntry *r = op->unk_18;
+    if (!r) {
+        func_0804ad38("branch target register wasn't set\n");
+        func_0804adf0(-1);
+    }
+    return r;
+}
+
+int Instr::func_08055718()
+{
+    return 0;
+}
+
+Operand *Instr::func_08055720(RegPoolEntry *reg, int mask)
+{
+    for (int i = 0; i != unk_138b; i++) {
+        Operand *op = &unk_38[i];
+        if (op->getReg() == reg && (op->unk_07 & mask))
+            return op;
+    }
+    return 0;
+}

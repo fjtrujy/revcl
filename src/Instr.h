@@ -186,7 +186,9 @@ public:
 
 // Placeholder for the object at Instr::unk_30 (type unknown).
 struct cls_unk30 {
-    char unk_00[0x10];
+    char unk_00[9];
+    char unk_09;
+    char unk_0a[6];
     instStream *unk_10;     // owner stream
 };
 
@@ -301,6 +303,13 @@ public:
     bool changeBranchImmediate(const char *s);
     bool setOwner(cls_unk30 *s);
     char *func_080552a8(bool flag, char *buf);
+    int func_080553b4(RegPoolEntry *reg, int mask);
+    int func_0805544c(RegPoolEntry *reg, int mask);
+    bool func_08055548();
+    char *getBranchTargetImmediate();
+    RegPoolEntry *getBranchTargetRegister();
+    int func_08055718();
+    Operand *func_08055720(RegPoolEntry *reg, int mask);
 };
 
 iInfo *func_0806bf8c(const char *name, bool);
@@ -313,5 +322,6 @@ instStream *func_08058618(ol_s *ol);
 bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot);
 bool link_oParts(ol_s *o, ol_s *i, int x, int y);
 const char *func_08055254(int t);
+const char *func_080554e4(int t);
 
 #endif
