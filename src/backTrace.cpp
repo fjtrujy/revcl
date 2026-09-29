@@ -6,7 +6,9 @@
 #include "RegPool.h"
 
 bool g_initBackTrace(instStream *s, int n);
+bool func_080615b0(Program *p, instStream *s);
 int func_08061cb0(Program *p, instStream *n);
+int func_08061d58(Program *p, instStream *n);
 bool func_08061e00(Program *p, int key);
 
 void dumpPathKey(Program *p, int key)
@@ -172,6 +174,139 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
                     func_0804ad38("failed to add an interstream latency stall\n");
                     return false;
                 }
+            }
+        }
+    }
+    return true;
+}
+
+bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int ofs, bool ext)
+{
+    regUse *tr = t->unk_234;
+    if (!tr) {
+        func_0804ad38("no rfu ?\n");
+        return false;
+    }
+    for (instStream *s = p->unk_d8; s; s = s->unk_254) {
+        if (s->unk_226 != 3) {
+            func_0804ad38("not end_match on the newmatchlist\n");
+            return false;
+        }
+        int minKey = func_08061cb0(p, s);
+        if (minKey <= 0) {
+            func_0804ad38("minimal path key was bad\n");
+            return false;
+        }
+        int maxKey = -1;
+        if (p->unk_b4) {
+            maxKey = func_08061d58(p, s);
+            if (maxKey <= 0) {
+                func_0804ad38("error getting max path key\n");
+                return false;
+            }
+        }
+        regUse *sr = s->unk_234;
+        if (!sr) {
+            func_0804ad38("an entry on the new match list had no regref?\n");
+            return false;
+        }
+        if (s->unk_226 != 3) {
+            func_0804ad38("newmatchlist had non -end-match \n");
+            return false;
+        }
+        int d = s->unk_230 - (s->unk_240 + ofs);
+        bool extended = false;
+        if (d > 0) {
+            if (ext) {
+                if (!p->unk_74.addStall(sr->unk_20[part].unk_08.unk_00,
+                                        tr->unk_20[part].unk_00.unk_00, 0, d)) {
+                    func_0804ad38("failed to add an external stall\n");
+                    return false;
+                }
+            } else {
+                s->unk_226 = 2;
+                extended = true;
+                if (!func_080615b0(p, s)) {
+                    func_0804ad38("failed to extend this back\n");
+                    return false;
+                }
+            }
+        }
+        for (ol_s *ol = tr->unk_20[part].unk_00.unk_00; ol; ol = ol->unk_00) {
+            ol_s *last = sr->unk_20[part].func_0805ba2c(0, true);
+            ol_s *match = 0;
+            if (ext)
+                match = last;
+            else {
+                int mn = s->unk_240;
+                int mx = s->unk_248;
+                if (mx < mn) {
+                    func_0804ad38("max_ilen<min_ilen for a non-blocking instruction match.. %d < %d and logmax is %d\n",
+                                  mx, mn, p->unk_b4);
+                    return false;
+                }
+                if (mn < 0) {
+                    func_0804ad38("minimal length<0\n");
+                    return false;
+                }
+                int pos = ol->unk_04->unk_1394;
+                if (pos < 0) {
+                    func_0804ad38("instruction not inserted or emu'd??\n");
+                    return false;
+                }
+                ol_s *min_s = sr->unk_20[part].func_0805ba2c(pos + mn, false);
+                ol_s *max_s = sr->unk_20[part].func_0805ba2c(pos + mx, false);
+                if (min_s) {
+                    if (!max_s) {
+                        func_0804ad38("min_s set, but couldn't find max_s\n");
+                        return false;
+                    }
+                    if (min_s != max_s) {
+                        unsigned char mode = t->func_0806d968();
+                        if (mode >= 2 && mode <= 4) {
+                            func_0804ac7c("multiple same-sequence output operands match to a fixed stream %s..setting hazard flags\n",
+                                          t->func_0806d674());
+                            tr->unk_12 |= 1 << part;
+                            sr->unk_13 |= 1 << part;
+                        } else {
+                            func_0804ac7c("vcl found a RAW stream with a non blocking operation for '%s' where by going down differing paths, an operand was set in different places..\n",
+                                          reg->func_0805a8e0());
+                            func_0804ac7c("this is a bit dodgy - min_ilen=%d.. max_ilen=%d.. target is %s, and match is  %s\n",
+                                          mn, mx, t->func_0806d674(), s->func_0806d674());
+                            func_0804ac7c("I can't really guarantee that the code is correct after this - but - since vcl would stop anyway here, let's carry on and see what happens... \n");
+                            func_0804ac7c("carrying on.. fixed raw mode. carrying on..\n");
+                            func_0804ac7c("paths - min..\n");
+                            func_0804ac7c("well - setting hiBits and localH this time..\n");
+                            tr->unk_12 |= 1 << part;
+                            sr->unk_13 |= 1 << part;
+                        }
+                        s->unk_228 = 1;
+                    }
+                }
+                if (min_s != last) {
+                    s->unk_228 = 1;
+                    sr->unk_13 |= 1 << part;
+                    tr->unk_12 |= 1 << part;
+                }
+                if (min_s)
+                    match = min_s;
+                else if (max_s) {
+                    func_0804ac7c("min_s not set.. but max_s is..so, taking that\n");
+                    match = max_s;
+                }
+            }
+            if (match) {
+                func_0805859c(match);
+                sr->unk_0d |= 1 << part;
+                if (!link_oParts(match, ol, minKey, maxKey)) {
+                    func_0804ad38("failed to link_oparts external\n");
+                    match->func_08057fbc();
+                    return false;
+                }
+            }
+            if (!ext && !match && !extended) {
+                func_0804ad38("non blocking, no match, but didn't extend\n");
+                return false;
             }
         }
     }

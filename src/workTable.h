@@ -19,8 +19,8 @@ struct regUse {
     unsigned char unk_0f;
     unsigned char unk_10;
     bool unk_11;
-    bool unk_12;
-    bool unk_13;
+    unsigned char unk_12;    // hazard bits per part
+    unsigned char unk_13;
     bool unk_14;
     char unk_15;
     short unk_16;

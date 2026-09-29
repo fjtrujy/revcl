@@ -23,15 +23,21 @@ public:
     bool func_0806563c(bool a, bool b);  // build memory dependencies
     bool func_0806d5cc();         // flow reset
     unsigned char func_0806d908(); // code mode
+    unsigned char func_0806d968(); // work table mode
     const char *func_0806d934();  // code mode name
 
     char unk_00[0x108];
     instStream *unk_108;         // next in Program::unk_a0
     char unk_10c[0x218 - 0x10c];
     workTable *unk_218;  // work table
-    char unk_21c[0x22c - 0x21c];
+    char unk_21c[0x226 - 0x21c];
+    char unk_226;               // match state (3 = end match)
+    char unk_227;
+    char unk_228;               // hazard flag
+    char unk_229[0x22c - 0x229];
     int unk_22c;                // dependency length used by back trace
-    char unk_230[0x234 - 0x230];
+    short unk_230;
+    char unk_232[2];
     regUse *unk_234;
     unsigned *unk_238;          // m_tStore
     int unk_23c;                // dst key
@@ -40,7 +46,7 @@ public:
     int unk_248;
     int unk_24c;
     instStream *unk_250;        // next in Program::unk_dc
-    char unk_254[4];
+    instStream *unk_254;        // next in Program::unk_d8
     instStream *unk_258;        // next in Program::unk_e0
     instStream *unk_25c;        // next in Program::unk_e4
     char unk_260;      // set when stream takes part in a stall

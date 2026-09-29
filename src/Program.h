@@ -43,13 +43,13 @@ struct Program {
     char unk_80[0x20];
     instStream *unk_a0; // all streams, chained via unk_108
     char unk_a4[0x10];
-    char unk_b4;
+    bool unk_b4;        // logmax: also compute max path key
     char unk_b5;
     char unk_b6[2];
     int unk_b8;
     VisitCache unk_bc;  // back-trace visit cache
     instStream *unk_d4; // t target
-    char unk_d8[4];
+    instStream *unk_d8; // new match list, chained via unk_254
     instStream *unk_dc; // sources, chained via unk_250
     instStream *unk_e0; // chained via unk_258
     instStream *unk_e4; // chained via unk_25c
