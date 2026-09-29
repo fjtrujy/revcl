@@ -115,6 +115,9 @@ public:
     int unk_44;             // extminlength
     char unk_48[0x88 - 0x48];
     wtInstrList unk_88;     // linear list
+    int unk_90;             // linear count
+    char unk_94[0xc8 - 0x94];
+    int unk_c8;             // instruction count in table
 
     wtRow *func_080724f0(int i);
     Instr *getBranch();
