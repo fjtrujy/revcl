@@ -735,3 +735,60 @@ rPart::rPart()
     func_0805a3cc();
     unk_48 = 0;
 }
+
+mNode* RegPoolEntry::func_0805a8a4(const char* name)
+{
+    mNode* n = unk_2b8.func_0804b234(name);
+    if (n)
+        return n;
+    return unk_2b8.func_0804b444(name);
+}
+
+const char* RegPoolEntry::func_0805a8e0()
+{
+    const char* s = unk_2b8.func_0804b550();
+    if (!s)
+        s = "UNNAMED_REGISTER!";
+    return s;
+}
+
+int RegPoolEntry::func_0805a908(int i)
+{
+    return unk_44[i].unk_48;
+}
+
+bool RegPoolEntry::func_0805a924(int i, int v)
+{
+    unk_44[i].unk_48 = v;
+    return true;
+}
+
+int rPart::func_0805a948()
+{
+    return unk_48;
+}
+
+bool rPart::func_0805a954(int v)
+{
+    unk_48 = v;
+    return true;
+}
+
+ol_s* rPart::func_0805a968(int i)
+{
+    return &unk_4c[i];
+}
+
+void RegPoolEntry::moveReset()
+{
+    if (!unk_20) {
+        func_0804ad38("rg..movereset called - but not move\n");
+        func_0804adf0(-1);
+    }
+    unk_3c = -1;
+    unk_15 = false;
+    unk_2b4 = 0;
+    unk_10 = 0;
+    for (int i = 0; i != unk_28; i++)
+        unk_44[i].unk_48 = 0;
+}

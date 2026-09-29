@@ -27,6 +27,9 @@ struct rPart {
     void func_0805a4d4();
     void func_0805a4e4();
     rPart();
+    int func_0805a948();
+    bool func_0805a954(int v);
+    ol_s* func_0805a968(int i);
 };
 
 class RegPool;
@@ -48,6 +51,9 @@ struct RegPoolEntry {
     bool optReset();
     int gatherInflight(ol_s** out);
     void func_0805a340();
+    int func_0805a908(int i);
+    bool func_0805a924(int i, int v);
+    void moveReset();
     rPart* getRP(int i)
     {
         if (i < 0 || i >= unk_28) {
