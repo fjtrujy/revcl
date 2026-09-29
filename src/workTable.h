@@ -129,6 +129,7 @@ public:
     void func_08072c70();
     const char *ownerName();
     bool func_08073854();
+    int func_08073754();
     int func_0807411c();    // range start
     int func_080741b4();    // lsz
     int func_080741c0();    // range end

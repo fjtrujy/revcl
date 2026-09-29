@@ -37,6 +37,15 @@ public:
         func_0804adf0(-1);
         return unk_218;
     }
+    // Same check as getWorkTable, written as a guarded block (different code shape).
+    workTable *getTable()
+    {
+        if (!unk_218) {
+            func_0804ad38("work table not set in %s\n", func_0806d674());
+            func_0804adf0(-1);
+        }
+        return unk_218;
+    }
 
     bool func_0805e4bc();         // gather stats
     bool func_0806563c(bool a, bool b);  // build memory dependencies

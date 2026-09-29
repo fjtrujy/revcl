@@ -29,7 +29,7 @@ char *func_0804a67c(unsigned char flags, char *buf, int *len, int argFirst, int 
 bool func_080603bc(Program *p);
 bool func_08062a88(Program *p);
 bool func_08063154(Program *p);
-bool func_08066150(Program *p);
+bool Prune(Program *p);
 bool func_08066f34(Program *p);
 bool func_08069324(Program *p, bool init);
 bool func_0806ad00(Program *p);
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
     }
     if (!func_0804a2b4(&flow, flag_080b300d, false, false))
         func_0804adf0(-1);
-    if (!func_08066150(&flow)) {
+    if (!Prune(&flow)) {
         func_0804ad38("Failed to prune..\n");
         func_0804adf0(-1);
     }
@@ -370,7 +370,7 @@ int main(int argc, char **argv)
             func_0804ad38("imm fixup failed to patch something\n");
             func_0804adf0(-1);
         }
-        if (!func_08066150(&flow)) {
+        if (!Prune(&flow)) {
             func_0804ad38("Failed to prune..\n");
             func_0804adf0(-1);
         }
