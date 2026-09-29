@@ -847,3 +847,186 @@ int Instr::func_08055ac4()
         return -1;
     return func_0806c72c(unk_34);
 }
+
+bool Instr::func_08055ae4()
+{
+    for (int i = 0; i != unk_138b; i++) {
+        Operand *op = &unk_38[i];
+        if (op->unk_04 < 22 || op->unk_04 > 25)
+            continue;
+        if (i != unk_138b - 1) {
+            func_0804ad38("virtual stat operand not final\n");
+            return false;
+        }
+        unk_138b--;
+        switch (op->unk_04) {
+        case 22:
+            op->unk_08 = 1;
+            op->unk_04 = 20;
+            op->unk_09 = 2;
+            op->unk_14 = op->unk_18 = func_0806c224(56);
+            op->unk_07 = 1;
+            op->unk_0a = unk_38[0].unk_0a;
+            op->unk_0b = 0;
+            op->unk_26 = unk_138b++;
+            op = &unk_38[i + 1];
+            op->unk_08 = 1;
+            op->unk_04 = 19;
+            op->unk_09 = 1;
+            op->unk_14 = op->unk_18 = func_0806c224(58);
+            op->unk_07 = 1;
+            op->unk_0a = -1;
+            op->unk_0b = 1;
+            op->unk_26 = unk_138b++;
+            break;
+        case 23:
+            op->unk_08 = 1;
+            op->unk_04 = 21;
+            op->unk_09 = 2;
+            op->unk_14 = op->unk_18 = func_0806c224(55);
+            op->unk_07 = 1;
+            op->unk_0a = 4;
+            op->unk_0b = 0;
+            op->unk_26 = unk_138b++;
+            op = &unk_38[i + 1];
+            op->unk_08 = 1;
+            op->unk_04 = 18;
+            op->unk_09 = 1;
+            op->unk_14 = op->unk_18 = func_0806c224(57);
+            op->unk_07 = 1;
+            op->unk_0a = -1;
+            op->unk_0b = 1;
+            op->unk_26 = unk_138b++;
+            break;
+        case 24: {
+            if (unk_38[i - 1].unk_04 != 27) {
+                func_0804ad38("not immediate predecessor in fs test\n");
+                return false;
+            }
+            bool a = true;
+            bool b = true;
+            bool c = true;
+            bool d = true;
+            mValue *v = &unk_38[i - 1].unk_1c;
+            unsigned int imm;
+            if (v->type == mValue::STRING) {
+                func_0804ac7c("fsop has literals - so assuming the worst - if it were numerical vcl could figure out dependencies better\n");
+            } else if (v->getUInt(&imm)) {
+                int id = -1;
+                if (unk_34)
+                    id = func_0806c72c(unk_34);
+                switch (id) {
+                case 147:
+                    break;
+                case 148:
+                    imm = ~imm;
+                case 146:
+                    a = (imm & 0xf) != 0;
+                    b = (imm & 0x30) != 0;
+                    c = (imm & 0xc00) != 0;
+                    d = (imm & 0x3c0) != 0;
+                    break;
+                default:
+                    func_0804ad38("bad fsop \n");
+                    return false;
+                }
+            } else {
+                func_0804ad38("failed to get immediate value\n");
+                return false;
+            }
+            a = a | c;
+            b = b | d;
+            if (a) {
+                op->unk_08 = 1;
+                op->unk_04 = 21;
+                op->unk_09 = 1;
+                op->unk_14 = op->unk_18 = func_0806c224(55);
+                op->unk_07 = 1;
+                op->unk_0a = -1;
+                op->unk_0b = 0;
+                op->unk_26 = unk_138b++;
+                op++;
+            }
+            if (b) {
+                op->unk_08 = 1;
+                op->unk_04 = 20;
+                op->unk_09 = 1;
+                op->unk_14 = op->unk_18 = func_0806c224(56);
+                op->unk_07 = 1;
+                op->unk_0a = -1;
+                op->unk_0b = 0;
+                op->unk_26 = unk_138b++;
+                op++;
+            }
+            if (c) {
+                op->unk_08 = 1;
+                op->unk_04 = 18;
+                op->unk_09 = 1;
+                op->unk_14 = op->unk_18 = func_0806c224(57);
+                op->unk_07 = 1;
+                op->unk_0a = -1;
+                op->unk_0b = 1;
+                op->unk_26 = unk_138b++;
+                op++;
+                op->unk_08 = 1;
+                op->unk_04 = 18;
+                op->unk_09 = 2;
+                op->unk_14 = op->unk_18 = func_0806c224(57);
+                op->unk_07 = 1;
+                op->unk_0a = 1;
+                op->unk_0b = 1;
+                op->unk_26 = unk_138b++;
+                op++;
+            }
+            if (d) {
+                op->unk_08 = 1;
+                op->unk_04 = 19;
+                op->unk_09 = 1;
+                op->unk_14 = op->unk_18 = func_0806c224(58);
+                op->unk_07 = 1;
+                op->unk_0a = -1;
+                op->unk_0b = 1;
+                op->unk_26 = unk_138b++;
+                op++;
+                op->unk_08 = 1;
+                op->unk_04 = 19;
+                op->unk_09 = 2;
+                op->unk_14 = op->unk_18 = func_0806c224(58);
+                op->unk_07 = 1;
+                op->unk_0a = 1;
+                op->unk_0b = 1;
+                op->unk_26 = unk_138b++;
+            }
+            break;
+        }
+        case 25:
+            op->unk_08 = 1;
+            op->unk_04 = 18;
+            op->unk_09 = 2;
+            op->unk_14 = op->unk_18 = func_0806c224(57);
+            op->unk_07 = 1;
+            op->unk_0a = 1;
+            op->unk_0b = 1;
+            op->unk_26 = unk_138b++;
+            op = &unk_38[i + 1];
+            op->unk_08 = 1;
+            op->unk_04 = 19;
+            op->unk_09 = 2;
+            op->unk_14 = op->unk_18 = func_0806c224(58);
+            op->unk_07 = 1;
+            op->unk_0a = 1;
+            op->unk_0b = 1;
+            op->unk_26 = unk_138b++;
+            break;
+        }
+    }
+    return true;
+}
+
+void Instr::func_08055f4c()
+{
+    unk_13b0 = 0;
+    unk_13b2 = 0;
+    unk_13b4 = 0;
+    unk_13b6 = 0;
+}

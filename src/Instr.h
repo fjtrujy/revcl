@@ -87,7 +87,7 @@ struct Operand {
     char unk_0d;            // paired operand index + 1
     char unk_0e[2];
     int unk_10;
-    int unk_14;
+    RegPoolEntry *unk_14;
     RegPoolEntry *unk_18;   // register
     mValue unk_1c;          // immediate value
     char unk_24;
@@ -323,9 +323,12 @@ public:
     int func_08055a0c();
     bool func_08055a88();
     bool func_08055aa8();
+    bool func_08055ae4();
+    void func_08055f4c();
 };
 
 iInfo *func_0806bf8c(const char *name, bool);
+RegPoolEntry *func_0806c224(int idx);
 int func_0806c72c(iInfo *op);
 RegPoolEntry *func_0806c25c(char kind);
 bool func_080543bc(Instr *a, Instr *b);
