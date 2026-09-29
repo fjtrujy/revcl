@@ -327,3 +327,178 @@ bool cls0805c244::addOutput(cls0805bcc4 *lk, int a, int b, unsigned char c)
     unk_24++;
     return true;
 }
+
+bool cls0805c244::removeInput(cls0805bcc4 *in)
+{
+    cls0805bcc4 *out = in->unk_0c;
+    out->unk_46 -= in->unk_02;
+    out->unk_48 -= in->unk_01;
+    out->unk_20--;
+    out->unk_22--;
+    out->unk_4a -= in->unk_00;
+    in->unk_04 = 0;
+    in->unk_14 = 0;
+    in->unk_0c = 0;
+    return true;
+}
+
+bool cls0805c244::removeOutput(cls0805bcc4 *lk)
+{
+    lk->unk_14 = 0;
+    lk->unk_04 = 0;
+    unk_26--;
+    unk_24--;
+    return true;
+}
+
+bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
+{
+    if (!lk) {
+        func_0804ad38("Addoutputlock - null pointer\n");
+        return false;
+    }
+    if (lk->unk_14 != 2) {
+        func_0804ad38("Addoutputlock - bad type\n");
+        return false;
+    }
+    if (lk->unk_2c) {
+        func_0804ad38("Addoutputlock - already inserted\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (lk->unk_04 != this) {
+        func_0804ad38("Addoutput lock - I don't own it\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (lk->unk_0c) {
+        func_0804ad38("AddOutputLock: m_Link already set!\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (lk->unk_22 != lk->unk_20) {
+        func_0804ad38("Addoutputlock - mRefCount!=m_RefCount\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (lk->unk_08) {
+        func_0804ad38("AddOutputLock:: m_Next already set\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (unk_26 <= 0) {
+        func_0804ad38("add output lock - count was already down to zero or less\n");
+        checkCounts();
+        func_0804adf0(-1);
+        return false;
+    }
+    unk_26--;
+    lk->unk_08 = unk_1c;
+    unk_1c = lk;
+    if (!lk->calcStats(0)) {
+        func_0804ad38("AddOutputLock failed to calcStats\n");
+        checkCounts();
+        func_0804adf0(-1);
+    }
+    lk->unk_2c = 1;
+    lk->unk_10 = 0;
+    cls0805bcc4 *prev = 0;
+    for (cls0805bcc4 *cur = unk_20; cur; cur = cur->unk_10) {
+        int rl = lk->unk_30;
+        int crl = cur->unk_30;
+        if (rl == crl && rl >= 0) {
+            func_0804ad38("during a lock sort for output locks, two had the same rline..\n");
+            checkCounts();
+            func_0804adf0(-1);
+        }
+        int line = lk->unk_32;
+        int cline = cur->unk_32;
+        if (line < cline)
+            break;
+        prev = cur;
+    }
+    if (prev) {
+        lk->unk_10 = prev->unk_10;
+        prev->unk_10 = lk;
+    } else {
+        lk->unk_10 = unk_20;
+        unk_20 = lk;
+    }
+    return true;
+}
+
+bool cls0805c244::addInputLock(cls0805bcc4 *in)
+{
+    cls0805bcc4 *out = in->unk_0c;
+    out->unk_22--;
+    in->unk_08 = out->unk_0c;
+    out->unk_0c = in;
+    if (!out->calcStats(0)) {
+        func_0804ad38("AddInputLock failed to calcStats\n");
+        func_0804adf0(-1);
+    }
+    in->unk_2c = 1;
+    return true;
+}
+
+bool cls0805c244::undoInputLock(cls0805bcc4 *in)
+{
+    cls0805bcc4 *out = in->unk_0c;
+    out->unk_22++;
+    out->unk_0c = in->unk_08;
+    in->unk_08 = 0;
+    if (!out->calcStats(0)) {
+        func_0804ad38("UndoInputLock failed to calcStats\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    in->unk_2c = 0;
+    in->resetStats();
+    return true;
+}
+
+bool cls0805c244::undoOutputLock(cls0805bcc4 *lk)
+{
+    unk_26++;
+    unk_1c = lk->unk_08;
+    lk->unk_08 = 0;
+    if (!lk->calcStats(0)) {
+        func_0804ad38("UndoOutputLock failed to calcStats\n");
+        checkCounts();
+        func_0804adf0(-1);
+        return false;
+    }
+    lk->unk_2c = 0;
+    cls0805bcc4 *prev = 0;
+    cls0805bcc4 *cur = unk_20;
+    while (cur && cur != lk) {
+        prev = cur;
+        cur = cur->unk_10;
+    }
+    if (!cur) {
+        func_0804ad38("couldn't find lock on the sorted list\n");
+        func_0804adf0(-1);
+    }
+    if (prev)
+        prev->unk_10 = lk->unk_10;
+    else
+        unk_20 = lk->unk_10;
+    lk->unk_10 = 0;
+    lk->resetStats();
+    return true;
+}
+
+int cls0805c244::func_0805c938(int n)
+{
+    int best = 0;
+    for (cls0805bcc4 *lk = unk_20; lk; lk = lk->unk_10) {
+        n--;
+        if (lk->unk_42 > best)
+            best = lk->unk_42;
+        if (lk->unk_22 != 0)
+            return 30000;
+        if (n <= 0)
+            break;
+    }
+    return best;
+}

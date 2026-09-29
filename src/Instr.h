@@ -84,7 +84,7 @@ public:
     cls0805c244 *unk_04;    // owning locklist
     cls0805bcc4 *unk_08;    // next sibling in parent's child list
     cls0805bcc4 *unk_0c;    // input: parent output lock; output: child list head
-    int unk_10;
+    cls0805bcc4 *unk_10;    // next in locklist sorted output list
     unsigned char unk_14;   // 1 = input lock, 2 = output lock
     char unk_15;
     char unk_16;
@@ -135,6 +135,20 @@ public:
     bool incRef();
     bool decRef();
     void print();
+    bool calcStats(int);
+    void resetStats()
+    {
+        unk_30 = unk_32 = -1;
+        unk_34 = -1;
+        unk_36 = -1;
+        unk_38 = -1;
+        unk_3a = -1;
+        unk_3c = -1;
+        unk_3e = -1;
+        unk_40 = -1;
+        unk_42 = -1;
+        unk_4c = unk_4e = -1;
+    }
 };
 
 class cls0805c244 {
@@ -144,7 +158,7 @@ public:
     cls0805c244 *unk_08;    // next locklist
     int unk_0c[4];
     cls0805bcc4 *unk_1c;    // output lock list (linked by lock->unk_08)
-    int unk_20;
+    cls0805bcc4 *unk_20;    // sorted output list head (by unk_32, linked by unk_10)
     short unk_24;           // nOutLocks
     short unk_26;           // nToGo
     char unk_28;
@@ -159,6 +173,13 @@ public:
     bool reset();
     bool addInput(cls0805bcc4 *out, cls0805bcc4 *in, char a, unsigned char b);
     bool addOutput(cls0805bcc4 *lk, int a, int b, unsigned char c);
+    bool removeInput(cls0805bcc4 *in);
+    bool removeOutput(cls0805bcc4 *lk);
+    bool addOutputLock(cls0805bcc4 *lk);
+    bool addInputLock(cls0805bcc4 *in);
+    bool undoInputLock(cls0805bcc4 *in);
+    bool undoOutputLock(cls0805bcc4 *lk);
+    int func_0805c938(int n);
 };
 
 int func_08070300(unsigned char);
