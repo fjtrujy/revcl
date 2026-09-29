@@ -30,7 +30,7 @@ bool func_080603bc(Program *p);
 bool func_08062a88(Program *p);
 bool func_08063154(Program *p);
 bool Prune(Program *p);
-bool func_08066f34(Program *p);
+bool globalPrune(Program *p);
 bool func_08069324(Program *p, bool init);
 bool func_0806ad00(Program *p);
 void func_0806ed78(Program *p, bool a);
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
         func_0804ad38("failed to explode raw loops\n");
         func_0804adf0(-1);
     }
-    if (!func_08066f34(&flow)) {
+    if (!globalPrune(&flow)) {
         func_0804ad38("failed to do a global prune\n");
         func_0804adf0(-1);
     }

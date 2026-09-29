@@ -54,6 +54,7 @@ public:
     unsigned char func_0806d968(); // work table mode
     const char *func_0806d934();  // code mode name
     Instr *getBranch();
+    bool removeBranch();
     ~instStream();
     bool dump(bool);
     bool func_0806d9a0();         // raw-mode work table
@@ -62,7 +63,8 @@ public:
     char unk_00[0x108];
     instStream *unk_108;         // next in Program::unk_a0
     instStream *unk_10c;         // previous stream (to-register branch)
-    char unk_110[0x128 - 0x110];
+    char unk_110[0x124 - 0x110];
+    int unk_124;                 // pass thru
     linkList unk_128;            // input links
     linkList unk_134;            // output links
     char unk_140[0x218 - 0x140];
@@ -89,14 +91,15 @@ public:
     instStream *unk_258;        // next in Program::unk_e0
     instStream *unk_25c;        // next in Program::unk_e4
     char unk_260;      // set when stream takes part in a stall
-    char unk_261[0x265 - 0x261];
+    char unk_261[0x264 - 0x261];
+    char unk_264;      // reached top (accessible)
     char unk_265;      // collapse into successor (tidy)
     char unk_266[0x2c0 - 0x266];
     short unk_2c0;     // stream id
     char unk_2c2[0x2cc - 0x2c2];
     char unk_2cc;
     char unk_2cd;      // code mode (2 adds 1000 to back trace dep length)
-    char unk_2ce;
+    unsigned char unk_2ce;  // branch type
     char unk_2cf[0x2d4 - 0x2cf];
     char unk_2d4;      // dbgTop
     char unk_2d5;      // dbgEnd
