@@ -1030,3 +1030,39 @@ void Instr::func_08055f4c()
     unk_13b4 = 0;
     unk_13b6 = 0;
 }
+
+void Instr::func_08055f78(Instr *src)
+{
+    unk_13b0 = src->unk_13b0;
+    unk_13b2 = src->unk_13b2;
+    unk_13b4 = src->unk_13b4;
+    unk_13b6 = src->unk_13b6;
+}
+
+void Instr::func_08055fbc(short v)
+{
+    unk_13b0 = unk_13b0 < v ? v : unk_13b0;
+}
+
+void Instr::func_08055fdc(short v)
+{
+    unk_13b2 = unk_13b2 < v ? v : unk_13b2;
+}
+
+void Instr::func_08055ffc(short v)
+{
+    unk_13b4 = unk_13b4 < v ? v : unk_13b4;
+}
+
+void Instr::func_0805601c(short v)
+{
+    unk_13b6 = unk_13b6 < v ? v : unk_13b6;
+}
+
+OpSlot::OpSlot()
+{
+}
+
+OpSlot::~OpSlot()
+{
+}

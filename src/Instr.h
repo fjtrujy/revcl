@@ -66,11 +66,23 @@ public:
     ol_s *func_08058348(ol_s *ol, bool ext);
 };
 
-struct OpSlot {
+// Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).
+class cls0805bcc4 {
+public:
     char unk_00[0x50];
+
+    cls0805bcc4() { func_0805bcc4(); }
+    ~cls0805bcc4() {}
+    bool func_0805bcc4();
+};
+
+struct OpSlot : public cls0805bcc4 {
     short unk_50;
     char unk_52[2];
     olList unk_54;          // uses
+
+    OpSlot();
+    ~OpSlot();
 };
 
 struct Operand {
@@ -325,6 +337,11 @@ public:
     bool func_08055aa8();
     bool func_08055ae4();
     void func_08055f4c();
+    void func_08055f78(Instr *src);
+    void func_08055fbc(short v);
+    void func_08055fdc(short v);
+    void func_08055ffc(short v);
+    void func_0805601c(short v);
 };
 
 iInfo *func_0806bf8c(const char *name, bool);
