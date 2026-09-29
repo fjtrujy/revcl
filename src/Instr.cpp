@@ -343,3 +343,147 @@ Instr *Instr::clone()
     }
     return c;
 }
+
+int Instr::getRamBits()
+{
+    if (!unk_13ce)
+        return 0;
+    int r = 0;
+    if (unk_34) {
+        switch (unk_34->unk_0c) {
+        case 1:
+            r = unk_138f;
+            break;
+        default:
+            func_0804ad38("got here! - end of get rambits?\n");
+            func_08054008(false);
+            func_0804adf0(-1);
+            return 0;
+        case 3: {
+            Operand *op = getOp(1);
+            if (!op) {
+                func_0804ad38("failed to get op1 for mod_1 ram test\n");
+                func_0804adf0(-1);
+            }
+            if (!op->unk_0c)
+                func_0804ac7c("mb was 0 failed to get xmod bits for mod 1 inst\n");
+            r = op->unk_0c;
+            break;
+        }
+        case 0:
+        case 4:
+        case 5:
+            r = 15;
+            break;
+        }
+    }
+    return r;
+}
+
+bool Instr::func_08054b84()
+{
+    unk_13e8.func_080586e0();
+    unk_2c = 0;
+    unk_24.unk_04 = 0;
+    unk_24.unk_00 = 0;
+    unk_1418 = 0;
+    unk_1398 = 0;
+    unk_141c = 0;
+    for (int i = 0; i != unk_138b; i++) {
+        if (!unk_38[i].func_08056a24()) {
+            func_0804ad38("failed to optReset operand  %d\n", i);
+            return false;
+        }
+    }
+    return true;
+}
+
+int Instr::func_08054c24(RegPoolEntry *reg, bool *paired)
+{
+    int mask = 0;
+    *paired = false;
+    Operand *op;
+    for (int i = 0; (op = getOp(i)) != 0; i++) {
+        RegPoolEntry *r;
+        if (op->unk_09 == 2)
+            r = op->unk_18;
+        else
+            r = 0;
+        if (reg == r) {
+            *paired = *paired || op->unk_0d;
+            mask |= op->unk_07;
+        }
+    }
+    return mask;
+}
+
+int Instr::func_08054cc4(RegPoolEntry *reg, bool *paired)
+{
+    int mask = 0;
+    *paired = false;
+    Operand *op;
+    for (int i = 0; (op = getOp(i)) != 0; i++) {
+        RegPoolEntry *r;
+        if (op->unk_09 == 1)
+            r = op->unk_18;
+        else
+            r = 0;
+        if (reg == r) {
+            *paired = *paired || op->unk_0d;
+            mask |= op->unk_07;
+        }
+    }
+    return mask;
+}
+
+bool Instr::func_08054d64(int n, int *out)
+{
+    Operand *op = getOp(n);
+    if (!op) {
+        func_0804ad38("failed to get operand %d\n", n);
+        return false;
+    }
+    return op->unk_1c.getInt(out);
+}
+
+bool Instr::changeBranchImmediate(const char *s)
+{
+    if (!unk_1388 || !unk_34) {
+        func_0804ad38("changeBranchImmediate: not a branch\n");
+        return false;
+    }
+    if (unk_1388 & 2) {
+        func_0804ad38("changeBranchImmediate: target is register!\n");
+        return false;
+    }
+    int n = unk_34->unk_1a;
+    if (!n) {
+        func_0804ad38("getBranchTargetImmediate - branch target operand not set\n");
+        func_0804adf0(-1);
+    }
+    Operand *op = &unk_38[n - 1];
+    if (op->unk_04 != 0x1b) {
+        func_0804ad38("changeBranchImmediate::target operand isn't immediate!\n");
+        func_0804adf0(-1);
+    }
+    return op->unk_1c.setString(s);
+}
+
+bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
+{
+    if (!a || !b) {
+        func_0804ad38("link_oParts, null arg pointer!\n");
+        return false;
+    }
+    if (bSlot != slot) {
+        func_0804ad38("swizzle detected for ps2 ?\n");
+        return false;
+    }
+    olList *la = &a->unk_38[aOp].unk_2c[slot].unk_54;
+    olList *lb = &b->unk_38[bOp].unk_2c[slot].unk_54;
+    if (!la->func_080580fc(b, bOp, slot, false) || !lb->func_080580fc(a, aOp, slot, false)) {
+        func_0804ad38("failed to add ol\n");
+        return false;
+    }
+    return true;
+}

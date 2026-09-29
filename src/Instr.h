@@ -8,6 +8,7 @@
 
 class instStream;
 class LocTag;
+class Instr;
 struct ol_s;
 
 // Opcode descriptor ("iInfo", from the null-argument error string).
@@ -23,7 +24,9 @@ struct iOpDesc {
 
 class iInfo {
 public:
-    char unk_00[0xe];
+    char unk_00[0xc];
+    unsigned char unk_0c;
+    char unk_0d;
     char unk_0e;
     char unk_0f;
     char unk_10;
@@ -32,7 +35,8 @@ public:
     char unk_13[5];
     unsigned char unk_18;
     unsigned char unk_19;
-    char unk_1a[0x44 - 0x1a];
+    unsigned char unk_1a;   // branch target operand index + 1
+    char unk_1b[0x44 - 0x1b];
     iOpDesc unk_44[1];      // operand descriptors
 
     char func_0806ffb4();
@@ -56,6 +60,7 @@ public:
     ~olList() { clear(); }
     bool clear();
     void func_08057e9c();
+    ol_s *func_080580fc(Instr *inst, int op, int slot, bool ext);
 };
 
 struct OpSlot {
@@ -97,6 +102,7 @@ struct Operand {
     bool func_080563f8();
     void func_0805665c(int);
     bool func_080569cc();
+    bool func_08056a24();
     bool isZero()
     {
         int z = 0;
@@ -162,6 +168,7 @@ public:
 
     cls08058718();
     ~cls08058718();
+    void func_080586e0();
 };
 
 class cls0805e2e4 {
@@ -191,7 +198,7 @@ public:
     short unk_1a;
     iLink unk_1c;   // linear list link
     iLink unk_24;   // ToDo/Done list link
-    char unk_2c[4];
+    int unk_2c;
     cls_unk30 *unk_30;
     iInfo *unk_34;  // opcode descriptor
     Operand unk_38[12];
@@ -202,7 +209,7 @@ public:
     char unk_138c;
     char unk_138d;
     char unk_138e;
-    char unk_138f;
+    unsigned char unk_138f;
     char unk_1390;
     char unk_1391;
     char unk_1392;
@@ -282,7 +289,12 @@ public:
         return n < unk_138b ? &unk_38[n] : 0;
     }
     Instr *clone();
+    int getRamBits();
     bool func_08054b84();
+    int func_08054c24(RegPoolEntry *reg, bool *paired);
+    int func_08054cc4(RegPoolEntry *reg, bool *paired);
+    bool func_08054d64(int n, int *out);
+    bool changeBranchImmediate(const char *s);
 };
 
 iInfo *func_0806bf8c(const char *name, bool);
@@ -290,5 +302,6 @@ int func_0806c72c(iInfo *op);
 RegPoolEntry *func_0806c25c(char kind);
 bool func_080543bc(Instr *a, Instr *b);
 bool func_0805449c(Instr *a, Instr *b);
+bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot);
 
 #endif
