@@ -4,6 +4,7 @@
 #include "RegPool.h"
 #include "mValue.h"
 #include "mList.h"
+#include "os.h"
 
 class instStream;
 class LocTag;
@@ -87,7 +88,8 @@ struct Operand {
     unsigned char unk_27;
     char unk_28;
     char unk_29;
-    char unk_2a[2];
+    char unk_2a;
+    char unk_2b;
     OpSlot unk_2c[4];       // per register slot
 
     Operand();
@@ -168,6 +170,7 @@ public:
 
     cls0805e2e4();
     ~cls0805e2e4();
+    void func_0805e37c(cls0805e2e4 *src);
 };
 
 // Placeholder for the object at Instr::unk_30 (type unknown).
@@ -180,7 +183,7 @@ class Instr {
 public:
     int unk_00;
     int unk_04;
-    int unk_08;
+    Instr *unk_08;  // tmpClone
     char unk_0c[4];
     ptrList unk_10;
     LocTag *unk_14;
@@ -269,6 +272,17 @@ public:
     int func_08053104();
     int func_080532d8();
     int func_08055ac4();
+    Operand *getOp(int n)
+    {
+        if (n < 0) {
+            func_0804ad38("-ve operand passed to getOp!\n");
+            func_0804adf0(0);
+            return 0;
+        }
+        return n < unk_138b ? &unk_38[n] : 0;
+    }
+    Instr *clone();
+    bool func_08054b84();
 };
 
 iInfo *func_0806bf8c(const char *name, bool);
