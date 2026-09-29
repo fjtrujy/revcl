@@ -124,6 +124,7 @@ struct Operand {
     char *Emit(char *buf, bool, bool symbolic);
     bool func_080569cc();
     bool func_08056a24();
+    Instr *getOwner();
     char *func_08057b90(bool flag, char *buf);
     bool isZero()
     {
@@ -362,5 +363,22 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot);
 bool link_oParts(ol_s *o, ol_s *i, int x, int y);
 const char *func_08055254(int t);
 const char *func_080554e4(int t);
+
+// Implicit operand description (name guessed).
+struct ImplicitOp {
+    char name[0x800];
+    char unk_800[0x800];
+    char unk_1000[0x800];
+    char unk_1800[0x800];
+    int unk_2000;           // slot mask
+    int unk_2004;
+    int unk_2008;
+    char unk_200c;
+    char unk_200d[3];
+};
+
+bool buildImplicitOperand(int kind, ImplicitOp *out, bool);
+const char *opKindName(int kind);
+int func_08057a34(int kind);
 
 #endif

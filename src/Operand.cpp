@@ -415,3 +415,150 @@ bool Operand::func_08056a24()
     }
     return true;
 }
+
+bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
+{
+    out->unk_1800[0] = 0;
+    out->unk_1000[0] = 0;
+    out->unk_2000 = 0;
+    out->unk_200c = 0;
+    switch (kind) {
+    case 10: mstrcpy(out->name, "ACC");   out->unk_2000 = 7; return true;
+    case 4:  mstrcpy(out->name, "I");     out->unk_2000 = 1; return true;
+    case 5:  mstrcpy(out->name, "P");     out->unk_2000 = 1; return true;
+    case 6:  mstrcpy(out->name, "tt_nP"); out->unk_2000 = 1; return true;
+    case 7:  mstrcpy(out->name, "Q");     out->unk_2000 = 1; return true;
+    case 8:  mstrcpy(out->name, "R");     out->unk_2000 = 1; return true;
+    case 9:  mstrcpy(out->name, "ACC");   out->unk_2000 = 15; return true;
+    case 17: mstrcpy(out->name, "CLIP");  out->unk_2000 = 1; return true;
+    case 18: case 19: case 20: case 21:
+        func_0804ad38("odecode for a V_STAT\n");
+        return false;
+    case 22: case 23: case 24: case 25: case 55:
+        out->name[0] = 0;
+        return true;
+    case 26: mstrcpy(out->name, "MAC");   out->unk_2000 = 1; return true;
+    case 28: out->unk_2000 = 1; return true;
+    case 37: mstrcpy(out->name, "ramreg"); return true;
+    case 40: out->unk_2000 = 3; return true;
+    case 45: mstrcpy(out->name, "CLIPA"); out->unk_2000 = 1; return true;
+    default:
+        func_0804ad38("fell through building an implicit operand of type %s\n", opKindName(kind));
+        out->name[0] = 0;
+        out->unk_800[0] = 0;
+        return false;
+    case 47: mstrcpy(out->name, "HILO0"); out->unk_2000 = 1; return true;
+    case 48: mstrcpy(out->name, "HILO1"); out->unk_2000 = 1; return true;
+    case 49: mstrcpy(out->name, "FSTAT"); out->unk_2000 = 1; return true;
+    case 50: mstrcpy(out->name, "FCOND"); out->unk_2000 = 1; return true;
+    case 51: mstrcpy(out->name, "FACC");  out->unk_2000 = 1; return true;
+    case 52: mstrcpy(out->name, "FDIV");  out->unk_2000 = 1; return true;
+    case 53: mstrcpy(out->name, "SHFTA"); out->unk_2000 = 1; return true;
+    case 54:
+        mstrcpy(out->unk_800, "$ra");
+        mstrcpy(out->name, "$ra");
+        out->unk_2000 = 3;
+        return true;
+    }
+}
+
+const char *opKindName(int kind)
+{
+    const char *s = "BAD_OPERAND";
+    switch (kind) {
+    case 0: s = "OP_NULL"; break;
+    case 1: s = "OP_V_FL4"; break;
+    case 2: s = "OP_V_INT"; break;
+    case 3: s = "OP_V_FL1"; break;
+    case 4: s = "OP_V_I"; break;
+    case 5: s = "OP_V_P"; break;
+    case 6: s = "OP_V_nP"; break;
+    case 7: s = "OP_V_Q"; break;
+    case 8: s = "OP_V_R"; break;
+    case 9: s = "OP_V_ACC"; break;
+    case 10: s = "OP_V_ACCXYZ"; break;
+    case 11: s = "OP_V_FLXYZ"; break;
+    case 13: s = "OP_V_FLX"; break;
+    case 14: s = "OP_V_FLY"; break;
+    case 15: s = "OP_V_FLZ"; break;
+    case 16: s = "OP_V_FLW"; break;
+    case 17: s = "OP_V_CLIP"; break;
+    case 18: case 19: case 20: case 21: s = "OP_V_STAT"; break;
+    case 22: s = "OP_V_STAT_DIV"; break;
+    case 23: s = "OP_V_STAT_ALU"; break;
+    case 24: s = "OP_V_STAT_TST"; break;
+    case 25: s = "OP_V_STAT_SET"; break;
+    case 26: s = "OP_V_MAC"; break;
+    case 27: s = "OP_IMM"; break;
+    case 28: s = "OP_V_EA"; break;
+    case 29: s = "OP_V_EA_IMM"; break;
+    case 30: s = "OP_V_EA_REG"; break;
+    case 31: s = "OP_V_EA_IMM_REG"; break;
+    case 32: s = "OP_V_EA_INC"; break;
+    case 33: s = "OP_V_EA_DEC"; break;
+    case 34: s = "OP_V_INT1"; break;
+    case 35: s = "OP_V_FL4S"; break;
+    case 36: s = "OP_V_INTS"; break;
+    case 37: s = "OP_V_MEMREG"; break;
+    case 38: s = "OP_V_TBD"; break;
+    case 39: s = "OP_C_GPR32"; break;
+    case 40: s = "OP_C_GPR64"; break;
+    case 41: s = "OP_C_GPR128"; break;
+    case 42: s = "OP_C_GPRS"; break;
+    case 43: s = "OP_C_FPR"; break;
+    case 44: s = "OP_C_FPRS"; break;
+    case 45: s = "OP_V_CLIPA"; break;
+    case 46: s = "OP_C_EA_IMM"; break;
+    case 47: s = "OP_C_HILO0"; break;
+    case 48: s = "OP_C_HILO1"; break;
+    case 49: s = "OP_C_FSTAT"; break;
+    case 50: s = "OP_C_FCOND"; break;
+    case 51: s = "OP_C_FACC"; break;
+    case 52: s = "OP_C_FDIV"; break;
+    case 53: s = "OP_C_SHFTA"; break;
+    case 54: s = "OP_C_GPR64_31($ra)"; break;
+    case 55: s = "OP_EXT_DEP"; break;
+    }
+    return s;
+}
+
+int func_08057a34(int kind)
+{
+    switch (kind) {
+    default:
+    case 55:
+    case 0:
+        return 0;
+    case 1: case 3: case 11: case 13: case 14: case 15: case 16: case 35:
+        return 9;
+    case 2: case 28: case 29: case 30: case 31: case 32: case 33: case 34: case 36:
+        return 8;
+    case 37:
+        return 11;
+    case 43: case 44:
+        return 2;
+    case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 17:
+    case 18: case 19: case 20: case 21: case 26: case 45:
+        return 10;
+    case 47: case 48: case 49: case 50: case 51: case 52: case 53:
+        return 6;
+    case 39: case 40: case 41: case 42: case 46: case 54:
+        return 1;
+    }
+    return 0;
+}
+
+Instr *Operand::getOwner()
+{
+    Instr *owner = 0;
+    if (unk_26 >= 0) {
+        int off = (int)&((Instr *)0)->unk_38[unk_26];
+        Instr *p = (Instr *)((char *)this - off);
+        if (p->unk_138b < unk_26) {
+            func_0804ad38("operand: getOwner - bad instruction?\n");
+            func_0804adf0(-1);
+        }
+        owner = p;
+    }
+    return owner;
+}
