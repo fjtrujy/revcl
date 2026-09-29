@@ -249,7 +249,7 @@ struct Operand {
     unsigned char unk_27;
     char unk_28;
     char unk_29;
-    char unk_2a;
+    unsigned char unk_2a;   // prune mask
     char unk_2b;
     OpSlot unk_2c[4];       // per register slot
 
@@ -292,6 +292,18 @@ struct Operand {
     RegPoolEntry *getReg2()
     {
         if (isReg2())
+            return unk_18;
+        return 0;
+    }
+    RegPoolEntry *inReg()
+    {
+        if (unk_09 == 1)
+            return unk_18;
+        return 0;
+    }
+    RegPoolEntry *outReg()
+    {
+        if (unk_09 == 2)
             return unk_18;
         return 0;
     }

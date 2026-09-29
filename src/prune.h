@@ -13,8 +13,9 @@
 inline bool initPrune(instStream *s);
 inline bool initPrune(Instr *in);
 inline int tryPrune(instStream *s);
-int tryPrune(Instr *in, bool raw);
+inline int tryPrune(Instr *in, bool raw);
 bool doPrune(instStream *s);
+int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp);
 
 inline bool initPrune(Program *p)
 {
@@ -96,6 +97,84 @@ inline int tryPrune(instStream *s)
             break;
         }
         n += r;
+    }
+    return n;
+}
+
+inline int tryPrune(Instr *in, bool raw)
+{
+    int n = 0;
+    if (!in->unk_34)
+        return 0;
+    if (raw) {
+        for (int i = 0;; i++) {
+            Operand *op = in->getOp(i);
+            if (!op)
+                break;
+            RegPoolEntry *r = 0;
+            if (op->unk_09 == 1)
+                r = op->unk_18;
+            if (r)
+                op->unk_2a = op->unk_07;
+        }
+    }
+    Operand *out;
+    for (int o = 0; (out = in->getOp(o)) != 0; o++) {
+        RegPoolEntry *reg = out->unk_09 == 2 ? out->unk_18 : 0;
+        if (!reg)
+            continue;
+        int cnt = 0;
+        for (int s = 0; s != reg->unk_28; s++) {
+            if ((out->unk_07 >> s) & 1)
+            for (ol_s *ol = out->unk_2c[s].unk_54.unk_00; ol; ol = ol->unk_00) {
+                Operand *src = func_0805802c(ol);
+                if (!src) {
+                    func_0804ad38("failed to get an operand from an oploc\n");
+                    return -1;
+                }
+                if (src->unk_18 != reg) {
+                    func_0804ad38("there was a reg mismatch\n");
+                    return -1;
+                }
+                if (ol->unk_11 != s) {
+                    func_0804ad38("swizzle detected\n");
+                    return -1;
+                }
+                if (!((src->unk_07 >> s) & 1)) {
+                    func_0804ad38("there was a mop bit mismatch\n");
+                    return -1;
+                }
+                if (((src->unk_2a >> s) & 1) && ((~out->unk_2a >> s) & 1)) {
+                    cnt++;
+                    n++;
+                    out->unk_2a |= 1 << s;
+                }
+            }
+        }
+        if (!cnt)
+            continue;
+        if (out->unk_04 == 10 || out->unk_04 == 11)
+            out->unk_2a = out->unk_07;
+        Operand *ip;
+        for (int k = 0; (ip = in->getOp(k)) != 0; k++) {
+            RegPoolEntry *r = ip->unk_09 == 1 ? ip->unk_18 : 0;
+            if (!r)
+                continue;
+            int bits = hackIOmask(in, o, out->unk_2a, k);
+            if (bits < 0) {
+                func_0804ad38("lprune: failed to deduce which inputs affected which outputs\n");
+                return -1;
+            }
+            if ((ip->unk_07 & bits) != bits) {
+                func_0804ad38("bits were used.. but outside of mod bit mask!\n");
+                func_0804ad38("OUTPUT(%d) INPUT(%d) inst : \n", o, k);
+                func_0804ad38("A_BITS=%x .. INPUT_MODBITS=%x : \n", bits, ip->unk_07);
+                func_0804ad38("otype is opt->m_oType=%d\n", ip->unk_04);
+                in->func_08054008(false);
+                return -1;
+            }
+            ip->unk_2a |= bits;
+        }
     }
     return n;
 }
