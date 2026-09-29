@@ -288,7 +288,12 @@ struct Operand {
             r = true;
         return r;
     }
-    RegPoolEntry *getReg2() { return isReg2() ? unk_18 : 0; }
+    RegPoolEntry *getReg2()
+    {
+        if (isReg2())
+            return unk_18;
+        return 0;
+    }
 };
 
 class Instr;
