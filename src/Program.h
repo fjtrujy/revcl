@@ -5,6 +5,7 @@
 
 struct CpuDef;
 class Parser;
+struct traceNode;
 
 // Flow object ("flowMon") living on main's stack. Name is a guess.
 struct Program {
@@ -38,7 +39,18 @@ struct Program {
     int unk_70;
     char unk_74[0x08];
     int unk_7c;
-    char unk_80[0x70];
+    char unk_80[0x20];
+    traceNode *unk_a0;  // all nodes, chained via unk_108
+    char unk_a4[0x10];
+    char unk_b4;
+    char unk_b5;
+    char unk_b6[0x1e];
+    traceNode *unk_d4;  // t target
+    char unk_d8[4];
+    traceNode *unk_dc;  // sources, chained via unk_250
+    traceNode *unk_e0;
+    traceNode *unk_e4;  // chained via unk_25c
+    char unk_e8[8];
 };
 
 #endif

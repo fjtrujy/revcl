@@ -19,6 +19,17 @@ public:
         a = 0;
         b = 0;
     }
+    ~tPair() {}
+
+    void reset()
+    {
+        next = 0;
+        src = -1;
+        dst = -1;
+        a = 0;
+        b = 0;
+    }
+    void func_08058ab0() {}
 };
 
 class tPairList {
