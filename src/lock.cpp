@@ -985,7 +985,7 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
     int hi = par->unk_4e;
 
     if (lsz && par->unk_2d == 2) {
-        if (!par->unk_2e)
+        if (par->unk_2e == 0)
             return 0;
         bool inside = true;
         if (p < lo) { lo = p; inside = false; }
@@ -1044,20 +1044,22 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
     }
 
     bool isExt = false;
-    if (lsz)
-        isExt = par == unk_0c[0];
+    if (lsz && par == unk_0c[0])
+        isExt = true;
 
     for (; lk; lk = lk->unk_08) {
         if (lk == par)
             continue;
         if (isExt && lk->unk_2d == 2)
             continue;
+        int ls = lk->unk_34;
+        int le = lk->unk_4c;
         if (lk->unk_22) {
-            if (s < lk->unk_4c && e >= lk->unk_34) {
+            if (s < le && e >= ls) {
                 *minPos = 30000;
                 return ret | 0x10;
             }
-        } else if (func_0805db74(s, e, lk->unk_34, lk->unk_4c)) {
+        } else if (func_0805db74(s, e, ls, le)) {
             if (g_080de288 && lsz && in->unk_19 == 1) {
                 in->unk_1a = 2;
                 ret |= 0x100;
