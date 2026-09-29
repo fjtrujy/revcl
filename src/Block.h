@@ -5,7 +5,12 @@ class Instr;
 
 class Block {
 public:
-    char unk_00[0x88];
+    char unk_00[4];
+    short unk_04;   // current height
+    short unk_06;
+    char unk_08[0x30];
+    int unk_38;     // range width limit
+    char unk_3c[0x88 - 0x3c];
     Instr *unk_88;  // linear list tail
     Instr *unk_8c;  // linear list head
     int unk_90;     // linear list count

@@ -345,7 +345,8 @@ class cls0805e2e4 {
 public:
     short unk_00, unk_02, unk_04, unk_06;
     int unk_08, unk_0c, unk_10, unk_14;
-    char unk_18[0x10];
+    short unk_18, unk_1a, unk_1c, unk_1e;
+    char unk_20[8];
 
     cls0805e2e4();
     ~cls0805e2e4();
@@ -391,7 +392,7 @@ public:
     bool unk_138a;
     unsigned char unk_138b;     // operand count
     char unk_138c;
-    char unk_138d;
+    unsigned char unk_138d;
     char unk_138e;
     unsigned char unk_138f;
     char unk_1390;
@@ -440,6 +441,7 @@ public:
     Instr(iInfo *info);
     ~Instr();
     void func_0806a310();
+    void func_0805f4e0();
     bool isValid()
     {
         if (!unk_34)
