@@ -1105,7 +1105,9 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
 
     bool ext = false;
     int lim;
-    if (out->unk_20) {
+    if (!out->unk_20)
+        lim = first;
+    else {
         int hi = out->unk_48, lo = out->unk_4a;
         if (hi < lo) { int t = hi; hi = lo; lo = t; }
         int d = out->unk_46 - (hi - lo);
@@ -1114,8 +1116,7 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
         if (hi > 0)
             hi--;
         lim = last + hi;
-    } else
-        lim = first;
+    }
 
     if (lsz && unk_28) {
         cls0805bcc4 *h = unk_20;
