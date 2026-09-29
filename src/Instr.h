@@ -1,6 +1,8 @@
 #ifndef INSTR_H
 #define INSTR_H
 
+class instStream;
+
 class Instr {
 public:
     char unk_00[0x1c];
@@ -9,6 +11,7 @@ public:
     Instr *unk_24;  // ToDo/Done list next
     Instr *unk_28;  // ToDo/Done list prev
 
+    instStream *func_08054168();  // owner instruction stream
     void leDump(int opnd, int mask);
 };
 

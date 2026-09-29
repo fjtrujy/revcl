@@ -3,7 +3,9 @@
 #define INFOLIST_H
 #pragma interface
 
-class Instr;
+#include "Instr.h"
+#include "os.h"
+
 class infoNode;
 
 struct ol_s {
@@ -32,6 +34,7 @@ public:
     }
     void func_080523b8();
     bool catInit(ol_s *ol);
+    inline void dump();
 };
 
 class infoNode {
@@ -50,10 +53,24 @@ public:
     virtual void dump();
     bool catStall(ol_s *a, ol_s *b, int x, int val);
 
-    int unk_08;
+    bool unk_08;  // setter and user in same stream ("local")
     iHolder unk_0c;
     iHolder unk_18;
-    short unk_24[3];
+    unsigned short unk_24[3];
+};
+
+class RegPoolEntry;
+
+class ubsNode : public infoNode {
+public:
+    ubsNode() { unk_08 = 0; unk_0c = 0; unk_10 = 0; unk_14 = 0; }
+    virtual ~ubsNode() {}
+    virtual void dump();
+
+    RegPoolEntry *unk_08;
+    unsigned char unk_0c;  // mask
+    void *unk_10;
+    void *unk_14;
 };
 
 class infoList {
