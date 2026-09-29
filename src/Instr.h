@@ -92,6 +92,8 @@ public:
     char unk_17;
     char unk_18;
     char unk_19;
+    char unk_1a;
+    char unk_1b;
     cls0805bcc4 *unk_1c;    // in/out partner lock
     short unk_20;
     short unk_22;
@@ -143,6 +145,7 @@ public:
     void func_0805d020();
     void setFrom(cls08058718 *r);
     short func_0805d0dc();
+    const char *regName();
     void resetStats()
     {
         unk_30 = unk_32 = -1;
@@ -194,9 +197,12 @@ public:
     bool addExtOutput(cls0805bcc4 *lk, bool flag);
     Instr *earliestExt();
     int func_0805d3c4();
+    bool setRepReg(RegPoolEntry *rg);
+    int checkInputLock(cls0805bcc4 *in, short *pos, int *minPos);
 };
 
 bool freeLockLists(cls0805c244 *p);
+bool func_0805db74(int s1, int e1, int s2, int e2);
 cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part);
 const char *rlmtName(unsigned char t);
 
@@ -326,6 +332,7 @@ public:
 
 extern int g_080b336c;  // range lsz
 extern bool g_080de284; // rfUsed before result ready is fatal (name guessed)
+extern bool g_080de288;
 extern int g_080b3370;  // range start
 extern int g_080b3374;  // range end
 

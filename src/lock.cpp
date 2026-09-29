@@ -944,3 +944,128 @@ const char *rlmtName(unsigned char t)
         return "RLMT_UNKNOWN";
     }
 }
+
+const char *cls0805bcc4::regName()
+{
+    if (!unk_04)
+        return "NOT_ON_A_LOCKLIST";
+    if (!unk_04->unk_04)
+        return "RLL_HAS_NO_REG";
+    return unk_04->unk_04->func_0805a8e0();
+}
+
+bool cls0805c244::setRepReg(RegPoolEntry *rg)
+{
+    if (unk_04 && rg != unk_04) {
+        func_0804ad38("can't set representative reg - it's already set\n");
+        return false;
+    }
+    unk_04 = rg;
+    return true;
+}
+
+int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
+{
+    cls0805bcc4 *lk = unk_1c;
+    int lsz = g_080b336c;
+    int ret = 0;
+    int p = *pos;
+
+    in->unk_1a = 0;
+    if (in->unk_19 == 2) {
+        func_0804ad38("CheckInputLock::aa input\n");
+        func_0804aeb0();
+        return 0;
+    }
+    if (unk_29)
+        return 0;
+
+    cls0805bcc4 *par = in->getParent();
+    int lo = par->unk_36;
+    int hi = par->unk_4e;
+
+    if (lsz && par->unk_2d == 2) {
+        if (!par->unk_2e)
+            return 0;
+        bool inside = true;
+        if (p < lo) { lo = p; inside = false; }
+        if (p > hi) { hi = p; inside = false; }
+        if (inside)
+            return 0;
+        int span = hi - lo;
+        int room = lsz;
+        if (unk_0c[0])
+            room -= unk_0c[0]->unk_18;
+        else {
+            func_0804ad38("no ext output set. but .. not const for loop\n");
+            func_0804adf0(-1);
+        }
+        if (span <= room)
+            return 0;
+        int need;
+        if (p < par->unk_3e)
+            need = par->unk_4e - room;
+        else if (in->unk_19 == 1) {
+            in->unk_1a = 1;
+            return 0x100;
+        } else
+            need = 30000;
+        if (*minPos < need)
+            *minPos = need;
+        return 0x2000;
+    }
+
+    int start = in->unk_18 + par->unk_3a;
+    if (p < start) {
+        if (start > *minPos)
+            *minPos = start;
+        return 8;
+    }
+    if (p <= hi)
+        return 0;
+
+    int d = p - lo;
+    if (lsz && d >= lsz) {
+        if (in->unk_19 == 1) {
+            in->unk_1a = 3;
+            return 0x100;
+        }
+        *minPos = 30000;
+        return 0x400;
+    }
+
+    int s = par->unk_34;
+    int e = d + s;
+    if (g_080b336c) {
+        while (s >= g_080b336c) {
+            s -= g_080b336c;
+            e -= g_080b336c;
+        }
+    }
+
+    bool isExt = false;
+    if (lsz)
+        isExt = par == unk_0c[0];
+
+    for (; lk; lk = lk->unk_08) {
+        if (lk == par)
+            continue;
+        if (isExt && lk->unk_2d == 2)
+            continue;
+        if (lk->unk_22) {
+            if (s < lk->unk_4c && e >= lk->unk_34) {
+                *minPos = 30000;
+                return ret | 0x10;
+            }
+        } else if (func_0805db74(s, e, lk->unk_34, lk->unk_4c)) {
+            if (g_080de288 && lsz && in->unk_19 == 1) {
+                in->unk_1a = 2;
+                ret |= 0x100;
+            } else {
+                *minPos = 30000;
+                return ret | 0x20;
+            }
+        }
+    }
+    return ret;
+}
