@@ -5,7 +5,7 @@
 #include "os.h"
 
 class workTable;
-struct regRef;
+struct regUse;
 
 class instStream {
 public:
@@ -32,7 +32,7 @@ public:
     char unk_21c[0x22c - 0x21c];
     int unk_22c;                // dependency length used by back trace
     char unk_230[0x234 - 0x230];
-    regRef *unk_234;
+    regUse *unk_234;
     unsigned *unk_238;          // m_tStore
     int unk_23c;                // dst key
     int unk_240;

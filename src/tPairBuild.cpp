@@ -1,6 +1,6 @@
 #include "Program.h"
 #include "instStream.h"
-#include "regRef.h"
+#include "workTable.h"
 
 int func_0804ad38(const char *fmt, ...);
 bool func_08061c34(instStream *n);
@@ -40,7 +40,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
         func_0804ad38("failed to do internal trace for  a t pair\n");
         return false;
     }
-    regRef *tr = t->unk_234;
+    regUse *tr = t->unk_234;
     if (!tr) {
         func_0804ad38("there's  no regref set in t target\n");
         return false;
@@ -50,7 +50,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
         return false;
     }
     for (instStream *s = p->unk_dc; s; s = s->unk_250) {
-        regRef *sr = s->unk_234;
+        regUse *sr = s->unk_234;
         if (!sr) {
             func_0804ad38("there's no regref in t src\n");
             return false;
@@ -69,7 +69,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
             func_0804ad38("src_key is bad in tpair\n");
             return false;
         }
-        if (!tr->unk_30[part].unk_00.addPair(s, b, src_key, dst_key)) {
+        if (!tr->unk_20[part].unk_10.addPair(s, b, src_key, dst_key)) {
             func_0804ad38("failed to add tpair for tcheck\n");
             return false;
         }

@@ -589,7 +589,7 @@ bool func_0804a2b4(Program *p, bool a, bool b, bool c)
         }
         func_0804acb0("on the final pass, was detected, but , it should be ok\n");
     }
-    if (b && p->unk_7c)
+    if (b && p->unk_74.unk_08)
         reportWarnings(p);
     return true;
 }

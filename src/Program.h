@@ -3,6 +3,7 @@
 
 #include "mList.h"
 #include "VisitCache.h"
+#include "infoList.h"
 
 struct CpuDef;
 class Parser;
@@ -38,8 +39,7 @@ struct Program {
     bool unk_63;
     char unk_64[0x0c];
     int unk_70;
-    char unk_74[0x08];
-    int unk_7c;
+    infoList unk_74;    // stall list (really an infoList subclass, vtable 0x080b33c8); unk_08 = count
     char unk_80[0x20];
     instStream *unk_a0; // all streams, chained via unk_108
     char unk_a4[0x10];
