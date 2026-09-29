@@ -97,7 +97,8 @@ struct wtInstrList {
 
 class workTable {
 public:
-    char unk_00[9];
+    char unk_00[8];
+    char unk_08;
     unsigned char unk_09;   // code mode
     unsigned char unk_0a;
     char unk_0b;
@@ -136,6 +137,7 @@ public:
     bool grow(int n);
     bool destroyInstruction(Instr *&in);
     bool prepRawTable();
+    bool func_08073774(unsigned char mode);
     bool changeMode(unsigned char mode);
 };
 

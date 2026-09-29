@@ -96,7 +96,9 @@ public:
     char unk_265;      // collapse into successor (tidy)
     char unk_266[0x2c0 - 0x266];
     short unk_2c0;     // stream id
-    char unk_2c2[0x2cc - 0x2c2];
+    char unk_2c2[2];
+    short unk_2c4;
+    char unk_2c6[0x2cc - 0x2c6];
     char unk_2cc;
     char unk_2cd;      // code mode (2 adds 1000 to back trace dep length)
     unsigned char unk_2ce;  // branch type
