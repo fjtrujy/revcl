@@ -63,5 +63,6 @@ bool func_08050780(const char *s, const char *kw);
 bool func_080507f4(const char *s);
 bool func_08050810(const char *s);
 bool func_0805082c(LocTag *t);
+int func_0805085c(LocTag *t);
 
 #endif

@@ -492,3 +492,8 @@ bool func_0805082c(LocTag *t)
         r = true;
     return r;
 }
+
+int func_0805085c(LocTag *t)
+{
+    return t->unk_8c;
+}
