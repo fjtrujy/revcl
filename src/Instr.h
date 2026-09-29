@@ -199,6 +199,8 @@ public:
     int func_0805d3c4();
     bool setRepReg(RegPoolEntry *rg);
     int checkInputLock(cls0805bcc4 *in, short *pos, int *minPos);
+    int checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos);
+    int checkOverlap(cls0805bcc4 *out, short *pos, int *minPos);
 };
 
 bool freeLockLists(cls0805c244 *p);
