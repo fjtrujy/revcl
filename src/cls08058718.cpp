@@ -1,4 +1,4 @@
-#pragma implementation "tPairList.h"
+#pragma implementation "tPair.h"
 #include "Instr.h"
 #include "tPairList.h"
 #include "cls0807411c.h"

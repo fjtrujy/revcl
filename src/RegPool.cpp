@@ -1,6 +1,8 @@
 #include "RegPool.h"
 #include "ol_s_inline.h"
 #include "os.h"
+#include "VUStr.h"
+#include "workTable.h"
 
 struct iInfo;
 iInfo* func_0806bf8c(const char* name, bool);
@@ -791,4 +793,68 @@ void RegPoolEntry::moveReset()
     unk_10 = 0;
     for (int i = 0; i != unk_28; i++)
         unk_44[i].unk_48 = 0;
+}
+
+bool RegPoolEntry::optReset()
+{
+    unk_2b4 = 0;
+    return true;
+}
+
+bool RegPoolEntry::func_0805aa00()
+{
+    for (int i = 0; i != unk_28; i++) {
+        if (unk_44[i].unk_48)
+            ((char*)unk_44[i].unk_48)[3] = 0;
+    }
+    return true;
+}
+
+char regNameBuf[1024];
+int regNameBufPos;
+
+char* RegPoolEntry::maskName(int mask)
+{
+    if (regNameBufPos > 512)
+        regNameBufPos = 0;
+    char* buf = &regNameBuf[regNameBufPos];
+    const char* name = unk_2b8.func_0804b550();
+    if (!name)
+        name = "UNNAMED_REGISTER!";
+    char* p = buf + func_0804adbc(buf, "%s", name);
+    if (unk_28 > 1)
+        p += func_0804adbc(p, "%s", func_080520d4(mask));
+    *p = 0;
+    regNameBufPos = p - regNameBuf + 1;
+    return buf;
+}
+
+int RegPoolEntry::regIndex()
+{
+    if (!unk_04)
+        func_0804ad38("no reg pool set for register\n");
+    return unk_04->regIndex(unk_30);
+}
+
+regUse::regUse(RegPoolEntry* reg)
+{
+    unk_0c = 0;
+    unk_0d = 0;
+    unk_0e = 0;
+    unk_0f = 0;
+    unk_10 = 0;
+    unk_11 = 0;
+    unk_12 = 0;
+    unk_13 = 0;
+    unk_14 = 0;
+    unk_15 = -1;
+    unk_08 = reg;
+    unk_00 = 0;
+    unk_04 = 0;
+    unk_18 = reg->unk_36;
+    unk_1c = reg->unk_38;
+}
+
+regUse::~regUse()
+{
 }

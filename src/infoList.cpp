@@ -217,7 +217,7 @@ void ubsNode::dump()
                   unk_08->func_0805a8e0());
     for (int i = 0; i != unk_08->unk_28; i++) {
         if ((unk_0c >> i) & 1) {
-            for (ol_s *p = ru->unk_20[i].unk_00; p; p = p->unk_00) {
+            for (ol_s *p = ru->unk_20[i].unk_00.unk_00; p; p = p->unk_00) {
                 Instr *inst = p->unk_04;
                 int bit = 1 << p->unk_11;
                 opnd = p->unk_10;

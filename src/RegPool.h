@@ -49,6 +49,8 @@ struct RegPoolEntry {
     bool func_0805a4f4(bool flag);
     bool func_0805aa00();
     bool optReset();
+    char* maskName(int mask);
+    int regIndex();
     int gatherInflight(ol_s** out);
     void func_0805a340();
     int func_0805a908(int i);
