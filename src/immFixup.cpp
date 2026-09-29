@@ -172,3 +172,169 @@ bool aaFixup(instStream *s)
     }
     return true;
 }
+
+bool tidyStream(instStream *s)
+{
+    workTable *wt = s->getTable();
+    if (!wt)
+        return true;
+    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+        fixInst(in);
+    return true;
+}
+
+bool tidyTable(workTable *wt)
+{
+    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+        fixInst(in);
+    return true;
+}
+
+bool tidyProgram(Program *p)
+{
+    for (instStream *s = p->unk_a0; s; s = s->unk_108)
+        if (!tidyStream(s)) {
+            func_0804ad38("failed to tidy a stream\n");
+            func_0804adf0(-1);
+        }
+    return true;
+}
+
+struct epSrc {
+    short lid;
+    short type;
+};
+
+bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
+{
+    if (luid < 0) {
+        func_0804ad38("entered getSrcEpLid with -ve luid\n");
+        return false;
+    }
+    if (!oll->unk_04) {
+        func_0804ad38("oll has no entries for getSrcEpLid\n");
+        return false;
+    }
+    int nLocal = 0;
+    ol_s *ol;
+    for (ol = oll->unk_00; ol; ol = ol->unk_00) {
+        Instr *in = ol->unk_04;
+        if (!in) {
+            func_0804ad38("failed to get in from ol\n");
+            func_0804adf0(-1);
+        }
+        instStream *s = in->func_08054168();
+        if (!s) {
+            func_0804ad38("getSrcEpLid- failed to get owner\n");
+            return false;
+        }
+        if (s->unk_2c2 != luid) {
+            *lid = -1;
+            return true;
+        }
+    }
+    epSrc src[2];
+    for (ol = oll->unk_00; ol; ol = ol->unk_00) {
+        Instr *in = ol->unk_04;
+        if (!in) {
+            func_0804ad38("failed to get in from ol\n");
+            func_0804adf0(-1);
+        }
+        instStream *s = in->func_08054168();
+        if (!s) {
+            func_0804ad38("getSrcEpLid- failed to get owner\n");
+            return false;
+        }
+        int type = s->unk_2c4;
+        if (s->unk_2c2 != luid) {
+            func_0804ad38("getSrcEpLid() - rather unlikely\n");
+            return false;
+        }
+        if (nLocal > 1) {
+            func_0804ad38("nLocal got >1 in getSrcEpLid()\n");
+            oll->func_08057e9c();
+            return false;
+        }
+        src[nLocal].lid = in->unk_13d2;
+        src[nLocal].type = type;
+        nLocal++;
+    }
+    if (nLocal == 0) {
+        func_0804ad38("no valid eplids found for getSrc\n");
+        return false;
+    }
+    if (nLocal == 2) {
+        if (src[0].type == src[1].type) {
+            func_0804ad38("nLocal is 2 , but both setters from same type of construct\n");
+            return false;
+        }
+        if (epType == 2) {
+            func_0804ad38("nLocal is 2, but we are a prologue!\n");
+            return false;
+        }
+        for (int i = 0; i != 2; i++) {
+            switch (epType) {
+            case 3:
+                switch (src[i].type) {
+                case 2:
+                    break;
+                case 5:
+                    src[i].lid--;
+                    break;
+                default:
+                    func_0804ad38("epSrc: we are EPI, but not MAIN/PRO setter for n=2\n");
+                    return false;
+                }
+                break;
+            case 5:
+                switch (src[i].type) {
+                case 2:
+                    break;
+                case 5:
+                    src[i].lid--;
+                    break;
+                default:
+                    func_0804ad38("epSrc: we are MAIN, but not MAIN/PRO setter\n");
+                    return false;
+                }
+                break;
+            default:
+                func_0804ad38("bad loop type found for n=2\n");
+                return false;
+            }
+        }
+        if (src[0].lid != src[1].lid) {
+            func_0804ad38("lid mismatch for n=2\n");
+            return false;
+        }
+    } else {
+    switch (epType) {
+    case 2:
+        break;
+    case 3:
+        switch (src[0].type) {
+        case 2:
+        case 3:
+            break;
+        case 5:
+            src[0].lid--;
+            break;
+        default:
+            func_0804ad38("bad ep type for n=1\n");
+            return false;
+        }
+        break;
+    case 5:
+        if (src[0].type != 2 && src[0].type != 5) {
+            func_0804ad38("bad ep type for n=1  %d\n", src[0].type);
+            return false;
+        }
+        break;
+    default:
+        func_0804ad38("mylm is bad for n=1\n");
+        return false;
+    }
+    }
+    *lid = src[0].lid;
+    return true;
+}
