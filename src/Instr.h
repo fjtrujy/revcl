@@ -6,6 +6,7 @@
 #include "mList.h"
 
 class instStream;
+class LocTag;
 struct ol_s;
 
 // Opcode descriptor ("iInfo", from the null-argument error string).
@@ -57,7 +58,9 @@ public:
 };
 
 struct OpSlot {
-    char unk_00[0x54];
+    char unk_00[0x50];
+    short unk_50;
+    char unk_52[2];
     olList unk_54;          // uses
 };
 
@@ -81,7 +84,7 @@ struct Operand {
     char unk_24;
     char unk_25;
     char unk_26;            // operand index
-    char unk_27;
+    unsigned char unk_27;
     char unk_28;
     char unk_29;
     char unk_2a[2];
@@ -109,6 +112,14 @@ struct Operand {
         return r;
     }
     RegPoolEntry *getReg() { return isReg() ? unk_18 : 0; }
+    bool isReg2()
+    {
+        bool r = false;
+        if (unk_09 == 2 && !isZero())
+            r = true;
+        return r;
+    }
+    RegPoolEntry *getReg2() { return isReg2() ? unk_18 : 0; }
 };
 
 class Instr;
@@ -172,7 +183,7 @@ public:
     int unk_08;
     char unk_0c[4];
     ptrList unk_10;
-    int unk_14;
+    LocTag *unk_14;
     short unk_18;
     short unk_1a;
     iLink unk_1c;   // linear list link
@@ -249,6 +260,10 @@ public:
     bool func_08054138();
     instStream *func_08054168();  // owner instruction stream
     bool func_0805417c();
+    bool func_080541fc();
+    bool func_08054214();
+    void leDump();
+    void leDump(int opnd);
     void leDump(int opnd, int mask);
     bool func_08052f84();
     int func_08053104();
@@ -259,5 +274,7 @@ public:
 iInfo *func_0806bf8c(const char *name, bool);
 int func_0806c72c(iInfo *op);
 RegPoolEntry *func_0806c25c(char kind);
+bool func_080543bc(Instr *a, Instr *b);
+bool func_0805449c(Instr *a, Instr *b);
 
 #endif
