@@ -96,4 +96,10 @@ inline int VisitCache::endRecord()
     return i;
 }
 
+inline bool VisitCache::testBit(int rec, int bit)
+{
+    unsigned *row = unk_00 + rec * unk_04;
+    return (row[bit / 32] & (1 << (bit & 31))) != 0;
+}
+
 #endif

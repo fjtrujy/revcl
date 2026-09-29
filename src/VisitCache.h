@@ -34,11 +34,7 @@ public:
     bool startRecord();
     bool setBit(int bit);
     int endRecord();
-    bool testBit(int rec, int bit)
-    {
-        unsigned *row = unk_00 + rec * unk_04;
-        return (row[bit / 32] & (1 << (bit & 31))) != 0;
-    }
+    bool testBit(int rec, int bit);
     void Dump()
     {
         func_0804acb0("VisitCache::Dump()\n");

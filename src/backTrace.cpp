@@ -1,9 +1,11 @@
+#pragma implementation "tStore.h"
 #include "Program.h"
 #include "instStream.h"
 #include "os.h"
 #include "VisitCache.h"
 #include "workTable.h"
 #include "RegPool.h"
+#include "tStore.h"
 
 bool g_initBackTrace(instStream *s, int n);
 bool extendBackTrace(Program *p, instStream *n);
@@ -12,14 +14,20 @@ bool recalcMinTraceLengths(Program *p);
 bool recalcMaxTraceLengths(Program *p);
 int mergeTstores(Program *p, unsigned *dst, unsigned *src);
 int func_08061cb0(Program *p, instStream *n);
-int func_08061d58(Program *p, instStream *n);
-bool func_08061e00(Program *p, int key);
+int getMaxPathKey(Program *p, instStream *n);
+bool isPathRaw(Program *p, int key);
+
+static inline bool testPathBit(VisitCache *vc, int rec, int bit)
+{
+    unsigned *row = vc->unk_00 + rec * vc->unk_04;
+    return (row[bit / 32] & (1 << (bit & 31))) != 0;
+}
 
 void dumpPathKey(Program *p, int key)
 {
     func_0804acb0("dumping path key '%d'\n", key);
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {
-        if (p->unk_bc.testBit(key, s->unk_2c0))
+        if (testPathBit(&p->unk_bc, key, s->unk_2c0))
             func_0804acb0("    %d: %s\n", s->func_0806d674());
     }
     func_0804acb0(" done dumping path key '%d'\n", key);
@@ -161,7 +169,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
             }
             n->unk_08 = key;
         }
-        if (func_08061e00(p, key)) {
+        if (isPathRaw(p, key)) {
             int dist = s->unk_240;
             int tend = s->unk_22c - sr->unk_20[part].unk_3c[10];
             int fst = tr->unk_20[part].unk_3c[7];
@@ -203,7 +211,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
         }
         int maxKey = -1;
         if (p->unk_b4) {
-            maxKey = func_08061d58(p, s);
+            maxKey = getMaxPathKey(p, s);
             if (maxKey <= 0) {
                 func_0804ad38("error getting max path key\n");
                 return false;
@@ -629,4 +637,100 @@ int func_08061cb0(Program *p, instStream *n)
         }
     }
     return vc->endRecord();
+}
+
+int getMaxPathKey(Program *p, instStream *n)
+{
+    VisitCache *vc = &p->unk_bc;
+    if (!vc->startRecord()) {
+        func_0804ad38("failed to start a record\n");
+        return 0;
+    }
+    if (!vc->setBit(p->unk_d4->unk_2c0)) {
+        func_0804ad38("failed to add target to max path key\n");
+        return 0;
+    }
+    for (; n; n = n->unk_24c) {
+        if (!vc->setBit(n->unk_2c0)) {
+            func_0804ad38("failed to add to record to max path\n");
+            return 0;
+        }
+    }
+    return vc->endRecord();
+}
+
+bool isPathRaw(Program *p, int key)
+{
+    if (key <= 0) {
+        func_0804ad38("<=0 input to isPathRaw\n");
+        func_0804adf0(-1);
+    }
+    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+        int id = s->unk_2c0;
+        if (p->unk_bc.testBit(key, id) && s->func_0806d908() == 1)
+            return false;
+    }
+    return true;
+}
+
+int guessKeyLen(Program *p, int key, int start, int end)
+{
+    instStream *s = p->unk_a0;
+    int len = 0;
+    bool foundStart = false;
+    bool foundEnd = false;
+    for (; s; s = s->unk_108) {
+        int id = s->unk_2c0;
+        if (p->unk_bc.testBit(key, id)) {
+            bool hit = false;
+            if (id == start) {
+                foundStart = true;
+                hit = true;
+            }
+            if (id == end) {
+                foundEnd = true;
+                hit = true;
+            }
+            if (!hit)
+                len += s->getOrGuessDepLength();
+        }
+    }
+    if (!foundEnd || !foundStart) {
+        func_0804ad38("guessKeyLen - didn't contain one of start or end\n");
+        return -1;
+    }
+    return len;
+}
+
+void dumpMinPathToTarget(instStream *s)
+{
+    func_0804acb0("%s  minPathToTarget\n", s->func_0806d674());
+    int i = 0;
+    for (instStream *q = s->unk_244; q; q = q->unk_244)
+        func_0804acb0("    %2d:   [%3d] %s\n", ++i, q->unk_240, q->func_0806d674());
+    func_0804acb0("done .. %s  minPathToTarget\n", s->func_0806d674());
+}
+
+void dumpMaxPathToTarget(instStream *s)
+{
+    func_0804acb0("%s  maxPathToTarget\n", s->func_0806d674());
+    int i = 0;
+    for (instStream *q = s->unk_24c; q; q = q->unk_24c)
+        func_0804acb0("    %2d:   [%3d] %s\n", ++i, q->unk_248, q->func_0806d674());
+    func_0804acb0("done .. %s  maxPathToTarget\n", s->func_0806d674());
+}
+
+int mergeTstores(Program *p, unsigned *dst, unsigned *src)
+{
+    if (!src || !dst) {
+        func_0804ad38("mergetTstores - null input\n");
+        return -1;
+    }
+    unsigned changed = 0;
+    for (int i = 0; i != p->unk_b8; i++) {
+        unsigned d = dst[i];
+        changed |= ~d & src[i];
+        dst[i] = d | src[i];
+    }
+    return changed != 0;
 }
