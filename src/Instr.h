@@ -333,6 +333,12 @@ public:
     void func_08058744();
     void func_0805874c(short v);
     void func_0805878c(char c);
+    void setRow(short r)
+    {
+        unk_03 = 0;
+        unk_00 = unk_04 = r;
+        unk_02 = 1;
+    }
 };
 
 extern int g_080b336c;  // range lsz

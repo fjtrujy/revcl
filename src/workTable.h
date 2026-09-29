@@ -79,17 +79,19 @@ public:
 };
 
 struct wtRow {
-    int unk_00[2];
+    Instr *unk_00[2];
     char unk_08[8];
 
     bool func_080721f8();  // clears unk_00
+    int func_08072304();   // count of used entries
 };
 
 class workTable {
 public:
     char unk_00[9];
     unsigned char unk_09;   // code mode
-    char unk_0a[0x14 - 0x0a];
+    unsigned char unk_0a;
+    char unk_0b[0x14 - 0x0b];
     regUseList unk_14;
     char unk_20[8];
     int unk_28;             // row count
@@ -97,8 +99,13 @@ public:
     int unk_30;             // range start
     int unk_34;             // range end (one past)
     int unk_38;             // lsz
+    char unk_3c[8];
+    int unk_44;             // extminlength
 
     wtRow *func_080724f0(int i);
+    Instr *getBranch();
+    bool takeOut(Instr *i);
+    bool putIn(Instr *i);
     int func_08072eec();
     int getLogicalLen();
     int getPhysicalLen();
