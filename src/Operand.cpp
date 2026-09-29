@@ -270,16 +270,14 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         break;
     case 3:
         if (unk_07 & 1)
-            buf += func_0804adbc(buf, "%sx", rn);
-        else if (unk_07 & 2)
-            buf += func_0804adbc(buf, "%sy", rn);
-        else if (unk_07 & 4)
-            buf += func_0804adbc(buf, "%sz", rn);
-        else if (unk_07 & 8)
-            buf += func_0804adbc(buf, "%sw", rn);
-        else
-            return 0;
-        break;
+            goto emit_x;
+        if (unk_07 & 2)
+            goto emit_y;
+        if (unk_07 & 4)
+            goto emit_z;
+        if (unk_07 & 8)
+            goto emit_w;
+        return 0;
     case 4:
         buf += func_0804adbc(buf, "I");
         break;
@@ -305,30 +303,34 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         buf += func_0804adbc(buf, "%sxyz", rn);
         break;
     case 13:
+    emit_x:
         buf += func_0804adbc(buf, "%sx", rn);
         break;
     case 14:
+    emit_y:
         buf += func_0804adbc(buf, "%sy", rn);
         break;
     case 15:
+    emit_z:
         buf += func_0804adbc(buf, "%sz", rn);
         break;
     case 16:
+    emit_w:
         buf += func_0804adbc(buf, "%sw", rn);
         break;
     case 27:
-        if (unk_1c.isNumeric()) {
-            if (func_08070300(unk_05) == 2)
-                buf += func_0804adbc(buf, "%d", unk_1c.i);
-            else
-                buf += func_0804adbc(buf, "0x%08x", unk_1c.u);
-        } else {
+        if (!unk_1c.isNumeric()) {
             char *s = unk_1c.asChars();
             if (!s) {
                 func_0804ad38("failed to get chars from immediate operand\n");
                 return 0;
             }
             buf += func_0804adbc(buf, "%s", s);
+        } else {
+            if (func_08070300(unk_05) == 2)
+                buf += func_0804adbc(buf, "%d", unk_1c.i);
+            else
+                buf += func_0804adbc(buf, "0x%08x", unk_1c.u);
         }
         break;
     case 31: {
@@ -364,7 +366,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             func_0804ad38("emit ramreg - no rn\n");
             return 0;
         }
-        buf += func_0804adbc(buf, "ramreg-[%s]", rn);
+        buf += func_0804adbc("ramreg-[%s]", rn);
         break;
     case 29:
     case 46: {
