@@ -25,6 +25,7 @@ int func_0804acf4(const char *fmt, ...);
 int func_0804ad38(const char *fmt, ...);
 int func_0804ad84(const char *fmt, ...);
 int func_0804adbc(char *buf, const char *fmt, ...);
+const char *func_0806c6a0(int dev);  // device name
 int func_0804add4(const char *s);
 void func_0804adf0(int status);
 void func_0804ae34(const char *fmt, ...);

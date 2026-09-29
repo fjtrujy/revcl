@@ -80,8 +80,13 @@ public:
 
 class workTable {
 public:
-    char unk_00[0x14];
+    char unk_00[9];
+    unsigned char unk_09;   // code mode
+    char unk_0a[0x14 - 0x0a];
     regUseList unk_14;
+
+    int func_08072eec();
+    int getLogicalLen();
 };
 
 #endif

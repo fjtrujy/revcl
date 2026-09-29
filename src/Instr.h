@@ -353,6 +353,7 @@ public:
     void func_0805e304();
     void func_0805e340();
     void func_0805e37c(cls0805e2e4 *src);
+    void func_0805e3c0(cls0805e2e4 *o);
 };
 
 // Placeholder for the object at Instr::unk_30 (type unknown).

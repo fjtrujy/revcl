@@ -1,5 +1,8 @@
+#pragma implementation "instStreamLen.h"
 #include "Instr.h"
 #include "os.h"
+#include "instStreamLen.h"
+#include "workTable.h"
 
 bool cls0805bcc4::setOwner(int part, Instr *instr, int opnd)
 {
@@ -1501,4 +1504,121 @@ void cls0805e2e4::func_0805e340()
     unk_08 = unk_0c = 0;
     unk_10 = 0;
     unk_14 = 0;
+}
+
+void cls0805e2e4::func_0805e37c(cls0805e2e4 *src)
+{
+    unk_00 = src->unk_00;
+    unk_02 = src->unk_02;
+    unk_04 = src->unk_04;
+    unk_06 = src->unk_06;
+    unk_08 = src->unk_08;
+    unk_0c = src->unk_0c;
+    unk_10 = src->unk_10;
+    unk_14 = src->unk_14;
+}
+
+void cls0805e2e4::func_0805e3c0(cls0805e2e4 *o)
+{
+    if (o->unk_00 > unk_00) unk_00 = o->unk_00;
+    if (o->unk_02 > unk_02) unk_02 = o->unk_02;
+    if (o->unk_04 > unk_04) unk_04 = o->unk_04;
+    if (o->unk_06 > unk_06) unk_06 = o->unk_06;
+    if (o->unk_08 > unk_08) unk_08 = o->unk_08;
+    if (o->unk_10 > unk_10) unk_10 = o->unk_10;
+    if (o->unk_0c > unk_0c) unk_0c = o->unk_0c;
+    if (o->unk_14 > unk_14) unk_14 = o->unk_14;
+}
+
+extern char g_080de2a0[];  // stall reason text buffer
+
+const char *stallReasonStr(short why)
+{
+    const char *s = "dunno why";
+    switch (why & 0xff) {
+    case 1:
+        s = "instruction latency";
+        break;
+    case 2:
+        s = "instruction thruput";
+        break;
+    case 3:
+        s = "number of upper instructions";
+        break;
+    case 4:
+        s = "number of lower instructions";
+        break;
+    case 5:
+        s = "can't loop";
+        break;
+    case 6:
+        s = "dependency chain depth";
+        break;
+    case 7:
+        s = "dependency chain height";
+        break;
+    case 8:
+        s = "branch instruction dependency chain height";
+        break;
+    case 9:
+        func_0804adbc(g_080de2a0, "issue pressure on %s", func_0806c6a0((char)((why & 0xff00) >> 8)));
+        s = g_080de2a0;
+        break;
+    case 10:
+        s = "circular dependency chain";
+        break;
+    }
+    return s;
+}
+
+int instStream::getOrGuessDepLength()
+{
+    workTable *wt = unk_218;
+    if (!wt)
+        wt = getWorkTable();
+    if (!wt) {
+        func_0804ad38("getOrGuess - no work table\n");
+        func_0804adf0(-1);
+    }
+    int len = 0;
+    switch (wt->unk_09) {
+    case 1:
+        len = func_0805f284();
+        break;
+    case 3:
+        len = wt->func_08072eec();
+        break;
+    }
+    return len;
+}
+
+int instStream::func_0805f354()
+{
+    workTable *wt = unk_218;
+    if (!wt)
+        wt = getWorkTable();
+    if (!wt) {
+        func_0804ad38("getOrGuess - no work table\n");
+        func_0804adf0(-1);
+    }
+    int len = 0;
+    switch (wt->unk_09) {
+    case 1:
+    case 3:
+        len = func_0805f284();
+        break;
+    }
+    return len;
+}
+
+int instStream::getOrGuessLogicalLength()
+{
+    workTable *wt = unk_218;
+    if (!wt)
+        wt = getWorkTable();
+    if (!wt) {
+        func_0804ad38("getOrGuess - no work table\n");
+        func_0804adf0(-1);
+    }
+    return wt->getLogicalLen();
 }

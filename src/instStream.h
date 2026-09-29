@@ -24,6 +24,15 @@ public:
     char unk_260;      // set when stream takes part in a stall
     char unk_261[0x5f];
     short unk_2c0;     // stream id
+    char unk_2c2[0x2e0 - 0x2c2];
+    int unk_2e0;       // dependency length
+    int unk_2e4;
+
+    int func_0805f284();
+    int func_0805f29c();
+    int getOrGuessDepLength();
+    int func_0805f354();
+    int getOrGuessLogicalLength();
 };
 
 #endif
