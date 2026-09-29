@@ -138,6 +138,7 @@ public:
     bool destroyInstruction(Instr *&in);
     bool prepRawTable();
     bool func_08073774(unsigned char mode);
+    bool func_080728fc(unsigned char mode, int size);  // init table (name guessed)
     bool changeMode(unsigned char mode);
 };
 

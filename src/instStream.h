@@ -3,6 +3,8 @@
 #define INSTSTREAM_H
 
 #include "os.h"
+#include "mList.h"
+#include "workTable.h"
 
 class workTable;
 class Instr;
@@ -28,6 +30,7 @@ struct linkList {
 
 class instStream {
 public:
+    instStream();
     const char *func_0806d674();  // stream name or default
     workTable *getWorkTable()
     {
@@ -63,11 +66,13 @@ public:
     char unk_00[0x108];
     instStream *unk_108;         // next in Program::unk_a0
     instStream *unk_10c;         // previous stream (to-register branch)
-    char unk_110[0x124 - 0x110];
+    mList unk_110;               // name list
     int unk_124;                 // pass thru
     linkList unk_128;            // input links
     linkList unk_134;            // output links
-    char unk_140[0x218 - 0x140];
+    char unk_140[8];
+    workTable unk_148;           // own work table
+    char unk_214[4];
     workTable *unk_218;  // work table
     workTable *unk_21c;  // tidied work table
     char unk_220[4];
@@ -96,7 +101,7 @@ public:
     char unk_265;      // collapse into successor (tidy)
     char unk_266[0x2c0 - 0x266];
     short unk_2c0;     // stream id
-    char unk_2c2[2];
+    short unk_2c2;     // stream serial
     short unk_2c4;
     char unk_2c6[0x2cc - 0x2c6];
     char unk_2cc;

@@ -1,3 +1,4 @@
+#pragma implementation
 #include "loopDebris.h"
 #include "os.h"
 #include "instStream.h"
@@ -133,4 +134,77 @@ epiRec *loopDebris::allocPro(int size)
     } else
         func_0804ad38("allocPro: overrun\n");
     return r;
+}
+
+epiRec *loopDebris::allocEpi(int size)
+{
+    char buf[4096];
+    epiRec *r = 0;
+    if (m_nEpi < 16) {
+        const char *name = "NOTSET";
+        if (m_baseName)
+            name = m_baseName;
+        func_0804adbc(buf, "%s_EPI%d", name, m_nEpi);
+        r = &m_epi[m_nEpi];
+        r->reset();
+        if (!r->init(size, buf)) {
+            func_0804ad38("failed to init for epi\n");
+            return 0;
+        }
+        r->unk_14->unk_2c4 = 3;
+        if (unk_10) {
+            r->unk_18->func_08073774(2);
+            r->unk_18->unk_08 = unk_14;
+        } else {
+            r->unk_18->func_08073774(1);
+            r->unk_18->unk_08 = 2;
+        }
+        m_nEpi++;
+    } else
+        func_0804ad38("getEpi: overrun\n");
+    return r;
+}
+
+epiRec *loopDebris::allocMain(int size)
+{
+    char buf[4096];
+    m_main.reset();
+    const char *name = "NOTSET";
+    if (m_baseName)
+        name = m_baseName;
+    func_0804adbc(buf, "%s_MAIN_LOOP", name);
+    if (!m_main.init(size, buf)) {
+        func_0804ad38("failed to init for epi\n");
+        return 0;
+    }
+    m_main.unk_14->unk_2c4 = 5;
+    m_main.unk_18->unk_08 = unk_14;
+    m_main.unk_18->func_08073774(2);
+    return &m_main;
+}
+
+epiRec *loopDebris::allocEnter(int size)
+{
+    m_enter.reset();
+    if (!m_enter.init(size, m_entryName)) {
+        func_0804ad38("failed to init for epi\n");
+        return 0;
+    }
+    m_enter.unk_14->unk_2c4 = 4;
+    m_enter.unk_18->unk_08 = 2;
+    m_enter.unk_18->func_08073774(1);
+    return &m_enter;
+}
+
+epiRec *loopDebris::allocExit(int size)
+{
+    m_exit.reset();
+    if (!m_exit.init(size, m_exitName)) {
+        func_0804ad38("failed to init for epi\n");
+        return 0;
+    }
+    m_exit.unk_14->unk_2c4 = 1;
+    m_exit.unk_18->unk_08 = 2;
+    m_exit.unk_18->func_08073774(1);
+    return &m_exit;
 }

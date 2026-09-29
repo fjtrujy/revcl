@@ -1,40 +1,12 @@
 #ifndef LOOPDEBRIS_H
 #define LOOPDEBRIS_H
 
+#pragma interface
+
+#include "epiRec.h"
+
 class instStream;
 class workTable;
-
-struct epiRec {
-    int unk_00;
-    int unk_04;
-    int unk_08;
-    int unk_0c;
-    int unk_10;
-    instStream *unk_14;
-    workTable *unk_18;
-    int unk_1c;
-
-    epiRec()
-    {
-        unk_08 = -1;
-        unk_0c = -1;
-        unk_04 = -1;
-        unk_00 = -1;
-        unk_14 = 0;
-        unk_1c = 0;
-    }
-    ~epiRec() {}
-    void reset()
-    {
-        unk_08 = -1;
-        unk_0c = -1;
-        unk_04 = -1;
-        unk_00 = -1;
-        unk_14 = 0;
-        unk_1c = 0;
-    }
-    bool init(int size, const char *name);
-};
 
 class loopDebris {
 public:
@@ -48,6 +20,10 @@ public:
     instStream *getProStream(int i);
     instStream *getEpiStream(int i);
     epiRec *allocPro(int size);
+    epiRec *allocEpi(int size);
+    epiRec *allocMain(int size);
+    epiRec *allocEnter(int size);
+    epiRec *allocExit(int size);
 
     epiRec *getProRec(int i)
     {
@@ -60,6 +36,13 @@ public:
         if (i < 0 || i >= m_nEpi)
             return 0;
         return &m_epi[i];
+    }
+    epiRec *func_08067c70(int key)
+    {
+        for (int i = 0; i != m_nEpi; i++)
+            if (m_epi[i].unk_08 == key)
+                return &m_epi[i];
+        return 0;
     }
 
     int unk_00;
