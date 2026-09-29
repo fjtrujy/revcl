@@ -627,3 +627,154 @@ short cls0805bcc4::func_0805ccd4()
 {
     return unk_3e;
 }
+
+static inline bool hasPartFlag(cls0805bcc4 *lk)
+{
+    return lk->unk_16 && lk->unk_04->unk_28;
+}
+
+bool cls0805bcc4::calcStats(Instr *skip)
+{
+    int lsz = g_080b336c;
+    cls0805c244 *ll = unk_04;
+    unk_2e = 0;
+    int minFree = 30000;
+    int minUse = 30000;
+    int maxT = -30000;
+    for (cls0805bcc4 *c = unk_0c; c; c = c->unk_08) {
+        if (skip) {
+            Instr *o = c->unk_2d == 1 ? (Instr *)c->unk_24 : 0;
+            if (o == skip)
+                continue;
+        }
+        if (c->unk_19 == 2)
+            continue;
+        int t = c->unk_32;
+        if (t > maxT)
+            maxT = t;
+        if (t < minUse)
+            minUse = t;
+        t -= c->unk_18;
+        if (t < minFree)
+            minFree = t;
+        unk_2e++;
+    }
+    if (ll->unk_29 && lsz) {
+        minFree = 0;
+        maxT = lsz - 1;
+        unk_2e = 0;
+    }
+    if (unk_2e != 0) {
+        unk_3e = minFree;
+        unk_42 = maxT;
+        if (lsz && unk_2d == 2) {
+            unk_36 = minFree;
+            unk_3a = minFree;
+        } else if (unk_2d == 2) {
+            if (unk_18 == 0) {
+                unk_36 = 0;
+                unk_3a = 0;
+            } else {
+                if (unk_15)
+                    unk_36 = 0;
+                else
+                    unk_36 = unk_18 + unk_32;
+                unk_3a = unk_18 + unk_32;
+            }
+        } else {
+            if (unk_15)
+                unk_36 = unk_32 + 1;
+            else
+                unk_36 = unk_18 + unk_32;
+            unk_3a = unk_18 + unk_32;
+        }
+        if (unk_3e < unk_3a) {
+            if (g_080de284) {
+                func_0804ad38("rLock::calcStats - rfUsed before result ready..rfu=%d rr=%d!\n", unk_3e, unk_3a);
+                print();
+                return false;
+            }
+            if (minUse < unk_36)
+                func_0804ac7c("rLock::calcStats - stalls non fatal, but.. rfUsed_nolh before result write..rfu=%d rw=%d..this maybe important\n", minUse, unk_36);
+        }
+    } else {
+        if (unk_2d == 2) {
+            if (unk_18 == 0) {
+                unk_36 = 0;
+                unk_3a = 0;
+            } else {
+                if (unk_15)
+                    unk_36 = 0;
+                else
+                    unk_36 = unk_18 + unk_32;
+                unk_3a = unk_18 + unk_32;
+            }
+        } else {
+            if (unk_15)
+                unk_36 = unk_32 + 1;
+            else
+                unk_36 = unk_18 + unk_32;
+            unk_3a = unk_18 + unk_32;
+        }
+        unk_3e = unk_36;
+        unk_42 = unk_36;
+    }
+    int shift = unk_30 - unk_32;
+    unk_34 = shift + unk_36;
+    unk_38 = shift + unk_3a;
+    unk_3c = shift + unk_3e;
+    unk_40 = shift + unk_42;
+    if (unk_20 != 0 || hasPartFlag(this)) {
+        unk_4e = unk_42;
+        if (!lsz || unk_2d != 2) {
+            int hi = unk_48;
+            int lo = unk_4a;
+            if (hi < lo) {
+                hi = unk_4a;
+                lo = unk_48;
+            }
+            int slack = unk_46 - (hi - lo);
+            if (slack > 0)
+                hi += (slack + 1) >> 1;
+            if (hi > 0)
+                hi--;
+            hi += unk_3a;
+            if (hi > unk_42)
+                unk_4e = hi;
+        }
+    } else
+        unk_4e = unk_36;
+    unk_4c = shift + unk_4e;
+    return true;
+}
+
+void cls0805bcc4::func_0805d020()
+{
+    resetStats();
+}
+
+void cls0805bcc4::setFrom(cls08058718 *r)
+{
+    int rline = r->unk_00;
+    unk_32 = rline;
+    int loop = r->unk_04;
+    unk_30 = loop;
+    int lsz = g_080b336c;
+    if (lsz) {
+        if (rline % lsz == loop)
+            return;
+        func_0804ad38("rLock::setFrom: rline/loop mismatch %d vs %d (lsz%d)\n", rline, loop, lsz);
+    } else {
+        if (unk_30 == unk_32)
+            return;
+        func_0804ad38("setFrom rline/non-loop mismatch\n");
+    }
+    func_0804adf0(-1);
+}
+
+short cls0805bcc4::func_0805d0dc()
+{
+    if (g_080b336c)
+        return unk_32 / g_080b336c;
+    return 0;
+}

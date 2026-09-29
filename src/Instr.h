@@ -75,6 +75,7 @@ public:
 
 // Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).
 class cls0805c244;
+class cls08058718;
 
 class cls0805bcc4 {
 public:
@@ -138,7 +139,10 @@ public:
     bool isOk(int type, bool inserted);
     short func_0805ccc8();
     short func_0805ccd4();
-    bool calcStats(int);
+    bool calcStats(Instr *skip);
+    void func_0805d020();
+    void setFrom(cls08058718 *r);
+    short func_0805d0dc();
     void resetStats()
     {
         unk_30 = unk_32 = -1;
@@ -311,6 +315,7 @@ public:
 };
 
 extern int g_080b336c;  // range lsz
+extern bool g_080de284; // rfUsed before result ready is fatal (name guessed)
 extern int g_080b3370;  // range start
 extern int g_080b3374;  // range end
 
