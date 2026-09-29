@@ -25,6 +25,11 @@ struct RegPoolEntry {
     RegPool *unk_04;    // owning pool
     RegPoolEntry* next;
     const char* func_0805a8e0();
+    RegPoolEntry();
+    void func_0805a300();
+    void func_0805a348();
+    void func_0805a390();
+    mNode* func_0805a8a4(const char* name);
 
     int unk_0c;
     int unk_10;
@@ -32,10 +37,14 @@ struct RegPoolEntry {
     bool unk_15;        // allocable
     bool unk_16;
     char unk_17;
-    int unk_18[3];
+    int unk_18;
+    char unk_1c;        // nonblockid
+    char unk_1d[3];
+    int unk_20;
     int unk_24;         // register class
-    int unk_28;         // slot count
-    int unk_2c;
+    int unk_28;         // slot count (nparts)
+    bool unk_2c;
+    char unk_2d[3];
     int unk_30;         // register index
     char unk_34;
     unsigned char unk_35;   // used slot mask
@@ -50,8 +59,13 @@ class RegPool {
 public:
     RegPool();
     virtual ~RegPool();
+    bool Init(int a, const char* name, int cls, int b);
+    void Dump();
     RegPoolEntry* func_080593e0(int index);
     RegPoolEntry* func_08059418(const char* name);
+    bool func_08059464();
+    bool func_080594c0();
+    bool func_0805951c();
     bool func_08059c00();
 
     RegPoolEntry* unk_04;
@@ -65,7 +79,18 @@ public:
     RegPoolEntry* unk_20;
     int unk_24;
     int unk_28;
-    int unk_2c;
+    const char* unk_2c;     // pool name
 };
+
+struct RegDesc {
+    const char* names[4];   // aliases; names[0] == 0 ends the table
+    unsigned char unk_10;   // allocable
+    unsigned char unk_11;   // register class
+    unsigned char unk_12;   // nparts
+    char unk_13;            // nonblockid
+    unsigned char unk_14;
+};
+
+extern RegDesc regDescTable[];
 
 #endif
