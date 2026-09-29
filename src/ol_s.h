@@ -3,7 +3,7 @@
 #define OL_S_H
 #pragma interface
 
-#include "Instr.h"
+class Instr;
 
 struct ol_s {
     ol_s *unk_00;   // next
@@ -21,23 +21,14 @@ struct ol_s {
     unsigned char unk_13;   // flags, bit0 = external
 
     inline ol_s();
+    inline ~ol_s();
     inline void reset();
     inline bool isExt();
     void func_08057fbc();
     void func_08057fec();
     ol_s *func_080583ac();
     ol_s *func_08058414();
-    void func_08058054(ol_s *src)
-    {
-        reset();
-        if (src) {
-            unk_13 = src->unk_13;
-            unk_04 = src->unk_04;
-            unk_10 = src->unk_10;
-            unk_11 = src->unk_11;
-            unk_12 = src->unk_12;
-        }
-    }
+    void func_08058054(ol_s *src);
     void init(Instr *inst, int op, int slot, bool ext)
     {
         reset();

@@ -4,23 +4,26 @@
 #include "mList.h"
 #include "os.h"
 
-struct RegPoolSub {
-    ~RegPoolSub() {}
+#include "ol_s.h"
 
-    int unk_00;
-    int unk_04;
-    int unk_08;
-    int unk_0c;
-    short unk_10;
-    bool unk_12;        // in flight
-    char unk_13;
-};
+struct rPart {
+    short unk_00[0x24 / 2];
+    ol_s unk_24;        // current part
+    ol_s* unk_38;       // pending source
+    short unk_3c;       // age counter
+    short unk_3e;       // issueLock
+    short unk_40;
+    short unk_42;
+    short unk_44;
+    short unk_46;
+    int unk_48;
+    ol_s unk_4c[4];     // pending parts
 
-struct RegPoolSlot {
-    int unk_00[0x24 / 4];
-    RegPoolSub unk_24;
-    int unk_38[(0x4c - 0x38) / 4];
-    RegPoolSub unk_4c[4];
+    bool flushPending();
+    ol_s* func_0805a164();
+    bool cycle(bool flag);
+    void func_0805a374();
+    void func_0805a3cc();
 };
 
 class RegPool;
@@ -40,8 +43,9 @@ struct RegPoolEntry {
     bool func_0805a4f4(bool flag);
     bool func_0805aa00();
     bool optReset();
-    int gatherInflight(RegPoolSub** out);
-    RegPoolSlot* getRP(int i)
+    int gatherInflight(ol_s** out);
+    void func_0805a340();
+    rPart* getRP(int i)
     {
         if (i < 0 || i >= unk_28) {
             func_0804ad38("getRP - asked to get out of range part %s.%d / %d\n",
@@ -68,11 +72,11 @@ struct RegPoolEntry {
     int unk_30;         // register index
     char unk_34;
     unsigned char unk_35;   // used slot mask
-    char unk_36[2];
+    short unk_36;
     int unk_38;
     int unk_3c;
     int unk_40;
-    RegPoolSlot unk_44[4];
+    rPart unk_44[4];
     int unk_2b4;
     mList unk_2b8;
 };
@@ -108,7 +112,7 @@ public:
     int regIndex(int reg);
     int countUsed();
     int func_08059f70();
-    int gatherInflight(RegPoolSub** out);
+    int gatherInflight(ol_s** out);
 
     RegPoolEntry* unk_04;
     int unk_08;

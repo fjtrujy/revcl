@@ -1,4 +1,5 @@
 #include "RegPool.h"
+#include "ol_s_inline.h"
 #include "os.h"
 
 struct iInfo;
@@ -515,15 +516,15 @@ int RegPool::func_08059f70()
     return n;
 }
 
-int RegPoolEntry::gatherInflight(RegPoolSub** out)
+int RegPoolEntry::gatherInflight(ol_s** out)
 {
     int n = 0;
     int i;
     for (i = 0; i != unk_28; i++) {
-        RegPoolSlot* s = getRP(i);
+        rPart* s = getRP(i);
         if (s->unk_24.unk_12)
             out[n++] = &s->unk_24;
-        RegPoolSub* p = s->unk_4c;
+        ol_s* p = s->unk_4c;
         for (int j = 0; j != 4; j++, p++)
             if (p->unk_12)
                 out[n++] = p;
@@ -531,7 +532,7 @@ int RegPoolEntry::gatherInflight(RegPoolSub** out)
     return n;
 }
 
-int RegPool::gatherInflight(RegPoolSub** out)
+int RegPool::gatherInflight(ol_s** out)
 {
     int n = 0;
     for (int i = 0; i != unk_08; i++) {
@@ -548,4 +549,112 @@ int RegPool::gatherInflight(RegPoolSub** out)
         n += r;
     }
     return n;
+}
+
+bool rPart::flushPending()
+{
+    if (unk_3e) {
+        func_0804ad38("rPart::flushPending - issueLock was set (%d)\n", unk_3e);
+        return false;
+    }
+    for (int i = 0; i != 4; i++)
+        unk_4c[i].reset();
+    unk_38 = 0;
+    unk_24.reset();
+    return true;
+}
+
+ol_s* rPart::func_0805a164()
+{
+    for (int i = 0; i != 4; i++) {
+        if (!unk_4c[i].unk_12) {
+            unk_4c[i].reset();
+            return &unk_4c[i];
+        }
+    }
+    return 0;
+}
+
+bool rPart::cycle(bool flag)
+{
+    if (flag) {
+        unk_3e = 0;
+        if (unk_38 && unk_38 != &unk_24) {
+            unk_24.func_08058054(unk_38);
+            unk_38 = &unk_24;
+        }
+        for (int i = 0; i != 4; i++)
+            unk_4c[i].reset();
+        ol_s* cur = &unk_24;
+        if (cur->unk_12)
+            cur->unk_12 = 0;
+    } else {
+        int n = 0;
+        ol_s* cur = &unk_24;
+        int c = cur->unk_12;
+        if (c) {
+            int v = c - 1;
+            cur->unk_12 = v > 255 ? 255 : v;
+            n = 1;
+        }
+        for (int i = 0; i != 4; i++) {
+            ol_s* p = &unk_4c[i];
+            int c = p->unk_12;
+            if (!c)
+                continue;
+            int v = c - 1;
+            p->unk_12 = v > 255 ? 255 : v;
+            if (v == 0) {
+                if (++n > 1) {
+                    func_0804ad38("WARNING !! CYCLE wrote thru more than once!\n");
+                    return false;
+                }
+                cur->func_08058054(p);
+                unk_3c = 0;
+            }
+        }
+    }
+    if (++unk_3c == 0x7fff)
+        unk_3c = 0x7fff;
+    if (unk_3e)
+        unk_3e--;
+    return true;
+}
+
+void RegPoolEntry::func_0805a300()
+{
+    unk_35 = 0;
+    unk_38 = 0;
+    unk_36 = 0;
+    for (int i = 0; i != 4; i++)
+        unk_44[i].func_0805a3cc();
+}
+
+void RegPoolEntry::func_0805a340()
+{
+}
+
+void RegPoolEntry::func_0805a348()
+{
+    for (int i = 0; i != 4; i++) {
+        rPart* p = &unk_44[i];
+        p->unk_40 = -1;
+        p->unk_42 = -1;
+        p->unk_44 = -1;
+    }
+}
+
+void rPart::func_0805a374()
+{
+    unk_40 = -1;
+    unk_42 = -1;
+    unk_44 = -1;
+}
+
+void RegPoolEntry::func_0805a390()
+{
+    unk_38 = 0;
+    unk_36 = 0;
+    for (int i = 0; i != 4; i++)
+        unk_44[i].func_0805a3cc();
 }

@@ -1,30 +1,11 @@
 // olList / ol_s operand-location lists, CIE group 5.
 #pragma implementation "ol_s.h"
+#pragma implementation "ol_s_copy.h"
 #include "Instr.h"
 #include "ol_s.h"
+#include "ol_s_inline.h"
+#include "ol_s_copy.h"
 #include "os.h"
-
-inline void ol_s::reset()
-{
-    unk_13 = 0;
-    unk_04 = 0;
-    unk_10 = -1;
-    unk_12 = 0;
-    unk_00 = 0;
-    unk_11 = 0;
-    unk_0c = 0;
-    unk_08 = 0;
-}
-
-inline bool ol_s::isExt()
-{
-    return unk_13 & 1;
-}
-
-inline ol_s::ol_s()
-{
-    reset();
-}
 
 void olList::func_08057e9c()
 {
