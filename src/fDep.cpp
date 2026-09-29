@@ -1,13 +1,16 @@
+#pragma implementation "fDep.h"
 #include "os.h"
 #include "Instr.h"
 #include "ol_s.h"
 #include "mValue.h"
 #include "instStream.h"
 #include "workTable.h"
+#include "fDep.h"
 
 bool BuildfDepList(workTable *wt, bool force, bool);
-bool func_08065d40(Instr *a, Instr *b);
-void func_08065fd4(Instr *in, Instr *other);
+bool tagsMatch(Instr *a, Instr *b);
+bool func_08065fd4(Instr *in, Instr *other);
+bool copyCloneFdeps(Instr *in, ol_s *o, olList *dst);
 
 Operand *getEA(Instr *i)
 {
@@ -112,23 +115,6 @@ bool instStream::func_0806563c(bool a, bool b)
     return BuildfDepList(unk_218, a, b);
 }
 
-inline bool fdep_Link(Instr *pre, Instr *post)
-{
-    if (!pre && !post) {
-        func_0804ad38("fdep_Link -passed a null ptr\n");
-        return false;
-    }
-    if (!pre->unk_13a8.func_0805826c(post)) {
-        func_0804ad38("failed to add post to the post list\n");
-        return false;
-    }
-    if (!post->unk_13a0.func_0805826c(pre)) {
-        func_0804ad38("failed to add pre to the pre list\n");
-        return false;
-    }
-    return true;
-}
-
 bool BuildfDepList(workTable *wt, bool force, bool)
 {
     Instr *in;
@@ -191,7 +177,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                 int type = (unsigned char)o->unk_13ce;
                 if (((b20 && type == 2) || (b10 && type == 1))
                     && (!ea || ((o->getRamBits() & ramBits)
-                                && (force || func_08065d40(o, in) || sameEA(in, o)))))
+                                && (force || tagsMatch(o, in) || sameEA(in, o)))))
                     dep = true;
                 else if (b40 && (o->unk_13d0 & 0x40)) {
                     b40 = false;
@@ -259,6 +245,61 @@ bool BuildfDepList(workTable *wt, bool force, bool)
         in->func_08054008(false);
         in->unk_13a0.func_08057e9c();
         in->unk_13a8.func_08057e9c();
+    }
+    return true;
+}
+
+bool tagsMatch(Instr *a, Instr *b)
+{
+    char *p = a->unk_139c;
+    if (!p)
+        return false;
+    char *q0 = b->unk_139c;
+    if (!q0)
+        return false;
+    while (*p) {
+        char *q = q0;
+        while (*q) {
+            char *s = p;
+            while (*q && *s && *q != ':' && *s != ':') {
+                q++;
+                s++;
+            }
+            if (*q == *s)
+                return true;
+            while (*q && *q != ':')
+                q++;
+            if (*q == ':')
+                q++;
+        }
+        while (*p && *p != ':')
+            p++;
+        if (*p == ':')
+            p++;
+    }
+    return false;
+}
+
+bool fixupCloneFdeps(workTable *wt)
+{
+    int n = 0;
+    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        Instr *orig = in->unk_08;
+        n += 8;
+        in->unk_13e4 = n;
+        if (!orig) {
+            func_0804ad38("no original set\n");
+            func_0804adf0(-1);
+        }
+        in->unk_13f0.unk_20 = orig->unk_13f0.unk_20;
+        if (!copyCloneFdeps(in, orig->unk_13a0.unk_00, &in->unk_13a0)) {
+            func_0804ad38("failed to fixup the pre fdep list\n");
+            return false;
+        }
+        if (!copyCloneFdeps(in, orig->unk_13a8.unk_00, &in->unk_13a8)) {
+            func_0804ad38("failed to fix the post fdeps\n");
+            return false;
+        }
     }
     return true;
 }
