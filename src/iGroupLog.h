@@ -12,6 +12,9 @@ public:
 
     iGroupLog();
     ~iGroupLog();
+    static int init();
+    static int reset();
+    static int add(Instr *ins);
 };
 
 #endif
