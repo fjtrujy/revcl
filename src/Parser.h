@@ -24,6 +24,8 @@ public:
     ~LocTag() {}
     char *func_0805086c(int *commentMode, char *in);
     void func_08050c40(int);
+    char *func_08050be4(int, int);
+    bool func_08050f48();
 };
 
 // Source parser living on main's stack (CIE group 2). Name is a guess.
@@ -41,10 +43,12 @@ public:
     int func_0805030c(const char *name, int n);
     int FindLocTag(const char *name, int n);
     bool func_0805041c(char *line);
+    bool func_08050738(int i);
 
     Line lines[0x2000];
     int unk_10000;          // line count
-    char unk_10004[8];
+    char *unk_10004;        // name of last ".include" seen (loctag kind 1)
+    char *unk_10008;        // name of last macro label seen (loctag kind 2)
     LocRef unk_1000c[16];
     int unk_1008c;
     char *unk_10090;        // raw buffer
@@ -52,5 +56,12 @@ public:
     int unk_10098;
     LocTag *unk_1009c;
 };
+
+bool func_080506e0(const char *s);
+bool func_08050708(char c);
+bool func_08050780(const char *s, const char *kw);
+bool func_080507f4(const char *s);
+bool func_08050810(const char *s);
+bool func_0805082c(LocTag *t);
 
 #endif

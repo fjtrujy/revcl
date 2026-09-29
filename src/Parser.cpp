@@ -8,6 +8,7 @@
 
 int mstrlen(const char *s);
 bool func_0804c03c(const char *a, const char *b);
+bool func_0804bfcc(const char *a, const char *b);
 
 int g_080b3140 = 0;
 
@@ -119,7 +120,8 @@ void Parser::reset()
     }
 }
 
-extern char *g_080b3148;    // whitespace set
+extern char *g_080b3144;    // gasp line-number chars
+extern char *g_080b3148;    // token (non-whitespace) char set
 extern char *g_080b314c;    // block-start keyword
 extern char *g_080b3150;    // block-end keyword
 
@@ -330,4 +332,163 @@ int Parser::FindLocTag(const char *name, int n)
         if (lines[i].unk_04 == n && func_0804c03c(lines[i].unk_00, name))
             return i;
     return -1;
+}
+
+static inline bool isGaspDigit(const char *s)
+{
+    for (const char *q = g_080b3144; *q; q++)
+        if (*q == *s)
+            return true;
+    return false;
+}
+
+bool Parser::func_0805041c(char *line)
+{
+    int stack[16];
+    int depth = 0;
+    if (!line)
+        return false;
+    if (*line != ';')
+        return false;
+    char *p = line + 1;
+    while (*p && !isGaspDigit(p))
+        p++;
+    while (isGaspDigit(p)) {
+        int n = func_0804add4(p);
+        if (!n) {
+            func_0804ad38("bad gasp char in line %s\n", line);
+            return false;
+        }
+        if (depth > 15) {
+            func_0804ad38("exceeded maximum depth for the loctag stack\n");
+            return false;
+        }
+        stack[depth++] = n;
+        while (isGaspDigit(p) && *p != '.')
+            p++;
+        if (*p != '.')
+            break;
+        p++;
+    }
+    if (!depth) {
+        func_0804ad38("no gasp line entries!\n");
+        return false;
+    }
+    if (depth != unk_1008c) {
+        int d = depth - unk_1008c;
+        if (d > 1) {
+            func_0804ad38("jumped too far  in gasp depth\n");
+            return false;
+        }
+        if (d == 1) {
+            int idx;
+            if (unk_10008)
+                idx = func_0805030c(unk_10008, 2);
+            else if (unk_10004)
+                idx = func_0805030c(unk_10004, 1);
+            else {
+                func_0804ad38("neither previous include or previous macro set\n");
+                return false;
+            }
+            if (idx < 0) {
+                func_0804ad38("failed to add loc tag for include directive\n");
+                return false;
+            }
+            unk_1000c[depth - 1].unk_00 = &lines[idx];
+        }
+    }
+    bool isInclude = false;
+    for (;;) {
+        while (*p && !isWhite(p))
+            p++;
+        if (!*p)
+            break;
+        char *e = p;
+        while (*e && isWhite(e))
+            e++;
+        *e = 0;
+        if (func_0804bfcc(p, ".include")) {
+            p = e + 1;
+            isInclude = true;
+            continue;
+        }
+        if (e[-1] == ':') {
+            p = e;
+            continue;
+        }
+        if (isInclude) {
+            unk_10004 = p;
+            unk_10008 = 0;
+        } else {
+            unk_10008 = p;
+            unk_10004 = 0;
+        }
+        break;
+    }
+    unk_1008c = depth;
+    for (int i = 0; i != unk_1008c; i++)
+        unk_1000c[i].unk_04 = stack[i];
+    return true;
+}
+
+bool func_080506e0(const char *s)
+{
+    if (!s || !*s)
+        return false;
+    while (*s)
+        s++;
+    return s[-1] == ':';
+}
+
+bool func_08050708(char c)
+{
+    return isWhite(&c);
+}
+
+bool Parser::func_08050738(int i)
+{
+    LocTag *t;
+    if (i < 0 || i >= unk_10098)
+        t = 0;
+    else
+        t = &unk_1009c[i];
+    if (t)
+        return t->func_08050f48();
+    return false;
+}
+
+bool func_08050780(const char *s, const char *kw)
+{
+    if (!s)
+        return false;
+    while (*s && !isWhite(s) && *s != '\n')
+        s++;
+    while (*kw && *s && *s == *kw) {
+        s++;
+        kw++;
+    }
+    if (!*kw)
+        return true;
+    return false;
+}
+
+bool func_080507f4(const char *s)
+{
+    return func_08050780(s, g_080b314c);
+}
+
+bool func_08050810(const char *s)
+{
+    return func_08050780(s, g_080b3150);
+}
+
+bool func_0805082c(LocTag *t)
+{
+    bool r = false;
+    if (t->unk_00) {
+        if (t->unk_8c)
+            r = true;
+    } else if (!t->unk_8c)
+        r = true;
+    return r;
 }
