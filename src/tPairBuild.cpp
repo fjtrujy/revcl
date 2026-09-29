@@ -1,13 +1,14 @@
 #include "Program.h"
-#include "traceNode.h"
+#include "instStream.h"
+#include "regRef.h"
 
 int func_0804ad38(const char *fmt, ...);
-bool func_08061c34(traceNode *n);
-bool func_080615b0(Program *p, traceNode *n);
+bool func_08061c34(instStream *n);
+bool func_080615b0(Program *p, instStream *n);
 bool func_080614bc(Program *p);
-int func_08061cb0(Program *p, traceNode *n);
+int func_08061cb0(Program *p, instStream *n);
 
-bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, traceNode *t, void *b)
+bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b)
 {
     if (!t) {
         func_0804ad38("int_buildTpairs - null arg\n");
@@ -19,7 +20,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, traceNode *t, void
     p->unk_e4 = 0;
     p->unk_b5 = 0;
     p->unk_b4 = 0;
-    for (traceNode *i = p->unk_a0; i; i = i->unk_108) {
+    for (instStream *i = p->unk_a0; i; i = i->unk_108) {
         if (!func_08061c34(i)) {
             func_0804ad38("failed to do a local init for the back trace\n");
             return false;
@@ -29,7 +30,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, traceNode *t, void
         func_0804ad38("failed on the initial extend\n");
         return false;
     }
-    for (traceNode *i = p->unk_e4; i; i = i->unk_25c) {
+    for (instStream *i = p->unk_e4; i; i = i->unk_25c) {
         i->unk_244 = 0;
         i->unk_24c = 0;
         i->unk_240 = 0;
@@ -48,7 +49,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, traceNode *t, void
         func_0804ad38("there's a mismatch between reg and regref\n");
         return false;
     }
-    for (traceNode *s = p->unk_dc; s; s = s->unk_250) {
+    for (instStream *s = p->unk_dc; s; s = s->unk_250) {
         regRef *sr = s->unk_234;
         if (!sr) {
             func_0804ad38("there's no regref in t src\n");

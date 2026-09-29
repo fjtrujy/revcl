@@ -5,6 +5,7 @@
 #include "os.h"
 
 class workTable;
+struct regRef;
 
 class instStream {
 public:
@@ -18,9 +19,28 @@ public:
         return unk_218;
     }
 
-    char unk_00[0x218];
+    bool func_0805e4bc();         // gather stats
+    bool func_0806563c(bool a, bool b);  // build memory dependencies
+    bool func_0806d5cc();         // flow reset
+    unsigned char func_0806d908(); // code mode
+    const char *func_0806d934();  // code mode name
+
+    char unk_00[0x108];
+    instStream *unk_108;         // next in Program::unk_a0
+    char unk_10c[0x218 - 0x10c];
     workTable *unk_218;  // work table
-    char unk_21c[0x260 - 0x21c];
+    char unk_21c[0x234 - 0x21c];
+    regRef *unk_234;
+    char unk_238[4];
+    int unk_23c;                // dst key
+    int unk_240;
+    int unk_244;
+    int unk_248;
+    int unk_24c;
+    instStream *unk_250;        // next in Program::unk_dc
+    char unk_254[4];
+    instStream *unk_258;        // next in Program::unk_e0
+    instStream *unk_25c;        // next in Program::unk_e4
     char unk_260;      // set when stream takes part in a stall
     char unk_261[0x5f];
     short unk_2c0;     // stream id
