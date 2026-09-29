@@ -52,7 +52,7 @@ Instr::Instr(iInfo *info)
     unk_141c = 0;
     unk_13d2 = -1;
     unk_138e = -1;
-    func_0806a310();
+    resetImmFixup();
     unk_34 = info;
     unk_13d7 = info->unk_0e;
     unk_138c = info->unk_0e;

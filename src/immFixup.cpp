@@ -466,3 +466,11 @@ bool Instr::hasImmFixup()
         return true;
     return false;
 }
+
+void Instr::resetImmFixup()
+{
+    unk_13d4 = 0;
+    unk_13d5 = 0;
+    unk_13d6 = -1;
+    unk_13d8.clear();
+}
