@@ -2,6 +2,7 @@
 #define PROGRAM_H
 
 #include "mList.h"
+#include "VisitCache.h"
 
 struct CpuDef;
 class Parser;
@@ -44,7 +45,9 @@ struct Program {
     char unk_a4[0x10];
     char unk_b4;
     char unk_b5;
-    char unk_b6[0x1e];
+    char unk_b6[2];
+    int unk_b8;
+    VisitCache unk_bc;  // back-trace visit cache
     instStream *unk_d4; // t target
     char unk_d8[4];
     instStream *unk_dc; // sources, chained via unk_250

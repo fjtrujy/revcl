@@ -1,10 +1,12 @@
 #pragma implementation "subCache.h"
+#pragma implementation "VisitCache.h"
 #include "Program.h"
 #include "instStream.h"
 #include "workTable.h"
 #include "RegPool.h"
 #include "os.h"
 #include "subCache.h"
+#include "VisitCache.h"
 
 int buildDepCount_080b33a4;
 
