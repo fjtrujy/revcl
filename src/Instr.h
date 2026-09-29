@@ -10,6 +10,8 @@ class instStream;
 class LocTag;
 class Instr;
 struct ol_s;
+struct Operand;
+struct regUse;
 
 // Opcode descriptor ("iInfo", from the null-argument error string).
 struct iOpDesc {
@@ -90,12 +92,12 @@ public:
     int unk_1c;
     short unk_20;
     short unk_22;
-    int unk_24;
-    char unk_28;
-    char unk_29;
-    char unk_2a[2];
+    void *unk_24;           // owner: Instr* (oType 1) or regUse* (oType 2)
+    unsigned char unk_28;   // part
+    unsigned char unk_29;   // operand index
+    short unk_2a;
     char unk_2c;
-    char unk_2d;
+    char unk_2d;            // owner type
     short unk_2e;
     short unk_30;
     short unk_32;
@@ -117,6 +119,14 @@ public:
     cls0805bcc4() { func_0805bcc4(); }
     ~cls0805bcc4() {}
     bool func_0805bcc4();
+    bool setOwner(int part, Instr *instr, int opnd);
+    bool setOwner(int part, regUse *rf);
+    bool clearOwner();
+    Instr *ownerInstr();
+    regUse *ownerRegUse();
+    Operand *ownerOperand();
+    int ownerOpnd();
+    int getPart();
 };
 
 int func_08070300(unsigned char);
