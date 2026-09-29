@@ -161,16 +161,17 @@ public:
 class cls0805c244 {
 public:
     short unk_00;
-    int unk_04;
+    unsigned char unk_02;   // part
+    RegPoolEntry *unk_04;   // register
     cls0805c244 *unk_08;    // next locklist
-    int unk_0c[4];
+    cls0805bcc4 *unk_0c[4]; // external output locks
     cls0805bcc4 *unk_1c;    // output lock list (linked by lock->unk_08)
     cls0805bcc4 *unk_20;    // sorted output list head (by unk_32, linked by unk_10)
     short unk_24;           // nOutLocks
     short unk_26;           // nToGo
     char unk_28;
     char unk_29;
-    char unk_2a;
+    unsigned char unk_2a;   // extern output count
     char unk_2b;
 
     cls0805c244();
@@ -188,7 +189,16 @@ public:
     bool undoOutputLock(cls0805bcc4 *lk);
     int func_0805c938(int n);
     bool isOk(cls0805bcc4 *lk, int type, bool inserted);
+    bool moveOutputLock(cls0805bcc4 *lk);
+    bool moveInputLock(cls0805bcc4 *in);
+    bool addExtOutput(cls0805bcc4 *lk, bool flag);
+    Instr *earliestExt();
+    int func_0805d3c4();
 };
+
+bool freeLockLists(cls0805c244 *p);
+cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part);
+const char *rlmtName(unsigned char t);
 
 int func_08070300(unsigned char);
 
@@ -370,6 +380,7 @@ public:
     char unk_1391;
     char unk_1392;
     short unk_1394;
+    short unk_1396;
     int unk_1398;
     char *unk_139c;
     olList unk_13a0;

@@ -778,3 +778,169 @@ short cls0805bcc4::func_0805d0dc()
         return unk_32 / g_080b336c;
     return 0;
 }
+
+bool cls0805c244::moveOutputLock(cls0805bcc4 *lk)
+{
+    if (!lk) {
+        func_0804ad38("moveoutputlock - null pointer\n");
+        return false;
+    }
+    if (lk->unk_14 != 2) {
+        func_0804ad38("moveoutputlock - bad type\n");
+        return false;
+    }
+    if (!lk->unk_2c) {
+        func_0804ad38("moveoutputlock - not already inserted\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (!lk->calcStats(0)) {
+        func_0804ad38("moveoutputlock failed to set lUsed\n");
+        checkCounts();
+        func_0804adf0(-1);
+    }
+    cls0805bcc4 *cur = unk_20;
+    cls0805bcc4 *prev = 0;
+    unk_20 = 0;
+    while (cur) {
+        cls0805bcc4 *next = cur->unk_10;
+        cur->unk_10 = 0;
+        if (cur != lk) {
+            if (!unk_20)
+                unk_20 = cur;
+            else
+                prev->unk_10 = cur;
+            prev = cur;
+        }
+        cur = next;
+    }
+    prev = 0;
+    for (cur = unk_20; cur; cur = cur->unk_10) {
+        int rl = lk->unk_30;
+        int crl = cur->unk_30;
+        if ((short)rl == (short)crl) {
+            func_0804ad38("during a lock sort for output locks, two had the same rline..\n");
+            checkCounts();
+            func_0804adf0(-1);
+        }
+        int line = lk->unk_32;
+        int cline = cur->unk_32;
+        if ((short)line < (short)cline)
+            break;
+        prev = cur;
+    }
+    if (prev) {
+        lk->unk_10 = prev->unk_10;
+        prev->unk_10 = lk;
+    } else {
+        lk->unk_10 = unk_20;
+        unk_20 = lk;
+    }
+    return true;
+}
+
+bool cls0805c244::moveInputLock(cls0805bcc4 *in)
+{
+    if (!in->unk_0c->calcStats(0)) {
+        func_0804ad38("moveinputlock failed to calcStats\n");
+        func_0804adf0(-1);
+    }
+    return true;
+}
+
+bool cls0805c244::addExtOutput(cls0805bcc4 *lk, bool flag)
+{
+    bool ok = true;
+    if (lk->unk_16) {
+        func_0804ad38("lock is already external output\n");
+        ok = false;
+    } else if (unk_2a > 3) {
+        func_0804ad38("too many extern outputs\n");
+        ok = false;
+    } else if (unk_2a && g_080de284 == 1) {
+        if (!flag) {
+            func_0804ad38("more than one xo for rlock uta..count=%d\n", unk_2a);
+            checkCounts();
+            ok = false;
+        }
+    } else {
+        unk_2b = flag;
+        unk_0c[unk_2a] = lk;
+        lk->unk_16 = ++unk_2a;
+    }
+    return ok;
+}
+
+Instr *cls0805c244::earliestExt()
+{
+    Instr *res = 0;
+    cls0805bcc4 *lk = unk_20;
+    if (!lk || lk->unk_2d != 2)
+        return res;
+    int best = 30000;
+    for (cls0805bcc4 *ch = lk->unk_0c; ch; ch = ch->unk_08) {
+        if (ch->unk_19 != 2) {
+            Instr *in = ch->unk_2d == 1 ? (Instr *)ch->unk_24 : 0;
+            if (!in) {
+                func_0804ad38("not get in for earliest ext\n");
+                func_0804adf0(-1);
+            }
+            if (in->unk_13e8.unk_00 < best) {
+                best = in->unk_1396;
+                res = in;
+            }
+        }
+    }
+    return res;
+}
+
+int cls0805c244::func_0805d3c4()
+{
+    cls0805bcc4 *lk = unk_1c;
+    int n = 0;
+    while (lk) {
+        if (lk->unk_22)
+            n++;
+        lk = lk->unk_08;
+    }
+    return n;
+}
+
+bool freeLockLists(cls0805c244 *p)
+{
+    while (p) {
+        cls0805c244 *next = p->unk_08;
+        if (p)
+            ::operator delete(p);
+        p = next;
+    }
+    return true;
+}
+
+cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part)
+{
+    for (; p; p = p->unk_08) {
+        if (p->unk_04 == reg && p->unk_02 == part) {
+            if (reg->func_0805a908(part) && reg->func_0805a908(part) != (int)p) {
+                func_0804ad38("rg points to rll, but rll list not it\n");
+                func_0804adf0(-1);
+            }
+            return p;
+        }
+    }
+    return 0;
+}
+
+const char *rlmtName(unsigned char t)
+{
+    switch (t) {
+    case 1:
+        return "RLMT_MOVEAGE";
+    case 2:
+        return "RLMT_AUTOAGE";
+    case 0:
+        return "RLMT_NOMOVE";
+    default:
+        return "RLMT_UNKNOWN";
+    }
+}
