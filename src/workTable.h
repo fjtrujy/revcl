@@ -4,26 +4,10 @@
 
 #include "Instr.h"
 #include "tPairList.h"
+#include "regUseSlot.h"
 
 struct ol_s;
 struct RegPoolEntry;
-
-struct regUseSlot {
-    olList unk_00;
-    olList unk_08;
-    tPairList unk_10;
-    olList unk_18;
-    olList unk_20;
-    olList unk_28;
-    short unk_30;
-    short unk_32;
-    short unk_34[4];
-    short unk_3c[13];
-    int unk_58;
-    cls0805bcc4 unk_5c;
-
-    regUseSlot();
-};
 
 struct regUse {
     regUse *unk_00;          // prev
@@ -46,6 +30,7 @@ struct regUse {
 
     regUse(RegPoolEntry *reg);
     ~regUse();
+    void func_0805b51c();
 };
 
 class regUseList {
@@ -56,6 +41,10 @@ public:
     regUse *AddNewRegRef(RegPoolEntry *reg);
     bool append(regUse *ru);
     bool remove(regUse *ru);
+    bool func_0805b0cc();
+    bool func_0805b0f8();
+    void func_0805b44c();
+    int func_0805b494(int regClass);
     regUse *func_0805b5dc(RegPoolEntry *reg);
 
     regUse *find(RegPoolEntry *reg)
