@@ -20,6 +20,8 @@ struct ol_s {
     inline bool isExt();
     void func_08057fbc();
     void func_08057fec();
+    ol_s *func_080583ac();
+    ol_s *func_08058414();
     void func_08058054(ol_s *src)
     {
         reset();

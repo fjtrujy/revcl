@@ -127,3 +127,95 @@ ol_s *olList::func_080580fc(Instr *inst, int op, int slot, bool ext)
     unk_04++;
     return p;
 }
+
+ol_s *olList::func_0805826c(Instr *inst)
+{
+    ol_s *prev = 0;
+    ol_s *p;
+    for (p = unk_00; p; p = p->unk_00) {
+        if (inst == p->unk_04)
+            return p;
+        prev = p;
+    }
+    p = allocOL();
+    p->init(inst, 0, 0, false);
+    if (prev)
+        prev->unk_00 = p;
+    else
+        unk_00 = p;
+    unk_04++;
+    return p;
+}
+
+ol_s *olList::func_08058348(ol_s *ol, bool ext)
+{
+    return func_080580fc(ol->unk_04, ol->unk_10, ol->unk_11, ext);
+}
+
+ol_s *olList::func_08058370()
+{
+    ol_s *p = unk_00;
+    if (p && p->isExt()) {
+        p = p->unk_00;
+        while (p && p->isExt())
+            p = p->unk_00;
+    }
+    return p;
+}
+
+ol_s *ol_s::func_080583ac()
+{
+    ol_s *p = unk_00;
+    while (p && p->isExt())
+        p = p->unk_00;
+    return p;
+}
+
+ol_s *olList::func_080583d8()
+{
+    ol_s *p = unk_00;
+    if (p && !p->isExt()) {
+        p = p->unk_00;
+        while (p && !p->isExt())
+            p = p->unk_00;
+    }
+    return p;
+}
+
+ol_s *ol_s::func_08058414()
+{
+    ol_s *p = unk_00;
+    while (p && !p->isExt())
+        p = p->unk_00;
+    return p;
+}
+
+RegPoolEntry *func_08058440(ol_s *ol)
+{
+    Operand *op = ol->unk_04 ? &ol->unk_04->unk_38[ol->unk_10] : 0;
+    if (op)
+        return op->unk_18;
+    func_0804ae34("no register!\n");
+    return 0;
+}
+
+ol_s *olList::func_08058484(ol_s *src)
+{
+    ol_s *prev = 0;
+    ol_s *p;
+    for (p = unk_00; p; p = p->unk_00) {
+        if (src->unk_12 < p->unk_12)
+            break;
+        prev = p;
+    }
+    ol_s *n = allocOL();
+    n->func_08058054(src);
+    n->unk_13 |= 1;
+    n->unk_00 = p;
+    if (prev)
+        prev->unk_00 = n;
+    else
+        unk_00 = n;
+    unk_04++;
+    return n;
+}

@@ -64,7 +64,11 @@ public:
     void func_08057e9c();
     void func_08057f2c();
     ol_s *func_080580fc(Instr *inst, int op, int slot, bool ext);
+    ol_s *func_0805826c(Instr *inst);
     ol_s *func_08058348(ol_s *ol, bool ext);
+    ol_s *func_08058370();
+    ol_s *func_080583d8();
+    ol_s *func_08058484(ol_s *src);
 };
 
 // Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).
