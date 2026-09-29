@@ -37,6 +37,28 @@ public:
     char func_0806ffd8();
     char func_08070020();
     bool func_08070044();
+    char func_0807005c();
+};
+
+// List of ol_s nodes returned to a free pool (class name guessed).
+class olList {
+public:
+    ol_s *unk_00;   // head
+    int unk_04;
+
+    olList()
+    {
+        unk_00 = 0;
+        unk_04 = 0;
+    }
+    ~olList() { clear(); }
+    bool clear();
+    void func_08057e9c();
+};
+
+struct OpSlot {
+    char unk_00[0x54];
+    olList unk_54;          // uses
 };
 
 struct Operand {
@@ -44,7 +66,7 @@ struct Operand {
     char unk_04;            // operand kind
     char unk_05;
     char unk_06;
-    char unk_07;
+    unsigned char unk_07;   // register slot mask
     char unk_08;
     char unk_09;            // 1 == register operand
     char unk_0a;
@@ -62,12 +84,14 @@ struct Operand {
     char unk_27;
     char unk_28;
     char unk_29;
-    char unk_2a[0x80 - 0x2a];
-    ol_s *unk_80;           // uses
-    char unk_84[0x19c - 0x84];
+    char unk_2a[2];
+    OpSlot unk_2c[4];       // per register slot
 
     Operand();
     ~Operand();
+    bool func_080563f8();
+    void func_0805665c(int);
+    bool func_080569cc();
     bool isZero()
     {
         int z = 0;
@@ -115,21 +139,6 @@ public:
     ~ptrList();
 };
 
-// List of ol_s nodes returned to a free pool (class name guessed).
-class olList {
-public:
-    ol_s *unk_00;   // head
-    int unk_04;
-
-    olList()
-    {
-        unk_00 = 0;
-        unk_04 = 0;
-    }
-    ~olList() { clear(); }
-    bool clear();
-};
-
 class cls08058718 {
 public:
     short unk_00;
@@ -150,6 +159,12 @@ public:
     ~cls0805e2e4();
 };
 
+// Placeholder for the object at Instr::unk_30 (type unknown).
+struct cls_unk30 {
+    char unk_00[0x10];
+    instStream *unk_10;     // owner stream
+};
+
 class Instr {
 public:
     int unk_00;
@@ -163,7 +178,7 @@ public:
     iLink unk_1c;   // linear list link
     iLink unk_24;   // ToDo/Done list link
     char unk_2c[4];
-    void *unk_30;
+    cls_unk30 *unk_30;
     iInfo *unk_34;  // opcode descriptor
     Operand unk_38[12];
     unsigned char unk_1388;     // flags
@@ -179,7 +194,7 @@ public:
     char unk_1392;
     short unk_1394;
     int unk_1398;
-    int unk_139c;
+    char *unk_139c;
     olList unk_13a0;
     olList unk_13a8;
     short unk_13b0;
@@ -217,13 +232,27 @@ public:
     int unk_1434;
 
     Instr(iInfo *info);
+    ~Instr();
     void func_0806a310();
+    bool isValid()
+    {
+        if (!unk_34)
+            return false;
+        for (int i = 0; i != unk_138b; i++)
+            if (!unk_38[i].func_080563f8())
+                return false;
+        return true;
+    }
+    bool func_08053f4c();
+    bool func_08053fac();
+    void func_08054008(bool);
+    bool func_08054138();
     instStream *func_08054168();  // owner instruction stream
+    bool func_0805417c();
     void leDump(int opnd, int mask);
     bool func_08052f84();
     int func_08053104();
     int func_080532d8();
-    bool func_08053fac();
     int func_08055ac4();
 };
 

@@ -74,3 +74,78 @@ Instr::Instr(iInfo *info)
             op->unk_0a = 0;
     }
 }
+
+Instr::~Instr()
+{
+    if (unk_139c) {
+        delete[] unk_139c;
+        unk_139c = 0;
+    }
+    unk_13d8.clear();
+    unk_13a0.clear();
+    unk_13a8.clear();
+}
+
+bool Instr::func_08053f4c()
+{
+    if (unk_139c) {
+        delete[] unk_139c;
+        unk_139c = 0;
+    }
+    unk_13d8.clear();
+    unk_13a0.clear();
+    unk_13a8.clear();
+    return true;
+}
+
+bool Instr::func_08053fac()
+{
+    if (!unk_34)
+        return false;
+    for (int i = 0; i != unk_138b; i++)
+        if (!unk_38[i].func_080563f8())
+            return false;
+    return true;
+}
+
+void Instr::func_08054008(bool b)
+{
+    if (isValid()) {
+        for (int i = 0; i != unk_138b; i++)
+            unk_38[i].func_0805665c(0);
+        if (b) {
+            for (int j = 0; j != unk_138b; j++) {
+                Operand *op = &unk_38[j];
+                RegPoolEntry *r = op->unk_18;
+                if (r && r->unk_14)
+                    for (int k = 0; k != r->unk_28; k++)
+                        if ((op->unk_07 >> k) & 1)
+                            op->unk_2c[k].unk_54.func_08057e9c();
+            }
+        }
+    }
+}
+
+bool Instr::func_08054138()
+{
+    if (!unk_34)
+        return true;
+    return unk_34->func_0807005c();
+}
+
+instStream *Instr::func_08054168()
+{
+    return unk_30 ? unk_30->unk_10 : 0;
+}
+
+bool Instr::func_0805417c()
+{
+    unk_13a0.clear();
+    unk_13a8.clear();
+    unk_1394 = -1;
+    for (int i = 0; i != unk_138b; i++)
+        if (!unk_38[i].func_080569cc())
+            return false;
+    unk_1434 = 0;
+    return true;
+}
