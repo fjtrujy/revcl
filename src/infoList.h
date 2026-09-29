@@ -5,18 +5,9 @@
 
 #include "Instr.h"
 #include "os.h"
+#include "ol_s.h"
 
 class infoNode;
-
-struct ol_s {
-    ol_s *unk_00;   // next
-    Instr *unk_04;  // instruction
-    int unk_08;
-    int unk_0c;
-    char unk_10;    // operand index
-    char unk_11;    // field bit number
-    unsigned char unk_12;
-};
 
 class iHolder {
 public:

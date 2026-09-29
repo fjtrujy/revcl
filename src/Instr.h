@@ -62,6 +62,7 @@ public:
     ~olList() { clear(); }
     bool clear();
     void func_08057e9c();
+    void func_08057f2c();
     ol_s *func_080580fc(Instr *inst, int op, int slot, bool ext);
     ol_s *func_08058348(ol_s *ol, bool ext);
 };
