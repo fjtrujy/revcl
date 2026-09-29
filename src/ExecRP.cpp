@@ -413,3 +413,70 @@ int func_08051c50(Program *prog, LocTag *t)
 {
     return func_080519f8(t, GetRP(2), true);
 }
+
+int func_08051c70(Program *prog, LocTag *t)
+{
+    return func_080519f8(t, GetRP(1), false);
+}
+
+int func_08051c90(Program *prog, LocTag *t)
+{
+    return func_080519f8(t, GetRP(2), false);
+}
+
+int func_08051cb0(LocTag *t, RegPool *pool)
+{
+    if (!pool) {
+        func_0804ad38("ExecRP_init_reg_all: passed a null pool\n");
+        return 0;
+    }
+    return pool->func_08059c00();
+}
+
+int func_08051ce0(Program *prog, LocTag *t)
+{
+    return ExecRP_init_reg_all(GetRP(1));
+}
+
+int func_08051d1c(Program *prog, LocTag *t)
+{
+    return ExecRP_init_reg_all(GetRP(2));
+}
+
+int func_08051d58(Program *prog, LocTag *t)
+{
+    return 1;
+}
+
+int func_08051d64(Program *prog, LocTag *t)
+{
+    return 0;
+}
+
+bool func_08051d6c(Program *prog, LocTag *t, int v)
+{
+    char buf[0x800];
+    int left = 0x7ff;
+    char *d = buf;
+    for (int i = 1; i < func_0805085c(t); i++) {
+        char *tok = t->func_08050f18(i) ? 0 : t->func_08050be4(i, 0);
+        if (!tok)
+            continue;
+        while (*tok) {
+            *d++ = *tok++;
+            if (--left == 0) {
+                func_0804ad38("ran out of local space for visible list\n");
+                return false;
+            }
+        }
+        *d++ = ':';
+    }
+    *d = 0;
+    mNode *n = prog->unk_4c.func_0804b444(buf);
+    if (!n) {
+        func_0804ad38("failed to process  a visibility directive\n");
+        return false;
+    }
+    n->unk_18 = v;
+    return true;
+}
