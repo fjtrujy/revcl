@@ -74,7 +74,45 @@ public:
 // Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).
 class cls0805bcc4 {
 public:
-    char unk_00[0x50];
+    char unk_00;
+    char unk_01;
+    char unk_02;
+    int unk_04;
+    int unk_08;
+    int unk_0c;
+    int unk_10;
+    char unk_14;
+    char unk_15;
+    char unk_16;
+    char unk_17;
+    char unk_18;
+    char unk_19;
+    int unk_1c;
+    short unk_20;
+    short unk_22;
+    int unk_24;
+    char unk_28;
+    char unk_29;
+    char unk_2a[2];
+    char unk_2c;
+    char unk_2d;
+    short unk_2e;
+    short unk_30;
+    short unk_32;
+    short unk_34;
+    short unk_36;
+    short unk_38;
+    short unk_3a;
+    short unk_3c;
+    short unk_3e;
+    short unk_40;
+    short unk_42;
+    short unk_44;
+    short unk_46;
+    short unk_48;
+    short unk_4a;
+    short unk_4c;
+    short unk_4e;
 
     cls0805bcc4() { func_0805bcc4(); }
     ~cls0805bcc4() {}

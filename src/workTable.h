@@ -13,11 +13,11 @@ struct regUse {
     regUse *unk_00;          // prev
     regUse *unk_04;          // next
     RegPoolEntry *unk_08;    // register
-    bool unk_0c;
-    bool unk_0d;
-    bool unk_0e;
-    bool unk_0f;
-    bool unk_10;
+    unsigned char unk_0c;    // component masks
+    unsigned char unk_0d;
+    unsigned char unk_0e;
+    unsigned char unk_0f;
+    unsigned char unk_10;
     bool unk_11;
     bool unk_12;
     bool unk_13;
@@ -36,6 +36,8 @@ struct regUse {
     bool optReset();
     regUse *Clone();
     const char *regName();
+
+    bool isExternal() { return unk_0c || unk_0d || unk_10; }
 };
 
 class regUseList {
@@ -50,6 +52,9 @@ public:
     bool func_0805b0f8();
     void func_0805b44c();
     int func_0805b494(int regClass);
+    int func_0805ba64(int regClass);
+    void func_0805bab0();
+    void func_0805bb10(int regClass);
     regUse *func_0805b5dc(RegPoolEntry *reg);
     regUse *firstReal();
     regUse *firstVirtual();

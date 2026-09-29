@@ -72,7 +72,7 @@ struct RegPoolEntry {
     bool unk_15;        // allocable
     bool unk_16;
     char unk_17;
-    int unk_18;
+    RegPoolEntry* unk_18;   // allocated physical register
     char unk_1c;        // nonblockid
     char unk_1d[3];
     Instr* unk_20;      // move instruction

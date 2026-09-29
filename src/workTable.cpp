@@ -249,3 +249,99 @@ ol_s *regUseSlot::func_0805ba2c(int pos, bool all)
     }
     return prev;
 }
+
+int regUseList::func_0805ba64(int regClass)
+{
+    int n = 0;
+    for (regUse *p = unk_04; p; p = p->unk_04) {
+        RegPoolEntry *reg = p->unk_08;
+        if (reg->unk_24 != regClass || reg == reg->unk_04->unk_10)
+            continue;
+        if ((~p->unk_0e & p->unk_10) || !p->unk_0f)
+            n++;
+    }
+    return n;
+}
+
+void regUseList::func_0805bab0()
+{
+    if (func_0805b0cc()) {
+        for (int i = 0; i != 12; i++) {
+            RegPool *rp = GetRP(i);
+            if (rp && rp->unk_18) {
+                func_0804acb0("%s\n", rp->unk_2c);
+                func_0805bb10(i);
+            }
+        }
+    }
+}
+
+void regUseList::func_0805bb10(int regClass)
+{
+    regUse *p;
+    for (p = unk_04; p; p = p->unk_04) {
+        RegPoolEntry *reg = p->unk_08;
+        const char *alloc = "UNALLOCATED";
+        if (reg->unk_18)
+            alloc = reg->unk_18->func_0805a8e0();
+        if (reg->unk_14 != true)
+            alloc = reg->func_0805a8e0();
+        int mask = p->unk_0c | p->unk_0d | p->unk_0e | p->unk_0f | p->unk_10;
+        if (reg->unk_24 == regClass && reg != reg->unk_04->unk_10 && p->isExternal())
+            func_0804acb0(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc,
+                          (p->unk_10 & ~(p->unk_0c | p->unk_0d | p->unk_0e | p->unk_0f)) ? "-THR" : "");
+    }
+    for (p = unk_04; p; p = p->unk_04) {
+        RegPoolEntry *reg = p->unk_08;
+        const char *alloc = "UNALLOCATED";
+        if (reg->unk_18)
+            alloc = reg->unk_18->func_0805a8e0();
+        if (reg->unk_14 != true)
+            alloc = reg->func_0805a8e0();
+        int mask = p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d | p->unk_10;
+        if (reg->unk_24 == regClass && reg != reg->unk_04->unk_10 && !p->isExternal())
+            func_0804acb0(" LOCAL : %20s - %s\n", reg->maskName(mask), alloc);
+    }
+}
+
+bool cls0805bcc4::func_0805bcc4()
+{
+    unk_22 = 0;
+    unk_20 = 0;
+    unk_0c = 0;
+    unk_08 = 0;
+    unk_16 = 0;
+    unk_17 = 0;
+    unk_18 = 0;
+    unk_15 = 0;
+    unk_1c = 0;
+    unk_2c = 0;
+    unk_19 = 0;
+    unk_10 = 0;
+    unk_2e = 0;
+    unk_48 = 0;
+    unk_4a = 0;
+    unk_46 = 0;
+    unk_02 = 0;
+    unk_01 = 0;
+    unk_00 = 0;
+    unk_24 = 0;
+    unk_2d = 0;
+    unk_14 = 0;
+    unk_04 = 0;
+    unk_28 = -1;
+    unk_29 = -1;
+    unk_32 = -1;
+    unk_30 = -1;
+    unk_34 = -1;
+    unk_36 = -1;
+    unk_38 = -1;
+    unk_3a = -1;
+    unk_3c = -1;
+    unk_3e = -1;
+    unk_40 = -1;
+    unk_42 = -1;
+    unk_4e = -1;
+    unk_4c = -1;
+    return true;
+}
