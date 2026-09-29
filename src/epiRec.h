@@ -34,6 +34,8 @@ struct epiRec {
         unk_1c = 0;
     }
     bool init(int size, const char *name);
+    void func_08067df0();
+    const char *getName();
 };
 
 #endif

@@ -31,3 +31,14 @@ bool epiRec::init(int size, const char *name)
     unk_14->unk_218 = &unk_14->unk_148;
     return true;
 }
+
+void epiRec::func_08067df0()
+{
+}
+
+const char *epiRec::getName()
+{
+    if (!unk_14)
+        return "!UNNAMED!";
+    return unk_14->func_0806d674();
+}
