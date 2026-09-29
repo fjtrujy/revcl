@@ -466,6 +466,8 @@ public:
 
     Instr(iInfo *info);
     ~Instr();
+    void hasImmValue();
+    bool hasImmFixup();
     void func_0806a310();
     void func_0805f4e0();
     bool isValid()

@@ -7,6 +7,7 @@
 
 bool aaFixup(instStream *s);
 bool func_08069e7c(Instr *in);
+int maddImmediate(Operand *op, mValue *v, int n);
 
 static inline void initImm(Instr *in)
 {
@@ -17,7 +18,7 @@ static inline void initImm(Instr *in)
     in->unk_13d2 = -1;
 }
 
-static inline bool Init_immFixup(instStream *s)
+static inline bool initStreamImm(instStream *s)
 {
     workTable *wt = s->getTable();
     if (!wt) {
@@ -59,7 +60,7 @@ bool func_08069324(Program *p, bool init)
     instStream *s;
     if (init) {
         for (s = p->unk_a0; s; s = s->unk_108)
-            if (!Init_immFixup(s))
+            if (!initStreamImm(s))
                 return false;
         for (s = p->unk_a0; s; s = s->unk_108)
             if (!aaFixup(s))
@@ -69,7 +70,7 @@ bool func_08069324(Program *p, bool init)
             if (!do_immFixup(s))
                 return false;
         for (s = p->unk_a0; s; s = s->unk_108)
-            if (!Init_immFixup(s))
+            if (!initStreamImm(s))
                 return false;
     }
     return true;
@@ -337,4 +338,131 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
     }
     *lid = src[0].lid;
     return true;
+}
+
+static inline bool isCinput(Operand *op)
+{
+    return op->unk_09 == 1;
+}
+
+bool func_08069e7c(Instr *in)
+{
+    instStream *s = in->func_08054168();
+    if (!s) {
+        func_0804ad38("failed to get owner istream from inst during immediate fixup\n");
+        func_0804adf0(-1);
+    }
+    if (!in->unk_13d4)
+        return true;
+    Operand *op = in->getOp(in->unk_13d6);
+    if (!op) {
+        func_0804ad38("failed to get opernad for imm fix\n");
+        func_0804adf0(-1);
+    }
+    if (!isCinput(op)) {
+        func_0804ad38("operand isn't cinput for in fix\n");
+        func_0804adf0(-1);
+    }
+    int ep;
+    if (s->unk_2c2) {
+        if (in->unk_13d2 < 0) {
+            func_0804ad38("loop, epID<0 for operand in im fixup aaDstMode=%d..epMode=%d\n",
+                          in->unk_13d5, in->unk_13d2);
+            in->func_08054008(false);
+            func_0804adf0(-1);
+        }
+        ep = in->unk_13d2;
+    } else {
+        if (in->unk_13d2 >= 0) {
+            func_0804ad38("nonloop, epID>=0 for operand in im fixup aaDstmode=%d..epMode=%d\n",
+                          in->unk_13d5, in->unk_13d2);
+            in->func_08054008(false);
+            func_0804adf0(-1);
+        }
+        ep = 0;
+    }
+    if (in->unk_13d5 == 1)
+        ep--;
+    int lid;
+    if (s->unk_2c2) {
+        olList *oll = &op->unk_2c[0].unk_54;
+        if (!getSrcEpLid(oll, s->unk_2c2, s->unk_2c4, &lid)) {
+            func_0804ad38("failed to determine actual loopid of setter.. we are:\n");
+            in->leDump();
+            if (in->func_08054168())
+                func_0804ad38("parent stream is : %s\n", in->func_08054168()->func_0806d674());
+            func_0804ad38("expected was %d\n", in->unk_13d2);
+            func_0804adf0(-1);
+        }
+    } else
+        lid = op->unk_27 ? -1 : 0;
+    if (ep != lid) {
+    int diff = ep - lid;
+    int dir;
+    if (diff < 0) {
+        dir = -1;
+        diff = -diff;
+    } else
+        dir = 1;
+    int mul;
+    switch (in->unk_13d4) {
+    case 1:
+        mul = 1;
+        break;
+    case 2:
+        mul = -1;
+        break;
+    case 3:
+        func_0804ad38("well - I'll code this one later\n");
+        func_0804adf0(-1);
+        return false;
+    default:
+        func_0804ad38("bad opchar mode %d\n", in->unk_13d4);
+        func_0804adf0(-1);
+        return false;
+    }
+    if (dir * mul < 0)
+        diff = -diff;
+    int r = maddImmediate(&in->unk_38[in->unk_13d6], &in->unk_13d8, diff);
+    if (r < 0) {
+        func_0804ad38("failed to madd immediates\n");
+        in->leDump(in->unk_13d6);
+        func_0804adf0(-1);
+    }
+    if (r == 1) {
+        func_0804ad38("ran out of bits for immfixup\n");
+        return false;
+    }
+    }
+    return true;
+}
+
+bool Init_immFixup(instStream *s)
+{
+    workTable *wt = s->getTable();
+    if (!wt) {
+        func_0804ad38("Init_immFixup - failed to get work table\n");
+        return false;
+    }
+    s->unk_2c2 = 0;
+    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+        initImm(in);
+    return true;
+}
+
+static inline bool immValid(mValue *v)
+{
+    return v->isValid();
+}
+
+void Instr::hasImmValue()
+{
+    immValid(&unk_13d8);
+}
+
+bool Instr::hasImmFixup()
+{
+    if (unk_13d4 != 0 || unk_13d5 != 0 || unk_13d6 != -1 || unk_13d8.isValid())
+        return true;
+    return false;
 }
