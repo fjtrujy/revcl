@@ -18,9 +18,11 @@ struct RegPoolSlot {
     RegPoolSub unk_4c[4];
 };
 
+class RegPool;
+
 struct RegPoolEntry {
     int unk_00;
-    int unk_04;
+    RegPool *unk_04;    // owning pool
     RegPoolEntry* next;
     const char* func_0805a8e0();
 
@@ -52,7 +54,7 @@ public:
     int unk_08;
     short unk_0c;
     short unk_0e;
-    int unk_10;
+    RegPoolEntry* unk_10;   // zero register
     int unk_14;
     int unk_18;
     RegPoolEntry* unk_1c;
