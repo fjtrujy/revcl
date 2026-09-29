@@ -23,7 +23,7 @@ struct regUse {
     bool unk_13;
     bool unk_14;
     char unk_15;
-    char unk_16[2];
+    short unk_16;
     short unk_18;
     int unk_1c;
     regUseSlot unk_20[4];
@@ -34,6 +34,8 @@ struct regUse {
     regUse *nextReal();
     regUse *nextVirtual();
     bool optReset();
+    regUse *Clone();
+    const char *regName();
 };
 
 class regUseList {

@@ -23,6 +23,12 @@ struct regUseSlot {
 
     regUseSlot();
     ~regUseSlot() {}
+    bool optReset();
+    bool addOutput(ol_s *ol);
+    void func_0805b814();
+    void func_0805b824();
+    cls0805bcc4 *func_0805b830();
+    ol_s *func_0805ba2c(int pos, bool all);
 };
 
 #endif
