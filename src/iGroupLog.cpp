@@ -1,6 +1,11 @@
 #include <stdlib.h>
 #include "iGroupLog.h"
+#include "Instr.h"
+#include "workTable.h"
+#include "RegPool.h"
+#include "ol_s.h"
 
+int func_0804acb0(const char *fmt, ...);
 int func_0804ad38(const char *fmt, ...);
 
 Instr **iGroupLog::table;
@@ -61,4 +66,72 @@ int iGroupLog::add(Instr *ins)
     }
     table[count] = ins;
     return count++;
+}
+
+int iGroupLog::logTable(workTable *wt)
+{
+    if (table) {
+        func_0804ad38("logTable - called - but the table is already open\n");
+        return 0;
+    }
+    for (regUse *p = wt->unk_14.unk_04; p; p = p->unk_04) {
+        RegPoolEntry *reg = p->unk_08;
+        for (int i = 0; i != reg->unk_28; i++) {
+            if (((p->unk_0c & p->unk_0d) >> i) & 1) {
+            Instr *in;
+            for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+                in->unk_0e = 0;
+            for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+                for (int j = 0; j != in->unk_138b; j++) {
+                    Operand *op = &in->unk_38[j];
+                    RegPoolEntry *r = op->unk_18;
+                    if (r == reg && op->unk_27)
+                        for (int k = 0; k != r->unk_28; k++) {
+                            if (op->isReg2() && ((op->unk_27 >> k) & 1))
+                                in->func_08055aa8();
+                            if (op->isReg() && ((op->unk_27 >> k) & 1))
+                                in->func_08055a88();
+                        }
+                }
+            bool changed;
+            do {
+                changed = false;
+                for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+                    if (in->unk_0e_1)
+                        for (int j = 0; j != in->unk_138b; j++) {
+                            Operand *op = &in->unk_38[j];
+                            RegPoolEntry *r = op->getReg2();
+                            if (r)
+                                for (int k = 0; k != r->unk_28; k++)
+                                    for (ol_s *o = op->unk_2c[k].unk_54.func_08058370(); o; o = o->func_080583ac()) {
+                                        Instr *t = o->unk_04;
+                                        changed = changed || t->func_08055a88();
+                                    }
+                        }
+                wtInstrList *list = &wt->unk_88;
+                for (in = list->unk_04; in; in = in->unk_1c.unk_04)
+                    if (in->unk_0e_0)
+                        for (int j = 0; j != in->unk_138b; j++) {
+                            Operand *op = &in->unk_38[j];
+                            RegPoolEntry *r = op->getReg();
+                            if (r)
+                                for (int k = 0; k != r->unk_28; k++)
+                                    for (ol_s *o = op->unk_2c[k].unk_54.func_08058370(); o; o = o->func_080583ac())
+                                        o->unk_04->unk_0e_0 = 1;
+                        }
+            } while (changed);
+            func_0804acb0("  dumping scan for %s\n", reg->maskName(1 << i));
+            int n = 0;
+            for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+                if (in->unk_0e == 3) {
+                    const char *name = "NO_BASE_INST";
+                    if (in->unk_34)
+                        name = in->unk_34->unk_04;
+                    func_0804acb0("  [%4d] %d %s\n", n++, in->unk_0c, name);
+                }
+            func_0804acb0("  ..%d matches\n", n);
+            }
+        }
+    }
+    return 1;
 }

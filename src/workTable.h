@@ -86,6 +86,11 @@ struct wtRow {
     int func_08072304();   // count of used entries
 };
 
+struct wtInstrList {
+    Instr *unk_00;          // head
+    Instr *unk_04;          // tail
+};
+
 class workTable {
 public:
     char unk_00[9];
@@ -101,6 +106,8 @@ public:
     int unk_38;             // lsz
     char unk_3c[8];
     int unk_44;             // extminlength
+    char unk_48[0x88 - 0x48];
+    wtInstrList unk_88;     // linear list
 
     wtRow *func_080724f0(int i);
     Instr *getBranch();

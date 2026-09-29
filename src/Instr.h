@@ -371,10 +371,14 @@ public:
     int unk_00;
     int unk_04;
     Instr *unk_08;  // tmpClone
-    char unk_0c;
-    char unk_0d;
-    unsigned char unk_0e_0 : 1;
-    unsigned char unk_0e_1 : 1;
+    short unk_0c;   // id
+    union {
+        unsigned char unk_0e;
+        struct {
+            unsigned char unk_0e_0 : 1;
+            unsigned char unk_0e_1 : 1;
+        };
+    };
     char unk_0f;
     iGroupList unk_10;
     LocTag *unk_14;
