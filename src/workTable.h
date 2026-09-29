@@ -7,6 +7,7 @@
 #include "regUseSlot.h"
 
 struct ol_s;
+class instStream;
 struct RegPoolEntry;
 
 struct regUse {
@@ -80,9 +81,12 @@ public:
 
 struct wtRow {
     Instr *unk_00[2];
-    char unk_08[8];
+    char unk_08[8];         // unk_08[0]: m_bSkip
 
+    wtRow();
+    ~wtRow();
     bool func_080721f8();  // clears unk_00
+    bool func_0807222c(int);
     int func_08072304();   // count of used entries
 };
 
@@ -96,7 +100,9 @@ public:
     char unk_00[9];
     unsigned char unk_09;   // code mode
     unsigned char unk_0a;
-    char unk_0b[0x14 - 0x0b];
+    char unk_0b;
+    int unk_0c;
+    instStream *unk_10;     // owner
     regUseList unk_14;
     char unk_20[8];
     int unk_28;             // row count
@@ -104,7 +110,8 @@ public:
     int unk_30;             // range start
     int unk_34;             // range end (one past)
     int unk_38;             // lsz
-    char unk_3c[8];
+    int unk_3c;             // mlid
+    char unk_40[4];
     int unk_44;             // extminlength
     char unk_48[0x88 - 0x48];
     wtInstrList unk_88;     // linear list
@@ -116,6 +123,8 @@ public:
     int func_08072eec();
     int getLogicalLen();
     int getPhysicalLen();
+    void func_08072c70();
+    const char *ownerName();
     bool func_08073854();
     int func_0807411c();    // range start
     int func_080741b4();    // lsz

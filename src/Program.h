@@ -40,7 +40,8 @@ struct Program {
     char unk_64[0x0c];
     int unk_70;
     infoList unk_74;    // stall list (really an infoList subclass, vtable 0x080b33c8); unk_08 = count
-    char unk_80[0x20];
+    int unk_80;         // emulated length
+    char unk_84[0x1c];
     instStream *unk_a0; // all streams, chained via unk_108
     char unk_a4[0x10];
     bool unk_b4;        // logmax: also compute max path key
