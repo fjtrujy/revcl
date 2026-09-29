@@ -536,6 +536,25 @@ public:
 iInfo *func_0806bf8c(const char *name, bool);
 RegPoolEntry *func_0806c224(int idx);
 int func_0806c72c(iInfo *op);
+
+// Address-alias descriptor per opcode (12-byte entries, names guessed).
+struct aaDesc {
+    int unk_00;             // opcode id
+    char unk_04;            // -> Instr::unk_13d4
+    unsigned char unk_05;   // operand index
+    unsigned char unk_06;   // output operand index
+    signed char unk_07;     // immediate operand index, <0 => unk_08
+    int unk_08;             // literal immediate
+};
+
+// Address-alias use entry per opcode (8-byte entries, names guessed).
+struct aaUse {
+    int unk_00;             // opcode id
+    unsigned char unk_04;   // operand index
+};
+
+aaDesc *func_0806c768(Instr *in);
+aaUse *func_0806c7f8(Instr *in);
 RegPoolEntry *func_0806c25c(char kind);
 bool func_080543bc(Instr *a, Instr *b);
 bool func_0805449c(Instr *a, Instr *b);

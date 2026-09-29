@@ -26,7 +26,7 @@ struct regUse {
     char unk_15;
     short unk_16;
     short unk_18;
-    int unk_1c;
+    int unk_1c;              // defining instruction (Instr *)
     regUseSlot unk_20[4];
 
     regUse(RegPoolEntry *reg);
