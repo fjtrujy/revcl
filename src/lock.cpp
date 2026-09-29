@@ -351,6 +351,11 @@ bool cls0805c244::removeOutput(cls0805bcc4 *lk)
     return true;
 }
 
+static inline bool isOwnedBy(cls0805bcc4 *lk, cls0805c244 *ll)
+{
+    return lk->unk_04 == ll;
+}
+
 bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
 {
     if (!lk) {
@@ -366,7 +371,7 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
         func_0804adf0(-1);
         return false;
     }
-    if (lk->unk_04 != this) {
+    if (!isOwnedBy(lk, this)) {
         func_0804ad38("Addoutput lock - I don't own it\n");
         func_0804adf0(-1);
         return false;
@@ -406,14 +411,14 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
     for (cls0805bcc4 *cur = unk_20; cur; cur = cur->unk_10) {
         int rl = lk->unk_30;
         int crl = cur->unk_30;
-        if (rl == crl && rl >= 0) {
+        if ((short)rl == (short)crl && (short)rl >= 0) {
             func_0804ad38("during a lock sort for output locks, two had the same rline..\n");
             checkCounts();
             func_0804adf0(-1);
         }
         int line = lk->unk_32;
         int cline = cur->unk_32;
-        if (line < cline)
+        if ((short)line < (short)cline)
             break;
         prev = cur;
     }
