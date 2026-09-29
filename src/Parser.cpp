@@ -175,18 +175,18 @@ bool Parser::func_0804fd80(bool gasp, bool cpp)
         return false;
     }
     unk_10098 = 0;
+    char *next;
     int lineNo = 0;
     char *out = unk_10094;
-    char *line = unk_10090;
     int commentMode = 0;
-    while (*line) {
+    for (char *line = unk_10090; *line; line = next) {
         char *p = line;
         while (*p && *p != '\n')
             p++;
         char *eol = p;
         while (*p && isEol(*p))
             p++;
-        char *next = p;
+        next = p;
         *eol = 0;
         bool process = true;
         if (*line == ';' && gasp) {
@@ -247,7 +247,6 @@ bool Parser::func_0804fd80(bool gasp, bool cpp)
             }
         }
         lineNo++;
-        line = next;
     }
     return true;
 }
