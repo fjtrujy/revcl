@@ -14,7 +14,8 @@ inline bool initPrune(instStream *s);
 inline bool initPrune(Instr *in);
 inline int tryPrune(instStream *s);
 inline int tryPrune(Instr *in, bool raw);
-bool doPrune(instStream *s);
+inline bool doPrune(instStream *s);
+inline int doPrune(Instr *in);
 int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp);
 
 inline bool initPrune(Program *p)
@@ -186,6 +187,46 @@ inline bool doPrune(Program *p)
             func_0804ad38("failed to do prune for %s\n", s->func_0806d674());
             return false;
         }
+    return true;
+}
+
+extern int errorOccurred;
+extern bool quiet_080bbd98;
+
+inline bool doPrune(instStream *s)
+{
+    workTable *t = s->getTable();
+    if (!t) {
+        func_0804ad38("failed to get work table\n");
+        return false;
+    }
+    if (t->func_08073754() == 4 || t->func_08073754() == 3)
+        return true;
+    Instr *next;
+    for (Instr *in = t->unk_88.unk_00; in; in = next) {
+        next = in->unk_1c.unk_00;
+        int r = doPrune(in);
+        if (r < 0) {
+            func_0804ad38("do  prune failed for instruction\n");
+            in->func_08054008(false);
+            return false;
+        }
+        if (r == 0) {
+            if (!in->func_08054138()) {
+                func_0804acf4("REMOVE INST: ");
+                int saved = errorOccurred;
+                errorOccurred = quiet_080bbd98;
+                in->leDump();
+                errorOccurred = saved;
+            }
+            if (!t->destroyInstruction(in)) {
+                func_0804ad38("failed to destroy instruction\n");
+                if (in)
+                    in->func_08054008(false);
+                return false;
+            }
+        }
+    }
     return true;
 }
 

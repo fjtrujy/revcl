@@ -134,6 +134,7 @@ public:
     int func_080741b4();    // lsz
     int func_080741c0();    // range end
     bool grow(int n);
+    bool destroyInstruction(Instr *&in);
     bool prepRawTable();
     bool changeMode(unsigned char mode);
 };
