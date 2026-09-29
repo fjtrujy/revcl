@@ -255,10 +255,8 @@ inline int doPrune(Instr *in)
         return 0;
     if (info->unk_0c == 1) {
         int m, nIn = 0, inOR = 0, outOR = 0, nOut = 0;
-        for (int i = 0;; i++) {
-            Operand *op = in->getOp(i);
-            if (!op)
-                break;
+        Operand *op;
+        for (int i = 0; (op = in->getOp(i)) != 0; i++) {
             if (op->unk_04 != 1 && op->unk_04 != 9)
                 continue;
             if (!op->unk_18) {
