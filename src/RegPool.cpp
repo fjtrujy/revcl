@@ -858,3 +858,110 @@ regUse::regUse(RegPoolEntry* reg)
 regUse::~regUse()
 {
 }
+
+regUseList::regUseList()
+{
+    unk_08 = 0;
+    unk_04 = 0;
+    unk_00 = 0;
+}
+
+regUseList::~regUseList()
+{
+    regUse *ru = unk_04;
+    while (ru) {
+        regUse *next = ru->unk_04;
+        if (ru->unk_04)
+            ru->unk_04->unk_00 = ru->unk_00;
+        else
+            unk_08 = ru->unk_00;
+        if (ru->unk_00)
+            ru->unk_00->unk_04 = ru->unk_04;
+        else
+            unk_04 = ru->unk_04;
+        unk_00--;
+        ru->unk_00 = 0;
+        ru->unk_04 = 0;
+        delete ru;
+        ru = next;
+    }
+}
+
+bool regUseList::clear()
+{
+    regUse *ru = unk_04;
+    while (ru) {
+        regUse *next = ru->unk_04;
+        if (ru->unk_04)
+            ru->unk_04->unk_00 = ru->unk_00;
+        else
+            unk_08 = ru->unk_00;
+        if (ru->unk_00)
+            ru->unk_00->unk_04 = ru->unk_04;
+        else
+            unk_04 = ru->unk_04;
+        unk_00--;
+        ru->unk_00 = 0;
+        ru->unk_04 = 0;
+        delete ru;
+        ru = next;
+    }
+    return true;
+}
+
+regUse *regUseList::AddNewRegRef(RegPoolEntry *reg)
+{
+    if (find(reg)) {
+        func_0804ad38("addnewregref - already have rg\n");
+        func_0804adf0(-1);
+        return 0;
+    }
+    regUse *ru = new regUse(reg);
+    if (!ru) {
+        func_0804ad38("AddNewRegRef() - new failed\n");
+        func_0804adf0(-1);
+        return 0;
+    }
+    ru->unk_00 = 0;
+    ru->unk_04 = 0;
+    if (!unk_08) {
+        unk_04 = ru;
+    } else {
+        unk_08->unk_04 = ru;
+        ru->unk_00 = unk_08;
+    }
+    unk_08 = ru;
+    unk_00++;
+    return ru;
+}
+
+bool regUseList::append(regUse *ru)
+{
+    ru->unk_00 = 0;
+    ru->unk_04 = 0;
+    if (!unk_08) {
+        unk_04 = ru;
+    } else {
+        unk_08->unk_04 = ru;
+        ru->unk_00 = unk_08;
+    }
+    unk_08 = ru;
+    unk_00++;
+    return true;
+}
+
+bool regUseList::remove(regUse *ru)
+{
+    if (ru->unk_04)
+        ru->unk_04->unk_00 = ru->unk_00;
+    else
+        unk_08 = ru->unk_00;
+    if (ru->unk_00)
+        ru->unk_00->unk_04 = ru->unk_04;
+    else
+        unk_04 = ru->unk_04;
+    unk_00--;
+    ru->unk_00 = 0;
+    ru->unk_04 = 0;
+    return true;
+}

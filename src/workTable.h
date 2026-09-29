@@ -26,7 +26,7 @@ struct regUseSlot {
 };
 
 struct regUse {
-    int unk_00;
+    regUse *unk_00;          // prev
     regUse *unk_04;          // next
     RegPoolEntry *unk_08;    // register
     bool unk_0c;
@@ -50,10 +50,30 @@ struct regUse {
 
 class regUseList {
 public:
+    regUseList();
+    ~regUseList();
+    bool clear();
+    regUse *AddNewRegRef(RegPoolEntry *reg);
+    bool append(regUse *ru);
+    bool remove(regUse *ru);
     regUse *func_0805b5dc(RegPoolEntry *reg);
 
-    int unk_00;
+    regUse *find(RegPoolEntry *reg)
+    {
+        if (!reg)
+            return 0;
+        regUse *p = unk_04;
+        while (p) {
+            if (reg == p->unk_08)
+                break;
+            p = p->unk_04;
+        }
+        return p;
+    }
+
+    int unk_00;      // count
     regUse *unk_04;  // head
+    regUse *unk_08;  // tail
 };
 
 class workTable {
