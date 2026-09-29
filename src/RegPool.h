@@ -19,6 +19,7 @@ struct RegPoolSlot {
 };
 
 class RegPool;
+class Instr;
 
 struct RegPoolEntry {
     int unk_00;
@@ -32,8 +33,9 @@ struct RegPoolEntry {
     mNode* func_0805a8a4(const char* name);
     void func_0805a4b4();
     bool func_0805a4f4(bool flag);
+    bool func_0805aa00();
 
-    int unk_0c;
+    RegPoolEntry* unk_0c;   // prev
     int unk_10;
     bool unk_14;        // virtual
     bool unk_15;        // allocable
@@ -42,7 +44,7 @@ struct RegPoolEntry {
     int unk_18;
     char unk_1c;        // nonblockid
     char unk_1d[3];
-    int unk_20;
+    Instr* unk_20;      // move instruction
     int unk_24;         // register class
     int unk_28;         // slot count (nparts)
     bool unk_2c;
@@ -51,7 +53,9 @@ struct RegPoolEntry {
     char unk_34;
     unsigned char unk_35;   // used slot mask
     char unk_36[2];
-    int unk_38[(0x44 - 0x38) / 4];
+    int unk_38;
+    int unk_3c;
+    int unk_40;
     RegPoolSlot unk_44[4];
     int unk_2b4;
     mList unk_2b8;
@@ -74,8 +78,14 @@ public:
     bool func_08059828(bool flag);
     bool func_080598b0();
     RegPoolEntry* func_08059944(const char* name);
+    RegPoolEntry* func_08059a1c(const char* name);
     RegPoolEntry* func_08059a5c(const char* name);
     bool func_08059c00();
+    bool func_08059c4c();
+    bool func_08059c94();
+    bool func_08059cdc();
+    RegPoolEntry* getMoveReg(Instr* move);
+    bool func_08059e20(RegPoolEntry* e);
 
     RegPoolEntry* unk_04;
     int unk_08;

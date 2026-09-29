@@ -315,3 +315,138 @@ RegPoolEntry* RegPool::func_08059944(const char* name)
     }
     return e;
 }
+
+RegPoolEntry* RegPool::func_08059a1c(const char* name)
+{
+    return findVirtual(unk_1c, name);
+}
+
+RegPoolEntry* RegPool::func_08059a5c(const char* name)
+{
+    if (isResvd(name, unk_0c))
+        func_0804ac7c(" name '%s' was reserved\n", name);
+    RegPoolEntry* e;
+    for (e = unk_1c; e; e = e->next)
+        if (func_0804bfcc(e->func_0805a8e0(), name))
+            break;
+    if (e) {
+        func_0804ac7c("WARNING: AddVirtual : name already found '%s'!\n", name);
+        return 0;
+    }
+    e = new RegPoolEntry;
+    if (!e) {
+        func_0804ad38("failed to get a new virtual register\n");
+        return 0;
+    }
+    e->unk_04 = this;
+    e->unk_24 = unk_0c;
+    e->unk_0c = 0;
+    e->next = 0;
+    e->unk_28 = unk_18;
+    e->unk_30 = unk_0c * 2000 + unk_24;
+    e->unk_14 = true;
+    e->unk_1c = 0;
+    if (!e->func_0805a8a4(name)) {
+        func_0804ad38("failed to christen name to register %s \n", name);
+        delete e;
+        return 0;
+    }
+    if (unk_1c) {
+        unk_20->next = e;
+        e->unk_0c = unk_20;
+        unk_20 = e;
+    } else {
+        unk_20 = e;
+        unk_1c = e;
+    }
+    unk_24++;
+    return e;
+}
+
+bool RegPool::func_08059c00()
+{
+    if (!unk_04) {
+        func_0804ad38("regPool: add all to use - but had no table\n");
+        return false;
+    }
+    RegPoolEntry* e = unk_04;
+    for (int i = 0; i != unk_08; i++, e++)
+        if (e->unk_15)
+            e->unk_16 = true;
+    return true;
+}
+
+bool RegPool::func_08059c4c()
+{
+    if (unk_04) {
+        RegPoolEntry* e = unk_04;
+        for (int i = 0; i != unk_08; i++, e++)
+            e->unk_18 = 0;
+    }
+    for (RegPoolEntry* p = unk_1c; p; p = p->next)
+        p->unk_18 = 0;
+    return true;
+}
+
+bool RegPool::func_08059c94()
+{
+    if (unk_04) {
+        RegPoolEntry* e = unk_04;
+        for (int i = 0; i != unk_08; i++, e++)
+            e->unk_18 = 0;
+    }
+    for (RegPoolEntry* p = unk_1c; p; p = p->next)
+        p->unk_18 = 0;
+    return true;
+}
+
+bool RegPool::func_08059cdc()
+{
+    for (RegPoolEntry* p = unk_1c; p; p = p->next) {
+        if (!p->func_0805aa00())
+            goto fail;
+        p->unk_18 = 0;
+        p->unk_3c = -1;
+    }
+    {
+        RegPoolEntry* e = unk_04;
+        for (int i = 0; i != unk_08; i++, e++) {
+            if (!e->func_0805aa00())
+                goto fail;
+            e->unk_18 = 0;
+        }
+    }
+    return true;
+fail:
+    func_0804ad38("failed to resetlalloc\n");
+    return false;
+}
+
+int moveRegCount;
+
+RegPoolEntry* RegPool::getMoveReg(Instr* move)
+{
+    char buf[128];
+    func_0804adbc(buf, "move__m%d", moveRegCount);
+    moveRegCount++;
+    if (!move) {
+        func_0804ad38("getMoveReg -  but no move\n");
+        func_0804adf0(-1);
+    }
+    RegPoolEntry* e = func_08059a5c(buf);
+    if (!e) {
+        func_0804ad38("failed to add a new virtual register!\n");
+        func_0804adf0(-1);
+    }
+    if (e->unk_20) {
+        func_0804ad38("move inst already set in getMoveReg\n");
+        func_0804adf0(-1);
+    }
+    e->unk_20 = move;
+    return e;
+}
+
+bool RegPool::func_08059e20(RegPoolEntry* e)
+{
+    return e && e->unk_24 == unk_0c;
+}
