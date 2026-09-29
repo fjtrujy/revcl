@@ -30,6 +30,8 @@ struct RegPoolEntry {
     void func_0805a348();
     void func_0805a390();
     mNode* func_0805a8a4(const char* name);
+    void func_0805a4b4();
+    bool func_0805a4f4(bool flag);
 
     int unk_0c;
     int unk_10;
@@ -66,6 +68,13 @@ public:
     bool func_08059464();
     bool func_080594c0();
     bool func_0805951c();
+    bool func_08059578();
+    bool func_080595d4();
+    static bool isResvd(const char* name, int cls);
+    bool func_08059828(bool flag);
+    bool func_080598b0();
+    RegPoolEntry* func_08059944(const char* name);
+    RegPoolEntry* func_08059a5c(const char* name);
     bool func_08059c00();
 
     RegPoolEntry* unk_04;
@@ -92,5 +101,8 @@ struct RegDesc {
 };
 
 extern RegDesc regDescTable[];
+extern const char* regNameChars;
+
+int func_0805968c(const char* name);
 
 #endif

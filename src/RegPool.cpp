@@ -1,6 +1,10 @@
 #include "RegPool.h"
 #include "os.h"
 
+struct iInfo;
+iInfo* func_0806bf8c(const char* name, bool);
+bool func_0804bfcc(const char* a, const char* b);
+
 RegPool::RegPool()
 {
     unk_28 = 0;
@@ -167,4 +171,147 @@ bool RegPool::func_0805951c()
     for (RegPoolEntry* p = unk_1c; p; p = p->next)
         p->func_0805a300();
     return true;
+}
+
+bool RegPool::func_08059578()
+{
+    if (unk_04) {
+        RegPoolEntry* e = unk_04;
+        for (int i = 0; i != unk_08; i++, e++)
+            e->func_0805a4b4();
+        for (RegPoolEntry* p = unk_1c; p; p = p->next)
+            p->func_0805a4b4();
+    }
+    return true;
+}
+
+bool RegPool::func_080595d4()
+{
+    RegPoolEntry* p = unk_1c;
+    while (p) {
+        RegPoolEntry* n = p->next;
+        delete p;
+        p = n;
+    }
+    unk_1c = unk_20 = 0;
+    unk_24 = 0;
+    RegPoolEntry* e = unk_04;
+    for (int i = 0; i != unk_08; i++, e++) {
+        e->unk_16 = false;
+        e->unk_14 = false;
+    }
+    return true;
+}
+
+int func_0805968c(const char* name)
+{
+    return RegPool::isResvd(name, -123);
+}
+
+static inline bool isRegNameChar(const char* c)
+{
+    for (const char* q = regNameChars; *q; q++)
+        if (*q == *c)
+            return true;
+    return false;
+}
+
+bool RegPool::isResvd(const char* name, int cls)
+{
+    if (!name) {
+        func_0804ad38("isResvd. passed a null string as name\n");
+        func_0804adf0(-1);
+    }
+    const char* p;
+    for (p = name; *p; p++) {
+        if (!isRegNameChar(p)) {
+            func_0804ad84("can't use '%c' in the name of a register : '%s'\n", *p, name);
+            return true;
+        }
+    }
+    unsigned int len = p - name;
+    if (len > 62) {
+        func_0804ad84("register name '%s' is too long\n", name);
+        return true;
+    }
+    if (len > 1 && func_0806bf8c(name, true)) {
+        func_0804ad84("invalid name for register '%s'\n", name);
+        return true;
+    }
+    if (cls == 8) {
+        if (func_0804bfcc(name, "i") || func_0804bfcc(name, "p")
+            || func_0804bfcc(name, "q") || func_0804bfcc(name, "r"))
+            return false;
+    }
+    for (RegDesc* d = regDescTable; d->names[0]; d++) {
+        if (d->unk_11 == cls)
+            continue;
+        for (int i = 0; i != 3; i++)
+            if (d->names[i] && func_0804bfcc(name, d->names[i]))
+                return true;
+    }
+    return false;
+}
+
+bool RegPool::func_08059828(bool flag)
+{
+    RegPoolEntry* e = unk_04;
+    for (int i = 0; i != unk_08; i++, e++)
+        if (!e->func_0805a4f4(flag)) {
+            func_0804ad38("cycle: fail for %s\n", e->func_0805a8e0());
+            return false;
+        }
+    for (RegPoolEntry* p = unk_1c; p; p = p->next)
+        if (!p->func_0805a4f4(flag)) {
+            func_0804ad38("cycle: fail for %s\n", p->func_0805a8e0());
+            return false;
+        }
+    return true;
+}
+
+bool RegPool::func_080598b0()
+{
+    RegPoolEntry* p = unk_1c;
+    while (p) {
+        RegPoolEntry* n = p->next;
+        delete p;
+        p = n;
+    }
+    unk_1c = unk_20 = 0;
+    unk_24 = 0;
+    return true;
+}
+
+static inline RegPoolEntry* findVirtual(RegPoolEntry* p, const char* name)
+{
+    for (; p; p = p->next)
+        if (func_0804bfcc(p->func_0805a8e0(), name))
+            break;
+    return p;
+}
+
+RegPoolEntry* RegPool::func_08059944(const char* name)
+{
+    if (!unk_18) {
+        RegPoolEntry* e = func_08059418(name);
+        if (!e)
+            func_0804ad38("failed to find reg, and don't allow virtuals - pool %s regname=%s\n", unk_2c, name);
+        return e;
+    }
+    RegPoolEntry* e = func_08059418(name);
+    if (e)
+        return e;
+    if (isResvd(name, unk_0c)) {
+        func_0804ad84("can't use %s as a name for one of the %s\n", name, unk_2c);
+        return 0;
+    }
+    e = findVirtual(unk_1c, name);
+    if (!e) {
+        e = func_08059a5c(name);
+        if (!e) {
+            func_0804ad38("failed to create a virtual reg\n");
+            return 0;
+        }
+    }
+    return e;
 }
