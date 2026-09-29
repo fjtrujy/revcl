@@ -487,3 +487,141 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
     }
     return true;
 }
+
+bool link_oParts(ol_s *o, ol_s *i, int x, int y)
+{
+    if (!o || !i) {
+        func_0804ad38("link_oParts, null arg pointer2!\n");
+        return false;
+    }
+    Operand *out = func_0805802c(o);
+    if (!out) {
+        func_0804ad38("link_oParts(2) - output not set \n");
+        return false;
+    }
+    if (!out->isReg2()) {
+        func_0804ad38("link_oParts - output was not output\n");
+        out->func_0805665c(0);
+        return false;
+    }
+    Operand *in = func_0805802c(i);
+    if (!in) {
+        func_0804ad38("link_oParts(2) - input not set \n");
+        return false;
+    }
+    if (!in->isReg()) {
+        func_0804ad38("link_oParts - input was not input\n");
+        return false;
+    }
+    int to = o->unk_11;
+    int ti = i->unk_11;
+    if (!((out->unk_07 >> to) & 1)) {
+        func_0804ad38("link_oParts - mod bit not set for output\n");
+        return false;
+    }
+    if (!((in->unk_07 >> ti) & 1)) {
+        func_0804ad38("link_oParts - mod bit not set for input\n");
+        return false;
+    }
+    if (!((in->unk_27 >> ti) & 1)) {
+        func_0804ad38("link_oParts_ext - external bit not set for input\n");
+        return false;
+    }
+    out->unk_27 |= 1 << to;
+    if (func_08058618(o) != func_08058618(i)) {
+        out->unk_06 |= 1 << o->unk_11;
+        in->unk_06 |= 1 << i->unk_11;
+    }
+    if (to != ti) {
+        func_0804ad38("link_oParts - not a bug, but should not happen for this cpu, t_o!=t_i (%d!=%d)\n", to, ti);
+        return false;
+    }
+    ol_s *a = out->unk_2c[ti].unk_54.func_08058348(i, true);
+    if (!a) {
+        func_0804ad38("failed to add ol_input to output\n");
+        return false;
+    }
+    ol_s *b = in->unk_2c[ti].unk_54.func_08058348(o, true);
+    if (!b) {
+        func_0804ad38("failed to add ol_ouput to input\n");
+        return false;
+    }
+    int s = o->unk_12;
+    if (s > 0xff)
+        s = 0xff;
+    a->unk_12 = s;
+    a->unk_08 = x;
+    a->unk_0c = y;
+    b->unk_12 = 0;
+    b->unk_08 = x;
+    b->unk_0c = y;
+    return true;
+}
+
+bool Instr::setOwner(cls_unk30 *s)
+{
+    if (unk_30 && unk_30 != s) {
+        func_0804ad38("in->setOwner - already owned..but by wrong stream!\n");
+        func_0804adf0(-1);
+    }
+    unk_30 = s;
+    return true;
+}
+
+const char *func_08055254(int t)
+{
+    switch (t) {
+    case 0:
+        return "BTYPE_NULL";
+    case 1:
+        return "BTYPE_ABS";
+    case 3:
+        return "BTYPE_REG";
+    case 5:
+        return "BTYPE_COND_ABS";
+    case 7:
+        return "BTYPE_COND_REG";
+    case 9:
+        return "BTYPE_ABS_LINK";
+    case 11:
+        return "BTYPE_REG_LINK";
+    default:
+        return "BTYPE_TYPE_THIS_IN!";
+    case 13:
+        return "BTYPE_COND_ABS_LINK";
+    }
+}
+
+char *Instr::func_080552a8(bool flag, char *buf)
+{
+    if (!buf)
+        return 0;
+    iInfo *info = unk_34;
+    if (info) {
+        buf += func_0804adbc(buf, info->unk_04);
+        switch ((char)info->unk_0c) {
+        case 1:
+            buf += func_0804adbc(buf, ".[xyzw]");
+            break;
+        case 2:
+            buf += func_0804adbc(buf, ".xyz");
+            break;
+        case 3:
+            buf += func_0804adbc(buf, ".[x/y/z/w]");
+            break;
+        }
+    } else {
+        buf += func_0804adbc(buf, "nop");
+    }
+    buf += func_0804adbc(buf, "\t");
+    for (int n = 0; n != unk_138b; n++) {
+        if (unk_38[n].unk_08)
+            break;
+        if (n)
+            buf += func_0804adbc(buf, ",");
+        buf = unk_38[n].func_08057b90(flag, buf);
+        if (!buf)
+            break;
+    }
+    return buf;
+}

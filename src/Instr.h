@@ -24,7 +24,9 @@ struct iOpDesc {
 
 class iInfo {
 public:
-    char unk_00[0xc];
+    char unk_00[4];
+    char *unk_04;           // mnemonic
+    char unk_08[4];
     unsigned char unk_0c;
     char unk_0d;
     char unk_0e;
@@ -61,6 +63,7 @@ public:
     bool clear();
     void func_08057e9c();
     ol_s *func_080580fc(Instr *inst, int op, int slot, bool ext);
+    ol_s *func_08058348(ol_s *ol, bool ext);
 };
 
 struct OpSlot {
@@ -103,6 +106,7 @@ struct Operand {
     void func_0805665c(int);
     bool func_080569cc();
     bool func_08056a24();
+    char *func_08057b90(bool flag, char *buf);
     bool isZero()
     {
         int z = 0;
@@ -295,6 +299,8 @@ public:
     int func_08054cc4(RegPoolEntry *reg, bool *paired);
     bool func_08054d64(int n, int *out);
     bool changeBranchImmediate(const char *s);
+    bool setOwner(cls_unk30 *s);
+    char *func_080552a8(bool flag, char *buf);
 };
 
 iInfo *func_0806bf8c(const char *name, bool);
@@ -302,6 +308,10 @@ int func_0806c72c(iInfo *op);
 RegPoolEntry *func_0806c25c(char kind);
 bool func_080543bc(Instr *a, Instr *b);
 bool func_0805449c(Instr *a, Instr *b);
+Operand *func_0805802c(ol_s *ol);
+instStream *func_08058618(ol_s *ol);
 bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot);
+bool link_oParts(ol_s *o, ol_s *i, int x, int y);
+const char *func_08055254(int t);
 
 #endif
