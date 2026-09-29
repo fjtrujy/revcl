@@ -80,16 +80,16 @@ public:
     char unk_01;
     char unk_02;
     int unk_04;
-    int unk_08;
-    int unk_0c;
+    cls0805bcc4 *unk_08;    // next sibling in parent's child list
+    cls0805bcc4 *unk_0c;    // input: parent output lock; output: child list head
     int unk_10;
-    char unk_14;
+    unsigned char unk_14;   // 1 = input lock, 2 = output lock
     char unk_15;
     char unk_16;
     char unk_17;
     char unk_18;
     char unk_19;
-    int unk_1c;
+    cls0805bcc4 *unk_1c;    // in/out partner lock
     short unk_20;
     short unk_22;
     void *unk_24;           // owner: Instr* (oType 1) or regUse* (oType 2)
@@ -97,7 +97,7 @@ public:
     unsigned char unk_29;   // operand index
     short unk_2a;
     char unk_2c;
-    char unk_2d;            // owner type
+    unsigned char unk_2d;   // owner type: 0 none, 1 Instr, 2 regUse
     short unk_2e;
     short unk_30;
     short unk_32;
@@ -127,6 +127,30 @@ public:
     Operand *ownerOperand();
     int ownerOpnd();
     int getPart();
+    void printOwner();
+    cls0805bcc4 *getParent();
+    bool setInOut(cls0805bcc4 *olk);
+    bool incRef();
+    bool decRef();
+    void print();
+};
+
+class cls0805c244 {
+public:
+    short unk_00;
+    int unk_04;
+    int unk_08;
+    int unk_0c[4];
+    int unk_1c;
+    int unk_20;
+    short unk_24;
+    short unk_26;
+    char unk_28;
+    char unk_29;
+    char unk_2a;
+    char unk_2b;
+
+    cls0805c244();
 };
 
 int func_08070300(unsigned char);
