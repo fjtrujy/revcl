@@ -219,3 +219,48 @@ ol_s *olList::func_08058484(ol_s *src)
     unk_04++;
     return n;
 }
+
+void func_0805859c(ol_s *ol)
+{
+    ol->unk_13 |= 2;
+}
+
+int func_080585a8(ol_s *ol)
+{
+    return ol->unk_04->func_08055548();
+}
+
+int func_080585c0(ol_s *ol)
+{
+    return ol->unk_04->unk_13e0;
+}
+
+bool func_080585d4(ol_s *a, ol_s *b)
+{
+    if (a && b)
+        return a->unk_04 == b->unk_04 && a->unk_10_11 == b->unk_10_11;
+    return a == b;
+}
+
+instStream *func_08058618(ol_s *ol)
+{
+    return ol->unk_04->func_08054168();
+}
+
+int func_0805862c(ol_s *ol)
+{
+    return ol->unk_04->unk_13e8.unk_00;
+}
+
+ol_s *func_08058640()
+{
+    return allocOL();
+}
+
+int func_080586c4()
+{
+    int n = 0;
+    for (ol_s *p = olFreeList; p; p = p->unk_00)
+        n++;
+    return n;
+}

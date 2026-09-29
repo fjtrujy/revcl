@@ -10,8 +10,13 @@ struct ol_s {
     Instr *unk_04;  // instruction
     int unk_08;
     int unk_0c;
-    char unk_10;    // operand index
-    char unk_11;    // field bit number
+    union {
+        struct {
+            char unk_10;    // operand index
+            char unk_11;    // field bit number
+        };
+        short unk_10_11;    // operand index and bit compared together
+    };
     unsigned char unk_12;
     unsigned char unk_13;   // flags, bit0 = external
 
