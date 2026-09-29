@@ -747,3 +747,103 @@ Operand *Instr::func_08055720(RegPoolEntry *reg, int mask)
     }
     return 0;
 }
+
+Operand *Instr::func_080557a4(RegPoolEntry *reg, int mask)
+{
+    for (int i = 0; i != unk_138b; i++) {
+        Operand *op = &unk_38[i];
+        if (op->getReg2() == reg && (op->unk_07 & mask))
+            return op;
+    }
+    return 0;
+}
+
+bool Instr::func_08055828(unsigned int n)
+{
+    if (!unk_34)
+        return false;
+    for (; n < unk_138b; n++) {
+        Operand *op = &unk_38[n];
+        RegPoolEntry *r = op->getReg2();
+        if (r) {
+            if (op->unk_27)
+                return true;
+            for (int j = 0; j != r->unk_28; j++)
+                if (((op->unk_07 >> j) & 1) && op->unk_2c[j].unk_54.unk_04)
+                    return true;
+        }
+    }
+    return false;
+}
+
+bool Instr::func_080558f4()
+{
+    if (unk_13ce == 2) {
+        unk_138e = 1;
+        return true;
+    }
+    if (unk_13d0 & 0x40) {
+        unk_138e = 2;
+        return true;
+    }
+    for (int i = 0; i != unk_138b; i++) {
+        Operand *op = &unk_38[i];
+        if (op->isReg2() && op->unk_06) {
+            unk_138e = 2;
+            return true;
+        }
+    }
+    unk_138e = 0;
+    return true;
+}
+
+Instr **Instr::getIE()
+{
+    cls_unk30 *table = unk_30;
+    if (!table) {
+        func_0804ad38("failed to get itable from instruction\n");
+        return 0;
+    }
+    cls08058718 *pos = &unk_13e8;
+    Instr **ie = table->getIE_ck(pos->unk_00);
+    if (!ie) {
+        func_0804ad38("failed to get ie from table for in::getIE()\n");
+        return 0;
+    }
+    if (ie[pos->unk_02] != this) {
+        func_0804ad38("we aren't where we thought we were for in::getIE\n");
+        return 0;
+    }
+    return ie;
+}
+
+int Instr::func_08055a0c()
+{
+    for (int i = 0; i != unk_138b; i++) {
+        Operand *op = &unk_38[i];
+        if (op->getReg2() && !op->unk_0b)
+            return op->unk_0a;
+    }
+    return 0;
+}
+
+bool Instr::func_08055a88()
+{
+    bool r = !unk_0e_1;
+    unk_0e_1 = 1;
+    return r;
+}
+
+bool Instr::func_08055aa8()
+{
+    bool r = !unk_0e_0;
+    unk_0e_0 = 1;
+    return r;
+}
+
+int Instr::func_08055ac4()
+{
+    if (!unk_34)
+        return -1;
+    return func_0806c72c(unk_34);
+}

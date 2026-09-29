@@ -190,6 +190,8 @@ struct cls_unk30 {
     char unk_09;
     char unk_0a[6];
     instStream *unk_10;     // owner stream
+
+    Instr **getIE_ck(int rl);
 };
 
 class Instr {
@@ -197,7 +199,11 @@ public:
     int unk_00;
     int unk_04;
     Instr *unk_08;  // tmpClone
-    char unk_0c[4];
+    char unk_0c;
+    char unk_0d;
+    unsigned char unk_0e_0 : 1;
+    unsigned char unk_0e_1 : 1;
+    char unk_0f;
     ptrList unk_10;
     LocTag *unk_14;
     short unk_18;
@@ -310,6 +316,13 @@ public:
     RegPoolEntry *getBranchTargetRegister();
     int func_08055718();
     Operand *func_08055720(RegPoolEntry *reg, int mask);
+    Operand *func_080557a4(RegPoolEntry *reg, int mask);
+    bool func_08055828(unsigned int n);
+    bool func_080558f4();
+    Instr **getIE();
+    int func_08055a0c();
+    bool func_08055a88();
+    bool func_08055aa8();
 };
 
 iInfo *func_0806bf8c(const char *name, bool);
