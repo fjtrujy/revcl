@@ -6,6 +6,8 @@
 
 char *dupString(const char *s);
 extern bool noAlign_080b3016;
+extern int errorOccurred;
+extern bool quiet_080bbd98;
 
 bool func_0804bfcc(const char *a, const char *b);
 RegPool *GetRP(unsigned t);
@@ -478,5 +480,35 @@ bool func_08051d6c(Program *prog, LocTag *t, int v)
         return false;
     }
     n->unk_18 = v;
+    return true;
+}
+
+inline bool ExecRP_show_line(LocTag *t)
+{
+    int saved = errorOccurred;
+    errorOccurred = !quiet_080bbd98;
+    t->func_08050c40(-1);
+    errorOccurred = saved;
+    return true;
+}
+
+bool func_08051e34(Program *prog, LocTag *t, int v)
+{
+    mNode *n = prog->unk_4c.unk_10;
+    if (!n) {
+        func_0804ac7c("closing visibility directive and no tail at:\n");
+        ExecRP_show_line(t);
+        return true;
+    }
+    if (n->unk_18 != v) {
+        func_0804ad84("mode mismatch closing a visibility scope\n");
+        ExecRP_show_line(t);
+        return false;
+    }
+    if (!prog->unk_4c.func_0804b3e8(n)) {
+        func_0804ad38("failed to remove tail node\n");
+        return false;
+    }
+    delete n;
     return true;
 }
