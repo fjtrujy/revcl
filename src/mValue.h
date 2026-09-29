@@ -58,5 +58,6 @@ bool func_0804ddc0(mValue *dst, mValue *a, mValue *b);
 bool func_0804dfd4(mValue *dst, mValue *a, mValue *b);
 bool func_0804e050(mValue *dst, mValue *a, mValue *b);
 bool func_0804e0cc(mValue *dst, mValue *a, mValue *b);
+bool func_0804e5c0(mValue *a, mValue *b);
 
 #endif
