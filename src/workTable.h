@@ -31,6 +31,9 @@ struct regUse {
     regUse(RegPoolEntry *reg);
     ~regUse();
     void func_0805b51c();
+    regUse *nextReal();
+    regUse *nextVirtual();
+    bool optReset();
 };
 
 class regUseList {
@@ -46,6 +49,9 @@ public:
     void func_0805b44c();
     int func_0805b494(int regClass);
     regUse *func_0805b5dc(RegPoolEntry *reg);
+    regUse *firstReal();
+    regUse *firstVirtual();
+    bool optReset();
 
     regUse *find(RegPoolEntry *reg)
     {
