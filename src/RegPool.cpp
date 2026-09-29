@@ -450,3 +450,102 @@ bool RegPool::func_08059e20(RegPoolEntry* e)
 {
     return e && e->unk_24 == unk_0c;
 }
+
+bool RegPool::optReset()
+{
+    if (unk_04) {
+        RegPoolEntry* e = unk_04;
+        for (int i = 0; i != unk_08; i++, e++)
+            e->optReset();
+        for (RegPoolEntry* p = unk_1c; p; p = p->next)
+            p->optReset();
+    }
+    return true;
+}
+
+bool RegPool::emitReset()
+{
+    if (unk_04) {
+        RegPoolEntry* e = unk_04;
+        for (int i = 0; i != unk_08; i++, e++)
+            e->unk_35 = 0;
+        for (RegPoolEntry* p = unk_1c; p; p = p->next)
+            p->unk_35 = 0;
+    }
+    return true;
+}
+
+char* RegPool::emitStats(char* buf)
+{
+    buf += func_0804adbc(buf, "; %3d %s\n", countUsed(), unk_2c);
+    return buf;
+}
+
+int RegPool::regIndex(int reg)
+{
+    int r = -1;
+    if (unk_04) {
+        reg -= unk_04->unk_30;
+        if (reg >= 0 && reg < unk_08)
+            r = reg;
+    }
+    return r;
+}
+
+int RegPool::countUsed()
+{
+    int n = 0;
+    if (unk_04) {
+        RegPoolEntry* e = unk_04;
+        for (int i = 0; i != unk_08; i++, e++)
+            if (e->unk_35)
+                n++;
+    }
+    return n;
+}
+
+int RegPool::func_08059f70()
+{
+    int n = 0;
+    if (unk_04) {
+        for (int i = 0; i != unk_08; i++)
+            if (unk_04[i].unk_16)
+                n++;
+    }
+    return n;
+}
+
+int RegPoolEntry::gatherInflight(RegPoolSub** out)
+{
+    int n = 0;
+    int i;
+    for (i = 0; i != unk_28; i++) {
+        RegPoolSlot* s = getRP(i);
+        if (s->unk_24.unk_12)
+            out[n++] = &s->unk_24;
+        RegPoolSub* p = s->unk_4c;
+        for (int j = 0; j != 4; j++, p++)
+            if (p->unk_12)
+                out[n++] = p;
+    }
+    return n;
+}
+
+int RegPool::gatherInflight(RegPoolSub** out)
+{
+    int n = 0;
+    for (int i = 0; i != unk_08; i++) {
+        RegPoolEntry* e = &unk_04[i];
+        int r = e->gatherInflight(out + n);
+        if (r < 0)
+            return -1;
+        n += r;
+    }
+    for (RegPoolEntry* p = unk_1c; p; p = p->next) {
+        int r = p->gatherInflight(out + n);
+        if (r < 0)
+            return -1;
+        n += r;
+    }
+    return n;
+}

@@ -2,6 +2,7 @@
 #define REGPOOL_H
 
 #include "mList.h"
+#include "os.h"
 
 struct RegPoolSub {
     ~RegPoolSub() {}
@@ -10,11 +11,15 @@ struct RegPoolSub {
     int unk_04;
     int unk_08;
     int unk_0c;
-    int unk_10;
+    short unk_10;
+    bool unk_12;        // in flight
+    char unk_13;
 };
 
 struct RegPoolSlot {
-    int unk_00[0x4c / 4];
+    int unk_00[0x24 / 4];
+    RegPoolSub unk_24;
+    int unk_38[(0x4c - 0x38) / 4];
     RegPoolSub unk_4c[4];
 };
 
@@ -34,6 +39,17 @@ struct RegPoolEntry {
     void func_0805a4b4();
     bool func_0805a4f4(bool flag);
     bool func_0805aa00();
+    bool optReset();
+    int gatherInflight(RegPoolSub** out);
+    RegPoolSlot* getRP(int i)
+    {
+        if (i < 0 || i >= unk_28) {
+            func_0804ad38("getRP - asked to get out of range part %s.%d / %d\n",
+                          func_0805a8e0(), i, unk_28);
+            func_0804adf0(-1);
+        }
+        return &unk_44[i];
+    }
 
     RegPoolEntry* unk_0c;   // prev
     int unk_10;
@@ -86,6 +102,13 @@ public:
     bool func_08059cdc();
     RegPoolEntry* getMoveReg(Instr* move);
     bool func_08059e20(RegPoolEntry* e);
+    bool optReset();
+    bool emitReset();
+    char* emitStats(char* buf);
+    int regIndex(int reg);
+    int countUsed();
+    int func_08059f70();
+    int gatherInflight(RegPoolSub** out);
 
     RegPoolEntry* unk_04;
     int unk_08;
