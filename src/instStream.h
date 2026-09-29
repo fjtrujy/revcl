@@ -29,9 +29,11 @@ public:
     instStream *unk_108;         // next in Program::unk_a0
     char unk_10c[0x218 - 0x10c];
     workTable *unk_218;  // work table
-    char unk_21c[0x234 - 0x21c];
+    char unk_21c[0x22c - 0x21c];
+    int unk_22c;                // dependency length used by back trace
+    char unk_230[0x234 - 0x230];
     regRef *unk_234;
-    char unk_238[4];
+    unsigned *unk_238;          // m_tStore
     int unk_23c;                // dst key
     int unk_240;
     int unk_244;
@@ -44,7 +46,9 @@ public:
     char unk_260;      // set when stream takes part in a stall
     char unk_261[0x5f];
     short unk_2c0;     // stream id
-    char unk_2c2[0x2e0 - 0x2c2];
+    char unk_2c2[0x2cd - 0x2c2];
+    char unk_2cd;      // code mode (2 adds 1000 to back trace dep length)
+    char unk_2ce[0x2e0 - 0x2ce];
     int unk_2e0;       // dependency length
     int unk_2e4;
 

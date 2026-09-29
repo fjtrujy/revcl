@@ -1,5 +1,6 @@
 // Growable table of bit rows used by back tracing ("VisitCache"); members are inline,
-// emitted via #pragma implementation.
+// emitted via #pragma implementation in flowMon.cpp. init/startRecord/endRecord live in
+// VisitCache_inline.h (only flowMon.cpp includes it), so other units call them.
 #ifndef VISITCACHE_H
 #define VISITCACHE_H
 
@@ -26,62 +27,35 @@ public:
         unk_0c = 0;
         unk_10 = 0;
     }
-    ~VisitCache()
+    ~VisitCache();
+    bool init(int nbits);
+    bool release();
+    bool Extend(int rows);
+    bool startRecord();
+    bool setBit(int bit)
     {
-        release();
-    }
-    bool init(int nbits)
-    {
-        release();
-        unk_08 = nbits;
-        unk_04 = (nbits + 31) / 32;
-        if (!Extend(512)) {
-            func_0804ad38("VisitCache:: init failed\n");
-            release();
-            return false;
-        }
-        return true;
-    }
-    bool release()
-    {
-        if (unk_00)
-            free(unk_00);
-        unk_00 = 0;
-        unk_04 = 0;
-        unk_08 = 0;
-        unk_0c = 0;
-        unk_10 = 0;
-        return true;
-    }
-    bool Extend(int rows)
-    {
-        unsigned *p = (unsigned *)realloc(unk_00, rows * unk_04 * sizeof(unsigned));
-        if (!p) {
-            func_0804ad38("VisitCache::Extend.. failed to realloc\n");
-            release();
-            return false;
-        }
-        unk_00 = p;
-        unk_0c = rows;
-        return true;
-    }
-    bool startRecord()
-    {
-        if (unk_10 >= unk_0c - 1) {
-            if (!Extend(unk_0c + 512)) {
-                func_0804ad38("startRecord - failed to extend\n");
-                return false;
-            }
-        }
-        if (!unk_00) {
-            func_0804ad38("VisitCache:: startRecord - null table pointer\n");
-            return false;
-        }
         unsigned *row = unk_00 + unk_10 * unk_04;
-        unk_14 = true;
-        for (int i = 0; i != unk_04; i++)
-            *row++ = 0;
+        row[bit / 32] |= 1 << (bit & 31);
         return true;
+    }
+    int endRecord();
+    bool testBit(int rec, int bit)
+    {
+        unsigned *row = unk_00 + rec * unk_04;
+        return (row[bit / 32] & (1 << (bit & 31))) != 0;
+    }
+    void Dump()
+    {
+        func_0804acb0("VisitCache::Dump()\n");
+        unsigned *row = unk_00;
+        for (int i = 0; i != unk_10; i++) {
+            func_0804ac50(" [%3d] ", i);
+            for (int j = 0; j != unk_04; j++)
+                func_0804ac50(" %08x", row[j]);
+            func_0804ac50("\n");
+            row += unk_04;
+        }
+        func_0804acb0("VisitCache:: %d records\n", unk_10);
     }
 };
 

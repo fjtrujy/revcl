@@ -1,6 +1,8 @@
 #pragma implementation "subCache.h"
 #pragma implementation "VisitCache.h"
+#pragma implementation "VisitCache_inline.h"
 #include "Program.h"
+#include "VisitCache_inline.h"
 #include "instStream.h"
 #include "workTable.h"
 #include "RegPool.h"
@@ -14,8 +16,8 @@ bool func_0806c340(Program *p);
 bool func_0806f50c(Program *p);
 bool func_0806c0f8(Program *p);
 bool func_080642ec(Program *p, instStream *s);
-bool func_08060b3c(Program *p);
-bool func_08060c44(Program *p);
+bool initBackTrace(Program *p);
+bool disposeBackTrace(Program *p);
 bool func_08062038(Program *p, instStream *s, RegPoolEntry *reg, int part, int depth, int mode, bool hot);
 bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b);
 
@@ -55,7 +57,7 @@ bool func_08060018(Program *p, bool b)
             return false;
         }
     }
-    if (!func_08060b3c(p)) {
+    if (!initBackTrace(p)) {
         func_0804ad38("flowMon:: failed to init back trace\n");
         return false;
     }
@@ -102,7 +104,7 @@ bool func_08060018(Program *p, bool b)
             }
         }
     }
-    if (!func_08060c44(p)) {
+    if (!disposeBackTrace(p)) {
         func_0804ad38("faield to dispose of the backtrace info\n");
         return false;
     }
