@@ -6,6 +6,22 @@
 
 class workTable;
 struct regUse;
+class instStream;
+
+struct linkNode {
+    char unk_00[8];
+    linkNode *unk_08;           // next
+    instStream *unk_0c;         // other stream
+    char unk_10;                // marked
+    char unk_11[3];
+    int unk_14;                 // link type
+};
+
+struct linkList {
+    linkNode *unk_00;           // head
+    char unk_04[8];
+    linkNode *func_0806dff4(instStream *s, int type);
+};
 
 class instStream {
 public:
@@ -28,10 +44,15 @@ public:
 
     char unk_00[0x108];
     instStream *unk_108;         // next in Program::unk_a0
-    char unk_10c[0x218 - 0x10c];
+    instStream *unk_10c;         // previous stream (to-register branch)
+    char unk_110[0x128 - 0x110];
+    linkList unk_128;            // input links
+    linkList unk_134;            // output links
+    char unk_140[0x218 - 0x140];
     workTable *unk_218;  // work table
-    char unk_21c[0x226 - 0x21c];
-    char unk_226;               // match state (3 = end match)
+    char unk_21c[0x224 - 0x21c];
+    short unk_224;
+    unsigned char unk_226;      // visit mode (0 unvisited, 1 active, 2 visited, 3 end match, 4 dead end)
     char unk_227;
     char unk_228;               // hazard flag
     char unk_229[0x22c - 0x229];
@@ -42,9 +63,9 @@ public:
     unsigned *unk_238;          // m_tStore
     int unk_23c;                // dst key
     int unk_240;
-    int unk_244;
+    instStream *unk_244;        // min-path predecessor
     int unk_248;
-    int unk_24c;
+    instStream *unk_24c;        // max-path predecessor
     instStream *unk_250;        // next in Program::unk_dc
     instStream *unk_254;        // next in Program::unk_d8
     instStream *unk_258;        // next in Program::unk_e0

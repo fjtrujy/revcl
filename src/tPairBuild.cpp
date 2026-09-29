@@ -4,8 +4,8 @@
 
 int func_0804ad38(const char *fmt, ...);
 bool func_08061c34(instStream *n);
-bool func_080615b0(Program *p, instStream *n);
-bool func_080614bc(Program *p);
+bool extendBackTrace(Program *p, instStream *n);
+bool processActiveList(Program *p);
 int func_08061cb0(Program *p, instStream *n);
 
 bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b)
@@ -26,7 +26,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
             return false;
         }
     }
-    if (!func_080615b0(p, t)) {
+    if (!extendBackTrace(p, t)) {
         func_0804ad38("failed on the initial extend\n");
         return false;
     }
@@ -36,7 +36,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
         i->unk_240 = 0;
         i->unk_248 = 0;
     }
-    if (!func_080614bc(p)) {
+    if (!processActiveList(p)) {
         func_0804ad38("failed to do internal trace for  a t pair\n");
         return false;
     }
