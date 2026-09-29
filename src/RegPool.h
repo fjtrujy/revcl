@@ -24,6 +24,9 @@ struct rPart {
     bool cycle(bool flag);
     void func_0805a374();
     void func_0805a3cc();
+    void func_0805a4d4();
+    void func_0805a4e4();
+    rPart();
 };
 
 class RegPool;

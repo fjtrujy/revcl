@@ -658,3 +658,80 @@ void RegPoolEntry::func_0805a390()
     for (int i = 0; i != 4; i++)
         unk_44[i].func_0805a3cc();
 }
+
+void rPart::func_0805a3cc()
+{
+    unk_00[3] = 0;
+    unk_00[2] = 0;
+    unk_00[0] = 0;
+    unk_00[1] = 0;
+    unk_3e = 0;
+    unk_24.reset();
+    unk_38 = 0;
+    unk_3c = 0;
+    unk_00[7] = -1;
+    unk_00[4] = -1;
+    unk_00[8] = -1;
+    unk_00[5] = -1;
+    unk_00[6] = -1;
+    unk_00[12] = -1;
+    unk_00[9] = -1;
+    unk_00[13] = -1;
+    unk_00[10] = -1;
+    unk_00[14] = -1;
+    unk_00[11] = -1;
+    unk_00[16] = -1;
+    unk_00[15] = -1;
+    for (int i = 0; i != 4; i++)
+        unk_4c[i].reset();
+}
+
+void RegPoolEntry::func_0805a4b4()
+{
+    for (int i = 0; i != 4; i++)
+        unk_44[i].unk_48 = 0;
+}
+
+void rPart::func_0805a4d4()
+{
+    unk_48 = 0;
+}
+
+void rPart::func_0805a4e4()
+{
+    unk_48 = 0;
+}
+
+bool RegPoolEntry::func_0805a4f4(bool flag)
+{
+    for (int i = 0; i != unk_28; i++)
+        if (!unk_44[i].cycle(flag))
+            return false;
+    return true;
+}
+
+RegPoolEntry::RegPoolEntry()
+{
+    unk_0c = 0;
+    next = 0;
+    unk_24 = 0;
+    unk_28 = 0;
+    unk_15 = false;
+    unk_20 = 0;
+    unk_30 = 0;
+    unk_14 = false;
+    unk_04 = 0;
+    unk_2b4 = 0;
+    unk_10 = 0;
+    unk_16 = false;
+    unk_35 = 0;
+    unk_1c = 0;
+    unk_2c = false;
+    unk_18 = 0;
+}
+
+rPart::rPart()
+{
+    func_0805a3cc();
+    unk_48 = 0;
+}
