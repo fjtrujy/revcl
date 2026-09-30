@@ -5,6 +5,30 @@
 #include "Block.h"
 #include "instStream.h"
 
+typedef bool (*wrangleFunc)(workTable *, int *);
+
+struct optimiser {
+    const char *name;
+    int wmode;
+    int flags;
+    wrangleFunc func;
+    int unk_10;
+};
+
+extern optimiser optTable[11];
+const char *g_080de730;
+
+instStream *selectUninsertedStream(Program *p);
+bool prepExtInfo(Program *p, instStream *s, bool b);
+workTable *prepUta(Program *p, instStream *s, int loopSize, char smart);
+bool statReset(Program *p);
+bool dynCalcStats(workTable *wt);
+bool func_0807f360(workTable *wt, wrangleFunc f);
+bool func_0808061c(workTable *wt, wrangleFunc f);
+bool reduceExtents(workTable *wt);
+bool fiddleBDL(workTable *wt);
+bool assignLocalRegisters(Program *p, workTable *wt);
+
 bool workTable::qRegRef(regUse *ru)
 {
     if (!ru) {
@@ -509,4 +533,113 @@ bool instStream::setOptTable(workTable *nt)
 int getNumOptimisers()
 {
     return 11;
+}
+
+bool doLinear(Program *p, int smart)
+{
+    instStream *s;
+    while ((s = selectUninsertedStream(p)) != 0) {
+        if (s->func_0806d908() != 1) {
+            func_0804ad38("doLinear() - asked to process a non-uta\n");
+            return false;
+        }
+        if (s->getAllocMode() != 2) {
+            func_0804ad38("flowMon::doLinear() - table hasn't had external allocation .. %s mode %d!\n",
+                          s->func_0806d674(), s->getAllocMode());
+            return false;
+        }
+        if (!prepExtInfo(p, s, 0)) {
+            func_0804ad38("failed to prep external info for stream\n");
+            return false;
+        }
+        workTable *wt = s->getTable();
+        if (!wt) {
+            func_0804ad38("flowMon::Optimise() - couldn't get work table for %s!\n", s->func_0806d674());
+            return false;
+        }
+        if (wt->func_080741b4()) {
+            func_0804ad38("loop size set for linear table opt %s\n", s->func_0806d674());
+            return false;
+        }
+        workTable *best = 0;
+        int i = smart ? 10 : 0;
+        for (; i >= 0 && (i != 0 || !best); i--) {
+            optimiser *o = &optTable[i];
+            if (o->flags & 2) {
+                g_080de730 = o->name;
+                workTable *nt = prepUta(p, s, 0, 1);
+                if (!nt) {
+                    func_0804ad38("failed to prepUta istream\n");
+                    return false;
+                }
+                nt->unk_00 = i;
+                if (!statReset(p)) {
+                    func_0804ad38("failed to reset stats for cpu\n");
+                    return false;
+                }
+                if (!dynCalcStats(nt)) {
+                    func_0804ad38("dyn calc stats failed for linear\n");
+                    return false;
+                }
+                bool ok = false;
+                switch (o->wmode) {
+                case 0:
+                    ok = func_0808061c(nt, o->func);
+                    break;
+                case 1:
+                    ok = func_0807f360(nt, o->func);
+                    break;
+                default:
+                    func_0804ad38("bad wmode\n");
+                    func_0804aeb0();
+                }
+                if (!ok)
+                    func_0804ac7c(" WARNING: failed to %s via %s\n", o->name, s->func_0806d674());
+                else {
+                    if (!reduceExtents(nt)) {
+                        func_0804ad38("failed to reduce extents for code!\n");
+                        return false;
+                    }
+                    if (!fiddleBDL(nt)) {
+                        func_0804ad38("reduceEx - failed to fiddle bdl\n");
+                        return false;
+                    }
+                    if (!nt->doPostOpt(1)) {
+                        func_0804ad38("failed to validate/patch moves - so continue\n");
+                        func_0804adf0(-1);
+                    }
+                    if (assignLocalRegisters(p, nt)) {
+                        if (best) {
+                            if (nt->getPhysicalLen() < best->getPhysicalLen()) {
+                                delete best;
+                                best = nt;
+                            } else
+                                delete nt;
+                        } else
+                            best = nt;
+                        if (best && best->getPhysicalLen() <= s->func_0805f284())
+                            break;
+                        continue;
+                    }
+                }
+                delete nt;
+            }
+        }
+        if (!best) {
+            func_0804ad38("no opt table.. something failed making table .. for %s!\n", s->func_0806d674());
+            s->dump(0);
+            return false;
+        }
+        int len = best->getPhysicalLen();
+        if (len < 0) {
+            func_0804ad38("optTable was bad size\n");
+            return false;
+        }
+        if (!s->setOptTable(best)) {
+            func_0804ad38("set opt table - failed \n");
+            return false;
+        }
+        func_0804acb0("Opt::Linear %16s  %d/%d\n", s->func_0806d674(), len, s->func_0805f284());
+    }
+    return true;
 }
