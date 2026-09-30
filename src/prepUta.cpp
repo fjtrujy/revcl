@@ -244,3 +244,25 @@ bool makeLpWork(instStream *s, int maxSpread)
     }
     return true;
 }
+
+bool disposeLpWork(instStream *s)
+{
+    if (s->unk_218 == 0) {
+        func_0804ad38("no work table set for dispose lp table\n");
+        return false;
+    }
+    delete s->unk_218;
+    if (s->unk_220 == 0) {
+        func_0804ad38("there's no saved work table for dispose\n");
+        return false;
+    }
+    s->unk_218 = s->unk_220;
+    s->unk_220 = 0;
+    return true;
+}
+
+bool keepLpWork(instStream *s)
+{
+    s->unk_220 = 0;
+    return true;
+}
