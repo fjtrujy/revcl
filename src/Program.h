@@ -18,6 +18,7 @@ struct Program {
     bool func_0806efc4(Parser *parser, bool a, bool newSyntax);
 
     bool func_0806c9b8(const char *name);
+    const char *getUniqueName();
 
     bool unk_00;        // new syntax
     char unk_01[3];
@@ -25,7 +26,8 @@ struct Program {
     char *unk_18;       // global name (dupString)
     char *unk_1c;       // "Nameless"
     mList unk_20;
-    char unk_34[9];
+    char *unk_34;       // unique name (dupString), default "FLOW"
+    char unk_38[5];
     char unk_3d;        // mode: 1 normal, 3 raw (VSM)
     char unk_3e;        // 3 reorder, 4 noreorder
     bool unk_3f;        // inside .rawloop

@@ -11,6 +11,8 @@ extern bool quiet_080bbd98;
 
 bool func_08070180(iInfo *tab, int count);
 bool func_0804bf28(char a, char b);
+bool func_0804bf9c(char c);
+char *dupString(const char *s);
 
 Processor::Processor()
 {
@@ -536,4 +538,88 @@ aaDesc *func_0806c768(Instr *in)
             }
     }
     return res;
+}
+
+aaUse *func_0806c7f8(Instr *in)
+{
+    if (!in)
+        return 0;
+    if (!in->unk_34)
+        return 0;
+    int id = iinfoId(in->unk_34);
+    if (id < 0) {
+        func_0804ad38("couldn't deduce instruction uid\n");
+        func_0804adf0(-1);
+    }
+    if (!g_080de724)
+        return 0;
+    for (aaUse *t = (aaUse *)g_080de728; t->unk_00; t++)
+        if (t->unk_00 == id)
+            return t;
+    return 0;
+}
+
+bool emitReset(Program *p)
+{
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i] && !g_080de6e0[i]->emitReset()) {
+            func_0804ad38("Processor::emitReset() - failed to reset %s\n",
+                          g_080de6e0[i]->unk_2c);
+            return false;
+        }
+    return true;
+}
+
+char *emitStats(Program *p, char *buf)
+{
+    buf += func_0804adbc(buf, "; register stats:\n");
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i] && g_080de6e0[i]->unk_18) {
+            buf = g_080de6e0[i]->emitStats(buf);
+            if (!buf) {
+                func_0804ad38("Processor::emitStats() - failed to emit stats for %s\n",
+                              g_080de6e0[i]->unk_2c);
+                return 0;
+            }
+        }
+    return buf;
+}
+
+int getPoolsByClassID(int cls, RegPool **tab, int max)
+{
+    if (!tab) {
+        func_0804ad38("Processor :: passed a null table pointer to getPoolsByClassID()\n");
+        return -1;
+    }
+    int n = 0;
+    for (int i = 0; i != 12; i++) {
+        RegPool *rp = g_080de6e0[i];
+        if (rp && rp->unk_0e == cls) {
+            if (n >= max) {
+                func_0804ad38("Processor:: more pools than space provided in getPoolsByClassID()\n");
+                return -1;
+            }
+            tab[n++] = rp;
+        }
+    }
+    return n;
+}
+
+bool Program::func_0806c9b8(const char *name)
+{
+    if (unk_34)
+        delete[] unk_34;
+    unk_34 = 0;
+    if (name) {
+        unk_34 = dupString(name);
+        for (char *s = unk_34; *s; s++)
+            if (!func_0804bf9c(*s))
+                *s = '_';
+    }
+    return true;
+}
+
+const char *Program::getUniqueName()
+{
+    return unk_34 ? unk_34 : "FLOW";
 }
