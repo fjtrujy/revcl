@@ -8,6 +8,12 @@ void disposeBackTrace(Program *p);
 void func_0806be68(Program *p);
 bool parseReset(Program *p);
 const char *linkTypeName(int type);
+bool func_0804c03c(const char *a, const char *b);
+bool emitReset(Program *p);
+char *emitStats(Program *p, char *buf);
+char *emitFileStart(Program *p, char *buf);
+char *emitFileEnd(Program *p, char *buf);
+const char *getOptimiserName(int id);
 
 Program::Program(bool symbolic)
 {
@@ -252,4 +258,125 @@ bool func_0806f0e8(Program *p)
             func_0804ad38("flowMon::PatchLatencies - failed for '%s'\n", s->func_0806d674());
     }
     return true;
+}
+
+char *emitProgram(Program *p, char *out, int comments)
+{
+    instStream *s;
+    int total = 0;
+    if (!out) {
+        func_0804ad38("flowMon::Emit - null output pointer\n");
+        return 0;
+    }
+    char *buf = out;
+    for (s = p->unk_a0; s; s = s->unk_108) {
+        if (s->unk_00) {
+            buf += func_0804adbc(buf, "; === __LP__ %s:\n", s->func_0806d674());
+            for (int i = 0; i != s->unk_00; i++) {
+                if (s->unk_04[i].unk_00 > 0) {
+                    buf += func_0804adbc(buf, "; === %16s : optimal=%d clid=%d mlid=%d size=(%d) ",
+                                         getOptimiserName(i), s->unk_04[i].unk_04, s->unk_04[i].unk_0c,
+                                         s->unk_04[i].unk_08, s->unk_04[i].unk_00);
+                    buf += func_0804adbc(buf, "\n");
+                }
+            }
+        }
+    }
+    buf += func_0804adbc(buf, "; =================================================\n");
+    buf += func_0804adbc(buf, "; flowMon::Emit() vcl 1.4beta7 produced this code:\n");
+    emitReset(p);
+    buf = emitFileStart(p, buf);
+    if (!buf) {
+        func_0804ad38("failed to emit the start of the source file\n");
+        return 0;
+    }
+    for (s = p->unk_a0; s; s = s->unk_108) {
+        s->dump(0);
+        int n = 0, m = 0;
+        s->unk_2c8 = total;
+        buf = s->emit(buf, comments, &n, &m);
+        if (!buf) {
+            func_0804ad38("flowMon : failed to write a stream\n");
+            return 0;
+        }
+        total += n;
+    }
+    buf = emitFileEnd(p, buf);
+    if (!buf) {
+        func_0804ad38("failed to emit end of file\n");
+        return 0;
+    }
+    buf += func_0804adbc(buf, ";\tiCount=%d\n", total);
+    buf = emitStats(p, buf);
+    if (!buf) {
+        func_0804ad38("failed to emit cpu stats\n");
+        return 0;
+    }
+    return buf;
+}
+
+bool setUniqueName(Program *p, const char *name)
+{
+    return p->proc.setUniqueName(name);
+}
+
+const char *getUniqueName(Program *p)
+{
+    return p->proc.getUniqueName();
+}
+
+char *emitLabels(Program *p, char *buf)
+{
+    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+        buf = s->emitLabels(buf);
+        if (!buf) {
+            func_0804ad38("failed to emit user labels for '%s'\n", s->func_0806d674());
+            return 0;
+        }
+    }
+    return buf;
+}
+
+bool isReferencedLabel(Program *p, char *name)
+{
+    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+        if (s->unk_2cc == 2) {
+            linkNode *l = s->unk_134.unk_00;
+            if (l) {
+                linkNode *next = l->unk_08;
+                if (next) {
+                    func_0804ad38("found entry point with more than one exit\n");
+                    func_0804adf0(-1);
+                }
+                instStream *t = l->unk_0c;
+                if (!t) {
+                    func_0804ad38("no stream for ir\n");
+                    func_0804adf0(-1);
+                }
+                if (t->unk_110.func_0804b234(name))
+                    return true;
+            }
+        }
+        if (s->getBranch()) {
+            char *tgt = s->getBranchTargetImmediate();
+            if (tgt && func_0804c03c(tgt, name))
+                return true;
+        }
+    }
+    return p->unk_88.func_0804b234(name) != 0;
+}
+
+bool func_0806f4a0(Program *p, instStream *s)
+{
+    mList *l = &s->unk_110;
+    for (mNode *n = l->unk_0c; n; n = n->unk_04) {
+        if (p->proc.unk_04.func_0804b234(n->unk_14))
+            return true;
+    }
+    return false;
+}
+
+bool func_0806f4e8(Program *p, char *name)
+{
+    return p->proc.unk_04.func_0804b234(name) != 0;
 }

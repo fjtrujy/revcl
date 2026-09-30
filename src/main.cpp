@@ -35,8 +35,8 @@ bool func_08069324(Program *p, bool init);
 bool explodeRaw(Program *p);
 void func_0806ed78(Program *p, int a);
 bool func_0806f0e8(Program *p);
-int func_0806f13c(Program *p, char *buf, int comments);
-int func_0806f340(Program *p, char *buf);
+char *emitProgram(Program *p, char *buf, int comments);
+char *emitLabels(Program *p, char *buf);
 bool func_08071f30(Program *p);
 bool func_08079318(Program *p, bool smart);
 bool func_08079778(Program *p, bool smart);
@@ -461,7 +461,7 @@ int main(int argc, char **argv)
         func_0804ad38("failed to get obuffer\n");
         func_0804adf0(-1);
     }
-    if (!func_0806f13c(&flow, obuf, comments)) {
+    if (!emitProgram(&flow, obuf, comments)) {
         func_0804ad38("failed to write string\n");
         func_0804adf0(-1);
     }
@@ -470,7 +470,7 @@ int main(int argc, char **argv)
         func_0804ad38("failed to get ojbuffer\n");
         func_0804adf0(-1);
     }
-    if (!func_0806f340(&flow, ojbuf)) {
+    if (!emitLabels(&flow, ojbuf)) {
         func_0804ad38("failed to write label list\n");
         func_0804adf0(-1);
     }

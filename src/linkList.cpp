@@ -6,7 +6,7 @@
 
 const char *linkTypeName(int type);
 bool func_0806f4e8(Program *p, char *name);
-const char *func_0806f334(Program *p);
+const char *getUniqueName(Program *p);
 char *mprefix_del(const char *a, const char *b);
 
 static inline linkNode *findRef(linkNode *p, instStream *s, int type)
@@ -321,7 +321,7 @@ bool Program::doUnique()
                     return false;
                 }
                 if (!func_0806f4e8(this, name)) {
-                    char *nn = mprefix_del(func_0806f334(this), name);
+                    char *nn = mprefix_del(getUniqueName(this), name);
                     if (!nn) {
                         func_0804ad38("failed to cat name\n");
                         return false;
@@ -337,7 +337,7 @@ bool Program::doUnique()
     for (s = unk_a0; s; s = s->unk_108) {
         for (mNode *n = s->unk_110.unk_0c; n; n = n->unk_04) {
             if (!func_0806f4e8(this, n->unk_14)) {
-                char *nn = mprefix_del(func_0806f334(this), n->unk_14);
+                char *nn = mprefix_del(getUniqueName(this), n->unk_14);
                 if (!nn) {
                     func_0804ad38("failed to cat\n");
                     return false;
@@ -351,7 +351,7 @@ bool Program::doUnique()
     }
     for (mNode *n = unk_88.unk_0c; n; n = n->unk_04) {
         if (!func_0806f4e8(this, n->unk_14)) {
-            char *nn = mprefix_del(func_0806f334(this), n->unk_14);
+            char *nn = mprefix_del(getUniqueName(this), n->unk_14);
             if (!nn) {
                 func_0804ad38("failed to cat\n");
                 return false;

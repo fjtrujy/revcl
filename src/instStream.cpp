@@ -1,7 +1,7 @@
 #pragma implementation "linkList.h"
 #include "instStream.h"
 
-bool func_0806f398(Program *p, char *name);
+bool isReferencedLabel(Program *p, char *name);
 bool func_0806f4e8(Program *p, char *name);
 const char *codeModeName(int mode);
 
@@ -259,7 +259,7 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
         return buf;
     }
     for (mNode *n = unk_110.unk_0c; n; n = n->unk_04) {
-        if (n->unk_14 && (func_0806f398(unk_104, n->unk_14)
+        if (n->unk_14 && (isReferencedLabel(unk_104, n->unk_14)
                           || func_0806f4e8(unk_104, n->unk_14) || n->unk_18))
             buf += func_0804adbc(buf, "%s:\n", n->unk_14);
     }
