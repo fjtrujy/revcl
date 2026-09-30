@@ -55,7 +55,7 @@ bool func_08060018(Program *p, bool a);
 bool func_0806a74c(Program *p);
 bool func_0806ae58(Program *p);
 bool detectMoves(Program *p);
-void func_0806c3ac(Program *p);
+void reportUBS(Program *p);
 void func_0806c3e0(Program *p);
 
 extern int errorOccurred;
@@ -567,7 +567,7 @@ void func_0804a2a4()
 static inline void reportErrors(Program *p)
 {
     func_0804ad84("vcl thinks it found problem(s) in the input source:\n");
-    func_0806c3ac(p);
+    reportUBS(p);
 }
 
 static inline void reportWarnings(Program *p)
@@ -582,7 +582,7 @@ bool func_0804a2b4(Program *p, bool a, bool b, bool c)
         func_0804ad38("vcl found a bug in itself while chasing dependencies\n");
         return false;
     }
-    if (p->unk_70) {
+    if (p->unk_68.unk_08) {
         if (!c) {
             reportErrors(p);
             return false;

@@ -313,3 +313,95 @@ bool func_0806c0f8(Program *p)
         }
     return true;
 }
+
+inline RegPool *getRP(unsigned t)
+{
+    if (t < 12)
+        return g_080de6e0[t];
+    func_0804ac7c("Processor::GetRP - out of range register type (%d)\n", t);
+    return 0;
+}
+
+RegPoolEntry *getReg(unsigned type, const char *name)
+{
+    RegPool *pool = getRP(type);
+    if (!pool) {
+        func_0804ad38("getBaseReg from - not find pool %d\n", type);
+        func_0804adf0(-1);
+    }
+    return pool->func_08059418(name);
+}
+
+RegPoolEntry *getReg(unsigned type, int index)
+{
+    RegPool *pool = getRP(type);
+    if (!pool) {
+        func_0804ad38("getBaseReg from - not find pool %d\n", type);
+        func_0804adf0(-1);
+    }
+    return pool->func_080593e0(index);
+}
+
+RegPoolEntry *func_0806c224(int idx)
+{
+    for (int i = 0; i != 12; i++) {
+        RegPool *rp = g_080de6e0[i];
+        if (rp) {
+            RegPoolEntry *e = rp->func_080593e0(idx);
+            if (e)
+                return e;
+        }
+    }
+    return 0;
+}
+
+RegPoolEntry *getOperandZeroReg(int kind)
+{
+    RegPool *pool = getRP(func_08057a34(kind));
+    if (!pool) {
+        func_0804ad38("getRP failed for operand getZeroReg\n");
+        func_0804adf0(-1);
+    }
+    return pool->unk_10;
+}
+
+RegPoolEntry *getZeroReg(unsigned type)
+{
+    RegPool *pool = getRP(type);
+    if (!pool) {
+        func_0804ad38("getRP failed getZeroReg\n");
+        func_0804adf0(-1);
+    }
+    return pool->unk_10;
+}
+
+RegPool *GetRP(unsigned t)
+{
+    if (t > 11) {
+        func_0804ac7c("Processor::GetRP - out of range register type (%d)\n", t);
+        return 0;
+    }
+    return g_080de6e0[t];
+}
+
+bool flowReset(Program *p)
+{
+    p->unk_68.clear();
+    p->unk_74.clear();
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i] && !g_080de6e0[i]->func_0805951c()) {
+            func_0804ad38("Processor::flowReset() - failed to reset %s\n",
+                          g_080de6e0[i]->unk_2c);
+            return false;
+        }
+    return true;
+}
+
+void reportUBS(Program *p)
+{
+    ubsList *ubs = &p->unk_68;
+    if (ubs->unk_08) {
+        func_0804acb0("uh-oh, VCL thinks the following operands were used before set:\n");
+        ubs->func_080525c8();
+    }
+}

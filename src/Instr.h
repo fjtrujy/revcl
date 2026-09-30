@@ -559,7 +559,7 @@ struct aaUse {
 
 aaDesc *func_0806c768(Instr *in);
 aaUse *func_0806c7f8(Instr *in);
-RegPoolEntry *func_0806c25c(char kind);
+RegPoolEntry *getOperandZeroReg(int kind);
 bool func_080543bc(Instr *a, Instr *b);
 bool func_0805449c(Instr *a, Instr *b);
 Operand *func_0805802c(ol_s *ol);

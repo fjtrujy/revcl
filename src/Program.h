@@ -4,6 +4,7 @@
 #include "mList.h"
 #include "VisitCache.h"
 #include "infoList.h"
+#include "ubsList.h"
 
 struct CpuDef;
 class Parser;
@@ -37,8 +38,8 @@ struct Program {
     char unk_61;        // saved unk_3e
     char unk_62;        // saved unk_3d
     bool unk_63;
-    char unk_64[0x0c];
-    int unk_70;
+    char unk_64[4];
+    ubsList unk_68;     // used-before-set list; unk_08 = count
     infoList unk_74;    // stall list (really an infoList subclass, vtable 0x080b33c8); unk_08 = count
     int unk_80;         // emulated length
     char unk_84[0x1c];

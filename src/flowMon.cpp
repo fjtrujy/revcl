@@ -12,7 +12,7 @@
 
 int buildDepCount_080b33a4;
 
-bool func_0806c340(Program *p);
+bool flowReset(Program *p);
 bool func_0806f50c(Program *p);
 bool func_0806c0f8(Program *p);
 bool func_080642ec(Program *p, instStream *s);
@@ -24,7 +24,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
 bool func_08060018(Program *p, bool b)
 {
     buildDepCount_080b33a4++;
-    if (!func_0806c340(p)) {
+    if (!flowReset(p)) {
         func_0804ad38("failed to reset cpu\n");
         return false;
     }

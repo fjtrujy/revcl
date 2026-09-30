@@ -407,7 +407,7 @@ int Instr::func_080532d8()
     case 0x6f: {
         Operand *op = &unk_38[1];
         if (op->unk_18 == unk_38[2].unk_18) {
-            RegPoolEntry *z = func_0806c25c(op->unk_04);
+            RegPoolEntry *z = getOperandZeroReg(op->unk_04);
             if (!z) {
                 func_0804ad38("failed to get a zero register");
                 return 0;
