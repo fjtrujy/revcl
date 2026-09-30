@@ -12,6 +12,8 @@ bool UnlinkFromDone(Block *blk, Instr *n);
 bool AddToDo_Head(Block *blk, Instr *n);
 bool setRange(int start, int end, int lsz);
 int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
+int func_0807de00(workTable *wt, Instr *in, cls08058718 *pos);
+int func_0807e1f8(workTable *wt, Instr *in, cls08058718 *pos);
 int func_0804bf50(unsigned int x);
 extern bool stagger_080b33ac;
 
@@ -540,4 +542,98 @@ bool reduceExtents(workTable *wt)
         }
     } while (moved);
     return true;
+}
+
+int drag(workTable *wt, Instr *in, cls08058718 *pos, int back, int depth)
+{
+    if (!wt->unk_38)
+        return 0;
+    func_0807de00(wt, in, pos);
+    func_0807e1f8(wt, in, pos);
+    int total = 0;
+    int n;
+    do {
+        n = 0;
+        Operand *op;
+        for (int i = 0; (op = in->getOp(i)) != 0; i++) {
+            RegPoolEntry *r = op->inputRegB();
+            if (!r)
+                continue;
+            for (int p = 0; p != r->unk_28; p++) {
+                if ((op->unk_07 >> p) & 1) {
+                OpSlot *s = &op->unk_2c[p];
+                cls0805bcc4 *par = s->getParent();
+                Instr *oi = par->ownerInstr();
+                if (!oi)
+                    continue;
+                int maxPos = pos->unk_00 - par->unk_18 - s->unk_18;
+                int start = pos->unk_00 - back;
+                if (!back)
+                    start = oi->unk_13e8.unk_00 + 1;
+                if (!par->unk_15)
+                    start -= par->unk_18;
+                bool single = true;
+                if (oi->unk_13d1) {
+                    start = oi->unk_13e8.unk_00 + 1;
+                    if (maxPos > wt->unk_38 + oi->unk_13e8.unk_00)
+                        maxPos = wt->unk_38 + oi->unk_13e8.unk_00;
+                    if (maxPos > oi->unk_1430)
+                        maxPos = oi->unk_1430;
+                    single = false;
+                }
+                cls08058718 *opos = &oi->unk_13e8;
+                if (start <= opos->unk_00)
+                    continue;
+                if (start > maxPos)
+                    continue;
+                bool moved = false;
+                char pipe = opos->unk_02;
+                cls08058718 np;
+                np.func_0805878c(pipe);
+                np.func_0805874c(start);
+                if (depth <= 3) {
+                    int b = back;
+                    if (oi->unk_13d1)
+                        b = wt->unk_38;
+                    cls08058718 tmp;
+                    n += drag(wt, oi, &np, b, depth + 1);
+                }
+                cls08058718 cur;
+                cur.unk_00 = np.unk_00;
+                cur.unk_04 = np.unk_04;
+                cur.unk_03 = np.unk_03;
+                cur.unk_02 = np.unk_02;
+                for (; start <= maxPos; start++) {
+                    cur.func_0805874c(start);
+                    if (!func_0807e130(wt, oi, &cur, false)) {
+                        np.unk_00 = cur.unk_00;
+                        np.unk_04 = cur.unk_04;
+                        np.unk_03 = cur.unk_03;
+                        np.unk_02 = cur.unk_02;
+                        moved = true;
+                        if (single)
+                            break;
+                    }
+                }
+                if (moved) {
+                    if (!wt->takeOut(oi)) {
+                        func_0804ad38("drag: failed to take in from table\n");
+                        func_0804aeb0();
+                    }
+                    if (!moveLocks(oi, &np)) {
+                        func_0804ad38("failed to move !\n");
+                        func_0804aeb0();
+                    }
+                    if (!wt->putIn(oi)) {
+                        func_0804ad38("failed to put in dragged instruction\n");
+                        func_0804aeb0();
+                    }
+                    n++;
+                }
+                }
+            }
+        }
+        total += n;
+    } while (n);
+    return total;
 }

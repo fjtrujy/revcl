@@ -323,6 +323,13 @@ struct Operand {
             r = 1;
         return (bool)r ? unk_18 : 0;
     }
+    RegPoolEntry *inputRegB()
+    {
+        int r = 0;
+        if (unk_09 == 1 && !isZero())
+            r = 1;
+        return (bool)r ? unk_18 : 0;
+    }
     RegPoolEntry *outputRegZ()
     {
         int r = 0;
