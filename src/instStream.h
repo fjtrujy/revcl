@@ -30,6 +30,9 @@ struct linkList {
     ~linkList();
     linkNode *func_0806dff4(instStream *s, int type);
     instStream *getStream(int type);
+    void dump();
+    bool removeAll();
+    bool func_0806dfa0(linkNode *n);
 };
 
 class instStream {
@@ -63,7 +66,12 @@ public:
     Instr *getBranch();
     bool removeBranch();
     ~instStream();
-    bool dump(bool);
+    bool reset();
+    void dump(bool);
+    void zeroStats();
+    bool iOwn(Instr *i);
+    bool patchLatencies();
+    bool canLoop();
     bool func_0806d9a0();         // raw-mode work table
     bool disposeInputTable();
 
@@ -73,7 +81,7 @@ public:
     instStream *unk_108;         // next in Program::unk_a0
     instStream *unk_10c;         // previous stream (to-register branch)
     mList unk_110;               // name list
-    int unk_124;                 // pass thru
+    char *unk_124;               // pass thru
     linkList unk_128;            // input links
     linkList unk_134;            // output links
     char unk_140;
@@ -130,7 +138,7 @@ public:
     char unk_2cd;      // code mode (2 adds 1000 to back trace dep length)
     unsigned char unk_2ce;  // branch type
     char unk_2cf;
-    int unk_2d0;
+    char *unk_2d0;
     char unk_2d4;      // dbgTop
     char unk_2d5;      // dbgEnd
     char unk_2d6;
