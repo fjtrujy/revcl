@@ -323,3 +323,27 @@ bool addNewOutput(Instr *in, RegPoolEntry *r, int bits, int flag)
     }
     return true;
 }
+
+RegPoolEntry *getTagRegister(RegPool *pool, char *name)
+{
+    if (RegPool::isResvd(name, pool->unk_0c)) {
+        func_0804ad84("can't use %s as a name for one of the %s\n", name, pool->unk_2c);
+        return 0;
+    }
+    RegPoolEntry *r = pool->func_08059a1c(name);
+    if (!r) {
+        r = pool->func_08059a5c(name);
+        if (!r) {
+            func_0804ad38("failed to create a virtual reg\n");
+            return 0;
+        }
+    }
+    r->unk_14 = false;
+    r->unk_28 = 4;
+    return r;
+}
+
+bool func_08085a9c(Program *)
+{
+    return true;
+}
