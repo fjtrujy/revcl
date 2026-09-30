@@ -266,3 +266,111 @@ bool keepLpWork(instStream *s)
     s->unk_220 = 0;
     return true;
 }
+
+bool modLsqq(Instr *in, int imm);
+
+bool lsqChain(workTable *wt)
+{
+    func_0804ad38("well, let's hope never wind up in this function!\n");
+    func_0804aeb0();
+    for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
+        RegPoolEntry *reg = ru->unk_08;
+        if (reg->unk_24 != 8)
+            continue;
+        Instr *list[1024];
+        Instr *in = wt->unk_88.unk_00;
+        func_0804acb0("lsqi- scan %s\n", reg->func_0805a8e0());
+        int n = 0;
+        bool bad = false;
+        bool ok = true;
+        for (; in; in = in->unk_1c.unk_00) {
+            int opc = in->func_08055ac4();
+            if (in->func_080553b4(reg, 0xff)) {
+                if (!(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4) || bad) {
+                    ok = false;
+                    break;
+                }
+                list[n++] = in;
+            }
+            if (in->func_0805544c(reg, 0xff)
+                && !(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4))
+                bad = true;
+        }
+        if (!ok || n <= 1)
+            continue;
+        func_0804acb0("lsChain for %s\n", reg->func_0805a8e0());
+        Operand *src = &list[0]->unk_38[1];
+        if (src->unk_27 != 1) {
+            func_0804ad38("this isn't externally set!\n");
+            func_0804aeb0();
+        }
+        int total = 0;
+        for (int i = 0; i != n; i++) {
+            Instr *in = list[i];
+            int opc = in->func_08055ac4();
+            int delta = 0;
+            switch (opc) {
+            case 0x9e:
+            case 0xa3:
+                delta = 1;
+                break;
+            case 0x9f:
+            case 0xa4:
+                delta = -1;
+                break;
+            }
+            if (!modLsqq(in, total))
+                func_0804ad38("mod instruction\n");
+            total += delta;
+            const char *name = "NO_BASE_INST";
+            if (in->unk_34)
+                name = in->unk_34->unk_04;
+            func_0804acb0("  %3d : %s\n", i, name);
+        }
+        iInfo *ii;
+        if (total < 0) {
+            ii = func_0806bf74(0x70);
+            total = -total;
+        } else
+            ii = func_0806bf74(0x6e);
+        Instr *ni = new Instr(ii);
+        if (!ni) {
+            func_0804ad38("failed to get new instruction\n");
+            return false;
+        }
+        ni->unk_38[0].unk_18 = reg;
+        ni->unk_38[0].unk_27 = 1;
+        ni->unk_38[0].unk_07 = 1;
+        ni->unk_38[1].unk_18 = reg;
+        ni->unk_38[1].unk_27 = 1;
+        ni->unk_38[1].unk_07 = 1;
+        ni->unk_38[2].unk_1c.setInt(total);
+        if (!wt->logAddLinear_After(list[n - 1], ni)) {
+            func_0804ad38("failed to add the new instruction\n");
+            return false;
+        }
+        for (Instr *in = ni->unk_1c.unk_00; in; in = in->unk_1c.unk_00) {
+            for (int k = 0; k != in->unk_138b; k++) {
+                Operand *op = &in->unk_38[k];
+                if (op->unk_18 != reg)
+                    continue;
+                if (!op->isInReg()) {
+                    func_0804ad38("isn't an input, and this code is ..not taking any chances!\n");
+                    return false;
+                }
+                op->unk_2c[0].unk_54.clear();
+                if (!link_oParts(ni, 0, 0, in, k, 0)) {
+                    func_0804ad38("failed to link parts together\n");
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool splitStreams()
+{
+    func_0804ad38("split streams called\n");
+    return false;
+}
