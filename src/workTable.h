@@ -101,6 +101,7 @@ struct wtRow {
     int func_080723ec(RegPoolEntry *reg, unsigned char mask);
     int func_08072440(RegPoolEntry *reg, unsigned char mask);
     unsigned int func_08072494();
+    char *emit(char *buf, int flags, bool upper, bool unused);
 };
 
 struct wtInstrList {
