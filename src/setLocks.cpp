@@ -5,6 +5,7 @@
 
 class Block;
 bool func_0806558c(Instr *i, int *row);
+bool func_080655e8(Instr *i, int *row);
 bool unresolveMove(Block *blk, Instr *mv);
 bool UnlinkFromToDo(Block *blk, Instr *n);
 bool AddDone_Tail(Block *blk, Instr *n);
@@ -636,4 +637,78 @@ int drag(workTable *wt, Instr *in, cls08058718 *pos, int back, int depth)
         total += n;
     } while (n);
     return total;
+}
+
+cls0805c244 *workTable::getLockList(RegPoolEntry *reg, int part)
+{
+    cls0805c244 *ll = findLockList(unk_24, reg, part);
+    if (ll)
+        return ll;
+    ll = new cls0805c244(unk_24);
+    if (!ll) {
+        func_0804ad38("failed to get new locklist\n");
+        func_0804aeb0();
+    }
+    unk_20++;
+    unk_24 = ll;
+    if (!ll->setRepReg(reg)) {
+        func_0804ad38("failed to set representative reg\n");
+        return 0;
+    }
+    ll->unk_02 = part;
+    return ll;
+}
+
+int func_0807dc44(workTable *wt, Instr *in, cls08058718 *pos)
+{
+    int row = pos->unk_00;
+    int pipe = pos->unk_02;
+    int r4 = pos->unk_04;
+
+    short e = in->unk_13b2;
+    if (e < in->unk_13b0)
+        e = in->unk_13b0;
+    if (r4 < e + g_080b3370)
+        return 0x10000;
+
+    short l = in->unk_13b6;
+    if (l < in->unk_13b4)
+        l = in->unk_13b4;
+    if (l && g_080b3374 >= 0 && g_080b3374 - r4 <= l)
+        return 0x10000;
+    if (stagger_080b33ac && in->unk_13ce && (bool)(r4 & 1))
+        return 0x10000;
+
+    if (wt->unk_38) {
+        if (row / wt->unk_38 > 16)
+            return 0x8000;
+    } else if (row >= wt->unk_28) {
+        return 0x8000;
+    }
+
+    if (!in->unk_1410) {
+        int fr = 0;
+        if (!func_0806558c(in, &fr)) {
+            func_0804ad38("check fdeps failed\n");
+            func_0804adf0(-1);
+            return 0x80000000;
+        }
+        if (fr < 0 || fr > row)
+            return 0x100000;
+    }
+    int lr = 30000;
+    if (!func_080655e8(in, &lr)) {
+        func_0804ad38("check fdeps failed\n");
+        func_0804adf0(-1);
+        return 0x80000000;
+    }
+    if (lr <= row)
+        return 0x100000;
+
+    Instr **ie = ((cls_unk30 *)wt)->getIE_ck(pos->unk_04);
+    if (ie[pipe] != (Instr *)in->unk_1398 && ie[pipe] != in)
+        return 0x40;
+    if (!wouldPair(ie, in, pipe))
+        return 0x80;
+    return canMoveLocks(in, &pos->unk_00);
 }
