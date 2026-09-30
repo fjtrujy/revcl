@@ -336,3 +336,65 @@ bool buildSynth(Program *prog, instStream *s, flowBlock *blocks, int count)
 fail:
     return false;
 }
+
+bool buildUta(Program *prog, instStream *s, flowBlock *blocks, int count)
+{
+    workTable *t = &s->unk_148;
+    if (!t) {
+        func_0804ad38("build: failed to get input table from ist\n");
+        return false;
+    }
+    if (!t->init(1, 0)) {
+        func_0804ad38("failed to init uta table for '%s'\n", s->func_0806d674());
+        return false;
+    }
+    t->unk_10 = s;
+    int flags = 0;
+    int branch = -1;
+    for (int i = 0; i != count; i++) {
+        flowBlock *b = &blocks[i];
+        if (b->unk_14.func_0804b794()) {
+            func_0804ad38("started to build the stream.. but there was a label decorated with debug info in the way!\n");
+            return false;
+        }
+        b->unk_14.func_0804b1b0();
+        Instr *in = b->unk_0c[0];
+        if (!in)
+            continue;
+        if (in->unk_1420 > 0) {
+            func_0804ad84("parseLid set for a uta instruction\n");
+            in->leDump();
+            return false;
+        }
+        in->unk_1420 = -1;
+        if (in->unk_13cd) {
+            if (!s->processCmdSynth(in)) {
+                func_0804ad84("failed to process an instruction\n");
+                int saved = errorOccurred;
+                errorOccurred = !quiet_080bbd98;
+                in->func_08054008(false);
+                errorOccurred = saved;
+            }
+            flags |= in->unk_1389;
+        } else {
+            b->unk_0c[0] = 0;
+            if (!t->logAddLinear_Tail(in)) {
+                func_0804ad38("failed to attach instruction to the linear list for synth\n");
+                return false;
+            }
+            if (in->unk_1388) {
+                if (branch >= 0) {
+                    func_0804ad38("more than one branch in uta decode\n");
+                    return false;
+                }
+                branch = in->unk_1388;
+            }
+        }
+    }
+    if (branch < 0)
+        branch = 0;
+    s->unk_2ce = branch;
+    if (flags)
+        func_0804acb0("d_viFlags - is set to %x on exit<-----------------------------\n", flags);
+    return true;
+}
