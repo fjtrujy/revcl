@@ -1,5 +1,6 @@
 #include "instStream.h"
 #include "flowBlock.h"
+#include "Program.h"
 
 extern int errorOccurred;
 extern bool quiet_080bbd98;
@@ -396,5 +397,135 @@ bool buildUta(Program *prog, instStream *s, flowBlock *blocks, int count)
     s->unk_2ce = branch;
     if (flags)
         func_0804acb0("d_viFlags - is set to %x on exit<-----------------------------\n", flags);
+    return true;
+}
+
+int func_0806e530(int flags);
+void func_0806ed78(Program *p, int a);
+bool fixupBtorBranch(Program *p, instStream *s, int *changed, bool btor);
+
+bool resolveStreamBranches(Program *p)
+{
+    instStream *s;
+    for (s = p->unk_a0; s; s = s->unk_108) {
+        switch (s->unk_2cd) {
+        case 1: {
+            unsigned char bt = s->unk_2ce;
+            if (!bt || (bt & 4)) {
+                if (s->unk_108) {
+                    if (!p->linkStreams(s, s->unk_108, 0)) {
+                        func_0804ad38("failed to link streams together\n");
+                        return false;
+                    }
+                } else if (!s->unk_124) {
+                    func_0804ad38("fell off the bottom of code! .. last stream should either end in END or be a branch\n");
+                    return false;
+                }
+            }
+            if (bt) {
+                if (!((bt >> 1) & 1)) {
+                    int type = func_0806e530(bt);
+                    char *label = s->getBranchTargetImmediate();
+                    if (!label) {
+                        func_0804ad38("failed to get branch target immediate\n");
+                        return false;
+                    }
+                    instStream *t = p->findStream(label);
+                    if (!t) {
+                        func_0804ad84("failed to find label '%s'\n", label);
+                        return false;
+                    }
+                    if (!p->linkStreams(s, t, type)) {
+                        func_0804ad38("failed to link streams together\n");
+                        return false;
+                    }
+                } else {
+                    Instr *br = s->getBranch();
+                    if (!br) {
+                        func_0804ad38("failed to get a branch instruction for btor case\n");
+                        return false;
+                    }
+                    if (br->unk_139c) {
+                        int type = func_0806e530(s->unk_2ce);
+                        char name[2064];
+                        for (char *q = br->unk_139c; *q; q++) {
+                            char *d = name;
+                            char *r = q;
+                            while (*r != ':')
+                                *d++ = *r++;
+                            *d = 0;
+                            q = r;
+                            instStream *t = p->findStream(name);
+                            if (!t) {
+                                func_0804ad84("branch-to-register tag, failed to find label '%s'\n", name);
+                                return false;
+                            }
+                            if (!p->linkStreams(s, t, type)) {
+                                func_0804ad38("failed to link streams together\n");
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        case 2:
+            if (s->unk_2ce) {
+                func_0804ad38("branchtype not null for end / cont\n");
+                return false;
+            }
+            if (!s->unk_108) {
+                func_0804ad84("fell off the bottom of code! .. last stream should either end in END or be a branch\n");
+                return false;
+            }
+            if (!p->linkStreams(s, s->unk_108, 0)) {
+                func_0804ad38("failed to link streams together\n");
+                return false;
+            }
+            break;
+        case 4:
+            if (!s->unk_2d0) {
+                func_0804ad38("no macro set in end_macro\n");
+                return false;
+            }
+            /* fall through */
+        case 3:
+            if (s->unk_2ce) {
+                func_0804ad38("branchtype not null for end / cont\n");
+                return false;
+            }
+            break;
+        default:
+            func_0804ad38("bad end type in stream\n");
+            return false;
+        }
+    }
+
+    bool again;
+    do {
+        again = false;
+        for (s = p->unk_a0; s; s = s->unk_108) {
+            bool btor = (s->unk_2ce >> 1) & 1;
+            if (btor) {
+                int changed = 0;
+                if (!fixupBtorBranch(p, s, &changed, btor)) {
+                    func_0804ad38("failed to fixup a branch-to-register instruction\n");
+                    return false;
+                }
+                if (changed)
+                    again = true;
+            }
+        }
+    } while (again);
+
+    func_0806ed78(p, 0);
+    for (s = p->unk_a0; s; s = s->unk_108) {
+        Instr *br = s->getBranch();
+        if (br && br->unk_139c) {
+            delete[] br->unk_139c;
+            br->unk_139c = 0;
+        }
+    }
     return true;
 }
