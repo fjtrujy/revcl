@@ -347,7 +347,7 @@ int propagateMoves(workTable *t)
                 if (!(used & ~valid) && !(used & srcWritten) && !paired)
                     for (int i = 0; i != cur->unk_138b; i++) {
                         Operand *op = &cur->unk_38[i];
-                        if (op->getReg() == dst)
+                        if (op->regOp() == dst)
                             op->getRegFrom(&in->unk_38[1]);
                         count++;
                     }
