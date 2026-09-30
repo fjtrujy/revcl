@@ -235,6 +235,7 @@ public:
     bool unlockLine(cls08058718 *line);
     bool qRegRef(regUse *ru);
     bool qInstruction(Instr *in);
+    bool forceInsert(Instr *in, cls08058718 *pos);
     workTable *localClone();
     void clearLinear()
     {
