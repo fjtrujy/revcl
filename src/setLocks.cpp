@@ -10,6 +10,9 @@ bool UnlinkFromToDo(Block *blk, Instr *n);
 bool AddDone_Tail(Block *blk, Instr *n);
 bool UnlinkFromDone(Block *blk, Instr *n);
 bool AddToDo_Head(Block *blk, Instr *n);
+bool setRange(int start, int end, int lsz);
+int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
+int func_0804bf50(unsigned int x);
 extern bool stagger_080b33ac;
 
 bool setLocks(Instr *in)
@@ -469,5 +472,72 @@ bool UndoInsert(workTable *wt, Instr *in)
         func_0804ad38("failed to relink to todo list\n");
         func_0804aeb0();
     }
+    return true;
+}
+
+bool reduceExtents(workTable *wt)
+{
+    setRange(wt->unk_30, wt->unk_34, wt->unk_38);
+    int moved;
+    do {
+        moved = 0;
+        for (int r = wt->unk_30; r != wt->unk_34; r++) {
+            wtRow *row = wt->func_080724f0(r);
+            for (int p = 0; p != 2; p++) {
+                Instr *in = row->getEntry(p);
+                if (!in)
+                    continue;
+                int lo = in->unk_13e8.unk_00;
+                int cnt = 0;
+                int minEnd = 30000;
+                Operand *op;
+                for (int i = 0; (op = in->getOp(i)) != 0; i++) {
+                    RegPoolEntry *reg = op->outputRegZ();
+                    if (reg) {
+                        for (int k = 0; k != reg->unk_28; k++) {
+                            if ((op->unk_07 >> k) & 1) {
+                                cnt++;
+                                OpSlot *s = &op->unk_2c[k];
+                                if (s->unk_20 != 0) {
+                                    int e = s->unk_3e;
+                                    if (e < minEnd)
+                                        minEnd = e;
+                                }
+                            }
+                        }
+                    }
+                    if (op->inputReg())
+                        cnt -= func_0804bf50(op->unk_07);
+                }
+                if (minEnd < 30000 && cnt >= 0) {
+                    int t = minEnd;
+                    cls08058718 pos;
+                    bool found = false;
+                    for (; t > lo; t--) {
+                        pos.func_0805874c(t);
+                        if (!func_0807e130(wt, in, &pos, false)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        if (!wt->takeOut(in)) {
+                            func_0804ad38("failed to take out instruction\n");
+                            func_0804aeb0();
+                        }
+                        if (!moveLocks(in, &pos)) {
+                            func_0804ad38("failed to move !\n");
+                            func_0804aeb0();
+                        }
+                        if (!wt->putIn(in)) {
+                            func_0804ad38("failed to put in back in\n");
+                            func_0804aeb0();
+                        }
+                        moved++;
+                    }
+                }
+            }
+        }
+    } while (moved);
     return true;
 }
