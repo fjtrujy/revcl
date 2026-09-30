@@ -232,7 +232,7 @@ int func_08071e64(Block *blk, Instr *mv);
 bool UnlinkFromToDo(Block *blk, Instr *n);
 void func_08073bb0(Block *blk, Instr *mv);
 void func_08071ef8(Block *blk, Instr *mv, int);
-void func_0807197c(Instr *mv);
+bool addFreeMove(Instr *mv);
 
 bool undoMove(Block *blk, Instr *mv)
 {
@@ -312,7 +312,7 @@ bool undoMove(Block *blk, Instr *mv)
     }
     func_08073bb0(blk, mv);
     func_08071ef8(blk, mv, -1);
-    func_0807197c(mv);
+    addFreeMove(mv);
     return true;
 }
 

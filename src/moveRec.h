@@ -6,7 +6,7 @@
 class moveRec {
 public:
     moveRec *unk_00;          // next free
-    char unk_04;              // move type
+    unsigned char unk_04;     // move type
     Instr *unk_08;            // inst
     RegPoolEntry *unk_0c;     // m_Reg
     cls0805c244 unk_10[4];    // rll

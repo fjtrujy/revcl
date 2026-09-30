@@ -113,3 +113,132 @@ Instr *getMove(int type, int)
     mr->unk_0c = reg;
     return in;
 }
+
+bool addFreeMove(Instr *in)
+{
+    if (!in) {
+        func_0804ad38("addFReeMove - null input\n");
+        func_0804adf0(-1);
+    }
+    moveRec *mr = (moveRec *)in->unk_1428;
+    if (!mr) {
+        func_0804ad38("not a move to free\n");
+        func_0804adf0(-1);
+    }
+    RegPoolEntry *reg = mr->unk_0c;
+    if (!reg) {
+        func_0804ad38("m_Reg not set in mr\n");
+        func_0804adf0(-1);
+    }
+    reg->moveReset();
+    for (int i = 0; i != reg->unk_28; i++) {
+        cls0805c244 *l = &mr->unk_10[i];
+        l->unk_08 = 0;
+        l->reset();
+    }
+    if (in != mr->unk_08) {
+        func_0804ad38("no instruction set in mr\n");
+        func_0804adf0(-1);
+    }
+    in->unk_24.unk_04 = 0;
+    in->unk_24.unk_00 = 0;
+    in->unk_1c.unk_04 = 0;
+    in->unk_1c.unk_00 = 0;
+    in->unk_30 = 0;
+    in->unk_13e8.func_080586e0();
+    in->func_08054b84();
+    if (!in->unk_142c) {
+        func_0804ad38("baseMuid is not set for free move\n");
+        return false;
+    }
+    iInfo *ii = func_0806bf74(in->unk_142c);
+    in->unk_142e = 0;
+    in->unk_34 = ii;
+    in->unk_138c = ii->unk_0e;
+    in->unk_138d = ii->unk_10;
+    mr->unk_00 = (moveRec *)g_080de714[mr->unk_04];
+    g_080de714[mr->unk_04] = (int)mr;
+    return true;
+}
+
+bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp)
+{
+    *opc = -1;
+    *mask = 0;
+    if (!in)
+        return false;
+    int id = func_0806c72c(in->unk_34);
+    *srcOp = *dstOp = -1;
+    unsigned int v;
+    switch (id) {
+    case 0x22:
+    case 0x30:
+        if (in->unk_138f & 8)
+            return false;
+    case 0x25:
+    case 0x26:
+    case 0x27:
+    case 0x44:
+        if (in->func_08055828(1))
+            return false;
+        if (in->unk_38[2].unk_18->unk_30 != 0)
+            return false;
+        *opc = 0xb4;
+        *srcOp = 1;
+        *dstOp = 0;
+        break;
+    case 0x6c:
+    case 0x6f:
+        if (in->unk_38[2].unk_18->unk_30 != 32)
+            return false;
+        *opc = 0xb2;
+        *srcOp = 1;
+        *dstOp = 0;
+        break;
+    case 0x6d:
+    case 0x6e:
+    case 0x70:
+        if (!in->unk_38[2].unk_1c.getUInt(&v))
+            return false;
+        if (v)
+            return false;
+        *dstOp = 0;
+        *srcOp = 1;
+        *opc = 0xb2;
+        break;
+    case 0x99:
+        *opc = 0xb4;
+        *dstOp = 0;
+        *srcOp = 1;
+        break;
+    default:
+        return false;
+    }
+    RegPoolEntry *d = in->unk_38[*dstOp].unk_18;
+    RegPoolEntry *s = in->unk_38[*srcOp].unk_18;
+    if (!s || !d) {
+        func_0804ad38("move detect error - reg not set\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (s->unk_24 != d->unk_24) {
+        func_0804ad38("move detect - bad types\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (*opc < 0) {
+        func_0804ad38("bad uid for move detection\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (in->unk_38[*srcOp].unk_07 != in->unk_38[*dstOp].unk_07) {
+        func_0804ad38("bad mod bits for a move\n");
+        func_0804adf0(-1);
+    }
+    *mask = in->unk_38[*srcOp].unk_07;
+    if (!*mask) {
+        func_0804ac7c("modbits 0 for move..avoiding\n");
+        return false;
+    }
+    return true;
+}
