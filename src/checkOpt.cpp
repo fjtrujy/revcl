@@ -134,7 +134,7 @@ bool checkOpt3(Program *p)
                     count++;
                 }
             }
-            int lcount = wt->unk_90;
+            int lcount = wt->unk_88.unk_08;
             if (count != lcount) {
                 func_0804ad38("linear count and itable mismatch (%d != %d) for %s\n",
                               lcount, count, s->func_0806d674());

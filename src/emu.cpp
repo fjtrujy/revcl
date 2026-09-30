@@ -84,7 +84,7 @@ bool func_080642ec(Program *p, instStream *s)
 
     wt = s->getWorkTable();
     int linear = wt->unk_c8;
-    int iCount = wt->unk_90;
+    int iCount = wt->unk_88.unk_08;
     if (linear != iCount) {
         func_0804ad38("linear count not same as iCount %d!=%d\n", linear, iCount);
         return false;

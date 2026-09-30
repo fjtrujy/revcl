@@ -106,6 +106,10 @@ struct wtRow {
 struct wtInstrList {
     Instr *unk_00;          // head
     Instr *unk_04;          // tail
+    int unk_08;             // count
+
+    wtInstrList() { unk_04 = 0; unk_08 = 0; unk_00 = 0; }
+    ~wtInstrList() { unk_04 = 0; unk_00 = 0; unk_08 = 0; }
 };
 
 class workTable {
@@ -118,7 +122,8 @@ public:
     int unk_0c;
     instStream *unk_10;     // owner
     regUseList unk_14;
-    char unk_20[8];
+    int unk_20;
+    int unk_24;
     int unk_28;             // row count
     wtRow *unk_2c;          // rows
     int unk_30;             // range start
@@ -127,10 +132,16 @@ public:
     int unk_3c;             // mlid
     char unk_40[4];
     int unk_44;             // extminlength
-    char unk_48[0x88 - 0x48];
+    char unk_48[4];
+    int unk_4c;
+    char unk_50[4];
+    cls08058718 unk_54;
+    cls0805e2e4 unk_5c;
+    char unk_74[0x88 - 0x74];
     wtInstrList unk_88;     // linear list
-    int unk_90;             // linear count
-    char unk_94[0xb0 - 0x94];
+    wtInstrList unk_94;
+    wtInstrList unk_a0;
+    char unk_ac[4];
     int unk_b0;             // move count, class 3
     int unk_b4;             // move count, odd class
     int unk_b8;             // move count, even class
