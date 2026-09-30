@@ -360,6 +360,20 @@ struct Operand {
             return unk_18;
         return 0;
     }
+    RegPoolEntry *inRegOp()
+    {
+        bool r = false;
+        if (unk_09 == 1 && !isZeroReg())
+            r = true;
+        return r ? unk_18 : 0;
+    }
+    RegPoolEntry *outRegOp()
+    {
+        bool r = false;
+        if (unk_09 == 2 && !isZeroReg())
+            r = true;
+        return r ? unk_18 : 0;
+    }
     bool isInput() { return unk_09 == 1; }
     RegPoolEntry *inReg()
     {

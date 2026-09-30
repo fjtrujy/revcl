@@ -169,3 +169,63 @@ done:
         saved[k]->incRef();
     return ret;
 }
+
+int canMoveLocks(Instr *in, short *pos)
+{
+    cls0805bcc4 *saved[64];
+    int ret = 0;
+    int i;
+    int n = 0;
+
+    for (i = 0; i != in->unk_138b; i++) {
+        Operand *op = &in->unk_38[i];
+        RegPoolEntry *r = op->inRegOp();
+        if (!r)
+            continue;
+        for (int p = 0; p != r->unk_28; p++) {
+            if ((op->unk_07 >> p) & 1) {
+                cls0805bcc4 *par = op->unk_2c[p].getParent();
+                if (!par->calcStats(in)) {
+                    func_0804ad38("failed to recalc stats ignoring instruction\n");
+                    func_0804aeb0();
+                }
+                saved[n++] = par;
+            }
+        }
+    }
+    for (i = 0; i != in->unk_138b; i++) {
+        Operand *op = &in->unk_38[i];
+        RegPoolEntry *ri = op->inRegOp();
+        if (ri) {
+            for (int p = 0; p != ri->unk_28; p++) {
+                if ((op->unk_07 >> p) & 1) {
+                    OpSlot *s = &op->unk_2c[p];
+                    int *minPos;
+                    ret |= s->unk_04->canMoveInputLock(s, pos, minPos);
+                    if (ret)
+                        goto done;
+                }
+            }
+        }
+        RegPoolEntry *ro = op->outRegOp();
+        if (ro) {
+            for (int p = 0; p != ro->unk_28; p++) {
+                if ((op->unk_07 >> p) & 1) {
+                    OpSlot *s = &op->unk_2c[p];
+                    int *minPos;
+                    ret |= s->unk_04->canMoveOutputLock(s, pos, minPos);
+                    if (ret)
+                        goto done;
+                }
+            }
+        }
+    }
+done:
+    while (n != 0) {
+        if (!saved[--n]->calcStats(0)) {
+            func_0804ad38("failed to calc stats undoing move test\n");
+            func_0804aeb0();
+        }
+    }
+    return ret;
+}
