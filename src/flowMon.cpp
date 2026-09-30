@@ -13,7 +13,7 @@
 int buildDepCount_080b33a4;
 
 bool flowReset(Program *p);
-bool func_0806f50c(Program *p);
+bool recalcFlowUIDs(Program *p);
 bool func_0806c0f8(Program *p);
 bool func_080642ec(Program *p, instStream *s);
 bool initBackTrace(Program *p);
@@ -35,7 +35,7 @@ bool func_08060018(Program *p, bool b)
             return false;
         }
     }
-    if (!func_0806f50c(p)) {
+    if (!recalcFlowUIDs(p)) {
         func_0804ad38("flowMon::flowReset: failed to recalculate flow UIDs\n");
         return false;
     }

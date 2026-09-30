@@ -380,3 +380,101 @@ bool func_0806f4e8(Program *p, char *name)
 {
     return p->proc.unk_04.func_0804b234(name) != 0;
 }
+
+bool recalcFlowUIDs(Program *p)
+{
+    instStream *s = p->unk_a0;
+    int n = 0;
+    p->unk_ac = -1;
+    for (; s; s = s->unk_108) {
+        if (!s->func_0806d908()) {
+            func_0804ad38("recalcFlowUIDs - found bad code mode at %s\n", s->func_0806d674());
+            return false;
+        }
+        s->unk_2c0 = n++;
+    }
+    if (n != p->unk_a8) {
+        func_0804ad38("recalcFlowUIDs - there was a hole somewhere?\n");
+        return false;
+    }
+    p->unk_ac = n;
+    int size = p->unk_ac + 1;
+    if (p->unk_b0) {
+        delete p->unk_b0;
+        p->unk_b0 = 0;
+    }
+    p->unk_b0 = new instStream *[size];
+    if (!p->unk_b0) {
+        func_0804ad38("failed to get a new linear table\n");
+        return false;
+    }
+    for (s = p->unk_a0; s; s = s->unk_108)
+        p->unk_b0[s->unk_2c0] = s;
+    return true;
+}
+
+bool func_0806f610(Program *p)
+{
+    if (!p->proc.func_0806bd40()) {
+        func_0804ad38("failed to alloc reset the cpu\n");
+        return false;
+    }
+    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+        workTable *wt = s->getTable();
+        if (!wt) {
+            func_0804ad38("failed to get work table\n");
+            return false;
+        }
+        wt->unk_08 = 1;
+    }
+    return true;
+}
+
+bool func_0806f6a4(Program *p)
+{
+    if (!p->proc.func_0806bd88()) {
+        func_0804ad38("failed to alloc reset the cpu\n");
+        return false;
+    }
+    return true;
+}
+
+void dumpFlow(Program *p)
+{
+    instStream *s = p->unk_a0;
+    func_0804acb0("dumpFlow-------------------\n");
+    for (; s; s = s->unk_108) {
+        const char *tag = "";
+        if (s->unk_2cc == 2)
+            tag = " ---ENTRY";
+        if (s->unk_2cd == 3)
+            tag = " ---EXIT";
+        bool fallThrough = false;
+        int id = s->unk_2c0;
+        func_0804acb0("[%5d] %s %s   <--\n", id, s->func_0806d674(), tag);
+        linkNode *l;
+        for (l = s->unk_128.unk_00; l; l = l->unk_08) {
+            if (l->unk_14) {
+                const char *name = l->unk_0c->func_0806d674();
+                int other = l->unk_0c->unk_2c0;
+                const char *type = linkTypeName(l->unk_14);
+                func_0804acb0("       <--[(%s) [%5d]%s]\n", type, other, name);
+            }
+        }
+        for (l = s->unk_134.unk_00; l; l = l->unk_08) {
+            if (l->unk_14) {
+                const char *name = l->unk_0c->func_0806d674();
+                int other = l->unk_0c->unk_2c0;
+                const char *type = linkTypeName(l->unk_14);
+                func_0804acb0("     --> %s [%5d]%s\n", type, other, name);
+            } else
+                fallThrough = true;
+        }
+        if (fallThrough) {
+            func_0804acb0("    |\n");
+            func_0804acb0("    V\n");
+        } else
+            func_0804acb0("\n");
+    }
+    func_0804acb0("dumpFlow - done\n");
+}

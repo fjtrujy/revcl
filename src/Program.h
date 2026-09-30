@@ -30,8 +30,9 @@ struct Program {
     instStream *unk_a0; // all streams, chained via unk_108
     instStream *unk_a4; // stream list tail
     int unk_a8;         // stream count
-    char unk_ac[4];
-    char *unk_b0;
+    short unk_ac;       // flow UID count
+    char unk_ae[2];
+    instStream **unk_b0; // linear table indexed by stream id
     bool unk_b4;        // logmax: also compute max path key
     char unk_b5;
     char unk_b6[2];
