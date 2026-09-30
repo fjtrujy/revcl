@@ -226,7 +226,8 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
             func_0804ad38("newmatchlist had non -end-match \n");
             return false;
         }
-        int d = s->unk_230 - (s->unk_240 + ofs);
+        int len = ofs + s->unk_240;
+        int d = s->unk_230 - len;
         bool extended = false;
         if (d > 0) {
             if (ext) {
@@ -274,12 +275,13 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                         return false;
                     }
                     if (min_s != max_s) {
-                        unsigned char mode = t->func_0806d968();
+                        int mode = t->func_0806d968();
                         if (mode >= 2 && mode <= 4) {
                             func_0804ac7c("multiple same-sequence output operands match to a fixed stream %s..setting hazard flags\n",
                                           t->func_0806d674());
                             tr->unk_12 |= 1 << part;
                             sr->unk_13 |= 1 << part;
+                            s->unk_228 = 1;
                         } else {
                             func_0804ac7c("vcl found a RAW stream with a non blocking operation for '%s' where by going down differing paths, an operand was set in different places..\n",
                                           reg->func_0805a8e0());
@@ -291,8 +293,8 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                             func_0804ac7c("well - setting hiBits and localH this time..\n");
                             tr->unk_12 |= 1 << part;
                             sr->unk_13 |= 1 << part;
+                            s->unk_228 = 1;
                         }
-                        s->unk_228 = 1;
                     }
                 }
                 if (min_s != last) {
