@@ -36,7 +36,7 @@ bool optReset(Program *p);
 workTable *makeForceTable(Program *p, instStream *s);
 void func_0806ed78(Program *p, int a);
 const char *stallReasonStr(short why);
-bool func_0807a3dc(workTable *wt);
+bool sredTable(workTable *wt);
 bool func_0807e528(Program *p, instStream *s, workTable *wt);
 bool func_0807e740(Program *p, workTable *wt, unsigned char a, unsigned char b);
 
@@ -902,7 +902,7 @@ bool func_08079fdc(Program *p, bool smart, bool sizeReduce)
                     func_0804ad38("failed to linear reduce table\n");
                     return false;
                 }
-                if (!func_0807a3dc(wt)) {
+                if (!sredTable(wt)) {
                     func_0804ad38("failed to prep for sred for %s\n", s->func_0806d674());
                     return false;
                 }
