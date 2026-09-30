@@ -1108,7 +1108,7 @@ workTable *workTable::localClone()
         Instr *c = in->clone();
         for (int i = 0; i != c->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->regOp();
+            RegPoolEntry *reg = op->isInReg() ? op->unk_18 : 0;
             if (reg) {
             int mask = op->unk_07 & ~op->unk_27;
             for (int k = 0; k != reg->unk_28; k++) {
