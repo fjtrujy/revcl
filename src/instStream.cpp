@@ -546,3 +546,10 @@ void instStream::func_0806dc9c(instStream *src)
     for (int i = 0; i != unk_00; i++)
         unk_04[i] = src->unk_04[i];
 }
+
+linkList::linkList()
+{
+    unk_00 = 0;
+    unk_04 = 0;
+    unk_08 = 0;
+}
