@@ -37,7 +37,7 @@ void func_0806ed78(Program *p, int a);
 bool func_0806f0e8(Program *p);
 char *emitProgram(Program *p, char *buf, int comments);
 char *emitLabels(Program *p, char *buf);
-bool func_08071f30(Program *p);
+bool loadStalls(Program *p);
 bool func_08079318(Program *p, bool smart);
 bool func_08079778(Program *p, bool smart);
 bool func_08079bfc(Program *p, bool smart);
@@ -451,7 +451,7 @@ int main(int argc, char **argv)
     }
     if (!func_0804a2b4(&flow, flag_080b300d, false, true))
         func_0804adf0(-1);
-    if (!func_08071f30(&flow)) {
+    if (!loadStalls(&flow)) {
         func_0804ad38("failed to load stalls!\n");
         func_0804adf0(-1);
     }

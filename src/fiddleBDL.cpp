@@ -54,11 +54,11 @@ bool fiddleBDL(workTable *wt)
     posP.setRow(wt->unk_34 - 3);
     posB.setRow(wt->unk_34 - 2);
     bool ok = true;
-    if (br != brow->unk_00[1]) {
+    if (br != brow->unk_00[1].unk_00) {
         func_0804ad38("the branch wasn't where I thought it was\n");
         return false;
     }
-    Instr *prev = prow->unk_00[1];
+    Instr *prev = prow->unk_00[1].unk_00;
     if (func_0805449c(prev, br))
         return true;
 

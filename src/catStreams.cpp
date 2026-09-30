@@ -91,7 +91,7 @@ bool catOnTo(workTable *t1, workTable *t2)
         wtRow *src = &t2->unk_2c[i];
         memcpy(&t1->unk_2c[dst], src, 14);
         for (int j = 0; j != 2; j++) {
-            Instr *in = src->unk_00[j];
+            Instr *in = src->unk_00[j].unk_00;
             if (in) {
                 if (!UnlinkFromLinear((Block *)t2, in)) {
                     func_0804ad38("failed to remlinear\n");
@@ -100,13 +100,13 @@ bool catOnTo(workTable *t1, workTable *t2)
                 in->unk_30 = 0;
                 in->setOwner((cls_unk30 *)t1);
             }
-            src->unk_00[j] = 0;
+            src->unk_00[j].unk_00 = 0;
         }
     }
     for (i = t1->unk_30; i < t1->unk_34; i++) {
         wtRow *r = &t1->unk_2c[i];
         for (int j = 0; j != 2; j++) {
-            Instr *in = r->unk_00[j];
+            Instr *in = r->unk_00[j].unk_00;
             if (in && !UnlinkFromLinear((Block *)t1, in)) {
                 func_0804ad38("failed to link in from it1\n");
                 return 0;

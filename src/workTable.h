@@ -5,6 +5,7 @@
 #include "Instr.h"
 #include "tPairList.h"
 #include "regUseSlot.h"
+#include "wtEntry.h"
 
 struct ol_s;
 class instStream;
@@ -80,13 +81,18 @@ public:
 };
 
 struct wtRow {
-    Instr *unk_00[2];
-    char unk_08[8];         // unk_08[0]: m_bSkip
+    wtEntry unk_00[2];
+    char unk_08;            // m_bSkip
+    unsigned char unk_09;   // max stall length
+    unsigned char unk_0a;   // stall type mask
+    char unk_0b;
+    short unk_0c;
 
     wtRow();
     ~wtRow();
     bool func_080721f8();  // clears unk_00
     bool func_0807222c(int);
+    bool addStall(int type, int len);
     int func_08072304();   // count of used entries
 };
 

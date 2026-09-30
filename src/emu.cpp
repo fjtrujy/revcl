@@ -25,9 +25,9 @@ bool emuTable(Program *p, workTable *wt)
         wtRow row;
         for (; i; i = i->unk_1c.unk_00) {
             row.func_080721f8();
-            row.unk_00[0] = i;
+            row.unk_00[0].unk_00 = i;
             int r = emuInst(p, &row, -1, true, true);
-            row.unk_00[0] = 0;
+            row.unk_00[0].unk_00 = 0;
             if (r < 0) {
                 func_0804ad38("failed to uta emu instruction\n");
                 i->func_08054008(false);
@@ -44,9 +44,9 @@ bool emuTable(Program *p, workTable *wt)
                 func_0804ad38("emuuta - failed to get an ie\n");
                 return false;
             }
-            if (r->unk_08[0]) {
+            if (r->unk_08) {
                 for (int k = 0; k != 2; k++)
-                    if (r->unk_00[k]) {
+                    if (r->unk_00[k].unk_00) {
                         func_0804ad38("m_bSkip set .. but line contains instructions\n");
                         return false;
                     }
