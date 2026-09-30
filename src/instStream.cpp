@@ -2,6 +2,7 @@
 
 bool func_0806f398(Program *p, char *name);
 bool func_0806f4e8(Program *p, char *name);
+const char *codeModeName(int mode);
 
 instStream::instStream()
 {
@@ -389,4 +390,73 @@ unsigned char instStream::func_0806d908()
         return wt->unk_09;
     func_0804ad38("getCodeMode - work table not set\n");
     return 0;
+}
+
+const char *instStream::getCodeModeName()
+{
+    workTable *wt = unk_218;
+    if (wt)
+        return codeModeName(wt->unk_09);
+    func_0804ad38("getCodeMode - work table not set\n");
+    return 0;
+}
+
+unsigned char instStream::func_0806d968()
+{
+    workTable *wt = unk_218;
+    if (wt)
+        return wt->func_08073754();
+    func_0804ad38("getCodeMode - work table not set\n");
+    return 0;
+}
+
+bool instStream::func_0806d9a0()
+{
+    workTable *wt = unk_218;
+    if (!wt)
+        return false;
+    return wt->unk_09 == 3 && (wt->unk_0a == 1 || wt->unk_0a == 3);
+}
+
+bool instStream::func_0806d9d4()
+{
+    workTable *wt = unk_218;
+    if (!wt)
+        return false;
+    return wt->unk_09 == 3 && (wt->unk_0a == 2 || wt->unk_0a == 4);
+}
+
+unsigned char instStream::getAllocMode()
+{
+    workTable *wt = unk_218;
+    if (wt)
+        return wt->unk_08;
+    func_0804ad38("getAllocMode - work table not set\n");
+    return 0;
+}
+
+bool instStream::func_0806da34()
+{
+    workTable *wt = unk_218;
+    if (wt && wt->unk_09 == 3)
+        return false;
+    return true;
+}
+
+bool instStream::func_0806da58()
+{
+    if (unk_218)
+        return unk_218->func_08073854();
+    return false;
+}
+
+bool instStream::func_0806da80()
+{
+    int st = unk_2cc;
+    bool ok = false;
+    if (st == 1 || st == 2) {
+        int et = unk_2cd;
+        ok = (unsigned)(et - 1) < 4;
+    }
+    return ok;
 }

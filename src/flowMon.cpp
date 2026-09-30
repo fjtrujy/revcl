@@ -45,7 +45,7 @@ bool func_08060018(Program *p, bool b)
             return false;
         }
         if (!func_080642ec(p, s)) {
-            func_0804ad38("build dependency - failed to %s stream..\n", s->func_0806d934());
+            func_0804ad38("build dependency - failed to %s stream..\n", s->getCodeModeName());
             return false;
         }
         if (!s->func_0806563c(b, true)) {

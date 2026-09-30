@@ -94,7 +94,7 @@ public:
     }
     unsigned char func_0806d908(); // code mode
     unsigned char func_0806d968(); // work table mode
-    const char *func_0806d934();  // code mode name
+    const char *getCodeModeName();
     void dumpSynthetics();
     char *emitLabels(char *buf);
     Instr *getBranch();
@@ -109,6 +109,11 @@ public:
     bool patchLatencies();
     bool canLoop();
     bool func_0806d9a0();         // raw-mode work table
+    bool func_0806d9d4();
+    unsigned char getAllocMode();
+    bool func_0806da34();         // not raw mode
+    bool func_0806da58();
+    bool func_0806da80();         // out-of-line checkStartEnd
     bool disposeInputTable();
 
     int unk_00;
