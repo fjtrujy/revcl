@@ -8,6 +8,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found);
 int latestInsert(workTable *wt, Instr *in, bool *found);
 int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
 int func_0804bf50(unsigned int x);
+RegPoolEntry *getZeroReg(unsigned int type);
 
 static inline bool isPipeMode(workTable *wt)
 {
@@ -237,4 +238,58 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     *capMask = g_080de748;
     g_080de734 = ii->unk_0e_w;
     return g_080de734;
+}
+
+bool doCap(int line, int pipe, int mask)
+{
+    if (!g_080de738) {
+        func_0804ad38("cap_ii not set\n");
+        return false;
+    }
+    if (!mask) {
+        func_0804ad38("zero mod bits for doCap\n");
+        return false;
+    }
+    Instr *ci = new Instr(g_080de738);
+    if (!ci) {
+        func_0804ad38("failed to make cap instruction\n");
+        return false;
+    }
+    ci->unk_138f = mask;
+    for (int i = 0; i != ci->unk_138b; i++)
+        ci->unk_38[i].unk_07 = mask;
+
+    if (g_080de744->unk_24 == 9) {
+        RegPoolEntry *z = getZeroReg(9);
+        ci->unk_38[0].unk_18 = z;
+        ci->unk_38[0].unk_14 = z;
+        ci->unk_38[0].unk_10 = 0;
+        ci->unk_38[1].unk_18 = g_080de744;
+        ci->unk_38[1].unk_14 = g_080de744;
+        ci->unk_38[1].unk_10 = 0;
+        g_080de740->unk_38[0].unk_14 = g_080de744;
+        g_080de740->unk_38[0].unk_18 = g_080de744;
+        g_080de740->unk_38[0].unk_10 = 0;
+        regUse *ru = g_080de73c->unk_14.func_0805b5dc(g_080de744);
+        if (!ru) {
+            ru = g_080de73c->unk_14.AddNewRegRef(g_080de744);
+            if (!ru) {
+                func_0804ad38("failed to add new regref\n");
+                return true;
+            }
+        }
+        ru->unk_0e |= mask;
+        ru->unk_0f |= mask;
+    } else {
+        ci->unk_38[0].unk_18 = g_080de744;
+        ci->unk_38[0].unk_14 = g_080de744;
+    }
+    ci->unk_13e8.func_0805874c(line);
+    ci->unk_13e8.func_0805878c(pipe);
+    if (!g_080de73c->putIn(ci)) {
+        func_0804ad38("failed to put instruction into itable\n");
+        return false;
+    }
+    g_080de738 = 0;
+    return true;
 }
