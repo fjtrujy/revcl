@@ -39,7 +39,7 @@ char *emitProgram(Program *p, char *buf, int comments);
 char *emitLabels(Program *p, char *buf);
 bool loadStalls(Program *p);
 bool doLinear(Program *p, int smart);
-bool func_08079778(Program *p, bool smart);
+bool doLoop(Program *p, bool smart);
 bool func_08079bfc(Program *p, bool smart);
 bool func_08079e78(Program *p);
 bool func_08079fdc(Program *p, bool smart, bool sizeReduce);
@@ -354,7 +354,7 @@ int main(int argc, char **argv)
             func_0804ad38("failed to restat\n");
             func_0804adf0(-1);
         }
-        if (!func_08079778(&flow, smart)) {
+        if (!doLoop(&flow, smart)) {
             func_0804ad38("failed to uta loop->raw_loop\n");
             func_0804adf0(-1);
         }

@@ -4,6 +4,7 @@
 #include "RegPool.h"
 #include "Block.h"
 #include "instStream.h"
+#include "Program.h"
 
 typedef bool (*wrangleFunc)(workTable *, int *);
 
@@ -28,6 +29,10 @@ bool func_0808061c(workTable *wt, wrangleFunc f);
 bool reduceExtents(workTable *wt);
 bool fiddleBDL(workTable *wt);
 bool assignLocalRegisters(Program *p, workTable *wt);
+bool makeLpWork(instStream *s, int maxSpread);
+bool disposeLpWork(instStream *s);
+bool keepLpWork(instStream *s);
+const char *stallReasonStr(short why);
 
 bool workTable::qRegRef(regUse *ru)
 {
@@ -640,6 +645,127 @@ bool doLinear(Program *p, int smart)
             return false;
         }
         func_0804acb0("Opt::Linear %16s  %d/%d\n", s->func_0806d674(), len, s->func_0805f284());
+    }
+    return true;
+}
+
+bool doLoop(Program *p, bool smart)
+{
+    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+        int i;
+        if (!s->canLoop() || !s->unk_270)
+            continue;
+        workTable *best = 0;
+        if (!prepExtInfo(p, s, 1)) {
+            func_0804ad38("failed to prep external info for stream\n");
+            return false;
+        }
+        int size = s->func_0805f29c();
+        size += s->unk_26c;
+        if (s->unk_268 > 1) {
+            if (size > s->unk_268)
+                func_0804ac7c("the minimal possible loop size + --LoopExtra was greather than the --LoopAbs setting, so ignoring --LoopAbs\n");
+            else
+                size = s->unk_268;
+        }
+        bool found = false;
+        do {
+            s->unk_00 = 11;
+            if (!makeLpWork(s, size)) {
+                func_0804ad38("failed to generate a work table for loop size %d\n", size);
+                return false;
+            }
+            bool first = true;
+            for (i = 10; i >= 0; i--) {
+                s->unk_04[i].unk_04 = -1;
+                s->unk_04[i].unk_00 = -1;
+                s->unk_04[i].unk_0c = -1;
+                s->unk_04[i].unk_08 = -1;
+                g_080de730 = optTable[i].name;
+                if (optTable[i].flags & 1) {
+                    const char *why = stallReasonStr(s->unk_2b8);
+                    func_0804acb0("lpgen[%d](limit: %s) - '%s' flow %s\n",
+                                  size, why, optTable[i].name, s->func_0806d674());
+                    workTable *nt = prepUta(p, s, size, 1);
+                    if (!nt) {
+                        func_0804ad38("failed to prepUta istream\n");
+                        return false;
+                    }
+                    nt->unk_00 = i;
+                    if (!statReset(p)) {
+                        func_0804ad38("failed to reset stats for cpu\n");
+                        return false;
+                    }
+                    if (!dynCalcStats(nt)) {
+                        func_0804ad38("failed to calc stats for loop\n");
+                        return false;
+                    }
+                    if (first)
+                        first = false;
+                    bool ok = false;
+                    switch (optTable[i].wmode) {
+                    case 0:
+                        ok = func_0808061c(nt, optTable[i].func);
+                        break;
+                    case 1:
+                        ok = func_0807f360(nt, optTable[i].func);
+                        break;
+                    default:
+                        func_0804ad38("bad wmode\n");
+                        func_0804aeb0();
+                    }
+                    if (ok) {
+                        if (!reduceExtents(nt)) {
+                            func_0804ad38("failed to reduce extents for code!\n");
+                            func_0804adf0(-1);
+                        }
+                        if (!nt->doPostOpt(2)) {
+                            func_0804ad38("failed to validate/patch moves - so continue\n");
+                            func_0804adf0(-1);
+                        }
+                        if (!assignLocalRegisters(p, nt))
+                            func_0804ac7c("failed to assign reg size would be %d!\n", nt->func_080741b4());
+                        else {
+                            s->unk_04[i].unk_04 = s->func_0805f29c();
+                            s->unk_04[i].unk_08 = nt->unk_3c;
+                            s->unk_04[i].unk_0c = nt->getCondLid();
+                            s->unk_04[i].unk_00 = nt->func_080741b4();
+                            if (best && best->unk_3c < nt->unk_3c) {
+                                delete nt;
+                                nt = 0;
+                            }
+                            if (nt) {
+                                if (best)
+                                    delete best;
+                                found = true;
+                                best = nt;
+                            }
+                            continue;
+                        }
+                    }
+                    delete nt;
+                }
+            }
+            if (!found) {
+                if (!disposeLpWork(s)) {
+                    func_0804ad38("failed to unget work for loop table\n");
+                    return false;
+                }
+            } else if (!keepLpWork(s)) {
+                func_0804ad38("failed to fix the new work table for loop opt\n");
+                return false;
+            }
+            size++;
+        } while (!found);
+        if (!best) {
+            func_0804ad38("loop code failed for %s\n", s->func_0806d674());
+            return false;
+        }
+        if (!s->setOptTable(best)) {
+            func_0804ad38("setOptTable failed\n");
+            return false;
+        }
+        func_0804acb0("Opt::Loop %16s  %d/%d\n", s->func_0806d674(), best->func_080741b4(), s->func_0805f29c());
     }
     return true;
 }
