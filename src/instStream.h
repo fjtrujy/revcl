@@ -99,7 +99,10 @@ public:
     char unk_261[0x264 - 0x261];
     char unk_264;      // reached top (accessible)
     char unk_265;      // collapse into successor (tidy)
-    char unk_266[0x2c0 - 0x266];
+    char unk_266[0x270 - 0x266];
+    int unk_270;                 // known min count
+    int unk_274;                 // minimum safe count
+    char unk_278[0x2c0 - 0x278];
     short unk_2c0;     // stream id
     short unk_2c2;     // stream serial
     short unk_2c4;

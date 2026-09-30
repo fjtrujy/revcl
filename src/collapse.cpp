@@ -6,8 +6,26 @@
 #include "Instr.h"
 #include "ol_s.h"
 
+extern RegPoolEntry *g_080de6ac;
 extern mValue *g_080de6b0;
+extern int g_080de6b4;
 int func_0806aa54(Instr *in);
+int func_08067e18(Program *p, instStream *s);
+
+static inline bool fitsSigned(int v, int bits)
+{
+    int r = 0;
+    int hi = 1 << (bits - 1);
+    int lo = -hi;
+    if (v >= lo && v < hi)
+        r = 1;
+    return r;
+}
+
+static inline bool fitsUnsigned(int v, int bits)
+{
+    return v >= 0 && v < (1 << bits);
+}
 bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc);
 
 bool pushImmediate(ol_s *ol)
@@ -125,5 +143,148 @@ bool func_0806a74c(Program *p)
             }
         }
     } while (changed);
+    return true;
+}
+
+int func_0806aa54(Instr *in)
+{
+    int opc = in->func_08055ac4();
+    int bits = 0;
+    int idx = -1;
+    bool neg = false;
+    bool isSigned = false;
+    int val = 0;
+    g_080de6b0 = 0;
+    g_080de6ac = 0;
+    switch (opc) {
+    case 0x6e:
+        bits = 15;
+        idx = 0;
+        isSigned = false;
+        g_080de6ac = in->unk_38[1].unk_18;
+        g_080de6b0 = &in->unk_38[2].unk_1c;
+        break;
+    case 0x70:
+        bits = 15;
+        idx = 0;
+        isSigned = false;
+        g_080de6ac = in->unk_38[1].unk_18;
+        g_080de6b0 = &in->unk_38[2].unk_1c;
+        neg = true;
+        break;
+    }
+    if (idx < 0)
+        return -1;
+    int ret = -1;
+    if (g_080de6b0->type != mValue::STRING) {
+        if (!g_080de6b0->getInt(&val)) {
+            func_0804ad38("failed to get immediate value\n");
+            return -2;
+        }
+        if (val == 0)
+            return -1;
+        if (isSigned) {
+            if (!fitsSigned(val, bits)) {
+                func_0804ac7c("immediate %d doesn't fit as signed value in %d bits - skipping\n", val, bits);
+                return -1;
+            }
+        } else if (!fitsUnsigned(val, bits)) {
+            func_0804ac7c("immediate %d doesn't fit as unsigned value in %d bits - skipping\n", val, bits);
+            return -1;
+        }
+        g_080de6b4 = neg ? -val : val;
+        ret = idx;
+    }
+    return ret;
+}
+
+bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc)
+{
+    *srcOp = -1;
+    *immOp = -1;
+    *opc = in->func_08055ac4();
+    bool sgn = false;
+    bool sub = false;
+    switch (*opc) {
+    case 0x9b:
+    case 0x9c:
+    case 0xa0:
+    case 0xa1:
+        *srcOp = 1;
+        sgn = true;
+        *immOp = 1;
+        break;
+    case 0x6e:
+        *srcOp = 1;
+        *immOp = 2;
+        break;
+    case 0x70:
+        *srcOp = 1;
+        sub = true;
+        *immOp = 2;
+        break;
+    default:
+        return false;
+    }
+    mValue *v = &in->unk_38[*immOp].unk_1c;
+    if (v->type != mValue::STRING) {
+        int x = 0;
+        if (v->getInt(&x)) {
+            x = sub ? x - g_080de6b4 : x + g_080de6b4;
+            bool fits;
+            if (sgn)
+                fits = fitsSigned(x, 11);
+            else
+                fits = fitsUnsigned(x < 0 ? -x : x, 15);
+            if (!fits)
+                return false;
+            *val = x;
+            return true;
+        }
+        func_0804ad38("failed to get immediate value\n");
+    }
+    return false;
+}
+
+bool explodeRaw(Program *p)
+{
+    instStream *next;
+    for (instStream *s = p->unk_a0; s; s = next) {
+        next = s->unk_108;
+        workTable *t = s->getTable();
+        if (!t) {
+            func_0804ad38("floBuild - there's no work table!\n");
+            return false;
+        }
+        if (!t->func_080741b4())
+            continue;
+        if (t->unk_09 != 3) {
+            func_0804ad38("explodeRaw: a non raw stream has a loop size set\n");
+            return false;
+        }
+        if (s->unk_270 <= 0) {
+            func_0804ac7c("setting known min count to 1 for %s\n", s->func_0806d674());
+            s->unk_270 = 1;
+        }
+        if (s->unk_274 < 0) {
+            func_0804ac7c("setting minimum safe count to 1000 for %s\n", s->func_0806d674());
+            s->unk_274 = 10000;
+        }
+        int r = func_08067e18(p, s);
+        if (r < 0) {
+            func_0804ad38("failed to construct epilogue/prologues\n");
+            return false;
+        }
+        if (r == 0) {
+            func_0804ad38("no new streams added during build?\n");
+            return false;
+        }
+        delete s;
+    }
+    return true;
+}
+
+bool func_0806ae58(Program *p)
+{
     return true;
 }

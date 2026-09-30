@@ -32,7 +32,7 @@ bool func_08063154(Program *p);
 bool Prune(Program *p);
 bool globalPrune(Program *p);
 bool func_08069324(Program *p, bool init);
-bool func_0806ad00(Program *p);
+bool explodeRaw(Program *p);
 void func_0806ed78(Program *p, bool a);
 bool func_0806f0e8(Program *p);
 int func_0806f13c(Program *p, char *buf, int comments);
@@ -291,7 +291,7 @@ int main(int argc, char **argv)
         func_0804ad38("failed to build flow from parser!\n");
         func_0804adf0(-1);
     }
-    if (!func_0806ad00(&flow)) {
+    if (!explodeRaw(&flow)) {
         func_0804ad38("failed to explode raw loops\n");
         func_0804adf0(-1);
     }
@@ -358,7 +358,7 @@ int main(int argc, char **argv)
             func_0804ad38("failed to uta loop->raw_loop\n");
             func_0804adf0(-1);
         }
-        if (!func_0806ad00(&flow)) {
+        if (!explodeRaw(&flow)) {
             func_0804ad38("failed to explode raw loops after loop opt\n");
             func_0804adf0(-1);
         }
