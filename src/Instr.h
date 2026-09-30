@@ -259,7 +259,7 @@ struct Operand {
     char unk_0c;
     char unk_0d;            // paired operand index + 1
     char unk_0e[2];
-    int unk_10;
+    RegPoolEntry *unk_10;   // forced base register
     RegPoolEntry *unk_14;
     RegPoolEntry *unk_18;   // register
     mValue unk_1c;          // immediate value

@@ -45,7 +45,7 @@ bool relaxOpt(Program *p);
 bool func_08079fdc(Program *p, bool smart, bool sizeReduce);
 int func_0807aa28(Program *p);
 bool func_0807aee4(Program *p);
-bool func_08085004(Program *p);
+bool bindExternals(Program *p);
 bool func_08085a9c(Program *p);
 bool func_080889e8(Program *p);
 void func_08088c50(Program *p);
@@ -376,7 +376,7 @@ int main(int argc, char **argv)
         }
         if (!func_0804a2b4(&flow, flag_080b300d, false, false))
             func_0804adf0(-1);
-        if (!func_08085004(&flow)) {
+        if (!bindExternals(&flow)) {
             func_0804ad38("failed to bind externals\n");
             func_0804adf0(-1);
         }
