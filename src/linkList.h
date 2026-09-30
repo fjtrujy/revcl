@@ -51,6 +51,7 @@ struct linkList {
     bool relink(linkNode *n);
     bool unlink(linkNode *n);
     linkNode *func_0806dff4(instStream *s, int type);
+    bool addNewRef(instStream *s, int type);
     int func_0806e4f0();
 };
 

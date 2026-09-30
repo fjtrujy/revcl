@@ -1,6 +1,31 @@
 // Instruction stream reference lists ("istRefList").
 #include "linkList.h"
 #include "os.h"
+#include "instStream.h"
+#include "Program.h"
+
+const char *linkTypeName(int type);
+
+static inline linkNode *findRef(linkNode *p, instStream *s, int type)
+{
+    while (p && !(p->unk_0c == s && p->unk_14 == type))
+        p = p->unk_08;
+    return p;
+}
+
+static inline int branchLinkType(unsigned int f)
+{
+    int t = 0;
+    if (f) {
+        switch (f & 0xa) {
+        case 8: t = 3; break;
+        case 2: t = 2; break;
+        case 10: t = 4; break;
+        default: t = 1; break;
+        }
+    }
+    return t;
+}
 
 linkList::~linkList()
 {
@@ -104,5 +129,100 @@ bool linkList::unlink(linkNode *n)
     n->unk_04 = 0;
     n->unk_08 = 0;
     unk_08--;
+    return true;
+}
+
+linkNode *linkList::func_0806dff4(instStream *s, int type)
+{
+    return findRef(unk_00, s, type);
+}
+
+bool linkList::addNewRef(instStream *s, int type)
+{
+    if (findRef(unk_00, s, type)) {
+        func_0804ad38("addNewRef - already present\n");
+        return false;
+    }
+    linkNode *n = new linkNode;
+    if (!n) {
+        func_0804ad38("addNewRef - new failed\n");
+        return false;
+    }
+    n->unk_14 = type;
+    n->unk_0c = s;
+    if (unk_04) {
+        unk_04->unk_08 = n;
+        n->unk_04 = unk_04;
+    } else
+        unk_00 = n;
+    unk_04 = n;
+    unk_08++;
+    return true;
+}
+
+bool linkTypeOk(instStream *s, int type)
+{
+    if (type == 5)
+        type = 2;
+    return type == branchLinkType(s->unk_2ce) || (type == 0 && (s->unk_2ce & 4));
+}
+
+bool Program::linkStreams(instStream *a, instStream *b, int type)
+{
+    if (!linkTypeOk(a, type)) {
+        func_0804ad38("incompatible lnktypes for %s...src=%s\n", linkTypeName(type), a->branchTypeName());
+        return false;
+    }
+    if (!a->unk_134.addNewRef(b, type)) {
+        func_0804ad38("LinkStreams - add out failed\n");
+        return false;
+    }
+    if (!b->unk_128.addNewRef(a, type)) {
+        func_0804ad38("LinkStreams - add in failed\n");
+        return false;
+    }
+    return true;
+}
+
+bool Program::areLinkedBy(instStream *src, instStream *dst, int type)
+{
+    bool hasSD = findRef(src->unk_134.unk_00, dst, type) != 0;
+    bool hasDS = findRef(dst->unk_128.unk_00, src, type) != 0;
+    if (hasSD) {
+        if (hasDS)
+            return true;
+    } else if (!hasDS)
+        return false;
+    func_0804ad38("areLinkedBy - hasSD=%d hasDS=%d src=%s dst=%s\n",
+                  hasSD, hasDS, src->func_0806d674(), dst->func_0806d674());
+    func_0804adf0(-1);
+    return false;
+}
+
+bool Program::unlinkStreams(instStream *a, instStream *b, int type)
+{
+    linkNode *n = findRef(a->unk_134.unk_00, b, type);
+    if (!n) {
+        func_0804ad38("unLinkStreams::failed to find ref for unlink in output of %s looking for %s type %d\n",
+                      a->func_0806d674(), b->func_0806d674(), type);
+        for (linkNode *p = a->unk_134.unk_00; p; p = p->unk_08)
+            ;
+        return false;
+    }
+    if (!a->unk_134.unlink(n)) {
+        func_0804ad38("unlink streams - failed to unlink out ref\n");
+        return false;
+    }
+    n = findRef(b->unk_128.unk_00, a, type);
+    if (!n) {
+        func_0804ad38("unLinkStreams::failed to find ref for unlink in input of %s\n", b->func_0806d674());
+        for (linkNode *p = b->unk_128.unk_00; p; p = p->unk_08)
+            ;
+        return false;
+    }
+    if (!b->unk_128.unlink(n)) {
+        func_0804ad38("unlink streams - failed to unlink in ref\n");
+        return false;
+    }
     return true;
 }
