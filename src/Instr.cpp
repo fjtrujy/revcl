@@ -59,7 +59,7 @@ Instr::Instr(iInfo *info)
     unk_138d = info->unk_10;
     unk_1388 = info->func_0806ffb4();
     unk_13cf = info->unk_12;
-    unk_13ce = info->func_0806ffd8();
+    unk_13ce = info->ramType();
     unk_13d0 = info->unk_18 & ~7;
     unk_138a = info->func_08070044();
     unk_13cd = info->func_08070020();

@@ -15,13 +15,13 @@ struct regUse;
 
 // Opcode descriptor ("iInfo", from the null-argument error string).
 struct iOpDesc {
-    char unk_00;    // operand kind, 0 terminates the list
-    char unk_01;
-    char unk_02;
-    char unk_03;
-    char unk_04;
-    char unk_05;
-    char unk_06;    // paired operand index + 1
+    unsigned char unk_00;   // operand kind, 0 terminates the list
+    unsigned char unk_01;   // direction: 1 = input, 2 = output
+    unsigned char unk_02;   // implicit operand
+    unsigned char unk_03;
+    unsigned char unk_04;
+    unsigned char unk_05;
+    unsigned char unk_06;   // patch: paired operand index + 1
 };
 
 class iInfo {
@@ -45,12 +45,16 @@ public:
     char unk_24[0x44 - 0x24];
     iOpDesc unk_44[12];     // operand descriptors
 
-    char func_0806ffb4();
-    char func_0806ffd8();
-    char func_08070020();
+    unsigned char kind() { return unk_18 & 7; }
+
+    unsigned char func_0806ffb4();
+    unsigned char ramType();
+    unsigned char func_08070020();
     bool func_08070044();
     char func_0807005c();
-    int func_08070080();
+    void func_08070080();
+    void func_080700a4();
+    bool check();
     char func_0807026c();
 };
 
