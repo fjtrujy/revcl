@@ -33,7 +33,7 @@ bool Prune(Program *p);
 bool globalPrune(Program *p);
 bool func_08069324(Program *p, bool init);
 bool explodeRaw(Program *p);
-void func_0806ed78(Program *p, bool a);
+void func_0806ed78(Program *p, int a);
 bool func_0806f0e8(Program *p);
 int func_0806f13c(Program *p, char *buf, int comments);
 int func_0806f340(Program *p, char *buf);

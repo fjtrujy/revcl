@@ -88,7 +88,7 @@ public:
     RegPoolEntry *getBranchTargetRegister();
     ~instStream();
     bool reset();
-    void dump(bool);
+    void dump(int);
     void zeroStats();
     bool iOwn(Instr *i);
     bool patchLatencies();

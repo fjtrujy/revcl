@@ -78,7 +78,7 @@ bool instStream::reset()
     return true;
 }
 
-void instStream::dump(bool)
+void instStream::dump(int)
 {
     unk_110.func_0804b534();
     unk_128.dump();

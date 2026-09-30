@@ -19,7 +19,7 @@ struct Program {
     bool dispose();
     bool addStream(instStream *s);
     bool insertStreamAfter(instStream *after, instStream *s);
-    bool func_0806efc4(Parser *parser, bool a, bool newSyntax);
+    bool func_0806efc4(Parser *parser, int a, bool newSyntax);
 
     Processor proc;
     int unk_80;         // emulated length
@@ -51,6 +51,9 @@ struct Program {
     bool doUnique();
     bool func_0806e878(const char *name);
     bool removeStream(instStream *s);
+    instStream *findStreamById(int id);
+    instStream *findStream(const char *name);
+    bool retarget(instStream *from, instStream *to);
 };
 
 #endif
