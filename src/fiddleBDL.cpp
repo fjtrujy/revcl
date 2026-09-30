@@ -12,8 +12,7 @@ bool fiddleBDL(workTable *wt)
     bool skip = false;
     if (wt->unk_09 == 3 && (wt->unk_0a == 2 || wt->unk_0a == 4))
         skip = true;
-    if (skip)
-        return true;
+    if (!skip) {
     int len = wt->unk_34 - wt->unk_30;
     if (len < wt->unk_44) {
         func_0804ad38("table already smaller than extminlength in fiddleBDL\n");
@@ -131,5 +130,6 @@ bool fiddleBDL(workTable *wt)
         return false;
     }
     wt->unk_34--;
+    }
     return true;
 }
