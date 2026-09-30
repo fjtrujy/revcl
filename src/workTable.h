@@ -234,6 +234,7 @@ public:
     bool lockLine(cls08058718 *line);
     bool unlockLine(cls08058718 *line);
     bool qRegRef(regUse *ru);
+    cls0805c244 *getLockList(RegPoolEntry *reg, int part);
     bool qInstruction(Instr *in);
     bool forceInsert(Instr *in, cls08058718 *pos);
     workTable *localClone();
