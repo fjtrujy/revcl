@@ -67,6 +67,7 @@ struct Program {
     bool unlinkStreams(instStream *from, instStream *to, int type);
     bool unLinkStreams(instStream *from, instStream *to, int type);
     bool doUnique();
+    bool func_0806e878(const char *name);
     bool removeStream(instStream *s);
 };
 

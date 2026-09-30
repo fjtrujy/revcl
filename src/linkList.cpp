@@ -364,3 +364,12 @@ bool Program::doUnique()
     }
     return true;
 }
+
+bool Program::func_0806e878(const char *name)
+{
+    for (instStream *s = unk_a0; s; s = s->unk_108) {
+        if (s->unk_110.func_0804b284(name))
+            return true;
+    }
+    return false;
+}
