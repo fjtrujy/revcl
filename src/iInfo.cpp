@@ -84,3 +84,89 @@ bool iInfo::check()
     }
     return true;
 }
+
+bool checkTable(iInfo *tab, int count)
+{
+    if (!tab) {
+        func_0804ad38("checkTable - passed a null table\n");
+        return false;
+    }
+    int i;
+    for (i = 0; tab->unk_04; i++, tab++) {
+        if (!tab->check()) {
+            func_0804ad38("checkTable failed\n");
+            return false;
+        }
+    }
+    if (i != count) {
+        func_0804ad38("instruction count mismatch %d!=%d\n", i, count);
+        return false;
+    }
+    return true;
+}
+
+int iInfo::func_080701f4()
+{
+    unsigned int v = kind() == 3 ? unk_19 : 0;
+    return (v >> 1) & 1;
+}
+
+int iInfo::func_0807021c()
+{
+    unsigned int v = kind() == 3 ? unk_19 : 0;
+    return (v >> 3) & 1;
+}
+
+int iInfo::func_08070244()
+{
+    unsigned int v = kind() == 3 ? unk_19 : 0;
+    return (v >> 2) & 1;
+}
+
+char iInfo::func_0807026c()
+{
+    char r = 0;
+    if (!(unk_18 & 0xf8)) {
+        int k2 = kind() == 2 ? unk_19 : 0;
+        if (!k2) {
+            int rt;
+            if (kind() == 4) {
+                unsigned char t = unk_19;
+                if ((unsigned char)(t - 1) <= 1)
+                    rt = t;
+                else {
+                    func_0804ad38("loadstore instruction, but bad ramtype\n");
+                    func_0804adf0(-1);
+                    rt = 0;
+                }
+            } else
+                rt = 0;
+            if (rt != 2) {
+                int k3 = kind() == 3 ? unk_19 : 0;
+                if (!k3)
+                    r = 1;
+            }
+        }
+    }
+    return r;
+}
+
+int func_08070300(unsigned char x)
+{
+    int r = 0;
+    if (x) {
+        unsigned int f = x & 0x60;
+        r = (f >> 5) + 1;
+    }
+    return r;
+}
+
+int func_0807031c(unsigned char)
+{
+    return 0;
+}
+
+unsigned char func_08070324(unsigned char x)
+{
+    return x >> 7;
+}

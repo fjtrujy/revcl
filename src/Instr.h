@@ -55,6 +55,9 @@ public:
     void func_08070080();
     void func_080700a4();
     bool check();
+    int func_080701f4();
+    int func_0807021c();
+    int func_08070244();
     char func_0807026c();
 };
 
@@ -219,7 +222,10 @@ bool func_0805db74(int s1, int e1, int s2, int e2);
 cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part);
 const char *rlmtName(unsigned char t);
 
+bool checkTable(iInfo *tab, int count);
 int func_08070300(unsigned char);
+int func_0807031c(unsigned char);
+unsigned char func_08070324(unsigned char);
 
 struct OpSlot : public cls0805bcc4 {
     short unk_50;

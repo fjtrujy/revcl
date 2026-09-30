@@ -9,7 +9,6 @@
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 
-bool func_08070180(iInfo *tab, int count);
 bool func_0804bf28(char a, char b);
 bool func_0804bf9c(char c);
 char *dupString(const char *s);
@@ -51,7 +50,7 @@ bool Processor::Init(CpuDef *cpu)
     }
     PoolDef *pools = cpu->pools;
     iInfo *iinfos = cpu->iinfos;
-    if (!func_08070180(iinfos, 0xd6)) {
+    if (!checkTable(iinfos, 0xd6)) {
         func_0804ad38("couldnt init cpu '%s' - the idefs were bad\n", cpu->name);
         return false;
     }
