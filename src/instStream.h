@@ -5,6 +5,8 @@
 #include "os.h"
 #include "mList.h"
 #include "workTable.h"
+#include "Instr.h"
+#include "statCounts.h"
 
 class workTable;
 class Instr;
@@ -22,8 +24,10 @@ struct linkNode {
 
 struct linkList {
     linkNode *unk_00;           // head
-    char unk_04[4];
+    int unk_04;
     int unk_08;                 // count
+    linkList();
+    ~linkList();
     linkNode *func_0806dff4(instStream *s, int type);
     instStream *getStream(int type);
 };
@@ -63,19 +67,23 @@ public:
     bool func_0806d9a0();         // raw-mode work table
     bool disposeInputTable();
 
-    char unk_00[0x108];
+    int unk_00;
+    char unk_04[0x104 - 0x04];
+    int unk_104;
     instStream *unk_108;         // next in Program::unk_a0
     instStream *unk_10c;         // previous stream (to-register branch)
     mList unk_110;               // name list
     int unk_124;                 // pass thru
     linkList unk_128;            // input links
     linkList unk_134;            // output links
-    char unk_140[8];
+    char unk_140;
+    char unk_141[3];
+    int unk_144;
     workTable unk_148;           // own work table
-    char unk_214[4];
+    int unk_214;
     workTable *unk_218;  // work table
     workTable *unk_21c;  // tidied work table
-    char unk_220[4];
+    int unk_220;
     short unk_224;
     unsigned char unk_226;      // visit mode (0 unvisited, 1 active, 2 visited, 3 end match, 4 dead end)
     char unk_227;
@@ -96,26 +104,40 @@ public:
     instStream *unk_258;        // next in Program::unk_e0
     instStream *unk_25c;        // next in Program::unk_e4
     char unk_260;      // set when stream takes part in a stall
-    char unk_261[0x264 - 0x261];
+    char unk_261;
+    char unk_262;
+    char unk_263;
     char unk_264;      // reached top (accessible)
     char unk_265;      // collapse into successor (tidy)
-    char unk_266[0x270 - 0x266];
+    char unk_266[2];
+    int unk_268;
+    int unk_26c;
     int unk_270;                 // known min count
     int unk_274;                 // minimum safe count
-    char unk_278[0x2c0 - 0x278];
+    cls0805e2e4 unk_278;
+    statCounts unk_290;
+    short unk_2b4;
+    short unk_2b6;
+    short unk_2b8;
+    short unk_2ba;
+    int unk_2bc;
     short unk_2c0;     // stream id
     short unk_2c2;     // stream serial
     short unk_2c4;
-    char unk_2c6[0x2cc - 0x2c6];
+    short unk_2c6;
+    int unk_2c8;
     char unk_2cc;
     char unk_2cd;      // code mode (2 adds 1000 to back trace dep length)
     unsigned char unk_2ce;  // branch type
-    char unk_2cf[0x2d4 - 0x2cf];
+    char unk_2cf;
+    int unk_2d0;
     char unk_2d4;      // dbgTop
     char unk_2d5;      // dbgEnd
     char unk_2d6;
     char unk_2d7;
-    char unk_2d8[0x2e0 - 0x2d8];
+    int unk_2d8;
+    char unk_2dc;
+    char unk_2dd[3];
     int unk_2e0;       // dependency length
     int unk_2e4;
 

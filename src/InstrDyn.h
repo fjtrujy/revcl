@@ -7,10 +7,10 @@
 
 inline void Instr::func_0805f4e0()
 {
-    unk_13f0.unk_18 = 30000;
-    unk_13f0.unk_1a = -1;
-    unk_13f0.unk_1c = 0;
-    unk_13f0.unk_1e = 0;
+    unk_1408 = 30000;
+    unk_140a = -1;
+    unk_140c = 0;
+    unk_140e = 0;
     for (int i = 0; i != unk_138b; i++) {
         RegPoolEntry *r = unk_38[i].unk_18;
         if (r)

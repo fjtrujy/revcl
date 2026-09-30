@@ -119,9 +119,9 @@ bool BuildfDepList(workTable *wt, bool force, bool)
 {
     Instr *in;
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-        in->unk_13f0.unk_20 = 0;
-        in->unk_13f0.unk_22 = 0;
-        in->unk_13f0.unk_24 = 0;
+        in->unk_1410 = 0;
+        in->unk_1412 = 0;
+        in->unk_1414 = 0;
         if (!in->unk_13a0.clear()) {
             func_0804ad38("failed to dispose of existing prefdeplist\n");
             return false;
@@ -205,7 +205,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                 RegPoolEntry *r = op->getReg2();
                 if (r) {
                     if (r->unk_30 == 48)
-                        in->unk_13f0.unk_24 = op->unk_07;
+                        in->unk_1414 = op->unk_07;
                     if (r->unk_30 == 48 || r->unk_30 == 49) {
                         for (int p = 0; p != r->unk_28; p++)
                             if ((op->unk_07 >> p) & 1)
@@ -218,7 +218,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                 }
                 RegPoolEntry *w = op->getReg();
                 if (w && w->unk_30 == 48)
-                    in->unk_13f0.unk_22 = op->unk_07;
+                    in->unk_1412 = op->unk_07;
             }
         }
     }
@@ -227,16 +227,16 @@ bool BuildfDepList(workTable *wt, bool force, bool)
     for (; in; in = in->unk_1c.unk_00) {
         int p;
         for (p = 0; p != 4; p++)
-            if (((in->unk_13f0.unk_24 >> p) & 1) && !((in->unk_13f0.unk_22 >> p) & 1))
+            if (((in->unk_1414 >> p) & 1) && !((in->unk_1412 >> p) & 1))
                 last[p] = in;
         for (p = 0; p != 4; p++) {
-            if ((in->unk_13f0.unk_22 >> p) & 1) {
+            if ((in->unk_1412 >> p) & 1) {
                 Instr *w = last[p];
                 if (w)
                     for (ol_s *l = in->unk_13a0.unk_00; l; l = l->unk_00) {
                         Instr *pre = l->unk_04;
                         if (pre->unk_13e4 < w->unk_13e4) {
-                            w->unk_13f0.unk_20 = 1;
+                            w->unk_1410 = 1;
                             w->unk_13a0.func_0805826c(pre);
                         }
                     }
@@ -291,7 +291,7 @@ bool fixupCloneFdeps(workTable *wt)
             func_0804ad38("no original set\n");
             func_0804adf0(-1);
         }
-        in->unk_13f0.unk_20 = orig->unk_13f0.unk_20;
+        in->unk_1410 = orig->unk_1410;
         if (!copyCloneFdeps(in, orig->unk_13a0.unk_00, &in->unk_13a0)) {
             func_0804ad38("failed to fixup the pre fdep list\n");
             return false;

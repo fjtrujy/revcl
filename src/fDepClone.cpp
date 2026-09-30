@@ -36,7 +36,7 @@ bool func_08065fd4(Instr *in, Instr *other)
                     for (ol_s *l = op->unk_2c[p].unk_54.unk_00; l; l = l->unk_00) {
                         Instr *x = l->unk_04;
                         if (x && x != in && x->unk_13e4 < in->unk_13e4) {
-                            in->unk_13f0.unk_20 = 1;
+                            in->unk_1410 = 1;
                             if (!in->unk_13a0.func_0805826c(x)) {
                                 func_0804ad38("failed to add\n");
                                 func_0804adf0(-1);

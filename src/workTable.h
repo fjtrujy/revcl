@@ -121,6 +121,8 @@ public:
     int unk_c8;             // instruction count in table
 
     wtRow *func_080724f0(int i);
+    workTable();
+    ~workTable();
     Instr *getBranch();
     bool takeOut(Instr *i);
     bool putIn(Instr *i);

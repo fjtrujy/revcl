@@ -365,11 +365,6 @@ class cls0805e2e4 {
 public:
     short unk_00, unk_02, unk_04, unk_06;
     int unk_08, unk_0c, unk_10, unk_14;
-    short unk_18, unk_1a, unk_1c, unk_1e;
-    short unk_20;   // fdep "has extra pre deps" flag
-    short unk_22;   // slot mask read of reg idx 48
-    short unk_24;   // slot mask written of reg idx 48
-    char unk_26[2];
 
     cls0805e2e4();
     ~cls0805e2e4();
@@ -452,6 +447,11 @@ public:
     int unk_13e4;
     cls08058718 unk_13e8;
     cls0805e2e4 unk_13f0;
+    short unk_1408, unk_140a, unk_140c, unk_140e;
+    short unk_1410;     // fdep "has extra pre deps" flag
+    short unk_1412;     // slot mask read of reg idx 48
+    short unk_1414;     // slot mask written of reg idx 48
+    char unk_1416[2];
     short unk_1418;
     short unk_141a;
     short unk_141c;

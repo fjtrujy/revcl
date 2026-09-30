@@ -1676,13 +1676,13 @@ void dynDumpStats(Block *b)
     int n = 0;
     for (Instr *in = b->unk_94; in; in = in->unk_24.unk_00) {
         const char *mark = "    ";
-        int s = in->unk_13f0.unk_1a;
-        int e = in->unk_13f0.unk_18;
+        int s = in->unk_140a;
+        int e = in->unk_1408;
         if (s - e > b->unk_38)
             mark = "****";
         int ht = b->unk_04 - in->unk_13f0.unk_00;
         func_0804acb0("[%3d]:%3d [%5d %5d %5d %5d ]%s dep=%2d ht=%2d  %s\n",
-                      n, b->unk_38, e, s, in->unk_13f0.unk_1c, in->unk_13f0.unk_1e, mark,
+                      n, b->unk_38, e, s, in->unk_140c, in->unk_140e, mark,
                       in->unk_13f0.unk_04, ht, in->unk_34->unk_04);
         n++;
     }
