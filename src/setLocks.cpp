@@ -3,6 +3,15 @@
 #include "Instr.h"
 #include "RegPool.h"
 
+class Block;
+bool func_0806558c(Instr *i, int *row);
+bool unresolveMove(Block *blk, Instr *mv);
+bool UnlinkFromToDo(Block *blk, Instr *n);
+bool AddDone_Tail(Block *blk, Instr *n);
+bool UnlinkFromDone(Block *blk, Instr *n);
+bool AddToDo_Head(Block *blk, Instr *n);
+extern bool stagger_080b33ac;
+
 bool setLocks(Instr *in)
 {
     for (int i = 0; i != in->unk_138b; i++) {
@@ -317,6 +326,148 @@ bool setPipeBits(Instr *in)
             }
         }
         r->unk_34 |= op->unk_07;
+    }
+    return true;
+}
+
+int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos)
+{
+    int row = pos->unk_00;
+    int pipe = pos->unk_02;
+    int r4 = pos->unk_04;
+
+    if (*minPos < row)
+        *minPos = row;
+
+    short e = in->unk_13b2;
+    if (e < in->unk_13b0)
+        e = in->unk_13b0;
+    int v = e;
+    if (r4 < v + g_080b3370) {
+        int m = *minPos;
+        if (g_080b336c) {
+            int rem = v % g_080b336c;
+            int q = m / g_080b336c;
+            if (rem <= m % g_080b336c)
+                q++;
+            v = q * g_080b336c + rem;
+        }
+        *minPos = v;
+        return 0x10000;
+    }
+
+    short l = in->unk_13b6;
+    if (l < in->unk_13b4)
+        l = in->unk_13b4;
+    if (l && g_080b3374 >= 0 && g_080b3374 - r4 <= l) {
+        *minPos = 30000;
+        return 0x10000;
+    }
+    if (stagger_080b33ac && in->unk_13ce && (bool)(r4 & 1)) {
+        *minPos = row + 1;
+        return 0x10000;
+    }
+
+    if (wt->unk_38) {
+        if (row / wt->unk_38 > 16) {
+            *minPos = 30000;
+            return 0x8000;
+        }
+    } else if (row >= wt->unk_28) {
+        *minPos = 30000;
+        return 0x8000;
+    }
+
+    int fr = 0;
+    if (!in->unk_1410) {
+        if (!func_0806558c(in, &fr)) {
+            func_0804ad38("check fdeps failed\n");
+            func_0804adf0(-1);
+            return 0x80000000;
+        }
+        if (fr < 0) {
+            *minPos = 30000;
+            return 0x100000;
+        }
+        if (fr > *minPos) {
+            *minPos = fr;
+            return 0x100000;
+        }
+    }
+
+    Instr **ie = ((cls_unk30 *)wt)->getIE_ck(pos->unk_04);
+    if (ie[pipe] != (Instr *)in->unk_1398) {
+        *minPos = row + 1;
+        return 0x40;
+    }
+    if (!wouldPair(ie, in, pipe)) {
+        (*minPos)++;
+        return 0x80;
+    }
+    return checkLocks(in, &pos->unk_00, minPos);
+}
+
+bool DoInsert(workTable *wt, Instr *in, cls08058718 *pos)
+{
+    if (in->unk_142c && !in->unk_142e) {
+        func_0804ad38("undo insert currmuid not set\n");
+        return false;
+    }
+    wtRow *row = &wt->unk_2c[pos->unk_04];
+    cls08058718 *s = &in->unk_13e8;
+    s->unk_04 = pos->unk_04;
+    s->unk_03 = pos->unk_03;
+    s->unk_00 = pos->unk_00;
+    s->unk_02 = pos->unk_02;
+    row->unk_00[pos->unk_02].unk_00 = in;
+    if (!setLocks(in)) {
+        func_0804ad38("DoInsert: failed to set locks in instruction insert\n");
+        return false;
+    }
+    in->unk_1396 = wt->unk_40++;
+    if (!UnlinkFromToDo((Block *)wt, in)) {
+        func_0804ad38("failed to unlink from to do list\n");
+        func_0804aeb0();
+    }
+    if (!AddDone_Tail((Block *)wt, in)) {
+        func_0804ad38("failed to add to done\n");
+        func_0804aeb0();
+    }
+    return true;
+}
+
+bool UndoInsert(workTable *wt, Instr *in)
+{
+    if (in->unk_1388)
+        wt->unk_84 = 0;
+    if (in->unk_142c) {
+        if (!in->unk_142e) {
+            func_0804ad38("undo insert currmuid not set\n");
+            return false;
+        }
+        if (!unresolveMove((Block *)wt, in)) {
+            func_0804ad38("failed to unresolve move\n");
+            func_0804aeb0();
+        }
+    }
+    if (!wt->takeOut(in)) {
+        func_0804ad38("failed to take out instruction!\n");
+        func_0804aeb0();
+    }
+    if (!undoLocks(in)) {
+        func_0804ad38("UndoInsert:: undo locks - failed\n");
+        func_0804aeb0();
+        return false;
+    }
+    wt->unk_40--;
+    in->unk_1396 = -1;
+    if (!UnlinkFromDone((Block *)wt, in)) {
+        func_0804ad38("failed to unlink from done list\n");
+        func_0804aeb0();
+    }
+    if (!AddToDo_Head((Block *)wt, in)) {
+        func_0804ad38("failed to relink to todo list\n");
+        func_0804aeb0();
     }
     return true;
 }
