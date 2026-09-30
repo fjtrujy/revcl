@@ -340,6 +340,20 @@ struct Operand {
             r = true;
         return r;
     }
+    bool isOutRegOp()
+    {
+        int r = 0;
+        if (unk_09 == 2 && !isZeroReg())
+            r = 1;
+        return r;
+    }
+    bool isInRegOp()
+    {
+        int r = 0;
+        if (unk_09 == 1 && !isZeroReg())
+            r = 1;
+        return r;
+    }
     RegPoolEntry *getReg2()
     {
         if (isReg2())
