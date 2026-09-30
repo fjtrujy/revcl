@@ -41,9 +41,9 @@ bool bindExternals(Program *p)
     return true;
 }
 
-int addXinFor(instStream *s, RegPoolEntry *r);
-int addXoutFor(instStream *s, RegPoolEntry *r);
-bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, char kind, int dir, bool flag);
+Instr *addXinFor(instStream *s, RegPoolEntry *r);
+Instr *addXoutFor(instStream *s, RegPoolEntry *r);
+bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int flag);
 RegPoolEntry *getTagRegister(RegPool *pool, char *name);
 int getPoolsByClassID(int cls, RegPool **tab, int max);
 RegPool *GetRP(unsigned t);
@@ -175,6 +175,151 @@ bool bindDependencies(Program *p)
                 }
             }
         }
+    }
+    return true;
+}
+
+Instr *addXinFor(instStream *s, RegPoolEntry *r)
+{
+    iInfo *info = func_0806bf74(0xbe);
+    if (!info) {
+        func_0804ad38("addXinFor - cant get xin_hw\n");
+        return 0;
+    }
+    Instr *in = new Instr(info);
+    if (!in) {
+        func_0804ad38("failed to make xin instruction\n");
+        return 0;
+    }
+    if (in->unk_138b != 1) {
+        func_0804ad38("xin doesn't have just one operand\n");
+        delete in;
+        return 0;
+    }
+    int serial = g_080b33a8++;
+    in->unk_13e0 = serial;
+    Operand *op = &in->unk_38[0];
+    if (op->unk_04 != 0x37) {
+        func_0804ad38("xin wasn't external\n");
+        delete in;
+        return 0;
+    }
+    op->unk_18 = r;
+    op->unk_07 = (1 << r->unk_28) - 1;
+    workTable *wt = s->getTable();
+    if (!wt) {
+        func_0804ad38("can't get work table\n");
+        delete in;
+        return 0;
+    }
+    if (!wt->logAddLinear_Tail(in)) {
+        func_0804ad38("failed to an external input to the tail of list\n");
+        return 0;
+    }
+    return in;
+}
+
+Instr *addXoutFor(instStream *s, RegPoolEntry *r)
+{
+    iInfo *info = func_0806bf74(0xbf);
+    if (!info) {
+        func_0804ad38("addxoutFor - can't get xout_hw\n");
+        return 0;
+    }
+    Instr *in = new Instr(info);
+    if (!in) {
+        func_0804ad38("failed to make xout instruction\n");
+        return 0;
+    }
+    if (in->unk_138b != 1) {
+        func_0804ad38("xout doesn't have just one operand\n");
+        delete in;
+        return 0;
+    }
+    int serial = g_080b33a8++;
+    in->unk_13e0 = serial;
+    Operand *op = &in->unk_38[0];
+    if (op->unk_04 != 0x37) {
+        func_0804ad38("xout wasn't external\n");
+        delete in;
+        return 0;
+    }
+    op->unk_18 = r;
+    op->unk_07 = (1 << r->unk_28) - 1;
+    workTable *wt = s->getTable();
+    if (!wt) {
+        func_0804ad38("can't get work table\n");
+        delete in;
+        return 0;
+    }
+    if (!wt->logAddLinear_Head(in)) {
+        func_0804ad38("failed to an external output to the head of list\n");
+        return 0;
+    }
+    return in;
+}
+
+bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int flag)
+{
+    if (!r) {
+        func_0804ad38("add new output - passed a null rg pointer\n");
+        return false;
+    }
+    if (!bits) {
+        func_0804ad38("passed null mod bits for new output register\n");
+        return false;
+    }
+    if (bits & (-1 << r->unk_28)) {
+        func_0804ad38("add new output - out of bounds mod bits requested\n");
+        return false;
+    }
+    if (!in->unk_34) {
+        func_0804ad38("instruction has no m_Inst\n");
+        return false;
+    }
+    unsigned char n = in->unk_138b;
+    int i;
+    for (i = 0; i < n; i++) {
+        Operand *op = &in->unk_38[i];
+        if (op->unk_08 && op->unk_09 == dir && r == op->unk_18) {
+            op->unk_07 |= bits;
+            return true;
+        }
+    }
+    if (i == 12) {
+        func_0804ad38("ran out of operand space for add new output\n");
+        return false;
+    }
+    Operand *op = &in->unk_38[n];
+    op->unk_26 = n;
+    op->unk_0b = 1;
+    op->unk_09 = dir;
+    op->unk_08 = 1;
+    op->unk_05 = 0;
+    op->unk_0d = 0;
+    op->unk_0a = flag;
+    op->unk_29 = 0;
+    op->unk_18 = r;
+    op->unk_07 = bits;
+    op->unk_04 = kind;
+    in->unk_138b++;
+    return in->func_08053fac();
+}
+
+bool addNewInput(Instr *in, RegPoolEntry *r, int bits)
+{
+    if (!addNewOperand(in, r, bits, 0x37, 1, false)) {
+        func_0804ad38("add new input failed\n");
+        return false;
+    }
+    return true;
+}
+
+bool addNewOutput(Instr *in, RegPoolEntry *r, int bits, int flag)
+{
+    if (!addNewOperand(in, r, bits, 0x37, 2, flag)) {
+        func_0804ad38("add new output failed\n");
+        return false;
     }
     return true;
 }
