@@ -535,6 +535,7 @@ public:
     void func_0805601c(short v);
 };
 
+iInfo *func_0806bf74(int id);
 iInfo *func_0806bf8c(const char *name, bool);
 RegPoolEntry *func_0806c224(int idx);
 int func_0806c72c(iInfo *op);
