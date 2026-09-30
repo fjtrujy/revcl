@@ -540,6 +540,10 @@ iInfo *func_0806bf74(int id);
 iInfo *func_0806bf8c(const char *name, bool);
 RegPoolEntry *func_0806c224(int idx);
 int func_0806c72c(iInfo *op);
+Instr *GetI(Instr **ie, int p);
+int checkDispatchEntry(Instr **ie);
+bool wouldPair(Instr **ie, Instr *in, unsigned p);
+bool func_0806c6c4(RegPoolEntry *r);
 
 // Address-alias descriptor per opcode (12-byte entries, names guessed).
 struct aaDesc {

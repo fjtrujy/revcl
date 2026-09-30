@@ -405,3 +405,135 @@ void reportUBS(Program *p)
         ubs->func_080525c8();
     }
 }
+
+void reportStalls(Program *p)
+{
+    infoList *st = &p->unk_74;
+    if (st->unk_08) {
+        func_0804acb0("VCL thinks the following instructions caused stalls:\n");
+        st->func_080525c8();
+    }
+}
+
+int checkDispatchEntry(Instr **ie)
+{
+    if (!ie) {
+        func_0804ad38("checkDispatchEntry - passed a null pointer\n");
+        func_0804adf0(-1);
+    }
+    for (int p = 0; p != 2; p++) {
+        Instr *in = GetI(ie, p);
+        if (!in)
+            continue;
+        if (!(((unsigned char)in->unk_138c >> p) & 1))
+            return -1;
+        for (int i = 0; i != in->unk_138b; i++) {
+            RegPoolEntry *r = in->unk_38[i].getReg2();
+            if (!r)
+                continue;
+            for (int q = p + 1; q <= 1; q++) {
+                Instr *o = GetI(ie, q);
+                if (!o)
+                    continue;
+                if (!(((unsigned char)o->unk_138c >> q) & 1))
+                    return -1;
+                for (int j = 0; j != o->unk_138b; j++) {
+                    RegPoolEntry *r2 = o->unk_38[j].getReg2();
+                    if (r2 && r2 == r)
+                        return -1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+bool wouldPair(Instr **ie, Instr *in, unsigned p)
+{
+    if (!ie || !in || p > 1) {
+        func_0804ad38("wouldPair - bad args\n");
+        func_0804adf0(-1);
+    }
+    int i;
+    for (i = 0; i != 2; i++)
+        if (ie[i] == in) {
+            ie[i] = (Instr *)in->unk_1398;
+            break;
+        }
+    if (ie[p] != (Instr *)in->unk_1398) {
+        if (i != 2)
+            ie[i] = in;
+        return false;
+    }
+    ie[p] = in;
+    int r = checkDispatchEntry(ie);
+    ie[p] = (Instr *)in->unk_1398;
+    if (i != 2)
+        ie[i] = in;
+    return r == 0;
+}
+
+const char *func_0806c6a0(int dev)
+{
+    const char **tab = (const char **)g_080de720;
+    if (!tab)
+        return "NO_DEVTAB";
+    if ((unsigned)dev > 8)
+        return "UNKNOWN_DEV";
+    return tab[dev];
+}
+
+bool func_0806c6c4(RegPoolEntry *r)
+{
+    return r->unk_24 == 8 || r->unk_24 == 9;
+}
+
+bool func_0806c6dc(Program *p)
+{
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i] && !g_080de6e0[i]->optReset()) {
+            func_0804ad38("Processor::optReset() - failed to reset %s\n",
+                          g_080de6e0[i]->unk_2c);
+            return false;
+        }
+    return true;
+}
+
+static inline int iinfoId(iInfo *op)
+{
+    if (!op)
+        return -1;
+    int id = ((char *)op - (char *)g_080de6c0) / sizeof(iInfo);
+    if (id < 0)
+        return -1;
+    if (id >= 0xd6)
+        id = -1;
+    return id;
+}
+
+int func_0806c72c(iInfo *op)
+{
+    return iinfoId(op);
+}
+
+aaDesc *func_0806c768(Instr *in)
+{
+    if (!in)
+        return 0;
+    if (!in->unk_34)
+        return 0;
+    int id = iinfoId(in->unk_34);
+    if (id < 0) {
+        func_0804ad38("couldn't deduce instruction uid\n");
+        func_0804adf0(-1);
+    }
+    aaDesc *res = 0;
+    if (g_080de724) {
+        for (aaDesc *t = (aaDesc *)g_080de724; t->unk_00; t++)
+            if (t->unk_00 == id) {
+                res = t;
+                break;
+            }
+    }
+    return res;
+}

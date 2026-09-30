@@ -56,7 +56,7 @@ bool func_0806a74c(Program *p);
 bool func_0806ae58(Program *p);
 bool detectMoves(Program *p);
 void reportUBS(Program *p);
-void func_0806c3e0(Program *p);
+void reportStalls(Program *p);
 
 extern int errorOccurred;
 extern char *outName_080b303c;
@@ -573,7 +573,7 @@ static inline void reportErrors(Program *p)
 static inline void reportWarnings(Program *p)
 {
     func_0804ac7c("vcl thinks it found problem(s) in the input source:\n");
-    func_0806c3e0(p);
+    reportStalls(p);
 }
 
 bool func_0804a2b4(Program *p, bool a, bool b, bool c)
