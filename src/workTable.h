@@ -91,9 +91,12 @@ struct wtRow {
     wtRow();
     ~wtRow();
     bool func_080721f8();  // clears unk_00
-    bool func_0807222c(int);
-    bool addStall(int type, int len);
+    void func_0807222c(int);
+    Instr *getEntry(int p);
     int func_08072304();   // count of used entries
+    Instr *onlyEntry();
+    bool clearStalls();
+    bool addStall(int type, int len);
 };
 
 struct wtInstrList {

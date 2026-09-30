@@ -56,3 +56,85 @@ wtRow::wtRow()
 wtRow::~wtRow()
 {
 }
+
+bool wtRow::func_080721f8()
+{
+    for (int i = 0; i != 2; i++)
+        if (!unk_00[i].func_08072218())
+            return 0;
+    return 1;
+}
+
+void wtRow::func_0807222c(int)
+{
+    for (int i = 0; i != 2; i++) {
+        Instr *in = unk_00[i].unk_00;
+        if (!in)
+            continue;
+        if ((int)in & 1)
+            continue;
+        in->func_08054008(false);
+    }
+}
+
+Instr *wtRow::getEntry(int p)
+{
+    if (p < 0) {
+        func_0804ad38("iEntry::GetI() - p<0\n");
+        func_0804adf0(-1);
+        return 0;
+    }
+    if (p >= 2) {
+        func_0804ad38("iEntry::GetI() - p>=MAX_IPIPES\n");
+        func_0804adf0(-1);
+        return 0;
+    }
+    return unk_00[p].unk_00;
+}
+
+Instr *GetI(Instr **ie, int p)
+{
+    if (p < 0) {
+        func_0804ad38("iEntry::GetI() - p<0\n");
+        func_0804adf0(-1);
+        return 0;
+    }
+    if (p >= 2) {
+        func_0804ad38("iEntry::GetI() - p>=MAX_IPIPES\n");
+        func_0804adf0(-1);
+        return 0;
+    }
+    Instr *in = ie[p];
+    if ((int)in & 1)
+        return 0;
+    return in;
+}
+
+int wtRow::func_08072304()
+{
+    int n = 0;
+    for (int i = 0; i != 2; i++)
+        if (unk_00[i].unk_00)
+            n++;
+    return n;
+}
+
+Instr *wtRow::onlyEntry()
+{
+    Instr *r = 0;
+    for (int i = 0; i != 2; i++) {
+        if (unk_00[i].unk_00) {
+            if (r)
+                return 0;
+            r = unk_00[i].unk_00;
+        }
+    }
+    return r;
+}
+
+bool wtRow::clearStalls()
+{
+    unk_0a = 0;
+    unk_09 = 0;
+    return 1;
+}
