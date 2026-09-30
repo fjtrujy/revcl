@@ -237,6 +237,7 @@ public:
     cls0805c244 *getLockList(RegPoolEntry *reg, int part);
     bool qInstruction(Instr *in);
     bool forceInsert(Instr *in, cls08058718 *pos);
+    bool doPostOpt(int rawMode);
     workTable *localClone();
     void clearLinear()
     {
