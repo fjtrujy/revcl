@@ -221,6 +221,10 @@ public:
     bool getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1, int *minSfx2);
     bool func_08073f90();
     bool setRange();
+    bool setRange(int len);
+    bool setRange(int s, int e);
+    bool setSkip(int row, char skip);
+    bool logAddLinear_After(Instr *after, Instr *n);
 };
 
 const char *codeModeName(int mode);

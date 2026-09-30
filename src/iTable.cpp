@@ -792,3 +792,159 @@ bool workTable::setRange()
     unk_38 = 0;
     return 1;
 }
+
+bool workTable::setRange(int len)
+{
+    if (!unk_2c) {
+        func_0804ad38("setRange - no table!\n");
+        return 0;
+    }
+    unk_30 = 0;
+    unk_34 = len;
+    unk_38 = len;
+    return 1;
+}
+
+bool workTable::setRange(int s, int e)
+{
+    if (!unk_2c) {
+        func_0804ad38("setRange - no table!\n");
+        return 0;
+    }
+    unk_30 = s;
+    unk_34 = e;
+    unk_38 = 0;
+    if (s < 0) {
+        func_0804ad38("s before 0\n");
+        func_0804aeb0();
+        return 0;
+    }
+    if (e < s) {
+        func_0804ad38("setRange : e<s before [%d,%d]\n", s, e);
+        func_0804aeb0();
+        return 0;
+    }
+    if (e >= unk_28) {
+        func_0804ad38("e after end\n");
+        func_0804aeb0();
+        return 0;
+    }
+    return 1;
+}
+
+bool workTable::setSkip(int row, char skip)
+{
+    if (row < unk_30) {
+        func_0804ad38("setskip - before start\n");
+        return 0;
+    }
+    if (row >= unk_34) {
+        func_0804ad38("setskip >= end\n");
+        return 0;
+    }
+    wtRow *r = rowAt(row);
+    if (!r) {
+        func_0804ad38("failed to get ie in setSkip\n");
+        return 0;
+    }
+    r->unk_08 = skip;
+    return 1;
+}
+
+int workTable::func_0807411c()
+{
+    if (!unk_2c) {
+        const char *m = codeModeStr(unk_09);
+        const char *o = unk_10 ? unk_10->func_0806d674() : "UNOWNED_TABLE";
+        func_0804ad38("getStart called .. no table for %s mode %s\n", o, m);
+        func_0804adf0(-1);
+    }
+    return unk_30;
+}
+
+int workTable::func_080741b4()
+{
+    return unk_38;
+}
+
+int workTable::func_080741c0()
+{
+    if (!unk_2c) {
+        const char *o = unk_10 ? unk_10->func_0806d674() : "UNOWNED_TABLE";
+        func_0804ad38("getEnd called .. no table for %s\n", o);
+        func_0804ad38("getEnd called .. no table\n");
+        func_0804adf0(-1);
+    }
+    return unk_34;
+}
+
+bool workTable::changeMode(unsigned char mode)
+{
+    int cur = unk_09;
+    if (mode == (unsigned char)cur) {
+        func_0804ad38("change mode to same!\n");
+        func_0804aeb0();
+        return 0;
+    }
+    switch (cur) {
+    case 0:
+        func_0804ad38("can't change mode from bad\n");
+        func_0804aeb0();
+        return 0;
+    case 1:
+        func_0804ad38("can't change uta->\n");
+        func_0804aeb0();
+        return 0;
+    case 2:
+        if (mode != 3) {
+            func_0804ad38("can only go mid->raw\n");
+            func_0804aeb0();
+            return 0;
+        }
+        break;
+    case 3:
+        func_0804ad38("can't change from raw to %s\n", codeModeStr(mode));
+        func_0804aeb0();
+        return 0;
+    case 4:
+        func_0804ad38("can't change from synth\n");
+        func_0804aeb0();
+        break;
+    case 5:
+        if (mode != 3) {
+            func_0804ad38("can only go preexp->raw\n");
+            func_0804aeb0();
+            return 0;
+        }
+        break;
+    default:
+        func_0804ad38("bad code mode for change mode\n");
+        func_0804aeb0();
+        break;
+    }
+    unk_09 = mode;
+    return 1;
+}
+
+bool AddLinear_After(Block *blk, Instr *after, Instr *n);
+
+bool workTable::logAddLinear_After(Instr *after, Instr *n)
+{
+    if (!n) {
+        func_0804ad38("can't add null pointer to linear\n");
+        return 0;
+    }
+    if (!n->setOwner((cls_unk30 *)this)) {
+        func_0804ad38("logAddLinear_Head: failed to set owner\n");
+        return 0;
+    }
+    if (!AddLinear_After((Block *)this, after, n)) {
+        func_0804ad38("logAddLinear_Head: failed to add head of linear list\n");
+        return 0;
+    }
+    if (!logInstr((Block *)this, n)) {
+        func_0804ad38("logAddLinear_Head: failed to log instruction\n");
+        return 0;
+    }
+    return 1;
+}
