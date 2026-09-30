@@ -3,7 +3,7 @@
 #include "Instr.h"
 
 bool setRange(int start, int end, int lsz);
-bool func_0807cc6c(Instr *i, cls08058718 *pos);
+bool moveLocks(Instr *i, cls08058718 *pos);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
 int latestInsert(workTable *wt, Instr *in, bool *found);
 int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
@@ -81,7 +81,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
     return true;
 
 move:
-    if (wt->takeOut(in) && func_0807cc6c(in, &pos) && wt->putIn(in))
+    if (wt->takeOut(in) && moveLocks(in, &pos) && wt->putIn(in))
         return true;
     func_0804ad38("failed to move inst to tline1\n");
     return false;

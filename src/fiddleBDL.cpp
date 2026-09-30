@@ -3,7 +3,7 @@
 #include "os.h"
 
 bool setRange(int start, int end, int lsz);
-bool func_0807cc6c(Instr *i, cls08058718 *pos);
+bool moveLocks(Instr *i, cls08058718 *pos);
 int func_0807dc44(workTable *wt, Instr *i, cls08058718 *pos);
 
 bool fiddleBDL(workTable *wt)
@@ -69,7 +69,7 @@ bool fiddleBDL(workTable *wt)
     if (func_0807dc44(wt, br, &posP))
         ok = false;
     if (prev) {
-        if (!func_0807cc6c(prev, &posP)) {
+        if (!moveLocks(prev, &posP)) {
             func_0804ad38("failed to undo takeout\n");
             return false;
         }
@@ -91,7 +91,7 @@ bool fiddleBDL(workTable *wt)
         int m2 = prev->unk_13b6 < prev->unk_13b4 ? prev->unk_13b4 : prev->unk_13b6;
         if ((short)m2)
             ok = false;
-        if (!func_0807cc6c(br, &posB)) {
+        if (!moveLocks(br, &posB)) {
             func_0804ad38("failed to undo branch\n");
             return false;
         }
@@ -111,12 +111,12 @@ bool fiddleBDL(workTable *wt)
         func_0804ad38("failed to takeout in_p\n");
         return false;
     }
-    if (!func_0807cc6c(br, &posP)) {
+    if (!moveLocks(br, &posP)) {
         func_0804ad38("after all that - failed to move branch\n");
         return false;
     }
     if (prev) {
-        if (!func_0807cc6c(prev, &posB)) {
+        if (!moveLocks(prev, &posB)) {
             func_0804ad38("after all that - failed to prev\n");
             return false;
         }

@@ -229,3 +229,94 @@ done:
     }
     return ret;
 }
+
+bool moveLocks(Instr *in, cls08058718 *pos)
+{
+    cls08058718 *d = &in->unk_13e8;
+    d->unk_00 = pos->unk_00;
+    d->unk_04 = pos->unk_04;
+    d->unk_03 = pos->unk_03;
+    d->unk_02 = pos->unk_02;
+    for (int i = 0; i != in->unk_138b; i++) {
+        Operand *op = &in->unk_38[i];
+        RegPoolEntry *r = op->unk_18;
+        if (!r)
+            continue;
+        if (op->isOutRegOp()) {
+            for (int p = 0; p != r->unk_28; p++) {
+                if ((op->unk_07 >> p) & 1) {
+                    OpSlot *s = &op->unk_2c[p];
+                    cls0805c244 *ll = s->unk_04;
+                    s->setFrom(&in->unk_13e8);
+                    if (!ll->moveOutputLock(s)) {
+                        func_0804ad38("oh no - move output lock failed %d.%d\n", i, p);
+                        in->func_08054008(false);
+                        func_0804aeb0();
+                        return false;
+                    }
+                }
+            }
+        }
+        if (op->isInRegOp()) {
+            for (int p = 0; p != r->unk_28; p++) {
+                if ((op->unk_07 >> p) & 1) {
+                    OpSlot *s = &op->unk_2c[p];
+                    cls0805c244 *ll = s->unk_04;
+                    s->setFrom(&in->unk_13e8);
+                    if (!ll->moveInputLock(s)) {
+                        func_0804ad38("oh no - move input lock failed %d.%d\n", i, p);
+                        in->func_08054008(false);
+                        func_0804aeb0();
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool setPipeBits(Instr *in)
+{
+    int i;
+    for (i = 0; i != in->unk_138b; i++) {
+        Operand *op = &in->unk_38[i];
+        if (op->unk_18)
+            op->unk_18->unk_34 = 0;
+    }
+    for (i = 0; i != in->unk_138b; i++) {
+        Operand *op = &in->unk_38[i];
+        RegPoolEntry *r = op->inputReg();
+        if (!r)
+            continue;
+        for (int p = 0; p != r->unk_28; p++) {
+            if ((op->unk_07 >> p) & 1) {
+                OpSlot *s = &op->unk_2c[p];
+                s->unk_01 = 0;
+                s->unk_00 = 0;
+                s->unk_02 = 0;
+                if (!(((unsigned char)r->unk_34 >> p) & 1)) {
+                    switch ((unsigned char)in->unk_138c) {
+                    case 0:
+                        func_0804ad38("no physical pipe bits!\n");
+                        return false;
+                    case 1:
+                        s->unk_01 = 1;
+                        break;
+                    case 2:
+                        s->unk_00 = 1;
+                        break;
+                    case 3:
+                        s->unk_02 = 1;
+                        break;
+                    default:
+                        func_0804ad38("unknown pipe request\n");
+                        return false;
+                    }
+                }
+            }
+        }
+        r->unk_34 |= op->unk_07;
+    }
+    return true;
+}
