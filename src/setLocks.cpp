@@ -800,3 +800,65 @@ int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards)
     pos->func_0805878c(in->unk_13e8.unk_02);
     return func_0807dc44(wt, in, pos);
 }
+
+int func_0807e1f8(workTable *wt, Instr *in, cls08058718 *pos)
+{
+    int row = in->unk_13e8.unk_00 < 0 ? pos->unk_00 : in->unk_13e8.unk_00;
+    if (row < 0) {
+        func_0804ad38("inst not inserted\n");
+        func_0804aeb0();
+    }
+    Operand *op;
+    for (int i = 0; (op = in->getOp(i)) != 0; i++) {
+        RegPoolEntry *reg = op->isInReg() ? op->unk_18 : 0;
+        if (!reg)
+            continue;
+        for (int k = 0; k != reg->unk_28; k++) {
+            if ((op->unk_07 >> k) & 1) {
+                OpSlot *s = &op->unk_2c[k];
+                cls0805bcc4 *par = s->getParent();
+                if (par->unk_22 != 0)
+                    continue;
+                Instr *oi = par->ownerInstr();
+                if (!oi)
+                    continue;
+                if (oi->unk_13ce != 1 && oi->unk_13f0.unk_04 != 0)
+                    continue;
+                int t = in->unk_13e8.unk_00 - par->unk_18 - s->unk_18;
+                int oiRow = oi->unk_13e8.unk_00;
+                if (t <= oiRow)
+                    continue;
+                bool found = false;
+                cls08058718 trial;
+                cls08058718 dest;
+                dest.func_0805874c(t);
+                for (; oiRow < t; t--) {
+                    trial.func_0805874c(t);
+                    if (!func_0807e130(wt, oi, &trial, true)) {
+                        dest.unk_00 = trial.unk_00;
+                        dest.unk_04 = trial.unk_04;
+                        dest.unk_03 = trial.unk_03;
+                        dest.unk_02 = trial.unk_02;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    if (!wt->takeOut(oi)) {
+                        func_0804ad38("drag: failed to take in from table\n");
+                        func_0804aeb0();
+                    }
+                    if (!moveLocks(oi, &dest)) {
+                        func_0804ad38("failed to move !\n");
+                        func_0804aeb0();
+                    }
+                    if (!wt->putIn(oi)) {
+                        func_0804ad38("failed to put in dragged instruction\n");
+                        func_0804aeb0();
+                    }
+                }
+            }
+        }
+    }
+    return 1;
+}
