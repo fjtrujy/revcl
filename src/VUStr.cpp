@@ -184,7 +184,7 @@ int func_080521f0(char *s)
     return mods;
 }
 
-int func_080522c4(int mods, unsigned char mode, bool flag)
+bool func_080522c4(int mods, unsigned char mode, bool flag)
 {
     int allowed = 0;
     switch (mode) {

@@ -10,7 +10,7 @@ char *func_080520d4(int mask);
 int func_08052100(const char *s);
 int func_0805219c(const char *s);
 int func_080521f0(char *s);
-int func_080522c4(int mods, unsigned char mode, bool flag);
+bool func_080522c4(int mods, unsigned char mode, bool flag);
 char *func_08052314(int mods);
 
 #endif

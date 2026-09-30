@@ -10,6 +10,8 @@ class stallList : public infoList {
 
 class iInfo;
 class RegPool;
+class Instr;
+class LocTag;
 struct ol_s;
 
 struct PoolDef {            // array ends at type == 0
@@ -54,6 +56,8 @@ public:
 
     bool setUniqueName(const char *name);
     const char *getUniqueName();
+    Instr *getNextInstruction(LocTag *t, int *pos);
+    bool decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *nOut);
 
     bool unk_00;           // new syntax
     mList unk_04;
