@@ -458,13 +458,18 @@ bool workTable::doPostOpt(int rawMode)
     return true;
 }
 
+static inline bool isRawTable(workTable *wt)
+{
+    return wt->unk_09 == 3;
+}
+
 bool instStream::setOptTable(workTable *nt)
 {
     if (!nt) {
         func_0804ad38("can't set opt table to null ptr - use clear\n");
         func_0804aeb0();
     }
-    if (nt->unk_09 != 3) {
+    if (!isRawTable(nt)) {
         func_0804ad38("setOptTable - table not vsm\n");
         return false;
     }
@@ -491,7 +496,13 @@ bool instStream::setOptTable(workTable *nt)
             return false;
         }
         Instr *c = in->unk_08;
-        if (c) {
+        if (!c) {
+            if (!in->unk_1428) {
+                func_0804ad38("doPostLinearOpt - inst wasn't cloned, but not a move either\n");
+                in->func_08054008(false);
+                return false;
+            }
+        } else {
             if (c->unk_00) {
                 func_0804ad38("doPostLinear() - original had m_optClone set\n");
                 c->func_08054008(false);
@@ -524,10 +535,6 @@ bool instStream::setOptTable(workTable *nt)
             }
             in->unk_04 = (int)c;
             c->unk_00 = (int)in;
-        } else if (!in->unk_1428) {
-            func_0804ad38("doPostLinearOpt - inst wasn't cloned, but not a move either\n");
-            in->func_08054008(false);
-            return false;
         }
     }
     nt->clearClones();
