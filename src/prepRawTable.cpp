@@ -8,7 +8,7 @@ void resetRange();
 bool workTable::prepRawTable()
 {
     int mode = unk_09;
-    if (mode != 3)
+    if ((unsigned char)mode != 3)
         func_0804ad38("prepRawTable called - but mode is not raw %s\n", codeModeName(mode));
     if (!unk_2c) {
         func_0804ad38("iTable::prepRawTable - table not ready\n");
@@ -66,7 +66,7 @@ bool workTable::prepRawTable()
             cls08058718 *loc = &in->unk_13e8;
             if (unk_38) {
                 if (!in->func_08054138())
-                    lid = loc->unk_03;
+                    lid = in->unk_13e8.unk_03;
                 if (lid < 0) {
                     func_0804ad38("lid was <0 during table setup\n");
                     in->leDump();
@@ -89,7 +89,7 @@ bool workTable::prepRawTable()
             cls08058718 pos;
             pos.func_0805874c(il);
             pos.func_0805878c(p);
-            loc->unk_00 = pos.unk_00;
+            in->unk_13e8.unk_00 = pos.unk_00;
             loc->unk_04 = pos.unk_04;
             loc->unk_03 = pos.unk_03;
             loc->unk_02 = pos.unk_02;
