@@ -47,7 +47,9 @@ public:
     unsigned char unk_1a;   // branch target operand index + 1
     char unk_1b[5];
     int (*unk_20)(void *, Instr *);     // per-opcode handler
-    char unk_24[0x44 - 0x24];
+    char unk_24[0x38 - 0x24];
+    char *(*unk_38)(char *buf, Instr *in, bool upper, char *mods, bool b, int zero); // emit hook
+    char unk_3c[0x44 - 0x3c];
     iOpDesc unk_44[12];     // operand descriptors
 
     unsigned char kind() { return unk_18 & 7; }

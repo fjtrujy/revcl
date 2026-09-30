@@ -1,6 +1,8 @@
 #include "Program.h"
 #include "os.h"
 #include "instStream.h"
+#include "VUStr.h"
+#include "fileEmit.h"
 
 extern bool noAlign_080b3016;
 int getNumOptimisers();
@@ -208,4 +210,153 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         return 0;
     }
     return buf;
+}
+
+extern bool noEbit_080b3017;
+extern char *stallNames_080b3244[3];
+int func_0804bf50(unsigned int);
+char *emitNop(char *buf, int flags, int *len);
+char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b);
+
+char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
+{
+    if (!buf) {
+        func_0804ad38("iEntry::emit - null pointer!\n");
+        return 0;
+    }
+    if (unk_08) {
+        if (func_08072304()) {
+            func_0804ad38("can't skip a non-empty ie\n");
+            return 0;
+        }
+        return buf;
+    }
+    buf += func_0804adbc(buf, "         ");
+    int i;
+    for (i = 0; i != 2; i++)
+        if (unk_00[i].unk_00)
+            flags |= unk_00[i].unk_00->unk_1389;
+    int len = 0;
+    for (i = 0; i != 2; i++) {
+        if (!unk_00[i].unk_00)
+            buf = emitNop(buf, flags, &len);
+        else
+            buf = emitInstr(unk_00[i].unk_00, buf, false, flags, upper);
+        if (!buf) {
+            func_0804ad38("failed to emit upper for pipe %d ie\n", i);
+            return 0;
+        }
+        flags = 0;
+        if (i != 1)
+            buf += func_0804adbc(buf, "         ");
+    }
+    if (unk_09) {
+        buf += func_0804adbc(buf, "       ;\tSTALL");
+        bool any = false;
+        for (int k = 0; k != 3; k++) {
+            int bit = (unk_0a >> k) & 1;
+            if (bit) {
+                buf += func_0804adbc(buf, "_%s", stallNames_080b3244[k]);
+                any = true;
+            }
+        }
+        if (!any)
+            func_0804ac7c("reported a stall.. but dunno what type\n");
+        int stall = unk_09;
+        buf += func_0804adbc(buf, " ?%d", stall);
+    }
+    return buf + func_0804adbc(buf, "\n");
+}
+
+char *emitNop(char *buf, int flags, int *len)
+{
+    char line[320];
+    char mods[16];
+    char *p = line;
+    if (noEbit_080b3017)
+        flags &= ~2;
+    char *s = func_08052314(flags);
+    char *d = mods;
+    while (*s)
+        *d++ = *s++;
+    *d = 0;
+    p += func_0804adbc(p, "NOP%s", mods);
+    for (int n = p - line; n < 50; n++)
+        *p++ = ' ';
+    *p = 0;
+    buf += func_0804adbc(buf, "%s", line);
+    return buf;
+}
+
+char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
+{
+    char line[320];
+    char mods[16];
+    char *s = func_08052314(flags);
+    char *p = line;
+    char *d = mods;
+    while (*s)
+        *d++ = *s++;
+    *d = 0;
+    if (in->unk_1392 || !in->unk_34)
+        p += func_0804adbc(p, "nop%s", mods);
+    else {
+        if (in->unk_34->unk_38) {
+            p = in->unk_34->unk_38(line, in, upper, mods, b, 0);
+            if (!p) {
+                func_0804ad38("emit hook failed for an instruction\n");
+                return 0;
+            }
+        } else {
+            p = func_0808750c(line, in, upper, mods, b, 0);
+            if (!p) {
+                func_0804ad38("generic emit hook failed for an instruction\n");
+                return 0;
+            }
+        }
+    }
+    for (int n = p - line; n < 50; n++)
+        *p++ = ' ';
+    *p = 0;
+    return buf + func_0804adbc(buf, "%s", line);
+}
+
+char *emitDestMask(char *p, int mdBits, unsigned char mods)
+{
+    if (p) {
+        switch (mdBits) {
+        case 0:
+            goto done;
+        case 1:
+            break;
+        case 2:
+            if (mods != 7) {
+                func_0804ad38("not just one mod bit for MD_XYZ..bits are %x\n", mods);
+                return 0;
+            }
+            break;
+        case 3:
+            if (func_0804bf50(mods) != 1) {
+                func_0804ad38("not just one mod bit for MD_ONE\n");
+                return 0;
+            }
+            break;
+        default:
+            func_0804ad38("unknown md_bits for vpu target \n");
+            return 0;
+        }
+        if (!mods) {
+            func_0804ad38("modBits is null for case MD_ANY.. which should be ok, but ee-dvp-as doesn't assemble it\n");
+            return 0;
+        }
+        if (mods != 15) {
+            *p++ = '.';
+            if (mods & 1) *p++ = 'x';
+            if (mods & 2) *p++ = 'y';
+            if (mods & 4) *p++ = 'z';
+            if (mods & 8) *p++ = 'w';
+        }
+    }
+done:
+    return p;
 }
