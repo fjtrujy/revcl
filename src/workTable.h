@@ -96,7 +96,11 @@ struct wtRow {
     int func_08072304();   // count of used entries
     Instr *onlyEntry();
     bool clearStalls();
+    void func_08072364();
     bool addStall(int type, int len);
+    int func_080723ec(RegPoolEntry *reg, unsigned char mask);
+    int func_08072440(RegPoolEntry *reg, unsigned char mask);
+    unsigned int func_08072494();
 };
 
 struct wtInstrList {
