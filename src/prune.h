@@ -113,9 +113,10 @@ inline int tryPrune(Instr *in, bool raw)
             Operand *op = in->getOp(i);
             if (!op)
                 break;
-            RegPoolEntry *r = 0;
+            bool isIn = false;
             if (op->unk_09 == 1)
-                r = op->unk_18;
+                isIn = true;
+            RegPoolEntry *r = isIn ? op->unk_18 : 0;
             if (r)
                 op->unk_2a = op->unk_07;
         }
