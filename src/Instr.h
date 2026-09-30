@@ -295,6 +295,22 @@ struct Operand {
         return r;
     }
     RegPoolEntry *getReg() { return isReg() ? unk_18 : 0; }
+    bool isZeroReg()
+    {
+        bool z = false;
+        if (unk_18) {
+            if (unk_18 == unk_18->unk_04->unk_10)
+                z = true;
+        }
+        return z;
+    }
+    RegPoolEntry *inputReg()
+    {
+        int r = 0;
+        if (unk_09 == 1 && !isZeroReg())
+            r = 1;
+        return r ? unk_18 : 0;
+    }
     bool isRegOp()
     {
         int r = 0;

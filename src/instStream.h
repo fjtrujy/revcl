@@ -79,6 +79,8 @@ public:
     }
     unsigned char func_0806d908(); // code mode
     unsigned char func_0806d968(); // work table mode
+    int getUninsertedxInputs();
+    int getUninsertedxOutputs();
     const char *getCodeModeName();
     void dumpSynthetics();
     char *emitLabels(char *buf);
