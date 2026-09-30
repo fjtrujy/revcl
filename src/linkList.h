@@ -8,7 +8,7 @@ class instStream;
 
 struct linkNode {
     char unk_00[4];
-    int unk_04;
+    linkNode *unk_04;           // prev
     linkNode *unk_08;           // next
     instStream *unk_0c;         // other stream
     char unk_10;                // marked
@@ -40,15 +40,17 @@ struct linkNode {
 
 struct linkList {
     linkNode *unk_00;           // head
-    int unk_04;
+    linkNode *unk_04;           // tail
     int unk_08;                 // count
     linkList();
     ~linkList();
-    linkNode *func_0806dff4(instStream *s, int type);
+    linkNode *findType(int type);
     instStream *getStream(int type);
     void dump();
     bool removeAll();
-    bool func_0806dfa0(linkNode *n);
+    bool relink(linkNode *n);
+    bool unlink(linkNode *n);
+    linkNode *func_0806dff4(instStream *s, int type);
     int func_0806e4f0();
 };
 
