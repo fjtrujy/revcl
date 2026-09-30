@@ -298,6 +298,7 @@ struct Operand {
             return unk_18;
         return 0;
     }
+    bool isInput() { return unk_09 == 1; }
     RegPoolEntry *inReg()
     {
         if (unk_09 == 1)

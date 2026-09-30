@@ -44,7 +44,10 @@ struct Program {
     ubsList unk_68;     // used-before-set list; unk_08 = count
     infoList unk_74;    // stall list (really an infoList subclass, vtable 0x080b33c8); unk_08 = count
     int unk_80;         // emulated length
-    char unk_84[0x1c];
+    char unk_84[4];
+    mList unk_88;       // names prefixed by doUnique
+    bool unk_9c;        // ctor arg
+    char unk_9d[3];
     instStream *unk_a0; // all streams, chained via unk_108
     char unk_a4[0x10];
     bool unk_b4;        // logmax: also compute max path key
@@ -63,6 +66,7 @@ struct Program {
     bool areLinkedBy(instStream *src, instStream *dst, int type);
     bool unlinkStreams(instStream *from, instStream *to, int type);
     bool unLinkStreams(instStream *from, instStream *to, int type);
+    bool doUnique();
     bool removeStream(instStream *s);
 };
 

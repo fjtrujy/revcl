@@ -36,6 +36,7 @@ struct linkNode {
         while (n && n->unk_14 != type);
         return n;
     }
+    int func_0806e514();
 };
 
 struct linkList {
