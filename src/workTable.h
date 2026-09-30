@@ -149,7 +149,7 @@ public:
     int unk_40;
     int unk_44;             // extminlength
     char unk_48[4];
-    int unk_4c;
+    Instr *unk_4c;          // move list head (as Block::unk_4c)
     int unk_50;
     cls08058718 unk_54;
     cls0805e2e4 unk_5c;

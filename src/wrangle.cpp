@@ -447,3 +447,114 @@ bool buildCandidateList2(workTable *wt)
     }
     return true;
 }
+
+bool func_0808158c(workTable *wt, wrangleCand *c)
+{
+    int pipe;
+    int row = c->unk_04;
+    Instr *in = c->unk_00;
+    pipe = 0;
+    if (in->unk_1388)
+        row = in->unk_141e;
+    if (in->unk_138c == 3)
+        pipe = c->unk_06 & 1;
+    else
+        pipe = in->unk_138c != 1;
+    if (func_08081610(wt, in, &row, &pipe)) {
+        c->unk_04 = row;
+        c->unk_06 = pipe;
+        return true;
+    }
+    return false;
+}
+
+bool func_08081610(workTable *wt, Instr *in, int *row, int *pipe)
+{
+    bool both = false;
+    if (in->unk_138c == 3)
+        both = true;
+    cls08058718 pos;
+    if (both) {
+        int p;
+        int best;
+        int r;
+        for (;;) {
+            best = 30000;
+            p = *pipe;
+            for (; p <= 1; p++) {
+                r = *row;
+                pos.func_0805878c(p);
+                pos.func_0805874c(r);
+                if (!(checkInsert(wt, in, &pos, &r) & ~0x100)) {
+                    *row = r;
+                    *pipe = p;
+                    return true;
+                }
+                if (r < best)
+                    best = r;
+            }
+            if (best >= 30000)
+                return false;
+            if (best == *row) {
+                func_0804ad38("min_nl was nl and all failed .. %d->%d\n", best, best);
+                func_0804adf0(-1);
+            }
+            *row = best;
+            *pipe = 0;
+        }
+    } else {
+        *pipe = in->unk_138c != 1;
+        pos.func_0805874c(*row);
+        pos.func_0805878c(*pipe);
+        while (checkInsert(wt, in, &pos, row) & ~0x100) {
+            if (*row >= 30000)
+                return false;
+            pos.func_0805874c(*row);
+        }
+        if (*row >= 30000)
+            return false;
+        return true;
+    }
+}
+
+bool func_080817d4(workTable *wt, wrangleCand *c)
+{
+    Instr *best = 0;
+    int min = 0x7fffffff;
+    for (Instr *in = wt->unk_4c; in; in = in->unk_2c) {
+        if (in->unk_13e4 < min) {
+            best = in;
+            min = in->unk_13e4;
+        }
+    }
+    if (!best)
+        return false;
+    c->unk_00 = best;
+    c->unk_04 = best->unk_141e + best->unk_141c;
+    if (!best->unk_1428 && c->unk_04 < wt->unk_54.getRow())
+        c->unk_04 = wt->unk_54.getRow();
+    c->unk_06 = best->unk_1418 & 1;
+    return true;
+}
+
+bool func_0808184c(workTable *wt, wrangleCand *c)
+{
+    Instr *best = 0;
+    int min = 0x7fffffff;
+    for (Instr *in = wt->unk_4c; in; in = in->unk_2c) {
+        if (in->unk_13e4 < min) {
+            best = in;
+            min = in->unk_13e4;
+        }
+    }
+    if (!best)
+        return false;
+    c->unk_00 = best;
+    c->unk_04 = best->unk_141e + best->unk_141c;
+    if (!best->unk_1428 && c->unk_04 < wt->unk_54.getRow() - 64)
+        c->unk_04 = wt->unk_54.getRow() - 64;
+    if (c->unk_04 < 0)
+        c->unk_04 = 0;
+    c->unk_06 = best->unk_1418 & 1;
+    return true;
+}
