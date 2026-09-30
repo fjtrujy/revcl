@@ -233,6 +233,8 @@ public:
     bool relinkRawIt();
     bool lockLine(cls08058718 *line);
     bool unlockLine(cls08058718 *line);
+    bool qRegRef(regUse *ru);
+    bool qInstruction(Instr *in);
     workTable *localClone();
     void clearLinear()
     {
