@@ -40,8 +40,8 @@ char *emitLabels(Program *p, char *buf);
 bool loadStalls(Program *p);
 bool doLinear(Program *p, int smart);
 bool doLoop(Program *p, bool smart);
-bool func_08079bfc(Program *p, bool smart);
-bool func_08079e78(Program *p);
+bool doRawAndSynth(Program *p, bool smart);
+bool relaxOpt(Program *p);
 bool func_08079fdc(Program *p, bool smart, bool sizeReduce);
 int func_0807aa28(Program *p);
 bool func_0807aee4(Program *p);
@@ -393,7 +393,7 @@ int main(int argc, char **argv)
         func_0804ad38("failed to initialise immediate fixups\n");
         func_0804adf0(-1);
     }
-    if (!func_08079bfc(&flow, smart)) {
+    if (!doRawAndSynth(&flow, smart)) {
         func_0804ad38("failed to process raw tables\n");
         func_0804adf0(-1);
     }
@@ -417,7 +417,7 @@ int main(int argc, char **argv)
         func_0804ad38("basic operation pass failed\n");
         func_0804adf0(-1);
     }
-    if (!func_08079e78(&flow)) {
+    if (!relaxOpt(&flow)) {
         func_0804ad38("failed to relax opt\n");
         func_0804adf0(-1);
     }

@@ -32,6 +32,9 @@ bool assignLocalRegisters(Program *p, workTable *wt);
 bool makeLpWork(instStream *s, int maxSpread);
 bool disposeLpWork(instStream *s);
 bool keepLpWork(instStream *s);
+bool optReset(Program *p);
+workTable *makeForceTable(Program *p, instStream *s);
+void func_0806ed78(Program *p, int a);
 const char *stallReasonStr(short why);
 
 bool workTable::qRegRef(regUse *ru)
@@ -766,6 +769,106 @@ bool doLoop(Program *p, bool smart)
             return false;
         }
         func_0804acb0("Opt::Loop %16s  %d/%d\n", s->func_0806d674(), best->func_080741b4(), s->func_0805f29c());
+    }
+    return true;
+}
+
+bool doRawAndSynth(Program *p, bool smart)
+{
+    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+        if (s->func_0806d908() == 3) {
+            if (!prepExtInfo(p, s, 0)) {
+                func_0804ad38("failed to prep external info for stream\n");
+                return false;
+            }
+            if (!s->getTable()) {
+                func_0804ad38("work table not set\n");
+                func_0804adf0(-1);
+            }
+            if (!optReset(p)) {
+                func_0804ad38("failed to optReset cpu\n");
+                func_0804adf0(-1);
+            }
+            workTable *wt = makeForceTable(p, s);
+            if (!wt) {
+                s->dump(0);
+                func_0804ad38("failed to prepUta istream\n");
+                return false;
+            }
+            if (!wt->doPostOpt(s->func_0806d968())) {
+                func_0804ad38("failed to post opt after makeForce\n");
+                return false;
+            }
+            if (wt->getPhysicalLen() < 0) {
+                func_0804ad38("optTable was bad size\n");
+                return false;
+            }
+            switch ((unsigned char)wt->unk_08) {
+            case 2:
+                if (!assignLocalRegisters(p, wt)) {
+                    func_0804ad38("failed to assign reg for vsm table!\n");
+                    func_0806ed78(p, 0);
+                    func_0804ad38("here is %s\n", s->func_0806d674());
+                    return false;
+                }
+                /* fall through */
+            case 3:
+                if (!s->setOptTable(wt)) {
+                    func_0804ad38("set opt table - failed \n");
+                    return false;
+                }
+                break;
+            default:
+                func_0804ad38("bad alloc mode in dorawandsynth\n");
+                return false;
+            }
+        }
+        if (s->func_0806d908() == 4) {
+            workTable *wt = s->getTable();
+            if (s->getAllocMode() != 2) {
+                func_0804ad38("flowMon::doLinear() - table hasn't had external allocation .. %s mode %d!\n",
+                              s->func_0806d674(), s->getAllocMode());
+                return false;
+            }
+            wt->unk_08 = 3;
+        }
+    }
+    return true;
+}
+
+bool relaxOpt(Program *p)
+{
+    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+        switch (s->func_0806d908()) {
+        case 3: {
+            workTable *opt = s->unk_214;
+            if (!opt) {
+                func_0804ad38("relaxopt - no opt for %s\n", s->func_0806d674());
+                return false;
+            }
+            workTable *wt = s->getTable();
+            if (opt != wt) {
+                func_0804ad38("relaxOpt - work and opt not same\n");
+                return false;
+            }
+            wt->dump();
+            for (Instr *i = s->getTable()->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
+                i->unk_00 = 0;
+                i->unk_08 = 0;
+                i->unk_04 = 0;
+            }
+            s->unk_214 = 0;
+            break;
+        }
+        case 4:
+            break;
+        case 1:
+            func_0804ad38("uta found at relax time %s\n", s->func_0806d674());
+            return false;
+        default:
+            func_0804ad38("unknown code mode found at relax time %s\n", s->func_0806d674());
+            return false;
+        }
     }
     return true;
 }
