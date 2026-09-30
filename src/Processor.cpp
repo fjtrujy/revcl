@@ -4,11 +4,13 @@
 #include "hwRegPool.h"
 #include "memRegPool.h"
 #include "os.h"
+#include "Program.h"
 
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 
 bool func_08070180(iInfo *tab, int count);
+bool func_0804bf28(char a, char b);
 
 Processor::Processor()
 {
@@ -198,4 +200,116 @@ void Processor::func_0806bdd0()
         func_0804adf0(-1);
     }
     errorOccurred = saved;
+}
+
+void func_0806be68(Program *p)
+{
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i])
+            g_080de6e0[i]->Dump();
+}
+
+bool parseReset(Program *p)
+{
+    p->unk_63 = false;
+    p->unk_04.func_0804b1b0();
+    p->unk_20.func_0804b1b0();
+    p->unk_4c.func_0804b1b0();
+    p->unk_3d = 0;
+    p->unk_3e = 0;
+    p->unk_62 = 0;
+    p->unk_61 = 0;
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i] && !g_080de6e0[i]->func_080595d4()) {
+            func_0804ad38("Processor::parseReset() - failed to reset %s\n",
+                          g_080de6e0[i]->unk_2c);
+            return false;
+        }
+    return true;
+}
+
+bool statReset(Program *p)
+{
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i] && !g_080de6e0[i]->func_080594c0()) {
+            func_0804ad38("Processor::statReset() - failed to stat %s\n",
+                          g_080de6e0[i]->unk_2c);
+            return false;
+        }
+    return true;
+}
+
+iInfo *func_0806bf74(int id)
+{
+    return &g_080de6c0[id];
+}
+
+iInfo *func_0806bf8c(const char *tok, bool all)
+{
+    if (!tok) {
+        func_0804ad38("Proc::FindInstruction() - null token passed\n");
+        return 0;
+    }
+    if (!g_080de6c0) {
+        func_0804ad38("Proc::FindInstruction() - no instruction set loaded!\n");
+        return 0;
+    }
+    iInfo *p = g_080de6c0;
+    if (!all)
+        p += 12;
+    for (; p->unk_04; p++) {
+        const char *s = tok;
+        const char *m = p->unk_04;
+        while (*s && *m && func_0804bf28(*s, *m)) {
+            s++;
+            m++;
+        }
+        if (*m)
+            continue;
+        if (!*s)
+            return p;
+        if (*s == '.' && p->unk_0c) {
+            do {
+                s++;
+                if (!*s)
+                    return p;
+            } while (*s != '.');
+        }
+    }
+    return 0;
+}
+
+bool optReset(Program *p)
+{
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i] && !g_080de6e0[i]->func_08059578()) {
+            func_0804ad38("Processor::optReset() - failed to reset %s\n",
+                          g_080de6e0[i]->unk_2c);
+            return false;
+        }
+    return true;
+}
+
+bool Cycle(Program *p, bool flag)
+{
+    p->unk_80++;
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i] && !g_080de6e0[i]->func_08059828(flag)) {
+            func_0804ad38("Processor::Cycle() - failed to cycle %s\n",
+                          g_080de6e0[i]->unk_2c);
+            return false;
+        }
+    return true;
+}
+
+bool func_0806c0f8(Program *p)
+{
+    p->unk_80 = 0;
+    for (int i = 0; i != 12; i++)
+        if (g_080de6e0[i] && !g_080de6e0[i]->func_08059464()) {
+            func_0804ad38("Processor::emuReset() - failed to reset %s\n",
+                          g_080de6e0[i]->unk_2c);
+            return false;
+        }
+    return true;
 }
