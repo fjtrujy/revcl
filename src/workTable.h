@@ -187,6 +187,8 @@ public:
     ~workTable();
     Instr *getBranch();
     bool removeBranch();
+    bool logUnlinkFromLinear(Instr *in);
+    int getCondLid();
     void dumpSynthetics();
     bool takeOut(Instr *i);
     bool putIn(Instr *i);

@@ -258,3 +258,124 @@ Instr *workTable::func_08073060()
         return b;
     return 0;
 }
+
+Instr *workTable::getBranch()
+{
+    Instr *b = 0;
+    switch (unk_09) {
+    case 3:
+        if (!unk_2c) {
+            func_0804ac7c("called getBranch - but no table\n");
+            return 0;
+        }
+        if (unk_34 > unk_30) {
+            int r = unk_34 - 2;
+            if (r < unk_30)
+                return 0;
+            b = rowAt(r)->getEntry(1);
+        }
+        break;
+    case 1:
+        b = unk_88.unk_04;
+        break;
+    case 4:
+        break;
+    default: {
+        const char *owner = unk_10 ? unk_10->func_0806d674() : "UNOWNED_TABLE";
+        func_0804ad38("bad code mode for getBranch %s for %s\n", codeModeStr(unk_09), owner);
+        func_0804aeb0();
+    }
+    }
+    if (!unk_10) {
+        func_0804ac7c("no owner set for getBranch\n");
+        func_0804aeb0();
+    } else if (b) {
+            if (b->unk_1388) {
+                if (b->unk_1392)
+                    return 0;
+                else if (!unk_10->unk_2ce) {
+                    func_0804ad38("iTable::getBranch() for %s table has a branch at the end, but owning stream doesn't think it branches\n",
+                                  unk_10->func_0806d674());
+                    dump();
+                    func_0804aeb0();
+                }
+            } else if (unk_10->unk_2ce) {
+                func_0804ad38("iTable::getBranch() - owner thinks it has a branch, but the instruction doesn't seem to be one\n");
+                func_0804aeb0();
+            }
+        } else if (unk_10->unk_2ce) {
+            func_0804ad38("iTable::getBranch - owning stream thinks it has a branch - but there's no instruction here!\n");
+            func_0804aeb0();
+        }
+    return (b && b->unk_1388) ? b : 0;
+}
+
+class Block;
+bool UnlinkFromLinear(Block *blk, Instr *n);
+bool func_08073bb0(Block *blk, Instr *in);
+
+inline bool workTable::logUnlinkFromLinear(Instr *in)
+{
+    if (unk_94.unk_08) {
+        func_0804ad38("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", unk_94.unk_08);
+        return 0;
+    }
+    if (!UnlinkFromLinear((Block *)this, in)) {
+        func_0804ad38("logUnlinkFromLinear: failed to unlink instruction from linear\n");
+        func_0804aeb0();
+    }
+    in->unk_30 = 0;
+    if (!func_08073bb0((Block *)this, in)) {
+        func_0804ad38("failed to unlog instruction\n");
+        return 0;
+    }
+    return 1;
+}
+
+bool workTable::removeBranch()
+{
+    Instr *b = getBranch();
+    if (!b) {
+        func_0804ad38("removeBranch - couldn't find a branch instruction\n");
+        return 0;
+    }
+    if (!logUnlinkFromLinear(b)) {
+        func_0804ad38("failed to take out the branch instruction\n");
+        return 0;
+    }
+    delete b;
+    return 1;
+}
+
+int workTable::getCondLid()
+{
+    int lid = -1;
+    Instr *b = getBranch();
+    Instr *c = (b && ((b->unk_1388 >> 2) & 1)) ? b : 0;
+    if (c)
+        lid = c->unk_13e8.unk_03;
+    if (unk_38) {
+        if (lid < 0)
+            func_0804ad38("getCondLid : no terminating conditional!\n");
+    } else if (lid > 0) {
+        func_0804ad38("getCondLid : terminating conditional had lid>0\n");
+    }
+    return lid;
+}
+
+bool workTable::takeOut(Instr *i)
+{
+    cls08058718 *p = &i->unk_13e8;
+    wtRow *row = &unk_2c[p->unk_04];
+    row->unk_00[p->unk_02].unk_00 = (Instr *)i->unk_1398;
+    i->clearSlot();
+    return 1;
+}
+
+bool workTable::putIn(Instr *i)
+{
+    cls08058718 *p = &i->unk_13e8;
+    wtRow *row = &unk_2c[p->unk_04];
+    row->unk_00[p->unk_02].unk_00 = i;
+    return 1;
+}

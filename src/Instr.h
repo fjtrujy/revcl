@@ -469,6 +469,7 @@ public:
     int unk_13e0;
     int unk_13e4;
     cls08058718 unk_13e8;
+    void clearSlot() { unk_13e8.func_080586e0(); }
     cls0805e2e4 unk_13f0;
     short unk_1408, unk_140a, unk_140c, unk_140e;
     short unk_1410;     // fdep "has extra pre deps" flag
