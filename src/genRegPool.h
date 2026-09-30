@@ -7,6 +7,8 @@ class genRegPool : public RegPool {
 public:
     genRegPool();
     virtual ~genRegPool();
+
+    char unk_30[0x20];
 };
 
 #endif

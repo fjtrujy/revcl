@@ -43,13 +43,14 @@ public:
     char unk_1b[5];
     int (*unk_20)(void *, Instr *);     // per-opcode handler
     char unk_24[0x44 - 0x24];
-    iOpDesc unk_44[1];      // operand descriptors
+    iOpDesc unk_44[12];     // operand descriptors
 
     char func_0806ffb4();
     char func_0806ffd8();
     char func_08070020();
     bool func_08070044();
     char func_0807005c();
+    int func_08070080();
     char func_0807026c();
 };
 

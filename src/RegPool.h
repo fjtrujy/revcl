@@ -130,7 +130,7 @@ public:
     short unk_0c;
     short unk_0e;
     RegPoolEntry* unk_10;   // zero register
-    int unk_14;
+    RegPoolEntry* unk_14;   // ext register
     int unk_18;
     RegPoolEntry* unk_1c;
     RegPoolEntry* unk_20;
