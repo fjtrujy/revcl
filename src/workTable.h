@@ -134,6 +134,7 @@ public:
     void func_08072c70();
     const char *ownerName();
     bool func_08073854();
+    bool dispose();
     bool func_080737e4();
     char *emit(char *buf, int a, int *p1, int *p2);
     int func_08073754();

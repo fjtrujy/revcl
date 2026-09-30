@@ -7,6 +7,7 @@
 #include "workTable.h"
 #include "Instr.h"
 #include "statCounts.h"
+#include "linkList.h"
 
 class workTable;
 class Instr;
@@ -14,28 +15,12 @@ struct regUse;
 class instStream;
 struct Program;
 
-struct linkNode {
-    char unk_00[8];
-    linkNode *unk_08;           // next
-    instStream *unk_0c;         // other stream
-    char unk_10;                // marked
-    char unk_11;
-    char unk_12[2];
-    int unk_14;                 // link type
-};
-
-struct linkList {
-    linkNode *unk_00;           // head
+// 16-byte record in the leading table of a stream (name guessed).
+struct istRec {
+    int unk_00;
     int unk_04;
-    int unk_08;                 // count
-    linkList();
-    ~linkList();
-    linkNode *func_0806dff4(instStream *s, int type);
-    instStream *getStream(int type);
-    void dump();
-    bool removeAll();
-    bool func_0806dfa0(linkNode *n);
-    int func_0806e4f0();
+    int unk_08;
+    int unk_0c;
 };
 
 class instStream {
@@ -115,9 +100,11 @@ public:
     bool func_0806da58();
     bool func_0806da80();         // out-of-line checkStartEnd
     bool disposeInputTable();
+    bool processCmdSynth(Instr *i);
+    void func_0806dc9c(instStream *src);  // copy record table from src
 
-    int unk_00;
-    char unk_04[0x104 - 0x04];
+    int unk_00;                  // record count
+    istRec unk_04[16];
     Program *unk_104;
     instStream *unk_108;         // next in Program::unk_a0
     instStream *unk_10c;         // previous stream (to-register branch)

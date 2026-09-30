@@ -1,3 +1,4 @@
+#pragma implementation "linkList.h"
 #include "instStream.h"
 
 bool func_0806f398(Program *p, char *name);
@@ -459,4 +460,89 @@ bool instStream::func_0806da80()
         ok = (unsigned)(et - 1) < 4;
     }
     return ok;
+}
+
+bool instStream::processCmdSynth(Instr *i)
+{
+    if (!i) {
+        func_0804ad38("processCmdSynth - passed a null ptr\n");
+        return false;
+    }
+    if (i->unk_1420 > 0) {
+        func_0804ad84("parseLid set for processCmdSynth\n");
+        i->leDump();
+        return false;
+    }
+    switch ((unsigned char)i->unk_13cd) {
+    case 5:
+        if (unk_2cd != 1) {
+            func_0804ad38("CONT directive encountered - but end mode isn't null\n");
+            return false;
+        }
+        unk_2cd = 2;
+        break;
+    case 8:
+        if (!i->func_08054d64(0, &unk_270) || !i->func_08054d64(1, &unk_274)) {
+            func_0804ad84("failed to decode the --LoopCS directive, one of the 2 expected operands failed to parse\n");
+            i->leDump();
+            return false;
+        }
+        if (unk_270 <= 0) {
+            func_0804ad84("for --LoopCS, the minimum known count (arg 1) must be must be >0\n");
+            i->leDump();
+            return false;
+        }
+        if (unk_274 < 0) {
+            func_0804ad84("for --LoopCS, the minimum safe count (arg 2) must be must be >=0\n");
+            i->leDump();
+            return false;
+        }
+        break;
+    case 9:
+        if (!i->func_08054d64(0, &unk_26c) || unk_26c < 0) {
+            func_0804ad84("failed to get immediate field 0 (extra loop count) while processing --LoopExtra. value must be >=0\n");
+            i->leDump();
+            return false;
+        }
+        break;
+    case 10:
+        if (unk_2d6) {
+            const char *s = unk_110.func_0804b550();
+            const char *n = "UNNAMED_ISTREAM";
+            if (s)
+                n = s;
+            func_0804ad38("multiple barriers in one flow..%s?\n", n);
+            return false;
+        }
+        unk_2d6 = 1;
+        break;
+    default:
+        func_0804ad84("unexpected synthetic instruction encountered\n");
+        break;
+    case 12:
+        if (!i->func_08054d64(0, &unk_268) || unk_268 <= 2) {
+            func_0804ad84("failed to get immediate field 0 (extra loop count) while processing --LoopAbs. value must be >=2\n");
+            i->leDump();
+            return false;
+        }
+        break;
+    }
+    return true;
+}
+
+bool instStream::disposeInputTable()
+{
+    workTable *t = &unk_148;
+    if (t == unk_218) {
+        func_0804ad38("can't dispose of input table while it's the work table\n");
+        func_0804aeb0();
+    }
+    return t->dispose();
+}
+
+void instStream::func_0806dc9c(instStream *src)
+{
+    unk_00 = src->unk_00;
+    for (int i = 0; i != unk_00; i++)
+        unk_04[i] = src->unk_04[i];
 }
