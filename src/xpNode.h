@@ -41,6 +41,7 @@ public:
     int unk_0c;
 
     xpTree();
+    inline ~xpTree();
     bool dispose(xpNode *n);
     bool reset();
     void calcDepths();
