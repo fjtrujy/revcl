@@ -71,3 +71,101 @@ bool undoLocks(Instr *in)
     }
     return true;
 }
+
+int checkLocks(Instr *in, short *pos, int *minPos)
+{
+    cls0805bcc4 *saved[64];
+    int ret = 0;
+    int i;
+    int n = 0;
+
+    for (i = 0; i != in->unk_138b; i++) {
+        Operand *op = &in->unk_38[i];
+        RegPoolEntry *r = op->isInRegOp() ? op->unk_18 : 0;
+        if (!r)
+            continue;
+        for (int p = 0; p != r->unk_28; p++) {
+            if ((op->unk_07 >> p) & 1) {
+                OpSlot *s = &op->unk_2c[p];
+                cls0805c244 *ll = s->unk_04;
+                if (*minPos < ll->unk_00) {
+                    ret |= 0x80000;
+                    *minPos = ll->unk_00;
+                    goto done;
+                }
+                int rc = ll->checkInputLock(s, pos, minPos);
+                ret |= rc;
+                if (rc & 0x430) {
+                    cls0805bcc4 *par = s->getParent();
+                    Operand *o = par->ownerOperand();
+                    if (o) {
+                        Instr *oi = par->ownerInstr();
+                        if (!o->unk_2c[p].unk_52[0]) {
+                            o->unk_2c[p].unk_52[0] = 1;
+                            o->unk_2c[p].unk_50++;
+                        }
+                        func_080737b8(oi);
+                        oi->func_08054008(false);
+                    } else
+                        func_0804ac7c("failed to get setting operand .. so it's a regref??\n");
+                    *minPos = 30000;
+                    goto done;
+                }
+                if (s->unk_1c) {
+                    cls0805bcc4 *par = s->getParent();
+                    if (!par)
+                        func_0804adf0(0);
+                    par->decRef();
+                    saved[n++] = par;
+                }
+            }
+        }
+    }
+    for (i = 0; i != in->unk_138b; i++) {
+        Operand *op = &in->unk_38[i];
+        RegPoolEntry *r = op->isOutRegOp() ? op->unk_18 : 0;
+        if (!r)
+            continue;
+        for (int p = 0; p != r->unk_28; p++) {
+            if ((op->unk_07 >> p) & 1) {
+                OpSlot *s = &op->unk_2c[p];
+                cls0805c244 *ll = op->unk_2c[p].unk_04;
+                if (op->unk_2c[p].unk_50) {
+                    int v = ll->func_0805c938(op->unk_2c[p].unk_50);
+                    if (v > *minPos) {
+                        ret |= 0x80000;
+                        *minPos = v;
+                        goto done;
+                    }
+                }
+                int rc = ll->checkOutputLock(s, pos, minPos);
+                ret |= rc;
+                if (rc & 0x22000) {
+                    if (!g_080b336c) {
+                        func_0804ad38("late extern, loop overrun, but no loop\n");
+                        func_0804aeb0();
+                    }
+                    int d = *pos + s->unk_18 - g_080b336c;
+                    if (d > 0) {
+                        ll->unk_00 = d;
+                        Instr *e = ll->earliestExt();
+                        if (!e) {
+                            func_0804ac7c("failed to get earliest in ret=%x\n", rc);
+                            ll->checkCounts();
+                            func_0804ad38("this instruction is\n");
+                            in->leDump(i, p);
+                            func_0804aeb0();
+                        } else
+                            func_080737b8(e);
+                        *minPos = 30000;
+                        goto done;
+                    }
+                }
+            }
+        }
+    }
+done:
+    for (int k = 0; k != n; k++)
+        saved[k]->incRef();
+    return ret;
+}
