@@ -122,3 +122,125 @@ workTable *makeForceTable(Program *p, instStream *s)
     nt->func_08073774(wt->func_08073754());
     return nt;
 }
+
+bool makeLpWork(instStream *s, int maxSpread)
+{
+    workTable *wt = s->unk_218;
+    if (!wt) {
+        func_0804ad38("no work table set for make_lpWork \n");
+        return false;
+    }
+    if (s->unk_220) {
+        func_0804ad38("there's already a saved work table\n");
+        return false;
+    }
+    s->unk_220 = wt;
+    s->unk_218 = 0;
+    workTable *nt = wt->localClone();
+    s->unk_218 = nt;
+    if (!nt) {
+        func_0804ad38("failed to locally clone table\n");
+        return false;
+    }
+    Instr *in;
+    RegPoolEntry *reg;
+    for (in = nt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        int latest = 0;
+        for (int i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            reg = op->getReg();
+            if (reg) {
+                for (int j = 0; j != reg->unk_28; j++) {
+                    ol_s *ol = op->unk_2c[j].unk_54.unk_00;
+                    if (ol) {
+                        Instr *src = ol->unk_04;
+                        Operand *o = func_0805802c(ol);
+                        if (!src || !o) {
+                            func_0804ad38("in_s not set\n");
+                            return false;
+                        }
+                        int v = src->unk_0c + o->unk_0a + op->unk_29;
+                        if (latest < v)
+                            latest = v;
+                    }
+                }
+            }
+        }
+        in->unk_0c = latest;
+    }
+    for (in = nt->unk_88.unk_04; in; in = in->unk_1c.unk_04) {
+        int earliest = 30000;
+        for (int i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            RegPoolEntry *reg = op->getReg2();
+            if (reg) {
+                for (int j = 0; j != reg->unk_28; j++) {
+                    for (ol_s *ol = op->unk_2c[j].unk_54.unk_00; ol; ol = ol->unk_00) {
+                        Instr *dst = ol->unk_04;
+                        Operand *o = func_0805802c(ol);
+                        if (!dst || !o) {
+                            func_0804ad38("in_s not set\n");
+                            return false;
+                        }
+                        int v = dst->unk_0c - op->unk_0a - o->unk_29;
+                        if (earliest > v)
+                            earliest = v;
+                    }
+                }
+            }
+        }
+        if (earliest != 30000) {
+            if (earliest < in->unk_0c) {
+                func_0804ad38("can't have htnew before minip\n");
+                return false;
+            }
+            in->unk_0c = earliest;
+        }
+    }
+    char buf[256];
+    for (in = nt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        int lo = 30000;
+        int hi = 0;
+        char *p = buf;
+        for (int i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            reg = op->getReg();
+            if (reg) {
+                p += func_0804adbc(p, " %s: ", reg->func_0805a8e0());
+                int rlo = 30000, rhi = 0;
+                bool any = false;
+                for (int j = 0; j != reg->unk_28; j++) {
+                    if ((op->unk_07 >> j) & 1) {
+                        ol_s *ol = op->unk_2c[j].unk_54.unk_00;
+                        if (ol) {
+                            Instr *src = ol->unk_04;
+                            int d = in->unk_0c - src->unk_0c;
+                            any = true;
+                            if (d < rlo)
+                                rlo = d;
+                            if (d > rhi)
+                                rhi = d;
+                            p += func_0804adbc(p, "%3d ", d, src);
+                        } else
+                            p += func_0804adbc(p, "xxx ");
+                    } else
+                        p += func_0804adbc(p, "... ");
+                }
+                if (any) {
+                    p += func_0804adbc(p, "[%d %d] (%d) ", rlo, rhi, rhi - rlo);
+                    if (rhi - rlo > maxSpread)
+                        p += func_0804adbc(p, "!!!");
+                    if (rlo < lo)
+                        lo = rlo;
+                    if (rhi > hi)
+                        hi = rhi;
+                }
+            }
+        }
+        p += func_0804adbc(p, "    -> %d %d (%d)", lo, hi, hi - lo);
+        if (lo > maxSpread)
+            p += func_0804adbc(p, " ****");
+        p[10] = 0;
+    }
+    return true;
+}

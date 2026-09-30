@@ -121,7 +121,7 @@ public:
     workTable *unk_214;  // opt table
     workTable *unk_218;  // work table
     workTable *unk_21c;  // tidied work table
-    int unk_220;
+    workTable *unk_220;  // saved work table
     short unk_224;
     unsigned char unk_226;      // visit mode (0 unvisited, 1 active, 2 visited, 3 end match, 4 dead end)
     char unk_227;
