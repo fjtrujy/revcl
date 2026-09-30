@@ -151,3 +151,38 @@ bool func_0807aee4(Program *p)
     }
     return true;
 }
+
+void func_0807bb84(workTable *wt)
+{
+    wtRow *row = wt->unk_2c + wt->unk_30;
+    for (int l = wt->unk_30; l != wt->unk_34; l++, row++) {
+        int rel = l - wt->unk_30;
+        for (int p = 0; p != 2; p++) {
+            Instr *in = GetI((Instr **)row, p);
+            if (in && in->unk_1394 != rel)
+                func_0804ae34("l=%d exec time mismatch in instruction %d!=%d\n",
+                              l, in->unk_1394, rel);
+        }
+        row->unk_0c = l - wt->unk_30;
+    }
+}
+
+void splitCtime(workTable *wt, int l, int m)
+{
+    if (l < wt->unk_30 || l >= wt->unk_34)
+        func_0804ae34("nop line is bad\n");
+    if (m <= l)
+        func_0804ae34("m<l for splitCtime()\n");
+    if (m > wt->unk_34)
+        m = wt->unk_34;
+    wtRow *row = &wt->unk_2c[l];
+    for (; l < m; l++, row++)
+        row->unk_0c--;
+}
+
+int getCtime(workTable *wt, int l)
+{
+    if (l < wt->unk_30 || l >= wt->unk_34)
+        func_0804ae34("nop line is bad\n");
+    return wt->unk_2c[l].unk_0c;
+}
