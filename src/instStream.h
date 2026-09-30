@@ -60,6 +60,22 @@ public:
         return unk_218;
     }
 
+    workTable *checkedTable(const char *msg)
+    {
+        if (unk_218)
+            return unk_218;
+        func_0804ad38(msg);
+        func_0804adf0(-1);
+        return unk_218;
+    }
+    void requireTable(const char *msg)
+    {
+        if (!unk_218) {
+            func_0804ad38(msg);
+            func_0804adf0(-1);
+        }
+    }
+
     bool func_0805e4bc();         // gather stats
     bool func_0806563c(bool a, bool b);  // build memory dependencies
     bool flowReset();
@@ -79,8 +95,12 @@ public:
     unsigned char func_0806d908(); // code mode
     unsigned char func_0806d968(); // work table mode
     const char *func_0806d934();  // code mode name
+    void dumpSynthetics();
+    char *emitLabels(char *buf);
     Instr *getBranch();
     bool removeBranch();
+    char *getBranchTargetImmediate();
+    RegPoolEntry *getBranchTargetRegister();
     ~instStream();
     bool reset();
     void dump(bool);

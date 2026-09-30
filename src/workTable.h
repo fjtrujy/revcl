@@ -124,6 +124,8 @@ public:
     workTable();
     ~workTable();
     Instr *getBranch();
+    bool removeBranch();
+    void dumpSynthetics();
     bool takeOut(Instr *i);
     bool putIn(Instr *i);
     int func_08072eec();

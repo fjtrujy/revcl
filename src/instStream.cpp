@@ -308,3 +308,85 @@ bool instStream::flowReset()
     unk_260 = 0;
     return true;
 }
+
+const char *instStream::func_0806d674()
+{
+    const char *s = unk_110.func_0804b550();
+    const char *n = "UNNAMED_ISTREAM";
+    if (s)
+        n = s;
+    return n;
+}
+
+void instStream::dumpSynthetics()
+{
+    checkedTable("dump synthetics .. work table not set\n")->dumpSynthetics();
+}
+
+char *instStream::emitLabels(char *buf)
+{
+    if (unk_2c8 >= 0) {
+        for (mNode *n = unk_110.unk_0c; n; n = n->unk_04) {
+            if (n->unk_14) {
+                const char *p = "__v_";
+                const char *s = n->unk_14;
+                while (*p && *s && *p == *s) {
+                    p++;
+                    s++;
+                }
+                if (*p)
+                    buf += func_0804adbc(buf, "%-40s = %d\n", n->unk_14, unk_2c8);
+            }
+        }
+    }
+    return buf;
+}
+
+Instr *instStream::getBranch()
+{
+    return checkedTable("getBranch  - no work table!\n")->getBranch();
+}
+
+bool instStream::removeBranch()
+{
+    requireTable("getBranch  - no work table!\n");
+    if (!unk_218->removeBranch()) {
+        func_0804ad38("failed to delete branch from work table\n");
+        return false;
+    }
+    unk_2ce = 0;
+    return true;
+}
+
+char *instStream::getBranchTargetImmediate()
+{
+    char *r = 0;
+    requireTable("getBranch  - no work table!\n");
+    Instr *br = unk_218->getBranch();
+    if (br)
+        r = br->getBranchTargetImmediate();
+    else
+        func_0804ac7c("getBranchTargetImmediate:: failed to get branch\n");
+    return r;
+}
+
+RegPoolEntry *instStream::getBranchTargetRegister()
+{
+    RegPoolEntry *r = 0;
+    requireTable("getBranch  - no work table!\n");
+    Instr *br = unk_218->getBranch();
+    if (br)
+        r = br->getBranchTargetRegister();
+    else
+        func_0804ac7c("getBranchTargetImmediate:: failed to get branch\n");
+    return r;
+}
+
+unsigned char instStream::func_0806d908()
+{
+    workTable *wt = unk_218;
+    if (wt)
+        return wt->unk_09;
+    func_0804ad38("getCodeMode - work table not set\n");
+    return 0;
+}
