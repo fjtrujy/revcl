@@ -71,8 +71,9 @@ int func_0807aaf4(Program *p, instStream *s)
                 continue;
             Operand *op = in->unk_38;
             for (int i = 0; i != in->unk_138b; i++, op++) {
+                ol_s *live = op->unk_2c[0].unk_54.unk_00;
                 RegPoolEntry *reg = op->getReg2();
-                if (!reg || op->unk_0b || !op->unk_2c[0].unk_54.unk_00)
+                if (!reg || op->unk_0b || !live)
                     continue;
                 RegPoolEntry *capReg = 0;
                 int capMask = 0;
