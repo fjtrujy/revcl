@@ -500,7 +500,7 @@ public:
     short unk_1a;
     iLink unk_1c;   // linear list link
     iLink unk_24;   // ToDo/Done list link
-    int unk_2c;
+    Instr *unk_2c;  // next in Block move list
     cls_unk30 *unk_30;
     iInfo *unk_34;  // opcode descriptor
     Operand unk_38[12];

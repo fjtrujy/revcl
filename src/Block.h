@@ -10,7 +10,10 @@ public:
     short unk_06;
     char unk_08[0x30];
     int unk_38;     // range width limit
-    char unk_3c[0x88 - 0x3c];
+    char unk_3c[0x10];
+    Instr *unk_4c;  // move list head
+    int unk_50;     // move list count
+    char unk_54[0x88 - 0x54];
     Instr *unk_88;  // linear list tail
     Instr *unk_8c;  // linear list head
     int unk_90;     // linear list count
