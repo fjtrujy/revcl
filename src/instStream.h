@@ -104,6 +104,7 @@ public:
     bool disposeInputTable();
     bool processCmdSynth(Instr *i);
     void func_0806dc9c(instStream *src);  // copy record table from src
+    bool setOptTable(workTable *nt);
 
     int unk_00;                  // record count
     istRec unk_04[16];

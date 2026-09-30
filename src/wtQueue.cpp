@@ -422,3 +422,91 @@ bool workTable::doPostOpt(int rawMode)
     }
     return true;
 }
+
+bool instStream::setOptTable(workTable *nt)
+{
+    if (!nt) {
+        func_0804ad38("can't set opt table to null ptr - use clear\n");
+        func_0804aeb0();
+    }
+    if (nt->unk_09 != 3) {
+        func_0804ad38("setOptTable - table not vsm\n");
+        return false;
+    }
+    workTable *old = getTable();
+    if (!old) {
+        func_0804ad38("no old work table\n");
+        return false;
+    }
+    if (old == nt) {
+        func_0804ad38("old and new are same\n");
+        return false;
+    }
+    if (unk_214) {
+        func_0804ad38("stream already has opttable set\n");
+        return false;
+    }
+    for (Instr *in = nt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        if (in->func_08054168() != this) {
+            func_0804ad38("didn't own instruction\n");
+            return false;
+        }
+        if (in->unk_00) {
+            func_0804ad38("doPostLinearOpt - optClone set in image?\n");
+            return false;
+        }
+        Instr *c = in->unk_08;
+        if (c) {
+            if (c->unk_00) {
+                func_0804ad38("doPostLinear() - original had m_optClone set\n");
+                c->func_08054008(false);
+                return false;
+            }
+            if (c->func_08054168() != this) {
+                func_0804ad38("setOptTable -  cloned image wsn't owned by us\n");
+                return false;
+            }
+            workTable *owner = (workTable *)c->unk_30;
+            if (owner != getTable()) {
+                func_0804ad38("clone owner wasn't our work table\n");
+                return false;
+            }
+            if (in->unk_138b != c->unk_138b) {
+                func_0804ad38("operand count mismatch between original and opt image\n");
+                return false;
+            }
+            for (int i = 0; i != in->unk_138b; i++) {
+                char io = in->unk_38[i].unk_09;
+                char cio = c->unk_38[i].unk_09;
+                if (io != cio) {
+                    if (cio != 1 && io != 3) {
+                        func_0804ad38("io type mismatch for something that wasn't a whacked input\n");
+                        return false;
+                    }
+                    in->unk_38[i].unk_18 = c->unk_38[i].unk_18;
+                    in->unk_38[i].unk_09 = cio;
+                }
+            }
+            in->unk_04 = (int)c;
+            c->unk_00 = (int)in;
+        } else if (!in->unk_1428) {
+            func_0804ad38("doPostLinearOpt - inst wasn't cloned, but not a move either\n");
+            in->func_08054008(false);
+            return false;
+        }
+    }
+    nt->clearClones();
+    old->clearClones();
+    unk_218 = nt;
+    unk_214 = nt;
+    if (nt->unk_00 >= 0)
+        unk_144 |= 1 << nt->unk_00;
+    if (nt->func_080741b4())
+        unk_140 = 1;
+    return true;
+}
+
+int getNumOptimisers()
+{
+    return 11;
+}
