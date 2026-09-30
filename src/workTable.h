@@ -185,6 +185,7 @@ public:
     ~workTable();
     Instr *getBranch();
     bool removeBranch();
+    bool unlinkAndUnlog(Instr *in);
     bool logUnlinkFromLinear(Instr *in);
     int getCondLid();
     void dumpSynthetics();
@@ -225,6 +226,23 @@ public:
     bool setRange(int s, int e);
     bool setSkip(int row, char skip);
     bool logAddLinear_After(Instr *after, Instr *n);
+    bool logAddLinear_Head(Instr *n);
+    bool logAddLinear_Tail(Instr *n);
+    bool makeLinearList();
+    bool relinkRawIt();
+    bool lockLine(cls08058718 *line);
+    bool unlockLine(cls08058718 *line);
+    void clearLinear()
+    {
+        unk_88.reset();
+        unk_c0[2] = 0;
+        unk_bc = 0;
+        unk_b0 = 0;
+        unk_b4 = 0;
+        unk_c0[0] = 0;
+        unk_b8 = 0;
+        unk_c0[1] = 0;
+    }
 };
 
 const char *codeModeName(int mode);

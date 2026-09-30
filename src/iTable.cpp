@@ -314,7 +314,7 @@ Instr *workTable::getBranch()
 bool UnlinkFromLinear(Block *blk, Instr *n);
 bool func_08073bb0(Block *blk, Instr *in);
 
-inline bool workTable::logUnlinkFromLinear(Instr *in)
+inline bool workTable::unlinkAndUnlog(Instr *in)
 {
     if (unk_94.unk_08) {
         func_0804ad38("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", unk_94.unk_08);
@@ -339,7 +339,7 @@ bool workTable::removeBranch()
         func_0804ad38("removeBranch - couldn't find a branch instruction\n");
         return 0;
     }
-    if (!logUnlinkFromLinear(b)) {
+    if (!unlinkAndUnlog(b)) {
         func_0804ad38("failed to take out the branch instruction\n");
         return 0;
     }
@@ -946,5 +946,132 @@ bool workTable::logAddLinear_After(Instr *after, Instr *n)
         func_0804ad38("logAddLinear_Head: failed to log instruction\n");
         return 0;
     }
+    return 1;
+}
+
+bool AddLinear_Head(Block *blk, Instr *n);
+
+bool workTable::logAddLinear_Head(Instr *n)
+{
+    if (!n) {
+        func_0804ad38("can't add null pointer to linear\n");
+        return 0;
+    }
+    if (!n->setOwner((cls_unk30 *)this)) {
+        func_0804ad38("logAddLinear_Head: failed to set owner\n");
+        return 0;
+    }
+    if (!AddLinear_Head((Block *)this, n)) {
+        func_0804ad38("logAddLinear_Head: failed to add head of linear list\n");
+        return 0;
+    }
+    if (!logInstr((Block *)this, n)) {
+        func_0804ad38("logAddLinear_Head: failed to log instruction\n");
+        return 0;
+    }
+    return 1;
+}
+
+bool AddLinear_Tail(Block *blk, Instr *n);
+
+bool workTable::logAddLinear_Tail(Instr *n)
+{
+    if (!n) {
+        func_0804ad38("can't add null pointer to linear\n");
+        return 0;
+    }
+    if (!n->setOwner((cls_unk30 *)this)) {
+        func_0804ad38("logAddLinear_Head: failed to set owner\n");
+        return 0;
+    }
+    if (!AddLinear_Tail((Block *)this, n)) {
+        func_0804ad38("logAddLinear_Head: failed to add head of linear list\n");
+        return 0;
+    }
+    if (!logInstr((Block *)this, n)) {
+        func_0804ad38("logAddLinear_Head: failed to log instruction\n");
+        return 0;
+    }
+    return 1;
+}
+
+bool workTable::makeLinearList()
+{
+    clearLinear();
+    if (unk_30 < 0 || !unk_2c) {
+        func_0804ad38("iTable::makeLinearList - table not ready\n");
+        return 0;
+    }
+    for (int i = unk_30; i < unk_34; i++) {
+        Instr **ie = ((cls_unk30 *)this)->getIE_ck(i);
+        if (!ie) {
+            func_0804ad38("iTable::makeLinearList - failed to get ientry\n");
+            return 0;
+        }
+        for (int p = 0; p != 2; p++) {
+            Instr *in = ie[p];
+            if (in && !logAddLinear_Tail(in)) {
+                func_0804ad38("iTable - failed to add an instruction\n");
+                in->leDump();
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+bool workTable::logUnlinkFromLinear(Instr *in)
+{
+    if (unk_94.unk_08) {
+        func_0804ad38("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", unk_94.unk_08);
+        return 0;
+    }
+    if (!UnlinkFromLinear((Block *)this, in)) {
+        func_0804ad38("logUnlinkFromLinear: failed to unlink instruction from linear\n");
+        func_0804aeb0();
+    }
+    in->unk_30 = 0;
+    if (!func_08073bb0((Block *)this, in)) {
+        func_0804ad38("failed to unlog instruction\n");
+        return 0;
+    }
+    return 1;
+}
+
+bool workTable::relinkRawIt()
+{
+    if (!unk_2c) {
+        func_0804ad38("relinkRawIt() -no table set\n");
+        return 0;
+    }
+    clearLinear();
+    for (int i = unk_30; i < unk_34; i++) {
+        wtRow *r = rowAt(i);
+        if (!r) {
+            func_0804ad38("iTable::makeLinearList - failed to get ientry\n");
+            return 0;
+        }
+        for (int p = 0; p != 2; p++) {
+            Instr *in = r->unk_00[p].unk_00;
+            if (in) {
+                in->unk_1c.unk_04 = 0;
+                in->unk_1c.unk_00 = 0;
+                if (!logAddLinear_Tail(in)) {
+                    func_0804ad38("failed to add linear tail\n");
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+bool workTable::lockLine(cls08058718 *line)
+{
+    return 1;
+}
+
+bool workTable::unlockLine(cls08058718 *line)
+{
     return 1;
 }
