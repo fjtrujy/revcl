@@ -10,8 +10,8 @@ struct Tool {
 extern Tool tools_080b301c[3];
 
 bool OS_Init();
-int setWatchdog(char *flag, unsigned int seconds);
-int clearWatchdog();
+bool setWatchdog(char *flag, unsigned int seconds);
+bool clearWatchdog();
 
 int func_0804ab6c(const char *name, char *pathOut);
 int OS_End();

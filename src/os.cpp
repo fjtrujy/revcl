@@ -33,11 +33,11 @@ bool OS_Init()
     return true;
 }
 
-int setWatchdog(char *flag, unsigned int seconds)
+bool setWatchdog(char *flag, unsigned int seconds)
 {
     if (!flag) {
         func_0804ad38("setWatchdog - passed null ptr\n");
-        return 0;
+        return false;
     }
     alarm(0);
     signal(SIGALRM, SIG_DFL);
@@ -45,15 +45,15 @@ int setWatchdog(char *flag, unsigned int seconds)
     watchdogFlag_080bbd90 = flag;
     signal(SIGALRM, func_0804ac30);
     alarm(seconds);
-    return 1;
+    return true;
 }
 
-int clearWatchdog()
+bool clearWatchdog()
 {
     alarm(0);
     signal(SIGALRM, SIG_DFL);
     watchdogFlag_080bbd90 = 0;
-    return 1;
+    return true;
 }
 
 int func_0804ab6c(const char *name, char *pathOut)

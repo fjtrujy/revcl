@@ -157,7 +157,10 @@ public:
     short unk_76;
     short unk_78;
     short unk_7a;
-    char unk_7c[0x84 - 0x7c];
+    short unk_7c;
+    char unk_7e[2];
+    short unk_80;
+    short unk_82;
     int unk_84;
     wtInstrList unk_88;     // linear list
     wtInstrList unk_94;
