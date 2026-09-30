@@ -1,0 +1,106 @@
+#include "os.h"
+#include "workTable.h"
+#include "Instr.h"
+
+class Program;
+
+int setRangeFrom(workTable *t);
+bool moveLocks(Instr *i, cls08058718 *pos);
+int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
+void func_0806ed78(Program *p, int a);
+int pullUp(workTable *wt);
+int dragDown(workTable *wt);
+
+static inline bool isPipeMode(workTable *wt)
+{
+    return wt->unk_09 == 3 && (wt->unk_0a == 1 || wt->unk_0a == 3);
+}
+
+bool func_0807e740(Program *p, workTable *wt, unsigned char up, unsigned char down)
+{
+    if (!isPipeMode(wt))
+        return true;
+    if (wt->func_080741b4())
+        return true;
+
+    int passes = up != 0;
+    if (down)
+        passes++;
+
+    wt->func_0807411c();
+    wt->func_080741c0();
+    setRangeFrom(wt);
+
+    int count = passes;
+    while (count) {
+        count--;
+        if (up) {
+            int r = pullUp(wt);
+            if (r < 0) {
+                func_0804ad38("failed to pull up\n");
+                func_0806ed78(p, 0);
+                return false;
+            }
+            if (r)
+                count = passes;
+        }
+        if (down) {
+            int r = dragDown(wt);
+            if (r < 0) {
+                func_0804ad38("failed drag down\n");
+                return false;
+            }
+            if (r)
+                count = passes;
+        }
+    }
+    return true;
+}
+
+bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl)
+{
+    cls08058718 pos;
+    bool found = false;
+    bool upwards;
+
+    if (dl == -1) {
+        if (s_test < e_test) {
+            func_0804ad38("do_localMove - s_test<e_test\n");
+            return false;
+        }
+        upwards = true;
+    } else if (dl == 1) {
+        if (s_test > e_test) {
+            func_0804ad38("do_localMove + s_test>e_test\n");
+            return false;
+        }
+        upwards = false;
+    } else {
+        func_0804ad38("bad dl for doLocalMove\t .. %d\n", dl);
+        return false;
+    }
+
+    for (; s_test != e_test; s_test += dl) {
+        pos.func_0805874c(s_test);
+        if (!func_0807e130(wt, in, &pos, upwards)) {
+            found = true;
+            break;
+        }
+    }
+
+    if (found) {
+        if (!wt->takeOut(in)) {
+            func_0804ad38("failed to take out instruction\n");
+            return false;
+        }
+        if (!moveLocks(in, &pos)) {
+            func_0804ad38("failed to move !\n");
+            return false;
+        }
+        if (!wt->putIn(in)) {
+            func_0804ad38("failed to put in back in\n");
+            return false;
+        }
+    }
+    return true;
+}
