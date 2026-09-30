@@ -54,7 +54,7 @@ bool func_080891cc(Program *p);
 bool func_08060018(Program *p, bool a);
 bool func_0806a74c(Program *p);
 bool func_0806ae58(Program *p);
-bool func_0806b234(Program *p);
+bool detectMoves(Program *p);
 void func_0806c3ac(Program *p);
 void func_0806c3e0(Program *p);
 
@@ -600,7 +600,7 @@ bool func_0804a358(Program *p)
         func_0804ad38("failed to collapse instructions\n");
         return false;
     }
-    if (!func_0806b234(p)) {
+    if (!detectMoves(p)) {
         func_0804ad38("failed to detect moves!\n");
         return false;
     }
