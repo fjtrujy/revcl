@@ -45,9 +45,11 @@ public:
     unsigned char unk_18;
     unsigned char unk_19;
     unsigned char unk_1a;   // branch target operand index + 1
-    char unk_1b[5];
+    char unk_1b;
+    int unk_1c;             // EFU mod-bits type (efu_Hook)
     int (*unk_20)(void *, Instr *);     // per-opcode handler
-    char unk_24[0x38 - 0x24];
+    char unk_24[0x34 - 0x24];
+    char *unk_34;           // mnemonic of the sense-reversed instruction
     char *(*unk_38)(char *buf, Instr *in, bool upper, char *mods, bool b, int zero); // emit hook
     char unk_3c[0x44 - 0x3c];
     iOpDesc unk_44[12];     // operand descriptors
