@@ -19,7 +19,7 @@ bool epiRec::init(int size, const char *name)
         func_0804adf0(-1);
     }
     workTable *wt = &unk_14->unk_148;
-    if (!wt->func_080728fc(3, size)) {
+    if (!wt->init(3, size)) {
         func_0804ad38("failed to init it_pro for size %d\n", size);
         func_0804adf0(-1);
     }

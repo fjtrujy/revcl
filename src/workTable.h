@@ -109,12 +109,28 @@ struct wtInstrList {
     int unk_08;             // count
 
     wtInstrList() { unk_04 = 0; unk_08 = 0; unk_00 = 0; }
+    void reset() { unk_04 = 0; unk_08 = 0; unk_00 = 0; }
     ~wtInstrList() { unk_04 = 0; unk_00 = 0; unk_08 = 0; }
 };
 
+inline const char *codeModeStr(int mode)
+{
+    switch (mode) {
+    case 0: return "CODE_MODE_BAD";
+    case 1: return "CODE_MODE_UTA";
+    case 2: return "CODE_MODE_MID";
+    case 3: return "CODE_MODE_RAW";
+    case 4: return "CODE_MODE_SYNTH";
+    case 5: return "CODE_MODE_RAW_PREEXP";
+    case 6: return "CODE_MODE_PASS_THRU";
+    }
+    return "CODE_MODE_????";
+}
+
 class workTable {
 public:
-    char unk_00[8];
+    int unk_00;
+    char unk_04[4];
     char unk_08;
     unsigned char unk_09;   // code mode
     unsigned char unk_0a;
@@ -123,29 +139,35 @@ public:
     instStream *unk_10;     // owner
     regUseList unk_14;
     int unk_20;
-    int unk_24;
+    cls0805c244 *unk_24;    // lock lists
     int unk_28;             // row count
     wtRow *unk_2c;          // rows
     int unk_30;             // range start
     int unk_34;             // range end (one past)
     int unk_38;             // lsz
     int unk_3c;             // mlid
-    char unk_40[4];
+    int unk_40;
     int unk_44;             // extminlength
     char unk_48[4];
     int unk_4c;
-    char unk_50[4];
+    int unk_50;
     cls08058718 unk_54;
     cls0805e2e4 unk_5c;
-    char unk_74[0x88 - 0x74];
+    char unk_74[6];
+    short unk_7a;
+    char unk_7c[0x88 - 0x7c];
     wtInstrList unk_88;     // linear list
     wtInstrList unk_94;
     wtInstrList unk_a0;
-    char unk_ac[4];
+    char unk_ac;
+    char unk_ad;
+    char unk_ae[2];
     int unk_b0;             // move count, class 3
     int unk_b4;             // move count, odd class
     int unk_b8;             // move count, even class
-    char unk_bc[0xc8 - 0xbc];
+    int unk_bc;
+    int unk_c0;
+    int unk_c4;
     int unk_c8;             // instruction count in table
 
     wtRow *func_080724f0(int i);
@@ -174,7 +196,7 @@ public:
     bool destroyInstruction(Instr *&in);
     bool prepRawTable();
     bool func_08073774(unsigned char mode);
-    bool func_080728fc(unsigned char mode, int size);  // init table (name guessed)
+    bool init(unsigned char mode, int size);
     bool changeMode(unsigned char mode);
 };
 
