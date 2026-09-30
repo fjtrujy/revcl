@@ -30,7 +30,7 @@ bool func_08060018(Program *p, bool b)
     }
     instStream *s;
     for (s = p->unk_a0; s; s = s->unk_108) {
-        if (!s->func_0806d5cc()) {
+        if (!s->flowReset()) {
             func_0804ad38("failed to flow reset a stream\n");
             return false;
         }

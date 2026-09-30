@@ -12,13 +12,15 @@ class workTable;
 class Instr;
 struct regUse;
 class instStream;
+struct Program;
 
 struct linkNode {
     char unk_00[8];
     linkNode *unk_08;           // next
     instStream *unk_0c;         // other stream
     char unk_10;                // marked
-    char unk_11[3];
+    char unk_11;
+    char unk_12[2];
     int unk_14;                 // link type
 };
 
@@ -33,6 +35,7 @@ struct linkList {
     void dump();
     bool removeAll();
     bool func_0806dfa0(linkNode *n);
+    int func_0806e4f0();
 };
 
 class instStream {
@@ -59,7 +62,20 @@ public:
 
     bool func_0805e4bc();         // gather stats
     bool func_0806563c(bool a, bool b);  // build memory dependencies
-    bool func_0806d5cc();         // flow reset
+    bool flowReset();
+    const char *branchTypeName();
+    const char *endTypeName();
+    const char *startTypeName();
+    char *emit(char *buf, int a, int *p1, int *p2);
+    bool checkStartEnd()
+    {
+        int st = unk_2cc;
+        int et = unk_2cd;
+        bool ok = false;
+        if (st == 1 || st == 2)
+            ok = et >= 1 && et <= 4;
+        return ok;
+    }
     unsigned char func_0806d908(); // code mode
     unsigned char func_0806d968(); // work table mode
     const char *func_0806d934();  // code mode name
@@ -77,7 +93,7 @@ public:
 
     int unk_00;
     char unk_04[0x104 - 0x04];
-    int unk_104;
+    Program *unk_104;
     instStream *unk_108;         // next in Program::unk_a0
     instStream *unk_10c;         // previous stream (to-register branch)
     mList unk_110;               // name list
@@ -134,8 +150,8 @@ public:
     short unk_2c4;
     short unk_2c6;
     int unk_2c8;
-    char unk_2cc;
-    char unk_2cd;      // code mode (2 adds 1000 to back trace dep length)
+    unsigned char unk_2cc;  // start type (ISTST_*)
+    unsigned char unk_2cd;  // end type (ISTET_*; 2 adds 1000 to back trace dep length)
     unsigned char unk_2ce;  // branch type
     char unk_2cf;
     char *unk_2d0;

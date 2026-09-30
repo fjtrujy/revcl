@@ -1,5 +1,8 @@
 #include "instStream.h"
 
+bool func_0806f398(Program *p, char *name);
+bool func_0806f4e8(Program *p, char *name);
+
 instStream::instStream()
 {
     unk_290.clear();
@@ -154,4 +157,154 @@ const char *istEndTypeName(int t)
         break;
     }
     return s;
+}
+
+const char *istBranchTypeName(int t)
+{
+    return func_08055254(t);
+}
+
+const char *instStream::branchTypeName()
+{
+    return func_08055254(unk_2ce);
+}
+
+const char *istStartTypeName(int t)
+{
+    const char *s;
+    switch (t) {
+    case 1:
+        s = "ISTST_NULL";
+        break;
+    case 2:
+        s = "ISTST_ENTRY";
+        break;
+    default:
+        s = "ISTST???\n";
+        break;
+    }
+    return s;
+}
+
+const char *instStream::endTypeName()
+{
+    int t = unk_2cd;
+    const char *s = "ISTET_BAD";
+    switch (t) {
+    case 1:
+        s = "ISTET_NULL";
+        break;
+    case 2:
+        s = "ISTET_END_CONT";
+        break;
+    case 3:
+        s = "ISTET_END_END";
+        break;
+    case 4:
+        s = "ISTET_END_MACRO";
+        break;
+    }
+    return s;
+}
+
+const char *instStream::startTypeName()
+{
+    const char *s;
+    switch (unk_2cc) {
+    case 1:
+        s = "ISTST_NULL";
+        break;
+    case 2:
+        s = "ISTST_ENTRY";
+        break;
+    default:
+        s = "ISTST???\n";
+        break;
+    }
+    return s;
+}
+
+bool instStream::canLoop()
+{
+    if (unk_2ce == 1 || unk_2ce == 5) {
+        instStream *s = unk_134.getStream(1);
+        if (!s) {
+            func_0804ad38("canLoop - bad return from outIST getFirst\n");
+            func_0804adf0(-1);
+        }
+        return this == s;
+    }
+    return false;
+}
+
+char *instStream::emit(char *buf, int a, int *p1, int *p2)
+{
+    *p1 = 0;
+    *p2 = 0;
+    if (!buf)
+        return 0;
+    if (!unk_110.unk_08) {
+        func_0804ad38("iStream::Emit: stream with no name\n");
+        return 0;
+    }
+    if (!checkStartEnd()) {
+        func_0804ad38("failed to check stream /start/end\n");
+        dump(false);
+        return 0;
+    }
+    if (unk_2cc != 2 && !unk_128.func_0806e4f0() && !unk_124) {
+        func_0804acb0("skip target emit. .coz it's no longer visible\n");
+        return buf;
+    }
+    for (mNode *n = unk_110.unk_0c; n; n = n->unk_04) {
+        if (n->unk_14 && (func_0806f398(unk_104, n->unk_14)
+                          || func_0806f4e8(unk_104, n->unk_14) || n->unk_18))
+            buf += func_0804adbc(buf, "%s:\n", n->unk_14);
+    }
+    if (unk_124) {
+        buf += func_0804adbc(buf, "\n%s\n", unk_124);
+    } else {
+        if (!unk_21c) {
+            func_0804ad38("can't emit .. no table!\n");
+            return 0;
+        }
+        buf = unk_21c->emit(buf, a, p1, p2);
+        if (!buf) {
+            func_0804ad38("failed to build out table\n");
+            return 0;
+        }
+        if (unk_2cd == 4) {
+            buf += func_0804adbc(buf, "\n");
+            if (!unk_2d0) {
+                func_0804ad38("end string not set\n");
+                return 0;
+            }
+            buf += func_0804adbc(buf, "         %s\n", unk_2d0);
+        }
+    }
+    return buf;
+}
+
+bool instStream::flowReset()
+{
+    if (!unk_218) {
+        func_0804ad38("work table not set\n");
+        return false;
+    }
+    if (!unk_218->unk_14.clear()) {
+        func_0804ad38("iStream::flowReset() - failed to dispose regrefs\n");
+        return false;
+    }
+    for (Instr *i = unk_218->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
+        if (!i->func_0805417c()) {
+            func_0804ad38("failed to init flow for isn\n");
+            return false;
+        }
+    }
+    if (!unk_218->func_080737e4()) {
+        func_0804ad38("failed to flow reset the iEntries for a work table\n");
+        return false;
+    }
+    unk_260 = 0;
+    return true;
 }
