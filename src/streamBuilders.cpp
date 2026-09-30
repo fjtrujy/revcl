@@ -1,6 +1,7 @@
 #include "instStream.h"
 #include "flowBlock.h"
 #include "Program.h"
+#include "fileEmit.h"
 
 extern int errorOccurred;
 extern bool quiet_080bbd98;
@@ -528,4 +529,125 @@ bool resolveStreamBranches(Program *p)
         }
     }
     return true;
+}
+
+bool fixupBtorBranch(Program *p, instStream *s, int *changed, bool btor)
+{
+    *changed = 0;
+    if (((s->unk_2ce >> 1) & 1) == 0) {
+        func_0804ad38("balFix:: not reg-target\n");
+        return false;
+    }
+    Instr *br = s->getBranch();
+    if (!br) {
+        func_0804ad38("balFix-no branch!\n");
+        return false;
+    }
+    RegPoolEntry *reg = br->getBranchTargetRegister();
+    if (!reg) {
+        func_0804ad38("no target register input for btor\n");
+        br->leDump();
+        return false;
+    }
+    br->func_08054008(false);
+    instStream *t;
+    for (t = p->unk_a0; t; t = t->unk_108)
+        t->unk_226 = 0;
+    s->unk_226 = 1;
+    bool first = true;
+    bool again;
+    do {
+        again = false;
+        for (t = p->unk_a0; t; t = t->unk_108) {
+            if (t->unk_226 != 1)
+                continue;
+            workTable *wt = t->getTable();
+            Instr *in;
+            if (first) {
+                in = br->unk_1c.unk_04;
+                t->unk_226 = 0;
+                first = false;
+            } else {
+                in = wt->unk_88.unk_04;
+                t->unk_226 = 2;
+            }
+            for (; in; in = in->unk_1c.unk_04) {
+                if (in->func_080553b4(reg, 0xff)) {
+                    in->func_08054008(false);
+                    break;
+                }
+            }
+            if (in) {
+                if ((in->unk_1388 >> 3) & 1) {
+                    if (!t->unk_108) {
+                        func_0804ad84("no physical successor to a branch+link\n");
+                        return false;
+                    }
+                    if (!p->areLinkedBy(s, t->unk_108, 2)) {
+                        if (!p->linkStreams(s, t->unk_108, 2)) {
+                            func_0804ad38("failed to fixup a branch to register\n");
+                            return false;
+                        }
+                        (*changed)++;
+                        again = true;
+                    }
+                } else if (!br->unk_139c) {
+                    func_0804ad38("VCL has found a branch to register at :\n");
+                    br->func_08054008(false);
+                    func_0804ad38("that's apparently set by:\n");
+                    in->func_08054008(false);
+                    func_0804ad38("unfortunately vcl can't figure out where the branch should go..\n");
+                    func_0804ad38("try adding a tag list to the branch\n");
+                    return false;
+                }
+            } else {
+                for (linkNode *n = t->unk_128.unk_00; n; n = n->unk_08) {
+                    instStream *o = n->unk_0c;
+                    if (!o) {
+                        func_0804ad38("null outist\n");
+                        return false;
+                    }
+                    if (!o->unk_226) {
+                        o->unk_226 = 1;
+                        again = true;
+                    }
+                }
+            }
+        }
+    } while (again);
+    return true;
+}
+
+char *func_0808750c(char *buf, Instr *in, bool upper, char *mods, bool b, int)
+{
+    iInfo *info = in->unk_34;
+    bool comma = false;
+    if (!mods)
+        mods = "";
+    int len = func_0804adbc(buf, "%s%s", info->unk_04, mods);
+    char *p = buf + len;
+    p = emitDestMask(p, (char)info->unk_0c, in->unk_138f);
+    if (!p) {
+        func_0804ad38("failed to emit inst mods\n");
+        return 0;
+    }
+    for (int n = p - buf; n < 14; n++)
+        *p++ = ' ';
+    for (int i = 0; i != in->unk_138b; i++) {
+        Operand *op = &in->unk_38[i];
+        if (op->unk_08)
+            continue;
+        if (comma)
+            *p++ = ',';
+        comma = true;
+        p = op->Emit(p, upper, b);
+        if (!p) {
+            func_0804ad38("failed to emit operand\n");
+            op->func_0805665c(0);
+            func_0804ad38("from\n");
+            in->func_08054008(false);
+            return 0;
+        }
+    }
+    return p;
 }
