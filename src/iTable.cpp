@@ -1150,3 +1150,83 @@ workTable *workTable::localClone()
     clearClones();
     return nt;
 }
+
+bool workTable::replaceInstruction(Instr *old, Instr *nw)
+{
+    if (old->unk_30 != (cls_unk30 *)this) {
+        func_0804ad38("old instruction isn't in table\n");
+        return 0;
+    }
+    if (nw->unk_30) {
+        func_0804ad38("replaceInstruction - new instruction already has owner\n");
+        return 0;
+    }
+    Instr *prev = old->unk_1c.unk_04;
+    if (!logUnlinkFromLinear(old)) {
+        func_0804ad38("failed to take out old instruction from linear\n");
+        return 0;
+    }
+    nw->unk_13e4 = old->unk_13e4;
+    nw->unk_13e0 = old->unk_13e0;
+    if (unk_09 == 1) {
+        if (nw->isConcreteMove()) {
+            func_0804ad38("trying to place a resolved move into abstract table\n");
+            return 0;
+        }
+        if (!logAddLinear_After(prev, nw)) {
+            func_0804ad38("failed to log new instruction \n");
+            return 0;
+        }
+        return 1;
+    }
+    if (nw->isAbstractMove()) {
+        func_0804ad38("trying to replace an abstract move into a table\n");
+        return 0;
+    }
+    if (!logAddLinear_After(prev, nw)) {
+        func_0804ad38("failed to log new instruction \n");
+        return 0;
+    }
+    cls08058718 pos;
+    cls08058718 *op = &old->unk_13e8;
+    pos.unk_00 = op->unk_00;
+    pos.unk_04 = op->unk_04;
+    pos.unk_03 = op->unk_03;
+    pos.unk_02 = op->unk_02;
+    cls08058718 *p = &nw->unk_13e8;
+    p->unk_00 = old->unk_13e8.unk_00;
+    p->unk_04 = pos.unk_04;
+    p->unk_03 = pos.unk_03;
+    p->unk_02 = pos.unk_02;
+    if (takeOut(old)) {
+        unk_2c[p->unk_04].unk_00[p->unk_02].unk_00 = nw;
+        return 1;
+    }
+    func_0804ad38("failed to take out old instruction\n");
+    return 0;
+}
+
+bool workTable::destroyInstruction(Instr *&in)
+{
+    if (!logUnlinkFromLinear(in)) {
+        func_0804ad38("destroyInstruction -  failed to unlink\n");
+        return 0;
+    }
+    if (unk_2c) {
+        cls08058718 *p = &in->unk_13e8;
+        int row = p->unk_04;
+        int pipe = p->unk_02;
+        Instr **ie = ((cls_unk30 *)this)->getIE_ck(row);
+        if (!ie) {
+            func_0804ad38("logUnlinkFromLinear: failed to get IE where insn ought to be (line %d.%d)\n", row, pipe);
+            return 0;
+        }
+        if (ie[pipe] != in) {
+            func_0804ad38("logUnlinkFromLinear: instruction wasn't where I thought it'd be!\n");
+            return 0;
+        }
+        ie[pipe] = 0;
+    }
+    in = 0;
+    return 1;
+}
