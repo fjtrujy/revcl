@@ -18,15 +18,7 @@ public:
     int unk_10;         // current record
     bool unk_14;        // record started
 
-    VisitCache()
-    {
-        unk_14 = false;
-        unk_00 = 0;
-        unk_04 = 0;
-        unk_08 = 0;
-        unk_0c = 0;
-        unk_10 = 0;
-    }
+    VisitCache();
     ~VisitCache();
     bool init(int nbits);
     bool release();

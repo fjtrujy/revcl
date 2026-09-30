@@ -52,26 +52,32 @@ public:
     bool func_0806bd88();
     void func_0806bdd0();
 
-    char unk_00;
+    bool setUniqueName(const char *name);
+    const char *getUniqueName();
+
+    bool unk_00;           // new syntax
     mList unk_04;
-    const char *unk_18;
+    const char *unk_18;    // global name (dupString)
     const char *unk_1c;    // name, default "Nameless"
     mList unk_20;
-    int unk_34;
+    char *unk_34;          // unique name (dupString), default "FLOW"
     int unk_38;
     char unk_3c;
-    char unk_3d;
-    char unk_3e;
-    int unk_40;
-    int unk_44;
+    char unk_3d;           // mode: 1 normal, 3 raw (VSM)
+    char unk_3e;           // 3 reorder, 4 noreorder
+    bool unk_3f;           // inside .rawloop
+    short unk_40;          // rawloop count
+    int unk_44;            // mpg target address, -1 = unset
     int unk_48;
     mList unk_4c;
-    char unk_60;
-    char unk_61[3];
+    char unk_60;           // unique all
+    char unk_61;           // saved unk_3e
+    char unk_62;           // saved unk_3d
+    bool unk_63;
     char unk_64;
     char unk_65;
-    ubsList unk_68;
-    stallList unk_74;
+    ubsList unk_68;        // used-before-set list; unk_08 = count
+    stallList unk_74;      // stall list; unk_08 = count
 };
 
 #endif

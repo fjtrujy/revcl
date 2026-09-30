@@ -2,6 +2,7 @@
 #define PROGRAM_H
 
 #include "mList.h"
+#include "Processor.h"
 #include "VisitCache.h"
 #include "infoList.h"
 #include "ubsList.h"
@@ -14,42 +15,23 @@ class instStream;
 struct Program {
     Program(bool symbolic);
     ~Program();
-    bool func_0806ea5c(CpuDef *cpu, const char *uniqueName, bool uniqueAll);
+    bool Init(CpuDef *cpu, const char *uniqueName, bool uniqueAll);
+    bool dispose();
+    bool addStream(instStream *s);
+    bool insertStreamAfter(instStream *after, instStream *s);
     bool func_0806efc4(Parser *parser, bool a, bool newSyntax);
 
-    bool func_0806c9b8(const char *name);
-    const char *getUniqueName();
-
-    bool unk_00;        // new syntax
-    char unk_01[3];
-    mList unk_04;
-    char *unk_18;       // global name (dupString)
-    char *unk_1c;       // "Nameless"
-    mList unk_20;
-    char *unk_34;       // unique name (dupString), default "FLOW"
-    char unk_38[5];
-    char unk_3d;        // mode: 1 normal, 3 raw (VSM)
-    char unk_3e;        // 3 reorder, 4 noreorder
-    bool unk_3f;        // inside .rawloop
-    short unk_40;       // rawloop count
-    char unk_42[2];
-    int unk_44;         // mpg target address, -1 = unset
-    int unk_48;
-    mList unk_4c;
-    char unk_60;
-    char unk_61;        // saved unk_3e
-    char unk_62;        // saved unk_3d
-    bool unk_63;
-    char unk_64[4];
-    ubsList unk_68;     // used-before-set list; unk_08 = count
-    infoList unk_74;    // stall list (really an infoList subclass, vtable 0x080b33c8); unk_08 = count
+    Processor proc;
     int unk_80;         // emulated length
     char unk_84[4];
     mList unk_88;       // names prefixed by doUnique
     bool unk_9c;        // ctor arg
     char unk_9d[3];
     instStream *unk_a0; // all streams, chained via unk_108
-    char unk_a4[0x10];
+    instStream *unk_a4; // stream list tail
+    int unk_a8;         // stream count
+    char unk_ac[4];
+    char *unk_b0;
     bool unk_b4;        // logmax: also compute max path key
     char unk_b5;
     char unk_b6[2];

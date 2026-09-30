@@ -213,14 +213,14 @@ void func_0806be68(Program *p)
 
 bool parseReset(Program *p)
 {
-    p->unk_63 = false;
-    p->unk_04.func_0804b1b0();
-    p->unk_20.func_0804b1b0();
-    p->unk_4c.func_0804b1b0();
-    p->unk_3d = 0;
-    p->unk_3e = 0;
-    p->unk_62 = 0;
-    p->unk_61 = 0;
+    p->proc.unk_63 = false;
+    p->proc.unk_04.func_0804b1b0();
+    p->proc.unk_20.func_0804b1b0();
+    p->proc.unk_4c.func_0804b1b0();
+    p->proc.unk_3d = 0;
+    p->proc.unk_3e = 0;
+    p->proc.unk_62 = 0;
+    p->proc.unk_61 = 0;
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_080595d4()) {
             func_0804ad38("Processor::parseReset() - failed to reset %s\n",
@@ -388,8 +388,8 @@ RegPool *GetRP(unsigned t)
 
 bool flowReset(Program *p)
 {
-    p->unk_68.clear();
-    p->unk_74.clear();
+    p->proc.unk_68.clear();
+    p->proc.unk_74.clear();
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_0805951c()) {
             func_0804ad38("Processor::flowReset() - failed to reset %s\n",
@@ -401,7 +401,7 @@ bool flowReset(Program *p)
 
 void reportUBS(Program *p)
 {
-    ubsList *ubs = &p->unk_68;
+    ubsList *ubs = &p->proc.unk_68;
     if (ubs->unk_08) {
         func_0804acb0("uh-oh, VCL thinks the following operands were used before set:\n");
         ubs->func_080525c8();
@@ -410,7 +410,7 @@ void reportUBS(Program *p)
 
 void reportStalls(Program *p)
 {
-    infoList *st = &p->unk_74;
+    infoList *st = &p->proc.unk_74;
     if (st->unk_08) {
         func_0804acb0("VCL thinks the following instructions caused stalls:\n");
         st->func_080525c8();
@@ -605,7 +605,7 @@ int getPoolsByClassID(int cls, RegPool **tab, int max)
     return n;
 }
 
-bool Program::func_0806c9b8(const char *name)
+bool Processor::setUniqueName(const char *name)
 {
     if (unk_34)
         delete[] unk_34;
@@ -619,7 +619,7 @@ bool Program::func_0806c9b8(const char *name)
     return true;
 }
 
-const char *Program::getUniqueName()
+const char *Processor::getUniqueName()
 {
     return unk_34 ? unk_34 : "FLOW";
 }

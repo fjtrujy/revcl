@@ -181,7 +181,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
             int total = fst + (tend + dist);
             if (total < sr->unk_20[part].unk_3c[11]) {
                 ol_s *setter = sr->unk_20[part].func_0805ba2c(0, true);
-                if (!p->unk_74.addStall(setter, tr->unk_20[part].unk_20.unk_00, 1,
+                if (!p->proc.unk_74.addStall(setter, tr->unk_20[part].unk_20.unk_00, 1,
                                         sr->unk_20[part].unk_3c[11] - total)) {
                     func_0804ad38("failed to add an interstream latency stall\n");
                     return false;
@@ -230,7 +230,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
         bool extended = false;
         if (d > 0) {
             if (ext) {
-                if (!p->unk_74.addStall(sr->unk_20[part].unk_08.unk_00,
+                if (!p->proc.unk_74.addStall(sr->unk_20[part].unk_08.unk_00,
                                         tr->unk_20[part].unk_00.unk_00, 0, d)) {
                     func_0804ad38("failed to add an external stall\n");
                     return false;

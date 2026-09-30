@@ -83,14 +83,14 @@ int func_080512a4(Program *prog, LocTag *t)
         func_0804ad38("failed to get global name\n");
         return 0;
     } else {
-        prog->unk_18 = dupString(s);
+        prog->proc.unk_18 = dupString(s);
     }
     return 1;
 }
 
 int func_08051308(Program *prog, LocTag *t)
 {
-    prog->unk_63 = true;
+    prog->proc.unk_63 = true;
     return 1;
 }
 
@@ -101,7 +101,7 @@ int func_0805131c(Program *prog, LocTag *t)
         func_0804ad38("must specify target address for mpg mode!\n");
         return 0;
     }
-    prog->unk_44 = func_0804add4(s);
+    prog->proc.unk_44 = func_0804add4(s);
     return 1;
 }
 
@@ -109,26 +109,26 @@ int func_0805137c(Program *prog, LocTag *t)
 {
     char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
     if (s)
-        prog->unk_04.func_0804b2d4(s);
+        prog->proc.unk_04.func_0804b2d4(s);
     return 1;
 }
 
 int func_080513cc(Program *prog, LocTag *t)
 {
-    if (prog->unk_3f) {
+    if (prog->proc.unk_3f) {
         func_0804ad84("hit a raw directive in a rawloop block\n");
         return 0;
     }
-    if (prog->unk_3d == 3)
+    if (prog->proc.unk_3d == 3)
         func_0804ac7c("hit a raw directive while already in a raw block\n");
-    prog->unk_3d = 3;
-    prog->unk_3e = 4;
+    prog->proc.unk_3d = 3;
+    prog->proc.unk_3e = 4;
     char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
     if (s) {
         if (func_0804bfcc(s, "reorder"))
-            prog->unk_3e = 3;
+            prog->proc.unk_3e = 3;
         else if (func_0804bfcc(s, "noreorder"))
-            prog->unk_3e = 4;
+            prog->proc.unk_3e = 4;
         else {
             func_0804ad84("bad option '%s' to raw directive\n", s);
             return 0;
@@ -139,36 +139,36 @@ int func_080513cc(Program *prog, LocTag *t)
 
 int func_080514a0(Program *prog, LocTag *t)
 {
-    if (prog->unk_3d == 1) {
+    if (prog->proc.unk_3d == 1) {
         func_0804ac7c("hit an endraw directive while not in raw mode\n");
         return 0;
     }
-    if (prog->unk_3f) {
+    if (prog->proc.unk_3f) {
         func_0804ad84("hit an endraw directive inside a rawloop\n");
         return 0;
     }
-    prog->unk_3d = 1;
-    prog->unk_3e = 0;
+    prog->proc.unk_3d = 1;
+    prog->proc.unk_3e = 0;
     return 1;
 }
 
 int func_080514e8(Program *prog, LocTag *t)
 {
-    if (prog->unk_3f) {
+    if (prog->proc.unk_3f) {
         func_0804ad84("encountered a .rawloop directive, while already in loop mode\n");
         return 0;
     }
-    prog->unk_40++;
-    prog->unk_62 = prog->unk_3d;
-    prog->unk_3d = 3;
-    prog->unk_3e = 4;
-    prog->unk_3f = true;
+    prog->proc.unk_40++;
+    prog->proc.unk_62 = prog->proc.unk_3d;
+    prog->proc.unk_3d = 3;
+    prog->proc.unk_3e = 4;
+    prog->proc.unk_3f = true;
     char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
     if (s) {
         if (func_0804bfcc(s, "reorder"))
-            prog->unk_3e = 3;
+            prog->proc.unk_3e = 3;
         else if (func_0804bfcc(s, "noreorder"))
-            prog->unk_3e = 4;
+            prog->proc.unk_3e = 4;
         else {
             func_0804ad84("bad option '%s' to raw loop directive\n", s);
             return 0;
@@ -179,17 +179,17 @@ int func_080514e8(Program *prog, LocTag *t)
 
 int func_080515a0(Program *prog, LocTag *t)
 {
-    if (!prog->unk_3f) {
+    if (!prog->proc.unk_3f) {
         func_0804ad84("reached an .endloop directive but when wasn't in loop mode\n");
         return 0;
     }
-    if (prog->unk_3d != 3) {
-        func_0804ad84("hit end raw directive, but wasn't in VSM mode..(mode is %d)?\n", prog->unk_3d);
+    if (prog->proc.unk_3d != 3) {
+        func_0804ad84("hit end raw directive, but wasn't in VSM mode..(mode is %d)?\n", prog->proc.unk_3d);
         return 0;
     }
-    prog->unk_3d = prog->unk_62;
-    prog->unk_3e = prog->unk_61;
-    prog->unk_3f = false;
+    prog->proc.unk_3d = prog->proc.unk_62;
+    prog->proc.unk_3e = prog->proc.unk_61;
+    prog->proc.unk_3f = false;
     return 1;
 }
 
@@ -295,9 +295,9 @@ int func_08051890(Program *prog, LocTag *t)
             func_0804ad84("unique name too long\n");
             return 0;
         }
-        prog->func_0806c9b8(name);
+        prog->proc.setUniqueName(name);
     }
-    prog->unk_60 = 1;
+    prog->proc.unk_60 = 1;
     return 1;
 }
 
@@ -309,11 +309,11 @@ int func_08051908(Program *prog, LocTag *t)
         return 0;
     }
     if (func_0804bfcc(arg, "new")) {
-        prog->unk_00 = true;
+        prog->proc.unk_00 = true;
         return 1;
     }
     if (func_0804bfcc(arg, "old")) {
-        prog->unk_00 = false;
+        prog->proc.unk_00 = false;
         return 1;
     }
     func_0804ad84("invalid argument to .syntax, options are 'new' or 'old'\n");
@@ -474,7 +474,7 @@ bool func_08051d6c(Program *prog, LocTag *t, int v)
         *d++ = ':';
     }
     *d = 0;
-    mNode *n = prog->unk_4c.func_0804b444(buf);
+    mNode *n = prog->proc.unk_4c.func_0804b444(buf);
     if (!n) {
         func_0804ad38("failed to process  a visibility directive\n");
         return false;
@@ -494,7 +494,7 @@ inline bool ExecRP_show_line(LocTag *t)
 
 bool func_08051e34(Program *prog, LocTag *t, int v)
 {
-    mNode *n = prog->unk_4c.unk_10;
+    mNode *n = prog->proc.unk_4c.unk_10;
     if (!n) {
         func_0804ac7c("closing visibility directive and no tail at:\n");
         ExecRP_show_line(t);
@@ -505,7 +505,7 @@ bool func_08051e34(Program *prog, LocTag *t, int v)
         ExecRP_show_line(t);
         return false;
     }
-    if (!prog->unk_4c.func_0804b3e8(n)) {
+    if (!prog->proc.unk_4c.func_0804b3e8(n)) {
         func_0804ad38("failed to remove tail node\n");
         return false;
     }

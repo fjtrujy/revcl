@@ -282,11 +282,11 @@ int main(int argc, char **argv)
     }
 
     Program flow(symbolic_080b300c);
-    if (!flow.func_0806ea5c(&cpu_080bbb50, uniqueName, uniqueAll)) {
+    if (!flow.Init(&cpu_080bbb50, uniqueName, uniqueAll)) {
         func_0804ad38("failed to set int name for flow\n");
         func_0804adf0(-1);
     }
-    flow.unk_44 = mValue;
+    flow.proc.unk_44 = mValue;
     if (!flow.func_0806efc4(&parser, true, newSyntax)) {
         func_0804ad38("failed to build flow from parser!\n");
         func_0804adf0(-1);
@@ -582,14 +582,14 @@ bool func_0804a2b4(Program *p, bool a, bool b, bool c)
         func_0804ad38("vcl found a bug in itself while chasing dependencies\n");
         return false;
     }
-    if (p->unk_68.unk_08) {
+    if (p->proc.unk_68.unk_08) {
         if (!c) {
             reportErrors(p);
             return false;
         }
         func_0804acb0("on the final pass, was detected, but , it should be ok\n");
     }
-    if (b && p->unk_74.unk_08)
+    if (b && p->proc.unk_74.unk_08)
         reportWarnings(p);
     return true;
 }

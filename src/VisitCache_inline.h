@@ -8,6 +8,16 @@
 #include <stdlib.h>
 #include "VisitCache.h"
 
+inline VisitCache::VisitCache()
+{
+    unk_14 = false;
+    unk_00 = 0;
+    unk_04 = 0;
+    unk_08 = 0;
+    unk_0c = 0;
+    unk_10 = 0;
+}
+
 inline VisitCache::~VisitCache()
 {
     release();
