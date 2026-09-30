@@ -4,7 +4,6 @@
 #include "Instr.h"
 #include "os.h"
 
-const char *codeModeName(int mode);
 int emuInst(Program *p, wtRow *row, int line, bool a, bool b);
 
 bool emuTable(Program *p, workTable *wt)
@@ -83,7 +82,7 @@ bool func_080642ec(Program *p, instStream *s)
     workTable *wt;
 
     wt = s->getTable();
-    int linear = wt->unk_c8;
+    int linear = wt->unk_c0[2];
     int iCount = wt->unk_88.unk_08;
     if (linear != iCount) {
         func_0804ad38("linear count not same as iCount %d!=%d\n", linear, iCount);
@@ -142,8 +141,8 @@ bool func_080642ec(Program *p, instStream *s)
             }
         }
     }
-    if (count != wt->unk_c8) {
-        func_0804ad38("icount mismatch (%d apparently in list, but %d in table?)\n", count, wt->unk_c8);
+    if (count != wt->unk_c0[2]) {
+        func_0804ad38("icount mismatch (%d apparently in list, but %d in table?)\n", count, wt->unk_c0[2]);
         return false;
     }
     for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {

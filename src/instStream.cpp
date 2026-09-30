@@ -3,7 +3,6 @@
 
 bool isReferencedLabel(Program *p, char *name);
 bool func_0806f4e8(Program *p, char *name);
-const char *codeModeName(int mode);
 
 instStream::instStream()
 {

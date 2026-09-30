@@ -84,13 +84,13 @@ bool workTable::dispose()
     unk_09 = 0;
     unk_08 = 0;
     unk_0a = 0;
-    unk_c8 = 0;
+    unk_c0[2] = 0;
     unk_bc = 0;
     unk_b0 = 0;
     unk_b4 = 0;
-    unk_c0 = 0;
+    unk_c0[0] = 0;
     unk_b8 = 0;
-    unk_c4 = 0;
+    unk_c0[1] = 0;
     unk_4c = 0;
     unk_88.reset();
     unk_94.reset();
@@ -507,4 +507,121 @@ bool workTable::func_080737e4()
             }
     }
     return 1;
+}
+
+bool workTable::func_08073854()
+{
+    if (unk_30 < 0)
+        return 0;
+    if (unk_34 <= 0)
+        return 1;
+    wtRow *r = rowAt(unk_34 - 1);
+    if (!r)
+        return 0;
+    Instr *in = r->unk_00[1].unk_00;
+    if (in) {
+        if (in->unk_13ce || in->unk_1388)
+            return 0;
+        int op = func_0806c72c(in->unk_34);
+        if (op >= 165 && op <= 167)
+            return 0;
+    }
+    r = rowAt(unk_34 - 2);
+    if (!r)
+        return 1;
+    in = r->unk_00[1].unk_00;
+    if (in && func_0806c72c(in->unk_34) == 165)
+        return 0;
+    return 1;
+}
+
+Instr **cls_unk30::getIE_ck(int rl)
+{
+    workTable *t = (workTable *)this;
+    if (!t->unk_2c) {
+        func_0804ad38("checkie: table not set\n");
+        return 0;
+    }
+    if (rl < 0) {
+        func_0804ad38("checkie() - rl<0\n");
+        return 0;
+    }
+    if (t->unk_38) {
+        if (t->unk_30) {
+            func_0804ad38("getIE_ck - iStart not zero for loop table\n");
+            func_0804aeb0();
+        }
+        if (rl >= t->unk_38)
+            rl %= t->unk_38;
+    }
+    if (rl >= t->unk_28) {
+        func_0804ad38("checkie() - rl>=m_MaxSize %d,%d\n", rl, t->unk_28);
+        return 0;
+    }
+    return (Instr **)&t->unk_2c[rl];
+}
+
+Instr *workTable::getInstr(int rl, int p)
+{
+    Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
+    if (!ie)
+        return 0;
+    if (p < 0 || p >= 2) {
+        func_0804ad38("out of bounds pipe\n");
+        return 0;
+    }
+    return ie[p];
+}
+
+Instr *workTable::getInstrInRange(int rl, int p)
+{
+    if (rl < unk_30 || rl >= unk_34)
+        return 0;
+    Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
+    Instr *in;
+    if (!ie)
+        in = 0;
+    else if (p < 0 || p >= 2) {
+        func_0804ad38("out of bounds pipe\n");
+        in = 0;
+    } else
+        in = ie[p];
+    return in;
+}
+
+const char *codeModeName(int mode)
+{
+    return codeModeStr(mode);
+}
+
+const char *rawModeName(int mode)
+{
+    switch (mode) {
+    case 0: return "RAW_MODE_BAD";
+    case 1: return "RAW_MODE_VCL_FREE";
+    case 2: return "RAW_MODE_VCL_FIXED";
+    case 3: return "RAW_MODE_USER_FREE";
+    case 4: return "RAW_MODE_USER_FIXED";
+    }
+    return "RAW_MODE_????";
+}
+
+const char *allocModeName(unsigned int mode)
+{
+    switch (mode) {
+    case 0: return "ALLOC_MODE_BAD";
+    case 1: return "ALLOC_MODE_NONE";
+    case 2: return "ALLOC_MODE_X";
+    case 3: return "ALLOC_MODE_DONE";
+    }
+    return "ALLOC_MODE_????";
+}
+
+int workTable::getPipeCount(int p)
+{
+    if (p < 0 || p > 2) {
+        func_0804ad38("get pipe count - bad pipe\n");
+        func_0804aeb0();
+    }
+    return unk_c0[p];
 }

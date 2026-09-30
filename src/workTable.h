@@ -167,9 +167,7 @@ public:
     int unk_b4;             // move count, odd class
     int unk_b8;             // move count, even class
     int unk_bc;
-    int unk_c0;
-    int unk_c4;
-    int unk_c8;             // instruction count in table
+    int unk_c0[3];          // per-pipe instr counts, [2] = total in table
 
     wtRow *func_080724f0(int i);
     wtRow *rowAt(int i)
@@ -215,7 +213,14 @@ public:
     bool init(unsigned char mode, int size);
     bool changeMode(unsigned char mode);
     bool clearClones();
+    Instr *getInstr(int rl, int p);
+    Instr *getInstrInRange(int rl, int p);
+    int getPipeCount(int p);
 };
+
+const char *codeModeName(int mode);
+const char *rawModeName(int mode);
+const char *allocModeName(unsigned int mode);
 
 bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bool a6, bool a7);
 extern Instr *g_080de72c;   // instr with smallest unk_1396
