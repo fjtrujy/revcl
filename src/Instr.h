@@ -356,6 +356,8 @@ public:
     void func_08058744();
     void func_0805874c(short v);
     void func_0805878c(char c);
+    short getRow() { return unk_00; }
+    short getPipe() { return unk_02; }
     void setRow(short r)
     {
         unk_03 = 0;
@@ -474,6 +476,20 @@ public:
     short unk_1432;
     int unk_1434;
 
+    bool isConcreteMove()
+    {
+        int r = 0;
+        if (unk_142c && unk_142e)
+            r = 1;
+        return r;
+    }
+    bool isAbstractMove()
+    {
+        int r = 0;
+        if (unk_142c && !unk_142e)
+            r = 1;
+        return r;
+    }
     Instr(iInfo *info);
     ~Instr();
     void hasImmValue();
