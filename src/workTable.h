@@ -153,7 +153,8 @@ public:
     int unk_50;
     cls08058718 unk_54;
     cls0805e2e4 unk_5c;
-    char unk_74[4];
+    short unk_74;
+    short unk_76;
     short unk_78;
     short unk_7a;
     char unk_7c[0x88 - 0x7c];
@@ -232,6 +233,7 @@ public:
     bool relinkRawIt();
     bool lockLine(cls08058718 *line);
     bool unlockLine(cls08058718 *line);
+    workTable *localClone();
     void clearLinear()
     {
         unk_88.reset();

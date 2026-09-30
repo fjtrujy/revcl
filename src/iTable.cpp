@@ -1075,3 +1075,78 @@ bool workTable::unlockLine(cls08058718 *line)
 {
     return 1;
 }
+
+workTable *workTable::localClone()
+{
+    if (unk_09 != 1) {
+        func_0804ad38("table to be locally cloned isn't uta\n");
+        return 0;
+    }
+    workTable *nt = new workTable;
+    if (!nt) {
+        func_0804ad38("failed to get new table\n");
+        return 0;
+    }
+    nt->init(1, 0);
+    nt->unk_7a = unk_7a;
+    nt->unk_5c.func_0805e37c(&unk_5c);
+    nt->unk_74 = unk_74;
+    nt->unk_76 = unk_76;
+    nt->unk_78 = unk_78;
+    nt->unk_44 = unk_44;
+    nt->unk_08 = unk_08;
+    nt->unk_40 = 0;
+    nt->unk_10 = unk_10;
+    for (regUse *r = unk_14.unk_04; r; r = r->unk_04) {
+        if (!nt->unk_14.append(r->Clone())) {
+            func_0804ad38("failed to add cloned regref to list\n");
+            delete r;
+            return 0;
+        }
+    }
+    for (Instr *in = unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        Instr *c = in->clone();
+        for (int i = 0; i != c->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            RegPoolEntry *reg = op->regOp();
+            if (reg) {
+            int mask = op->unk_07 & ~op->unk_27;
+            for (int k = 0; k != reg->unk_28; k++) {
+                int bit = 1 << k;
+                if (mask & bit) {
+                ol_s *o = op->unk_2c[k].unk_54.unk_00;
+                if (!o || o->unk_00) {
+                    func_0804ad38("more or less than one oploc for non-extern input\n");
+                    return 0;
+                }
+                Instr *setter = o->unk_04;
+                if (!setter) {
+                    func_0804ad38("could not get setting op for setter\n");
+                    return 0;
+                }
+                instStream *s = setter->func_08054168();
+                if (s != unk_10) {
+                    func_0804ad38("owner of setter not us %p vs %p\n", setter->unk_30, this, s);
+                    return 0;
+                }
+                if (!setter->unk_08) {
+                    func_0804ad38("qInstruction - setter had null work clone set\n");
+                    return 0;
+                }
+                if (!link_oParts(setter->unk_08, o->unk_10, o->unk_11, c, i, k)) {
+                    func_0804ad38("failed to link local oparts\n");
+                    return 0;
+                }
+                }
+            }
+            }
+        }
+        if (!nt->logAddLinear_Tail(c)) {
+            func_0804ad38("iTable::qInstruction - failed to add to linear list tail\n");
+            return 0;
+        }
+    }
+    nt->clearClones();
+    clearClones();
+    return nt;
+}
