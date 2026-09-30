@@ -258,3 +258,26 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
         *found = thru == line;
     return line;
 }
+
+int latestInsert(workTable *wt, Instr *in, bool *found)
+{
+    short e = in->unk_13b6;
+    if (e < in->unk_13b4)
+        e = in->unk_13b4;
+    int line = wt->unk_34 - e - 1;
+    int iline = in->unk_13e8.unk_04;
+    bool thru = false;
+    Operand *op;
+    for (int i = 0; (op = in->getOp(i)) != 0; i++) {
+        RegPoolEntry *reg = op->getReg();
+        if (reg && op->unk_28) {
+            thru = true;
+            break;
+        }
+    }
+    if (thru || in->unk_1388)
+        line = iline;
+    if (found)
+        *found = false;
+    return line;
+}
