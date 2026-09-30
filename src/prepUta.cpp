@@ -148,7 +148,9 @@ bool makeLpWork(instStream *s, int maxSpread)
         int latest = 0;
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            reg = op->getReg();
+            reg = 0;
+            if (op->isReg())
+                reg = op->unk_18;
             if (reg) {
                 for (int j = 0; j != reg->unk_28; j++) {
                     ol_s *ol = op->unk_2c[j].unk_54.unk_00;
@@ -204,7 +206,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         char *p = buf;
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            reg = op->getReg();
+            reg = op->inputReg();
             if (reg) {
                 p += func_0804adbc(p, " %s: ", reg->func_0805a8e0());
                 int rlo = 30000, rhi = 0;
