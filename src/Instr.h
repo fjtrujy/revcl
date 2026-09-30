@@ -31,8 +31,13 @@ public:
     char unk_08[4];
     unsigned char unk_0c;
     char unk_0d;
-    char unk_0e;
-    char unk_0f;
+    union {
+        struct {
+            char unk_0e;
+            char unk_0f;
+        };
+        unsigned short unk_0e_w;
+    };
     char unk_10;
     char unk_11;
     char unk_12;
