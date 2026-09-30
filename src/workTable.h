@@ -153,7 +153,8 @@ public:
     int unk_50;
     cls08058718 unk_54;
     cls0805e2e4 unk_5c;
-    char unk_74[6];
+    char unk_74[4];
+    short unk_78;
     short unk_7a;
     char unk_7c[0x88 - 0x7c];
     wtInstrList unk_88;     // linear list
@@ -171,6 +172,17 @@ public:
     int unk_c8;             // instruction count in table
 
     wtRow *func_080724f0(int i);
+    wtRow *rowAt(int i)
+    {
+        wtRow *r;
+        if (!unk_2c)
+            r = 0;
+        else if (i < 0 || i >= unk_28)
+            r = 0;
+        else
+            r = &unk_2c[i];
+        return r;
+    }
     workTable();
     ~workTable();
     Instr *getBranch();
@@ -181,7 +193,9 @@ public:
     int func_08072eec();
     int getLogicalLen();
     int getPhysicalLen();
-    void func_08072c70();
+    void dump();
+    bool reserveEntry(int key, int row, int slot);
+    Instr *func_08073060();
     const char *ownerName();
     bool func_08073854();
     bool dispose();

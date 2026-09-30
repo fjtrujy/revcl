@@ -88,7 +88,7 @@ void instStream::dump(int)
         func_0804ac7c("iStream:: dump - null work table - defaulting to inputTable\n");
         wt = &unk_148;
     }
-    wt->func_08072c70();
+    wt->dump();
     unk_134.dump();
     int dep = func_0805f284();
     int log = func_0805f29c();

@@ -1,5 +1,6 @@
 // iTable: work table construction and management (CIE group 24).
 #include "workTable.h"
+#include "instStream.h"
 
 workTable::workTable()
 {
@@ -99,4 +100,161 @@ bool workTable::dispose()
     unk_0c = -1;
     unk_10 = 0;
     return true;
+}
+
+void workTable::dump()
+{
+    switch (unk_09) {
+    case 0:
+        break;
+    case 1:
+    case 4:
+        for (Instr *p = unk_88.unk_00; p; p = p->unk_1c.unk_00)
+            p->func_08054008(false);
+        break;
+    case 3:
+    case 5:
+        for (int i = unk_30; i < unk_34; i++) {
+            wtRow *r = rowAt(i);
+            if (!r)
+                func_0804aeb0();
+            r->func_0807222c(i);
+        }
+        break;
+    case 2: {
+        int lsz = unk_38;
+        if (!unk_2c) {
+            func_0804ad38("code mode mid - but no table!\n");
+            func_0804aeb0();
+        }
+        if (!lsz && unk_34 < 0) {
+            wtRow *r = unk_2c;
+            for (int n = unk_28 - 1; n >= 0; n--, r++)
+                if (r->unk_00[0].unk_00 || r->unk_00[1].unk_00)
+                    break;
+        }
+        for (int i = unk_30; i < unk_34; i++) {
+            wtRow *r = rowAt(i);
+            if (!r)
+                func_0804aeb0();
+            r->func_0807222c(i);
+        }
+        for (Instr *p = unk_94.unk_00; p; p = p->unk_24.unk_00)
+            p->func_08054008(false);
+        break;
+    }
+    default:
+        func_0804ad38("unknown code mode for Dump()\n");
+        func_0804aeb0();
+    }
+    unk_14.func_0805b44c();
+}
+
+const char *workTable::ownerName()
+{
+    if (!unk_10)
+        return "UNOWNED_TABLE";
+    return unk_10->func_0806d674();
+}
+
+bool workTable::reserveEntry(int key, int row, int slot)
+{
+    bool even = !(key & 1);
+    if (even) {
+        func_0804ad38("can't reserve an entry with even key!\n");
+        func_0804aeb0();
+        return false;
+    }
+    Instr **ie = ((cls_unk30 *)this)->getIE_ck(row);
+    if (!ie) {
+        func_0804ad38("failed to reserve instruction!\n");
+        return false;
+    }
+    if (ie[slot]) {
+        func_0804ad38("can't reserve instruction - something already there!\n");
+        func_0804aeb0();
+    }
+    ie[slot] = (Instr *)key;
+    return true;
+}
+
+int workTable::func_08072eec()
+{
+    int len = -1;
+    switch (unk_09) {
+    case 3:
+        len = unk_0c;
+        break;
+    case 1:
+        func_0804ad38("called getlogical len on uta\n");
+        func_0804aeb0();
+        break;
+    case 4:
+        func_0804ac7c("called getlogical on synth stream\n");
+        len = 0;
+        break;
+    default:
+        func_0804ad38("unknown code mode for logical len\n");
+        func_0804aeb0();
+    }
+    return len;
+}
+
+int workTable::getLogicalLen()
+{
+    int len = 0;
+    switch (unk_09) {
+    case 1:
+    case 3:
+        len = unk_78;
+        break;
+    case 4:
+        break;
+    default:
+        func_0804ad38("unknown code mode for logical len\n");
+        func_0804aeb0();
+    }
+    return len;
+}
+
+int workTable::getPhysicalLen()
+{
+    int len = -1;
+    switch (unk_09) {
+    case 3:
+        if (!unk_2c) {
+            func_0804ad38("no table!\n");
+            func_0804aeb0();
+        }
+        if (unk_34 < unk_30) {
+            func_0804ad38("end before start\n");
+            func_0804aeb0();
+        }
+        len = unk_34 - unk_30;
+        break;
+    case 1:
+        func_0804ad38("called getphysical len on uta\n");
+        func_0804aeb0();
+        break;
+    case 4:
+        func_0804ac7c("called getlogical on synth stream\n");
+        len = 0;
+        break;
+    default:
+        func_0804ad38("unknown code mode for logical len\n");
+        func_0804aeb0();
+    }
+    if (len < 0) {
+        func_0804ad38("getPhysicalLen() - would return 0 - halting\n");
+        func_0804aeb0();
+    }
+    return len;
+}
+
+Instr *workTable::func_08073060()
+{
+    Instr *b = getBranch();
+    if (b && ((b->unk_1388 >> 2) & 1))
+        return b;
+    return 0;
 }

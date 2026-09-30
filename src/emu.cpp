@@ -63,7 +63,7 @@ bool emuTable(Program *p, workTable *wt)
         skipped += p->unk_80;
         if (skipped < wt->getPhysicalLen()) {
             func_0804ad38("logical len < physical len.. %d<%d!\n", p->unk_80, wt->getPhysicalLen());
-            wt->func_08072c70();
+            wt->dump();
             return false;
         }
         break;

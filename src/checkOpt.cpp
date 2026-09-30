@@ -115,7 +115,7 @@ bool checkOpt3(Program *p)
                             name = in->unk_34->unk_04;
                         func_0804ad38("linear list isn't in order at guid=%d %s prev=%p\n",
                                       in->unk_13e0, name, in->unk_1c.unk_04);
-                        wt->func_08072c70();
+                        wt->dump();
                         return false;
                     }
                     prev = in;
@@ -138,7 +138,7 @@ bool checkOpt3(Program *p)
             if (count != lcount) {
                 func_0804ad38("linear count and itable mismatch (%d != %d) for %s\n",
                               lcount, count, s->func_0806d674());
-                wt->func_08072c70();
+                wt->dump();
                 return false;
             }
         }
