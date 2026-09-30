@@ -214,6 +214,11 @@ public:
     bool func_08073774(unsigned char mode);
     bool init(unsigned char mode, int size);
     bool changeMode(unsigned char mode);
+    bool clearClones();
 };
+
+bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bool a6, bool a7);
+extern Instr *g_080de72c;   // instr with smallest unk_1396
+void func_080737b8(Instr *in);
 
 #endif

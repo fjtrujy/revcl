@@ -379,3 +379,132 @@ bool workTable::putIn(Instr *i)
     row->unk_00[p->unk_02].unk_00 = i;
     return 1;
 }
+
+bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bool a6, bool a7)
+{
+    if (lidE > lidS) {
+        func_0804ad38("CloneAppend - lid_e>lid_s\n");
+        func_0804aeb0();
+    }
+    if (!to) {
+        func_0804ad38("CloneAppend - null input pointer\n");
+        return 0;
+    }
+    if (!to->unk_2c) {
+        func_0804ad38("clone append - source table has no attached table\n");
+        return 0;
+    }
+    if (!from->unk_2c) {
+        func_0804ad38("clone append - destination table has no attached table\n");
+        return 0;
+    }
+    int n = from->unk_34 - from->unk_30;
+    int need = n + to->unk_34;
+    if (need > to->unk_28 && !to->grow(need + 0x20)) {
+        func_0804ad38("uh-oh, failed to grow a table\n");
+        return 0;
+    }
+    int j, i;
+    for (i = from->unk_30, j = to->unk_34; i != from->unk_34; i++, j++) {
+        wtRow *sr = &from->unk_2c[i];
+        wtRow *dr = &to->unk_2c[j];
+        for (int p = 0; p != 2; p++) {
+            Instr *in = sr->getEntry(p);
+            Instr *c = 0;
+            if (dr->getEntry(p)) {
+                func_0804ad38("CloneAppend: would overwrite inst in target\n");
+                return 0;
+            }
+            if (in) {
+                if (!in->unk_34) {
+                    func_0804ad38("no II in inst\n");
+                    from->dump();
+                }
+                if (!in->func_08054138() || a7) {
+                    int lid = in->unk_13e8.unk_03;
+                    if (lid <= lidS && lid >= lidE) {
+                        char f = in->unk_1388;
+                        if ((f && a5) || !f) {
+                            c = in->clone();
+                            if (!c) {
+                                func_0804ad38("failed to clone instruction\n");
+                                return 0;
+                            }
+                            c->unk_08 = 0;
+                            in->unk_08 = 0;
+                            if (a6)
+                                c->unk_13d2 = lidS - lid;
+                        }
+                    }
+                }
+            }
+            dr->unk_00[p].unk_00 = c;
+            if (c) {
+                cls08058718 pos;
+                c->setOwner((cls_unk30 *)to);
+                pos.setRow(j);
+                pos.unk_02 = p;
+                c->unk_13e8.setRow(j);
+                c->unk_13e8.unk_02 = p;
+            }
+        }
+    }
+    to->unk_34 += n;
+    return 1;
+}
+
+void workTable::dumpSynthetics()
+{
+    for (Instr *i = unk_88.unk_00; i; i = i->unk_1c.unk_00)
+        if (i->unk_13cd)
+            i->func_08054008(false);
+}
+
+bool workTable::clearClones()
+{
+    for (Instr *i = unk_88.unk_00; i; i = i->unk_1c.unk_00)
+        i->unk_08 = 0;
+    return 1;
+}
+
+int workTable::func_08073754()
+{
+    if (unk_09 == 3 || unk_09 == 5)
+        return unk_0a;
+    return 0;
+}
+
+bool workTable::func_08073774(unsigned char mode)
+{
+    unsigned char cm = unk_09;
+    if (unk_09 != 3 && unk_09 != 5 && mode) {
+        func_0804ad38("failed to set vsm mode - because code mode isn't vsm..mode=%d cm=%d\n", mode, cm);
+        func_0804aeb0();
+        return 0;
+    }
+    unk_0a = mode;
+    return 1;
+}
+
+Instr *g_080de72c;
+
+void func_080737b8(Instr *in)
+{
+    if (in) {
+        if (!g_080de72c || in->unk_1396 < g_080de72c->unk_1396)
+            g_080de72c = in;
+    }
+}
+
+bool workTable::func_080737e4()
+{
+    unk_0c = -1;
+    if (unk_2c && unk_30 >= 0) {
+        for (int i = unk_30; i < unk_34; i++)
+            if (!unk_2c[i].clearStalls()) {
+                func_0804ad38("failed to flow reset ientry\n");
+                return 0;
+            }
+    }
+    return 1;
+}
