@@ -303,6 +303,8 @@ struct Operand {
         return r;
     }
     RegPoolEntry *regOp() { return isRegOp() ? unk_18 : 0; }
+    bool isInReg() { return unk_09 == 1 && !isZero(); }
+    bool isOutReg() { return unk_09 == 2 && !isZero(); }
     bool isReg2()
     {
         bool r = false;
@@ -455,7 +457,7 @@ public:
     char unk_13cc;
     char unk_13cd;
     char unk_13ce;
-    char unk_13cf;
+    unsigned char unk_13cf;
     unsigned char unk_13d0;
     char unk_13d1;
     short unk_13d2;
