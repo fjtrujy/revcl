@@ -1,6 +1,8 @@
 #include "moveRec.h"
 #include "Processor.h"
 #include "os.h"
+#include "Block.h"
+#include "workTable.h"
 
 RegPool *GetRP(unsigned t);
 
@@ -241,4 +243,66 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
         return false;
     }
     return true;
+}
+
+bool resolveMovePipe(workTable *wt, Instr *mv, int pipe)
+{
+    if (mv->unk_142c == 0xb2)
+        mv->unk_142e = 0xb3;
+    else if (mv->unk_142c == 0xb4)
+        mv->unk_142e = pipe ? 0xb5 : 0xb6;
+    else {
+        func_0804ad38("resolve move: bad baseMuid\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (mv->unk_138c == 3)
+        wt->unk_b0--;
+    else if (mv->unk_138c & 1)
+        wt->unk_b4--;
+    else
+        wt->unk_b8--;
+    iInfo *ii = func_0806bf74(mv->unk_142e);
+    mv->unk_34 = ii;
+    mv->unk_138c = ii->unk_0e;
+    mv->unk_138d = ii->unk_10;
+    if (mv->unk_138c == 3)
+        wt->unk_b0++;
+    else if (mv->unk_138c & 1)
+        wt->unk_b4++;
+    else
+        wt->unk_b8++;
+    return true;
+}
+
+int unresolveMove(Block *blk, Instr *mv)
+{
+    iInfo *ii = func_0806bf74(mv->unk_142c);
+    if (mv->unk_138c == 3)
+        blk->unk_b0--;
+    else if (mv->unk_138c & 1)
+        blk->unk_b4--;
+    else
+        blk->unk_b8--;
+    mv->unk_142e = 0;
+    mv->unk_34 = ii;
+    mv->unk_138c = ii->unk_0e;
+    mv->unk_138d = ii->unk_10;
+    if (mv->unk_138c == 3)
+        blk->unk_b0++;
+    else if (mv->unk_138c & 1)
+        blk->unk_b4++;
+    else
+        blk->unk_b8++;
+    return 1;
+}
+
+void adjustMoveCount(Block *blk, Instr *mv, int n)
+{
+    if (mv->unk_138c == 3)
+        blk->unk_b0 += n;
+    else if (mv->unk_138c & 1)
+        blk->unk_b4 += n;
+    else
+        blk->unk_b8 += n;
 }

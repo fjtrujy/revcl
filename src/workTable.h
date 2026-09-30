@@ -117,7 +117,11 @@ public:
     char unk_48[0x88 - 0x48];
     wtInstrList unk_88;     // linear list
     int unk_90;             // linear count
-    char unk_94[0xc8 - 0x94];
+    char unk_94[0xb0 - 0x94];
+    int unk_b0;             // move count, class 3
+    int unk_b4;             // move count, odd class
+    int unk_b8;             // move count, even class
+    char unk_bc[0xc8 - 0xbc];
     int unk_c8;             // instruction count in table
 
     wtRow *func_080724f0(int i);

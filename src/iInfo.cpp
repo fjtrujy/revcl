@@ -228,16 +228,16 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
     return mv;
 }
 
-int func_08071e64(Block *blk, Instr *mv);
+int unresolveMove(Block *blk, Instr *mv);
 bool UnlinkFromToDo(Block *blk, Instr *n);
 void func_08073bb0(Block *blk, Instr *mv);
-void func_08071ef8(Block *blk, Instr *mv, int);
+void adjustMoveCount(Block *blk, Instr *mv, int);
 bool addFreeMove(Instr *mv);
 
 bool undoMove(Block *blk, Instr *mv)
 {
     if (mv->unk_142e)
-        func_08071e64(blk, mv);
+        unresolveMove(blk, mv);
     Operand *out = mv->getOp(0);
     Operand *in = mv->getOp(1);
     RegPoolEntry *orig = in->unk_18;
@@ -311,7 +311,7 @@ bool undoMove(Block *blk, Instr *mv)
         func_0804aeb0();
     }
     func_08073bb0(blk, mv);
-    func_08071ef8(blk, mv, -1);
+    adjustMoveCount(blk, mv, -1);
     addFreeMove(mv);
     return true;
 }
