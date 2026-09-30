@@ -82,7 +82,7 @@ bool func_080642ec(Program *p, instStream *s)
     Instr *i;
     workTable *wt;
 
-    wt = s->getWorkTable();
+    wt = s->getTable();
     int linear = wt->unk_c8;
     int iCount = wt->unk_88.unk_08;
     if (linear != iCount) {
