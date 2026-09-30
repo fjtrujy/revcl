@@ -116,7 +116,7 @@ public:
     char unk_141[3];
     int unk_144;
     workTable unk_148;           // own work table
-    int unk_214;
+    workTable *unk_214;  // opt table
     workTable *unk_218;  // work table
     workTable *unk_21c;  // tidied work table
     int unk_220;
