@@ -374,3 +374,41 @@ bool splitStreams()
     func_0804ad38("split streams called\n");
     return false;
 }
+
+bool modLsqq(Instr *in, int imm)
+{
+    iInfo *ii;
+    switch ((unsigned char)in->unk_13ce) {
+    case 1:
+        ii = func_0806bf74(0x9b);
+        break;
+    case 2:
+        ii = func_0806bf74(0xa0);
+        break;
+    default:
+        func_0804ad38("mod_lsqq: ?\n");
+        func_0804aeb0();
+        return false;
+    }
+    in->unk_34 = ii;
+    in->unk_38[2].unk_2c[0].func_080560e8();
+    in->unk_38[1].unk_2c[0].func_080560e8();
+    in->unk_138b = 2;
+    in->unk_38[1].unk_27 = 1;
+    Operand *op = &in->unk_38[1];
+    iOpDesc *d = &ii->unk_44[1];
+    op->unk_04 = d->unk_00;
+    op->unk_08 = d->unk_02 != 0;
+    op->unk_05 = d->unk_05;
+    op->unk_0d = d->unk_06;
+    if (op->unk_04 != 0x1d) {
+        func_0804ad38("modded lqsq isn't ea_imm_reg\n");
+        func_0804aeb0();
+        return false;
+    }
+    if (!op->unk_1c.setInt(imm)) {
+        func_0804ad38("failed to set new immediate\n");
+        return false;
+    }
+    return true;
+}
