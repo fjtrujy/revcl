@@ -2,6 +2,7 @@
 #include "workTable.h"
 #include "Instr.h"
 #include "Block.h"
+#include "wrangle.h"
 
 typedef bool (*wrangleFunc)(workTable *, int *);
 
@@ -23,11 +24,6 @@ bool func_080807e8(workTable *wt, wrangleFunc f);
 bool func_08081610(workTable *wt, Instr *in, int *row, int *pipe);
 int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos);
 
-struct wrangleCand {
-    Instr *unk_00;
-    short unk_04;       // row
-    char unk_06;        // pipe
-};
 
 bool func_0807f360(workTable *wt, wrangleFunc f)
 {
