@@ -216,6 +216,11 @@ public:
     Instr *getInstr(int rl, int p);
     Instr *getInstrInRange(int rl, int p);
     int getPipeCount(int p);
+    void resetCounts();
+    int getCurrentDoneSize();
+    bool getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1, int *minSfx2);
+    bool func_08073f90();
+    bool setRange();
 };
 
 const char *codeModeName(int mode);

@@ -1,6 +1,7 @@
 // iTable: work table construction and management (CIE group 24).
 #include "workTable.h"
 #include "instStream.h"
+#include "Block.h"
 
 workTable::workTable()
 {
@@ -310,7 +311,6 @@ Instr *workTable::getBranch()
     return (b && b->unk_1388) ? b : 0;
 }
 
-class Block;
 bool UnlinkFromLinear(Block *blk, Instr *n);
 bool func_08073bb0(Block *blk, Instr *in);
 
@@ -624,4 +624,171 @@ int workTable::getPipeCount(int p)
         func_0804aeb0();
     }
     return unk_c0[p];
+}
+
+bool logInstr(Block *blk, Instr *in)
+{
+    if (in->unk_138c == 3)
+        blk->unk_bc++;
+    else {
+        int n = 0;
+        if (in->unk_138c & 1) {
+            blk->unk_c0[0]++;
+            n = 1;
+        }
+        if (in->unk_138c & 2) {
+            n++;
+            blk->unk_c0[1]++;
+        }
+        if (n != 1) {
+            func_0804ad38("nad too many / too few\n");
+            func_0804aeb0();
+        }
+    }
+    blk->unk_c0[2]++;
+    return 1;
+}
+
+bool func_08073bb0(Block *blk, Instr *in)
+{
+    if (in->unk_138c == 3)
+        blk->unk_bc--;
+    else {
+        int n = 0;
+        if (in->unk_138c & 1) {
+            blk->unk_c0[0]--;
+            n = 1;
+        }
+        if (in->unk_138c & 2) {
+            n++;
+            blk->unk_c0[1]--;
+        }
+        if (n != 1) {
+            func_0804ad38("nad too many\n");
+            func_0804aeb0();
+        }
+    }
+    if (--blk->unk_c0[2] < 0) {
+        func_0804ad38("-ve icount\n");
+        return 0;
+    }
+    return 1;
+}
+
+void workTable::resetCounts()
+{
+    unk_c0[2] = 0;
+    unk_bc = 0;
+    unk_b0 = 0;
+    unk_b4 = 0;
+    unk_c0[0] = 0;
+    unk_b8 = 0;
+    unk_c0[1] = 0;
+}
+
+int workTable::getCurrentDoneSize()
+{
+    if (unk_38)
+        return unk_38;
+    int size = 0;
+    for (Instr *i = unk_a0.unk_00; i; i = i->unk_24.unk_00) {
+        int row = i->unk_13e8.unk_00;
+        if (row < 0) {
+            func_0804ad38("getCurrentDoneSize()\n");
+            return -1;
+        }
+        short m = i->unk_13b6;
+        if (m < i->unk_13b4)
+            m = i->unk_13b4;
+        int minToEnd = m;
+        if (minToEnd < 0) {
+            func_0804ad38("getCurrentDoneSize() - minToEnd was bad\n");
+            return -1;
+        }
+        if (i->unk_1388 && minToEnd <= 0)
+            minToEnd = 1;
+        if (row + minToEnd + 1 > size)
+            size = row + minToEnd + 1;
+    }
+    if (size < unk_44)
+        size = unk_44;
+    return size;
+}
+
+bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1, int *minSfx2)
+{
+    Instr *i = unk_a0.unk_00;
+    *maxLid = -1;
+    *maxBranchLid = -1;
+    *minSfx1 = 30000;
+    *minSfx2 = 30000;
+    for (; i; i = i->unk_24.unk_00) {
+        int lid = i->unk_13e8.unk_03;
+        if (lid > *maxLid)
+            *maxLid = lid;
+        switch ((unsigned char)i->unk_138e) {
+        case 0:
+            break;
+        case 1:
+            if (lid < *minSfx1)
+                *minSfx1 = lid;
+            break;
+        case 2:
+            if (lid < *minSfx2)
+                *minSfx2 = lid;
+            break;
+        default:
+            func_0804ad38("getCurrentLidStats - bad sfx\n");
+            return 0;
+        }
+        if (i->unk_1388 && lid > *maxBranchLid)
+            *maxBranchLid = lid;
+    }
+    if (*minSfx1 >= 30000)
+        *minSfx1 = -1;
+    if (*minSfx2 >= 30000)
+        *minSfx2 = -1;
+    return 1;
+}
+
+bool workTable::grow(int n)
+{
+    if (!unk_2c) {
+        func_0804ad38("can't grow.. there's nothing here\n");
+        return 0;
+    }
+    if (n <= unk_28)
+        return 1;
+    wtRow *nt = new wtRow[n];
+    if (!nt) {
+        func_0804ad38("failed to get new tab\n");
+        return 0;
+    }
+    for (int i = unk_30; i < unk_34; i++) {
+        nt[i] = unk_2c[i];
+        unk_2c[i].func_080721f8();
+    }
+    delete[] unk_2c;
+    unk_2c = nt;
+    unk_28 = n;
+    return 1;
+}
+
+bool workTable::func_08073f90()
+{
+    if (!unk_2c)
+        return 1;
+    return unk_34 <= unk_30;
+}
+
+bool workTable::setRange()
+{
+    if (!unk_2c) {
+        func_0804ad38("setRange - no table!\n");
+        return 0;
+    }
+    unk_30 = 0;
+    unk_34 = -1;
+    unk_38 = 0;
+    return 1;
 }

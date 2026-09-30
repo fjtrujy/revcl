@@ -25,6 +25,8 @@ public:
     int unk_b0;
     int unk_b4;
     int unk_b8;     // class-8 move count
+    int unk_bc;     // count of instrs using both pipes
+    int unk_c0[3];  // per-pipe instr counts, [2] = total
 };
 
 #endif
