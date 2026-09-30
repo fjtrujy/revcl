@@ -161,7 +161,7 @@ public:
     char unk_7e[2];
     short unk_80;
     short unk_82;
-    int unk_84;
+    Instr *unk_84;
     wtInstrList unk_88;     // linear list
     wtInstrList unk_94;
     wtInstrList unk_a0;

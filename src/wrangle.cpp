@@ -13,6 +13,16 @@ int g_080de750;
 char g_080de754;
 
 bool func_0807f560(workTable *wt, wrangleFunc f);
+bool dynCalcStats(workTable *wt);
+bool func_0806558c(Instr *i, int *row);
+bool func_0807f2c4(Block *blk, Instr *mv);
+bool func_08080460(workTable *wt, Instr *in, int *row, int *pipe);
+
+struct wrangleCand {
+    Instr *unk_00;
+    short unk_04;       // row
+    char unk_06;        // pipe
+};
 
 bool func_0807f360(workTable *wt, wrangleFunc f)
 {
@@ -72,4 +82,141 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
         return false;
     }
     return r;
+}
+
+bool buildCandidateList(workTable *wt)
+{
+    Instr *in;
+    in = wt->unk_94.unk_00;
+    wt->unk_4c = 0;
+    wt->unk_50 = 0;
+    cls08058718 pos;
+    int earliest;
+    int pipe = 0;
+    int row = 0;
+    wt->dump();
+    dynCalcStats(wt);
+    g_080de74c++;
+    for (; in; in = in->unk_24.unk_00) {
+        short m = in->unk_13b2;
+        if (m < in->unk_13b0)
+            m = in->unk_13b0;
+        int minRow = m;
+        earliest = 0;
+        if (!func_0806558c(in, &earliest)) {
+            func_0804ad38("failed check cand\n");
+            func_0804aeb0();
+        }
+        if (earliest < 0) {
+            in->func_08054008(false);
+            continue;
+        }
+        if (!in->unk_1410 && minRow < earliest)
+            minRow = earliest;
+        if (in->unk_1388) {
+            if (g_080b336c) {
+                minRow = g_080b336c - 2;
+                if (minRow < 0) {
+                    func_0804ad38("branch at bad pos for loop\n");
+                    func_0804aeb0();
+                }
+            } else {
+                if (wt->unk_94.unk_08 > 1)
+                    continue;
+                int d = wt->getCurrentDoneSize();
+                if (d < 0) {
+                    func_0804ad38("failed to get current done size\n");
+                    return false;
+                }
+                d -= 2;
+                if (minRow < d)
+                    minRow = d;
+                if (minRow < 0)
+                    minRow = 0;
+            }
+        }
+        for (int i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            RegPoolEntry *r = op->unk_18;
+            if (!r)
+                continue;
+            for (int j = 0; j != r->unk_28; j++) {
+                if ((op->unk_07 >> j) & 1) {
+                    if (op->isInReg()) {
+                        OpSlot *s = &op->unk_2c[j];
+                        cls0805bcc4 *p = s->getParent();
+                        if (!p) {
+                            func_0804ad38("input had no link\n");
+                            func_0804aeb0();
+                            return false;
+                        }
+                        if (!p->unk_2c)
+                            goto next;
+                        if (s->unk_19 != 2) {
+                            int t = p->unk_32 + p->unk_18 + s->unk_18;
+                            if (t > minRow)
+                                minRow = t;
+                        }
+                    }
+                }
+            }
+            Instr *mv = r->unk_20;
+            if (mv && in != mv && mv->unk_13e8.unk_04 < 0)
+                goto next;
+        }
+        if (wt->unk_38) {
+            int lim = 0;
+            switch ((unsigned char)in->unk_138e) {
+            case 0:
+                break;
+            case 1:
+                if (wt->unk_84)
+                    lim = (wt->unk_84->unk_13e8.unk_03 - wt->unk_7a) * wt->unk_38;
+                else
+                    lim = wt->unk_80;
+                break;
+            case 2:
+                if (wt->unk_84)
+                    lim = wt->unk_84->unk_13e8.unk_03 * wt->unk_38;
+                else
+                    lim = wt->unk_82;
+                break;
+            }
+            if (minRow < lim)
+                minRow = lim;
+        }
+        row = minRow;
+        pipe = 0;
+        if (func_08080460(wt, in, &row, &pipe)) {
+            in->unk_141e = row;
+            if (!func_0807f2c4((Block *)wt, in)) {
+                func_0804ad38("failed to add candidate\n");
+                return false;
+            }
+        }
+        if (!wt->unk_38 && wt->unk_50 > 16)
+            break;
+    next:;
+    }
+    return true;
+}
+
+bool func_080803dc(workTable *wt, wrangleCand *c)
+{
+    int pipe;
+    int row = c->unk_04;
+    Instr *in = c->unk_00;
+    pipe = 0;
+    if (in->unk_1388)
+        row = in->unk_141e;
+    if (in->unk_138c == 3)
+        pipe = c->unk_06 & 1;
+    else
+        pipe = in->unk_138c != 1;
+    if (func_08080460(wt, in, &row, &pipe)) {
+        c->unk_04 = row;
+        c->unk_06 = pipe;
+        return true;
+    }
+    return false;
 }
