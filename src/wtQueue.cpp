@@ -36,6 +36,9 @@ bool optReset(Program *p);
 workTable *makeForceTable(Program *p, instStream *s);
 void func_0806ed78(Program *p, int a);
 const char *stallReasonStr(short why);
+bool func_0807a3dc(workTable *wt);
+bool func_0807e528(Program *p, instStream *s, workTable *wt);
+bool func_0807e740(Program *p, workTable *wt, unsigned char a, unsigned char b);
 
 bool workTable::qRegRef(regUse *ru)
 {
@@ -871,4 +874,59 @@ bool relaxOpt(Program *p)
         }
     }
     return true;
+}
+
+bool func_08079fdc(Program *p, bool smart, bool sizeReduce)
+{
+    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+        if (s->func_0806d908() == 3) {
+            if (!prepExtInfo(p, s, 0)) {
+                func_0804ad38("failed to prep external info for stream\n");
+                return false;
+            }
+            if (!optReset(p)) {
+                func_0804ad38("failed to optReset cpu\n");
+                func_0804adf0(-1);
+            }
+            workTable *wt = makeForceTable(p, s);
+            if (!wt) {
+                func_0804ad38("failed to prepUta istream\n");
+                return false;
+            }
+            if (!func_0807e528(p, s, wt)) {
+                func_0804ad38("failed to do initial reduction test\n");
+                return false;
+            }
+            if (s->func_0806d9a0()) {
+                if (!func_0807e740(p, wt, s->unk_261, s->unk_262)) {
+                    func_0804ad38("failed to linear reduce table\n");
+                    return false;
+                }
+                if (!func_0807a3dc(wt)) {
+                    func_0804ad38("failed to prep for sred for %s\n", s->func_0806d674());
+                    return false;
+                }
+            }
+            if (!wt->doPostOpt(s->func_0806d968())) {
+                wt->dump();
+                func_0804ad38("failed to post opt after makeForce\n");
+                return false;
+            }
+            if (!s->setOptTable(wt)) {
+                func_0804ad38("set opt table - failed \n");
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+const char *getOptimiserName(int id)
+{
+    int numOptimisers = 11;
+    if (id < 0 || id >= numOptimisers) {
+        func_0804ad38("asked to get an out of bounds optimiser id\n");
+        func_0804aeb0();
+    }
+    return optTable[id].name;
 }
