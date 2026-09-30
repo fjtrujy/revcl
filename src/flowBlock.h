@@ -31,5 +31,6 @@ int func_080843a0(flowBlock *blocks, int count);
 flowBlock *func_08083768(Program *p, Parser *parser, int a, bool newSyntax, int *count);
 bool func_08085aa8(Program *p, flowBlock *blocks, int count, bool newSyntax);
 bool buildPassThru(Program *prog, instStream *s, flowBlock *blocks, int count);
+bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int loopMode);
 
 #endif
