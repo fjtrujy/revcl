@@ -1,4 +1,5 @@
 #include "Instr.h"
+#include "Block.h"
 #include "os.h"
 
 unsigned char iInfo::func_0806ffb4()
@@ -169,4 +170,60 @@ int func_0807031c(unsigned char)
 unsigned char func_08070324(unsigned char x)
 {
     return x >> 7;
+}
+
+Instr *getMove(int type, int);
+
+Instr *makeMove(Block *blk, RegPoolEntry *reg)
+{
+    int type = 0;
+    Instr *mv = 0;
+    if (blk->unk_b4 + blk->unk_b8 + blk->unk_b0 >= 2 * blk->unk_38)
+        return 0;
+    {
+        switch (reg->unk_24) {
+        case 8:
+            type = 1;
+            if (blk->unk_b8 >= blk->unk_38) {
+                blk->unk_ad = 1;
+                return mv;
+            }
+            break;
+        case 9:
+            type = 2;
+            break;
+        default:
+            func_0804ad38("can't make move for reg %s\n", reg->func_0805a8e0());
+            func_0804aeb0();
+        }
+        mv = getMove(type, 0);
+        if (mv == 0) {
+            func_0804ad38("failed to get a free move\n");
+            func_0804aeb0();
+        }
+        Operand *in = mv->getOp(1);
+        if (!in) {
+            func_0804ad38("failed to get move input!\n");
+            func_0804adf0(1);
+        }
+        Operand *out = mv->getOp(0);
+        if (!out) {
+            func_0804ad38("failed to get move output!\n");
+            func_0804adf0(1);
+        }
+        RegPoolEntry *dup = out->unk_18;
+        if (!dup) {
+            func_0804ad38("failed to dup  a reg\n");
+            func_0804aeb0();
+        }
+        mv->unk_141a = blk->unk_38;
+        in->unk_18 = reg;
+        in->unk_2b = 1;
+        in->unk_10 = 0;
+        out->unk_2b = 1;
+        out->unk_10 = 0;
+        mv->unk_13d1 = 1;
+        mv->unk_138e = 0;
+    }
+    return mv;
 }

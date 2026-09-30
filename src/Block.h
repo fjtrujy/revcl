@@ -20,6 +20,11 @@ public:
     Instr *unk_a0;  // Done list head
     Instr *unk_a4;  // Done list tail
     int unk_a8;     // Done list count
+    char unk_ac;
+    bool unk_ad;    // move limit reached
+    int unk_b0;
+    int unk_b4;
+    int unk_b8;     // class-8 move count
 };
 
 #endif
