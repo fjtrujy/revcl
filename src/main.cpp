@@ -47,7 +47,7 @@ int func_0807aa28(Program *p);
 bool func_0807aee4(Program *p);
 bool bindExternals(Program *p);
 bool func_08085a9c(Program *p);
-bool func_080889e8(Program *p);
+bool buildRegWebs(Program *p);
 void func_08088c50(Program *p);
 bool func_080891cc(Program *p);
 
@@ -321,7 +321,7 @@ int main(int argc, char **argv)
         func_0804ad38("generic dependency code decided to die\n");
         func_0804adf0(-1);
     }
-    if (!func_080889e8(&flow)) {
+    if (!buildRegWebs(&flow)) {
         func_0804ad38("failed to gather flow\n");
         func_0804adf0(-1);
     }
@@ -380,7 +380,7 @@ int main(int argc, char **argv)
             func_0804ad38("failed to bind externals\n");
             func_0804adf0(-1);
         }
-        if (!func_080889e8(&flow)) {
+        if (!buildRegWebs(&flow)) {
             func_0804ad38("failed to gather flow\n");
             func_0804adf0(-1);
         }

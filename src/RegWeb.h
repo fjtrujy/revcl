@@ -26,6 +26,11 @@ public:
     static bool merge(RegWeb *w_a, RegWeb *w_b);
     static bool setfMap(RegWeb *w, RegPoolEntry *r);
     static bool AddiTable(workTable *t);
+    static bool PatchOperand(Operand *op);
+    static bool PatchInstr(Instr *in);
+    static bool PatchITable(workTable *t);
+    static void Dump();
+    static bool ClearWebs(workTable *t);
 };
 
 extern RegWeb regWebs[0x4000];

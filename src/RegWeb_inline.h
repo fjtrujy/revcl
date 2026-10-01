@@ -5,6 +5,10 @@
 #pragma interface
 
 #include "RegWeb.h"
+#include "Program.h"
+#include "instStream.h"
+
+bool func_0806c6dc(Program *p);
 
 inline bool resetRegWebs()
 {
@@ -296,6 +300,131 @@ inline bool GatherWeb()
         }
     }
     regWebUsed = used;
+    return true;
+}
+
+inline bool RegWeb::PatchOperand(Operand *op)
+{
+    if (!op)
+        return true;
+    RegWeb *w = op->GetWeb();
+    if (w) {
+        RegPoolEntry *r = w->unk_00;
+        if (!r) {
+            func_0804ad38("patch operand - web has no reg\n");
+            return false;
+        }
+        op->unk_18 = r;
+        if (op->unk_10 && op->unk_10 != r) {
+            func_0804ad38("not forcing to a base reg after all - in PatchOperands %s isn't %s\n",
+                          op->unk_10->func_0805a8e0(), r->func_0805a8e0());
+            int have = op->unk_18->unk_14;
+            int want = op->unk_10->unk_14;
+            func_0804ad38("have %d %d\n", want, have);
+            return false;
+        }
+    }
+    return true;
+}
+
+inline bool RegWeb::PatchInstr(Instr *in)
+{
+    if (!in)
+        return true;
+    for (int i = 0; i != in->unk_138b; i++) {
+        Operand *op = &in->unk_38[i];
+        if (!PatchOperand(op))
+            return false;
+    }
+    return true;
+}
+
+inline bool RegWeb::PatchITable(workTable *t)
+{
+    if (!t) {
+        func_0804ad38("RegWeb::PatchITable - passed a null pointer\n");
+        return false;
+    }
+    for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        if (!PatchInstr(in)) {
+            func_0804ad38("patchiTable - failed\n");
+            in->func_08054008(false);
+            return false;
+        }
+    }
+    return true;
+}
+
+inline void RegWeb::Dump()
+{
+    for (int i = 0; i != regWebCount; i++) {
+        if (regWebs[i].unk_10 && !regWebs[i].unk_04) {
+            func_0804ad38("Dump: dReg not set\n");
+            func_0804adf0(-1);
+        }
+    }
+}
+
+inline bool RegWeb::setfMap(RegWeb *w, RegPoolEntry *r)
+{
+    while (w->unk_0c)
+        w = w->unk_0c;
+    if (!r) {
+        func_0804ad38("regweb::setfMap - asked to set a null mapping\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (r->unk_14) {
+        func_0804ad38("regweb:: setfMap - can't setfmap to virtual!\n");
+        func_0804adf0(-1);
+        return false;
+    }
+    if (w->unk_08) {
+        if (w->unk_08 != r) {
+            func_0804ad38("regweb:: set map - can't map to different base registers..\n");
+            func_0804ad38("regweb:: try to map both %s and %s\n",
+                          w->unk_08->func_0805a8e0(), r->func_0805a8e0());
+            return false;
+        }
+    } else
+        w->unk_08 = r;
+    return true;
+}
+
+inline bool buildRegWebs(Program *p)
+{
+    resetRegWebs();
+    if (!func_0806c6dc(p)) {
+        func_0804ad38("flow:: reset the webs\n");
+        return false;
+    }
+    instStream *s;
+    for (s = p->unk_a0; s; s = s->unk_108)
+        RegWeb::ClearWebs(s->getWorkTable());
+    for (s = p->unk_a0; s; s = s->unk_108) {
+        if (!RegWeb::AddiTable(s->getWorkTable())) {
+            func_0804ad38("flow: AddIStream failed for %s\n", s->func_0806d674());
+            return false;
+        }
+    }
+    if (!GatherWeb()) {
+        func_0804ad38("flow::GatherWeb() failed\n");
+        return false;
+    }
+    for (s = p->unk_a0; s; s = s->unk_108) {
+        if (!RegWeb::PatchITable(s->getWorkTable())) {
+            func_0804ad38("flow: failed to patch ist %s\n", s->func_0806d674());
+            return false;
+        }
+    }
+    return true;
+}
+
+inline bool RegWeb::ClearWebs(workTable *t)
+{
+    for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+        for (int i = 0; i != in->unk_138b; i++)
+            in->unk_38[i].unk_00 = 0;
     return true;
 }
 
