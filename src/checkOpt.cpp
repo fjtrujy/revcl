@@ -105,7 +105,7 @@ bool checkOpt3(Program *p)
                     Instr *in = ie[j];
                     if (!in)
                         continue;
-                    if ((int)in & 1) {
+                    if (((int)in & 1) == 1) {
                         func_0804ad38("found a key in an instruction slot\n");
                         return false;
                     }
