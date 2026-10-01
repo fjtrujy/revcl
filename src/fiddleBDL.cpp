@@ -6,13 +6,15 @@ bool setRange(int start, int end, int lsz);
 bool moveLocks(Instr *i, cls08058718 *pos);
 int func_0807dc44(workTable *wt, Instr *i, cls08058718 *pos);
 
+static inline bool noReduce(workTable *wt)
+{
+    return wt->unk_09 == 3 && (wt->unk_0a == 2 || wt->unk_0a == 4);
+}
+
 bool fiddleBDL(workTable *wt)
 {
     setRange(wt->unk_30, wt->unk_34, wt->unk_38);
-    bool skip = false;
-    if (wt->unk_09 == 3 && (wt->unk_0a == 2 || wt->unk_0a == 4))
-        skip = true;
-    if (!skip) {
+    if (!noReduce(wt)) {
     int len = wt->unk_34 - wt->unk_30;
     if (len < wt->unk_44) {
         func_0804ad38("table already smaller than extminlength in fiddleBDL\n");
