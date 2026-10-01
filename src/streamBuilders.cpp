@@ -9,6 +9,14 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
+static inline void dumpRowQuiet(wtRow *row)
+{
+    int saved = errorOccurred;
+    errorOccurred = !quiet_080bbd98;
+    row->func_0807222c(-1);
+    errorOccurred = saved;
+}
+
 bool buildPassThru(Program *prog, instStream *s, flowBlock *blocks, int count)
 {
     func_0804acb0("BLD_PASS\n");
@@ -131,10 +139,7 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
         if (n) {
             if (checkDispatchEntry(&row->unk_00[0].unk_00)) {
                 func_0804ad84("invalid instruction combination\n");
-                int saved = errorOccurred;
-                errorOccurred = !quiet_080bbd98;
-                row->func_0807222c(-1);
-                errorOccurred = saved;
+                dumpRowQuiet(row);
                 return false;
             }
             rows++;
