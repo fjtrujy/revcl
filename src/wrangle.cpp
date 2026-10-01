@@ -325,6 +325,7 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                         g_080de72c = wt->unk_a0.unk_00;
                     }
                     break;
+                case -1:
                 case 2:
                 case 3:
                     break;
@@ -381,18 +382,21 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                         func_0804ad38("failed to undo move\n");
                         func_0804aeb0();
                     }
-                    continue;
+                    in = 0;
                 }
-                in->unk_1418 = 0;
-                in->unk_141a++;
-                if (wt->unk_38 && in->unk_141a > wt->unk_38 * 16) {
-                    if (in->unk_1428) {
-                        if (!undoMovesTo((Block *)wt, in)) {
-                            func_0804ad38("failed to undo move\n");
-                            func_0804aeb0();
+                if (in) {
+                    in->unk_1418 = 0;
+                    in->unk_141a++;
+                    if (wt->unk_38 && in->unk_141a > wt->unk_38 * 16) {
+                        if (in->unk_1428) {
+                            if (!undoMovesTo((Block *)wt, in)) {
+                                func_0804ad38("failed to undo move\n");
+                                func_0804aeb0();
+                            }
+                            in = 0;
                         }
-                    } else {
-                        in->unk_141a = wt->unk_38 * 16;
+                        if (in)
+                            in->unk_141a = wt->unk_38 * 16;
                     }
                 }
             }
