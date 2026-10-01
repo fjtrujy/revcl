@@ -648,9 +648,9 @@ bool cls0805bcc4::calcStats(Instr *skip)
     int lsz = g_080b336c;
     cls0805c244 *ll = unk_04;
     unk_2e = 0;
+    int maxT = -30000;
     int minFree = 30000;
     int minUse = 30000;
-    int maxT = -30000;
     for (cls0805bcc4 *c = unk_0c; c; c = c->unk_08) {
         if (skip) {
             Instr *o = c->unk_2d == 1 ? (Instr *)c->unk_24 : 0;
@@ -677,10 +677,18 @@ bool cls0805bcc4::calcStats(Instr *skip)
     if (unk_2e != 0) {
         unk_3e = minFree;
         unk_42 = maxT;
-        if (lsz && unk_2d == 2) {
-            unk_36 = minFree;
-            unk_3a = minFree;
-        } else if (unk_2d == 2) {
+        if (lsz) {
+            if (isRegLock(this)) {
+                unk_36 = minFree;
+                unk_3a = minFree;
+            } else {
+                if (unk_15)
+                    unk_36 = unk_32 + 1;
+                else
+                    unk_36 = unk_18 + unk_32;
+                unk_3a = unk_18 + unk_32;
+            }
+        } else if (isRegLock(this)) {
             if (unk_18 == 0) {
                 unk_36 = 0;
                 unk_3a = 0;
@@ -708,7 +716,7 @@ bool cls0805bcc4::calcStats(Instr *skip)
                 func_0804ac7c("rLock::calcStats - stalls non fatal, but.. rfUsed_nolh before result write..rfu=%d rw=%d..this maybe important\n", minUse, unk_36);
         }
     } else {
-        if (unk_2d == 2) {
+        if (isRegLock(this)) {
             if (unk_18 == 0) {
                 unk_36 = 0;
                 unk_3a = 0;
