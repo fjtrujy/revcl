@@ -293,7 +293,7 @@ int propagateMoves(workTable *t)
 {
     wtInstrList *list = &t->unk_88;
     int count = 0;
-    for (Instr *in = list->unk_04; in; in = in->unk_1c.unk_04) {
+    for (Instr *in = list->unk_04; in; in = in->unk_1c.prev()) {
         if (in->func_080532d8() < 0) {
             func_0804ad38("failed to normalise instruction\n");
             return 0;
@@ -306,11 +306,12 @@ int propagateMoves(workTable *t)
         int keep = 0;
         int srcWritten = 0;
         int valid = mask;
+        iLink *l = &in->unk_1c;
         int row = in->unk_13e8.unk_00;
         Instr *n = in->unk_1c.unk_00;
         Instr *cur = n;
         if (row >= 0) {
-            Instr *p = in->unk_1c.unk_04;
+            Instr *p = l->prev();
             if (p && p->unk_13e8.unk_00 == row) {
                 bool a;
                 if (p->func_08054c24(dst, &a)) {
@@ -320,15 +321,15 @@ int propagateMoves(workTable *t)
                 bool b;
                 srcWritten = p->func_08054c24(src, &b);
             }
-            if (n && n->unk_13e8.unk_00 == row) {
+            if (l->unk_00 && l->unk_00->unk_13e8.unk_00 == row) {
                 bool a;
-                if (n->func_08054c24(dst, &a)) {
+                if (l->unk_00->func_08054c24(dst, &a)) {
                     func_0804ad38("seem to have two writes on same line!\n");
                     return 0;
                 }
                 bool b;
-                srcWritten |= n->func_08054c24(src, &b);
-                cur = n->unk_1c.unk_00;
+                srcWritten |= l->unk_00->func_08054c24(src, &b);
+                cur = l->unk_00->unk_1c.unk_00;
             }
         }
         int pendSrc = 0;

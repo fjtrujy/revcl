@@ -431,6 +431,8 @@ struct iLink {
     Instr *unk_00;  // next
     Instr *unk_04;  // prev
 
+    Instr *prev() { return unk_04; }
+
     iLink()
     {
         unk_04 = 0;
