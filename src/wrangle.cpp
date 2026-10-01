@@ -22,6 +22,8 @@ bool func_0807f2c4(Block *blk, Instr *mv);
 bool func_08080460(workTable *wt, Instr *in, int *row, int *pipe);
 bool func_080807e8(workTable *wt, wrangleFunc f);
 bool func_08081610(workTable *wt, Instr *in, int *row, int *pipe);
+bool buildCandidateList2(workTable *wt);
+bool func_0808158c(workTable *wt, wrangleCand *c);
 int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos);
 bool buildCandidateList(workTable *wt);
 bool func_080803dc(workTable *wt, wrangleCand *c);
@@ -637,6 +639,268 @@ bool func_0808061c(workTable *wt, wrangleFunc f)
         return false;
     }
     return r;
+}
+
+bool func_080807e8(workTable *wt, wrangleFunc f)
+{
+    cls08058718 pos;
+    for (;;) {
+        Instr *pending;
+        wrangleCand c;
+        int minPos;
+        wrangleCand mor;
+        if (g_080de75c) {
+            func_0804ac7c("time out..\n");
+            return false;
+        }
+    rebuild:
+        if (!buildCandidateList2(wt)) {
+            func_0804ad38("Wrangle: failed to build candidate list!\n");
+            return false;
+        }
+        if (!wt->unk_4c && !wt->unk_94.unk_00) {
+            wt->unk_30 = 0;
+            if (!wt->unk_38) {
+                int sz = wt->getCurrentDoneSize();
+                if (sz < 0) {
+                    func_0804ad38("error getting current done size\n");
+                    return false;
+                }
+                wt->unk_34 = sz;
+            } else {
+                wt->unk_34 = wt->unk_38;
+                int maxLid = 0;
+                int maxBranchLid = 0;
+                int minSfx2 = 0;
+                int minSfx1 = 0;
+                if (!wt->getCurrentLidStats(&maxLid, &maxBranchLid, &minSfx1, &minSfx2)) {
+                    func_0804ad38("failed to lid stats ?\n");
+                    return false;
+                }
+                bool b2 = minSfx2 >= 0 && minSfx2 < maxBranchLid;
+                bool b1 = minSfx1 >= 0 && minSfx1 < maxBranchLid - wt->unk_7a;
+                if (b2 || b1) {
+                    int lim2 = maxBranchLid * wt->unk_38;
+                    wt->unk_7c = maxBranchLid;
+                    int lim1 = (maxBranchLid - wt->unk_7a) * wt->unk_38;
+                    g_080de72c = 0;
+                    for (Instr *in = wt->unk_a0.unk_00; in; in = in->unk_24.unk_00) {
+                        switch ((unsigned char)in->unk_138e) {
+                        case 0:
+                            break;
+                        case 1:
+                            if (in->unk_13e8.unk_00 < lim1)
+                                func_080737b8(in);
+                            break;
+                        case 2:
+                            if (in->unk_13e8.unk_00 < lim2) {
+                                int saved = errorOccurred;
+                                errorOccurred = !quiet_080bbd98;
+                                in->leDump();
+                                errorOccurred = saved;
+                                func_080737b8(in);
+                            }
+                            break;
+                        default:
+                            func_0804ad38("bad case in sfx type\n");
+                            func_0804adf0(-1);
+                        }
+                    }
+                    if (!g_080de72c) {
+                        func_0804ad38("no fInst set after unwinding from bad side effects\n");
+                        func_0804adf0(-1);
+                    }
+                    func_0804acb0("sidefx : loop@ %d critical at %d recoverable at %d minSafe=%d..so abort\n",
+                                  maxBranchLid, minSfx2, minSfx1, (int)wt->unk_7a);
+                    goto faulted;
+                }
+            }
+            if (!wt->changeMode(3)) {
+                func_0804ad38("failed to change code mode to raw\n");
+                func_0804aeb0();
+            }
+            return true;
+        }
+        if (wt->unk_a0.unk_04)
+            wt->unk_54.func_0805874c(wt->unk_a0.unk_04->unk_13e8.unk_00);
+        else
+            wt->unk_54.func_0805874c(0);
+        pending = 0;
+        while (wt->unk_4c) {
+            if (!f(wt, (int *)&c)) {
+                wt->unk_4c = 0;
+                goto check_pending;
+            }
+            {
+                int lsz = wt->unk_38;
+                if (lsz && c.unk_00->unk_142c) {
+                    int pipe = c.unk_06;
+                    if (c.unk_00->unk_138c == 3) {
+                        if (wt->unk_b4 == lsz)
+                            pipe = 1;
+                        else if (wt->unk_b8 == lsz)
+                            pipe = 0;
+                        else if (wt->unk_ac)
+                            pipe = 0;
+                        else
+                            pipe = wt->unk_b4 > wt->unk_b8;
+                    }
+                    if (pipe == 1 && wt->unk_b8 == lsz && !wt->unk_ac)
+                        goto switch_pipe;
+                    if (!resolveMovePipe(wt, c.unk_00, pipe)) {
+                        func_0804ad38("failed to set up a move to a pipe\n");
+                        return false;
+                    }
+                }
+            }
+            if (func_0808158c(wt, &c)) {
+                if (!c.unk_00)
+                    func_0804adf0(-1);
+                pos.func_0805874c(c.unk_04);
+                pos.func_0805878c(c.unk_06);
+                minPos = c.unk_04;
+                g_080de72c = 0;
+                if (wt->unk_38) {
+                    if (!c.unk_00->unk_13d1)
+                        drag(wt, c.unk_00, &pos, wt->unk_38 >> 1, 0);
+                    else
+                        drag(wt, c.unk_00, &pos, wt->unk_38, 0);
+                } else {
+                    func_0807de00(wt, c.unk_00, &pos);
+                    func_0807e1f8(wt, c.unk_00, &pos);
+                }
+                g_080de72c = 0;
+                int ret = checkInsert(wt, c.unk_00, &pos, &minPos);
+                if (g_080de72c)
+                    goto faulted;
+                if (ret & 0x100) {
+                    int n = drag(wt, c.unk_00, &pos, wt->unk_38, 4);
+                    if (n < 0) {
+                        func_0804ad38("failed to drag setters\n");
+                        return false;
+                    }
+                    if (n)
+                        ret = checkInsert(wt, c.unk_00, &pos, &minPos);
+                    if ((ret & 0x100) && !pending) {
+                        pending = c.unk_00;
+                        mor = c;
+                        goto check_pending;
+                    }
+                }
+                if (!ret) {
+                    if (c.unk_00->unk_142c && !wt->unk_38) {
+                        if (!resolveMovePipe(wt, c.unk_00, c.unk_06)) {
+                            func_0804ad38("failed to assign a move to a pipe\n");
+                            func_0804adf0(-1);
+                        }
+                    }
+                    if (DoInsert(wt, c.unk_00, &pos)) {
+                        if (wt->unk_4c)
+                            goto next;
+                        goto check_pending;
+                    }
+                    func_0804ad38("was ok to insert..but failed!\n");
+                    wt->dump();
+                    func_0804adf0(-1);
+                }
+            }
+            {
+                Instr *prev = 0, *p;
+                for (p = wt->unk_4c; p; prev = p, p = p->unk_2c)
+                    if (p == c.unk_00)
+                        break;
+                if (p != c.unk_00) {
+                    func_0804ad38("instruction wasn't on candidate list\n");
+                    func_0804adf0(-1);
+                }
+                wt->unk_50--;
+                if (prev)
+                    prev->unk_2c = c.unk_00->unk_2c;
+                else
+                    wt->unk_4c = c.unk_00->unk_2c;
+            }
+        }
+    check_pending:
+        if (pending) {
+            c = mor;
+            int r = getMove((Block *)wt, c.unk_00, c.unk_04);
+            if (r < 0) {
+                func_0804ad38("oh no genmove failed!\n");
+                wt->dump();
+                func_0804adf0(-1);
+            }
+            if (!r)
+                goto rebuild;
+            if (r == 4)
+                func_0804ac7c("move wasn't needed - so try to code this\n");
+            if (wt->unk_ad && !wt->unk_ac)
+                goto switch_pipe;
+            if (r == 1) {
+                Instr *fi = g_080de72c;
+                wt->unk_4c = 0;
+                if (!fi)
+                    func_0804ac7c("finst not set for no slots\n");
+            }
+        }
+        if (wt->unk_4c)
+            continue;
+        goto undo;
+    switch_pipe:
+        wt->unk_ac = 1;
+        wt->unk_ad = 0;
+        g_080de72c = wt->unk_a0.unk_00;
+    faulted:
+        wt->unk_4c = 0;
+    undo:
+        {
+            wtInstrList *done = &wt->unk_a0;
+            if (!g_080de72c)
+                g_080de72c = done->unk_04;
+            while (done->unk_04 != g_080de72c) {
+                Instr *in = done->unk_04;
+                in->func_08054214();
+                if (!UndoInsert(wt, in)) {
+                    func_0804ad38("in finst track..undoinsert failed\n");
+                    func_0804adf0(-1);
+                    return false;
+                }
+                if (in->unk_1428 && !undoMovesTo((Block *)wt, in)) {
+                    func_0804ad38("failed to undo move\n");
+                    func_0804adf0(-1);
+                }
+            }
+            while (wt->unk_a0.unk_00) {
+                Instr *in = done->unk_04;
+                if (!UndoInsert(wt, in)) {
+                    func_0804ad38("undo insert: failed to remove done list tail\n");
+                    func_0804adf0(-1);
+                    return false;
+                }
+                if (++in->unk_1418 <= in->unk_141a)
+                    break;
+                in->func_08054214();
+                int mv = in->unk_1428;
+                if (in) {
+                    in->unk_1418 = 0;
+                    in->unk_141a++;
+                    if (wt->unk_38 && in->unk_141a > wt->unk_38 * 16) {
+                        if (mv) {
+                            if (!undoMovesTo((Block *)wt, in)) {
+                                func_0804ad38("failed to undo move\n");
+                                func_0804adf0(-1);
+                            }
+                            in = 0;
+                        }
+                        if (in)
+                            in->unk_141a = wt->unk_38 * 16;
+                    } else if (in->unk_141a > wt->unk_04 * 8)
+                        in->unk_141a = wt->unk_04 * 8;
+                }
+            }
+            g_080de72c = 0;
+        }
+    next:;
+    }
 }
 
 bool buildCandidateList2(workTable *wt)

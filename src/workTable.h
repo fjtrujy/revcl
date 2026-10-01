@@ -132,7 +132,8 @@ inline const char *codeModeStr(int mode)
 class workTable {
 public:
     int unk_00;
-    char unk_04[4];
+    short unk_04;
+    char unk_06[2];
     char unk_08;
     unsigned char unk_09;   // code mode
     unsigned char unk_0a;
