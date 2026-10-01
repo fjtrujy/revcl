@@ -113,7 +113,7 @@ int iGroupLog::logTable(workTable *wt)
                     if (in->unk_0e_0)
                         for (int j = 0; j != in->unk_138b; j++) {
                             Operand *op = &in->unk_38[j];
-                            RegPoolEntry *r = op->getReg();
+                            RegPoolEntry *r = op->regOp();
                             if (r)
                                 for (int k = 0; k != r->unk_28; k++)
                                     for (ol_s *o = op->unk_2c[k].unk_54.func_08058370(); o; o = o->func_080583ac())
