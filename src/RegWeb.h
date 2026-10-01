@@ -9,11 +9,11 @@
 
 class RegWeb {
 public:
-    void *unk_00;
+    RegPoolEntry *unk_00;   // assigned register
     RegPoolEntry *unk_04;   // virtual register of the web
-    int unk_08;
+    RegPoolEntry *unk_08;   // forced (mapped) register
     RegWeb *unk_0c;         // parent link (merged into)
-    short unk_10;           // count
+    unsigned short unk_10;  // count
     short unk_12;           // index in regWebs
     unsigned char unk_14;   // slot mask
     char unk_15[3];
@@ -33,5 +33,6 @@ extern int regWebUsed;
 extern int regWebCount;
 
 bool resetRegWebs();
+bool GatherWeb();
 
 #endif

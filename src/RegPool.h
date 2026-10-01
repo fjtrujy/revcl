@@ -34,6 +34,7 @@ struct rPart {
 
 class RegPool;
 class Instr;
+class RegWeb;
 
 struct RegPoolEntry {
     int unk_00;
@@ -88,8 +89,10 @@ struct RegPoolEntry {
     int unk_3c;
     int unk_40;
     rPart unk_44[4];
-    int unk_2b4;
+    RegWeb *unk_2b4;    // register web
     mList unk_2b8;
+
+    RegWeb *GetWeb();
 };
 
 class RegPool {

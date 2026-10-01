@@ -133,4 +133,170 @@ inline RegWeb *RegWeb::GetNewWeb(RegPoolEntry *old_vrg)
     return w;
 }
 
+inline bool RegWeb::merge(RegWeb *w_a, RegWeb *w_b)
+{
+    if (!w_a) {
+        func_0804ad38("RegWeb::merge.. w_a was null!\n");
+        return false;
+    }
+    unsigned char fa = 0, fb = 0;
+    while (w_a->unk_0c) {
+        fa |= w_a->unk_14;
+        if (w_a->unk_10) {
+            func_0804ad38("Merge: inconsistency - nUsed on chase\n");
+            func_0804adf0(-1);
+            return false;
+        }
+        if (w_a->unk_08) {
+            func_0804ad38("non-terminal web a had mapping\n");
+            func_0804adf0(-1);
+            return false;
+        }
+        w_a = w_a->unk_0c;
+    }
+    if (!w_a->unk_10) {
+        func_0804ad38("hit a terminal empty strand in web\n");
+        return false;
+    }
+    if (!w_b) {
+        func_0804ad38("RegWeb::merge .. b was null\n");
+        return false;
+    }
+    while (w_b->unk_0c) {
+        fb |= w_b->unk_14;
+        if (w_b->unk_10) {
+            func_0804ad38("Merge: inconsistency - nUsed on chase for w_b\n");
+            return false;
+        }
+        if (w_b->unk_08) {
+            func_0804ad38("web b had mapping\n");
+            func_0804adf0(-1);
+            return false;
+        }
+        w_b = w_b->unk_0c;
+    }
+    if (!w_b->unk_10) {
+        func_0804ad38("hit a terminal empty strand in web\n");
+        return false;
+    }
+    if (w_a == w_b)
+        return true;
+    if (w_b->unk_00 || w_a->unk_00) {
+        func_0804ad38("one or both strands had register attached!\n");
+        return false;
+    }
+    unsigned char m = fa | fb | w_b->unk_14 | w_a->unk_14;
+    w_a->unk_14 = m;
+    w_b->unk_14 = m;
+    if (w_a->unk_08) {
+        if (!setfMap(w_b, w_a->unk_08)) {
+            func_0804ad38("failed to load mapping from a into b\n");
+            return false;
+        }
+        w_a->unk_08 = 0;
+    }
+    w_b->unk_10 += w_a->unk_10;
+    w_a->unk_0c = w_b;
+    w_a->unk_10 = 0;
+    return true;
+}
+
+inline RegWeb *RegPoolEntry::GetWeb()
+{
+    RegWeb *w = unk_2b4;
+    if (!w)
+        return 0;
+    while (w->unk_0c) {
+        if (w->unk_10) {
+            func_0804ad38(" INTERNAL Register::GetWeb found non terminal count not at end!! for '%s' count=%d\n",
+                          func_0805a8e0(), w->unk_10);
+            func_0804adf0(-1);
+        }
+        w = w->unk_0c;
+    }
+    if (!w->unk_10) {
+        func_0804ad38("INTERNAL Register::terminal entry had zero count!\n");
+        func_0804adf0(-1);
+    }
+    return w;
+}
+
+inline RegWeb *Operand::GetWeb()
+{
+    RegWeb *w = unk_00;
+    if (!w)
+        return 0;
+    while (w->unk_0c) {
+        if (w->unk_10) {
+            func_0804ad38("INTERNAL : Operand::GetWeb found non terminal count!\n");
+            func_0804adf0(-1);
+        }
+        w = w->unk_0c;
+    }
+    if (!w->unk_10) {
+        func_0804ad38("INTERNAL : Operand::terminal entry had zero count!\n");
+        func_0804adf0(-1);
+    }
+    return w;
+}
+
+inline bool GatherWeb()
+{
+    int used = 0;
+    char name[128];
+    int i;
+    for (i = 0; i != regWebCount; i++) {
+        RegWeb *w = &regWebs[i];
+        if (w->unk_10 && w->unk_08) {
+            RegPoolEntry *r = w->unk_08;
+            if (r->unk_14 == 1) {
+                func_0804ad38("forced to a non-base register\n");
+                return false;
+            }
+            if (r->unk_2b4) {
+                if (!RegWeb::merge(r->unk_2b4, w)) {
+                    func_0804ad38("during mapped merge..failed for %s\n", r->func_0805a8e0());
+                    return false;
+                }
+            } else
+                r->unk_2b4 = w;
+        }
+    }
+    for (i = 0; i != regWebCount; i++) {
+        RegWeb *w = &regWebs[i];
+        if (w->unk_10) {
+            RegPoolEntry *r = w->unk_04;
+            if (!r) {
+                func_0804ad38("GatherWeb:: oh no - dReg not set\n");
+                func_0804adf0(-1);
+                return false;
+            }
+            if (w->unk_00) {
+                func_0804ad38("found register assign at unexpected place!\n");
+                func_0804adf0(-1);
+            }
+            if (w->unk_08)
+                w->unk_00 = w->unk_08;
+            else {
+                RegPool *pool = r->unk_04;
+                if (!pool) {
+                    func_0804ad38("Gather: register had no pool\n");
+                    return false;
+                }
+                func_0804adbc(name, "%s__%d", r->func_0805a8e0(), r->unk_10);
+                w->unk_00 = pool->func_08059a5c(name);
+                if (!w->unk_00) {
+                    func_0804ad38("GatherWeb: failed to get '%s' from %s\n", name, pool->unk_2c);
+                    return false;
+                }
+                w->unk_00->unk_2b4 = w;
+                r->unk_10++;
+                used++;
+            }
+        }
+    }
+    regWebUsed = used;
+    return true;
+}
+
 #endif
