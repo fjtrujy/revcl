@@ -17,6 +17,405 @@ static inline void copyToken(char *d, const char *s)
     d[i] = 0;
 }
 
+int gatherTokens(LocTag *t, int i, bool stopAtOpcode);
+int func_0804bf50(unsigned int x);
+bool func_0804bfcc(const char *a, const char *b);
+char *dupString(const char *s);
+int mstrlen(const char *s);
+bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax);
+bool parseImmediate(const char *s, unsigned char type, mValue *v);
+RegPool *GetRP(unsigned t);
+extern int g_080b34dc;
+
+Instr *Processor::getNextInstruction(LocTag *t, int *pos)
+{
+    ImplicitOp op;
+    char buf[0x801];
+    char nameBuf[0x400];
+    char fmtBuf[0x400];
+    int cur = *pos;
+    short loopid = 0;
+    bool explicitMods = false;
+    bool forcedMods = false;
+    bool ok = false;
+    int opBits = -1;
+    Instr *in = 0;
+    bool bad = false;
+    int mask;
+    iInfo *info;
+    int mods;
+    char tilde = 0;
+    int i;
+    char *p;
+    char *q;
+    bool hasMods;
+
+    if (!t) {
+        func_0804ad38("getNextInstruction - passed null pointer\n");
+        goto fail;
+    }
+    if (t->func_08050f18(cur)) {
+        func_0804ad38("getNextInstruction - tried to parse a comment\n");
+        goto fail;
+    }
+    {
+        char *s = t->func_08050be4(cur, 0);
+        char *d = buf;
+        for (i = 0; *s && i < 0x800; i++)
+            *d++ = *s++;
+        *d = 0;
+    }
+    mods = func_080521f0(buf);
+    p = buf;
+    if (buf[0] == '~') {
+        p = buf + 1;
+        tilde = 1;
+    }
+    q = p;
+    while (*q && !(q[0] == '.' && q[1] == '.'))
+        q++;
+    if (*q == '.') {
+        if (*p == '+')
+            loopid = 0x1024;
+        else {
+            loopid = func_0804add4(p);
+            if (loopid > 32) {
+                func_0804ad84("unlinkely large loopid set with instruction\n");
+                goto fail;
+            }
+        }
+        p = q + 2;
+    }
+    info = func_0806bf8c(p, unk_00);
+    if (!info) {
+        func_0804ad84("vcl can't find instruction '%s'\n", p);
+        goto fail;
+    }
+    cur++;
+    in = new Instr(info);
+    if (loopid < 0) {
+        func_0804ad84("parsed loop id is <0\n");
+        goto fail;
+    }
+    in->unk_1420 = loopid;
+    in->unk_1389 = mods;
+    in->unk_1392 = tilde;
+    bad = false;
+    hasMods = func_08051f08(p + mstrlen(info->unk_04), &mask, &bad);
+    if (bad) {
+        func_0804ad84("instruction has bad .modifier bits\n");
+        goto fail;
+    }
+    switch ((char)info->unk_0c) {
+    case 0:
+        break;
+    case 1:
+        if (hasMods) {
+            in->unk_138f = mask;
+            if (!(unsigned char)mask) {
+                func_0804ad84("getNextInstruction: instruction had zero mod bits\n");
+                goto fail;
+            }
+            forcedMods = true;
+            explicitMods = true;
+        } else
+            in->unk_138f = 15;
+        break;
+    case 2:
+        if (hasMods && mask != 7) {
+            func_0804ad84("getNextInstruction: XYZ instruction had bad mod bits\n");
+            goto fail;
+        }
+        forcedMods = true;
+        in->unk_138f = 7;
+        break;
+    case 3:
+        if (hasMods) {
+            if (in->unk_13ce == 1 && func_0804bf50(mask) != 1) {
+                func_0804ad84("getNextInstruction: MD_ONE instruction had bad mod bits. more than one?\n");
+                goto fail;
+            }
+            explicitMods = true;
+            in->unk_138f = mask;
+        }
+        break;
+    default:
+        func_0804ad38("processor: decode le - bad insn type\n");
+        goto fail;
+    }
+    op.unk_1000[0] = 0;
+    op.name[0] = 0;
+    op.unk_800[0] = 0;
+    op.unk_1800[0] = 0;
+    op.unk_2000 = 0;
+    op.unk_2008 = 0;
+    op.unk_200c = 0;
+    Operand *opd;
+    for (i = 0, opd = in->unk_38; i != in->unk_138b; i++, opd++) {
+        int next = cur;
+        if (opd->unk_08) {
+            if (!buildImplicitOperand(opd->unk_04, &op, unk_00)) {
+                func_0804ad38("getNextInstruction: failed to build implicit operand\n");
+                goto fail;
+            }
+            if (opd->unk_0d) {
+                if (opd->unk_09 != 1) {
+                    func_0804ad38("implicit web patch set for non-output\n");
+                    goto fail;
+                }
+                Operand *src = &in->unk_38[opd->unk_0d - 1];
+                if (src->unk_09 != 2) {
+                    func_0804ad38("implicit web patched operand not input\n");
+                    goto fail;
+                }
+                if (!src->unk_18) {
+                    func_0804ad38("no register found for implicit patch\n");
+                    goto fail;
+                }
+                func_0804adbc(op.name, "%s", src->unk_18->func_0805a8e0());
+            }
+        } else {
+            bool last = false;
+            if (i == in->unk_138b - 1 || opd[1].unk_08)
+                last = true;
+            opd->unk_24 = cur;
+            next = gatherTokens(t, cur, last);
+            if (next < 0)
+                goto fail;
+            if (info->func_08070020() == 11 && !gatheredToken[0]) {
+                gatheredToken[0] = ' ';
+                gatheredToken[1] = 0;
+            }
+            opd->unk_25 = next;
+            if (!oDecodeToken(opd->unk_04, gatheredToken, &op, unk_00)) {
+                func_0804ad84("failed to decode operand\n");
+                goto fail;
+            }
+        }
+        if (op.unk_1800[0]) {
+            if (in->unk_139c) {
+                func_0804ad84("more than one tagged operand associated with instruction at operand %d\n", i);
+                goto fail;
+            }
+            in->unk_139c = dupString(op.unk_1800);
+        }
+        if (op.unk_1000[0] && !parseImmediate(op.unk_1000, opd->unk_05, &opd->unk_1c)) {
+            func_0804ad38("failed to decode an immediate\n");
+            goto fail;
+        }
+        opd->unk_0c = op.unk_2004;
+        opd->unk_07 = op.unk_2000;
+        if (opd->unk_04 == 35 || opd->unk_04 == 42 || opd->unk_04 == 1 || opd->unk_04 == 9) {
+            if (forcedMods) {
+                if (opd->unk_07 != in->unk_138f && opd->unk_07 != 15)
+                    func_0804ac7c("getNextInstruction: forced mod bits!\n");
+                opd->unk_07 = in->unk_138f;
+            } else if (opBits < 0) {
+                opBits = opd->unk_07;
+                in->unk_138f = opBits;
+            } else if (opd->unk_07 != opBits) {
+                func_0804ad38("oDecode: bad mod bits in instruction.. not match opBitsStore (%x vs %x) op=%d?\n",
+                              opd->unk_07, opBits, i);
+                goto fail;
+            }
+        }
+        if (opd->unk_04 == 30 || opd->unk_04 == 31) {
+            if (explicitMods) {
+                if (opd->unk_0c) {
+                    if (opd->unk_0c != in->unk_138f) {
+                        func_0804ad38("ea/reg or imm(ea)reg has differing mod bits\n");
+                        goto fail;
+                    }
+                } else
+                    opd->unk_0c = in->unk_138f;
+            } else {
+                if (!opd->unk_0c) {
+                    func_0804ad38("have to set modbits for ea/reg or imm(ea)reg somewhere\n");
+                    goto fail;
+                }
+                if (info->unk_0c == 3 && func_0804bf50(opd->unk_0c) != 1) {
+                    func_0804ad38("only one mod field allowed (one of x,y,z, or w)\n");
+                    goto fail;
+                }
+                in->unk_138f = opd->unk_0c;
+            }
+        }
+        if (op.name[0]) {
+            int cls = -1;
+            if (opd->unk_04 == 38) {
+                if (op.unk_2008 == 1) {
+                    if (i != 2) {
+                        func_0804ad84("a scalar can only be the third operand in generic instruction\n");
+                        goto fail;
+                    }
+                    if (func_0804bfcc(op.name, "i")) {
+                        cls = 10;
+                        opd->unk_04 = 4;
+                    }
+                    if (func_0804bfcc(op.name, "q")) {
+                        cls = 10;
+                        opd->unk_04 = 7;
+                    }
+                    if (cls < 0) {
+                        cls = 9;
+                        opd->unk_04 = 3;
+                    }
+                } else if (op.unk_2008 == 2) {
+                    if (i == 0) {
+                        if (func_0804bfcc(op.name, "acc")) {
+                            cls = 10;
+                            opd->unk_04 = 9;
+                        }
+                    } else if (func_0804bfcc(op.name, "acc")) {
+                        func_0804ad84("ACC can only be first vector operand\n");
+                        goto fail;
+                    }
+                    if (cls < 0) {
+                        cls = 9;
+                        opd->unk_04 = 1;
+                    }
+                    opd->unk_07 = in->unk_138f;
+                    if (!unk_00) {
+                        func_0804ad38("new syntax off while parsing a tbd instruction\n");
+                        goto fail;
+                    }
+                } else {
+                    func_0804ad84("couldn't determine operand type for generic instruction\n");
+                    goto fail;
+                }
+            } else
+                cls = func_08057a34(opd->unk_04);
+            RegPool *pool = GetRP(cls);
+            if (!pool) {
+                func_0804ad38("oDecode: not find expected register ! regtype= '%d' operand = %d\n", cls, i);
+                goto fail;
+            }
+            char *s = nameBuf;
+            if (pool->unk_18 && unk_4c.unk_10 && !pool->func_08059418(op.name) && op.name[0] != '_') {
+                for (mNode *n = unk_4c.unk_10; n; n = n->unk_08) {
+                    char *np = n->unk_14;
+                    if (!np) {
+                        func_0804ad38("null name in parsep\n");
+                        goto fail;
+                    }
+                    bool found = false;
+                    while (*np && !found) {
+                        char *r = op.name;
+                        while (*r && *np && *r == *np) {
+                            r++;
+                            np++;
+                        }
+                        if (!*r && *np == ':')
+                            found = true;
+                        else {
+                            while (*np && *np != ':')
+                                np++;
+                            if (*np == ':')
+                                np++;
+                        }
+                    }
+                    if ((found && n->unk_18 == 0) || (!found && n->unk_18 == 1)) {
+                        s += func_0804adbc(s, "%d", (int)n->unk_10);
+                        break;
+                    }
+                }
+            }
+            func_0804adbc(s, "%s", op.name);
+            char *full = dupString(nameBuf);
+            RegPoolEntry *r = pool->func_08059944(full);
+            if (!r) {
+                func_0804ad84("oDecode: not find register '%s' from %s\n", full, pool->unk_2c);
+                goto fail;
+            }
+            if (op.unk_200c) {
+                RegPoolEntry *base = 0;
+                if (op.unk_800[0]) {
+                    base = pool->func_08059418(op.unk_800);
+                    if (!base) {
+                        func_0804ad84("request to bing non-base register\n");
+                        goto fail;
+                    }
+                    if (r->unk_18 && r->unk_18 != base)
+                        func_0804ac7c("changing binding for %s from %s to %s\n",
+                                      r->func_0805a8e0(), r->unk_18->func_0805a8e0(),
+                                      base->func_0805a8e0());
+                } else if (r->unk_18)
+                    base = r->unk_18;
+                else if (r->unk_14 != 1)
+                    base = r;
+                if (!base) {
+                    func_0804ad84(" can't figure out which base register to map %s to\n",
+                                  r->func_0805a8e0());
+                    goto fail;
+                }
+                if (base->unk_14 == 1) {
+                    func_0804ad38("what I thought was a base register isn't (%s maps to %s?)\n",
+                                  base->func_0805a8e0(), r->func_0805a8e0());
+                    goto fail;
+                }
+                r->unk_18 = base;
+                opd->unk_10 = base;
+            } else if (op.unk_800[0]) {
+                RegPoolEntry *base = pool->func_08059418(op.unk_800);
+                if (!base) {
+                    func_0804ad84("failed to find base map reg '%s'\n", op.unk_800);
+                    goto fail;
+                }
+                if (r->unk_14 != 1 && base != r) {
+                    func_0804ad84("base registers not the same\n");
+                    goto fail;
+                }
+                opd->unk_10 = base;
+            } else if (unk_65) {
+                RegPoolEntry *e = pool->func_08059418(op.name);
+                if (e && e != e->unk_04->unk_10)
+                    opd->unk_10 = e;
+            } else if (r->unk_14 != 1 && !r->unk_16)
+                opd->unk_10 = r;
+            opd->unk_18 = r;
+            opd->unk_14 = r;
+            if (full)
+                delete[] full;
+        }
+        cur = next;
+    }
+    if (!in->func_08053fac()) {
+        func_0804ad38("oDecode: sanity check failed\n");
+        goto fail;
+    }
+    if (info->unk_20 && !info->unk_20(info, in)) {
+        func_0804ad38("oDecode:: iBuildHook failed to patch instruction\n");
+        goto fail;
+    }
+    if (!in->func_08055ae4()) {
+        func_0804ad38("failed to patch status register dependency\n");
+        goto fail;
+    }
+    if (in->func_080532d8() < 0) {
+        func_0804ad38("failed to normalise instruction\n");
+        goto fail;
+    }
+    ok = true;
+    in->unk_14 = t;
+    in->unk_18 = *pos;
+    in->unk_1a = cur;
+fail:
+    if (ok)
+        *pos = cur;
+    else if (in) {
+        func_0804ad84("couldn't decode instruction .. problem is at:\n");
+        t->func_08050c40(cur);
+        if (in->func_080552a8(unk_00, fmtBuf, g_080b34dc))
+            func_0804ad84("expected format is: %s\n", fmtBuf);
+        delete in;
+        in = 0;
+    } else if (t) {
+        func_0804ad84("found a syntax error at :\n");
+        t->func_08050c40(cur);
+    }
+    return in;
+}
+
 bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *nOut)
 {
     char buf[0x800];

@@ -592,7 +592,7 @@ const char *func_08055254(int t)
     }
 }
 
-char *Instr::func_080552a8(bool flag, char *buf)
+char *Instr::func_080552a8(bool flag, char *buf, int)
 {
     if (!buf)
         return 0;

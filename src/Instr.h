@@ -628,7 +628,7 @@ public:
     bool func_08054d64(int n, int *out);
     bool changeBranchImmediate(const char *s);
     bool setOwner(cls_unk30 *s);
-    char *func_080552a8(bool flag, char *buf);
+    char *func_080552a8(bool flag, char *buf, int n);
     int func_080553b4(RegPoolEntry *reg, int mask);
     int func_0805544c(RegPoolEntry *reg, int mask);
     bool func_08055548();
