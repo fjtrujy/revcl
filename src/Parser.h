@@ -87,4 +87,14 @@ bool func_08050810(const char *s);
 bool func_0805082c(LocTag *t);
 int func_0805085c(LocTag *t);
 
+struct Program;
+
+// Source directive table entry (".name" -> handler).
+struct Directive {
+    const char *name;
+    bool (*fn)(Program *, LocTag *);
+};
+
+Directive *func_080519a0(LocTag *t);
+
 #endif

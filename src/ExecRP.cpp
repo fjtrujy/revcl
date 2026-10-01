@@ -17,10 +17,6 @@ bool func_08051e34(Program *prog, LocTag *t, int v);
 bool func_08088f20(RegPool *pool, const char *name, int size);
 int mstrlen(const char *s);
 
-struct Directive {
-    const char *name;
-    int (*fn)(Program *, LocTag *);
-};
 extern Directive directives_080b3160[28];
 
 int func_0805116c(Parser *p, LocTag *t)

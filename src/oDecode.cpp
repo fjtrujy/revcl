@@ -6,6 +6,8 @@
 #include "VUStr.h"
 #include "Instr.h"
 #include "workTable.h"
+#include "flowBlock.h"
+#include "Program.h"
 
 char gatheredToken[1024];
 
@@ -482,6 +484,337 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
         out[(*nOut)++] = ins;
     }
     return true;
+}
+
+flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, int *count)
+{
+    mList labels;
+    int nOut;
+    Instr *ins[2];
+    int pos = 0;
+    *count = 0;
+    bool ok = false;
+    int n = 0;
+    int lineIdx = 0;
+    int state = 0;
+    int exits = 0;
+    int enters = 0;
+    int maxLines = 0x1000;
+    p->proc.unk_64 = type;
+    p->proc.unk_00 = newSyntax;
+    flowBlock *blocks = 0;
+
+    if (type == 1) {
+        p->proc.unk_3d = 1;
+        p->proc.unk_65 = 0;
+    } else if (type == 2) {
+        p->proc.unk_3d = 3;
+        p->proc.unk_65 = 1;
+    } else {
+        func_0804ad38("Processor::Build:: bad build type request\n");
+        goto done;
+    }
+    p->proc.unk_62 = 0;
+    p->proc.unk_40 = 1;
+    p->proc.unk_3f = 0;
+    blocks = new flowBlock[0x1000];
+    if (!blocks) {
+        func_0804ad38("Processor::Build() new failed for decLine table\n");
+        goto done;
+    }
+    pos = 0;
+    while (lineIdx < parser->func_0805017c()) {
+        LocTag *t = parser->func_0805018c(lineIdx);
+        if (!t) {
+            func_0804ad38("NULL LE return\n");
+            goto done;
+        }
+        if (t->func_08050f48()) {
+            func_0804ad84("unexpected line continue\n");
+            goto done;
+        }
+        if (t->unk_08) {
+            flowBlock *b = &blocks[n];
+            b->unk_05 = 6;
+            char *s = dupString(t->unk_00);
+            if (!s) {
+                func_0804ad38("failed to dupe the pass thru text\n");
+                goto done;
+            }
+            b->unk_00 = s;
+            n++;
+            lineIdx++;
+            continue;
+        }
+        if (t->func_08050eec()) {
+            Directive *d = func_080519a0(t);
+            if (!d) {
+                func_0804ad84("failed to find a directive from line : \n");
+                t->func_08050c40(-1);
+                goto done;
+            }
+            if (!d->fn(p, t)) {
+                func_0804ad84("a directive parser failed at line:\n");
+                t->func_08050c40(-1);
+                goto done;
+            }
+            lineIdx++;
+            continue;
+        }
+        nOut = 0;
+        do {
+            t = parser->func_0805018c(lineIdx);
+            if (!t) {
+                func_0804ad38("got a null return.. while expanding line continues\n");
+                goto done;
+            }
+            int old = pos;
+            if (!p->proc.decodeLE(t, &pos, &labels, ins, &nOut)) {
+                func_0804ad38("failed to build list of instructions for line\n");
+                goto done;
+            }
+            if (pos >= func_0805085c(t)) {
+                lineIdx++;
+                pos = 0;
+            } else if (old >= pos) {
+                func_0804ad38("didn't advance start token during processing\n");
+                goto done;
+            }
+        } while (parser->func_08050738(lineIdx));
+        if (!nOut)
+            continue;
+        if (n < 0) {
+            func_0804ad38("out of bounds rLine getting decoded instructions\n");
+            goto done;
+        }
+        if (n >= maxLines) {
+            func_0804ad38("out of bounds rLine getting decoded instructions\n");
+            goto done;
+        }
+        flowBlock *b = &blocks[n];
+        b->func_08084220();
+        if (!b->unk_14.func_0804b4d0(&labels)) {
+            func_0804ad38("failed to grab labels from current list\n");
+            goto done;
+        }
+        bool synth = false;
+        for (int i = 0; i != nOut; i++) {
+            if (!ins[i]) {
+                func_0804ad38("instruction decoder appears to have failed?\n");
+                t->func_08050c40(-1);
+                goto done;
+            }
+            if (ins[i]->unk_13cd) {
+                if (nOut != 1) {
+                    func_0804ad84("only one synthetic allowed per line\n");
+                    t->func_08050c40(-1);
+                    goto done;
+                }
+                synth = true;
+            }
+            if (!func_080522c4(ins[i]->unk_1389, p->proc.unk_3d, false)) {
+                func_0804ad84("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
+                              codeModeName(p->proc.unk_3d));
+                ins[i]->leDump();
+                goto done;
+            }
+        }
+        b->unk_05 = p->proc.unk_3d;
+        b->unk_06 = p->proc.unk_3e;
+        if (synth) {
+            Instr *in = ins[0];
+            b->unk_0c[0] = in;
+            if (!in) {
+                func_0804ad38("during the initial build, found an iEntry, which thought it was synthetic, but had no instruction\n");
+                goto done;
+            }
+            switch ((unsigned char)in->unk_13cd) {
+            case 1:
+                if (state) {
+                    func_0804ad84("encountered enter directive in bad context\n");
+                    goto done;
+                }
+                enters++;
+                state = 1;
+                break;
+            case 2:
+                if (state != 1) {
+                    func_0804ad84("ValidateSynthetics: encountered an end enter directive, but not in enter context\n");
+                    goto done;
+                }
+                state = 0;
+                break;
+            case 3:
+            case 11:
+                if (state) {
+                    func_0804ad84("encountered exit directive in bad context\n");
+                    goto done;
+                }
+                exits++;
+                state = 2;
+                break;
+            case 4:
+                if (state != 2) {
+                    func_0804ad84("encountered a end enter directive, but not in enter context\n");
+                    goto done;
+                }
+                state = 0;
+                break;
+            case 5:
+                if (state) {
+                    func_0804ad84("encountered cont directive in bad context..mode=%d\n", state);
+                    goto done;
+                }
+                exits++;
+                break;
+            case 6:
+                if (state != 1) {
+                    func_0804ad84("encountered an input directive, but not in enter context\n");
+                    goto done;
+                }
+                break;
+            case 7:
+                if (state != 2) {
+                    func_0804ad84("encountered an output directive, but not in enter context\n");
+                    goto done;
+                }
+                break;
+            case 9:
+            case 12:
+                if (b->unk_05 == 3) {
+                    func_0804ad84("a loop size directive is an invalid directive for raw mode vsm..\n");
+                    goto done;
+                }
+                /* fall through */
+            case 8:
+                if (p->proc.unk_3f)
+                    b->unk_0a = p->proc.unk_40;
+                break;
+            case 10:
+                break;
+            default:
+                func_0804ad38("iStream::ValidateSynthetics() - unhandled/unexpected synthetic type (%d)\n",
+                              (unsigned char)in->unk_13cd);
+                in->func_08054008(false);
+                goto done;
+            }
+        } else if (p->proc.unk_3d == 3) {
+            if (nOut != p->proc.unk_38) {
+                func_0804ad84("in RAW decode mode, there weren't %d instructions on line : \n", p->proc.unk_38);
+                t->func_08050c40(-1);
+                goto done;
+            }
+            if (p->proc.unk_3f)
+                b->unk_0a = p->proc.unk_40;
+            for (int j = 0; j != p->proc.unk_38; j++)
+                b->unk_0c[j] = ins[j];
+        } else {
+            if (p->proc.unk_3f) {
+                func_0804ad38("Build() - was in loop mode during uta\n");
+                goto done;
+            }
+            if (nOut != 1) {
+                func_0804ad84("Build() - more than one instruction on the line in vcl mode\n");
+                t->func_08050c40(-1);
+                goto done;
+            }
+            Instr *in = ins[0];
+            if (!in) {
+                func_0804ad38("decode vcl - instruction ptr was null.. when I thought it wasn't\n");
+                t->func_08050c40(-1);
+                goto done;
+            }
+            if (in->unk_138a) {
+                func_0804ad84("vcl: instruction '%s' is unsupported, except in RAW mode.\n", in->unk_34->unk_04);
+                in->leDump();
+                delete in;
+                goto done;
+            }
+            b->unk_0c[0] = in;
+        }
+        if (b->unk_05 == 1) {
+            Instr *in = b->unk_0c[0];
+            if (in && ((in->unk_1388 >> 2) & 1)) {
+                int r = in->func_08053104();
+                if (r < 0) {
+                    func_0804ad38("failed to fixup a branch\n");
+                    goto done;
+                }
+                if (r == 0) {
+                    in->leDump();
+                    b->unk_0c[0] = 0;
+                    delete in;
+                    in = 0;
+                }
+                if (r == 2)
+                    in->leDump();
+            }
+        }
+        n++;
+    }
+    if (labels.unk_08) {
+        if (n < 0) {
+            func_0804ad38("out of bounds rLine extending table\n");
+            goto done;
+        }
+        if (n >= maxLines) {
+            func_0804ad38("out of bounds rLine extending table\n");
+            goto done;
+        }
+        func_0804ac7c("gathering labels at end of code into the final namelist\n");
+        if (!p->proc.unk_20.func_0804b4d0(&labels)) {
+            func_0804ad38("failed to grab ending labels\n");
+            goto done;
+        }
+        for (mNode *nd = p->proc.unk_20.unk_0c; nd; nd = nd->unk_04) {
+            if (nd->unk_18) {
+                func_0804ad84("can't attach [modifiers] to labels at the end of code\n");
+                func_0804ad84("Label '%s:' has '%s'\n", nd->unk_14, func_08052314(nd->unk_18));
+                goto done;
+            }
+        }
+    }
+    if (state) {
+        func_0804ad38("iStream::Validate - left stream - but not in null state\n");
+        goto done;
+    }
+    if (!enters) {
+        func_0804ad38("iStream: no enter directives!\n");
+        goto done;
+    }
+    if (!exits) {
+        func_0804ad38("iStream: no exit directives\n");
+        goto done;
+    }
+    for (int i = 0; i != n - 1; i++) {
+        mList *a = &blocks[i].unk_14;
+        if (!a->unk_0c)
+            continue;
+        for (int j = i + 1; j != n; j++) {
+            mList *c = &blocks[j].unk_14;
+            if (c->unk_0c) {
+                for (mNode *nd = a->unk_0c; nd; nd = nd->unk_04) {
+                    if (c->func_0804b284(nd->unk_14)) {
+                        func_0804ad84("found at least two uses of the label '%s' in the source\n", nd->unk_14);
+                        goto done;
+                    }
+                }
+            }
+        }
+    }
+    *count = n;
+    ok = true;
+done:
+    if (ok) {
+        if (p->proc.unk_4c.unk_08)
+            func_0804ac7c("scope stack open (depth %d) at end of source\n", p->proc.unk_4c.unk_08);
+    } else {
+        delete[] blocks;
+        blocks = 0;
+        *count = 0;
+    }
+    p->proc.unk_4c.func_0804b1b0();
+    return blocks;
 }
 
 int gatherTokens(LocTag *t, int i, bool stopAtOpcode)
