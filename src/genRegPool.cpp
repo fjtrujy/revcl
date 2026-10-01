@@ -8,6 +8,7 @@ bool func_0806f610(Program *p);
 bool func_0806f6a4(Program *p);
 bool setRange(int start, int end, int lsz);
 int func_0804bf50(unsigned int);
+int setRangeFrom(workTable *t);
 
 int maxParts_080bce20;
 int nRegs_080bce24;
@@ -599,4 +600,115 @@ genRegPool::genRegPool()
 
 genRegPool::~genRegPool()
 {
+}
+
+bool genRegPool::func_08088e54(workTable *t)
+{
+    if (!t) {
+        func_0804ad38("failed to get itable in nassign - which is not really likely\n");
+        return false;
+    }
+    if (!func_08059cdc()) {
+        func_0804ad38("failed to reset local allocation scheme for pool\n");
+        return false;
+    }
+    setRangeFrom(t);
+    if (!initAlloc(t->func_0807411c(), t->func_080741c0())) {
+        func_0804ad38("failed to set table range\n");
+        return false;
+    }
+    regUse *ru;
+    regUseList *list = &t->unk_14;
+    for (ru = list->firstReal(); ru; ru = ru->nextReal()) {
+        if (!set_in_aTab(ru)) {
+            func_0804ad38("failed to set forced register in aTab\n");
+            t->dump();
+            list->func_0805b44c();
+            func_0804adf0(-1);
+            return false;
+        }
+    }
+    RegPoolEntry *todo = 0;
+    Instr *in;
+    for (in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        Operand *op;
+        for (int o = 0; (op = in->getOp(o)) != 0; o++) {
+            RegPoolEntry *reg = op->unk_18;
+            if (func_08059e20(reg) && reg->unk_14 && reg->unk_3c < 0) {
+                if (!build_tTab(reg, (1 << reg->unk_28) - 1)) {
+                    func_0804ad38("failed to build ttab while building todolist\n");
+                    t->dump();
+                    func_0804adf0(-1);
+                }
+                reg->unk_3c = countTTab();
+                reg->unk_40 = todo;
+                todo = reg;
+                if (reg->unk_3c < 0) {
+                    func_0804ad38("-ve ttabsize\n");
+                    func_0804adf0(-1);
+                }
+            }
+        }
+    }
+    while (todo) {
+        RegPoolEntry *best = 0;
+        RegPoolEntry *bestPrev = 0;
+        int max = -1;
+        RegPoolEntry *prev = 0;
+        for (RegPoolEntry *p = todo; p; prev = p, p = p->unk_40) {
+            if (p->unk_3c > max) {
+                best = p;
+                bestPrev = prev;
+                max = p->unk_3c;
+            }
+        }
+        if (!best) {
+            func_0804ad38("failed to find lowest register!\n");
+            func_0804adf0(-1);
+        }
+        if (!build_tTab(best, (1 << best->unk_28) - 1)) {
+            func_0804ad38("failed to build tta externalb\n");
+            func_0804adf0(-1);
+        }
+        int r = bestReg();
+        if (r < 0) {
+            if (func_08059f70())
+                list->func_0805bab0();
+            else {
+                func_0804ad38("vcl failed to allocate a register of type %s, but there's no registers of this type available for it to use.. maybe adding a .init_.. directive would help\n", unk_2c);
+                func_0804ac44();
+                return false;
+            }
+            return false;
+        }
+        best->unk_18 = &unk_04[r];
+        if (!set_t_in_aTab(r)) {
+            ru->func_0805b51c();
+            list->func_0805b44c();
+            func_0804ad38("failed to set t\n");
+            func_0804adf0(-1);
+        }
+        dumpATab();
+        dumpTTab();
+        if (bestPrev)
+            bestPrev->unk_40 = best->unk_40;
+        else
+            todo = best->unk_40;
+    }
+    for (in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        Operand *op;
+        for (int o = 0; (op = in->getOp(o)) != 0; o++) {
+            RegPoolEntry *reg = op->unk_18;
+            if (func_08059e20(reg) && reg->unk_14) {
+                if (!reg->unk_18) {
+                    func_0804ad38("notmapped!, should have been mapped by now..%s!\n",
+                                  reg->func_0805a8e0());
+                    func_0804adf0(-1);
+                }
+                op->unk_18 = reg->unk_18;
+            }
+        }
+    }
+    dumpATab();
+    return true;
 }

@@ -88,8 +88,8 @@ struct RegPoolEntry {
     unsigned char unk_35;   // used slot mask
     short unk_36;
     int unk_38;
-    int unk_3c;
-    int unk_40;
+    int unk_3c;             // ttab size (nassign cost)
+    RegPoolEntry *unk_40;   // next in nassign todo list
     rPart unk_44[4];
     RegWeb *unk_2b4;    // register web
     mList unk_2b8;
