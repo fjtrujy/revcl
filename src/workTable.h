@@ -2,6 +2,7 @@
 #ifndef WORKTABLE_H
 #define WORKTABLE_H
 
+#include "os.h"
 #include "Instr.h"
 #include "tPairList.h"
 #include "regUseSlot.h"
@@ -244,6 +245,12 @@ public:
     bool forceInsert(Instr *in, cls08058718 *pos);
     bool doPostOpt(int rawMode);
     workTable *localClone();
+    int ctime(int l)
+    {
+        if (l < unk_30 || l >= unk_34)
+            func_0804ae34("nop line is bad\n");
+        return unk_2c[l].unk_0c;
+    }
     void clearLinear()
     {
         unk_88.reset();
