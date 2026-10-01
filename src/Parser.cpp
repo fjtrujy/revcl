@@ -120,10 +120,10 @@ void Parser::reset()
     }
 }
 
-extern char *g_080b3144;    // gasp line-number chars
-extern char *g_080b3148;    // token (non-whitespace) char set
-extern char *g_080b314c;    // block-start keyword
-extern char *g_080b3150;    // block-end keyword
+char *g_080b3144 = "0123456789.";    // gasp line-number chars
+char *g_080b3148 = "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?;";    // token (non-whitespace) char set
+char *g_080b314c = "----*";    // block-start keyword
+char *g_080b3150 = "*----";    // block-end keyword
 
 bool func_08050780(const char *s, const char *kw);
 
