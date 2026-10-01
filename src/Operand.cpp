@@ -263,17 +263,9 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         }
     }
     switch (unk_04) {
-    case 1:
-    case 2:
-    case 34:
-    case 39:
-    case 40:
-    case 41:
-    case 42:
-    case 43:
-    case 44:
-    case 54:
-        buf += func_0804adbc(buf, "%s", rn);
+    case 13:
+    emit_x:
+        buf += func_0804adbc(buf, "%sx", rn);
         break;
     case 3:
         if (unk_07 & 1)
@@ -308,10 +300,6 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         break;
     case 11:
         buf += func_0804adbc(buf, "%sxyz", rn);
-        break;
-    case 13:
-    emit_x:
-        buf += func_0804adbc(buf, "%sx", rn);
         break;
     case 14:
     emit_y:
@@ -353,6 +341,18 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         }
     case 28:
         buf += func_0804adbc(buf, "(%s)", rn);
+        break;
+    case 1:
+    case 2:
+    case 34:
+    case 39:
+    case 40:
+    case 41:
+    case 42:
+    case 43:
+    case 44:
+    case 54:
+        buf += func_0804adbc(buf, "%s", rn);
         break;
     case 32:
         if (!rn) {
