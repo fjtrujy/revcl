@@ -89,7 +89,7 @@ int iGroupLog::logTable(workTable *wt)
                         for (int k = 0; k != r->unk_28; k++) {
                             if (op->isReg2() && ((op->unk_27 >> k) & 1))
                                 in->func_08055aa8();
-                            if (op->isReg() && ((op->unk_27 >> k) & 1))
+                            if (op->isInRegB() && ((op->unk_27 >> k) & 1))
                                 in->func_08055a88();
                         }
                 }
@@ -100,7 +100,7 @@ int iGroupLog::logTable(workTable *wt)
                     if (in->unk_0e_1)
                         for (int j = 0; j != in->unk_138b; j++) {
                             Operand *op = &in->unk_38[j];
-                            RegPoolEntry *r = op->getReg2();
+                            RegPoolEntry *r = op->outRegOp();
                             if (r)
                                 for (int k = 0; k != r->unk_28; k++)
                                     for (ol_s *o = op->unk_2c[k].unk_54.func_08058370(); o; o = o->func_080583ac()) {
