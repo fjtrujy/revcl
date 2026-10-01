@@ -313,9 +313,10 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     emit_w:
         buf += func_0804adbc(buf, "%sw", rn);
         break;
-    case 27:
-        if (!unk_1c.isNumeric()) {
-            char *s = unk_1c.asChars();
+    case 27: {
+        mValue *imm = &unk_1c;
+        if (!imm->isNumeric()) {
+            char *s = imm->asChars();
             if (!s) {
                 func_0804ad38("failed to get chars from immediate operand\n");
                 return 0;
@@ -323,11 +324,12 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             buf += func_0804adbc(buf, "%s", s);
         } else {
             if (func_08070300(unk_05) == 2)
-                buf += func_0804adbc(buf, "%d", unk_1c.i);
+                buf += func_0804adbc(buf, "%d", imm->i);
             else
-                buf += func_0804adbc(buf, "0x%08x", unk_1c.u);
+                buf += func_0804adbc(buf, "0x%08x", imm->u);
         }
         break;
+    }
     case 31: {
         char *s = unk_1c.asChars();
         if (!s)
