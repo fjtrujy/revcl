@@ -8,6 +8,8 @@ bool optReset(Program *p);
 int setRangeFrom(workTable *t);
 bool fixupCloneFdeps(workTable *wt);
 
+int g_080b33f0 = 1;
+
 workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
 {
     workTable *wt = s->getTable();
