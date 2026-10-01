@@ -49,7 +49,7 @@ bool bindExternals(Program *p);
 bool func_08085a9c(Program *p);
 bool buildRegWebs(Program *p);
 void dumpThru(Program *p);
-bool func_080891cc(Program *p);
+bool assignExtRegisters(Program *p);
 
 bool func_08060018(Program *p, bool a);
 bool func_0806a74c(Program *p);
@@ -335,7 +335,7 @@ int main(int argc, char **argv)
     }
     if (dumpRegs)
         dumpThru(&flow);
-    if (!func_080891cc(&flow)) {
+    if (!assignExtRegisters(&flow)) {
         func_0806ed78(&flow, false);
         func_0804ad38("failed to assign externally visible stream registers\n");
         func_0804adf0(-1);

@@ -47,17 +47,17 @@ bool func_08088f20(RegPool *pool, const char *base, int size)
     return true;
 }
 
-bool memRegPool::func_080890f8(workTable *)
+bool memRegPool::func_08088e54(workTable *)
 {
     return true;
 }
 
-bool memRegPool::func_08089104(instStream *)
+bool memRegPool::assignExt(instStream *)
 {
     return true;
 }
 
-bool memRegPool::func_08089110(instStream *, RegPoolEntry *)
+bool memRegPool::func_08088e6c(instStream *, RegPoolEntry *)
 {
     return true;
 }

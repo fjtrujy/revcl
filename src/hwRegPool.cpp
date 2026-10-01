@@ -42,7 +42,7 @@ bool hwRegPool::func_08088e54(workTable *)
     return true;
 }
 
-bool hwRegPool::func_08088e60(instStream *)
+bool hwRegPool::assignExt(instStream *)
 {
     return true;
 }

@@ -35,6 +35,8 @@ struct rPart {
 class RegPool;
 class Instr;
 class RegWeb;
+class instStream;
+class workTable;
 
 struct RegPoolEntry {
     int unk_00;
@@ -99,6 +101,9 @@ class RegPool {
 public:
     RegPool();
     virtual ~RegPool();
+    virtual bool assignExt(instStream *s) = 0;                        // slot 2
+    virtual bool func_08088e6c(instStream *s, RegPoolEntry *reg) = 0; // slot 3
+    virtual bool func_08088e54(workTable *t) = 0;                     // slot 4
     bool Init(int a, const char* name, int cls, int b);
     void Dump();
     RegPoolEntry* func_080593e0(int index);
