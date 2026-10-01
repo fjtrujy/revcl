@@ -102,7 +102,7 @@ bool aaFixup(instStream *s)
             func_0804ad38("aaFixup - regref had no register\n");
             func_0804adf0(-1);
         }
-        Instr *in = (Instr *)ru->unk_1c;
+        Instr *in = ru->unk_1c;
         aaDesc *aa = func_0806c768(in);
         olList *vis = &ru->unk_20[0].unk_00;
         if (!aa || !bit0(ru->unk_0c) || !bit0(ru->unk_0d) || ru->unk_18 != 1)

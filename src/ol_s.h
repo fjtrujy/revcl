@@ -29,15 +29,7 @@ struct ol_s {
     ol_s *func_080583ac();
     ol_s *func_08058414();
     void func_08058054(ol_s *src);
-    void init(Instr *inst, int op, int slot, bool ext)
-    {
-        reset();
-        if (ext)
-            unk_13 = 1;
-        unk_04 = inst;
-        unk_10 = op;
-        unk_11 = slot;
-    }
+    inline void init(Instr *inst, int op, int slot, bool ext);
 };
 
 #endif

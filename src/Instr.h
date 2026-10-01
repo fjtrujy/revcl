@@ -570,7 +570,7 @@ public:
     short unk_142e;
     short unk_1430;
     short unk_1432;
-    int unk_1434;
+    Instr *unk_1434;        // prevThruput writer
 
     bool isConcreteMove()
     {

@@ -17,4 +17,14 @@ inline void ol_s::func_08058054(ol_s *src)
     }
 }
 
+inline void ol_s::init(Instr *inst, int op, int slot, bool ext)
+{
+    reset();
+    if (ext)
+        unk_13 = 1;
+    unk_04 = inst;
+    unk_10 = op;
+    unk_11 = slot;
+}
+
 #endif

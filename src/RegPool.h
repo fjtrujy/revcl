@@ -87,7 +87,7 @@ struct RegPoolEntry {
     char unk_34;
     unsigned char unk_35;   // used slot mask
     short unk_36;
-    int unk_38;
+    Instr *unk_38;          // previous thruput writer
     int unk_3c;             // ttab size (nassign cost)
     RegPoolEntry *unk_40;   // next in nassign todo list
     rPart unk_44[4];
