@@ -23,7 +23,7 @@ struct regUse {
     bool unk_11;
     unsigned char unk_12;    // hazard bits per part
     unsigned char unk_13;
-    bool unk_14;
+    unsigned char unk_14;    // hazard broadcast bits per part
     char unk_15;
     short unk_16;
     short unk_18;

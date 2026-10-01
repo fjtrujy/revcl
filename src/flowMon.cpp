@@ -18,7 +18,7 @@ bool func_0806c0f8(Program *p);
 bool func_080642ec(Program *p, instStream *s);
 bool initBackTrace(Program *p);
 bool disposeBackTrace(Program *p);
-bool func_08062038(Program *p, instStream *s, RegPoolEntry *reg, int part, int depth, int mode, bool hot);
+bool doBackTrace(Program *p, instStream *s, RegPoolEntry *reg, int part, int depth, int mode, bool hot);
 bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b);
 
 bool func_08060018(Program *p, bool b)
@@ -91,7 +91,7 @@ bool func_08060018(Program *p, bool b)
                     if (mode == 1)
                         mode = 2;
                 }
-                if (!func_08062038(p, s, reg, part, depth, mode, hot)) {
+                if (!doBackTrace(p, s, reg, part, depth, mode, hot)) {
                     func_0804ad38("failed to back trace a register!\n");
                     return false;
                 }

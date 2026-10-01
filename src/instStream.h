@@ -127,7 +127,8 @@ public:
     unsigned char unk_226;      // visit mode (0 unvisited, 1 active, 2 visited, 3 end match, 4 dead end)
     char unk_227;
     char unk_228;               // hazard flag
-    char unk_229[0x22c - 0x229];
+    char unk_229;               // visited flag in hazard broadcast
+    char unk_22a[2];
     int unk_22c;                // dependency length used by back trace
     short unk_230;
     short unk_232;
