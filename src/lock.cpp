@@ -982,6 +982,27 @@ bool cls0805c244::setRepReg(RegPoolEntry *rg)
     return true;
 }
 
+static inline void wrapRange(int &s, int &e)
+{
+    if (g_080b336c) {
+        while (s >= g_080b336c) {
+            s -= g_080b336c;
+            e -= g_080b336c;
+        }
+    }
+}
+
+static inline void wrapRangeLocal(int &s, int &e)
+{
+    int n = g_080b336c;
+    if (n) {
+        while (s >= n) {
+            s -= n;
+            e -= n;
+        }
+    }
+}
+
 int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
 {
     cls0805bcc4 *lk = unk_1c;
@@ -1034,7 +1055,7 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
         return 0x2000;
     }
 
-    int start = in->unk_18 + par->unk_3a;
+    int start = par->unk_3a + in->unk_18;
     if (p < start) {
         if (start > *minPos)
             *minPos = start;
@@ -1054,13 +1075,8 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
     }
 
     int s = par->unk_34;
-    int e = d + s;
-    if (g_080b336c) {
-        while (s >= g_080b336c) {
-            s -= g_080b336c;
-            e -= g_080b336c;
-        }
-    }
+    int e = s + d;
+    wrapRangeLocal(s, e);
 
     bool isExt = false;
     if (lsz && par == unk_0c[0])
@@ -1246,16 +1262,6 @@ int cls0805c244::checkOverlap(cls0805bcc4 *out, short *pos, int *minPos)
         }
     }
     return ret;
-}
-
-static inline void wrapRange(int &s, int &e)
-{
-    if (g_080b336c) {
-        while (s >= g_080b336c) {
-            s -= g_080b336c;
-            e -= g_080b336c;
-        }
-    }
 }
 
 bool func_0805db74(int s1, int e1, int s2, int e2)
