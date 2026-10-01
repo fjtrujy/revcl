@@ -3,6 +3,7 @@
 
 class instStream;
 class workTable;
+class Instr;
 
 struct epiRec {
     int unk_00;
@@ -12,7 +13,7 @@ struct epiRec {
     int unk_10;
     instStream *unk_14;
     workTable *unk_18;
-    int unk_1c;
+    Instr *unk_1c;
 
     epiRec()
     {
