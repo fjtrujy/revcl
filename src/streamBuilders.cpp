@@ -948,3 +948,15 @@ PoolDef vuPools_080bbae0[] = {
     {2, "hw", "VU hardware register", 10, 0, 0, "EXT"},
     {0, 0, 0, 0, 0, 0, 0},
 };
+
+extern const char *pipeNames[16];
+
+CpuDef cpu_080bbb50 = {
+    "Marigold",
+    2,
+    vuPools_080bbae0,
+    pipeNames,
+    vuITable_080b3b20,
+    opPairTable_080b32e0,
+    opCountTable_080b3340,
+};

@@ -724,4 +724,18 @@ bool func_08057d9c(int kind);
 const char *func_0806a33c(unsigned char);
 extern ol_s *olFreeList;
 
+struct opPair_s {
+    int opcode;
+    signed char unk_04[4];
+    int unk_08;
+};
+
+struct opCount_s {
+    int opcode;
+    int unk_04;
+};
+
+extern opPair_s opPairTable_080b32e0[];
+extern opCount_s opCountTable_080b3340[];
+
 #endif
