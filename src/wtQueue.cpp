@@ -140,6 +140,190 @@ bool workTable::qRegRef(regUse *ru)
     return true;
 }
 
+bool setPipeBits(Instr *in);
+bool AddToDo_Tail(Block *blk, Instr *n);
+extern int g_080b33f0;
+
+bool workTable::qInstruction(Instr *in)
+{
+    int i;
+    if (!in->func_080541fc()) {
+        func_0804ad38("tried to queue a synthetic\n");
+        return false;
+    }
+    in->func_08054138();
+    Instr *c = in->clone();
+    if (!c) {
+        func_0804ad38("failed to clone instruction\n");
+        func_0804adf0(-1);
+    }
+    c->func_08055f78(in);
+    if (!unk_10) {
+        func_0804ad38("qInstruction - no owner\n");
+        return false;
+    }
+    if (c->unk_13d5 == 1 || c->unk_13d5 == 2) {
+        if (c->unk_13d6 < 0) {
+            func_0804ad38("m_aaOp<0 but dstMode is set!\n");
+            func_0804adf0(-1);
+        }
+        c->unk_38[c->unk_13d6].unk_2b = 2;
+    }
+    setPipeBits(c);
+
+    for (i = 0; i != c->unk_138b; i++) {
+        Operand *src = in->getOp(i);
+        Operand *dst = c->getOp(i);
+        if (!src || !dst) {
+            func_0804ad38("qInstruction failed to get an operand\n");
+            return false;
+        }
+        RegPoolEntry *reg = dst->unk_18;
+        if (!reg)
+            continue;
+        regUse *rr = unk_14.func_0805b5dc(reg);
+        if (!rr) {
+            func_0804ad38("find reg ref failed to find rr from owner.. by now - this is fatal.. register %s\n",
+                          reg->func_0805a8e0());
+            func_0804adf0(-1);
+        }
+        if (dst->isInRegOpB()) {
+            if (dst->unk_2b == 2)
+                dst->unk_09 = 3;
+        }
+        if (dst->isInRegOpB()) {
+            if (g_080b336c && func_0806c6c4(reg) && dst->unk_2b != 2)
+                dst->unk_2b = 1;
+            for (int k = 0; k != reg->unk_28; k++) {
+                if ((dst->unk_07 >> k) & 1) {
+                cls0805bcc4 *lk = &dst->unk_2c[k];
+                int a = 0;
+                cls0805c244 *ll = (cls0805c244 *)reg->func_0805a908(k);
+                if (!ll) {
+                    func_0804ad38("failed to get curr lock list during qinst\n");
+                    func_0804adf0(-1);
+                }
+                lk->setOwner(k, c, i);
+                cls0805bcc4 *out;
+                if ((dst->unk_27 >> k) & 1) {
+                    regUse *o = unk_14.func_0805b5dc(reg);
+                    if (!o) {
+                        func_0804ad38("failed to find regref owner for input\n");
+                        return false;
+                    }
+                    out = o->unk_20[k].func_0805b830();
+                } else {
+                    ol_s *ol = src->unk_2c[k].unk_54.unk_00;
+                    if (!ol || ol->unk_00) {
+                        func_0804ad38("more or less than one oploc for non-extern input\n");
+                        func_0804adf0(-1);
+                    }
+                    Instr *setter = ol->unk_04;
+                    if (!setter) {
+                        func_0804ad38("could not get setting op for setter\n");
+                        func_0804adf0(-1);
+                    }
+                    Instr *img = setter->unk_08;
+                    if (!img) {
+                        func_0804ad38("qInstruction - setter had null work clone set\n");
+                        return false;
+                    }
+                    if ((workTable *)img->unk_30 != this) {
+                        func_0804ad38("qInstruction  - image of setter wasn't in this table\n");
+                        return false;
+                    }
+                    Operand *sop = img->getOp(ol->unk_10);
+                    if (!sop) {
+                        func_0804ad38("failed to get setter operand\n");
+                        return false;
+                    }
+                    out = &sop->unk_2c[k];
+                    a = dst->unk_29;
+                }
+                lk->unk_19 = dst->unk_2b;
+                if (!ll->addInput(out, lk, a, dst->unk_0b)) {
+                    func_0804ad38("failed to register input operand\n");
+                    return false;
+                }
+                }
+            }
+        }
+        if (dst->isReg2() && dst->unk_2b != 2 && g_080b336c && func_0806c6c4(reg) && !rr->unk_0d)
+            dst->unk_2b = 1;
+    }
+
+    for (i = 0; i != c->unk_138b; i++) {
+        Operand *op = c->getOp(i);
+        RegPoolEntry *reg = op->outputReg();
+        if (!reg)
+            continue;
+        for (int k = 0; k != reg->unk_28; k++) {
+            if ((op->unk_07 >> k) & 1) {
+                cls0805c244 *ll = (cls0805c244 *)reg->func_0805a908(k);
+                if (!ll) {
+                    func_0804ad38("couldn't get rll from reg\n");
+                    func_0804adf0(-1);
+                }
+                cls0805bcc4 *lk = &op->unk_2c[k];
+                lk->setOwner(k, c, i);
+                int a = 1;
+                if (reg->unk_2c)
+                    a = c->unk_13cf;
+                if (!ll->addOutput(lk, a, op->unk_0a, op->unk_0b)) {
+                    func_0804ad38("failed to register output operand : %s.%d\n", reg->func_0805a8e0(), k);
+                    return false;
+                }
+                if ((op->unk_27 >> k) & 1) {
+                    cls0805c244 *el = (cls0805c244 *)reg->func_0805a908(k);
+                    if (!el)
+                        func_0804ad38("couldn't get curr lock list for output\n");
+                    if (!el->addExtOutput(lk, false)) {
+                        func_0804ad38("failed to add ext output!\n");
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    for (i = 0; i != c->unk_138b; i++) {
+        Operand *op = c->getOp(i);
+        RegPoolEntry *reg = op->inputRegB();
+        if (!reg)
+            continue;
+        Operand *o2;
+        for (int j = 0; (o2 = c->getOp(j)) != 0; j++) {
+            if (o2->getReg2() != reg)
+                continue;
+            for (int k = 0; k != reg->unk_28; k++) {
+                if (((op->unk_07 & o2->unk_07) >> k) & 1) {
+                    if (!op->unk_2c[k].setInOut(&o2->unk_2c[k])) {
+                        func_0804ad38("failed to set in out\n");
+                        func_0804adf0(-1);
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!AddToDo_Tail((Block *)this, c)) {
+        func_0804ad38("iTable::qInstruction - failed to add to todo tail\n");
+        delete c;
+        return false;
+    }
+    if (!logAddLinear_Tail(c)) {
+        func_0804ad38("iTable::qInstruction - failed to add to linear list tail\n");
+        return false;
+    }
+    if (unk_38 && c->unk_1388) {
+        g_080b33f0 += 2;
+        c->unk_1398 = g_080b33f0;
+        reserveEntry(g_080b33f0, unk_38 - 2, 1);
+    }
+    return true;
+}
+
 bool UnlinkFromToDo(Block *blk, Instr *n);
 bool AddDone_Tail(Block *blk, Instr *n);
 
@@ -335,13 +519,15 @@ bool workTable::doPostOpt(int rawMode)
                     case 1:
                         in->unk_1394 = in->unk_13e8.unk_04 - unk_30;
                         break;
-                    case 2:
-                        in->unk_1394 = in->unk_13e8.unk_04;
+                    case 2: {
+                        int t = in->unk_13e8.unk_04;
+                        in->unk_1394 = t;
                         if (unk_30) {
                             func_0804ad38("postopt - istart set for fixed mode \n");
                             return false;
                         }
                         break;
+                    }
                     case 3:
                     case 4: {
                         Instr *c = in->unk_08;
@@ -443,7 +629,9 @@ bool workTable::doPostOpt(int rawMode)
             if (!ie)
                 func_0804ad38("can't get ie during postopt\n");
             for (int p = 0; p != 2; p++) {
-                if (ie[p] && !logAddLinear_Tail(ie[p])) {
+                if (!ie[p])
+                    continue;
+                if (!logAddLinear_Tail(ie[p])) {
                     func_0804ad38("failed to add in to linear tale\n");
                     return false;
                 }

@@ -381,6 +381,7 @@ struct Operand {
             r = 1;
         return r;
     }
+    bool isInRegOpB() { return unk_09 == 1 && !isZeroReg(); }
     RegPoolEntry *getReg2()
     {
         if (isReg2())
