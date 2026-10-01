@@ -39,7 +39,8 @@ class instStream;
 class workTable;
 
 struct RegPoolEntry {
-    int unk_00;
+    short unk_00;       // min row (getMove)
+    short unk_02;       // max row (getMove)
     RegPool *unk_04;    // owning pool
     RegPoolEntry* next;
     const char* func_0805a8e0();

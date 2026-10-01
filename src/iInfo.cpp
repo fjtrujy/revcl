@@ -228,11 +228,259 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
     return mv;
 }
 
+void adjustMoveCount(Block *blk, Instr *mv, int);
+bool addFreeMove(Instr *mv);
+bool setPipeBits(Instr *in);
+bool AddToDo_Head(Block *blk, Instr *n);
+bool logInstr(Block *blk, Instr *in);
+void func_080737b8(Instr *in);
+
+extern int g_080b33ec;
+
+int getMove(Block *blk, Instr *in, int now)
+{
+    Operand *bestOp = 0;
+    int bestScore = -1;
+    RegPoolEntry *bestReg = 0;
+    cls0805bcc4 *bestLk = 0;
+    if (in->unk_1428)
+        return 2;
+    Operand *op;
+    int i;
+    for (i = 0; (op = in->getOp(i)) != 0; i++) {
+        RegPoolEntry *r = op->getReg();
+        if (r) {
+            r->unk_00 = 0x7fff;
+            r->unk_02 = -1;
+        }
+    }
+    for (i = 0; (op = in->getOp(i)) != 0; i++) {
+        RegPoolEntry *reg = op->inRegOp();
+        if (reg && func_0806c6c4(reg) && op->unk_2b != 2) {
+            int score = -1;
+            cls0805bcc4 *lk = 0;
+            for (int p = 0; p != reg->unk_28; p++) {
+                if ((op->unk_07 >> p) & 1) {
+                    lk = &op->unk_2c[p];
+                    cls0805bcc4 *parent = lk->getParent();
+                    if (lk->unk_1a == 2 && score < 10000)
+                        score = 10000;
+                    if (lk->unk_1a == 1 && score < 20000)
+                        score = 20000;
+                    if (parent->unk_2d != 2) {
+                        int row = parent->unk_32;
+                        if (row < 0) {
+                            func_0804ad38("parent not inserted during move\n");
+                            func_0804aeb0();
+                        }
+                        int lo = row + 1;
+                        int hi = row + parent->unk_18;
+                        if (lo < reg->unk_00)
+                            reg->unk_00 = lo;
+                        if (hi > reg->unk_02)
+                            reg->unk_02 = hi;
+                        int d = now - lo;
+                        if (d < 0) {
+                            func_0804ad38("dff was <0\n");
+                            func_0804aeb0();
+                        }
+                        if (d > score)
+                            score = d;
+                    }
+                }
+            }
+            if (score > bestScore) {
+                bestOp = op;
+                bestScore = score;
+                bestReg = reg;
+                bestLk = lk;
+            }
+        }
+    }
+    if (!bestReg) {
+        func_0804ac7c("getMove: didn't set rg_old during pass\n");
+        return 4;
+    }
+    cls0805bcc4 *parent = bestLk->getParent();
+    if (!parent) {
+        func_0804ad38("getMove: failed to get parent for something I wanted to move!\n");
+        return -1;
+    }
+    Instr *owner = parent->ownerInstr();
+    int mask = 0;
+    int p;
+    for (p = 0; p != bestReg->unk_28; p++) {
+        cls0805bcc4 *o = ((cls0805c244 *)bestReg->func_0805a908(p))->unk_1c;
+        if (o && o->unk_22)
+            mask |= 1 << p;
+    }
+    Instr *mv = makeMove(blk, bestReg);
+    if (mv) {
+        setPipeBits(mv);
+        if (owner) {
+            mv->unk_13e4 = owner->unk_13e4 + 1;
+            mv->unk_1432 = owner->unk_1432 + 1;
+            mv->unk_141a = owner->unk_141a;
+            mv->unk_13f0.func_0805e37c(&owner->unk_13f0);
+        } else {
+            mv->unk_13e4 = in->unk_13e4 - 1;
+            mv->unk_141a = in->unk_141a;
+            mv->unk_1432 = 1;
+            mv->unk_13f0.func_0805e37c(&in->unk_13f0);
+        }
+        mv->unk_141c = 0;
+        Operand *out = mv->getOp(0);
+        Operand *mvIn = mv->getOp(1);
+        RegPoolEntry *newReg = out->unk_18;
+        mvIn->unk_14 = bestOp->unk_14;
+        out->unk_14 = newReg;
+        mv->unk_1430 = now - out->unk_0a;
+        int moved = 0;
+        int oldBits = 0;
+        int newBits = 0;
+        for (Instr *it = blk->unk_94; it; it = (Instr *)it->unk_24.unk_00) {
+            int n;
+            for (n = 0; n != it->unk_138b; n++) {
+                Operand *op = &it->unk_38[n];
+                RegPoolEntry *reg = op->inputRegB();
+                if (reg == bestReg) {
+                    bool stale = false;
+                    if (op->unk_2b != 1) {
+                        if (op->unk_07 & newBits) {
+                            func_0804ad38("cant age input - but the old register status is now invalid\n");
+                            func_0804aeb0();
+                        }
+                        stale = true;
+                    }
+                    if (op->unk_07 & oldBits) {
+                        if (op->unk_07 & newBits) {
+                            func_0804ad38("neither old new bits are valid - valid register state is spread over too many different registers\n");
+                            func_0804aeb0();
+                        }
+                        stale = true;
+                    }
+                    if (stale) {
+                        mv->unk_13d1 = 0;
+                        continue;
+                    }
+                    for (int p = 0; p != reg->unk_28; p++) {
+                        if ((op->unk_07 >> p) & 1) {
+                            cls0805bcc4 *lk = &op->unk_2c[p];
+                            cls0805bcc4 *par = lk->getParent();
+                            cls0805c244 *oldL = (cls0805c244 *)bestReg->func_0805a908(p);
+                            cls0805c244 *newL = (cls0805c244 *)newReg->func_0805a908(p);
+                            if (par->unk_2c) {
+                                cls0805bcc4 *oldOut = oldL->unk_1c;
+                                if (!((moved >> p) & 1)) {
+                                    if (!mvIn->unk_2c[p].setOwner(p, mv, 1)) {
+                                        func_0804ad38("getMove : failed to set owner for input\n");
+                                        return -1;
+                                    }
+                                    if (!out->unk_2c[p].setOwner(p, mv, 0)) {
+                                        func_0804ad38("getMove :failed to set owner for output\n");
+                                        return -1;
+                                    }
+                                    if (!oldL->addInput(oldOut, &mvIn->unk_2c[p], mvIn->unk_29, mvIn->unk_0b)) {
+                                        func_0804ad38("failed to register input from move instruction to old output\n");
+                                        return -1;
+                                    }
+                                    mvIn->unk_2c[p].unk_19 = mvIn->unk_2b;
+                                    if (!newL->addOutput(&out->unk_2c[p], mv->unk_13cf, out->unk_0a, out->unk_0b)) {
+                                        func_0804ad38("getMove : failed to register output lock for move\n");
+                                        return -1;
+                                    }
+                                    out->unk_2c[p].unk_19 = out->unk_2b;
+                                }
+                                moved |= 1 << p;
+                                if (!oldL->removeInput(lk)) {
+                                    func_0804ad38("failed to deregister an input during move create\n");
+                                    return -1;
+                                }
+                                if (!newL->addInput(&out->unk_2c[p], lk, op->unk_29, op->unk_0b)) {
+                                    func_0804ad38("failed to register input to a moves output\n");
+                                    return -1;
+                                }
+                                op->unk_18 = newReg;
+                            } else {
+                                if (par->unk_04 != newL) {
+                                    func_0804ad38("hmm candidate for moving wasn't one after all\n");
+                                    func_0804aeb0();
+                                }
+                                if (!oldL->removeInput(lk)) {
+                                    func_0804ad38("failed to deregister an input during move create\n");
+                                    return -1;
+                                }
+                                if (!newL->addInput(par, lk, op->unk_29, op->unk_0b)) {
+                                    func_0804ad38("failed to register an input during move create\n");
+                                    return -1;
+                                }
+                                op->unk_18 = newReg;
+                            }
+                        }
+                    }
+                }
+            }
+            for (n = 0; n != it->unk_138b; n++) {
+                Operand *op = &it->unk_38[n];
+                RegPoolEntry *reg = op->outputReg();
+                if (reg == bestReg) {
+                    if (op->unk_2b == 1) {
+                        newBits |= op->unk_07;
+                        for (int p = 0; p != reg->unk_28; p++) {
+                            if ((op->unk_07 >> p) & 1) {
+                                cls0805c244 *oldL = (cls0805c244 *)bestReg->func_0805a908(p);
+                                cls0805c244 *newL = (cls0805c244 *)newReg->func_0805a908(p);
+                                if (!oldL->removeOutput(&op->unk_2c[p])) {
+                                    func_0804ad38("retargetOutputOperands: failed to deregister output\n");
+                                    return -1;
+                                }
+                                if (!newL->addOutput(&op->unk_2c[p], it->unk_13cf, op->unk_0a, op->unk_0b)) {
+                                    func_0804ad38("retargetOutputOperands : failed to reregister output\n");
+                                    return -1;
+                                }
+                                op->unk_18 = newReg;
+                            }
+                        }
+                    } else {
+                        mv->unk_13d1 = 0;
+                        oldBits |= op->unk_07;
+                    }
+                }
+            }
+        }
+        if (moved) {
+            mv->unk_138f = moved;
+            mvIn->unk_07 = moved;
+            out->unk_07 = moved;
+            if (!AddToDo_Head(blk, mv)) {
+                func_0804ad38("getMove : failed to add move to the head of the to todo list\n");
+                return -1;
+            }
+            logInstr(blk, mv);
+            adjustMoveCount(blk, mv, 1);
+            return 0;
+        }
+        addFreeMove(mv);
+        g_080b33ec++;
+    }
+    Instr *earliest = 0;
+    for (p = 0; p != bestReg->unk_28; p++) {
+        cls0805bcc4 *o = ((cls0805c244 *)bestReg->func_0805a908(p))->unk_1c;
+        if (((mask >> p) & 1) && o && o->unk_22) {
+            Instr *oi = o->ownerInstr();
+            if (oi && (!earliest || oi->unk_13e8.getRow() < earliest->unk_13e8.getRow()))
+                earliest = oi;
+        }
+    }
+    if (!earliest)
+        earliest = blk->unk_a0;
+    func_080737b8(earliest);
+    return 1;
+}
+
 int unresolveMove(Block *blk, Instr *mv);
 bool UnlinkFromToDo(Block *blk, Instr *n);
 void func_08073bb0(Block *blk, Instr *mv);
-void adjustMoveCount(Block *blk, Instr *mv, int);
-bool addFreeMove(Instr *mv);
 
 bool undoMove(Block *blk, Instr *mv)
 {
