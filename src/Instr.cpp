@@ -505,7 +505,11 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
 
 bool link_oParts(ol_s *o, ol_s *i, int x, int y)
 {
-    if (!o || !i) {
+    if (!o) {
+        func_0804ad38("link_oParts, null arg pointer2!\n");
+        return false;
+    }
+    if (!i) {
         func_0804ad38("link_oParts, null arg pointer2!\n");
         return false;
     }
@@ -514,7 +518,7 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         func_0804ad38("link_oParts(2) - output not set \n");
         return false;
     }
-    if (!out->isReg2()) {
+    if (!out->isOutRegOp()) {
         func_0804ad38("link_oParts - output was not output\n");
         out->func_0805665c(0);
         return false;
@@ -524,7 +528,7 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         func_0804ad38("link_oParts(2) - input not set \n");
         return false;
     }
-    if (!in->isReg()) {
+    if (!in->isInRegOp()) {
         func_0804ad38("link_oParts - input was not input\n");
         return false;
     }
@@ -551,12 +555,14 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         func_0804ad38("link_oParts - not a bug, but should not happen for this cpu, t_o!=t_i (%d!=%d)\n", to, ti);
         return false;
     }
-    ol_s *a = out->unk_2c[ti].unk_54.func_08058348(i, true);
+    OpSlot *so = out->unk_2c + ti;
+    OpSlot *si = in->unk_2c + ti;
+    ol_s *a = so->unk_54.func_08058348(i, true);
     if (!a) {
         func_0804ad38("failed to add ol_input to output\n");
         return false;
     }
-    ol_s *b = in->unk_2c[ti].unk_54.func_08058348(o, true);
+    ol_s *b = si->unk_54.func_08058348(o, true);
     if (!b) {
         func_0804ad38("failed to add ol_ouput to input\n");
         return false;
