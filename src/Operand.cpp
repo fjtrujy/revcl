@@ -3,6 +3,12 @@
 #include "Instr.h"
 #include "infoList.h"
 #include "os.h"
+#include "VUStr.h"
+
+int func_0804bf50(unsigned int);
+bool func_0804bfcc(const char *a, const char *b);
+void func_0804c0c8(char *s);
+int mstrlen(const char *s);
 
 Operand::Operand()
 {
@@ -462,6 +468,507 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
         mstrcpy(out->name, "$ra");
         out->unk_2000 = 3;
         return true;
+    }
+}
+
+bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
+{
+    bool bad2;
+    int mask;
+    bool bad;
+    int m;
+    int field;
+    char *p;
+    char *q;
+    char *s;
+    char *d;
+    char *end;
+    char *start;
+
+    if (!tok || !out || !*tok || *tok == '.')
+        return false;
+    if (mstrlen(tok) > 2047) {
+        func_0804ad38("odecodeToken: token was too long\n");
+        return false;
+    }
+
+    char *t = tok;
+    while (*t && *t != ':')
+        t++;
+    if (*t == ':') {
+        *t = 0;
+        char *td = out->unk_1800;
+        t++;
+        int chars = 0;
+        int colons = 1;
+        while (*t) {
+            if (*t == ':') {
+                chars = 0;
+                colons++;
+            } else {
+                colons = 0;
+                chars++;
+            }
+            if (colons <= 1 || chars)
+                *td++ = *t;
+            t++;
+        }
+        if (colons)
+            td--;
+        if (td == out->unk_1800) {
+            func_0804ac7c("ignoring empty tag\n");
+            out->unk_1800[0] = 0;
+        } else {
+            td[0] = ':';
+            td[1] = 0;
+        }
+    }
+
+    char *e = tok;
+    while (*e)
+        e++;
+    out->name[0] = 0;
+    out->unk_1000[0] = 0;
+    out->unk_800[0] = 0;
+    out->unk_200c = 0;
+    int len = e - tok;
+    out->unk_2000 = 0;
+    out->unk_2004 = 0;
+
+    switch (kind) {
+    case 54:
+        func_0804ad38("encountered a force bind to $ra in an explicit operand\n");
+        return false;
+    case 1:
+        if (newSyntax) {
+            out->unk_2000 = 15;
+            mstrcpy(out->name, tok);
+            return true;
+        }
+        out->unk_2000 = func_08052100(tok);
+        if (!out->unk_2000)
+            out->unk_2000 = 15;
+        if (out->unk_2000 == -1) {
+            func_0804ad38("oDecodeToken: bad FL4 bits\n");
+            return false;
+        }
+        mstrcpy(out->name, tok);
+        func_0804c0c8(out->name);
+        return true;
+    case 2:
+        mstrcpy(out->name, tok);
+        out->unk_2000 = 1;
+        return true;
+    case 3:
+        if (newSyntax) {
+            if (!func_08051f78(tok, &mask) || func_0804bf50(mask) != 1) {
+                func_0804ad38("oDecodeToken: [x/y/z/w] token for new syntax\n");
+                return false;
+            }
+            out->unk_2000 = mask;
+            s = tok;
+            d = out->name;
+            while (*s)
+                *d++ = *s++;
+            *d = 0;
+            do
+                d--;
+            while (*d != '[');
+            *d = 0;
+            return true;
+        }
+        mask = func_08052100(tok);
+        if (func_0804bf50(mask) != 1) {
+            func_0804ad38("oDecodeToken: bad FL1 bits\n");
+            return false;
+        }
+        out->unk_2000 = mask;
+        mstrcpy(out->name, tok);
+        func_0804c0c8(out->name);
+        return true;
+    case 4:
+        if (len != 1 || (*tok != 'i' && *tok != 'I')) {
+            func_0804ad38("oDecode:: arg I\n");
+            return false;
+        }
+        out->unk_2000 = 1;
+        out->name[0] = 'I';
+        out->name[1] = 0;
+        return true;
+    case 5:
+        if (len != 1 || (*tok != 'p' && *tok != 'P'))
+            func_0804ad38("oDecode:: arg P\n");
+        out->unk_2000 = 1;
+        out->name[0] = 'P';
+        out->name[1] = 0;
+        return true;
+    case 7:
+        if (len != 1 || (*tok != 'q' && *tok != 'Q')) {
+            func_0804ad38("oDecode:: arg Q\n");
+            return false;
+        }
+        out->unk_2000 = 1;
+        out->name[0] = 'Q';
+        out->name[1] = 0;
+        return true;
+    case 8:
+        if (len != 1 || (*tok != 'r' && *tok != 'R')) {
+            func_0804ad38("oDecode:: arg R\n");
+            return false;
+        }
+        out->unk_2000 = 1;
+        out->name[0] = 'R';
+        out->name[1] = 0;
+        return true;
+    case 9: {
+        bad = false;
+        if (!func_08051f08(tok, &out->unk_2000, &bad))
+            out->unk_2000 = 15;
+        if (out->unk_2000 == -1) {
+            func_0804ad38("oDecodeToken: bad FL4 bits\n");
+            return false;
+        }
+        mstrcpy(out->name, "ACC");
+        return true;
+    }
+    case 10:
+        mask = func_08052100(tok);
+        if (mask && mask != 7) {
+            func_0804ad38("bad mod bits for ACCxyz\n");
+            return false;
+        }
+        out->unk_2000 = 7;
+        mstrcpy(out->name, "ACC");
+        return true;
+    case 11:
+        field = 7;
+    fieldSel:
+        if (newSyntax) {
+            m = 0;
+            if (func_08051f78(tok, &m)) {
+                if (m != field) {
+                    func_0804ad84("instruction and operand have mismatching field select\n");
+                    return false;
+                }
+                s = tok;
+                d = out->name;
+                while (*s)
+                    *d++ = *s++;
+                *d = 0;
+                do
+                    d--;
+                while (*d != '[');
+                *d = 0;
+                out->unk_2000 = field;
+                return true;
+            }
+            mstrcpy(out->name, tok);
+            out->unk_2000 = field;
+            return true;
+        }
+        mask = func_08052100(tok);
+        if (mask && mask != field) {
+            func_0804ad38("oDecode: bad FL?\n");
+            return false;
+        }
+        out->unk_2000 = field;
+        mstrcpy(out->name, tok);
+        func_0804c0c8(out->name);
+        return true;
+    case 13:
+        field = 1;
+        goto fieldSel;
+    case 14:
+        field = 2;
+        goto fieldSel;
+    case 15:
+        field = 4;
+        goto fieldSel;
+    case 16:
+        field = 8;
+        goto fieldSel;
+    case 17:
+        out->unk_2000 = 1;
+        mstrcpy(out->name, "CLIP");
+        return true;
+    case 26:
+        func_0804ad38("explicit mac register - but I'm writing ASTATUS here??\n");
+        func_0804adf0(1);
+        out->unk_2000 = 1;
+        mstrcpy(out->name, "ASTATUS");
+        return true;
+    case 27:
+        mstrcpy(out->unk_1000, tok);
+        return true;
+    case 28:
+        out->unk_2000 = 1;
+        if (len <= 2)
+            return false;
+        if (e[-1] != ')' || *tok != '(')
+            return false;
+        start = tok + 1;
+        end = e - 1;
+        goto copyName;
+    case 30:
+        out->unk_2000 = 1;
+        if (len <= 3)
+            return false;
+        if (*tok != '(')
+            return false;
+        p = e - 1;
+        while (p != tok && *p != ')') {
+            switch (*p) {
+            case 'x': out->unk_2004 |= 1; break;
+            case 'y': out->unk_2004 |= 2; break;
+            case 'z': out->unk_2004 |= 4; break;
+            case 'w': out->unk_2004 |= 8; break;
+            default: return false;
+            }
+            p--;
+        }
+        if (*p != ')')
+            return false;
+        start = tok + 1;
+        end = p;
+        goto copyName;
+    case 31:
+        out->unk_2000 = 1;
+        if (len <= 4)
+            return false;
+        p = e - 1;
+        while (p != tok && *p != ')') {
+            switch (*p) {
+            case 'x': out->unk_2004 |= 1; break;
+            case 'y': out->unk_2004 |= 2; break;
+            case 'z': out->unk_2004 |= 4; break;
+            case 'w': out->unk_2004 |= 8; break;
+            default: return false;
+            }
+            p--;
+        }
+        if (*p != ')')
+            return false;
+        end = p;
+        q = e;
+        while (q != tok && *q != '(')
+            q--;
+        if (*q != '(')
+            return false;
+        d = out->unk_1000;
+        for (s = tok; s != q; )
+            *d++ = *s++;
+        *d = 0;
+        if (!out->unk_1000[0]) {
+            out->unk_1000[0] = '0';
+            out->unk_1000[1] = 0;
+        }
+        start = q + 1;
+    copyName:
+        d = out->name;
+        for (s = start; s != end; )
+            *d++ = *s++;
+        *d = 0;
+        return true;
+    case 32:
+        out->unk_2000 = 1;
+        if (len <= 4)
+            return false;
+        if (e[-1] != ')' || e[-2] != '+' || e[-3] != '+' || *tok != '(')
+            return false;
+        start = tok + 1;
+        end = e - 3;
+        goto copyName;
+    case 33:
+        out->unk_2000 = 1;
+        if (len <= 4)
+            return false;
+        if (e[-1] != ')' || tok[0] != '(' || tok[1] != '-' || tok[2] != '-')
+            return false;
+        start = tok + 3;
+        end = e - 1;
+        goto copyName;
+    case 34:
+        if (!func_0804bfcc(tok, "vi01") && !func_0804bfcc(tok, "vi1")) {
+            func_0804ad84("oDecode:: operand has to be vi01 for this instruction..\n");
+            return false;
+        }
+        mstrcpy(out->unk_800, tok);
+        mstrcpy(out->name, tok);
+        out->unk_2000 = 1;
+        return true;
+    case 35: {
+        out->unk_200c = 1;
+        s = tok;
+        d = out->name;
+        while (*s && *s != '(')
+            *d++ = *s++;
+        *d = 0;
+        if (*s) {
+            if (*s != '(') {
+                func_0804ad38("oDecodeToken: bad fl4s\n");
+                return false;
+            }
+            s++;
+            d = out->unk_800;
+            while (*s && *s != ')')
+                *d++ = *s++;
+            *d = 0;
+        }
+        if (newSyntax) {
+            out->unk_2000 = 15;
+            return true;
+        }
+        bad2 = false;
+        bool ok = func_08051f08(out->name, &out->unk_2000, &bad2);
+        if (bad2) {
+            func_0804ad84("bad mod bits in operand\n");
+            return false;
+        }
+        if (!ok)
+            out->unk_2000 = 15;
+        if (out->unk_2000 == -1) {
+            func_0804ad38("oDecodeToken: bad FL4S bits\n");
+            return false;
+        }
+        func_0804c0c8(out->name);
+        return true;
+    }
+    case 36:
+        out->unk_200c = 1;
+        s = tok;
+        d = out->name;
+        while (*s && *s != '(')
+            *d++ = *s++;
+        *d = 0;
+        if (*s) {
+            if (*s != '(') {
+                func_0804ad38("oDecodeToken: bad ints\n");
+                return false;
+            }
+            s++;
+            d = out->unk_800;
+            while (*s && *s != ')')
+                *d++ = *s++;
+            *d = 0;
+        }
+        out->unk_2000 = 1;
+        return true;
+    case 38:
+        if (func_08051f78(tok, &mask)) {
+            out->unk_2008 = 1;
+            if (func_0804bf50(mask) != 1) {
+                func_0804ad84("bad [x,y,z,w] token for scalar\n");
+                return false;
+            }
+            out->unk_2000 = mask;
+            s = tok;
+            d = out->name;
+            while (*s)
+                *d++ = *s++;
+            *d = 0;
+            do
+                d--;
+            while (*d != '[');
+            *d = 0;
+            return true;
+        }
+        if (func_0804bfcc(tok, "q")) {
+            out->unk_2008 = 1;
+            out->unk_2000 = 1;
+            mstrcpy(out->name, "Q");
+            return true;
+        }
+        if (func_0804bfcc(tok, "i")) {
+            out->unk_2008 = 1;
+            out->unk_2000 = 1;
+            mstrcpy(out->name, "I");
+            return true;
+        }
+        out->unk_2000 = 15;
+        out->unk_2008 = 2;
+        mstrcpy(out->name, tok);
+        return true;
+    case 39:
+        out->unk_2000 = 1;
+        mstrcpy(out->name, tok);
+        return true;
+    case 40:
+        out->unk_2000 = 3;
+        mstrcpy(out->name, tok);
+        return true;
+    case 41:
+        out->unk_2000 = 15;
+        mstrcpy(out->name, tok);
+        return true;
+    case 42:
+        out->unk_200c = 1;
+        s = tok;
+        d = out->name;
+        while (*s && *s != '(')
+            *d++ = *s++;
+        *d = 0;
+        if (*s) {
+            if (*s != '(') {
+                func_0804ad38("oDecodeToken: bad gprs\n");
+                return false;
+            }
+            s++;
+            d = out->unk_800;
+            while (*s && *s != ')')
+                *d++ = *s++;
+            *d = 0;
+        }
+        out->unk_2000 = 15;
+        return true;
+    case 43:
+        mstrcpy(out->name, tok);
+        out->unk_2000 = 1;
+        return true;
+    case 44:
+        out->unk_200c = 1;
+        s = tok;
+        d = out->name;
+        while (*s && *s != '(')
+            *d++ = *s++;
+        *d = 0;
+        if (*s) {
+            if (*s != '(') {
+                func_0804ad38("oDecodeToken: bad fprs\n");
+                return false;
+            }
+            s++;
+            d = out->unk_800;
+            while (*s && *s != ')')
+                *d++ = *s++;
+            *d = 0;
+        }
+        out->unk_2000 = 1;
+        return true;
+    case 29:
+    case 46:
+        if (len <= 2)
+            return false;
+        out->unk_2000 = 1;
+        end = e - 1;
+        if (*end != ')')
+            return false;
+        p = end;
+        do
+            p--;
+        while (*p != '(');
+        start = p + 1;
+        d = out->unk_1000;
+        for (s = tok; s != start - 1; )
+            *d++ = *s++;
+        *d = 0;
+        if (!out->unk_1000[0]) {
+            out->unk_1000[0] = '0';
+            out->unk_1000[1] = 0;
+        }
+        goto copyName;
+    default:
+        func_0804ad38("oDecode: general BAD '%s'\n", opKindName(kind));
+        return false;
     }
 }
 
