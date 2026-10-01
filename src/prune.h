@@ -320,11 +320,11 @@ inline int doPrune(Instr *in)
                 op->unk_07 = m;
         }
         if (info->unk_20 == func_08087860)
-            in->unk_38[1].unk_07 = ((m << 1) | ((m & 8) >> 3)) & 0xf;
+            in->unk_38[1].unk_07 = (((m & 8) >> 3) | (m << 1)) & 0xf;
     }
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *r = op->getReg2();
+        RegPoolEntry *r = op->isOutRegOp() ? op->unk_18 : 0;
         if (!r || op->unk_2a || !r->unk_14)
             continue;
         RegPool *pool = r->unk_04;
