@@ -137,6 +137,7 @@ public:
     char unk_08;
     unsigned char unk_09;   // code mode
     unsigned char unk_0a;
+    bool isAbstract() { return unk_09 == 1; }
     char unk_0b;
     int unk_0c;
     instStream *unk_10;     // owner

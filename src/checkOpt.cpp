@@ -66,11 +66,11 @@ bool checkOpt3(Program *p)
             return false;
         }
 
-        if (wt->unk_09 == 1 && wt->unk_2c) {
-            func_0804ad38("table set for abstract list\n");
-            return false;
-        }
-        if (wt->unk_09 == 1) {
+        if (wt->isAbstract()) {
+            if (wt->unk_2c) {
+                func_0804ad38("table set for abstract list\n");
+                return false;
+            }
             for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
                 if (in->unk_13e8.getPipe() != -1) {
                     func_0804ad38("pipe is set for non-inserted instruction\n");
