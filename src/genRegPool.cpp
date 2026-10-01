@@ -9,6 +9,9 @@ bool func_0806f6a4(Program *p);
 bool setRange(int start, int end, int lsz);
 
 int maxParts_080bce20;
+int nRegs_080bce24;
+int tStart_080bce28;
+int tEnd_080bce2c;
 char aTab_080bce40[0x20000];
 char tTab_080dce40[0x1000];
 char regMask_080dde40[32];
@@ -161,7 +164,7 @@ static inline bool isInternalIn(cls0805bcc4 *lk)
     return lk->unk_19 == 2;
 }
 
-bool lockLiveRange(cls0805bcc4 *in, cls0805bcc4 *out, int *s, int *e)
+bool lockLiveRange(cls0805c244 *ll, cls0805bcc4 *out, int *s, int *e)
 {
     *s = -1;
     *e = -1;
@@ -313,6 +316,146 @@ void clearTTab()
 void genRegPool::func_08089a4c()
 {
     func_0804c220(unk_30, 0x20);
+}
+
+bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
+{
+    func_0804c220(tTab_080dce40, 0x1000);
+    if (!mask)
+        return true;
+    char set = 0;
+    if (!reg) {
+        func_0804ad38("build_tTab - passed a null pointer\n");
+        return false;
+    }
+    int lsz = g_080b336c;
+    for (int i = 0; i != reg->unk_28; i++) {
+        bool on = (mask >> i) & 1;
+        if (!on)
+            continue;
+        cls0805c244 *ll = (cls0805c244 *)reg->func_0805a908(i);
+        if (!ll) {
+            func_0804ad38("failed to get a lock list for %s\n", reg->func_0805a8e0());
+            return false;
+        }
+        cls0805bcc4 *lk = ll->unk_1c;
+        if (!lk)
+            continue;
+        bool shared = ll->unk_2b != 0;
+        set |= 1 << i;
+        if (lsz && ll->unk_2a)
+            shared = true;
+        for (; lk; lk = lk->unk_08) {
+            int s = 0, e = 0;
+            if (!lockLiveRange(ll, lk, &s, &e)) {
+                func_0804ad38("failed to get live range for an rLock\n");
+                func_0804adf0(-1);
+            }
+            if (s >= 0) {
+                if (lk->unk_2d == 2) {
+                    func_0804ad38("extern in .. rl_s>0\n");
+                    return false;
+                }
+            } else {
+                if (lk->unk_2d != 2) {
+                    func_0804ad38("not extern in .. -ve s\n");
+                    return false;
+                }
+                if (lsz) {
+                    if (e == 30000)
+                        s = 0;
+                    else
+                        s = (e / lsz) * lsz;
+                } else
+                    s = 0;
+            }
+            if (e == 30000) {
+                if (lsz)
+                    e = s + lsz - s % lsz;
+                else
+                    e = tEnd_080bce2c;
+            }
+            int r = lk->unk_30;
+            if (r >= 0)
+                tTab_080dce40[r] |= 0x80;
+            for (int c = s; c < e; c++) {
+                int idx = c;
+                if (lsz)
+                    idx = c % lsz;
+                unsigned char v = tTab_080dce40[idx];
+                if (((v >> i) & 1) && !shared) {
+                    func_0804ad38("build_tTab - already set.. so some overlap %d?\n", ll->unk_2b != 0);
+                    ll->checkCounts();
+                    dumpTTab();
+                    return false;
+                }
+                tTab_080dce40[idx] = v | (1 << i);
+            }
+        }
+    }
+    if (!set) {
+        func_0804ad38("build_tTab - set no bits! for %s\n", reg->func_0805a8e0());
+        func_0804adf0(-1);
+    }
+    return true;
+}
+
+bool genRegPool::initAlloc(int start, int end)
+{
+    func_0804c220(aTab_080bce40, 0x20000);
+    func_0804c220(unk_30, 0x20);
+    if (start) {
+        func_0804ad38("for now - can't base an alloc table other than at zero\n");
+        return false;
+    }
+    if (end < start) {
+        func_0804ad38("regpool - assign registers -done table was bad\n");
+        return false;
+    }
+    if (g_080b336c && end != g_080b336c)
+        func_0804ad38("loop mismatch\n");
+    tStart_080bce28 = start;
+    tEnd_080bce2c = end;
+    if (end > 0xfff) {
+        func_0804ad38("table too big. coder can't be bothered to realloc\n");
+        return false;
+    }
+    RegPoolEntry *e = unk_04;
+    if (!e) {
+        func_0804ad38("RegPool:Dump - no table?\n");
+        return false;
+    }
+    if (unk_08 > 0x20) {
+        func_0804ad38("alloc - fatal - should catch earlier - m_nReg>=MAX_PER_DEV\n");
+        return false;
+    }
+    nRegs_080bce24 = unk_08;
+    maxParts_080bce20 = 0;
+    for (int i = 0; i != unk_08; i++, e++) {
+        if (e->unk_16)
+            unk_30[i] = (1 << e->unk_28) - 1;
+        if (e->unk_28 > maxParts_080bce20)
+            maxParts_080bce20 = e->unk_28;
+    }
+    return true;
+}
+
+void genRegPool::dumpTTab()
+{
+    for (int i = tStart_080bce28; i < tEnd_080bce2c; i++) {
+        char c = tTab_080dce40[i];
+        if (c)
+            ;
+    }
+}
+
+int genRegPool::countTTab()
+{
+    int n = 0;
+    for (int i = tStart_080bce28; i < tEnd_080bce2c; i++)
+        if (tTab_080dce40[i])
+            n++;
+    return n;
 }
 
 genRegPool::genRegPool()

@@ -12,6 +12,10 @@ public:
     virtual bool func_08088e54(workTable *t);                     // slot 4
 
     void func_08089a4c();
+    bool build_tTab(RegPoolEntry *reg, unsigned char mask);
+    bool initAlloc(int start, int end);
+    void dumpTTab();
+    int countTTab();
 
     char unk_30[0x20];
 };
