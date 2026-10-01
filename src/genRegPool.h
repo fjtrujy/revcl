@@ -3,6 +3,8 @@
 
 #include "RegPool.h"
 
+struct regUse;
+
 class genRegPool : public RegPool {
 public:
     genRegPool();
@@ -16,6 +18,11 @@ public:
     bool initAlloc(int start, int end);
     void dumpTTab();
     int countTTab();
+    int fitCost(int reg);
+    bool set_t_in_aTab(int reg);
+    void dumpATab();
+    int bestReg();
+    bool set_in_aTab(regUse *ru);
 
     char unk_30[0x20];
 };

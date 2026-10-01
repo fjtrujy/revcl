@@ -7,6 +7,7 @@ RegPool *GetRP(unsigned t);
 bool func_0806f610(Program *p);
 bool func_0806f6a4(Program *p);
 bool setRange(int start, int end, int lsz);
+int func_0804bf50(unsigned int);
 
 int maxParts_080bce20;
 int nRegs_080bce24;
@@ -456,6 +457,139 @@ int genRegPool::countTTab()
         if (tTab_080dce40[i])
             n++;
     return n;
+}
+
+int genRegPool::fitCost(int reg)
+{
+    int total = 0;
+    for (int i = tStart_080bce28; i < tEnd_080bce2c; i++) {
+        unsigned char t = tTab_080dce40[i];
+        int m = t & 0x7f;
+        if (((unsigned char)unk_30[reg] & m) != m)
+            return -1;
+        char *row = &aTab_080bce40[i * 32];
+        unsigned char a = row[reg];
+        if (t & a)
+            return -1;
+        int n = func_0804bf50((t | a) & 0x7f);
+        if (n > maxParts_080bce20) {
+            func_0804ad38("nbits overrun \n");
+            func_0804adf0(-1);
+        }
+        total += maxParts_080bce20 - n;
+    }
+    if (total < 0)
+        total = 0;
+    return total;
+}
+
+bool genRegPool::set_t_in_aTab(int reg)
+{
+    int end = tEnd_080bce2c;
+    for (int i = tStart_080bce28; i < end; i++) {
+        unsigned char c = tTab_080dce40[i];
+        int t = c;
+        if (((unsigned char)unk_30[reg] & t & 0x7f) != (c & 0x7f)) {
+            func_0804ad38("couldnt fit at user has no access..id=%d\n", reg);
+            return false;
+        }
+        char *row = &aTab_080bce40[i * 32];
+        unsigned char a = row[reg];
+        if (a & t) {
+            func_0804ad38("set_t_in_aTab - overlap detected at line %d, register %d our mask is %x vs %x!\n",
+                          i, reg, a, t);
+            return false;
+        }
+        row[reg] = a | c;
+    }
+    return true;
+}
+
+void genRegPool::dumpATab()
+{
+    for (int i = tStart_080bce28; i != tEnd_080bce2c; i++)
+        for (int r = 0; r != nRegs_080bce24; r++) {
+            int m = (unsigned char)unk_30[r];
+            for (int p = 0; p != maxParts_080bce20; p++) {
+                if (m & (1 << p))
+                    ;
+            }
+        }
+}
+
+int genRegPool::bestReg()
+{
+    int best = 100000000;
+    int which = -1;
+    for (int r = 0; r != nRegs_080bce24; r++) {
+        int c = fitCost(r);
+        if (c < 0)
+            continue;
+        if (c == 0)
+            return r;
+        if (c < best) {
+            best = c;
+            which = r;
+        }
+    }
+    return which;
+}
+
+bool genRegPool::set_in_aTab(regUse *ru)
+{
+    RegPoolEntry *reg = ru->unk_08;
+    if (!reg) {
+        func_0804ad38("regref had no register\n");
+        return false;
+    }
+    if (!func_08059e20(reg))
+        return true;
+    if (reg->unk_14) {
+        func_0804ad38("RegPool::set_in_aTab,regref: alloc..had forced virtual register %s\n",
+                      reg->func_0805a8e0());
+        func_0804adf0(-1);
+    }
+    int id = reg->regIndex();
+    if (id < 0) {
+        func_0804ad38("failed to get local_id from a mapped register\n");
+        func_0804adf0(-1);
+    }
+    if (!reg->unk_16)
+        return true;
+    unsigned char mask = ru->unk_0e | ru->unk_0f | ru->unk_10;
+    if (!mask) {
+        func_0804ad38("error here\n");
+        func_0804adf0(-1);
+    }
+    int set = 0;
+    for (int i = 0; i != reg->unk_28; i++) {
+        bool on = (mask >> i) & 1;
+        if (on && !reg->func_0805a908(i)) {
+            func_0804ad38("failed to get rll\n");
+            return false;
+        }
+        cls0805c244 *ll = (cls0805c244 *)reg->func_0805a908(i);
+        if (ll) {
+            if (!ll->unk_03)
+                set |= 1 << i;
+            ll->unk_03 = 1;
+        }
+    }
+    if (set) {
+        if (!build_tTab(reg, set)) {
+            func_0804ad38("failed to build ttab Forced build for mapped reg %s from %s\n",
+                          reg->func_0805a8e0(), reg->func_0805a8e0());
+            return false;
+        }
+        if (!set_t_in_aTab(id)) {
+            func_0804ad38("failed to check_set t_in_aTab for '%s' at local ID=%d map\n",
+                          reg->func_0805a8e0(), id);
+            dumpTTab();
+            dumpATab();
+            return false;
+        }
+    }
+    return true;
 }
 
 genRegPool::genRegPool()

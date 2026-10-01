@@ -186,6 +186,7 @@ class cls0805c244 {
 public:
     short unk_00;
     unsigned char unk_02;   // part
+    unsigned char unk_03;   // assigned flag
     RegPoolEntry *unk_04;   // register
     cls0805c244 *unk_08;    // next locklist
     cls0805bcc4 *unk_0c[4]; // external output locks
