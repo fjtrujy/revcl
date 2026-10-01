@@ -11,6 +11,8 @@ public:
     virtual bool func_08088e6c(instStream *s, RegPoolEntry *reg); // slot 3
     virtual bool func_08088e54(workTable *t);                     // slot 4
 
+    void func_08089a4c();
+
     char unk_30[0x20];
 };
 
