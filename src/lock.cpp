@@ -1401,12 +1401,13 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
     int lim;
     if (out->unk_20) {
         int a = out->unk_48, b = out->unk_4a;
+        int d = out->unk_46;
         int hi = a, lo = b;
         if (a < b) {
             hi = b;
             lo = a;
         }
-        int d = out->unk_46 - (hi - lo);
+        d -= hi - lo;
         if (d > 0)
             hi += (d + 1) >> 1;
         int off = hi;
@@ -1481,7 +1482,7 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
                 return 0x200000;
         }
     }
-    return 0;
+    return ret;
 }
 
 cls0805e2e4::cls0805e2e4()
