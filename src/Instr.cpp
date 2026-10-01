@@ -10,6 +10,32 @@ char *dupString(const char *s);
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 
+struct opPair_s {
+    int opcode;
+    signed char unk_04[4];
+    int unk_08;
+};
+
+opPair_s opPairTable_080b32e0[] = {
+    {109, {1, 1, 0, 2}, 0},
+    {110, {1, 1, 0, 2}, 0},
+    {112, {2, 1, 0, 2}, 0},
+    {158, {1, 2, 1, -1}, 1},
+    {163, {1, 2, 1, -1}, 1},
+    {159, {2, 2, 1, -1}, 1},
+    {164, {2, 2, 1, -1}, 1},
+    {0, {0}, 0},
+};
+
+struct opCount_s {
+    int opcode;
+    int unk_04;
+};
+
+opCount_s opCountTable_080b3340[] = {
+    {155, 1}, {160, 1}, {156, 1}, {161, 1}, {0, 0},
+};
+
 Instr::Instr(iInfo *info)
 {
     if (!info) {
