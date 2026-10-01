@@ -1349,7 +1349,9 @@ bool func_0804e0cc(mValue *dst, mValue *a, mValue *b)
     return true;
 }
 
-extern const char *g_080b308c;
+bool g_080b3088 = false;
+const char *g_080b308c =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_@.[]";
 
 bool func_0804e148(const char *s)
 {
@@ -1368,8 +1370,7 @@ bool func_0804e148(const char *s)
     return true;
 }
 
-extern bool g_080b3088;
-extern const char *g_080b3090[];
+const char *g_080b3090[3] = { "0123456789", "0123456789abcdef", "01" };
 
 bool mValue::parse(const char *s)
 {
