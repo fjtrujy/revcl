@@ -156,7 +156,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     g_080de738 = 0;
     g_080de740 = 0;
 
-    RegPoolEntry *reg = op->getReg2();
+    RegPoolEntry *reg = op->isOutRegOp() ? op->unk_18 : 0;
     switch (reg->unk_30) {
     case 52:
         cap = 0x73;
