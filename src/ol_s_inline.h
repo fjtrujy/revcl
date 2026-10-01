@@ -21,6 +21,11 @@ inline bool ol_s::isExt()
     return unk_13 & 1;
 }
 
+inline bool ol_s::isExtUsed()
+{
+    return (unk_13 >> 1) & 1;
+}
+
 inline ol_s::ol_s()
 {
     reset();

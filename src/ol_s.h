@@ -24,6 +24,7 @@ struct ol_s {
     inline ~ol_s();
     inline void reset();
     inline bool isExt();
+    inline bool isExtUsed();
     void func_08057fbc();
     void func_08057fec();
     ol_s *func_080583ac();
