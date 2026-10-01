@@ -210,8 +210,8 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
                 int m = in->unk_38[0].unk_07 & mask[i];
                 int n = func_0804bf50(m);
                 if (n > best) {
-                    g_080de744 = pool->func_080593e0(i);
                     g_080de748 = m;
+                    g_080de744 = pool->func_080593e0(i);
                     best = n;
                 }
             }
