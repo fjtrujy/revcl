@@ -1469,9 +1469,9 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
     if (lsz && lim - first > lsz)
         return 0x2000;
 
-    int s = first + (sz - p);
-    int e = lim + (sz - p);
-    wrapRange(s, e);
+    int s = sz - p + first;
+    int e = sz - p + lim;
+    wrapRangeLocal(s, e);
     for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
         if (lk == out)
             continue;
@@ -1479,11 +1479,13 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
             continue;
         int ls = lk->unk_34;
         int le = lk->unk_4c;
-        wrapRange(ls, le);
+        wrapRangeLocal(ls, le);
         if (func_0805db74(s, e, ls, le))
             return 2;
     }
-    if (!ret && unk_2a && !lsz && !out->unk_15) {
+    if (ret)
+        return ret;
+    if (unk_2a && !lsz && !out->unk_15) {
         cls0805bcc4 *x = unk_0c[0];
         if (!x) {
             func_0804ad38("external lock not set \n");
@@ -1496,7 +1498,7 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
                 return 0x200000;
         }
     }
-    return ret;
+    return 0;
 }
 
 cls0805e2e4::cls0805e2e4()
