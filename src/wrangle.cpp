@@ -11,7 +11,7 @@ extern int timeout_080b3010;
 
 int g_080de74c;
 int g_080de750;
-char g_080de754;
+volatile char g_080de754;
 int g_080de758;
 char g_080de75c;
 
@@ -94,7 +94,7 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
         g_080de750 = wt->unk_94.unk_08 / 5 + 1;
     if (g_080de750 < timeout_080b3010)
         g_080de750 = timeout_080b3010;
-    if (!setWatchdog(&g_080de754, g_080de750)) {
+    if (!setWatchdog((char *)&g_080de754, g_080de750)) {
         func_0804ad38("failed to set OS_setWatchdog\n");
         return false;
     }
@@ -293,8 +293,8 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                 func_0804ad38("was ok to insert..but failed!\n");
                 wt->dump();
                 func_0804aeb0();
-            }
-            inserted = true;
+            } else
+                inserted = true;
             if (!inserted) {
                 func_0804ad38("got here - but inserted not set bFaulted=%d ret=%x\n", bFaulted, ret);
                 func_0804aeb0();
