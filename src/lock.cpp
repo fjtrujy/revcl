@@ -1985,6 +1985,172 @@ bool func_0805f550(Block *b)
     return true;
 }
 
+bool dynCalcStats(workTable *wt)
+{
+    Block *b = (Block *)wt;
+    int i;
+    Instr *in;
+    func_0805f550(b);
+
+    for (in = b->unk_a0; in; in = in->unk_24.unk_00) {
+        int v = in->unk_13e8.unk_00;
+        in->unk_140c = v;
+        in->unk_140a = v;
+        if (v > b->unk_04)
+            b->unk_04 = v;
+    }
+
+    for (in = b->unk_94; in; in = in->unk_24.unk_00) {
+        int h = 0;
+        for (i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            RegPoolEntry *reg = op->inputRegB();
+            if (reg) {
+                for (int p = 0; p != reg->unk_28; p++) {
+                    OpSlot *s = &op->unk_2c[p];
+                    bool bit = (op->unk_07 >> p) & 1;
+                    if (bit && s->unk_19 != 2) {
+                        cls0805bcc4 *par = s->getParent();
+                        int lat = s->unk_18 + par->unk_18;
+                        int t = 0;
+                        if (par->unk_2d != 2)
+                            t = par->ownerInstr()->unk_140a + lat;
+                        if (t > h)
+                            h = t;
+                    }
+                }
+            }
+        }
+        for (i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            RegPoolEntry *reg = op->getReg2();
+            if (reg) {
+                for (int p = 0; p != reg->unk_28; p++) {
+                    rPart *rp = reg->getRP(p);
+                    if (in->func_0805544c(reg, 1 << p) && rp->unk_44 != -1) {
+                        int v = rp->unk_44;
+                        if (op->unk_0b)
+                            v = v - 1;
+                        else
+                            v = v - op->unk_0a;
+                        if (h <= v)
+                            h = v + 1;
+                    }
+                }
+            }
+        }
+        in->unk_140a = h;
+        if (h > b->unk_04)
+            b->unk_04 = h;
+        for (i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            RegPoolEntry *reg = op->getReg();
+            if (reg) {
+                for (int p = 0; p != reg->unk_28; p++) {
+                    OpSlot *s = &op->unk_2c[p];
+                    bool bit = (op->unk_07 >> p) & 1;
+                    if (bit) {
+                        rPart *rp = reg->getRP(p);
+                        if (s->unk_19 != 2) {
+                            if (rp->unk_42 == -1) {
+                                rp->unk_42 = in->unk_140a;
+                                rp->unk_44 = in->unk_140a;
+                            } else {
+                                if (rp->unk_42 > in->unk_140a)
+                                    rp->unk_42 = in->unk_140a;
+                                if (rp->unk_44 < in->unk_140a)
+                                    rp->unk_44 = in->unk_140a;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            RegPoolEntry *reg = op->getReg2();
+            if (reg) {
+                for (int p = 0; p != reg->unk_28; p++) {
+                    bool bit = (op->unk_07 >> p) & 1;
+                    if (bit) {
+                        rPart *rp = reg->getRP(p);
+                        rp->unk_42 = -1;
+                        rp->unk_44 = -1;
+                    }
+                }
+            }
+        }
+    }
+
+    for (in = b->unk_94; in; in = in->unk_24.unk_00)
+        in->unk_140c = b->unk_04;
+
+    for (in = b->unk_98; in; in = in->unk_24.unk_04) {
+        for (i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            RegPoolEntry *reg = op->getReg();
+            if (reg) {
+                for (int p = 0; p != reg->unk_28; p++) {
+                    OpSlot *s = &op->unk_2c[p];
+                    bool bit = (op->unk_07 >> p) & 1;
+                    if (bit && s->unk_19 != 2) {
+                        cls0805bcc4 *par = s->getParent();
+                        if (par->unk_2d != 2) {
+                            Instr *pi = par->ownerInstr();
+                            int v = in->unk_140a - (par->unk_18 + s->unk_18);
+                            if (v < 0) {
+                                func_0804ad38("-ve ip?\n");
+                                in->func_08054008(false);
+                                wt->dump();
+                                in->func_08054008(false);
+                                func_0804adf0(-1);
+                            }
+                            if (pi->unk_140c > v)
+                                pi->unk_140c = v;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (in = b->unk_94; in; in = in->unk_24.unk_00) {
+        for (i = 0; i != in->unk_138b; i++) {
+            Operand *op = &in->unk_38[i];
+            RegPoolEntry *reg = op->getReg();
+            if (reg) {
+                for (int p = 0; p != reg->unk_28; p++) {
+                    OpSlot *s = &op->unk_2c[p];
+                    bool bit = (op->unk_07 >> p) & 1;
+                    if (bit && s->unk_19 != 2) {
+                        cls0805bcc4 *par = s->getParent();
+                        if (par->unk_2d != 2) {
+                            Instr *pi = par->ownerInstr();
+                            int lat;
+                            if (s->unk_15)
+                                lat = 1;
+                            else
+                                lat = par->unk_18;
+                            int v = pi->unk_140c + lat;
+                            if (v < in->unk_1408)
+                                in->unk_1408 = v;
+                            v = in->unk_140a - lat;
+                            if (v > pi->unk_140e)
+                                pi->unk_140e = v;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (in = b->unk_94; in; in = in->unk_24.unk_00) {
+        in->unk_13f0.unk_04 = in->unk_140a;
+        in->unk_13f0.unk_00 = b->unk_04 - in->unk_140c;
+    }
+    return true;
+}
+
 void dynDumpStats(Block *b)
 {
     int saved = errorOccurred;
