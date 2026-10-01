@@ -758,3 +758,105 @@ bool genRegPool::assignExt(instStream *s)
     }
     return true;
 }
+
+bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
+{
+    if (!reg || !func_08059e20(reg)) {
+        func_0804ad38("discard disjoint called, but this pool doesn't own this register!\n");
+        return false;
+    }
+    if (reg->unk_18) {
+        func_0804ad38("rg_a is mapped.. at start of DiscardDisjoint registers %s\n",
+                      reg->func_0805a8e0());
+        return false;
+    }
+    workTable *wt = s->getTable();
+    regUseList *l = &wt->unk_14;
+    regUse *ru;
+    for (ru = l->firstVirtual(); ru; ru = ru->nextVirtual()) {
+        if (ru->unk_08 == reg) {
+            if (!ru->isExternal()) {
+                func_0804ad38("discard disjoint - found a match - but it's not external\n");
+                return false;
+            }
+            break;
+        }
+    }
+    if (!ru)
+        return true;
+    if (!(ru->unk_0c | ru->unk_0d | ru->unk_10)) {
+        func_0804ad38("genRegPool: discard disjoint - an xnf register had was not xixot\n");
+        return false;
+    }
+    if (ru->unk_0c & ~ru->unk_0e) {
+        func_0804ad38("xiBits is outside of iBits \n");
+        return false;
+    }
+    if (ru->unk_0d & ~ru->unk_0f) {
+        func_0804ad38("xiBits is outside of iBits \n");
+        return false;
+    }
+    for (regUse *o = l->unk_04; o; o = o->unk_04) {
+        RegPoolEntry *r = o->unk_08;
+        if (!r) {
+            func_0804ad38("flowMon::discard disjoint forced regref with null reg\n");
+            return false;
+        }
+        if (!func_08059e20(r) || (!r->unk_18 && r->unk_14))
+            continue;
+        unsigned char m = 0;
+        switch (wt->unk_09) {
+        case 1:
+        case 4: {
+            unsigned char a = ru->unk_0e | ru->unk_0f;
+            if (ru->unk_0f)
+                a |= 0x80;
+            unsigned char b = o->unk_0e | o->unk_0f;
+            if (o->unk_0f)
+                b |= 0x80;
+            m = b & a;
+            m |= (a & o->unk_10) | (b & ru->unk_10);
+            break;
+        }
+        case 3:
+            for (int i = 0; i != reg->unk_28; i++) {
+                int as = 0, ae = 0;
+                bool aa = false;
+                int bs = 0, be = 0;
+                bool ba = false;
+                if (!regRefLiveRange(ru, i, &as, &ae, &aa)) {
+                    func_0804ad38("couldn't determine live range_a\n");
+                    return false;
+                }
+                if (!regRefLiveRange(o, i, &bs, &be, &ba)) {
+                    func_0804ad38("couldn't determine live range_b.%d\n", i);
+                    o->func_0805b51c();
+                    wt->dump();
+                    return false;
+                }
+                if (!(aa && ba) && (be >= 0 || ae >= 0) && as < be && ae > bs)
+                    m |= 1 << i;
+            }
+            if (ru->unk_0f && o->unk_0f && hack_slo(wt, reg, r))
+                m |= 0x80;
+            break;
+        default:
+            return false;
+        }
+        RegPoolEntry *tmpr;
+        if (r->unk_14 != 1)
+            tmpr = r;
+        else
+            tmpr = r->unk_18;
+        if (!tmpr) {
+            func_0804ad38("tmpr is zero\n");
+            return false;
+        }
+        if (tmpr->unk_14) {
+            func_0804ad38("tmpr is virtual\n");
+            return false;
+        }
+        regMask_080dde40[tmpr->regIndex()] |= m;
+    }
+    return true;
+}
