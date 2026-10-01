@@ -15,9 +15,8 @@ static inline bool isPipeMode(workTable *wt)
 
 bool detectMoves(Program *p)
 {
-    workTable *wt;
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {
-        wt = s->getWorkTable();
+        workTable *wt = s->getTable();
         if (wt->unk_09 == 1 || isPipeMode(wt)) {
             Instr *next;
             for (Instr *in = wt->unk_88.unk_00; in; in = next) {
