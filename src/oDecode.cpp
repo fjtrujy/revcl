@@ -27,7 +27,7 @@ int mstrlen(const char *s);
 bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax);
 bool parseImmediate(const char *s, unsigned char type, mValue *v);
 RegPool *GetRP(unsigned t);
-extern int g_080b34dc;
+int g_080b34dc = -1;
 
 Instr *Processor::getNextInstruction(LocTag *t, int *pos)
 {
