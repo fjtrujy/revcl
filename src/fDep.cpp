@@ -216,7 +216,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                                 }
                     }
                 }
-                RegPoolEntry *w = op->inRegOp();
+                RegPoolEntry *w = op->inputReg();
                 if (w && w->unk_30 == 48)
                     in->unk_1412 = op->unk_07;
             }
