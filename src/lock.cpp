@@ -977,8 +977,9 @@ bool cls0805c244::setRepReg(RegPoolEntry *rg)
 int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
 {
     cls0805bcc4 *lk = unk_1c;
+    int ret;
     int lsz = g_080b336c;
-    int ret = 0;
+    ret = 0;
     int p = *pos;
 
     in->unk_1a = 0;
@@ -994,7 +995,7 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
     int lo = par->unk_36;
     int hi = par->unk_4e;
 
-    if (lsz && par->unk_2d == 2) {
+    if (lsz && isRegLock(par)) {
         if (par->unk_2e == 0)
             return 0;
         bool inside = true;
