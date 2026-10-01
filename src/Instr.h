@@ -12,6 +12,7 @@ class Instr;
 struct ol_s;
 struct Operand;
 struct regUse;
+class RegWeb;
 
 // Opcode descriptor ("iInfo", from the null-argument error string).
 struct iOpDesc {
@@ -249,7 +250,7 @@ struct OpSlot : public cls0805bcc4 {
 };
 
 struct Operand {
-    int unk_00;
+    RegWeb *unk_00;         // register web
     char unk_04;            // operand kind
     char unk_05;
     char unk_06;
@@ -287,6 +288,11 @@ struct Operand {
     char *func_08057b90(bool flag, char *buf);
     int getRegFrom(Operand *src);
     const char *func_08057e40();
+    RegWeb *GetWeb();
+    bool isForwardable()
+    {
+        return unk_18 && unk_18->unk_04->unk_18 && unk_18 != unk_18->unk_04->unk_10;
+    }
     bool isZero()
     {
         int z = 0;

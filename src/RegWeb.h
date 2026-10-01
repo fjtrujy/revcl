@@ -10,16 +10,21 @@
 class RegWeb {
 public:
     void *unk_00;
-    int unk_04;
+    RegPoolEntry *unk_04;   // virtual register of the web
     int unk_08;
-    int unk_0c;
-    int unk_10;
-    int unk_14;
+    RegWeb *unk_0c;         // parent link (merged into)
+    short unk_10;           // count
+    short unk_12;           // index in regWebs
+    unsigned char unk_14;   // slot mask
+    char unk_15[3];
 
     RegWeb() {}
     ~RegWeb() {}
 
     static bool AddiInstr(Instr *in);
+    static RegWeb *GetNewWeb(RegPoolEntry *old_vrg);
+    static bool merge(RegWeb *w_a, RegWeb *w_b);
+    static bool setfMap(RegWeb *w, RegPoolEntry *r);
     static bool AddiTable(workTable *t);
 };
 
