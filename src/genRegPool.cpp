@@ -543,51 +543,51 @@ bool genRegPool::set_in_aTab(regUse *ru)
         func_0804ad38("regref had no register\n");
         return false;
     }
-    if (!func_08059e20(reg))
-        return true;
-    if (reg->unk_14) {
-        func_0804ad38("RegPool::set_in_aTab,regref: alloc..had forced virtual register %s\n",
-                      reg->func_0805a8e0());
-        func_0804adf0(-1);
-    }
-    int id = reg->regIndex();
-    if (id < 0) {
-        func_0804ad38("failed to get local_id from a mapped register\n");
-        func_0804adf0(-1);
-    }
-    if (!reg->unk_16)
-        return true;
-    unsigned char mask = ru->unk_0e | ru->unk_0f | ru->unk_10;
-    if (!mask) {
-        func_0804ad38("error here\n");
-        func_0804adf0(-1);
-    }
-    int set = 0;
-    for (int i = 0; i != reg->unk_28; i++) {
-        bool on = (mask >> i) & 1;
-        if (on && !reg->func_0805a908(i)) {
-            func_0804ad38("failed to get rll\n");
-            return false;
+    if (func_08059e20(reg)) {
+        if (reg->unk_14) {
+            func_0804ad38("RegPool::set_in_aTab,regref: alloc..had forced virtual register %s\n",
+                          reg->func_0805a8e0());
+            func_0804adf0(-1);
         }
-        cls0805c244 *ll = (cls0805c244 *)reg->func_0805a908(i);
-        if (ll) {
-            if (!ll->unk_03)
-                set |= 1 << i;
-            ll->unk_03 = 1;
+        int id = reg->regIndex();
+        if (id < 0) {
+            func_0804ad38("failed to get local_id from a mapped register\n");
+            func_0804adf0(-1);
         }
-    }
-    if (set) {
-        if (!build_tTab(reg, set)) {
-            func_0804ad38("failed to build ttab Forced build for mapped reg %s from %s\n",
-                          reg->func_0805a8e0(), reg->func_0805a8e0());
-            return false;
-        }
-        if (!set_t_in_aTab(id)) {
-            func_0804ad38("failed to check_set t_in_aTab for '%s' at local ID=%d map\n",
-                          reg->func_0805a8e0(), id);
-            dumpTTab();
-            dumpATab();
-            return false;
+        if (reg->unk_16) {
+            unsigned char mask = ru->unk_0e | ru->unk_0f | ru->unk_10;
+            if (!mask) {
+                func_0804ad38("error here\n");
+                func_0804adf0(-1);
+            }
+            int set = 0;
+            for (int i = 0; i != reg->unk_28; i++) {
+                bool on = (mask >> i) & 1;
+                if (on && !reg->func_0805a908(i)) {
+                    func_0804ad38("failed to get rll\n");
+                    return false;
+                }
+                cls0805c244 *ll = (cls0805c244 *)reg->func_0805a908(i);
+                if (ll) {
+                    if (!ll->unk_03)
+                        set |= 1 << i;
+                    ll->unk_03 = 1;
+                }
+            }
+            if (set) {
+                if (!build_tTab(reg, set)) {
+                    func_0804ad38("failed to build ttab Forced build for mapped reg %s from %s\n",
+                                  reg->func_0805a8e0(), reg->func_0805a8e0());
+                    return false;
+                }
+                if (!set_t_in_aTab(id)) {
+                    func_0804ad38("failed to check_set t_in_aTab for '%s' at local ID=%d map\n",
+                                  reg->func_0805a8e0(), id);
+                    dumpTTab();
+                    dumpATab();
+                    return false;
+                }
+            }
         }
     }
     return true;
