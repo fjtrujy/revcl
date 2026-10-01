@@ -574,17 +574,11 @@ public:
 
     bool isConcreteMove()
     {
-        int r = 0;
-        if (unk_142c && unk_142e)
-            r = 1;
-        return r;
+        return unk_142c && unk_142e;
     }
     bool isAbstractMove()
     {
-        int r = 0;
-        if (unk_142c && !unk_142e)
-            r = 1;
-        return r;
+        return unk_142c && !unk_142e;
     }
     Instr(iInfo *info);
     ~Instr();
