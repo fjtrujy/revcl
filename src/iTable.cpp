@@ -409,8 +409,8 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
         wtRow *sr = &from->unk_2c[i];
         wtRow *dr = &to->unk_2c[j];
         for (int p = 0; p != 2; p++) {
-            Instr *in = sr->getEntry(p);
             Instr *c = 0;
+            Instr *in = sr->getEntry(p);
             if (dr->getEntry(p)) {
                 func_0804ad38("CloneAppend: would overwrite inst in target\n");
                 return 0;
@@ -423,7 +423,7 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                 if (!in->func_08054138() || a7) {
                     int lid = in->unk_13e8.unk_03;
                     if (lid <= lidS && lid >= lidE) {
-                        char f = in->unk_1388;
+                        unsigned char f = in->unk_1388;
                         if ((f && a5) || !f) {
                             c = in->clone();
                             if (!c) {
