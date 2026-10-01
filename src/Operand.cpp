@@ -527,11 +527,11 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     char *e = tok;
     while (*e)
         e++;
+    int len = e - tok;
     out->name[0] = 0;
     out->unk_1000[0] = 0;
     out->unk_800[0] = 0;
     out->unk_200c = 0;
-    int len = e - tok;
     out->unk_2000 = 0;
     out->unk_2004 = 0;
 
