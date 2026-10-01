@@ -712,3 +712,49 @@ bool genRegPool::func_08088e54(workTable *t)
     dumpATab();
     return true;
 }
+
+bool genRegPool::assignExt(instStream *s)
+{
+    if (!s) {
+        func_0804ad38("AssignExternalRegisters - passed a null  pointer!\n");
+        return false;
+    }
+    Program *owner = s->unk_104;
+    if (!owner) {
+        func_0804ad38("AssignExternalRegisters - stream had no owner\n");
+        return false;
+    }
+    workTable *wt = s->getTable();
+    for (regUse *ru = wt->unk_14.firstVirtual(); ru; ru = ru->nextVirtual()) {
+        RegPoolEntry *reg = ru->unk_08;
+        if (!reg) {
+            func_0804ad38("flowMon::AssignExt: register not set in rf\n");
+            return false;
+        }
+        if (func_08059e20(reg) && ru->isExternal() && !reg->unk_18) {
+            initRegMask(this);
+            for (instStream *p = owner->unk_a0; p; p = p->unk_108) {
+                if (!func_08088e6c(p, reg)) {
+                    func_0804ad38("generic external allocator had internal error.. ret<0 for DiscardDisjoint\n");
+                    return false;
+                }
+            }
+            int r = firstEmptyMask(this);
+            if (r < 0) {
+                if (!func_08059f70()) {
+                    func_0804ad38("vcl failed to assign a register of type %s, but there's no registers of that type available for it to use, maybe adding a .init.. directive would help\n");
+                    func_0804ac44();
+                    return false;
+                }
+                func_0804acb0("currently at stream: %s trying to allocate external register %s\n",
+                              s->func_0806d674(), reg->func_0805a8e0());
+                wt->unk_14.func_0805bab0();
+                func_0804ad38("failed to assign an external %s\n", reg->func_0805a8e0());
+                func_0804ac44();
+                return false;
+            }
+            reg->unk_18 = &unk_04[r];
+        }
+    }
+    return true;
+}
