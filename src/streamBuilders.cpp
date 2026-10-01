@@ -803,3 +803,127 @@ char *emitClip(char *buf, Instr *in, bool upper, char *mods, bool b, int)
     }
     return p;
 }
+
+char *vmove_Emit(char *buf, Instr *in, bool upper, char *mods, bool b, int)
+{
+    char *p;
+    if (!in)
+        return 0;
+    if (!in->unk_142c) {
+        func_0804ad38("baseMuid not set in vmove_Emit\n");
+        return 0;
+    }
+    if (!in->unk_142e) {
+        func_0804ad38("trying to emit an abstract move\n");
+        return 0;
+    }
+    p = buf;
+    switch (in->unk_142e) {
+    case 0xb3:
+        p += func_0804adbc(buf, "iaddiu");
+        for (int n = p - buf; n < 14; n++)
+            *p++ = ' ';
+        p = in->unk_38[0].Emit(p, upper, b);
+        if (!p)
+            goto fail;
+        *p++ = ',';
+        p = in->unk_38[1].Emit(p, upper, b);
+        if (!p)
+            goto fail;
+        *p++ = ',';
+        *p++ = '0';
+        break;
+    case 0xb5:
+        p += func_0804adbc(buf, "%s%s", "move", mods);
+        p = emitDestMask(p, 1, in->unk_138f);
+        if (!p) {
+            func_0804ad38("failed to emit inst mods for lvfmove\n");
+            return 0;
+        }
+        for (int n = p - buf; n < 14; n++)
+            *p++ = ' ';
+        p = in->unk_38[0].Emit(p, upper, b);
+        if (!p)
+            goto fail;
+        *p++ = ',';
+        p = in->unk_38[1].Emit(p, upper, b);
+        if (!p)
+            goto fail;
+        break;
+    case 0xb6:
+        p += func_0804adbc(buf, "%s%s", "max", mods);
+        p = emitDestMask(p, 1, in->unk_138f);
+        if (!p) {
+            func_0804ad38("failed to emit inst mods for lvfmove\n");
+            return 0;
+        }
+        for (int n = p - buf; n < 14; n++)
+            *p++ = ' ';
+        p = in->unk_38[0].Emit(p, upper, b);
+        if (!p)
+            goto fail;
+        *p++ = ',';
+        p = in->unk_38[1].Emit(p, upper, b);
+        if (!p)
+            goto fail;
+        *p++ = ',';
+        p = in->unk_38[1].Emit(p, upper, b);
+        if (!p)
+            goto fail;
+        break;
+    default:
+        func_0804ad38("unknown vmove output requested\n");
+        return 0;
+    }
+    *p = 0;
+    return p;
+fail:
+    func_0804ad38("failed to emit operand 0\n");
+    return 0;
+}
+
+int semSynth(void *p, Instr *in)
+{
+    iInfo *info = (iInfo *)p;
+    char name[32];
+    char *d = name;
+    const char *s = info->unk_04;
+    while (*s)
+        *d++ = *s++;
+    if (in->unk_38[0].unk_04 == 9) {
+        if (d[-1] != 'a' && d[-1] != 'A') {
+            *d++ = 'a';
+            in->unk_38[0].unk_0a = 1;
+        }
+    } else
+        in->unk_38[0].unk_0a = 4;
+    char k = in->unk_38[2].unk_04;
+    if (k == 4) {
+        in->unk_38[2].unk_0b = 1;
+        *d++ = 'i';
+    }
+    if (k == 7) {
+        *d++ = 'q';
+        in->unk_38[2].unk_0b = 0;
+    }
+    if (k == 3) {
+        unsigned char m = in->unk_38[2].unk_07;
+        int n = 0;
+        if (m == 1) { *d++ = 'x'; n++; }
+        if (m == 2) { *d++ = 'y'; n++; }
+        if (m == 4) { *d++ = 'z'; n++; }
+        if (m == 8) { *d++ = 'w'; n++; }
+        if (n != 1) {
+            func_0804ad38("semSynth - bad FL1 bits\n");
+            return 0;
+        }
+    }
+    *d = 0;
+    iInfo *ni = func_0806bf8c(name, false);
+    if (!ni) {
+        func_0804ad38("failed to find derived instruction type '%s'\n", name);
+        return 0;
+    }
+    in->unk_34 = ni;
+    return 1;
+}
