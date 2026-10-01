@@ -22,7 +22,7 @@ loopDebris::~loopDebris()
     m_exitName = 0;
 }
 
-bool loopDebris::init(const char *baseName, int a, char flag)
+bool loopDebris::init(const char *baseName, int a, bool flag)
 {
     char buf[4096];
     if (!baseName) {

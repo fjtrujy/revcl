@@ -12,7 +12,7 @@ class loopDebris {
 public:
     loopDebris();
     ~loopDebris();
-    bool init(const char *baseName, int a, char flag);
+    bool init(const char *baseName, int a, bool flag);
     void func_0806770c();
     instStream *getEnterStream();
     instStream *getExitStream();
@@ -45,7 +45,7 @@ public:
         return 0;
     }
 
-    int unk_00;
+    workTable *unk_00;
     char *m_entryName;
     char *m_exitName;
     const char *m_baseName;
