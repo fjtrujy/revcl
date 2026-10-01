@@ -13,10 +13,9 @@ char gatheredToken[1024];
 
 static inline void copyToken(char *d, const char *s)
 {
-    int i;
-    for (i = 0; s[i] && i < 0x800; i++)
-        d[i] = s[i];
-    d[i] = 0;
+    for (int i = 0; *s && i < 0x800; i++)
+        *d++ = *s++;
+    *d = 0;
 }
 
 int gatherTokens(LocTag *t, int i, bool stopAtOpcode);
@@ -420,7 +419,7 @@ fail:
 
 bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *nOut)
 {
-    char buf[0x800];
+    char buf[0x810];
 
     if (!t) {
         func_0804ad38("decodeLE: passed a null pointer\n");
@@ -464,24 +463,25 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
     }
     if (t->func_08050f48())
         (*pos)++;
-    while (*pos < func_0805085c(t)) {
+next:
+    if (*pos < func_0805085c(t)) {
         if (t->func_08050f18(*pos)) {
             (*pos)++;
-            continue;
+            goto next;
         }
-        if (t->func_08050f7c(*pos)) {
-            (*pos)++;
-            return true;
+        if (!t->func_08050f7c(*pos)) {
+            if (*nOut > 1) {
+                func_0804ad84("too many instructions on a line!\n");
+                t->func_08050c40(-1);
+                return false;
+            }
+            Instr *ins = getNextInstruction(t, pos);
+            if (!ins)
+                return false;
+            out[(*nOut)++] = ins;
+            goto next;
         }
-        if (*nOut > 1) {
-            func_0804ad84("too many instructions on a line!\n");
-            t->func_08050c40(-1);
-            return false;
-        }
-        Instr *ins = getNextInstruction(t, pos);
-        if (!ins)
-            return false;
-        out[(*nOut)++] = ins;
+        (*pos)++;
     }
     return true;
 }
