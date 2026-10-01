@@ -12,8 +12,13 @@ char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
                     char **argv, bool keepTemps);
 
 extern const char *matchedDirective;
-extern unsigned char toolMask_080b3034;
-extern char toolOpt_080b3035;
+Tool tools_080b301c[3] = {
+    { "gcc", "gcc -P -E -C -x assembler-with-cpp" },
+    { "gasp", "gasp -p -s -c ';' " },
+    { "gasp", "gasp -p -a -s -c ';' " },
+};
+unsigned char toolMask_080b3034 = 7;
+char toolOpt_080b3035 = 'I';
 
 static inline char lowerCase(char c)
 {
