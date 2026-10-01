@@ -89,7 +89,7 @@ bool Processor::Init(CpuDef *cpu)
         }
         if (!pool)
             func_0804ad38("Processor::Init  - failed to get a regpool '%s'\n", d->name);
-        if (!pool->Init(d->unk_04, d->name, d->cls, d->unk_10)) {
+        if (!pool->Init((int)d->prefix, d->name, d->cls, d->unk_10)) {
             func_0804ad38("failed to init reg pool '%s'\n", d->name);
             delete pool;
             return false;

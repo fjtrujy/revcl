@@ -27,17 +27,17 @@ struct iOpDesc {
 
 class iInfo {
 public:
-    char unk_00[4];
+    char *unk_00;
     char *unk_04;           // mnemonic
-    char unk_08[4];
+    char *unk_08;
     unsigned char unk_0c;
     char unk_0d;
     union {
+        unsigned short unk_0e_w;
         struct {
             char unk_0e;
             char unk_0f;
         };
-        unsigned short unk_0e_w;
     };
     char unk_10;
     char unk_11;

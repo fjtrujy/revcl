@@ -2,6 +2,7 @@
 #include "flowBlock.h"
 #include "Program.h"
 #include "fileEmit.h"
+#include "Processor.h"
 
 extern int errorOccurred;
 extern bool quiet_080bbd98;
@@ -932,3 +933,18 @@ int semSynth(void *p, Instr *in)
     in->unk_34 = ni;
     return 1;
 }
+
+RegDesc regDescTable[] = {
+#include "regDescTable.h"
+};
+
+iInfo vuITable_080b3b20[] = {
+#include "vuITable.h"
+};
+
+PoolDef vuPools_080bbae0[] = {
+    {1, "vf", "VU User floating point", 9, 4, "vf00", 0},
+    {1, "vi", "VU User integer", 8, 1, "vi00", 0},
+    {2, "hw", "VU hardware register", 10, 0, 0, "EXT"},
+    {0, 0, 0, 0, 0, 0, 0},
+};

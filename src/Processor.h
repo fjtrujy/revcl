@@ -16,7 +16,7 @@ struct ol_s;
 
 struct PoolDef {            // array ends at type == 0
     int type;               // 1 gen, 2 hw, 3 mem
-    int unk_04;
+    const char *prefix;     // register prefix ("vf", "vi", "hw")
     const char *name;
     int cls;                // register class, index into g_080de6e0
     int unk_10;
