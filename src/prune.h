@@ -295,10 +295,10 @@ inline int doPrune(Instr *in)
                 return -1;
             }
             m = inOR;
-        } else if (outOR)
-            m = outOR;
-        else
+        } else if (!outOR)
             m = in->unk_138f;
+        else
+            m = outOR;
         if (m & ~in->unk_138f) {
             func_0804ad38("inOR was out of range of instruction mod bits nb=%x,mb=%x!\n", m, in->unk_138f);
             in->func_08054008(false);
