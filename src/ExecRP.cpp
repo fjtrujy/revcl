@@ -17,24 +17,22 @@ bool func_08051e34(Program *prog, LocTag *t, int v);
 bool func_08088f20(RegPool *pool, const char *name, int size);
 int mstrlen(const char *s);
 
-extern Directive directives_080b3160[28];
-
-int func_0805116c(Parser *p, LocTag *t)
+bool func_0805116c(Program *prog, LocTag *t)
 {
     return func_080519f8(t, GetRP(9), true);
 }
 
-int func_0805118c(Parser *p, LocTag *t)
+bool func_0805118c(Program *prog, LocTag *t)
 {
     return func_080519f8(t, GetRP(8), true);
 }
 
-int func_080511ac(Parser *p, LocTag *t)
+bool func_080511ac(Program *prog, LocTag *t)
 {
     return func_080519f8(t, GetRP(9), false);
 }
 
-int func_080511cc(Parser *p, LocTag *t)
+bool func_080511cc(Program *prog, LocTag *t)
 {
     return func_080519f8(t, GetRP(8), false);
 }
@@ -48,31 +46,31 @@ inline bool ExecRP_init_reg_all(RegPool *pool)
     return pool->func_08059c00();
 }
 
-int func_080511ec(Program *prog, LocTag *t)
+bool func_080511ec(Program *prog, LocTag *t)
 {
     return ExecRP_init_reg_all(GetRP(9));
 }
 
-int func_08051228(Program *prog, LocTag *t)
+bool func_08051228(Program *prog, LocTag *t)
 {
     return ExecRP_init_reg_all(GetRP(8));
 }
 
-int func_08051264(Program *prog, LocTag *t)
+bool func_08051264(Program *prog, LocTag *t)
 {
     noAlign_080b3016 = true;
     func_0804acb0("dh_align_disable() - disabling .align emit\n");
     return 1;
 }
 
-int func_08051284(Program *prog, LocTag *t)
+bool func_08051284(Program *prog, LocTag *t)
 {
     noAlign_080b3016 = true;
     func_0804acb0("dh_no_ebits() - disabling [e]bit emit\n");
     return 1;
 }
 
-int func_080512a4(Program *prog, LocTag *t)
+bool func_080512a4(Program *prog, LocTag *t)
 {
     char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
     if (!s) {
@@ -84,13 +82,13 @@ int func_080512a4(Program *prog, LocTag *t)
     return 1;
 }
 
-int func_08051308(Program *prog, LocTag *t)
+bool func_08051308(Program *prog, LocTag *t)
 {
     prog->proc.unk_63 = true;
     return 1;
 }
 
-int func_0805131c(Program *prog, LocTag *t)
+bool func_0805131c(Program *prog, LocTag *t)
 {
     char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
     if (!s) {
@@ -101,7 +99,7 @@ int func_0805131c(Program *prog, LocTag *t)
     return 1;
 }
 
-int func_0805137c(Program *prog, LocTag *t)
+bool func_0805137c(Program *prog, LocTag *t)
 {
     char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
     if (s)
@@ -109,7 +107,7 @@ int func_0805137c(Program *prog, LocTag *t)
     return 1;
 }
 
-int func_080513cc(Program *prog, LocTag *t)
+bool func_080513cc(Program *prog, LocTag *t)
 {
     if (prog->proc.unk_3f) {
         func_0804ad84("hit a raw directive in a rawloop block\n");
@@ -133,7 +131,7 @@ int func_080513cc(Program *prog, LocTag *t)
     return 1;
 }
 
-int func_080514a0(Program *prog, LocTag *t)
+bool func_080514a0(Program *prog, LocTag *t)
 {
     if (prog->proc.unk_3d == 1) {
         func_0804ac7c("hit an endraw directive while not in raw mode\n");
@@ -148,7 +146,7 @@ int func_080514a0(Program *prog, LocTag *t)
     return 1;
 }
 
-int func_080514e8(Program *prog, LocTag *t)
+bool func_080514e8(Program *prog, LocTag *t)
 {
     if (prog->proc.unk_3f) {
         func_0804ad84("encountered a .rawloop directive, while already in loop mode\n");
@@ -173,7 +171,7 @@ int func_080514e8(Program *prog, LocTag *t)
     return 1;
 }
 
-int func_080515a0(Program *prog, LocTag *t)
+bool func_080515a0(Program *prog, LocTag *t)
 {
     if (!prog->proc.unk_3f) {
         func_0804ad84("reached an .endloop directive but when wasn't in loop mode\n");
@@ -189,7 +187,7 @@ int func_080515a0(Program *prog, LocTag *t)
     return 1;
 }
 
-int func_080515f0(Program *prog, LocTag *t)
+bool func_080515f0(Program *prog, LocTag *t)
 {
     int device = -1;
     int limit = -1;
@@ -258,32 +256,32 @@ inline bool ExecRP_skip_directive(LocTag *t)
     return true;
 }
 
-int func_08051808(Program *prog, LocTag *t)
+bool func_08051808(Program *prog, LocTag *t)
 {
     return ExecRP_skip_directive(t);
 }
 
-int func_08051830(Program *prog, LocTag *t)
+bool func_08051830(Program *prog, LocTag *t)
 {
     return func_08051d6c(prog, t, 0);
 }
 
-int func_08051848(Program *prog, LocTag *t)
+bool func_08051848(Program *prog, LocTag *t)
 {
     return func_08051d6c(prog, t, 1);
 }
 
-int func_08051860(Program *prog, LocTag *t)
+bool func_08051860(Program *prog, LocTag *t)
 {
     return func_08051e34(prog, t, 0);
 }
 
-int func_08051878(Program *prog, LocTag *t)
+bool func_08051878(Program *prog, LocTag *t)
 {
     return func_08051e34(prog, t, 1);
 }
 
-int func_08051890(Program *prog, LocTag *t)
+bool func_08051890(Program *prog, LocTag *t)
 {
     char *name = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
     if (name) {
@@ -297,7 +295,7 @@ int func_08051890(Program *prog, LocTag *t)
     return 1;
 }
 
-int func_08051908(Program *prog, LocTag *t)
+bool func_08051908(Program *prog, LocTag *t)
 {
     char *arg = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
     if (!arg) {
@@ -315,6 +313,37 @@ int func_08051908(Program *prog, LocTag *t)
     func_0804ad84("invalid argument to .syntax, options are 'new' or 'old'\n");
     return 0;
 }
+
+Directive directives_080b3160[28] = {
+    {".vu", func_08051308},
+    {".mpg", func_0805131c},
+    {".vsm", func_080513cc},
+    {".endvsm", func_080514a0},
+    {".vsmloop", func_080514e8},
+    {".endvsmloop", func_080515a0},
+    {".init_vf", func_0805116c},
+    {".init_vi", func_0805118c},
+    {".rem_vf", func_080511ac},
+    {".rem_vi", func_080511cc},
+    {".init_vf_all", func_080511ec},
+    {".init_vi_all", func_08051228},
+    {".vu_work_area", func_080515f0},
+    {".name", func_080512a4},
+    {".syntax", func_08051908},
+    {".align", func_08051808},
+    {".global", func_0805137c},
+    {".noaligns", func_08051264},
+    {".noebits", func_08051284},
+    {".raw", func_080513cc},
+    {".endraw", func_080514a0},
+    {".rawloop", func_080514e8},
+    {".endrawloop", func_080515a0},
+    {".unique", func_08051890},
+    {".show", func_08051848},
+    {".hide", func_08051830},
+    {".endshow", func_08051878},
+    {".endhide", func_08051860},
+};
 
 Directive *func_080519a0(LocTag *t)
 {
