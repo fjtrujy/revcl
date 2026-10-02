@@ -82,18 +82,3 @@ int maddImmediate(Operand *op, mValue *v, int n)
     }
     return r;
 }
-
-int fitsSigned(int v, int bits)
-{
-    int r = 0;
-    int hi = 1 << (bits - 1);
-    int lo = -hi;
-    if (v >= lo && v < hi)
-        r = 1;
-    return r;
-}
-
-bool fitsUnsigned(int v, int bits)
-{
-    return v >= 0 && v < (1 << bits);
-}

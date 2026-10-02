@@ -1,0 +1,31 @@
+#ifndef GENREGPOOL_SHARED_H
+#define GENREGPOOL_SHARED_H
+
+#include "Program.h"
+#include "instStream.h"
+#include "genRegPool.h"
+
+void func_0804c220(char *p, int n);
+RegPool *GetRP(unsigned t);
+bool func_0806f610(Program *p);
+bool func_0806f6a4(Program *p);
+bool setRange(int start, int end, int lsz);
+int func_0804bf50(unsigned int);
+int setRangeFrom(workTable *t);
+static inline char bitSet(int m, int i)
+{
+    return (m & (1 << i)) != 0;
+}
+bool initRegMask(RegPool *pool);
+int firstEmptyMask(RegPool *pool);
+bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always);
+bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b);
+extern int maxParts_080bce20;
+extern int nRegs_080bce24;
+extern int tStart_080bce28;
+extern int tEnd_080bce2c;
+extern char aTab_080bce40[0x20000];
+extern char tTab_080dce40[0x1000];
+extern char regMask_080dde40[32];
+
+#endif

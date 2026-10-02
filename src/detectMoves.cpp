@@ -73,8 +73,3 @@ bool detectMoves(Program *p)
     }
     return true;
 }
-
-bool func_0806b4f0(Program *p)
-{
-    return true;
-}

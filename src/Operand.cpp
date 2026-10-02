@@ -1182,21 +1182,3 @@ const char *Operand::func_08057e40()
         return "NO_REG";
     return unk_18->func_0805a8e0();
 }
-
-bool olList::clear()
-{
-    ol_s *p = unk_00;
-    if (p) {
-        ol_s *f = olFreeList;
-        do {
-            ol_s *n = p->unk_00;
-            p->unk_00 = f;
-            f = p;
-            p = n;
-        } while (p);
-        olFreeList = f;
-    }
-    unk_00 = 0;
-    unk_04 = 0;
-    return true;
-}
