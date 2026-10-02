@@ -27,7 +27,7 @@ A byte-for-byte matching C++ decompilation of
 Progress (matched bytes / file size):
 
 <!-- progress:start -->
-**441,654 / 482,736 bytes (91.49%)** of `vcl_14beta7_x86` matched — code 235,711 / 268,717 (945 / 1192 functions exact, 111,683 bytes), data 148,340 bytes, unwind tables 46,460 bytes, linker/runtime 11,143 bytes
+**441,702 / 482,736 bytes (91.50%)** of `vcl_14beta7_x86` matched — code 235,743 / 268,717 (947 / 1192 functions exact, 111,946 bytes), data 148,340 bytes, unwind tables 46,476 bytes, linker/runtime 11,143 bytes
 <!-- progress:end -->
 
 Setup and daily use:
