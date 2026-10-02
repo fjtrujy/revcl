@@ -145,14 +145,11 @@ bool makeLpWork(instStream *s, int maxSpread)
         return false;
     }
     Instr *in;
-    RegPoolEntry *reg;
     for (in = nt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
         int latest = 0;
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            reg = 0;
-            if (op->isReg())
-                reg = op->unk_18;
+            RegPoolEntry *reg = op->inRegOp();
             if (reg) {
                 for (int j = 0; j != reg->unk_28; j++) {
                     ol_s *ol = op->unk_2c[j].unk_54.unk_00;
@@ -176,7 +173,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         int earliest = 30000;
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->getReg2();
+            RegPoolEntry *reg = op->outRegOp();
             if (reg) {
                 for (int j = 0; j != reg->unk_28; j++) {
                     for (ol_s *ol = op->unk_2c[j].unk_54.unk_00; ol; ol = ol->unk_00) {
@@ -208,7 +205,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         char *p = buf;
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            reg = op->inputReg();
+            RegPoolEntry *reg = op->inRegOp();
             if (reg) {
                 p += func_0804adbc(p, " %s: ", reg->func_0805a8e0());
                 int rlo = 30000, rhi = 0;
