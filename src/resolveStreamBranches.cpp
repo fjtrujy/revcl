@@ -27,14 +27,16 @@ bool resolveStreamBranches(Program *p)
                         func_0804ad38("failed to link streams together\n");
                         return false;
                     }
+                    bt = s->unk_2ce;
                 } else if (!s->unk_124) {
                     func_0804ad38("fell off the bottom of code! .. last stream should either end in END or be a branch\n");
                     return false;
                 }
             }
-            if (bt) {
+            int flags = bt;
+            if (flags) {
                 if (!((bt >> 1) & 1)) {
-                    int type = func_0806e530(bt);
+                    int type = func_0806e530(flags);
                     char *label = s->getBranchTargetImmediate();
                     if (!label) {
                         func_0804ad38("failed to get branch target immediate\n");
@@ -116,7 +118,7 @@ bool resolveStreamBranches(Program *p)
     do {
         again = false;
         for (s = p->unk_a0; s; s = s->unk_108) {
-            bool btor = (s->unk_2ce >> 1) & 1;
+            unsigned char btor = (s->unk_2ce >> 1) & 1;
             if (btor) {
                 int changed = 0;
                 if (!fixupBtorBranch(p, s, &changed, btor)) {
