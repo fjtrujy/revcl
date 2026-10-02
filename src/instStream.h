@@ -100,7 +100,7 @@ public:
     unsigned char getAllocMode();
     bool func_0806da34();         // not raw mode
     bool func_0806da58();
-    bool func_0806da80();         // out-of-line checkStartEnd
+    int func_0806da80();          // out-of-line checkStartEnd
     bool disposeInputTable();
     bool processCmdSynth(Instr *i);
     void func_0806dc9c(instStream *src);  // copy record table from src

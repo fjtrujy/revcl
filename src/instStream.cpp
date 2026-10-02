@@ -450,13 +450,13 @@ bool instStream::func_0806da58()
     return false;
 }
 
-bool instStream::func_0806da80()
+int instStream::func_0806da80()
 {
     int st = unk_2cc;
-    bool ok = false;
+    int ok = 0;
     if (st == 1 || st == 2) {
         int et = unk_2cd;
-        ok = (unsigned)(et - 1) < 4;
+        ok = et >= 1 && et <= 4;
     }
     return ok;
 }
