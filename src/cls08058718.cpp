@@ -70,7 +70,7 @@ int setRangeFrom(workTable *t)
         func_0804ad38("setRangeFrom - can't set range .. there's no table\n");
         return 0;
     }
-    if (t->unk_09 != 3 && t->unk_09 != 2 && t->unk_09 != 5) {
+    if (t->codeMode() != 3 && t->codeMode() != 2 && t->codeMode() != 5) {
         func_0804ad38("can't set range from a non raw/raw_preexp/mid table\n");
         return 0;
     }
