@@ -495,7 +495,7 @@ bool reduceExtents(workTable *wt)
                 int minEnd = 30000;
                 Operand *op;
                 for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-                    RegPoolEntry *reg = op->outputRegZ();
+                    RegPoolEntry *reg = op->isOutReg() ? op->unk_18 : 0;
                     if (reg) {
                         for (int k = 0; k != reg->unk_28; k++) {
                             if ((op->unk_07 >> k) & 1) {
