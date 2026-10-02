@@ -518,12 +518,27 @@ int cls0805c244::func_0805c938(int n)
     return best;
 }
 
+static inline Operand *lockOperand(cls0805bcc4 *lk)
+{
+    if (lk->unk_2d == 1) {
+        int opnd = lk->unk_29;
+        Instr *instr = (Instr *)lk->unk_24;
+        return &instr->unk_38[opnd];
+    }
+    return 0;
+}
+
+static inline bool isInserted(cls0805bcc4 *lk)
+{
+    return lk->unk_2c != 0;
+}
+
 bool cls0805bcc4::isOk(int type, bool inserted)
 {
     int loopSize = g_080b336c;
     bool ok = true;
     regUse *rf = unk_2d == 2 ? (regUse *)unk_24 : 0;
-    Operand *op = unk_2d == 1 ? &((Instr *)unk_24)->unk_38[unk_29] : 0;
+    Operand *op = lockOperand(this);
 
     if (rf) {
         if (op) {
@@ -538,7 +553,7 @@ bool cls0805bcc4::isOk(int type, bool inserted)
         func_0804ad38("isOk - unexpected type for is ok\n");
         ok = false;
     }
-    if ((unk_2c != 0) != inserted) {
+    if (isInserted(this) != inserted) {
         func_0804ad38("isOK - insert state was unexpected!\n");
         ok = false;
     }
