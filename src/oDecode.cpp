@@ -11,13 +11,6 @@
 
 char gatheredToken[1024];
 
-static inline void copyToken(char *d, const char *s)
-{
-    for (int i = 0; *s && i < 0x800; i++)
-        *d++ = *s++;
-    *d = 0;
-}
-
 int gatherTokens(LocTag *t, int i, bool stopAtOpcode);
 int func_0804bf50(unsigned int x);
 bool func_0804bfcc(const char *a, const char *b);
@@ -420,6 +413,7 @@ fail:
 bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *nOut)
 {
     char buf[0x810];
+    int i;
 
     if (!t) {
         func_0804ad38("decodeLE: passed a null pointer\n");
@@ -432,7 +426,12 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                 func_0804ad84("found a label on a continued line\n");
                 return false;
             }
-            copyToken(buf, tok);
+            {
+                char *s = tok, *d = buf;
+                for (i = 0; *s && i < 0x800; i++)
+                    *d++ = *s++;
+                *d = 0;
+            }
             int mods = func_080521f0(buf);
             char *p = buf;
             while (*p && *p != ':')
@@ -448,7 +447,12 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
             if (func_0805085c(t) > 1) {
                 char *tok2 = t->func_08050be4(1, 0);
                 if (*tok2 == '[') {
-                    copyToken(buf + 1, tok2);
+                    {
+                        char *s = tok2, *d = buf + 1;
+                        for (i = 0; *s && i < 0x800; i++)
+                            *d++ = *s++;
+                        *d = 0;
+                    }
                     n->unk_18 |= func_080521f0(buf);
                     (*pos)++;
                 }
@@ -464,26 +468,28 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
     if (t->func_08050f48())
         (*pos)++;
 next:
-    if (*pos < func_0805085c(t)) {
-        if (t->func_08050f18(*pos)) {
-            (*pos)++;
-            goto next;
-        }
-        if (!t->func_08050f7c(*pos)) {
-            if (*nOut > 1) {
-                func_0804ad84("too many instructions on a line!\n");
-                t->func_08050c40(-1);
-                return false;
-            }
-            Instr *ins = getNextInstruction(t, pos);
-            if (!ins)
-                return false;
-            out[(*nOut)++] = ins;
-            goto next;
-        }
+    if (*pos >= func_0805085c(t))
+        return true;
+    if (t->func_08050f18(*pos)) {
         (*pos)++;
+        goto next;
     }
-    return true;
+    if (t->func_08050f7c(*pos)) {
+        (*pos)++;
+        return true;
+    }
+    if (*nOut > 1) {
+        func_0804ad84("too many instructions on a line!\n");
+        t->func_08050c40(-1);
+        return false;
+    }
+    {
+        Instr *ins = getNextInstruction(t, pos);
+        if (!ins)
+            return false;
+        out[(*nOut)++] = ins;
+    }
+    goto next;
 }
 
 flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, int *count)
