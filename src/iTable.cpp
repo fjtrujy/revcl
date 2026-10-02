@@ -1161,7 +1161,8 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
         func_0804ad38("old instruction isn't in table\n");
         return 0;
     }
-    if (nw->unk_30) {
+    cls_unk30 *own = nw->unk_30;
+    if (own) {
         func_0804ad38("replaceInstruction - new instruction already has owner\n");
         return 0;
     }
@@ -1172,7 +1173,7 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
     }
     nw->unk_13e4 = old->unk_13e4;
     nw->unk_13e0 = old->unk_13e0;
-    if (unk_09 == 1) {
+    if (isAbstract()) {
         if (nw->isConcreteMove()) {
             func_0804ad38("trying to place a resolved move into abstract table\n");
             return 0;
@@ -1181,33 +1182,34 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
             func_0804ad38("failed to log new instruction \n");
             return 0;
         }
-        return 1;
+    } else {
+        if (nw->isAbstractMove()) {
+            func_0804ad38("trying to replace an abstract move into a table\n");
+            return 0;
+        }
+        if (!logAddLinear_After(prev, nw)) {
+            func_0804ad38("failed to log new instruction \n");
+            return 0;
+        }
+        cls08058718 pos;
+        cls08058718 *op = &old->unk_13e8;
+        pos.unk_00 = op->unk_00;
+        pos.unk_04 = op->unk_04;
+        pos.unk_03 = op->unk_03;
+        pos.unk_02 = op->unk_02;
+        cls08058718 *p = &nw->unk_13e8;
+        p->unk_00 = old->unk_13e8.unk_00;
+        p->unk_04 = pos.unk_04;
+        p->unk_03 = pos.unk_03;
+        p->unk_02 = pos.unk_02;
+        if (!takeOut(old)) {
+            func_0804ad38("failed to take out old instruction\n");
+            return 0;
+        }
+        wtRow *row = &unk_2c[p->unk_04];
+        row->unk_00[p->unk_02].unk_00 = nw;
     }
-    if (nw->isAbstractMove()) {
-        func_0804ad38("trying to replace an abstract move into a table\n");
-        return 0;
-    }
-    if (!logAddLinear_After(prev, nw)) {
-        func_0804ad38("failed to log new instruction \n");
-        return 0;
-    }
-    cls08058718 pos;
-    cls08058718 *op = &old->unk_13e8;
-    pos.unk_00 = op->unk_00;
-    pos.unk_04 = op->unk_04;
-    pos.unk_03 = op->unk_03;
-    pos.unk_02 = op->unk_02;
-    cls08058718 *p = &nw->unk_13e8;
-    p->unk_00 = old->unk_13e8.unk_00;
-    p->unk_04 = pos.unk_04;
-    p->unk_03 = pos.unk_03;
-    p->unk_02 = pos.unk_02;
-    if (takeOut(old)) {
-        unk_2c[p->unk_04].unk_00[p->unk_02].unk_00 = nw;
-        return 1;
-    }
-    func_0804ad38("failed to take out old instruction\n");
-    return 0;
+    return 1;
 }
 
 bool workTable::destroyInstruction(Instr *&in)
