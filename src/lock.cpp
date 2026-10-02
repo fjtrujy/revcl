@@ -685,8 +685,8 @@ bool cls0805bcc4::calcStats(Instr *skip)
                 if (unk_15)
                     unk_36 = unk_32 + 1;
                 else
-                    unk_36 = unk_18 + unk_32;
-                unk_3a = unk_18 + unk_32;
+                    unk_36 = unk_32 + unk_18;
+                unk_3a = unk_32 + unk_18;
             }
         } else if (isRegLock(this)) {
             if (unk_18 == 0) {
@@ -696,15 +696,15 @@ bool cls0805bcc4::calcStats(Instr *skip)
                 if (unk_15)
                     unk_36 = 0;
                 else
-                    unk_36 = unk_18 + unk_32;
-                unk_3a = unk_18 + unk_32;
+                    unk_36 = unk_32 + unk_18;
+                unk_3a = unk_32 + unk_18;
             }
         } else {
             if (unk_15)
                 unk_36 = unk_32 + 1;
             else
-                unk_36 = unk_18 + unk_32;
-            unk_3a = unk_18 + unk_32;
+                unk_36 = unk_32 + unk_18;
+            unk_3a = unk_32 + unk_18;
         }
         if (unk_3e < unk_3a) {
             if (g_080de284) {
@@ -724,15 +724,15 @@ bool cls0805bcc4::calcStats(Instr *skip)
                 if (unk_15)
                     unk_36 = 0;
                 else
-                    unk_36 = unk_18 + unk_32;
-                unk_3a = unk_18 + unk_32;
+                    unk_36 = unk_32 + unk_18;
+                unk_3a = unk_32 + unk_18;
             }
         } else {
             if (unk_15)
                 unk_36 = unk_32 + 1;
             else
-                unk_36 = unk_18 + unk_32;
-            unk_3a = unk_18 + unk_32;
+                unk_36 = unk_32 + unk_18;
+            unk_3a = unk_32 + unk_18;
         }
         unk_3e = unk_36;
         unk_42 = unk_36;
@@ -745,15 +745,15 @@ bool cls0805bcc4::calcStats(Instr *skip)
     if (unk_20 != 0 || hasPartFlag(this)) {
         unk_4e = unk_42;
         if (!lsz || unk_2d != 2) {
-            int hi = unk_48;
-            int lo = unk_4a;
-            if (hi < lo) {
-                hi = unk_4a;
-                lo = unk_48;
-            }
-            int slack = unk_46 - (hi - lo);
-            if (slack > 0)
-                hi += (slack + 1) >> 1;
+            int hi, lo;
+            int a = unk_48, b = unk_4a;
+            int len = unk_46;
+            hi = a; lo = b;
+            if (a < b) { hi = b; lo = a; }
+            int d = hi - lo;
+            len -= d;
+            if (len > 0)
+                hi += (len + 1) >> 1;
             if (hi > 0)
                 hi--;
             hi += unk_3a;
@@ -765,6 +765,7 @@ bool cls0805bcc4::calcStats(Instr *skip)
     unk_4c = shift + unk_4e;
     return true;
 }
+
 
 void cls0805bcc4::func_0805d020()
 {
