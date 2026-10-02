@@ -40,10 +40,10 @@ int dragDown(workTable *wt)
                         Operand *op = in->getOp(k);
                         if (!op)
                             break;
-                        RegPoolEntry *reg = op->outputReg();
+                        RegPoolEntry *reg = op->outputRegB();
                         if (reg) {
-                            OpSlot *sl = op->unk_2c;
-                            for (int j = 0; j != reg->unk_28; j++, sl++) {
+                            for (int j = 0; j != reg->unk_28; j++) {
+                                OpSlot *sl = &op->unk_2c[j];
                                 if ((op->unk_07 >> j) & 1) {
                                     int e = wt->unk_34 - 1;
                                     if (sl->unk_2e)
@@ -53,7 +53,7 @@ int dragDown(workTable *wt)
                                 }
                             }
                         }
-                        if (op->getReg() && op->unk_28)
+                        if (op->inputRegC() && op->unk_28)
                             mn = rl;
                     }
                     if (mn > rl) {

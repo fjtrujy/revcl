@@ -409,6 +409,27 @@ struct Operand {
             r = true;
         return r ? unk_18 : 0;
     }
+    bool isZeroB()
+    {
+        int z = 0;
+        if (unk_18 && unk_18 == unk_18->unk_04->unk_10)
+            z = 1;
+        return z;
+    }
+    RegPoolEntry *outputRegB()
+    {
+        int r = 0;
+        if (unk_09 == 2 && !isZeroB())
+            r = 1;
+        return (bool)r ? unk_18 : 0;
+    }
+    RegPoolEntry *inputRegC()
+    {
+        int r = 0;
+        if (unk_09 == 1 && !isZeroB())
+            r = 1;
+        return (bool)r ? unk_18 : 0;
+    }
     bool isInput() { return unk_09 == 1; }
     RegPoolEntry *inReg()
     {
