@@ -966,11 +966,13 @@ const char *rlmtName(unsigned char t)
 
 const char *cls0805bcc4::regName()
 {
-    if (!unk_04)
+    cls0805c244 *ll = unk_04;
+    if (!ll)
         return "NOT_ON_A_LOCKLIST";
-    if (!unk_04->unk_04)
+    RegPoolEntry *rg = ll->unk_04;
+    if (!rg)
         return "RLL_HAS_NO_REG";
-    return unk_04->unk_04->func_0805a8e0();
+    return rg->func_0805a8e0();
 }
 
 bool cls0805c244::setRepReg(RegPoolEntry *rg)
