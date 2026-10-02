@@ -135,11 +135,12 @@ inline int tryPrune(Instr *in, bool raw)
                     func_0804ad38("failed to get an operand from an oploc\n");
                     return -1;
                 }
+                int sw = ol->unk_11;
                 if (src->unk_18 != reg) {
                     func_0804ad38("there was a reg mismatch\n");
                     return -1;
                 }
-                if (ol->unk_11 != s) {
+                if (sw != s) {
                     func_0804ad38("swizzle detected\n");
                     return -1;
                 }
