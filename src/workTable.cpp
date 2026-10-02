@@ -289,9 +289,12 @@ void regUseList::func_0805bb10(int regClass)
         if (reg->unk_14 != true)
             alloc = reg->func_0805a8e0();
         int mask = p->unk_0c | p->unk_0d | p->unk_0e | p->unk_0f | p->unk_10;
-        if (reg->unk_24 == regClass && reg != reg->unk_04->unk_10 && p->isExternal())
-            func_0804acb0(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc,
-                          (p->unk_10 & ~(p->unk_0c | p->unk_0d | p->unk_0e | p->unk_0f)) ? "-THR" : "");
+        if (reg->unk_24 == regClass && reg != reg->unk_04->unk_10 && p->isExternal()) {
+            const char *thr = "";
+            if (p->unk_10 & ~(p->unk_0c | p->unk_0d | p->unk_0e | p->unk_0f))
+                thr = "-THR";
+            func_0804acb0(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc, thr);
+        }
     }
     for (p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
