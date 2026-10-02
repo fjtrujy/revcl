@@ -103,7 +103,24 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         *p2 = nulls;
     }
 
-    if (unk_09 != 4) {
+    if (unk_09 == 4) {
+        wtRow blank;
+        blank.func_080721f8();
+        for (int i = 0; i != nulls; i++) {
+            int f = 0;
+            if (isEnd && i == 0) {
+                f = (unsigned char)(owner->unk_2d5 | 2);
+                done = 1;
+            }
+            f |= top;
+            top = 0;
+            buf = blank.emit(buf, f, false, false);
+            if (!buf) {
+                func_0804ad38("failed to emit null ie for synth instruction!\n");
+                goto fail;
+            }
+        }
+    } else {
         instStream *s = unk_10;
         if (s) {
             buf += func_0804adbc(buf, "; ");
@@ -125,7 +142,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         if (len < nulls) {
             func_0804ad38("iTable: not fall. and too small a table\n");
             s->dump(0);
-            return 0;
+            goto fail;
         }
         *p1 = 0;
         *p2 = 0;
@@ -152,20 +169,12 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             f |= top;
             top = 0;
             switch (mode) {
-            case 2:
-                buf = r->emit(buf, f, true, true);
-                if (!buf) {
-                    func_0804ad38("failed to emit instruction!\n");
-                    r->func_0807222c(-1);
-                    return 0;
-                }
-                break;
             case 0:
                 buf = r->emit(buf, f, false, true);
                 if (!buf) {
                     func_0804ad38("failed to emit instruction!\n");
                     r->func_0807222c(-1);
-                    return 0;
+                    goto fail;
                 }
                 break;
             case 1:
@@ -174,34 +183,25 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 if (!buf) {
                     func_0804ad38("failed to emit instruction!\n");
                     r->func_0807222c(-1);
-                    return 0;
+                    goto fail;
                 }
                 *buf++ = ' ';
                 buf = r->emit(buf, f, false, true);
                 if (!buf) {
                     func_0804ad38("failed to emit instruction!\n");
                     r->func_0807222c(-1);
-                    return 0;
+                    goto fail;
                 }
                 *buf++ = '\n';
                 break;
-            }
-        }
-    } else {
-        wtRow blank;
-        blank.func_080721f8();
-        for (int i = 0; i != nulls; i++) {
-            int f = 0;
-            if (isEnd && i == 0) {
-                f = (unsigned char)(owner->unk_2d5 | 2);
-                done = 1;
-            }
-            f |= top;
-            top = 0;
-            buf = blank.emit(buf, f, false, false);
-            if (!buf) {
-                func_0804ad38("failed to emit null ie for synth instruction!\n");
-                return 0;
+            case 2:
+                buf = r->emit(buf, f, true, true);
+                if (!buf) {
+                    func_0804ad38("failed to emit instruction!\n");
+                    r->func_0807222c(-1);
+                    goto fail;
+                }
+                break;
             }
         }
     }
@@ -210,6 +210,8 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         return 0;
     }
     return buf;
+fail:
+    return 0;
 }
 
 extern bool noEbit_080b3017;
