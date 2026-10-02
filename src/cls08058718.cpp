@@ -84,6 +84,11 @@ bool setRange(int start, int end, int lsz)
         func_0804adf0(-1);
         return false;
     }
+    if (start < 0 && end >= 0) {
+        func_0804ad38("bad range, 1\n");
+        func_0804adf0(-1);
+        return false;
+    }
     if (start < 0) {
         func_0804ad38("bad range, 1\n");
         func_0804adf0(-1);
