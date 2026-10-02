@@ -63,7 +63,7 @@ bool workTable::prepRawTable()
             }
             int lid = 0;
             int il;
-            cls08058718 *loc = &in->unk_13e8;
+            cls08058718 *loc;
             if (unk_38) {
                 if (!in->func_08054138())
                     lid = in->unk_13e8.unk_03;
@@ -72,9 +72,11 @@ bool workTable::prepRawTable()
                     in->leDump();
                     return 0;
                 }
+                loc = &in->unk_13e8;
                 loc->unk_03 = lid;
                 il = lid * unk_38 + rl;
             } else {
+                loc = &in->unk_13e8;
                 lid = loc->unk_03;
                 if (lid) {
                     func_0804ad38("non zero lid for non-loop %d\n", lid);
@@ -90,12 +92,13 @@ bool workTable::prepRawTable()
             pos.func_0805874c(il);
             pos.func_0805878c(p);
             in->unk_13e8.unk_00 = pos.unk_00;
+            signed char nl = pos.unk_03;
             loc->unk_04 = pos.unk_04;
-            loc->unk_03 = pos.unk_03;
+            loc->unk_03 = nl;
             loc->unk_02 = pos.unk_02;
-            if (loc->unk_03 != lid) {
+            if (nl != lid) {
                 func_0804ad38("iTable::initialSetup - lid was bad (%d!=%d) lsz=%d rl=%d il=%d\n",
-                              loc->unk_03, lid, unk_38, il, rl);
+                              nl, lid, unk_38, il, rl);
                 return 0;
             }
             if (pos.unk_04 != rl) {
