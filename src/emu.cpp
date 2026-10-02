@@ -38,7 +38,7 @@ bool emuTable(Program *p, workTable *wt)
             if (r < 0) {
                 func_0804ad38("failed to uta emu instruction\n");
                 i->func_08054008(false);
-                return false;
+                goto fail;
             }
         }
         break;
@@ -63,7 +63,7 @@ bool emuTable(Program *p, workTable *wt)
             if (emuInst(p, r, line, false, true) < 0) {
                 func_0804ad38("failed to Emu an inst\n");
                 r->func_0807222c(-1);
-                return false;
+                goto fail;
             }
         }
         wt->unk_0c = p->unk_80;
@@ -81,6 +81,8 @@ bool emuTable(Program *p, workTable *wt)
         break;
     }
     return true;
+fail:
+    return false;
 }
 
 bool func_080642ec(Program *p, instStream *s)
