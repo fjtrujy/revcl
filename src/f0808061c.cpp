@@ -329,6 +329,11 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
     }
 }
 
+static inline void clearCand(Instr *in)
+{
+    in->func_08054008(false);
+}
+
 bool buildCandidateList2(workTable *wt)
 {
     Instr *in;
@@ -351,7 +356,7 @@ bool buildCandidateList2(workTable *wt)
             func_0804adf0(-1);
         }
         if (earliest < 0) {
-            in->func_08054008(false);
+            clearCand(in);
             continue;
         }
         if (!in->unk_1410 && minRow <= earliest)
@@ -430,7 +435,7 @@ bool buildCandidateList2(workTable *wt)
             if (in->unk_13f0.unk_00 && minRow < in->unk_140c - 2 * wt->unk_38)
                 minRow = in->unk_140c - 2 * wt->unk_38;
         }
-        in->func_08054008(false);
+        clearCand(in);
         row = minRow;
         pipe = 0;
         if (func_08081610(wt, in, &row, &pipe)) {
