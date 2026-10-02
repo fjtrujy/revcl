@@ -173,7 +173,7 @@ bool optNormal2(workTable *wt, wrangleCand *c)
                 bestC = in->unk_13f0.unk_00;
                 best = in;
             } else if (e == bestB) {
-                int f = (in->unk_1418 >> 2) + in->unk_141e;
+                int f = in->unk_141e + (in->unk_1418 >> 2);
                 if (f < bestD) {
                     bestD = f;
                     bestC = in->unk_13f0.unk_00;
