@@ -24,12 +24,13 @@ bool func_08063154(Program *p)
             return 0;
         }
         instStream *n = s->unk_108;
-        if (n && !n->unk_2d6 && !s->unk_2d7
-            && s->unk_134.unk_08 == 1 && n->unk_128.unk_08 == 1
+        if (n && !n->unk_2d6 && !s->unk_2d7) {
+        linkList *out = &s->unk_134;
+        if (out->unk_08 == 1 && n->unk_128.unk_08 == 1
             && s->func_0806d9a0() && n->func_0806d9a0()
             && s->unk_2cd == 1 && n->unk_2cc == 1
             && !s->getBranch()
-            && s->unk_134.getStream(0) == n
+            && out->getStream(0) == n
             && !n->unk_2d4 && !s->unk_2d5
             && !func_0806f4a0(p, n)) {
             if (!appendStream(p, s, n)) {
@@ -40,7 +41,7 @@ bool func_08063154(Program *p)
                 func_0804ad38("failed to unlink streams\n");
                 return 0;
             }
-            if (s->unk_134.unk_08) {
+            if (out->unk_08) {
                 func_0804ad38("there's still out ist's after unlink\n");
                 return 0;
             }
@@ -62,9 +63,10 @@ bool func_08063154(Program *p)
                 return 0;
             }
             delete n;
-        } else {
-            s = s->unk_108;
+            continue;
         }
+        }
+        s = s->unk_108;
     }
     return 1;
 }
