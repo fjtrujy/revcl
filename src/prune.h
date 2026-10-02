@@ -113,9 +113,7 @@ inline int tryPrune(Instr *in, bool raw)
             Operand *op = in->getOp(i);
             if (!op)
                 break;
-            bool isIn = false;
-            if (op->unk_09 == 1)
-                isIn = true;
+            int isIn = op->unk_09 == 1;
             RegPoolEntry *r = isIn ? op->unk_18 : 0;
             if (r)
                 op->unk_2a = op->unk_07;
@@ -123,7 +121,8 @@ inline int tryPrune(Instr *in, bool raw)
     }
     Operand *out;
     for (int o = 0; (out = in->getOp(o)) != 0; o++) {
-        RegPoolEntry *reg = out->unk_09 == 2 ? out->unk_18 : 0;
+        int isOut = out->unk_09 == 2;
+        RegPoolEntry *reg = isOut ? out->unk_18 : 0;
         if (!reg)
             continue;
         int cnt = 0;
@@ -161,7 +160,8 @@ inline int tryPrune(Instr *in, bool raw)
             out->unk_2a = out->unk_07;
         Operand *ip;
         for (int k = 0; (ip = in->getOp(k)) != 0; k++) {
-            RegPoolEntry *r = ip->unk_09 == 1 ? ip->unk_18 : 0;
+            int isIn = ip->unk_09 == 1;
+            RegPoolEntry *r = isIn ? ip->unk_18 : 0;
             if (!r)
                 continue;
             int bits = hackIOmask(in, o, out->unk_2a, k);
