@@ -40,14 +40,14 @@ bool iHolder::catInit(ol_s *ol)
         return false;
     }
     if (!unk_00) {
-        if (ol->unk_04) {
-            unk_00 = ol->unk_04;
-            unk_04 = ol->unk_10;
-            unk_08 = 0;
-        } else {
+        Instr *in = ol->unk_04;
+        if (!in) {
             func_0804ad38("iHolder:: init called, but ol_s not inst\n");
             return false;
         }
+        unk_00 = in;
+        unk_04 = ol->unk_10;
+        unk_08 = 0;
     } else if (unk_00 != ol->unk_04 || unk_04 != ol->unk_10) {
         func_0804ad38("iHolder::catInit - mismatch adding to an existing object\n");
         return false;
