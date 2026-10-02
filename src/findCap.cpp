@@ -13,6 +13,15 @@ int func_0804bf50(unsigned int x);
 RegPoolEntry *getZeroReg(unsigned int type);
 
 
+static inline bool isOut(Operand *o) { return o->unk_09 == 2; }
+static inline RegPoolEntry *outR(Operand *o)
+{
+    if (isOut(o))
+        return o->unk_18;
+    return 0;
+}
+static inline bool isPoolZero(RegPool *p, RegPoolEntry *r) { return r == p->unk_10; }
+
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask)
 {
     Operand *op = &in->unk_38[opIdx];
@@ -26,7 +35,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     g_080de738 = 0;
     g_080de740 = 0;
 
-    RegPoolEntry *reg = op->isOutRegOp() ? op->unk_18 : 0;
+    RegPoolEntry *reg = op->isReg2() ? op->unk_18 : 0;
     switch (reg->unk_30) {
     case 52:
         cap = 0x73;
@@ -41,7 +50,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     case 55: case 57: case 59: {
         if (in->unk_13e8.getPipe())
             break;
-        RegPoolEntry *r0 = in->unk_38[0].outReg();
+        RegPoolEntry *r0 = outR(&in->unk_38[0]);
         if (!r0) {
             func_0804ad38("couldn't get r0 for %s\n",
                           in->unk_34 ? in->unk_34->unk_04 : "NO_BASE_INST");
@@ -50,10 +59,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
         if (r0->unk_24 != 9)
             break;
         RegPool *pool = r0->unk_04;
-        int z = 0;
-        if (r0 == pool->unk_10)
-            z = 1;
-        if (z) {
+        if (isPoolZero(pool, r0)) {
             unsigned char mask[32];
             int i;
             for (i = 0; i != 32; i++) {
@@ -83,8 +89,8 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
                 int m = in->unk_38[0].unk_07 & mask[i];
                 int n = func_0804bf50(m);
                 if (n > best) {
-                    g_080de748 = m;
                     g_080de744 = pool->func_080593e0(i);
+                    g_080de748 = m;
                     best = n;
                 }
             }
