@@ -590,6 +590,15 @@ bool cls0805bcc4::isOk(int type, bool inserted)
     return ok;
 }
 
+static inline bool ownsLock(cls0805c244 *list, cls0805bcc4 *lk)
+{
+    if (lk->unk_04 == list)
+        return true;
+    func_0804ad38("isok - I don't own it\n");
+    func_0804adf0(-1);
+    return false;
+}
+
 bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
 {
     if (!lk) {
@@ -608,17 +617,15 @@ bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
             ok = false;
         }
     }
-    if (lk->unk_04 != this) {
-        func_0804ad38("isok - I don't own it\n");
-        func_0804adf0(-1);
+    if (!ownsLock(this, lk))
         return false;
-    }
     if (lk->unk_14 == 2) {
         if (unk_24 <= 0) {
             func_0804ad38("isOk - output, but no outputs! - <=0 output locks!\n");
             ok = false;
         }
-        if (unk_26 < !inserted) {
+        int lim = (inserted == false) - 1;
+        if (unk_26 <= lim) {
             func_0804ad38("isOk - output, but no outputs! - <=0 output locks to go!\n");
             ok = false;
         }
