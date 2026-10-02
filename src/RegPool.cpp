@@ -214,10 +214,10 @@ int func_0805968c(const char* name)
     return RegPool::isResvd(name, -123);
 }
 
-static inline bool isRegNameChar(const char* c)
+static inline bool isRegNameChar(char c)
 {
-    for (const char* q = regNameChars; *q; q++)
-        if (*q == *c)
+    for (char* q = (char*)regNameChars; *q != '\0'; q++)
+        if (*q == c)
             return true;
     return false;
 }
@@ -230,8 +230,9 @@ bool RegPool::isResvd(const char* name, int cls)
     }
     const char* p;
     for (p = name; *p; p++) {
-        if (!isRegNameChar(p)) {
-            func_0804ad84("can't use '%c' in the name of a register : '%s'\n", *p, name);
+        char c = *p;
+        if (!isRegNameChar(c)) {
+            func_0804ad84("can't use '%c' in the name of a register : '%s'\n", c, name);
             return true;
         }
     }
