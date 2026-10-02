@@ -439,15 +439,26 @@ bool func_0806f6a4(Program *p)
     return true;
 }
 
+static inline void printLink(const char *fmt, linkNode *l)
+{
+    const char *name = l->unk_0c->func_0806d674();
+    int other = l->unk_0c->unk_2c0;
+    const char *type = linkTypeName(l->unk_14);
+    func_0804acb0(fmt, type, other, name);
+}
+
+static inline bool isEntryStream(instStream *s) { return s->unk_2cc == 2; }
+static inline bool isExitStream(instStream *s) { return s->unk_2cd == 3; }
+
 void dumpFlow(Program *p)
 {
     instStream *s = p->unk_a0;
     func_0804acb0("dumpFlow-------------------\n");
     for (; s; s = s->unk_108) {
         const char *tag = "";
-        if (s->unk_2cc == 2)
+        if (isEntryStream(s))
             tag = " ---ENTRY";
-        if (s->unk_2cd == 3)
+        if (isExitStream(s))
             tag = " ---EXIT";
         bool fallThrough = false;
         int id = s->unk_2c0;
@@ -455,18 +466,12 @@ void dumpFlow(Program *p)
         linkNode *l;
         for (l = s->unk_128.unk_00; l; l = l->unk_08) {
             if (l->unk_14) {
-                const char *name = l->unk_0c->func_0806d674();
-                int other = l->unk_0c->unk_2c0;
-                const char *type = linkTypeName(l->unk_14);
-                func_0804acb0("       <--[(%s) [%5d]%s]\n", type, other, name);
+                printLink("       <--[(%s) [%5d]%s]\n", l);
             }
         }
         for (l = s->unk_134.unk_00; l; l = l->unk_08) {
             if (l->unk_14) {
-                const char *name = l->unk_0c->func_0806d674();
-                int other = l->unk_0c->unk_2c0;
-                const char *type = linkTypeName(l->unk_14);
-                func_0804acb0("     --> %s [%5d]%s\n", type, other, name);
+                printLink("     --> %s [%5d]%s\n", l);
             } else
                 fallThrough = true;
         }
