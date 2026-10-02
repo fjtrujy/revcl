@@ -26,12 +26,13 @@ void clearRegMask()
 bool initRegMask(RegPool *pool)
 {
     RegPoolEntry *e = pool->unk_04;
+    int *mp = &maxParts_080bce20;
     func_0804c220(regMask_080dde40, 32);
     for (int i = 0; i != pool->unk_08; i++, e++) {
         if (!e->unk_16)
             regMask_080dde40[i] = (1 << e->unk_28) - 1;
-        if (e->unk_28 > maxParts_080bce20)
-            maxParts_080bce20 = e->unk_28;
+        if (e->unk_28 > *mp)
+            *mp = e->unk_28;
     }
     return true;
 }
