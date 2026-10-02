@@ -933,6 +933,7 @@ bool Instr::func_08055ae4()
             if (v->type == mValue::STRING) {
                 func_0804ac7c("fsop has literals - so assuming the worst - if it were numerical vcl could figure out dependencies better\n");
             } else if (v->getUInt(&imm)) {
+                unsigned int bits;
                 int id = -1;
                 if (unk_34)
                     id = func_0806c72c(unk_34);
@@ -940,12 +941,15 @@ bool Instr::func_08055ae4()
                 case 147:
                     break;
                 case 148:
-                    imm = ~imm;
+                    bits = ~imm;
+                    goto test;
                 case 146:
-                    a = (imm & 0xf) != 0;
-                    b = (imm & 0x30) != 0;
-                    c = (imm & 0xc00) != 0;
-                    d = (imm & 0x3c0) != 0;
+                    bits = imm;
+                test:
+                    a = (bits & 0xf) != 0;
+                    b = (bits & 0x30) != 0;
+                    c = (bits & 0xc00) != 0;
+                    d = (bits & 0x3c0) != 0;
                     break;
                 default:
                     func_0804ad38("bad fsop \n");
