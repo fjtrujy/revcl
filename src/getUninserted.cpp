@@ -75,7 +75,7 @@ int instStream::getUninsertedxInputs()
                         return -1;
                     }
                     Operand *src = func_0805802c(ol);
-                    if (base + te + ol->unk_12 + 1 < src->unk_0a + op->unk_29) {
+                    if (te + base + ol->unk_12 + 1 < src->unk_0a + op->unk_29) {
                         if (reg->unk_28 == 1)
                             count += 4;
                         else
