@@ -295,10 +295,10 @@ int Parser::FindLocTag(const char *name, int n)
     return -1;
 }
 
-static inline bool isGaspDigit(const char *s)
+static inline bool isGaspDigit(unsigned char c)
 {
     for (const char *q = g_080b3144; *q; q++)
-        if (*q == *s)
+        if ((unsigned char)*q == c)
             return true;
     return false;
 }
@@ -313,9 +313,9 @@ bool Parser::func_0805041c(char *line)
     if (*p != ';')
         return false;
     p++;
-    while (*p && !isGaspDigit(p))
+    while (*p && !isGaspDigit(*p))
         p++;
-    while (isGaspDigit(p)) {
+    while (isGaspDigit(*p)) {
         int n = func_0804add4(p);
         if (!n) {
             func_0804ad38("bad gasp char in line %s\n", line);
@@ -326,7 +326,7 @@ bool Parser::func_0805041c(char *line)
             return false;
         }
         stack[depth++] = n;
-        while (isGaspDigit(p) && *p != '.')
+        while (isGaspDigit(*p) && *p != '.')
             p++;
         if (*p != '.')
             break;
