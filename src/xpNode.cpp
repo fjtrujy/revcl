@@ -216,14 +216,17 @@ const char *func_0804ec74(const char *s, xpNode *node, bool binary)
     xpOp *found = 0;
     int state = 1;
     int dots = 0;
-    char c = *s;
     do {
+        char c = *p;
         if (c == '(' || c == ')')
             break;
         switch (state) {
         case 1:
-            if (c == '.')
-                state = dots++ ? 0 : 1;
+            if (c == '.') {
+                if (dots)
+                    state = 0;
+                dots++;
+            }
             else if (c == 'e')
                 state = len ? 2 : 0;
             else if (!(c >= '0' && c <= '9') && c != '_')
@@ -256,7 +259,7 @@ const char *func_0804ec74(const char *s, xpNode *node, bool binary)
             break;
         len++;
         p++;
-    } while ((c = *p) != 0);
+    } while (*p);
     if (len) {
         found = &opTable_080b30a0[0];
     } else {
