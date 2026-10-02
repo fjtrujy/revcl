@@ -1094,7 +1094,8 @@ workTable *workTable::localClone()
     nt->unk_76 = unk_76;
     nt->unk_78 = unk_78;
     nt->unk_44 = unk_44;
-    nt->unk_08 = unk_08;
+    unsigned int t = (unsigned char)unk_08;
+    nt->unk_08 = t;
     nt->unk_40 = 0;
     nt->unk_10 = unk_10;
     for (regUse *r = unk_14.unk_04; r; r = r->unk_04) {
@@ -1108,7 +1109,7 @@ workTable *workTable::localClone()
         Instr *c = in->clone();
         for (int i = 0; i != c->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->isInReg() ? op->unk_18 : 0;
+            RegPoolEntry *reg = op->isInRegOpB() ? op->unk_18 : 0;
             if (reg) {
             int mask = op->unk_07 & ~op->unk_27;
             for (int k = 0; k != reg->unk_28; k++) {
@@ -1133,7 +1134,10 @@ workTable *workTable::localClone()
                     func_0804ad38("qInstruction - setter had null work clone set\n");
                     return 0;
                 }
-                if (!link_oParts(setter->unk_08, o->unk_10, o->unk_11, c, i, k)) {
+                Instr *w = setter->unk_08;
+                int p1 = o->unk_11;
+                int p0 = o->unk_10;
+                if (!link_oParts(w, p0, p1, c, i, k)) {
                     func_0804ad38("failed to link local oparts\n");
                     return 0;
                 }
