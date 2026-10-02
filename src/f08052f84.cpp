@@ -36,11 +36,11 @@ bool Instr::func_08052f84()
 
 int Instr::func_08053104()
 {
-    int target;
+    int id, target;
     if (!unk_34)
         return 0;
-    int id = func_0806c72c(unk_34);
     target = -1;
+    id = func_0806c72c(unk_34);
     if (id < 0) {
         func_0804ad38("vpu: fixup branch - iUID<0\n");
         return -1;
@@ -70,24 +70,25 @@ int Instr::func_08053104()
         if (id == 0xad)
             return 0;
     }
-    if (target <= 0)
-        return 1;
-    for (int i = 0; i != unk_138b; i++) {
-        unk_38[i].unk_18 = 0;
-        unk_38[i].unk_04 = 0;
+    if (target > 0) {
+        for (int i = 0; i != unk_138b; i++) {
+            unk_38[i].unk_18 = 0;
+            unk_38[i].unk_04 = 0;
+        }
+        unk_138b = 1;
+        unk_38[0].unk_04 = 0x1b;
+        if (!unk_38[0].unk_1c.set(&unk_38[target].unk_1c)) {
+            func_0804ad38("fixup branch -set new ximm\n");
+            return -1;
+        }
+        unk_38[target].unk_1c.clear();
+        unk_34 = func_0806bf8c("b", true);
+        if (!func_08053fac()) {
+            func_0804ad38("failed to convert a branch\n");
+            return -1;
+        }
+        unk_1388 = 1;
+        return 2;
     }
-    unk_138b = 1;
-    unk_38[0].unk_04 = 0x1b;
-    if (!unk_38[0].unk_1c.set(&unk_38[target].unk_1c)) {
-        func_0804ad38("fixup branch -set new ximm\n");
-        return -1;
-    }
-    unk_38[target].unk_1c.clear();
-    unk_34 = func_0806bf8c("b", true);
-    if (!func_08053fac()) {
-        func_0804ad38("failed to convert a branch\n");
-        return -1;
-    }
-    unk_1388 = 1;
-    return 2;
+    return 1;
 }
