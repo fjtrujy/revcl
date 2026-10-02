@@ -433,6 +433,26 @@ struct Operand {
     bool isZeroC() { return unk_18 && unk_18 == unk_18->unk_04->unk_10; }
     bool isInRegC() { return unk_09 == 1 && !isZeroC(); }
     bool isOutRegC() { return unk_09 == 2 && !isZeroC(); }
+    bool isHardZero()
+    {
+        if (unk_18 && unk_18 == unk_18->unk_04->unk_10)
+            return true;
+        return false;
+    }
+    bool isOutputReg()
+    {
+        int r = 0;
+        if (unk_09 == 2 && !isHardZero())
+            r = 1;
+        return (bool)r;
+    }
+    bool isInputReg()
+    {
+        int r = 0;
+        if (unk_09 == 1 && !isHardZero())
+            r = 1;
+        return (bool)r;
+    }
     bool isInput() { return unk_09 == 1; }
     RegPoolEntry *inReg()
     {

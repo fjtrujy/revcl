@@ -518,7 +518,7 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         func_0804ad38("link_oParts(2) - output not set \n");
         return false;
     }
-    if (!out->isOutRegOp()) {
+    if (!out->isOutputReg()) {
         func_0804ad38("link_oParts - output was not output\n");
         out->func_0805665c(0);
         return false;
@@ -528,7 +528,7 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         func_0804ad38("link_oParts(2) - input not set \n");
         return false;
     }
-    if (!in->isInRegOp()) {
+    if (!in->isInputReg()) {
         func_0804ad38("link_oParts - input was not input\n");
         return false;
     }
