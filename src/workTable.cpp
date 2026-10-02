@@ -257,7 +257,9 @@ int regUseList::func_0805ba64(int regClass)
         RegPoolEntry *reg = p->unk_08;
         if (reg->unk_24 != regClass || reg == reg->unk_04->unk_10)
             continue;
-        if ((~p->unk_0e & p->unk_10) || !p->unk_0f)
+        if (~p->unk_0e & p->unk_10)
+            n++;
+        else if (!p->unk_0f)
             n++;
     }
     return n;
