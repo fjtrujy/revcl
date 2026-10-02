@@ -73,7 +73,8 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
         }
         for (; tline != iline; tline += step) {
             pos.func_0805874c(tline);
-            if (wt->func_080724f0(tline)->func_08072304() == 1
+            wtRow *row = wt->func_080724f0(tline);
+            if (row->func_08072304() == 1
                 && !func_0807e130(wt, in, &pos, upwards))
                 goto move;
         }
