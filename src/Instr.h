@@ -396,6 +396,15 @@ struct Operand {
             r = true;
         return r;
     }
+    RegPoolEntry *outRegZ()
+    {
+        bool r = false;
+        if (unk_09 == 2 && !isZeroReg())
+            r = true;
+        if (r)
+            return unk_18;
+        return 0;
+    }
     RegPoolEntry *getReg2()
     {
         if (isReg2())

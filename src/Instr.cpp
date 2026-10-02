@@ -653,7 +653,7 @@ int Instr::func_080553b4(RegPoolEntry *reg, int mask)
     if (reg) {
         for (int i = 0; i != unk_138b; i++) {
             Operand *op = &unk_38[i];
-            if (op->getReg2() == reg)
+            if (op->outRegZ() == reg)
                 result |= op->unk_07;
         }
     }
