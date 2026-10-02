@@ -14,7 +14,7 @@ int func_0804bf50(unsigned int);
 int setRangeFrom(workTable *t);
 static inline char bitSet(int m, int i)
 {
-    return (m & (1 << i)) != 0;
+    return (m >> i) & 1;
 }
 bool initRegMask(RegPool *pool);
 int firstEmptyMask(RegPool *pool);

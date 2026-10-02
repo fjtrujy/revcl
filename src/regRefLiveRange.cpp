@@ -13,30 +13,35 @@ int func_0804bf50(unsigned int);
 int setRangeFrom(workTable *t);
 
 
+static inline bool validPipe(int p)
+{
+    return p == 0 || p == 1;
+}
+
 bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always)
 {
-    regUseSlot *sl = &ru->unk_20[part];
     *s = -4;
     *e = -3;
     *always = false;
+    regUseSlot *sl = &ru->unk_20[part];
     if (bitSet(ru->unk_0e, part)) {
-        if (sl->unk_3c[0] < 0 || (unsigned)sl->unk_3c[1] > 1 ||
-            sl->unk_3c[3] < 0 || (unsigned)sl->unk_3c[4] > 1) {
+        if (sl->unk_3c[0] < 0 || !validPipe(sl->unk_3c[1]) ||
+            sl->unk_3c[3] < 0 || !validPipe(sl->unk_3c[4])) {
             func_0804ad38("firstInput<0.. but iBit set\n");
             func_0804adf0(-1);
         }
     }
     if (bitSet(ru->unk_0f, part)) {
-        if (sl->unk_3c[5] < 0 || (unsigned)sl->unk_3c[6] > 1 ||
-            sl->unk_3c[8] < 0 || (unsigned)sl->unk_3c[9] > 1) {
+        if (sl->unk_3c[5] < 0 || !validPipe(sl->unk_3c[6]) ||
+            sl->unk_3c[8] < 0 || !validPipe(sl->unk_3c[9])) {
             func_0804ad38("firstInput<0.. but iBit set\n");
             func_0804adf0(-1);
         }
     }
     if (bitSet(~(ru->unk_0f | ru->unk_0e) & ru->unk_10, part)) {
         *s = -1;
-        *always = true;
         *e = 30000;
+        *always = true;
         return true;
     }
     if (bitSet(ru->unk_0c, part)) {
