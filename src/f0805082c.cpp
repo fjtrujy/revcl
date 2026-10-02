@@ -13,13 +13,7 @@ bool func_0804bfcc(const char *a, const char *b);
 
 bool func_0805082c(LocTag *t)
 {
-    bool r = false;
-    if (t->unk_00) {
-        if (t->unk_8c)
-            r = true;
-    } else if (!t->unk_8c)
-        r = true;
-    return r;
+    return (t->unk_00 && t->unk_8c) || (!t->unk_00 && !t->unk_8c);
 }
 
 int func_0805085c(LocTag *t)
