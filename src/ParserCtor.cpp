@@ -425,16 +425,16 @@ bool Parser::func_08050738(int i)
 
 bool func_08050780(const char *s, const char *kw)
 {
-    if (!s)
-        return false;
-    while (*s && !isWhite(s) && *s != '\n')
-        s++;
-    while (*kw && *s && *s == *kw) {
-        s++;
-        kw++;
+    if (s) {
+        while (*s && !isWhite(s) && *s != '\n')
+            s++;
+        while (*kw && *s && *s == *kw) {
+            s++;
+            kw++;
+        }
+        if (!*kw)
+            return true;
     }
-    if (!*kw)
-        return true;
     return false;
 }
 
