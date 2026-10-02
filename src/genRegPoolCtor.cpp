@@ -37,9 +37,9 @@ bool genRegPool::func_08088e54(workTable *t)
         func_0804ad38("failed to set table range\n");
         return false;
     }
-    regUse *ru;
+    regUse *ru = t->unk_14.firstReal();
     regUseList *list = &t->unk_14;
-    for (ru = list->firstReal(); ru; ru = ru->nextReal()) {
+    for (; ru; ru = ru->nextReal()) {
         if (!set_in_aTab(ru)) {
             func_0804ad38("failed to set forced register in aTab\n");
             t->dump();
@@ -71,9 +71,9 @@ bool genRegPool::func_08088e54(workTable *t)
         }
     }
     while (todo) {
+        int max = -1;
         RegPoolEntry *best = 0;
         RegPoolEntry *bestPrev = 0;
-        int max = -1;
         RegPoolEntry *prev = 0;
         for (RegPoolEntry *p = todo; p; prev = p, p = p->unk_40) {
             if (p->unk_3c > max) {
@@ -92,13 +92,12 @@ bool genRegPool::func_08088e54(workTable *t)
         }
         int r = bestReg();
         if (r < 0) {
-            if (func_08059f70())
-                list->func_0805bab0();
-            else {
+            if (!func_08059f70()) {
                 func_0804ad38("vcl failed to allocate a register of type %s, but there's no registers of this type available for it to use.. maybe adding a .init_.. directive would help\n", unk_2c);
                 func_0804ac44();
                 return false;
-            }
+            } else
+                list->func_0805bab0();
             return false;
         }
         best->unk_18 = &unk_04[r];
