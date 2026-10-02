@@ -77,7 +77,7 @@ int propagateMoves(workTable *t)
                 if (!(used & ~valid) && !(used & srcWritten) && !paired)
                     for (int i = 0; i != cur->unk_138b; i++) {
                         Operand *op = &cur->unk_38[i];
-                        if (op->regOp() == dst)
+                        if (op->inputReg() == dst)
                             op->getRegFrom(&in->unk_38[1]);
                         count++;
                     }
@@ -91,15 +91,14 @@ int propagateMoves(workTable *t)
             cur = cur->unk_1c.unk_00;
             row = r;
         }
-        int ext = in->unk_38[0].unk_27;
-        if (ext & ~valid) {
+        if (~valid & in->unk_38[0].unk_27) {
             func_0804ad38("valid bit mask from new register doesn't contain externally used bits for move %s<-%s\n",
                           dst->func_0805a8e0(), src->func_0805a8e0());
             func_0804ad38("valid mask = %x ext bits on output operand = %x\n",
                           valid, in->unk_38[0].unk_27);
             return -1;
         }
-        keep |= ext;
+        keep |= in->unk_38[0].unk_27;
         if (!keep)
             in->unk_38[0].unk_18 = in->unk_38[1].unk_18;
         in->unk_138f = keep;
