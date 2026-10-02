@@ -461,23 +461,23 @@ bool buildCandidateList(workTable *wt)
             if (!r)
                 continue;
             for (int j = 0; j != r->unk_28; j++) {
-                if ((op->unk_07 >> j) & 1) {
-                    if (op->isInReg()) {
-                        OpSlot *s = &op->unk_2c[j];
-                        cls0805bcc4 *p = s->getParent();
-                        if (!p) {
-                            func_0804ad38("input had no link\n");
-                            func_0804aeb0();
-                            return false;
-                        }
-                        if (!p->unk_2c)
-                            goto next;
-                        if (s->unk_19 != 2) {
-                            int t = p->unk_32 + p->unk_18 + s->unk_18;
-                            if (t > minRow)
-                                minRow = t;
-                        }
-                    }
+                if (!((op->unk_07 >> j) & 1))
+                    continue;
+                if (!op->isInReg())
+                    continue;
+                OpSlot *s = &op->unk_2c[j];
+                cls0805bcc4 *p = s->getParent();
+                if (!p) {
+                    func_0804ad38("input had no link\n");
+                    func_0804aeb0();
+                    return false;
+                }
+                if (!p->unk_2c)
+                    goto next;
+                if (s->unk_19 != 2) {
+                    int t = p->unk_32 + p->unk_18 + s->unk_18;
+                    if (t > minRow)
+                        minRow = t;
                 }
             }
             Instr *mv = r->unk_20;
