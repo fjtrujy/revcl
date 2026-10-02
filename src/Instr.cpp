@@ -869,6 +869,11 @@ int Instr::func_08055ac4()
     return func_0806c72c(unk_34);
 }
 
+static inline bool isLiteral(mValue *v)
+{
+    return v->type == mValue::STRING;
+}
+
 bool Instr::func_08055ae4()
 {
     for (int i = 0; i != unk_138b; i++) {
@@ -889,8 +894,9 @@ bool Instr::func_08055ae4()
             op->unk_07 = 1;
             op->unk_0a = unk_38[0].unk_0a;
             op->unk_0b = 0;
-            op->unk_26 = unk_138b++;
+            op->unk_26 = unk_138b;
             op = &unk_38[i + 1];
+            unk_138b++;
             op->unk_08 = 1;
             op->unk_04 = 19;
             op->unk_09 = 1;
@@ -930,7 +936,7 @@ bool Instr::func_08055ae4()
             bool d = true;
             mValue *v = &unk_38[i - 1].unk_1c;
             unsigned int imm;
-            if (v->type == mValue::STRING) {
+            if (isLiteral(v)) {
                 func_0804ac7c("fsop has literals - so assuming the worst - if it were numerical vcl could figure out dependencies better\n");
             } else if (v->getUInt(&imm)) {
                 unsigned int bits;
@@ -969,8 +975,9 @@ bool Instr::func_08055ae4()
                 op->unk_07 = 1;
                 op->unk_0a = -1;
                 op->unk_0b = 0;
-                op->unk_26 = unk_138b++;
+                op->unk_26 = unk_138b;
                 op++;
+                unk_138b++;
             }
             if (b) {
                 op->unk_08 = 1;
@@ -980,8 +987,9 @@ bool Instr::func_08055ae4()
                 op->unk_07 = 1;
                 op->unk_0a = -1;
                 op->unk_0b = 0;
-                op->unk_26 = unk_138b++;
+                op->unk_26 = unk_138b;
                 op++;
+                unk_138b++;
             }
             if (c) {
                 op->unk_08 = 1;
@@ -991,8 +999,9 @@ bool Instr::func_08055ae4()
                 op->unk_07 = 1;
                 op->unk_0a = -1;
                 op->unk_0b = 1;
-                op->unk_26 = unk_138b++;
+                op->unk_26 = unk_138b;
                 op++;
+                unk_138b++;
                 op->unk_08 = 1;
                 op->unk_04 = 18;
                 op->unk_09 = 2;
@@ -1000,8 +1009,9 @@ bool Instr::func_08055ae4()
                 op->unk_07 = 1;
                 op->unk_0a = 1;
                 op->unk_0b = 1;
-                op->unk_26 = unk_138b++;
+                op->unk_26 = unk_138b;
                 op++;
+                unk_138b++;
             }
             if (d) {
                 op->unk_08 = 1;
@@ -1011,8 +1021,9 @@ bool Instr::func_08055ae4()
                 op->unk_07 = 1;
                 op->unk_0a = -1;
                 op->unk_0b = 1;
-                op->unk_26 = unk_138b++;
+                op->unk_26 = unk_138b;
                 op++;
+                unk_138b++;
                 op->unk_08 = 1;
                 op->unk_04 = 19;
                 op->unk_09 = 2;
@@ -1032,8 +1043,9 @@ bool Instr::func_08055ae4()
             op->unk_07 = 1;
             op->unk_0a = 1;
             op->unk_0b = 1;
-            op->unk_26 = unk_138b++;
+            op->unk_26 = unk_138b;
             op = &unk_38[i + 1];
+            unk_138b++;
             op->unk_08 = 1;
             op->unk_04 = 19;
             op->unk_09 = 2;
