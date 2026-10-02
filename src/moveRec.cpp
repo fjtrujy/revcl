@@ -170,7 +170,8 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
     if (!in)
         return false;
     int id = func_0806c72c(in->unk_34);
-    *srcOp = *dstOp = -1;
+    *srcOp = -1;
+    *dstOp = -1;
     unsigned int v;
     switch (id) {
     case 0x22:
@@ -216,14 +217,14 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
     default:
         return false;
     }
-    RegPoolEntry *d = in->unk_38[*dstOp].unk_18;
     RegPoolEntry *s = in->unk_38[*srcOp].unk_18;
+    RegPoolEntry *d = in->unk_38[*dstOp].unk_18;
     if (!s || !d) {
         func_0804ad38("move detect error - reg not set\n");
         func_0804adf0(-1);
         return false;
     }
-    if (s->unk_24 != d->unk_24) {
+    if (d->unk_24 != s->unk_24) {
         func_0804ad38("move detect - bad types\n");
         func_0804adf0(-1);
         return false;
