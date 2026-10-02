@@ -213,10 +213,10 @@ int canMoveLocks(Instr *in, short *pos)
         RegPoolEntry *ri = op->inRegOp();
         if (ri) {
             for (int p = 0; p != ri->unk_28; p++) {
-                if ((op->unk_07 >> p) & 1) {
+                int bit = (op->unk_07 >> p) & 1;
+                if (bit) {
                     OpSlot *s = &op->unk_2c[p];
-                    int *minPos;
-                    ret |= s->unk_04->canMoveInputLock(s, pos, minPos);
+                    ret |= s->unk_04->canMoveInputLock(s, pos, bit);
                     if (ret)
                         goto done;
                 }
@@ -225,10 +225,10 @@ int canMoveLocks(Instr *in, short *pos)
         RegPoolEntry *ro = op->outRegOp();
         if (ro) {
             for (int p = 0; p != ro->unk_28; p++) {
-                if ((op->unk_07 >> p) & 1) {
+                int bit = (op->unk_07 >> p) & 1;
+                if (bit) {
                     OpSlot *s = &op->unk_2c[p];
-                    int *minPos;
-                    ret |= s->unk_04->canMoveOutputLock(s, pos, minPos);
+                    ret |= s->unk_04->canMoveOutputLock(s, pos, bit);
                     if (ret)
                         goto done;
                 }

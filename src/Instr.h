@@ -224,8 +224,8 @@ public:
     int checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos);
     int checkOverlap(cls0805bcc4 *out, short *pos, int *minPos);
     bool catLocks(cls0805bcc4 *a, cls0805bcc4 *b, int *s, int *e, int *end);
-    int canMoveInputLock(cls0805bcc4 *in, short *pos, int *minPos);
-    int canMoveOutputLock(cls0805bcc4 *out, short *pos, int *minPos);
+    int canMoveInputLock(cls0805bcc4 *in, short *pos, int slotBit);
+    int canMoveOutputLock(cls0805bcc4 *out, short *pos, int slotBit);
 };
 
 bool freeLockLists(cls0805c244 *p);

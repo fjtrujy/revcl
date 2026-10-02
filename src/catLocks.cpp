@@ -26,7 +26,7 @@ bool cls0805c244::catLocks(cls0805bcc4 *a, cls0805bcc4 *b, int *s, int *e, int *
     return true;
 }
 
-int cls0805c244::canMoveInputLock(cls0805bcc4 *in, short *pos, int *minPos)
+int cls0805c244::canMoveInputLock(cls0805bcc4 *in, short *pos, int slotBit)
 {
     int p = *pos;
     cls0805bcc4 *lk = unk_1c;
@@ -114,7 +114,7 @@ int cls0805c244::canMoveInputLock(cls0805bcc4 *in, short *pos, int *minPos)
     return 0;
 }
 
-int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
+int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int slotBit)
 {
     int ret;
     int lsz = g_080b336c;
