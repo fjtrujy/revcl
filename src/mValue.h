@@ -14,7 +14,7 @@ public:
     };
 
     mValue();
-    mValue(const char *s)
+    mValue(char *const &s)
     {
         str = 0;
         type = NONE;
