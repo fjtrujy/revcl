@@ -460,6 +460,13 @@ struct Operand {
             r = 1;
         return (bool)r ? unk_18 : 0;
     }
+    RegPoolEntry *getRegD()
+    {
+        bool r = false;
+        if (unk_09 == 1 && isZeroC() == false)
+            r = true;
+        return r ? unk_18 : 0;
+    }
     bool isZeroC() { return unk_18 && unk_18 == unk_18->unk_04->unk_10; }
     bool isInRegC() { return unk_09 == 1 && !isZeroC(); }
     bool isOutRegC() { return unk_09 == 2 && !isZeroC(); }

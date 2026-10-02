@@ -5,7 +5,7 @@ bool Instr::func_08052f84()
 {
     for (int i = 0; i != unk_138b; i++) {
         Operand *op = &unk_38[i];
-        if (!op->getReg())
+        if (!op->getRegD())
             continue;
         op->unk_29 = 0;
         if (!(unk_1388 & 4))
@@ -13,10 +13,13 @@ bool Instr::func_08052f84()
         for (ol_s *ol = op->unk_2c[0].unk_54.unk_00; ol; ol = ol->unk_00) {
             Instr *in = ol->unk_04;
             bool found = false;
-            if (in->unk_13ce && !ol->unk_10)
-                continue;
+            if (in->unk_13ce) {
+                int c = ol->unk_10;
+                if ((char)c == 0)
+                    continue;
+            }
             for (int j = 0; j != in->unk_138b; j++) {
-                RegPoolEntry *r = in->unk_38[j].getReg();
+                RegPoolEntry *r = in->unk_38[j].getRegD();
                 if (r && (unsigned)(r->unk_30 - 54) <= 5) {
                     found = true;
                     break;
