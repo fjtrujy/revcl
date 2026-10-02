@@ -50,7 +50,10 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
         if (r0->unk_24 != 9)
             break;
         RegPool *pool = r0->unk_04;
-        if (r0 == pool->unk_10) {
+        int z = 0;
+        if (r0 == pool->unk_10)
+            z = 1;
+        if (z) {
             unsigned char mask[32];
             int i;
             for (i = 0; i != 32; i++) {
