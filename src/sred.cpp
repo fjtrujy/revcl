@@ -91,8 +91,7 @@ bool sredTable(workTable *wt)
 {
     if (!isPipeMode(wt))
         return true;
-    if (wt->unk_30 == wt->unk_34)
-        return true;
+    if (wt->unk_30 != wt->unk_34) {
     if (wt->unk_38) {
         func_0804ad38("can't do modular reduction\n");
         return false;
@@ -100,9 +99,10 @@ bool sredTable(workTable *wt)
     setRange(wt->unk_30, wt->unk_34, 0);
 
     int changed;
+    int i;
     do {
         changed = false;
-        for (int i = wt->unk_30; i != wt->unk_34; i++) {
+        for (i = wt->unk_30; i != wt->unk_34; i++) {
             Instr *in = wt->func_080724f0(i)->onlyEntry();
             if (in) {
                 if (in->unk_13e8.unk_04 != i) {
@@ -119,7 +119,7 @@ bool sredTable(workTable *wt)
 
     do {
         changed = false;
-        for (int i = wt->unk_34 - 1; i >= wt->unk_30; i--) {
+        for (i = wt->unk_34 - 1; i >= wt->unk_30; i--) {
             Instr *in = wt->func_080724f0(i)->onlyEntry();
             if (in && !atEarliest(wt, in)) {
                 if (in->unk_13e8.unk_04 != i) {
@@ -133,6 +133,7 @@ bool sredTable(workTable *wt)
             }
         }
     } while (changed);
+    }
     return true;
 }
 
