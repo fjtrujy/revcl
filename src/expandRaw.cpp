@@ -20,11 +20,11 @@ bool expandRawTables(Program *p)
             func_0804adf0(-1);
         }
         workTable *wt = s->unk_218;
-        if (wt->unk_09 == 3) {
+        if (wt->codeMode() == 3) {
             func_0804ad38("hit a raw table during expraw\n");
             return false;
         }
-        if (wt->unk_09 == 5 && !wt->changeMode(3)) {
+        if (wt->codeMode() == 5 && !wt->changeMode(3)) {
             func_0804ad38("processor failed to expand raw table\n");
             return false;
         }
