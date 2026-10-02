@@ -21,8 +21,12 @@ public:
         if (!ol || !unk_00)
             return 0;
         int r = 0;
-        if (unk_00 == ol->unk_04 && unk_04 == ol->unk_10)
-            r = 1;
+        Instr *i = ol->unk_04;
+        if (unk_00 == i) {
+            int idx = ol->unk_10;
+            if (unk_04 == idx)
+                r = 1;
+        }
         return r;
     }
     void func_080523b8();
