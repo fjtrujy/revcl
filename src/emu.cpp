@@ -116,11 +116,11 @@ bool func_080642ec(Program *p, instStream *s)
                     return false;
                 }
             }
-            if (o->isReg2())
+            if (o->isOutRegC())
                 ru->unk_0f |= o->unk_07;
-            if (o->isReg())
+            if (o->isInRegC())
                 ru->unk_0e |= o->unk_07;
-            if (o->isReg2()) {
+            if (o->isOutRegC()) {
                 if (o->unk_27) {
                     func_0804ad38("operand had xbits set for output!\n");
                     return false;
@@ -139,7 +139,7 @@ bool func_080642ec(Program *p, instStream *s)
                         return false;
                     }
                 }
-                if (((o->unk_07 >> k) & 1) && reg->unk_2c && o->isReg2()) {
+                if (((o->unk_07 >> k) & 1) && reg->unk_2c && o->isOutRegC()) {
                     if (!ru->unk_20[k].unk_20.func_080580fc(i, op, k, false)) {
                         func_0804ad38("failed to add a local setter for a thruput check\n");
                         func_0804ad38("register is %s\n", reg->func_0805a8e0());
@@ -160,8 +160,8 @@ bool func_080642ec(Program *p, instStream *s)
             return false;
         }
         for (int part = 0; part != reg->unk_28; part++) {
-            rPart *rp = &reg->unk_44[part];
             regUseSlot *slot = &ru->unk_20[part];
+            rPart *rp = &reg->unk_44[part];
             slot->unk_3c[0] = rp->unk_00[4];
             slot->unk_3c[1] = rp->unk_00[5];
             slot->unk_3c[2] = rp->unk_00[6];
