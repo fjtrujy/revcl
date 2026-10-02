@@ -404,7 +404,11 @@ bool func_080506e0(const char *s)
 
 bool func_08050708(char c)
 {
-    return isWhite(&c);
+    const char *q = g_080b3148;
+    char ch;
+    while ((ch = *q) && ch != c)
+        q++;
+    return *q != 0;
 }
 
 bool Parser::func_08050738(int i)
