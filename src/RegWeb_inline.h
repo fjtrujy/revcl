@@ -309,11 +309,11 @@ inline bool RegWeb::PatchOperand(Operand *op)
         return true;
     RegWeb *w = op->GetWeb();
     if (w) {
-        RegPoolEntry *r = w->unk_00;
-        if (!r) {
+        if (!w->unk_00) {
             func_0804ad38("patch operand - web has no reg\n");
             return false;
         }
+        RegPoolEntry *r = w->unk_00;
         op->unk_18 = r;
         if (op->unk_10 && op->unk_10 != r) {
             func_0804ad38("not forcing to a base reg after all - in PatchOperands %s isn't %s\n",
