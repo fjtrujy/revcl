@@ -341,18 +341,20 @@ inline bool RegWeb::PatchInstr(Instr *in)
 
 inline bool RegWeb::PatchITable(workTable *t)
 {
-    if (!t) {
-        func_0804ad38("RegWeb::PatchITable - passed a null pointer\n");
-        return false;
-    }
-    for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-        if (!PatchInstr(in)) {
-            func_0804ad38("patchiTable - failed\n");
-            in->func_08054008(false);
-            return false;
+    if (t) {
+        for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+            if (!PatchInstr(in)) {
+                func_0804ad38("patchiTable - failed\n");
+                in->func_08054008(false);
+                goto fail;
+            }
         }
+        return true;
     }
-    return true;
+    func_0804ad38("RegWeb::PatchITable - passed a null pointer\n");
+    return false;
+fail:
+    return false;
 }
 
 inline void RegWeb::Dump()
