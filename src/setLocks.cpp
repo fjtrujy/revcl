@@ -419,18 +419,23 @@ bool DoInsert(workTable *wt, Instr *in, cls08058718 *pos)
         func_0804ad38("undo insert currmuid not set\n");
         return false;
     }
-    wtRow *row = &wt->unk_2c[pos->unk_04];
+    short r = pos->unk_04;
+    wtRow *row = &wt->unk_2c[r];
     cls08058718 *s = &in->unk_13e8;
-    s->unk_04 = pos->unk_04;
-    s->unk_03 = pos->unk_03;
-    s->unk_00 = pos->unk_00;
-    s->unk_02 = pos->unk_02;
-    row->unk_00[pos->unk_02].unk_00 = in;
+    s->unk_04 = r;
+    char a = pos->unk_03;
+    short b = pos->unk_00;
+    s->unk_03 = a;
+    char p = pos->unk_02;
+    s->unk_00 = b;
+    s->unk_02 = p;
+    row->unk_00[p].unk_00 = in;
     if (!setLocks(in)) {
         func_0804ad38("DoInsert: failed to set locks in instruction insert\n");
         return false;
     }
-    in->unk_1396 = wt->unk_40++;
+    in->unk_1396 = wt->unk_40;
+    wt->unk_40++;
     if (!UnlinkFromToDo((Block *)wt, in)) {
         func_0804ad38("failed to unlink from to do list\n");
         func_0804aeb0();
