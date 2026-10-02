@@ -424,10 +424,10 @@ void genRegPool::dumpATab()
 {
     for (int i = tStart_080bce28; i != tEnd_080bce2c; i++)
         for (int r = 0; r != nRegs_080bce24; r++) {
-            int m = (unsigned char)unk_30[r];
             for (int p = 0; p != maxParts_080bce20; p++) {
-                if (m & (1 << p))
-                    ;
+                int bit = (unsigned char)unk_30[r] & (1 << p);
+                if (bit != 0)
+                    bit = 1;
             }
         }
 }
