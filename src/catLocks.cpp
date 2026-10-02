@@ -651,9 +651,7 @@ int instStream::getOrGuessDepLength()
 
 int instStream::func_0805f354()
 {
-    workTable *wt = unk_218;
-    if (!wt)
-        wt = getWorkTable();
+    workTable *wt = getTable();
     if (!wt) {
         func_0804ad38("getOrGuess - no work table\n");
         func_0804adf0(-1);
