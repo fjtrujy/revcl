@@ -198,8 +198,7 @@ bool func_080522c4(int mods, unsigned char mode, bool flag)
         func_0804ac7c("bad mode to ask about mods\n");
         break;
     }
-    bool ok = (mods & ~allowed) == 0;
-    return ok;
+    return (~allowed & mods) == 0;
 }
 
 char g_080bce00[32];
