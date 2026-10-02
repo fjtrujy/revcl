@@ -272,7 +272,7 @@ bool moveLocks(Instr *in, cls08058718 *pos)
                 }
             }
         }
-        if (op->isInRegOp()) {
+        if (op->isInRegOpB()) {
             for (int p = 0; p != r->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
