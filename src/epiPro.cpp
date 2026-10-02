@@ -12,6 +12,26 @@ const char *getUniqueName(Program *p);
 char *dupString(const char *s);
 bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName);
 
+inline int loopDebris::getNumPro()
+{
+    return m_nPro;
+}
+
+inline int loopDebris::getNumEpi()
+{
+    return m_nEpi;
+}
+
+static inline instStream *checkedProStream(loopDebris *ld, int i)
+{
+    epiRec *r = ld->getProRec(i);
+    if (!r) {
+        func_0804ad38("failed to get pro epirec\n");
+        return 0;
+    }
+    return r->unk_14;
+}
+
 int func_08067e18(Program *p, instStream *s)
 {
     workTable *wt = s->getTable();
@@ -64,7 +84,8 @@ int func_08067e18(Program *p, instStream *s)
     }
 
     instStream *prev = enter;
-    for (i = 0; i != ld.m_nPro; i++) {
+    epiRec *r;
+    for (i = 0; ld.getNumPro() != i; i++) {
         epiRec *pr = ld.getProRec(i);
         if (!pr) {
             func_0804ad38("failed to get prologue\n");
@@ -97,21 +118,15 @@ int func_08067e18(Program *p, instStream *s)
                 func_0804ad38("failed to link prologue to epilogue\n");
                 return -1;
             }
-        } else if (i != ld.m_nPro - 1) {
+        } else if (i != ld.getNumPro() - 1) {
             func_0804ad38("not last prologue, but no conditional\n");
             func_0804adf0(-1);
         }
         instStream *next;
-        if (i == ld.m_nPro - 1) {
+        if (i == ld.getNumPro() - 1) {
             next = ld.m_main.unk_14;
         } else {
-            epiRec *r = ld.getProRec(i + 1);
-            if (r) {
-                next = r->unk_14;
-            } else {
-                func_0804ad38("failed to get pro epirec\n");
-                next = 0;
-            }
+            next = checkedProStream(&ld, i + 1);
         }
         if (!next) {
             func_0804ad38("failed to get next stream for a prologue\n");
@@ -138,7 +153,7 @@ int func_08067e18(Program *p, instStream *s)
     }
 
     instStream *succ = exit;
-    if (ld.m_nEpi) {
+    if (ld.getNumEpi()) {
         epiRec *e0 = ld.getEpiRec(0);
         if (!e0) {
             func_0804ad38("failed to get epi0\n");
@@ -155,20 +170,20 @@ int func_08067e18(Program *p, instStream *s)
         return -1;
     }
 
-    for (i = 0; i != ld.m_nEpi; i++) {
-        epiRec *er = ld.getEpiRec(i);
-        if (!er) {
+    for (i = 0; i != ld.getNumEpi(); i++) {
+        r = ld.getEpiRec(i);
+        if (!r) {
             func_0804ad38("failed to get epi \n");
             return -1;
         }
-        instStream *es = er->unk_14;
+        instStream *es = r->unk_14;
         if (!es) {
             func_0804ad38("failed to get istream epi\n");
             return -1;
         }
         int type = 0;
-        if (er->unk_1c) {
-            if (!er->unk_1c->changeBranchImmediate(ld.m_exitName)) {
+        if (r->unk_1c) {
+            if (!r->unk_1c->changeBranchImmediate(ld.m_exitName)) {
                 func_0804ad38("failed to change immediate\n");
                 func_0804adf0(-1);
             }
@@ -195,8 +210,8 @@ int func_08067e18(Program *p, instStream *s)
     }
 
     last = enter;
-    for (i = 0; i != ld.m_nPro; i++) {
-        epiRec *r = ld.getProRec(i);
+    for (i = 0; i != ld.getNumPro(); i++) {
+        r = ld.getProRec(i);
         if (!p->insertStreamAfter(last, r->unk_14)) {
             func_0804ad38("failed to add after\n");
             func_0804adf0(-1);
@@ -208,8 +223,8 @@ int func_08067e18(Program *p, instStream *s)
         func_0804adf0(-1);
     }
     last = main;
-    for (i = 0; i != ld.m_nEpi; i++) {
-        epiRec *r = ld.getEpiRec(i);
+    for (i = 0; i != ld.getNumEpi(); i++) {
+        r = ld.getEpiRec(i);
         if (!p->insertStreamAfter(last, r->unk_14)) {
             func_0804ad38("failed to add after\n");
             func_0804adf0(-1);
@@ -224,7 +239,7 @@ int func_08067e18(Program *p, instStream *s)
         func_0804ad38("failed to grab names from the source stream during epipro\n");
         func_0804adf0(-1);
     }
-    return ld.m_nPro + ld.m_nEpi + 3;
+    return ld.getNumPro() + ld.getNumEpi() + 3;
 }
 
 static inline void initDebris(loopDebris *ld, const char *baseName, int a, bool flag)
