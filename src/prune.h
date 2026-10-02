@@ -48,7 +48,8 @@ inline bool initPrune(Instr *in)
 {
     in->unk_13cc = 0;
     if (in->unk_34) {
-        if (!in->unk_34->func_0807026c())
+        char ok = in->unk_34->func_0807026c();
+        if (!ok)
             in->unk_13cc = 1;
         for (int i = 0;; i++) {
             Operand *op = in->getOp(i);

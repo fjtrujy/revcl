@@ -68,7 +68,7 @@ public:
     int func_080701f4();
     int func_0807021c();
     int func_08070244();
-    char func_0807026c();
+    int func_0807026c();
 };
 
 // List of ol_s nodes returned to a free pool (class name guessed).

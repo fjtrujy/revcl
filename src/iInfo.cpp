@@ -124,9 +124,9 @@ int iInfo::func_08070244()
     return (v >> 2) & 1;
 }
 
-char iInfo::func_0807026c()
+int iInfo::func_0807026c()
 {
-    char r = 0;
+    int r = 0;
     if (!(unk_18 & 0xf8)) {
         int k2 = kind() == 2 ? unk_19 : 0;
         if (!k2) {
@@ -138,9 +138,10 @@ char iInfo::func_0807026c()
                 else {
                     func_0804ad38("loadstore instruction, but bad ramtype\n");
                     func_0804adf0(-1);
-                    rt = 0;
+                    goto none;
                 }
             } else
+none:
                 rt = 0;
             if (rt != 2) {
                 int k3 = kind() == 3 ? unk_19 : 0;
