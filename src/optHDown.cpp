@@ -57,7 +57,7 @@ int hDownRegCost(Instr *in)
 {
     int cost = 0;
     for (int i = 0; i != in->unk_138b; i++) {
-        RegPoolEntry *r = in->unk_38[i].inRegOp();
+        RegPoolEntry *r = in->unk_38[i].inRegOp2();
         if (r) {
             switch (r->unk_30) {
             case 55:

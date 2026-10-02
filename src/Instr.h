@@ -418,6 +418,20 @@ struct Operand {
             r = true;
         return r ? unk_18 : 0;
     }
+    bool isZeroReg2()
+    {
+        bool z = true;
+        if (!unk_18 || unk_18 != unk_18->unk_04->unk_10)
+            z = false;
+        return z;
+    }
+    RegPoolEntry *inRegOp2()
+    {
+        bool r = false;
+        if (unk_09 == 1 && !isZeroReg2())
+            r = true;
+        return r ? unk_18 : 0;
+    }
     RegPoolEntry *outRegOp()
     {
         bool r = false;
