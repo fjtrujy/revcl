@@ -95,10 +95,12 @@ bool func_08060018(Program *p, bool b)
                     func_0804ad38("failed to back trace a register!\n");
                     return false;
                 }
-                for (instStream *t = p->unk_e0; t; t = t->unk_258) {
-                    if (!int_buildTpairs(p, reg, part, t, s)) {
-                        func_0804ad38("failed to build the tpairs\n");
-                        return false;
+                if (p->unk_e0) {
+                    for (instStream *t = p->unk_e0; t; t = t->unk_258) {
+                        if (!int_buildTpairs(p, reg, part, t, s)) {
+                            func_0804ad38("failed to build the tpairs\n");
+                            return false;
+                        }
                     }
                 }
             }
