@@ -527,10 +527,12 @@ int RegPoolEntry::gatherInflight(ol_s** out)
     int i;
     for (i = 0; i != unk_28; i++) {
         rPart* s = getRP(i);
-        if (s->unk_24.unk_12)
-            out[n++] = &s->unk_24;
-        ol_s* p = s->unk_4c;
-        for (int j = 0; j != 4; j++, p++)
+        ol_s* c = &s->unk_24;
+        if (c->unk_12)
+            out[n++] = c;
+        int j;
+        ol_s* p;
+        for (j = 0, p = s->unk_4c; j != 4; j++, p++)
             if (p->unk_12)
                 out[n++] = p;
     }
