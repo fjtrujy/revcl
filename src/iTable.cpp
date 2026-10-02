@@ -287,27 +287,28 @@ Instr *workTable::getBranch()
         func_0804aeb0();
     }
     }
-    if (!unk_10) {
+    instStream *o = unk_10;
+    if (!o) {
         func_0804ac7c("no owner set for getBranch\n");
         func_0804aeb0();
     } else if (b) {
-            if (b->unk_1388) {
-                if (b->unk_1392)
-                    return 0;
-                else if (!unk_10->unk_2ce) {
-                    func_0804ad38("iTable::getBranch() for %s table has a branch at the end, but owning stream doesn't think it branches\n",
-                                  unk_10->func_0806d674());
-                    dump();
-                    func_0804aeb0();
-                }
-            } else if (unk_10->unk_2ce) {
-                func_0804ad38("iTable::getBranch() - owner thinks it has a branch, but the instruction doesn't seem to be one\n");
+        if (b->unk_1388) {
+            if (b->unk_1392)
+                return 0;
+            else if (!o->unk_2ce) {
+                func_0804ad38("iTable::getBranch() for %s table has a branch at the end, but owning stream doesn't think it branches\n",
+                              o->func_0806d674());
+                dump();
                 func_0804aeb0();
             }
-        } else if (unk_10->unk_2ce) {
-            func_0804ad38("iTable::getBranch - owning stream thinks it has a branch - but there's no instruction here!\n");
+        } else if (o->unk_2ce) {
+            func_0804ad38("iTable::getBranch() - owner thinks it has a branch, but the instruction doesn't seem to be one\n");
             func_0804aeb0();
         }
+    } else if (o->unk_2ce) {
+        func_0804ad38("iTable::getBranch - owning stream thinks it has a branch - but there's no instruction here!\n");
+        func_0804aeb0();
+    }
     return (b && b->unk_1388) ? b : 0;
 }
 
