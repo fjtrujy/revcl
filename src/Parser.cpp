@@ -345,11 +345,12 @@ bool Parser::func_0805041c(char *line)
 {
     int stack[16];
     int depth = 0;
-    if (!line)
+    char *p = line;
+    if (!p)
         return false;
-    if (*line != ';')
+    if (*p != ';')
         return false;
-    char *p = line + 1;
+    p++;
     while (*p && !isGaspDigit(p))
         p++;
     while (isGaspDigit(p)) {
@@ -396,7 +397,7 @@ bool Parser::func_0805041c(char *line)
             unk_1000c[depth - 1].unk_00 = &lines[idx];
         }
     }
-    bool isInclude = false;
+    int isInclude = 0;
     for (;;) {
         while (*p && !isWhite(p))
             p++;
@@ -408,7 +409,7 @@ bool Parser::func_0805041c(char *line)
         *e = 0;
         if (func_0804bfcc(p, ".include")) {
             p = e + 1;
-            isInclude = true;
+            isInclude = 1;
             continue;
         }
         if (e[-1] == ':') {
