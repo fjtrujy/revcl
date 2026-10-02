@@ -416,18 +416,19 @@ bool func_0804cd68(mValue *dst, mValue *a, mValue *b)
 
 bool func_0804d040(mValue *dst, mValue *a, mValue *b)
 {
-    float fa, fb;
-    int ia, ib;
-    unsigned int ua, ub;
+    float fb, fa;
+    int ib, ia;
+    unsigned int ub, ua;
+    int t;
     if (!a)
-        return false;
+        goto fail;
     if (!b)
-        return false;
+        goto fail;
     if (a->type < mValue::UINT || a->type > mValue::FLOAT)
-        return false;
+        goto fail;
     if (b->type < mValue::UINT || b->type > mValue::FLOAT)
-        return false;
-    int t = a->type;
+        goto fail;
+    t = a->type;
     if ((int)b->type > t)
         t = b->type;
     dst->type = t;
@@ -437,29 +438,28 @@ bool func_0804d040(mValue *dst, mValue *a, mValue *b)
     case mValue::UINT:
         if (!getUIntInl(a, &ua) || !getUIntInl(b, &ub)) {
             printf("failed to get args\n");
-            return false;
+            goto fail;
         }
         dst->u = ua * ub;
-        break;
+        return true;
     case mValue::INT:
         if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
             func_0804ad38("failed to get args\n");
-            return false;
+            goto fail;
         }
         dst->i = ia * ib;
-        break;
+        return true;
     case mValue::FLOAT:
         if (getFloatInl(a, &fa) && getFloatInl(b, &fb)) {
             dst->f = fa * fb;
-            break;
+            return true;
         }
         func_0804ad38("failed to get args\n");
-        return false;
-    default:
-        printf("bad type to expr\n");
-        return false;
+        goto fail;
     }
-    return true;
+    printf("bad type to expr\n");
+fail:
+    return false;
 }
 
 bool func_0804d314(mValue *dst, mValue *a, mValue *b)
