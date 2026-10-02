@@ -57,7 +57,7 @@ int vutaRegCost(Instr *in)
 {
     int cost = 0;
     for (int i = 0; i != in->unk_138b; i++) {
-        RegPoolEntry *r = in->unk_38[i].inRegOp();
+        RegPoolEntry *r = in->unk_38[i].inRegOp2();
         if (r) {
             switch (r->unk_30) {
             case 55:
@@ -115,7 +115,7 @@ int anotherRegCost(Instr *in)
 {
     int cost = 0;
     for (int i = 0; i != in->unk_138b; i++) {
-        RegPoolEntry *r = in->unk_38[i].inRegOp();
+        RegPoolEntry *r = in->unk_38[i].inRegOp2();
         if (r) {
             switch (r->unk_30) {
             case 55:
@@ -197,7 +197,7 @@ int normal2RegCost(Instr *in)
 {
     int cost = 0;
     for (int i = 0; i != in->unk_138b; i++) {
-        RegPoolEntry *r = in->unk_38[i].inRegOp();
+        RegPoolEntry *r = in->unk_38[i].inRegOp2();
         if (r) {
             switch (r->unk_30) {
             case 55:
@@ -255,7 +255,7 @@ int vuta1RegCost(Instr *in)
 {
     int cost = 0;
     for (int i = 0; i != in->unk_138b; i++) {
-        RegPoolEntry *r = in->unk_38[i].inRegOp();
+        RegPoolEntry *r = in->unk_38[i].inRegOp2();
         if (r && r->unk_30 == 59)
             cost += 400;
     }
