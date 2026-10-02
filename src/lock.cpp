@@ -780,11 +780,11 @@ void cls0805bcc4::setFrom(cls08058718 *r)
     unk_30 = loop;
     int lsz = g_080b336c;
     if (lsz) {
-        if (rline % lsz == loop)
+        if (unk_32 % lsz == unk_30)
             return;
-        func_0804ad38("rLock::setFrom: rline/loop mismatch %d vs %d (lsz%d)\n", rline, loop, lsz);
+        func_0804ad38("rLock::setFrom: rline/loop mismatch %d vs %d (lsz%d)\n", unk_32, unk_30, lsz);
     } else {
-        if (unk_30 == unk_32)
+        if (unk_32 == unk_30)
             return;
         func_0804ad38("setFrom rline/non-loop mismatch\n");
     }
