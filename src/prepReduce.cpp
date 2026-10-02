@@ -39,9 +39,9 @@ bool func_0807e528(Program *p, instStream *s, workTable *wt)
                 if (!reg)
                     continue;
                 regUse *ru = ul->func_0805b5dc(reg);
-                if (op->isInReg())
+                if (op->isInRegC())
                     op->unk_28 = ru->unk_12 & op->unk_27;
-                if (op->isOutReg())
+                if (op->isOutRegC())
                     op->unk_28 = ru->unk_13 & op->unk_27;
                 op->unk_28 |= ru->unk_14;
             }
