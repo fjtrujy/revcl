@@ -345,11 +345,16 @@ Directive directives_080b3160[28] = {
     {".endhide", func_08051860},
 };
 
+inline char *ExecRP_directive_name(LocTag *t)
+{
+    return t->func_08050be4(0, 0);
+}
+
 Directive *func_080519a0(LocTag *t)
 {
     if (!t)
         return 0;
-    char *name = t->func_08050be4(0, 0);
+    char *name = ExecRP_directive_name(t);
     Directive *d = directives_080b3160;
     for (int i = 0; i != 28; i++, d++)
         if (func_0804bfcc(name, d->name))
