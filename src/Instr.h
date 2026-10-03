@@ -507,6 +507,28 @@ struct Operand {
 
 class Instr;
 
+static inline bool isZeroRegister(RegPoolEntry *reg)
+{
+    return reg == reg->unk_04->unk_10;
+}
+
+static inline bool isZeroOperand(Operand *op)
+{
+    return op->unk_18 && isZeroRegister(op->unk_18);
+}
+
+static inline bool isRegisterOperand(Operand *op, char direction)
+{
+    return op->unk_09 == direction && !isZeroOperand(op);
+}
+
+static inline RegPoolEntry *registerOperand(Operand *op, char direction)
+{
+    if (isRegisterOperand(op, direction))
+        return op->unk_18;
+    return 0;
+}
+
 // Doubly linked list link embedded in Instr.
 struct iLink {
     Instr *unk_00;  // next

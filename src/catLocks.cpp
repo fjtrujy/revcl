@@ -311,7 +311,7 @@ const char *stallReasonStr(short why)
     return s;
 }
 
-bool instStream::func_0805e4bc()
+bool instStream::gatherStats()
 {
     cls0805e2e4 *st = &unk_278;
     st->unk_00 = st->unk_02 = -1;
@@ -351,7 +351,7 @@ bool instStream::func_0805e4bc()
             }
             logged = 1;
         }
-        if (!logged) {
+        if ((unsigned char)logged == 0) {
             func_0804ad38("failed to log\n");
             return false;
         }
@@ -360,7 +360,7 @@ bool instStream::func_0805e4bc()
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *r = (op->isReg() && op->unk_2b != 2) ? op->unk_18 : 0;
+            RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
             if (r) {
                 for (int p = 0; p != r->unk_28; p++) {
                     if ((op->unk_07 >> p) & 1) {
@@ -376,7 +376,7 @@ bool instStream::func_0805e4bc()
                                     return false;
                                 }
                                 int l = so->unk_0a + op->unk_29;
-                                if (l > maxLat)
+                                if (maxLat < l)
                                     maxLat = l;
                             }
                         }
@@ -389,7 +389,11 @@ bool instStream::func_0805e4bc()
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *r = (op->isReg() && op->unk_2b != 2) ? op->unk_18 : 0;
+            RegPoolEntry *r;
+            if (isRegisterOperand(op, 1) && op->unk_2b != 2)
+                r = op->unk_18;
+            else
+                r = 0;
             if (r) {
                 for (int p = 0; p != r->unk_28; p++) {
                     if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
@@ -414,7 +418,7 @@ bool instStream::func_0805e4bc()
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *r = (op->isReg() && op->unk_2b != 2) ? op->unk_18 : 0;
+            RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
             if (r) {
                 for (int p = 0; p != r->unk_28; p++) {
                     if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
@@ -437,7 +441,11 @@ bool instStream::func_0805e4bc()
     for (in = lst->unk_04; in; in = in->unk_1c.unk_04) {
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *r = (op->isReg() && op->unk_2b != 2) ? op->unk_18 : 0;
+            RegPoolEntry *r;
+            if (isRegisterOperand(op, 1) && op->unk_2b != 2)
+                r = op->unk_18;
+            else
+                r = 0;
             if (r) {
                 for (int p = 0; p != r->unk_28; p++) {
                     if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
@@ -459,14 +467,18 @@ bool instStream::func_0805e4bc()
         }
     }
 
-    for (in = lst->unk_04; in; in = in->unk_1c.unk_04) {
-        for (Instr *m = in->unk_1c.unk_04; m; m = m->unk_1c.unk_04) {
+    for (in = lst->unk_04; in; ) {
+        iLink *link = &in->unk_1c;
+        Instr *m = link->unk_04;
+        for (; m; m = m->unk_1c.unk_04) {
             if (func_080543bc(m, in)) {
                 m->unk_13f0.unk_08++;
                 m->unk_13f0.unk_0c += in->unk_13f0.unk_0c + 1;
                 m->unk_13f0.unk_10 = in->unk_13f0.unk_10 + 1;
             }
         }
+        m = (Instr *)*(int *)&link->unk_04;
+        in = m;
     }
 
     int upper = 0;
@@ -491,7 +503,7 @@ bool instStream::func_0805e4bc()
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *r = op->getReg2();
+            RegPoolEntry *r = registerOperand(op, 2);
             if (r) {
                 for (int p = 0; p != r->unk_28; p++) {
                     int nBoth = 0;
@@ -519,27 +531,31 @@ bool instStream::func_0805e4bc()
                         hi += (rem + 1) >> 1;
                     if (hi)
                         hi--;
-                    int d = op->unk_0a + hi;
-                    if (d > maxIssue)
-                        maxIssue = d;
+                    hi += op->unk_0a;
+                    if (hi > maxIssue)
+                        maxIssue = hi;
                 }
             }
         }
     }
 
-    for (; both; both--) {
-        if (upper < lower)
-            upper++;
-        else
-            lower++;
-    }
-    if (upper > best) {
-        unk_2ba = 3;
-        best = upper;
-    }
-    if (lower > best) {
-        unk_2ba = 4;
-        best = lower;
+    {
+        int u = upper;
+        int l = lower;
+        for (; both; both--) {
+            if (u < l)
+                u++;
+            else
+                l++;
+        }
+        if (u > best) {
+            unk_2ba = 3;
+            best = u;
+        }
+        if (l > best) {
+            unk_2ba = 4;
+            best = l;
+        }
     }
     if (maxIssue > best) {
         best = maxIssue;

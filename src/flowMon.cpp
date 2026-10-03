@@ -52,7 +52,7 @@ bool func_08060018(Program *p, bool b)
             func_0804ad38("failed to build memory dependencies for ist\n");
             return false;
         }
-        if (!s->func_0805e4bc()) {
+        if (!s->gatherStats()) {
             func_0804ad38("failed to gather stats for the istream\n");
             return false;
         }
@@ -111,7 +111,7 @@ bool func_08060018(Program *p, bool b)
         return false;
     }
     for (s = p->unk_a0; s; s = s->unk_108) {
-        if (!s->func_0805e4bc()) {
+        if (!s->gatherStats()) {
             func_0804ad38("failed to gather stats for the istream\n");
             return false;
         }
@@ -122,7 +122,7 @@ bool func_08060018(Program *p, bool b)
 bool func_080603bc(Program *p)
 {
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {
-        if (!s->func_0805e4bc()) {
+        if (!s->gatherStats()) {
             func_0804ad38("failed to gather stats for the istream\n");
             return false;
         }

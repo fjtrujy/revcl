@@ -61,7 +61,7 @@ public:
         }
     }
 
-    bool func_0805e4bc();         // gather stats
+    bool gatherStats();
     bool func_0806563c(bool a, bool b);  // build memory dependencies
     bool flowReset();
     const char *branchTypeName();
