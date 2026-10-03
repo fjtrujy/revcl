@@ -416,11 +416,16 @@ bool Operand::func_080569cc()
     return true;
 }
 
+static inline bool resetOperandLock(cls0805bcc4 *lock)
+{
+    return lock->func_0805bcc4();
+}
+
 bool Operand::func_08056a24()
 {
     for (int i = 0; i != 4; i++) {
         OpSlot *s = &unk_2c[i];
-        s->func_0805bcc4();
+        resetOperandLock(s);
         s->unk_50 = 0;
         s->unk_52[0] = 0;
     }
