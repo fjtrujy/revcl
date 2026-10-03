@@ -38,11 +38,14 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count, bool newSyntax)
                 f->unk_04 = 1;
             } else if (in->unk_139c) {
                 char *tag = in->unk_139c;
-                while (*tag) {
+                if (!*tag)
+                    continue;
+                do {
                     char buf[2064];
+                    char *scan = tag;
                     char *d = buf;
-                    while (*tag != ':')
-                        *d++ = *tag++;
+                    while (*scan != ':')
+                        *d++ = *scan++;
                     *d = 0;
                     flowBlock *f = func_0808435c(blocks, count, buf);
                     if (!f) {
@@ -55,8 +58,8 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count, bool newSyntax)
                         return false;
                     }
                     f->unk_04 = 1;
-                    tag++;
-                }
+                    tag = scan + 1;
+                } while (*tag);
             }
         }
     }
@@ -71,13 +74,15 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count, bool newSyntax)
         char kind = b->unk_05;
         switch ((unsigned char)kind) {
         case 1:
-        case 3:
+        case 3: {
+            unsigned int nextMode = (unsigned char)kind;
             if (mode != (unsigned char)kind || sub != (unsigned char)b->unk_06) {
                 uid++;
-                mode = kind;
+                mode = nextMode;
                 sub = b->unk_06;
             }
             break;
+        }
         case 6:
             uid++;
             break;
@@ -93,15 +98,15 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count, bool newSyntax)
             uid++;
         if (b->unk_14.func_0804b794())
             uid++;
-        short f = b->unk_0a;
-        if (f > 0) {
+        int f = b->unk_0a;
+        if ((short)f > 0) {
             if (mode != 3) {
                 func_0804ad38("+ve flow uid in non raw sequence\n");
                 return false;
             }
-            if (f != lastUid) {
+            if ((short)f != lastUid) {
                 uid++;
-                lastUid = f;
+                lastUid = (short)f;
             }
         } else if (lastUid > 0) {
             lastUid = 0;
@@ -163,16 +168,22 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count, bool newSyntax)
         short id = b->unk_08;
         mode = b->unk_05;
         sub = b->unk_06;
-        for (flowBlock *q = b; end < count; end++, q++) {
-            if (q->unk_08 != id)
-                break;
-            if (q->func_080843d0()) {
-                if (mode != 1) {
-                    func_0804ad84("mismatched synth instruction encountered\n");
-                    return false;
+        if (end < count) {
+            flowBlock *q = b;
+            do {
+                unsigned int candidateId = q->unk_08;
+                if (id != (short)candidateId)
+                    break;
+                if (q->func_080843d0()) {
+                    if (mode != 1) {
+                        func_0804ad84("mismatched synth instruction encountered\n");
+                        return false;
+                    }
+                    mode = 4;
                 }
-                mode = 4;
-            }
+                end++;
+                q++;
+            } while (end < count);
         }
         int n = end - i;
         instStream *s = new instStream;
