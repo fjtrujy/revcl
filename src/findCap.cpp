@@ -24,10 +24,10 @@ static inline bool isPoolZero(RegPool *p, RegPoolEntry *r) { return r == p->unk_
 
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask)
 {
-    Operand *op = &in->unk_38[opIdx];
     g_080de73c = wt;
     g_080de744 = 0;
     *capReg = 0;
+    Operand *op = &in->unk_38[opIdx];
     int cap = -1;
     g_080de734 = 0;
     g_080de748 = 0;
@@ -35,7 +35,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     g_080de738 = 0;
     g_080de740 = 0;
 
-    RegPoolEntry *reg = op->isReg2() ? op->unk_18 : 0;
+    RegPoolEntry *reg = isRegisterOperand(op, 2) ? op->unk_18 : 0;
     switch (reg->unk_30) {
     case 52:
         cap = 0x73;
@@ -52,8 +52,8 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
             break;
         RegPoolEntry *r0 = outR(&in->unk_38[0]);
         if (!r0) {
-            func_0804ad38("couldn't get r0 for %s\n",
-                          in->unk_34 ? in->unk_34->unk_04 : "NO_BASE_INST");
+            const char *name = in->unk_34 ? in->unk_34->unk_04 : "NO_BASE_INST";
+            func_0804ad38("couldn't get r0 for %s\n", name);
             return -1;
         }
         if (r0->unk_24 != 9)
@@ -89,8 +89,9 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
                 int m = in->unk_38[0].unk_07 & mask[i];
                 int n = func_0804bf50(m);
                 if (n > best) {
-                    g_080de744 = pool->func_080593e0(i);
+                    RegPoolEntry *e = pool->func_080593e0(i);
                     g_080de748 = m;
+                    g_080de744 = e;
                     best = n;
                 }
             }
@@ -108,6 +109,10 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
         return 0;
     iInfo *ii = func_0806bf74(cap);
     g_080de738 = ii;
+    if (!ii && cap != 0) {
+        func_0804ad38("failed to get II for cap \n");
+        return -1;
+    }
     if (!ii) {
         func_0804ad38("failed to get II for cap \n");
         return -1;
