@@ -80,6 +80,11 @@ inline int tryPrune(Program *p)
     return n;
 }
 
+static inline void dumpPruneInstruction(Instr *in)
+{
+    in->func_08054008(false);
+}
+
 inline int tryPrune(instStream *s)
 {
     int n = 0;
@@ -95,9 +100,8 @@ inline int tryPrune(instStream *s)
         int r = tryPrune(in, raw);
         if (r < 0) {
             func_0804ad38("rec  prune failed for instruction\n");
-            in->func_08054008(false);
-            n = -1;
-            break;
+            dumpPruneInstruction(in);
+            return -1;
         }
         n += r;
     }
