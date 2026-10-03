@@ -802,7 +802,7 @@ int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards)
         }
         return result;
     }
-    pos->func_0805878c(in->unk_13e8.unk_02);
+    pos->func_0805878c(in->unk_13e8.getPipe());
     return func_0807dc44(wt, in, pos);
 }
 

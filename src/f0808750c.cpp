@@ -274,10 +274,12 @@ char *vmove_Emit(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         return 0;
     }
     *p = 0;
-    return p;
+    goto done;
 fail:
     func_0804ad38("failed to emit operand 0\n");
     return 0;
+done:
+    return p;
 }
 
 int semSynth(void *p, Instr *in)
