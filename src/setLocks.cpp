@@ -725,14 +725,14 @@ int func_0807dc44(workTable *wt, Instr *in, cls08058718 *pos)
 
 int func_0807de00(workTable *wt, Instr *in, cls08058718 *pos)
 {
-    int row = in->unk_13e8.unk_00 < 0 ? pos->unk_00 : in->unk_13e8.unk_00;
+    int row = in->unk_13e8.getRow() < 0 ? pos->getRow() : in->unk_13e8.getRow();
     if (row < 0) {
         func_0804ad38("inst not inserted\n");
         func_0804aeb0();
     }
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *reg = op->inputRegB();
+        RegPoolEntry *reg = registerOperand(op, 1);
         if (!reg)
             continue;
         for (int k = 0; k != reg->unk_28; k++) {
@@ -813,14 +813,14 @@ int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards)
 
 int func_0807e1f8(workTable *wt, Instr *in, cls08058718 *pos)
 {
-    int row = in->unk_13e8.unk_00 < 0 ? pos->unk_00 : in->unk_13e8.unk_00;
+    int row = in->unk_13e8.getRow() < 0 ? pos->getRow() : in->unk_13e8.getRow();
     if (row < 0) {
         func_0804ad38("inst not inserted\n");
         func_0804aeb0();
     }
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *reg = op->isInReg() ? op->unk_18 : 0;
+        RegPoolEntry *reg = registerOperand(op, 1);
         if (!reg)
             continue;
         for (int k = 0; k != reg->unk_28; k++) {
