@@ -399,7 +399,7 @@ bool workTable::forceInsert(Instr *in, cls08058718 *pos)
     unk_40++;
     for (i = 0; i != in->unk_138b; i++) {
         Operand *op = &in->unk_38[i];
-        RegPoolEntry *reg = op->isInReg() ? op->unk_18 : 0;
+        RegPoolEntry *reg = registerOperand(op, 1);
         if (!reg)
             continue;
         for (int k = 0; k != reg->unk_28; k++) {
@@ -424,7 +424,7 @@ bool workTable::forceInsert(Instr *in, cls08058718 *pos)
     }
     for (i = 0; i != in->unk_138b; i++) {
         Operand *op = &in->unk_38[i];
-        RegPoolEntry *reg = op->isOutReg() ? op->unk_18 : 0;
+        RegPoolEntry *reg = registerOperand(op, 2);
         if (!reg)
             continue;
         for (int k = 0; k != reg->unk_28; k++) {
