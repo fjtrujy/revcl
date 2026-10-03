@@ -420,9 +420,12 @@ struct Operand {
     }
     bool isZeroReg2()
     {
-        bool z = true;
-        if (!unk_18 || unk_18 != unk_18->unk_04->unk_10)
-            z = false;
+        bool z = false;
+        if (unk_18) {
+            int delta = (char *)unk_18 - (char *)unk_18->unk_04->unk_10;
+            if (!delta)
+                z = true;
+        }
         return z;
     }
     RegPoolEntry *inRegOp2()
