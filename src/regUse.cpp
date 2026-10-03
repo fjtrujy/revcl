@@ -2,6 +2,7 @@
 
 regUse::regUse(RegPoolEntry *reg)
 {
+    unk_08 = reg;
     unk_0c = 0;
     unk_0d = 0;
     unk_0e = 0;
@@ -12,7 +13,6 @@ regUse::regUse(RegPoolEntry *reg)
     unk_13 = 0;
     unk_14 = 0;
     unk_15 = -1;
-    unk_08 = reg;
     unk_00 = 0;
     unk_04 = 0;
     unk_18 = reg->unk_36;
