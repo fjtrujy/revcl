@@ -327,6 +327,13 @@ struct Operand {
             r = 1;
         return r ? unk_18 : 0;
     }
+    RegPoolEntry *inputRegister()
+    {
+        int r = 0;
+        if (unk_09 == 1 && !isZeroReg2())
+            r = 1;
+        return (char)r ? unk_18 : 0;
+    }
     RegPoolEntry *outputReg()
     {
         int r = 0;

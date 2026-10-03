@@ -301,7 +301,7 @@ bool setPipeBits(Instr *in)
     }
     for (i = 0; i != in->unk_138b; i++) {
         Operand *op = &in->unk_38[i];
-        RegPoolEntry *r = op->inputReg();
+        RegPoolEntry *r = op->inputRegister();
         if (!r)
             continue;
         for (int p = 0; p != r->unk_28; p++) {
