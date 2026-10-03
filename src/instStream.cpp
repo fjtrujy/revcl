@@ -238,6 +238,11 @@ bool instStream::canLoop()
     return false;
 }
 
+static inline void dumpEmitStream(instStream *s)
+{
+    s->dump(false);
+}
+
 char *instStream::emit(char *buf, int a, int *p1, int *p2)
 {
     *p1 = 0;
@@ -248,9 +253,9 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
         func_0804ad38("iStream::Emit: stream with no name\n");
         return 0;
     }
-    if (!checkStartEnd()) {
+    if (!(char)checkStartEnd()) {
         func_0804ad38("failed to check stream /start/end\n");
-        dump(false);
+        dumpEmitStream(this);
         return 0;
     }
     if (unk_2cc != 2 && !unk_128.func_0806e4f0() && !unk_124) {

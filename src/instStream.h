@@ -68,13 +68,15 @@ public:
     const char *endTypeName();
     const char *startTypeName();
     char *emit(char *buf, int a, int *p1, int *p2);
-    bool checkStartEnd()
+    int checkStartEnd()
     {
         int st = unk_2cc;
-        int et = unk_2cd;
-        bool ok = false;
-        if (st == 1 || st == 2)
-            ok = et >= 1 && et <= 4;
+        int ok = 0;
+        if (st == 1 || st == 2) {
+            int et = unk_2cd;
+            unsigned endTypeCount = 4;
+            ok = (unsigned)(et - 1) < endTypeCount;
+        }
         return ok;
     }
     unsigned char func_0806d908(); // code mode
