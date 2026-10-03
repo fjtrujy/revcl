@@ -3,11 +3,12 @@
 #include "instStream.h"
 #include "Program.h"
 #include "Instr.h"
+#include "ol_s_inline.h"
 
 bool prepExtInfo(Program *p, instStream *s, bool b);
 int func_0807aaf4(Program *p, instStream *s);
 void func_0807bb84(workTable *wt);
-bool func_0807af9c(Program *p, instStream *s);
+bool removeNops(Program *p, instStream *s);
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
 bool doCap(int line, int pipe, int mask);
 RegPool *GetRP(unsigned t);
@@ -28,7 +29,7 @@ bool func_0807aee4(Program *p)
             func_0804ad38("failed to prep external info for stream %s\n", s->func_0806d674());
             return false;
         }
-        if (!func_0807af9c(p, s)) {
+        if (!removeNops(p, s)) {
             func_0804ad38("failed to sred a table from %s\n", s->func_0806d674());
             return false;
         }
@@ -37,7 +38,7 @@ bool func_0807aee4(Program *p)
     return true;
 }
 
-bool func_0807af9c(Program *p, instStream *s)
+bool removeNops(Program *p, instStream *s)
 {
     if (!s->unk_218) {
         func_0804ad38("work table not set in %s\n", s->func_0806d674());
@@ -70,10 +71,12 @@ bool func_0807af9c(Program *p, instStream *s)
         return false;
     }
     bool lastOk = true;
-    if (s->unk_2ce)
+    if (!s->unk_2ce) {
+        if (s->unk_2cd != 1)
+            lastOk = false;
+    } else {
         lastOk = false;
-    else if (s->unk_2cd != 1)
-        lastOk = false;
+    }
     int curTick = 0;
     int logLen = wt->func_08072eec();
     ol_s *inflight[1024];
@@ -108,8 +111,8 @@ bool func_0807af9c(Program *p, instStream *s)
                         thr--;
                     else if (reg->unk_30 != 0x32)
                         func_0804ae34("non p-q has throughput?\n");
-                    wtRow *r = row;
                     int l = rl + 1;
+                    wtRow *r = row;
                     while (r++, l < wt->func_080741c0()) {
                         int t = r->unk_0c;
                         if (t > tNow + thr)
@@ -126,7 +129,7 @@ bool func_0807af9c(Program *p, instStream *s)
                         l++;
                     }
                 }
-                for (ol_s *u = op->unk_2c[part].unk_54.func_08058370(); u && !(u->unk_13 & 1); u = u->unk_00) {
+                for (ol_s *u = op->unk_2c[part].unk_54.func_08058370(); u && !u->isExt(); u = u->unk_00) {
                     Instr *ui = u->unk_04;
                     if (func_0805802c(u)->unk_0b && op->unk_0a > 1) {
                         int ul = ui->unk_13e8.unk_00;
@@ -173,9 +176,9 @@ bool func_0807af9c(Program *p, instStream *s)
                         Instr *in = r->getEntry(pp);
                         if (!in)
                             continue;
-                        Operand *o = in->unk_38;
-                        for (int i = 0; i != in->unk_138b; i++, o++) {
-                            RegPoolEntry *w = o->getReg2();
+                        for (int i = 0; i != in->unk_138b; i++) {
+                            Operand *o = &in->unk_38[i];
+                            RegPoolEntry *w = registerOperand(o, 2);
                             if (o->unk_28)
                                 ok = false;
                             if (w && !o->unk_0b) {
@@ -187,8 +190,12 @@ bool func_0807af9c(Program *p, instStream *s)
                                         r2++;
                                         l2++;
                                     }
-                                    if (l2 < wt->func_080741c0() && r2->unk_0c == t && r2->func_08072440(w, 0xff))
-                                        ok = false;
+                                    if (l2 < wt->func_080741c0()) {
+                                        if (r2->unk_0c == t) {
+                                            if (r2->func_08072440(w, 0xff))
+                                                ok = false;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -196,21 +203,26 @@ bool func_0807af9c(Program *p, instStream *s)
                 }
             }
             if (ok) {
-                wtRow *r = row + 1;
-                for (int l = rl + 1; l < m && ok; l++, r++) {
-                    int base = r->unk_0c - 1;
-                    for (int pp = 0; pp != 2; pp++) {
-                        Instr *in = GetI((Instr **)r, pp);
-                        if (in) {
-                            short e = in->unk_13b2;
-                            if (e < in->unk_13b0)
-                                e = in->unk_13b0;
-                            if (e > base) {
-                                ok = false;
-                                break;
+                if (rl + 1 < m) {
+                    wtRow *r = row + 1;
+                    int l = rl + 1;
+                    do {
+                        int base = r->unk_0c - 1;
+                        for (int pp = 0; pp != 2; pp++) {
+                            Instr *in = GetI((Instr **)r, pp);
+                            if (in) {
+                                short e = in->unk_13b2;
+                                if (e < in->unk_13b0)
+                                    e = in->unk_13b0;
+                                if (e > base) {
+                                    ok = false;
+                                    break;
+                                }
                             }
                         }
-                    }
+                        l++;
+                        r++;
+                    } while (l < m && ok);
                 }
                 if (ok) {
                     if (m >= wt->func_080741c0()) {

@@ -7,7 +7,7 @@
 bool prepExtInfo(Program *p, instStream *s, bool b);
 int func_0807aaf4(Program *p, instStream *s);
 void func_0807bb84(workTable *wt);
-bool func_0807af9c(Program *p, instStream *s);
+bool removeNops(Program *p, instStream *s);
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
 bool doCap(int line, int pipe, int mask);
 RegPool *GetRP(unsigned t);
