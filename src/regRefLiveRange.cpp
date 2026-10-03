@@ -162,7 +162,7 @@ bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b)
                 continue;
             for (int i = 0; i != in->unk_138b; i++) {
                 Operand *op = &in->unk_38[i];
-                if (op->isReg2()) {
+                if (isRegisterOperand(op, 2)) {
                     if (op->unk_18 == a)
                         hasA = true;
                     if (op->unk_18 == b)
