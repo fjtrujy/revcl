@@ -219,7 +219,8 @@ bool optVuta1(workTable *wt, wrangleCand *c)
     int bestB = 0x80000000, bestC = 0x80000000, bestD = 0x7fffffff;
     for (; in; in = in->unk_2c) {
         int cost = vuta1RegCost(in);
-        int a = in->unk_13f0.unk_0c - in->unk_1418 + in->unk_13f0.unk_04 * 32 + cost;
+        int base = in->unk_13f0.unk_0c;
+        int a = base - in->unk_1418 + in->unk_13f0.unk_04 * 32 + cost;
         if (a > bestA) {
             best = in;
             bestA = a;
@@ -232,7 +233,7 @@ bool optVuta1(workTable *wt, wrangleCand *c)
                 bestC = in->unk_13f0.unk_00;
                 best = in;
             } else if (e == bestB) {
-                int f = (in->unk_1418 >> 2) + in->unk_141e;
+                int f = in->unk_141e + (in->unk_1418 >> 2);
                 if (f < bestD) {
                     bestD = f;
                     bestC = in->unk_13f0.unk_00;
