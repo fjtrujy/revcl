@@ -122,7 +122,7 @@ bool func_0806a74c(Program *p)
                         same = false;
                     else
                         same = idx == srcOp;
-                    if (!same) {
+                    if (!(char)same) {
                         ok = false;
                         break;
                     }
