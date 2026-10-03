@@ -29,7 +29,7 @@ bool func_08065fd4(Instr *in, Instr *other)
     other->func_08054008(false);
     for (int k = 0; k != other->unk_138b; k++) {
         Operand *op = &other->unk_38[k];
-        RegPoolEntry *r = op->getReg();
+        RegPoolEntry *r = registerOperand(op, 1);
         if (r) {
             for (int p = 0; p != r->unk_28; p++)
                 if ((op->unk_07 >> p) & 1)

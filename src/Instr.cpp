@@ -235,7 +235,7 @@ bool func_080543bc(Instr *a, Instr *b)
         return false;
     for (int i = 0; i != b->unk_138b; i++) {
         Operand *op = &b->unk_38[i];
-        RegPoolEntry *r = op->regOp();
+        RegPoolEntry *r = registerOperand(op, 1);
         if (r) {
             int n = r->unk_28;
             for (int k = 0; k != n; k++)
