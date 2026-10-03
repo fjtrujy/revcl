@@ -567,7 +567,7 @@ int drag(workTable *wt, Instr *in, cls08058718 *pos, int back, int depth)
         n = 0;
         Operand *op;
         for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-            RegPoolEntry *r = op->inputRegB();
+            RegPoolEntry *r = registerOperand(op, 1);
             if (!r)
                 continue;
             for (int p = 0; p != r->unk_28; p++) {
