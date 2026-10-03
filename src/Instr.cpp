@@ -666,7 +666,7 @@ int Instr::func_0805544c(RegPoolEntry *reg, int mask)
     if (reg) {
         for (int i = 0; i != unk_138b; i++) {
             Operand *op = &unk_38[i];
-            if (op->getReg() == reg)
+            if (op->inRegOp2() == reg)
                 result |= op->unk_07;
         }
     }
@@ -763,7 +763,7 @@ Operand *Instr::func_08055720(RegPoolEntry *reg, int mask)
 {
     for (int i = 0; i != unk_138b; i++) {
         Operand *op = &unk_38[i];
-        if (op->getReg() == reg && (op->unk_07 & mask))
+        if (op->inRegOp2() == reg && (op->unk_07 & mask))
             return op;
     }
     return 0;
@@ -773,7 +773,7 @@ Operand *Instr::func_080557a4(RegPoolEntry *reg, int mask)
 {
     for (int i = 0; i != unk_138b; i++) {
         Operand *op = &unk_38[i];
-        if (op->getReg2() == reg && (op->unk_07 & mask))
+        if (op->outRegZ() == reg && (op->unk_07 & mask))
             return op;
     }
     return 0;
@@ -785,7 +785,7 @@ bool Instr::func_08055828(unsigned int n)
         return false;
     for (; n < unk_138b; n++) {
         Operand *op = &unk_38[n];
-        RegPoolEntry *r = op->getReg2();
+        RegPoolEntry *r = registerOperand(op, 2);
         if (r) {
             if (op->unk_27)
                 return true;
@@ -809,7 +809,7 @@ bool Instr::func_080558f4()
     }
     for (int i = 0; i != unk_138b; i++) {
         Operand *op = &unk_38[i];
-        if (op->isReg2() && op->unk_06) {
+        if (isRegisterOperand(op, 2) && op->unk_06) {
             unk_138e = 2;
             return true;
         }
@@ -842,7 +842,7 @@ int Instr::func_08055a0c()
 {
     for (int i = 0; i != unk_138b; i++) {
         Operand *op = &unk_38[i];
-        if (op->getReg2() && !op->unk_0b)
+        if (op->outRegZ() && !op->unk_0b)
             return op->unk_0a;
     }
     return 0;

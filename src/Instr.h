@@ -399,7 +399,7 @@ struct Operand {
     RegPoolEntry *outRegZ()
     {
         bool r = false;
-        if (unk_09 == 2 && !isZeroReg())
+        if (unk_09 == 2 && !isZeroReg2())
             r = true;
         if (r)
             return unk_18;
