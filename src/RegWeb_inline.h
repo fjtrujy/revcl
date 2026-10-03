@@ -59,8 +59,8 @@ inline bool RegWeb::AddiInstr(Instr *in)
                 return false;
             }
         }
-        RegPoolEntry *fb = op->unk_10;
-        if (fb) {
+        if (op->unk_10) {
+            RegPoolEntry *fb = op->unk_10;
             if (fb->unk_14) {
                 func_0804ad38("can't have a virtual forced register\n");
                 return false;
@@ -75,7 +75,7 @@ inline bool RegWeb::AddiInstr(Instr *in)
                 return false;
             }
         }
-        if (op->isInRegOp()) {
+        if (isRegisterOperand(op, 1)) {
             for (int j = 0; j != vrg->unk_28; j++) {
                 bool used = (op->unk_07 >> j) & 1;
                 if (!used)
