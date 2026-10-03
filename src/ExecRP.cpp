@@ -513,13 +513,9 @@ bool func_08051d6c(Program *prog, LocTag *t, int v)
     return true;
 }
 
-inline bool ExecRP_show_line(LocTag *t)
+inline void ExecRP_show_line(LocTag *t)
 {
-    int saved = errorOccurred;
-    errorOccurred = !quiet_080bbd98;
     t->func_08050c40(-1);
-    errorOccurred = saved;
-    return true;
 }
 
 bool func_08051e34(Program *prog, LocTag *t, int v)
@@ -527,12 +523,18 @@ bool func_08051e34(Program *prog, LocTag *t, int v)
     mNode *n = prog->proc.unk_4c.unk_10;
     if (!n) {
         func_0804ac7c("closing visibility directive and no tail at:\n");
+        int saved = errorOccurred;
+        errorOccurred = !quiet_080bbd98;
         ExecRP_show_line(t);
+        errorOccurred = saved;
         return true;
     }
     if (n->unk_18 != v) {
         func_0804ad84("mode mismatch closing a visibility scope\n");
+        int saved = errorOccurred;
+        errorOccurred = !quiet_080bbd98;
         ExecRP_show_line(t);
+        errorOccurred = saved;
         return false;
     }
     if (!prog->proc.unk_4c.func_0804b3e8(n)) {
