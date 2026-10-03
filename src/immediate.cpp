@@ -49,7 +49,7 @@ fail:
     return false;
 }
 
-int maddImmediate(Operand *op, mValue *v, int n)
+int maddImmediate(Operand *const op, mValue *v, int n)
 {
     if (!op->unk_1c.isValid()) {
         func_0804ad38("madd immediate- ximm invalid\n");
