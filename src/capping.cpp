@@ -68,14 +68,15 @@ int func_0807aaf4(Program *p, instStream *s)
     func_0807bb84(wt);
     for (int rl = wt->func_0807411c(); rl != wt->func_080741c0(); rl++) {
         wtRow *row = (wtRow *)((cls_unk30 *)wt)->getIE_ck(rl);
-        int id = row->unk_0c;
+        int id = row->ctime();
         for (int pp = 0; pp != 2; pp++) {
             Instr *in = GetI((Instr **)row, pp);
             if (!in)
                 continue;
-            Operand *op = in->unk_38;
-            for (int i = 0; i != in->unk_138b; i++, op++) {
-                RegPoolEntry *reg = op->outputReg();
+            Operand *op;
+            for (int i = 0; i != in->unk_138b; i++) {
+                op = &in->unk_38[i];
+                RegPoolEntry *reg = registerOperand(op, 2);
                 ol_s *live = op->unk_2c[0].unk_54.unk_00;
                 if (!reg || op->unk_0b || !live)
                     continue;
@@ -91,8 +92,8 @@ int func_0807aaf4(Program *p, instStream *s)
                 int need = op->unk_0a;
                 if (reg->unk_30 == 0x34 && need > 1)
                     need--;
-                wtRow *r = row + 1;
                 int line = rl + 1;
+                wtRow *r = row + 1;
                 int limit = need + id;
                 int bestMask = 0, bestLine = -1, bestPipe = -1, bestCount = 0, count = 0;
                 while (line < wt->func_080741c0() && capMask) {
@@ -113,7 +114,7 @@ int func_0807aaf4(Program *p, instStream *s)
                         break;
                     if (r->func_08072304())
                         count++;
-                    capMask &= ~r->func_080723ec(capReg, 0xff);
+                    capMask &= ~r->outputMask(capReg);
                     line++;
                     r++;
                 }

@@ -94,12 +94,14 @@ struct wtRow {
     bool func_080721f8();  // clears unk_00
     void func_0807222c(int);
     Instr *getEntry(int p);
+    int ctime() { return unk_0c; }
     int func_08072304();   // count of used entries
     Instr *onlyEntry();
     bool clearStalls();
     void func_08072364();
     bool addStall(int type, int len);
     int func_080723ec(RegPoolEntry *reg, unsigned char mask);
+    int outputMask(RegPoolEntry *reg) { return func_080723ec(reg, 0xff); }
     int func_08072440(RegPoolEntry *reg, unsigned char mask);
     unsigned int func_08072494();
     char *emit(char *buf, int flags, bool upper, bool unused);
