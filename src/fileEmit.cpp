@@ -56,6 +56,11 @@ char *emitFileEnd(Program *p, char *buf)
     return buf;
 }
 
+static inline unsigned char streamEndType(instStream *s)
+{
+    return s->unk_2cd;
+}
+
 char *workTable::emit(char *buf, int mode, int *p1, int *p2)
 {
     *p2 = 0;
@@ -73,21 +78,21 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
     }
     int nulls = 0;
     char isEnd = 0;
-    switch (owner->unk_2cd) {
-    case 2:
+    if (streamEndType(owner) == 2) {
         isEnd = 1;
         nulls = 2;
-        break;
-    case 3:
+    } else if (streamEndType(owner) == 3) {
         isEnd = 1;
         nulls = 2;
-        break;
     }
     if (owner->unk_2ce)
         nulls = 2;
     int top = (unsigned char)owner->unk_2d4;
 
-    if (unk_09 != 4) {
+    if (unk_09 == 4) {
+        *p1 = nulls;
+        *p2 = nulls;
+    } else {
         for (int i = unk_30; i != unk_34; i++) {
             wtRow *r = &unk_2c[i];
             if (!r->unk_08)
@@ -98,9 +103,6 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             (*p2)++;
             (*p1)++;
         }
-    } else {
-        *p1 = nulls;
-        *p2 = nulls;
     }
 
     if (unk_09 == 4) {
