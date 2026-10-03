@@ -18,6 +18,11 @@ int func_0807e1f8(workTable *wt, Instr *in, cls08058718 *pos);
 int func_0804bf50(unsigned int x);
 extern bool stagger_080b33ac;
 
+static inline void dumpLockInstruction(Instr *in)
+{
+    in->func_08054008(false);
+}
+
 bool setLocks(Instr *in)
 {
     for (int i = 0; i != in->unk_138b; i++) {
@@ -25,7 +30,7 @@ bool setLocks(Instr *in)
         RegPoolEntry *r = op->unk_18;
         if (!r)
             continue;
-        if (op->isOutRegOp()) {
+        if (isRegisterOperand(op, 2)) {
             for (int p = 0; p != r->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
@@ -33,13 +38,13 @@ bool setLocks(Instr *in)
                     s->setFrom(&in->unk_13e8);
                     if (!ll->addOutputLock(s)) {
                         func_0804ad38("oh no - add output lock failed %d.%d\n", i, p);
-                        in->func_08054008(false);
+                        dumpLockInstruction(in);
                         return false;
                     }
                 }
             }
         }
-        if (op->isInRegOp()) {
+        if (isRegisterOperand(op, 1)) {
             for (int p = 0; p != r->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
@@ -47,7 +52,7 @@ bool setLocks(Instr *in)
                     s->setFrom(&in->unk_13e8);
                     if (!ll->addInputLock(s)) {
                         func_0804ad38("SetLocks: oh no - add input lock failed %d.%d\n", i, p);
-                        in->func_08054008(false);
+                        dumpLockInstruction(in);
                         return false;
                     }
                 }
@@ -245,7 +250,7 @@ done:
     return ret;
 }
 
-bool moveLocks(Instr *in, cls08058718 *pos)
+bool moveLocks(Instr *const in, cls08058718 *pos)
 {
     cls08058718 *d = &in->unk_13e8;
     d->unk_00 = pos->unk_00;
@@ -257,7 +262,7 @@ bool moveLocks(Instr *in, cls08058718 *pos)
         RegPoolEntry *r = op->unk_18;
         if (!r)
             continue;
-        if (op->isOutRegOp()) {
+        if (isRegisterOperand(op, 2)) {
             for (int p = 0; p != r->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
@@ -265,14 +270,14 @@ bool moveLocks(Instr *in, cls08058718 *pos)
                     s->setFrom(&in->unk_13e8);
                     if (!ll->moveOutputLock(s)) {
                         func_0804ad38("oh no - move output lock failed %d.%d\n", i, p);
-                        in->func_08054008(false);
+                        dumpLockInstruction(in);
                         func_0804aeb0();
                         return false;
                     }
                 }
             }
         }
-        if (op->isInRegOpB()) {
+        if (isRegisterOperand(op, 1)) {
             for (int p = 0; p != r->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
@@ -280,7 +285,7 @@ bool moveLocks(Instr *in, cls08058718 *pos)
                     s->setFrom(&in->unk_13e8);
                     if (!ll->moveInputLock(s)) {
                         func_0804ad38("oh no - move input lock failed %d.%d\n", i, p);
-                        in->func_08054008(false);
+                        dumpLockInstruction(in);
                         func_0804aeb0();
                         return false;
                     }
