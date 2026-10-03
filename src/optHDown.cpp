@@ -77,7 +77,8 @@ bool optDUp(workTable *wt, wrangleCand *c)
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;
     for (; in; in = in->unk_2c) {
-        int a = in->unk_13f0.unk_0c - in->unk_1418;
+        int a = in->unk_13f0.unk_0c;
+        a -= in->unk_1418;
         if (a > bestA) {
             best = in;
             bestA = a;
