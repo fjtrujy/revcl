@@ -16,6 +16,11 @@ int getNumOptimisers()
     return 11;
 }
 
+static inline void dumpLinearStream(instStream *s)
+{
+    s->dump(0);
+}
+
 bool doLinear(Program *p, int smart)
 {
     instStream *s;
@@ -108,7 +113,7 @@ bool doLinear(Program *p, int smart)
         }
         if (!best) {
             func_0804ad38("no opt table.. something failed making table .. for %s!\n", s->func_0806d674());
-            s->dump(0);
+            dumpLinearStream(s);
             return false;
         }
         int len = best->getPhysicalLen();

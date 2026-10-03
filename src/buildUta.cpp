@@ -10,6 +10,11 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
+static inline void dumpUtaInstruction(Instr *in)
+{
+    in->func_08054008(false);
+}
+
 
 bool buildUta(Program *prog, instStream *s, flowBlock *blocks, int count)
 {
@@ -46,7 +51,7 @@ bool buildUta(Program *prog, instStream *s, flowBlock *blocks, int count)
                 func_0804ad84("failed to process an instruction\n");
                 int saved = errorOccurred;
                 errorOccurred = !quiet_080bbd98;
-                in->func_08054008(false);
+                dumpUtaInstruction(in);
                 errorOccurred = saved;
             }
             flags |= in->unk_1389;
