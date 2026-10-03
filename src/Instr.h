@@ -491,6 +491,7 @@ struct Operand {
         return (bool)r;
     }
     bool isInput() { return unk_09 == 1; }
+    bool isOutput() { return unk_09 == 2; }
     RegPoolEntry *inReg()
     {
         if (unk_09 == 1)

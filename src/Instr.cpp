@@ -420,7 +420,7 @@ int Instr::func_08054c24(RegPoolEntry *reg, bool *paired)
     Operand *op;
     for (int i = 0; (op = getOp(i)) != 0; i++) {
         RegPoolEntry *r;
-        if (op->unk_09 == 2)
+        if (op->isOutput())
             r = op->unk_18;
         else
             r = 0;
@@ -439,7 +439,7 @@ int Instr::func_08054cc4(RegPoolEntry *reg, bool *paired)
     Operand *op;
     for (int i = 0; (op = getOp(i)) != 0; i++) {
         RegPoolEntry *r;
-        if (op->unk_09 == 1)
+        if (op->isInput())
             r = op->unk_18;
         else
             r = 0;
