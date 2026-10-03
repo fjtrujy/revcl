@@ -64,7 +64,7 @@ bool undoLocks(Instr *in)
         RegPoolEntry *r = op->unk_18;
         if (!r)
             continue;
-        if (op->isOutRegOp()) {
+        if (isRegisterOperand(op, 2)) {
             for (int p = 0; p != r->unk_28; p++) {
                 op->unk_2c[p].unk_52[0] = 0;
                 if ((op->unk_07 >> p) & 1) {
@@ -74,7 +74,7 @@ bool undoLocks(Instr *in)
                 }
             }
         }
-        if (op->isInRegOp()) {
+        if (isRegisterOperand(op, 1)) {
             for (int p = 0; p != r->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
@@ -96,7 +96,7 @@ int checkLocks(Instr *in, short *pos, int *minPos)
 
     for (i = 0; i != in->unk_138b; i++) {
         Operand *op = &in->unk_38[i];
-        RegPoolEntry *r = op->isInRegOp() ? op->unk_18 : 0;
+        RegPoolEntry *r = isRegisterOperand(op, 1) ? op->unk_18 : 0;
         if (!r)
             continue;
         for (int p = 0; p != r->unk_28; p++) {
@@ -138,7 +138,7 @@ int checkLocks(Instr *in, short *pos, int *minPos)
     }
     for (i = 0; i != in->unk_138b; i++) {
         Operand *op = &in->unk_38[i];
-        RegPoolEntry *r = op->isOutRegOp() ? op->unk_18 : 0;
+        RegPoolEntry *r = isRegisterOperand(op, 2) ? op->unk_18 : 0;
         if (!r)
             continue;
         for (int p = 0; p != r->unk_28; p++) {
