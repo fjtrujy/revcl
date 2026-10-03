@@ -33,6 +33,11 @@ bool OS_Init()
     return true;
 }
 
+static inline void resetWatchdogSignal()
+{
+    signal(SIGALRM, SIG_DFL);
+}
+
 bool setWatchdog(char *flag, unsigned int seconds)
 {
     if (!flag) {
@@ -40,7 +45,7 @@ bool setWatchdog(char *flag, unsigned int seconds)
         return false;
     }
     alarm(0);
-    signal(SIGALRM, SIG_DFL);
+    resetWatchdogSignal();
     *flag = 0;
     watchdogFlag_080bbd90 = flag;
     signal(SIGALRM, func_0804ac30);
