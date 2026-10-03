@@ -8,6 +8,28 @@
 #include "RegPool.h"
 #include "ol_s_inline.h"
 
+static inline bool isZeroRegister(RegPoolEntry *reg)
+{
+    return reg == reg->unk_04->unk_10;
+}
+
+static inline bool isZeroOperand(Operand *op)
+{
+    return op->unk_18 && isZeroRegister(op->unk_18);
+}
+
+static inline bool isRegisterOperand(Operand *op, char direction)
+{
+    return op->unk_09 == direction && !isZeroOperand(op);
+}
+
+static inline RegPoolEntry *registerOperand(Operand *op, char direction)
+{
+    if (isRegisterOperand(op, direction))
+        return op->unk_18;
+    return 0;
+}
+
 int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
 bool Cycle(Program *p, bool flag);
 
@@ -54,7 +76,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
-            RegPoolEntry *reg = op->inputReg();
+            RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 for (int part = 0; part != reg->unk_28; part++)
                     if ((op->unk_07 >> part) & 1) {
@@ -112,15 +134,20 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                     out->unk_36++;
                 }
                 for (int part = 0; part != out->unk_28; part++) {
-                    rPart *rp = &out->unk_44[part];
-                    if (((op->unk_07 >> part) & 1) && rp->unk_3e) {
-                        ol_s tmp;
-                        tmp.init(in, o, part, false);
-                        if (commit && !p->proc.unk_74.addStall(rp->unk_38, &tmp, 1, rp->unk_3e)) {
-                            func_0804ad38("failed to add an internal thruput stall\n");
-                            return -1;
+                    if ((op->unk_07 >> part) & 1) {
+                        rPart *rp = &out->unk_44[part];
+                        if (rp->unk_3e) {
+                            ol_s tmp;
+                            tmp.init(in, o, part, false);
+                            if (commit) {
+                                int issueLock = rp->unk_3e;
+                                if (!p->proc.unk_74.addStall(rp->unk_38, &tmp, 1, issueLock)) {
+                                    func_0804ad38("failed to add an internal thruput stall\n");
+                                    return -1;
+                                }
+                            }
+                            maxThru = rp->unk_3e;
                         }
-                        maxThru = rp->unk_3e;
                     }
                 }
             }
@@ -134,7 +161,9 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         }
         cyc = -1;
     } else {
-        int stall = maxLat ? maxLat : 0;
+        int stall = 0;
+        if (maxLat)
+            stall = maxLat;
         if (maxThru && maxThru > stall)
             stall = maxThru;
         if (stall) {
@@ -158,96 +187,101 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             continue;
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
-            RegPoolEntry *reg = op->inRegOp();
-            if (!reg)
-                continue;
-            for (int part = 0; part != reg->unk_28; part++) {
-                if (!((op->unk_07 >> part) & 1))
-                    continue;
-                rPart *rp = &reg->unk_44[part];
-                Instr *src = rp->unk_24.unk_04;
-                if (!src) {
-                    op->unk_27 |= 1 << part;
-                    continue;
-                }
-                Operand *so = func_0805802c(&rp->unk_24);
-                if (!so || !so->isOutRegOp()) {
-                    func_0804ad38("emuUTA: operand that wasn't output set input\n");
-                    return -1;
-                }
-                if (!((so->unk_07 >> part) & 1)) {
-                    func_0804ad38("we used something not really set by setter\n");
-                    return -1;
-                }
-                if (commit && !link_oParts(src, rp->unk_24.unk_10, part, in, o, part)) {
-                    func_0804ad38("failed to cross link operands\n");
-                    return -1;
+            RegPoolEntry *reg = registerOperand(op, 1);
+            if (reg) {
+                for (int part = 0; part != reg->unk_28; part++) {
+                    if ((op->unk_07 >> part) & 1) {
+                        rPart *rp = &reg->unk_44[part];
+                        ol_s *setter = &rp->unk_24;
+                        Instr *src = setter->unk_04;
+                        if (!src) {
+                            op->unk_27 |= 1 << part;
+                            continue;
+                        }
+                        Operand *so = func_0805802c(setter);
+                        if (!so || !isRegisterOperand(so, 2)) {
+                            func_0804ad38("emuUTA: operand that wasn't output set input\n");
+                            return -1;
+                        }
+                        if (!((so->unk_07 >> part) & 1)) {
+                            func_0804ad38("we used something not really set by setter\n");
+                            return -1;
+                        }
+                        if (commit) {
+                            int sourceOp = rp->unk_24.unk_10;
+                            if (!link_oParts(src, sourceOp, part, in, o, part)) {
+                                func_0804ad38("failed to cross link operands\n");
+                                return -1;
+                            }
+                        }
+                    }
                 }
             }
         }
     }
     for (k = 0; k != 2; k++) {
-        in = row->unk_00[k].unk_00;
+        Instr *in = row->unk_00[k].unk_00;
         if (!in)
             continue;
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
-            RegPoolEntry *reg = op->outRegOp();
-            if (!reg)
-                continue;
-            for (int part = 0; part != reg->unk_28; part++) {
-                if (!((op->unk_07 >> part) & 1))
-                    continue;
-                rPart *rp = &reg->unk_44[part];
-                if (rp->unk_3e) {
-                    func_0804ad38("inconsistency detected.. issuelock still non-zero\n");
-                    return -1;
-                }
-                if (op->unk_0b) {
-                    if (!rp->flushPending()) {
-                        func_0804ad38("failed to flush pending outputs before a blocking output\n");
-                        return -1;
+            RegPoolEntry *reg = registerOperand(op, 2);
+            if (reg) {
+                for (int part = 0; part != reg->unk_28; part++) {
+                    if ((op->unk_07 >> part) & 1) {
+                        rPart *rp = &reg->unk_44[part];
+                        if (rp->unk_3e) {
+                            func_0804ad38("inconsistency detected.. issuelock still non-zero\n");
+                            return -1;
+                        }
+                        if (op->unk_0b) {
+                            if (!rp->flushPending()) {
+                                func_0804ad38("failed to flush pending outputs before a blocking output\n");
+                                return -1;
+                            }
+                            ol_s *ol = &rp->unk_24;
+                            ol->init(in, o, part, false);
+                            ol->unk_12 = clampByte(op->unk_0a);
+                            rp->unk_38 = ol;
+                            rp->unk_3c = 0;
+                        } else {
+                            ol_s *ol = rp->func_0805a164();
+                            if (!ol) {
+                                func_0804ad38("EMU: failed to get OL\n");
+                                return -1;
+                            }
+                            ol->init(in, o, part, false);
+                            ol->unk_12 = clampByte(op->unk_0a);
+                            rp->unk_38 = ol;
+                        }
+                        rp->unk_00[1] += op->unk_0a;
+                        if (op->unk_0a > rp->unk_00[3])
+                            rp->unk_00[3] = op->unk_0a;
+                        int tp = 1;
+                        if (reg->unk_2c)
+                            tp = in->unk_13cf;
+                        if (tp > rp->unk_00[2])
+                            rp->unk_00[2] = tp;
+                        if (rp->unk_00[9] < 0) {
+                            rp->unk_00[9] = line;
+                            rp->unk_00[10] = k;
+                            if (uta)
+                                rp->unk_00[11] = -1;
+                            else
+                                rp->unk_00[11] = p->unk_80;
+                        }
+                        rp->unk_00[12] = line;
+                        rp->unk_00[13] = k;
+                        if (uta)
+                            rp->unk_00[14] = -1;
+                        else
+                            rp->unk_00[14] = p->unk_80;
+                        rp->unk_00[16] = op->unk_0a;
+                        rp->unk_00[15] = tp;
+                        rp->unk_00[0] += tp;
+                        rp->unk_3e = tp;
                     }
-                    rp->unk_24.init(in, o, part, false);
-                    rp->unk_24.unk_12 = clampByte(op->unk_0a);
-                    rp->unk_38 = &rp->unk_24;
-                    rp->unk_3c = 0;
-                } else {
-                    ol_s *ol = rp->func_0805a164();
-                    if (!ol) {
-                        func_0804ad38("EMU: failed to get OL\n");
-                        return -1;
-                    }
-                    ol->init(in, o, part, false);
-                    ol->unk_12 = clampByte(op->unk_0a);
-                    rp->unk_38 = ol;
                 }
-                rp->unk_00[1] += op->unk_0a;
-                if (op->unk_0a > rp->unk_00[3])
-                    rp->unk_00[3] = op->unk_0a;
-                int tp = 1;
-                if (reg->unk_2c)
-                    tp = in->unk_13cf;
-                if (tp > rp->unk_00[2])
-                    rp->unk_00[2] = tp;
-                if (rp->unk_00[9] < 0) {
-                    rp->unk_00[9] = line;
-                    rp->unk_00[10] = k;
-                    if (uta)
-                        rp->unk_00[11] = -1;
-                    else
-                        rp->unk_00[11] = p->unk_80;
-                }
-                rp->unk_00[12] = line;
-                rp->unk_00[13] = k;
-                if (uta)
-                    rp->unk_00[14] = -1;
-                else
-                    rp->unk_00[14] = p->unk_80;
-                rp->unk_00[16] = op->unk_0a;
-                rp->unk_00[15] = tp;
-                rp->unk_00[0] += tp;
-                rp->unk_3e = tp;
             }
         }
     }
