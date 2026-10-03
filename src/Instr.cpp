@@ -1,5 +1,6 @@
 // Instr (instruction) and Operand, CIE group 4.
 #include "Instr.h"
+#include <string.h>
 #include "os.h"
 #include "Parser.h"
 #include "VUStr.h"
@@ -362,11 +363,14 @@ Instr *Instr::clone()
 
 int Instr::getRamBits()
 {
-    if (!unk_13ce)
-        return 0;
-    int r = 0;
+    int r;
+    if (!unk_13ce) {
+        memset(&r, 0, sizeof(r));
+        return r;
+    }
+    r = 0;
     if (unk_34) {
-        switch (unk_34->unk_0c) {
+        switch ((char)unk_34->unk_0c) {
         case 1:
             r = unk_138f;
             break;
@@ -374,7 +378,8 @@ int Instr::getRamBits()
             func_0804ad38("got here! - end of get rambits?\n");
             func_08054008(false);
             func_0804adf0(-1);
-            return 0;
+            memset(&r, 0, sizeof(r));
+            return r;
         case 3: {
             Operand *op = getOp(1);
             if (!op) {
