@@ -297,7 +297,8 @@ void func_0807bb84(workTable *wt)
                 func_0804ae34("l=%d exec time mismatch in instruction %d!=%d\n",
                               l, in->unk_1394, rel);
         }
-        row->unk_0c = l - wt->unk_30;
+        short *time = &row->unk_0c;
+        *time = l - wt->unk_30;
     }
 }
 
