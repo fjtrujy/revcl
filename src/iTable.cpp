@@ -574,20 +574,23 @@ Instr *workTable::getInstr(int rl, int p)
     return ie[p];
 }
 
+static inline Instr *getPipeInstr(Instr **ie, int p)
+{
+    if (!ie)
+        return 0;
+    if (p < 0 || p >= 2) {
+        func_0804ad38("out of bounds pipe\n");
+        return 0;
+    }
+    return ie[p];
+}
+
 Instr *workTable::getInstrInRange(int rl, int p)
 {
     if (rl < unk_30 || rl >= unk_34)
         return 0;
     Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
-    Instr *in;
-    if (!ie)
-        in = 0;
-    else if (p < 0 || p >= 2) {
-        func_0804ad38("out of bounds pipe\n");
-        in = 0;
-    } else
-        in = ie[p];
-    return in;
+    return getPipeInstr(ie, p);
 }
 
 const char *codeModeName(int mode)
