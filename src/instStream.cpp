@@ -410,12 +410,27 @@ unsigned char instStream::func_0806d968()
     return 0;
 }
 
+static inline bool isRawTable(workTable *wt)
+{
+    return wt->unk_09 == 3;
+}
+
+static inline bool isFreeRawTable(workTable *wt)
+{
+    return isRawTable(wt) && (wt->unk_0a == 1 || wt->unk_0a == 3);
+}
+
 bool instStream::func_0806d9a0()
 {
     workTable *wt = unk_218;
     if (!wt)
         return false;
-    return wt->unk_09 == 3 && (wt->unk_0a == 1 || wt->unk_0a == 3);
+    return isFreeRawTable(wt);
+}
+
+static inline bool isFixedRawTable(workTable *wt)
+{
+    return isRawTable(wt) && (wt->unk_0a == 2 || wt->unk_0a == 4);
 }
 
 bool instStream::func_0806d9d4()
@@ -423,7 +438,7 @@ bool instStream::func_0806d9d4()
     workTable *wt = unk_218;
     if (!wt)
         return false;
-    return wt->unk_09 == 3 && (wt->unk_0a == 2 || wt->unk_0a == 4);
+    return isFixedRawTable(wt);
 }
 
 unsigned char instStream::getAllocMode()
