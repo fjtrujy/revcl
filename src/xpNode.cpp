@@ -409,7 +409,7 @@ bool xpTree::evaluate(mValue *out, unsigned int type)
             r = false;
         else
             r = root->val.getUInt(&u);
-        if (r)
+        if ((char)r)
             ok = out->setUInt(u);
         break;
     }
@@ -418,7 +418,7 @@ bool xpTree::evaluate(mValue *out, unsigned int type)
             r = false;
         else
             r = root->val.getFloat(&f);
-        if (r)
+        if ((char)r)
             ok = out->setFloat(f);
         break;
     }
@@ -427,7 +427,7 @@ bool xpTree::evaluate(mValue *out, unsigned int type)
             r = false;
         else
             r = root->val.getInt(&i);
-        if (r)
+        if ((char)r)
             ok = out->setInt(i);
         break;
     }
