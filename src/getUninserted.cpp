@@ -55,7 +55,7 @@ int instStream::getUninsertedxInputs()
         base += unk_278.unk_00 - in->unk_13f0.unk_00;
         Operand *op;
         for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-            RegPoolEntry *reg = op->inputReg();
+            RegPoolEntry *reg = registerOperand(op, 1);
             if (!reg || !op->unk_27)
                 continue;
             for (int k = 0; k != reg->unk_28; k++) {
@@ -105,7 +105,7 @@ int instStream::getUninsertedxOutputs()
         base += unk_278.unk_04 - in->unk_13f0.unk_04;
         Operand *op;
         for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-            RegPoolEntry *reg = op->outputReg();
+            RegPoolEntry *reg = registerOperand(op, 2);
             if (!reg || !op->unk_27)
                 continue;
             for (int k = 0; k != reg->unk_28; k++) {
