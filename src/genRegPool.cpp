@@ -54,7 +54,7 @@ bool assignExtRegisters(Program *p)
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {
         workTable *wt = s->getTable();
         unsigned int mode = (unsigned char)wt->unk_08;
-        if (mode != 1) {
+        if ((char)mode != 1) {
             func_0804ad38("AssignExtRegisters - alloc mode not NONE for %s mode %s!\n",
                           s->func_0806d674(), allocModeName(mode));
             return false;
