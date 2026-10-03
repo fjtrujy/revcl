@@ -471,7 +471,8 @@ int instStream::func_0806da80()
     int ok = 0;
     if (st == 1 || st == 2) {
         int et = unk_2cd;
-        ok = et >= 1 && et <= 4;
+        unsigned endTypeCount = 4;
+        ok = (unsigned)(et - 1) < endTypeCount;
     }
     return ok;
 }
