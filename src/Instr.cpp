@@ -104,7 +104,8 @@ Instr::~Instr()
         delete[] unk_139c;
         unk_139c = 0;
     }
-    unk_13d8.clear();
+    mValue *value = &unk_13d8;
+    value->clear();
     unk_13a0.clear();
     unk_13a8.clear();
 }
