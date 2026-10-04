@@ -25,14 +25,17 @@ bool processActiveList(Program *p)
             }
             s->unk_250 = p->unk_dc;
             p->unk_dc = s;
-        } else if (s->unk_128.unk_00) {
-            s->unk_226 = 2;
-            if (!extendBackTrace(p, s)) {
-                func_0804ad38("failed to extend back trace at %s\n", s->func_0806d674());
-                return false;
-            }
         } else {
-            s->unk_226 = 4;
+            linkNode *head = s->unk_128.unk_00;
+            if (head) {
+                s->unk_226 = 2;
+                if (!extendBackTrace(p, s)) {
+                    func_0804ad38("failed to extend back trace at %s\n", s->func_0806d674());
+                    return false;
+                }
+            } else {
+                s->unk_226 = 4;
+            }
         }
     }
     return true;
