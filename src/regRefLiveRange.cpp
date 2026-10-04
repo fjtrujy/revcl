@@ -269,12 +269,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                 func_0804ad38("failed to get live range for an rLock\n");
                 func_0804adf0(-1);
             }
-            if (s >= 0) {
-                if (lk->unk_2d == 2) {
-                    func_0804ad38("extern in .. rl_s>0\n");
-                    return false;
-                }
-            } else {
+            if (s < 0) {
                 if (lk->unk_2d != 2) {
                     func_0804ad38("not extern in .. -ve s\n");
                     return false;
@@ -286,6 +281,11 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                         s = (e / lsz) * lsz;
                 } else
                     s = 0;
+            } else {
+                if (lk->unk_2d == 2) {
+                    func_0804ad38("extern in .. rl_s>0\n");
+                    return false;
+                }
             }
             if (e == 30000) {
                 if (lsz)
@@ -302,7 +302,8 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                     idx = c % lsz;
                 unsigned char v = tTab_080dce40[idx];
                 if (((v >> i) & 1) && !shared) {
-                    func_0804ad38("build_tTab - already set.. so some overlap %d?\n", ll->unk_2b != 0);
+                    int overlap = ll->unk_2b != 0;
+                    func_0804ad38("build_tTab - already set.. so some overlap %d?\n", overlap);
                     ll->checkCounts();
                     dumpTTab();
                     return false;
