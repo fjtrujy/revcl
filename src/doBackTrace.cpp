@@ -1,5 +1,10 @@
 #include "backTrace_shared.h"
 
+static inline void dumpBackTrace(Program *p)
+{
+    func_0806ed78(p, 0);
+}
+
 bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int earliestUse, int ioMode, bool thruput)
 {
     if (!t || !reg) {
@@ -138,7 +143,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
                             func_0804ad38("couldn't get regref for hazard broadcast op for reg %s.%d in %s hazard start=%s target=%s mode=%d\n",
                                           reg->func_0805a8e0(), part, n->func_0806d674(), k->func_0806d674(),
                                           t->func_0806d674(), n->unk_226);
-                            func_0806ed78(p, 0);
+                            dumpBackTrace(p);
                             return false;
                         }
                         u->unk_14 |= 1 << part;
