@@ -1,1 +1,1 @@
-{"cxxflags": ["-O2", "-frename-registers"], "cflags": ["-O2", "-frename-registers"], "units": {}}
+{"cxxflags": ["-O2", "-frename-registers"], "cflags": ["-O2", "-frename-registers"], "units": {"src/RegWeb.cpp": {"flags": ["-O2", "-frename-registers", "-fno-weak"]}}}
