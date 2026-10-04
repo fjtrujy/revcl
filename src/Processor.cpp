@@ -519,23 +519,35 @@ int func_0806c72c(iInfo *op)
 
 aaDesc *func_0806c768(Instr *in)
 {
-    if (!in)
-        return 0;
-    if (!in->unk_34)
-        return 0;
+    aaDesc *res;
+    if (!in) {
+        res = 0;
+        return res;
+    }
+    if (!in->unk_34) {
+        res = 0;
+        return res;
+    }
     int id = iinfoId(in->unk_34);
     if (id < 0) {
         func_0804ad38("couldn't deduce instruction uid\n");
         func_0804adf0(-1);
     }
-    aaDesc *res = 0;
-    if (g_080de724) {
-        for (aaDesc *t = (aaDesc *)g_080de724; t->unk_00; t++)
+    if (!g_080de724) {
+        res = 0;
+        return res;
+    }
+    aaDesc *t = (aaDesc *)g_080de724;
+    if (t->unk_00) {
+        do {
             if (t->unk_00 == id) {
                 res = t;
-                break;
+                return res;
             }
+            t++;
+        } while (t->unk_00);
     }
+    res = 0;
     return res;
 }
 
