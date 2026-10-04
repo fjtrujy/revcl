@@ -349,11 +349,15 @@ bool genRegPool::initAlloc(int start, int end)
     }
     nRegs_080bce24 = unk_08;
     maxParts_080bce20 = 0;
-    for (int i = 0; i != unk_08; i++, e++) {
+    int i = 0;
+    int count = unk_08;
+    for (; i != count; i++, e++) {
         if (e->unk_16)
             unk_30[i] = (1 << e->unk_28) - 1;
-        if (e->unk_28 > maxParts_080bce20)
+        if (e->unk_28 > maxParts_080bce20) {
             maxParts_080bce20 = e->unk_28;
+            count = unk_08;
+        }
     }
     return true;
 }
