@@ -87,7 +87,7 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
             func_0804ad38("failed to emit operand\n");
             op->func_0805665c(0);
             func_0804ad38("from\n");
-            in->func_08054008(false);
+            dumpEmitInstruction(in);
             return 0;
         }
     }
