@@ -10,6 +10,10 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
+static inline void dumpEmitInstruction(Instr *in)
+{
+    in->func_08054008(false);
+}
 
 char *func_0808750c(char *buf, Instr *in, bool upper, char *mods, bool b, int)
 {
@@ -38,7 +42,7 @@ char *func_0808750c(char *buf, Instr *in, bool upper, char *mods, bool b, int)
             func_0804ad38("failed to emit operand\n");
             op->func_0805665c(0);
             func_0804ad38("from\n");
-            in->func_08054008(false);
+            dumpEmitInstruction(in);
             return 0;
         }
     }
@@ -169,11 +173,6 @@ int wr2w_Hook(void *p, Instr *in)
     in->unk_38[1].unk_04 = 0x1f;
     in->unk_38[1].unk_1c.setInt(0);
     return 1;
-}
-
-static inline void dumpEmitInstruction(Instr *in)
-{
-    in->func_08054008(false);
 }
 
 char *emitClip(char *buf, Instr *in, bool upper, char *mods, bool b, int)
