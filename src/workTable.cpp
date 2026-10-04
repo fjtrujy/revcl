@@ -31,10 +31,10 @@ int regUseList::func_0805b494(int regClass)
         if (reg->unk_24 == regClass)
             n++;
     }
-    if (n <= 0)
+    if (n == 0)
         return 0;
     for (ru = head; ru; ru = ru->unk_04) {
-        if (ru->unk_08->unk_24 == regClass)
+        if (ru->unk_08->isClass(regClass))
             ru->func_0805b51c();
     }
     return n;

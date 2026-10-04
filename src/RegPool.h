@@ -56,6 +56,12 @@ struct RegPoolEntry {
     char* maskName(int mask);
     int regIndex();
     int gatherInflight(ol_s** out);
+    bool isClass(int cls)
+    {
+        if (unk_24 == cls)
+            return true;
+        return false;
+    }
     void func_0805a340();
     int func_0805a908(int i);
     bool func_0805a924(int i, int v);
