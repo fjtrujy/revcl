@@ -511,7 +511,7 @@ struct Operand {
     bool isOutput() { return unk_09 == 2; }
     RegPoolEntry *inReg()
     {
-        if (unk_09 == 1)
+        if (isInput() && unk_18)
             return unk_18;
         return 0;
     }

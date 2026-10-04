@@ -118,8 +118,7 @@ inline int tryPrune(Instr *in, bool raw)
             Operand *op = in->getOp(i);
             if (!op)
                 break;
-            int isIn = op->unk_09 == 1;
-            RegPoolEntry *r = isIn ? op->unk_18 : 0;
+            RegPoolEntry *r = op->inReg();
             if (r)
                 op->unk_2a = op->unk_07;
         }
@@ -179,7 +178,7 @@ inline int tryPrune(Instr *in, bool raw)
                 func_0804ad38("OUTPUT(%d) INPUT(%d) inst : \n", o, k);
                 func_0804ad38("A_BITS=%x .. INPUT_MODBITS=%x : \n", bits, ip->unk_07);
                 func_0804ad38("otype is opt->m_oType=%d\n", ip->unk_04);
-                in->func_08054008(false);
+                dumpPruneInstruction(in);
                 return -1;
             }
             ip->unk_2a |= bits;
