@@ -33,6 +33,11 @@ bool isAtEarliest(workTable *wt, Instr *in)
     return found && e == in->unk_13e8.unk_04;
 }
 
+static inline void dumpSredInstruction(Instr *in)
+{
+    in->func_08054008(false);
+}
+
 bool sredInstr(workTable *wt, Instr *in, bool up)
 {
     cls08058718 pos;
@@ -58,34 +63,35 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
         tline = latestInsert(wt, in, &found);
         if (tline < iline) {
             func_0804ad38("latest possible insert is before instruction..%d<%d!\n", tline, iline);
-            in->func_08054008(false);
+            dumpSredInstruction(in);
             return false;
         }
         step = -1;
     }
 
-    if (tline != iline) {
-        if (found) {
-            pos.func_0805874c(tline);
-            if (!func_0807e130(wt, in, &pos, upwards))
-                goto move;
-            tline += step;
-        }
-        for (; tline != iline; tline += step) {
-            pos.func_0805874c(tline);
-            wtRow *row = wt->func_080724f0(tline);
-            if (row->func_08072304() == 1
-                && !func_0807e130(wt, in, &pos, upwards))
-                goto move;
-        }
+    if (tline == iline)
+        return true;
+    if (found) {
+        pos.func_0805874c(tline);
+        if (!func_0807e130(wt, in, &pos, upwards))
+            goto move;
+        tline += step;
+    }
+    for (; tline != iline; tline += step) {
+        pos.func_0805874c(tline);
+        wtRow *row = wt->func_080724f0(tline);
+        if (row->func_08072304() == 1
+            && !func_0807e130(wt, in, &pos, upwards))
+            goto move;
     }
     return true;
 
 move:
-    if (wt->takeOut(in) && moveLocks(in, &pos) && wt->putIn(in))
-        return true;
-    func_0804ad38("failed to move inst to tline1\n");
-    return false;
+    if (!wt->takeOut(in) || !moveLocks(in, &pos) || !wt->putIn(in)) {
+        func_0804ad38("failed to move inst to tline1\n");
+        return false;
+    }
+    return true;
 }
 
 bool sredTable(workTable *wt)
