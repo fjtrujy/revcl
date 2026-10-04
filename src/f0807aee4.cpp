@@ -332,7 +332,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
     int iline = in->unk_13e8.unk_04;
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *reg = op->inputReg();
+        RegPoolEntry *reg = registerOperand(op, 1);
         if (reg) {
             for (int p = 0; p != reg->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
@@ -340,7 +340,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                     cls0805bcc4 *par = slot->getParent();
                     if (slot->unk_19 != 2) {
                         int s = par->unk_32;
-                        if (s >= 0) {
+                        if ((short)s >= 0) {
                             int t = s + par->unk_18 + slot->unk_18;
                             if (t >= line) {
                                 line = t;
@@ -357,7 +357,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                 }
             }
         }
-        reg = op->outputRegZB();
+        reg = registerOperand(op, 2);
         if (reg && reg->unk_2c) {
             for (int p = 0; p != reg->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
@@ -387,7 +387,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                 }
             }
         }
-        if (op->outputRegZB() && op->unk_28)
+        if (registerOperand(op, 2) && op->unk_28)
             line = iline;
     }
     if (in->unk_1388)
