@@ -407,7 +407,7 @@ int latestInsert(workTable *wt, Instr *in, bool *found)
     bool thru = false;
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *reg = op->getReg();
+        RegPoolEntry *reg = registerOperand(op, 1);
         if (reg && op->unk_28) {
             thru = true;
             break;
