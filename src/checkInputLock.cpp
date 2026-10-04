@@ -266,19 +266,17 @@ int cls0805c244::checkOverlap(cls0805bcc4 *out, short *pos, int *minPos)
 
 bool func_0805db74(int s1, int e1, int s2, int e2)
 {
-    if (g_080b336c) {
+    int n = g_080b336c;
+    if (n) {
         int l1 = e1 - s1;
         int l2 = e2 - s2;
-        wrapRange(s1, e1);
-        wrapRange(s2, e2);
-        bool r = true;
-        if (l1 + l2 <= g_080b336c) {
-            if (s1 <= s2)
-                r = e1 >= s2 || e2 - g_080b336c >= s1;
-            else
-                r = s1 <= e2 || e1 - g_080b336c >= s2;
-        }
-        return r;
+        wrapRangeLocal(s1, e1);
+        wrapRangeLocal(s2, e2);
+        if (l1 + l2 > n)
+            return true;
+        if (s1 <= s2)
+            return e1 >= s2 || e2 - n >= s1;
+        return s1 <= e2 || e1 - n >= s2;
     }
     if (s1 <= s2)
         return e1 >= s2;
