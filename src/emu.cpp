@@ -85,6 +85,11 @@ fail:
     return false;
 }
 
+static inline void reportRegRefFailure()
+{
+    func_0804ad38("failed to add reg ref\n");
+}
+
 bool func_080642ec(Program *p, instStream *s)
 {
     int count;
@@ -114,15 +119,15 @@ bool func_080642ec(Program *p, instStream *s)
             if (!ru) {
                 ru = wt->unk_14.AddNewRegRef(reg);
                 if (!ru) {
-                    func_0804ad38("failed to add reg ref\n");
+                    reportRegRefFailure();
                     return false;
                 }
             }
-            if (o->isOutRegC())
+            if (isRegisterOperand(o, 2))
                 ru->unk_0f |= o->unk_07;
-            if (o->isInRegC())
+            if (isRegisterOperand(o, 1))
                 ru->unk_0e |= o->unk_07;
-            if (o->isOutRegC()) {
+            if (isRegisterOperand(o, 2)) {
                 if (o->unk_27) {
                     func_0804ad38("operand had xbits set for output!\n");
                     return false;
@@ -141,7 +146,7 @@ bool func_080642ec(Program *p, instStream *s)
                         return false;
                     }
                 }
-                if (((o->unk_07 >> k) & 1) && reg->unk_2c && o->isOutRegC()) {
+                if (((o->unk_07 >> k) & 1) && reg->unk_2c && isRegisterOperand(o, 2)) {
                     if (!ru->unk_20[k].unk_20.func_080580fc(i, op, k, false)) {
                         func_0804ad38("failed to add a local setter for a thruput check\n");
                         func_0804ad38("register is %s\n", reg->func_0805a8e0());
