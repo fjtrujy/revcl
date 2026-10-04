@@ -35,9 +35,21 @@ Operand *getEA(Instr *i)
     return 0;
 }
 
+static inline bool sameValue(Operand *a, Operand *b)
+{
+    return func_0804e5c0(&a->unk_1c, &b->unk_1c);
+}
+
+static inline bool sameOwner(Instr *a, Instr *b)
+{
+    if (a->unk_30 == b->unk_30)
+        return true;
+    return false;
+}
+
 bool sameEA(Instr *a, Instr *b)
 {
-    if (!a || !b || !a->unk_13ce || !b->unk_13ce || a->unk_30 != b->unk_30)
+    if (!a || !b || !a->unk_13ce || !b->unk_13ce || !sameOwner(a, b))
         return false;
     Operand *ea1 = getEA(a);
     Operand *ea2 = getEA(b);
@@ -65,7 +77,5 @@ bool sameEA(Instr *a, Instr *b)
         if (!func_080585d4(ea1->unk_2c[0].unk_54.unk_00, ea2->unk_2c[0].unk_54.unk_00))
             return false;
     }
-    if (func_0804e5c0(&ea1->unk_1c, &ea2->unk_1c))
-        return true;
-    return false;
+    return sameValue(ea1, ea2);
 }
