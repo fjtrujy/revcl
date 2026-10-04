@@ -49,15 +49,12 @@ int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp)
         func_0804ad38("out of range t_bits vs modbits for input\n");
         return -1;
     }
-    int r = 0;
-    if (mask) {
-        if ((ip->unk_04 == 1 || ip->unk_04 == 9) && (out->unk_04 == 1 || out->unk_04 == 9)) {
-            if (info->unk_20 == func_08087860)
-                r = ((bits << 1) & 0xf) | ((mask & 8) >> 3);
-            else
-                r = bits;
-        } else
-            r = ip->unk_07;
+    if (!mask)
+        return 0;
+    if ((ip->unk_04 == 1 || ip->unk_04 == 9) && (out->unk_04 == 1 || out->unk_04 == 9)) {
+        if (info->unk_20 == func_08087860)
+            return ((bits << 1) & 0xf) | ((mask & 8) >> 3);
+        return bits;
     }
-    return r;
+    return ip->unk_07;
 }
