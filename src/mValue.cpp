@@ -944,7 +944,8 @@ char *mValue::getString()
 bool mValue::makeNumeric()
 {
     if (type == STRING) {
-        mValue tmp(str);
+        mValue tmp(NONE);
+        tmp.parse(str);
         if (isNumType(tmp.type))
             set(&tmp);
     }

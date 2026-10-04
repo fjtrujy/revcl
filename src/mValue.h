@@ -14,11 +14,10 @@ public:
     };
 
     mValue();
-    mValue(char *const &s)
+    mValue(unsigned int initialType)
     {
         str = 0;
-        type = NONE;
-        parse(s);
+        type = initialType;
     }
     ~mValue();
     void clear();
