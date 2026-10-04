@@ -722,7 +722,7 @@ char *Instr::getBranchTargetImmediate()
         func_0804adf0(-1);
     }
     Operand *op = &unk_38[n - 1];
-    if (op->unk_09 != 1) {
+    if (!op->isInput()) {
         func_0804ad38("alleged branch target immediate wasn't an input\n");
         func_0804adf0(-1);
     }
