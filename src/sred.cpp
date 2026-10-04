@@ -10,9 +10,14 @@ int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
 int func_0804bf50(unsigned int x);
 RegPoolEntry *getZeroReg(unsigned int type);
 
+static inline bool isRawTable(workTable *wt)
+{
+    return wt->unk_09 == 3;
+}
+
 static inline bool isPipeMode(workTable *wt)
 {
-    return wt->unk_09 == 3 && (wt->unk_0a == 1 || wt->unk_0a == 3);
+    return isRawTable(wt) && (wt->unk_0a == 1 || wt->unk_0a == 3);
 }
 
 inline bool atEarliest(workTable *wt, Instr *in)
@@ -98,48 +103,50 @@ bool sredTable(workTable *wt)
 {
     if (!isPipeMode(wt))
         return true;
-    if (wt->unk_30 != wt->unk_34) {
-    if (wt->unk_38) {
-        func_0804ad38("can't do modular reduction\n");
-        return false;
-    }
-    setRange(wt->unk_30, wt->unk_34, 0);
+    int i = wt->unk_30;
+    int n = wt->unk_34;
+    if (i != n) {
+        i = n = wt->unk_38;
+        if (i) {
+            func_0804ad38("can't do modular reduction\n");
+            return false;
+        }
+        setRange(wt->unk_30, wt->unk_34, 0);
 
-    int changed;
-    int i;
-    do {
-        changed = false;
-        for (i = wt->unk_30; i != wt->unk_34; i++) {
-            Instr *in = wt->func_080724f0(i)->onlyEntry();
-            if (in) {
-                if (in->unk_13e8.unk_04 != i) {
-                    func_0804ad38("badly placed instruction detected\n");
-                    return false;
-                }
-                if (!sredInstr(wt, in, true)) {
-                    func_0804ad38("failed to sred a line\n");
-                    return false;
+        int changed;
+        do {
+            changed = false;
+            for (i = wt->unk_30; i != wt->unk_34; i++) {
+                Instr *in = wt->func_080724f0(i)->onlyEntry();
+                if (in) {
+                    if (in->unk_13e8.unk_04 != i) {
+                        func_0804ad38("badly placed instruction detected\n");
+                        return false;
+                    }
+                    if (!sredInstr(wt, in, true)) {
+                        func_0804ad38("failed to sred a line\n");
+                        return false;
+                    }
                 }
             }
-        }
-    } while (changed);
+        } while (changed);
 
-    do {
-        changed = false;
-        for (i = wt->unk_34 - 1; i >= wt->unk_30; i--) {
-            Instr *in = wt->func_080724f0(i)->onlyEntry();
-            if (in && !atEarliest(wt, in)) {
-                if (in->unk_13e8.unk_04 != i) {
-                    func_0804ad38("badly placed instruction detected\n");
-                    return false;
-                }
-                if (!sredInstr(wt, in, false)) {
-                    func_0804ad38("failed to sred a line\n");
-                    return false;
+        do {
+            changed = false;
+            for (i = wt->unk_34 - 1; i >= wt->unk_30; i--) {
+                Instr *in = wt->func_080724f0(i)->onlyEntry();
+                if (in && !atEarliest(wt, in)) {
+                    if (in->unk_13e8.unk_04 != i) {
+                        func_0804ad38("badly placed instruction detected\n");
+                        return false;
+                    }
+                    if (!sredInstr(wt, in, false)) {
+                        func_0804ad38("failed to sred a line\n");
+                        return false;
+                    }
                 }
             }
-        }
-    } while (changed);
+        } while (changed);
     }
     return true;
 }
