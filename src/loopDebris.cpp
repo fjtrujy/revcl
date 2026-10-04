@@ -107,6 +107,11 @@ instStream *loopDebris::getEpiStream(int i)
     return r->unk_14;
 }
 
+static inline void setDebrisMode(workTable *wt, unsigned char mode)
+{
+    wt->func_08073774(mode);
+}
+
 epiRec *loopDebris::allocPro(int size)
 {
     char buf[4096];
@@ -124,21 +129,16 @@ epiRec *loopDebris::allocPro(int size)
         }
         r->unk_14->unk_2c4 = 2;
         if (unk_10) {
-            r->unk_18->func_08073774(2);
+            setDebrisMode(r->unk_18, 2);
             r->unk_18->unk_08 = unk_14;
         } else {
-            r->unk_18->func_08073774(1);
+            setDebrisMode(r->unk_18, 1);
             r->unk_18->unk_08 = 2;
         }
         m_nPro++;
     } else
         func_0804ad38("allocPro: overrun\n");
     return r;
-}
-
-static inline void setDebrisMode(workTable *wt, unsigned char mode)
-{
-    wt->func_08073774(mode);
 }
 
 epiRec *loopDebris::allocEpi(int size)
