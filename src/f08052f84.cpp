@@ -5,7 +5,7 @@ bool Instr::func_08052f84()
 {
     for (int i = 0; i != unk_138b; i++) {
         Operand *op = &unk_38[i];
-        if (!op->getRegD())
+        if (!registerOperand(op, 1))
             continue;
         op->unk_29 = 0;
         if (!(unk_1388 & 4))
@@ -19,7 +19,7 @@ bool Instr::func_08052f84()
                     continue;
             }
             for (int j = 0; j != in->unk_138b; j++) {
-                RegPoolEntry *r = in->unk_38[j].getRegD();
+                RegPoolEntry *r = registerOperand(&in->unk_38[j], 1);
                 if (r && (unsigned)(r->unk_30 - 54) <= 5) {
                     found = true;
                     break;
