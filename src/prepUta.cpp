@@ -8,6 +8,11 @@ bool optReset(Program *p);
 int setRangeFrom(workTable *t);
 bool fixupCloneFdeps(workTable *wt);
 
+static inline void copyShort(short &to, const short &from)
+{
+    to = from;
+}
+
 int g_080b33f0 = 1;
 
 workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
@@ -50,14 +55,15 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
     setRangeFrom(nt);
     g_080de284 = smart;
     nt->unk_5c.func_0805e37c(&s->unk_278);
-    nt->unk_74 = wt->unk_74;
-    nt->unk_76 = wt->unk_76;
-    nt->unk_78 = wt->unk_78;
+    copyShort(nt->unk_74, wt->unk_74);
+    copyShort(nt->unk_76, wt->unk_76);
+    copyShort(nt->unk_78, wt->unk_78);
     int mode = (unsigned char)wt->unk_08;
     nt->unk_08 = mode;
     nt->unk_40 = 0;
     nt->unk_44 = wt->unk_44;
-    for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
+    regUseList &regs = wt->unk_14;
+    for (regUse *ru = regs.unk_04; ru; ru = ru->unk_04) {
         if (!nt->qRegRef(ru)) {
             func_0804ad38("failed to add a cloned regref in %s\n", s->func_0806d674());
             wt->dump();
