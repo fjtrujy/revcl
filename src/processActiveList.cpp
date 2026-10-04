@@ -232,13 +232,14 @@ bool recalcMaxTraceLengths(Program *p)
 
 bool func_08061c34(instStream *n);
 
+static inline regUseSlot *registerPart(regUse *u, int part)
+{
+    return &u->unk_20[part];
+}
+
 bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
 {
-    if (!n->unk_218) {
-        func_0804ad38("work table not set in %s\n", n->func_0806d674());
-        func_0804adf0(-1);
-    }
-    workTable *wt = n->unk_218;
+    workTable *wt = n->getTable();
     if (!wt) {
         func_0804ad38("failed to get work table\n");
         return 0;
@@ -249,7 +250,7 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
     n->unk_258 = 0;
     n->unk_234 = u;
     if (u && ((u->unk_0f >> part) & 1)) {
-        if (wt->unk_09 == 1 || wt->unk_09 == 4) {
+        if (wt->codeMode() == 1 || wt->codeMode() == 4) {
             n->unk_224 = 1;
             n->unk_230 = 0;
             n->unk_232 = 0;
@@ -263,7 +264,7 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
             }
             int lo = head->unk_12;
             n->unk_230 = lo;
-            ol_s *last = u->unk_20[part].func_0805ba2c(0, true);
+            ol_s *last = registerPart(u, part)->func_0805ba2c(0, true);
             if (!last) {
                 func_0804ad38("visible outputs had nothing visible at infinity\n");
                 return 0;
