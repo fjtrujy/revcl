@@ -418,7 +418,7 @@ int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos)
     return checkLocks(in, &pos->unk_00, minPos);
 }
 
-bool DoInsert(workTable *wt, Instr *in, cls08058718 *pos)
+bool DoInsert(workTable *const wt, Instr *in, cls08058718 *pos)
 {
     if (in->unk_142c && !in->unk_142e) {
         func_0804ad38("undo insert currmuid not set\n");
