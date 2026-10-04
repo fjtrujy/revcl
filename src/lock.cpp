@@ -912,23 +912,32 @@ bool cls0805c244::addExtOutput(cls0805bcc4 *lk, bool flag)
     return ok;
 }
 
+static inline bool hasRegUseOwner(cls0805bcc4 *lk)
+{
+    if (lk->unk_2d == 2)
+        return true;
+    return false;
+}
+
 Instr *cls0805c244::earliestExt()
 {
     Instr *res = 0;
     cls0805bcc4 *lk = unk_20;
-    if (!lk || lk->unk_2d != 2)
-        return res;
-    int best = 30000;
-    for (cls0805bcc4 *ch = lk->unk_0c; ch; ch = ch->unk_08) {
-        if (ch->unk_19 != 2) {
-            Instr *in = ch->unk_2d == 1 ? (Instr *)ch->unk_24 : 0;
-            if (!in) {
-                func_0804ad38("not get in for earliest ext\n");
-                func_0804adf0(-1);
-            }
-            if (in->unk_13e8.unk_00 < best) {
-                best = in->unk_1396;
-                res = in;
+    if (lk) {
+        if (hasRegUseOwner(lk)) {
+            int best = 30000;
+            for (cls0805bcc4 *ch = lk->unk_0c; ch; ch = ch->unk_08) {
+                if (ch->unk_19 != 2) {
+                    Instr *in = ch->unk_2d == 1 ? (Instr *)ch->unk_24 : 0;
+                    if (!in) {
+                        func_0804ad38("not get in for earliest ext\n");
+                        func_0804adf0(-1);
+                    }
+                    if (in->unk_13e8.unk_00 < best) {
+                        best = in->unk_1396;
+                        res = in;
+                    }
+                }
             }
         }
     }
