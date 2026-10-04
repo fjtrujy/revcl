@@ -906,12 +906,14 @@ void dynDumpStats(Block *b)
         const char *mark = "    ";
         int s = in->unk_140a;
         int e = in->unk_1408;
-        if (s - e > b->unk_38)
+        int dep = b->unk_38;
+        if (s - e > dep)
             mark = "****";
         int ht = b->unk_04 - in->unk_13f0.unk_00;
+        dep = in->unk_13f0.unk_04;
         func_0804acb0("[%3d]:%3d [%5d %5d %5d %5d ]%s dep=%2d ht=%2d  %s\n",
                       n, b->unk_38, e, s, in->unk_140c, in->unk_140e, mark,
-                      in->unk_13f0.unk_04, ht, in->unk_34->unk_04);
+                      dep, ht, in->unk_34->unk_04);
         n++;
     }
     func_0804acb0("dyDuumpStats - end\n");
