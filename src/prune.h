@@ -56,9 +56,8 @@ inline bool initPrune(Instr *in)
             if (!op)
                 break;
             op->unk_2a = 0;
-            if (op->unk_09 != 1 || !in->unk_13cc)
-                continue;
-            op->unk_2a = op->unk_07;
+            if (op->isInput() && in->unk_13cc)
+                op->unk_2a = op->unk_07;
         }
         return true;
     }
