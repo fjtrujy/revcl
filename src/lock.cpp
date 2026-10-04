@@ -890,27 +890,34 @@ bool cls0805c244::moveInputLock(cls0805bcc4 *in)
     return true;
 }
 
+static inline bool singleExtOutputMode()
+{
+    if (g_080de284 == 1)
+        return true;
+    return false;
+}
+
 bool cls0805c244::addExtOutput(cls0805bcc4 *lk, bool flag)
 {
-    bool ok = true;
     if (lk->unk_16) {
         func_0804ad38("lock is already external output\n");
-        ok = false;
-    } else if (unk_2a > 3) {
-        func_0804ad38("too many extern outputs\n");
-        ok = false;
-    } else if (unk_2a && g_080de284 == 1) {
-        if (!flag) {
-            func_0804ad38("more than one xo for rlock uta..count=%d\n", unk_2a);
-            checkCounts();
-            ok = false;
-        }
-    } else {
-        unk_2b = flag;
-        unk_0c[unk_2a] = lk;
-        lk->unk_16 = ++unk_2a;
+        return false;
     }
-    return ok;
+    if (unk_2a > 3) {
+        func_0804ad38("too many extern outputs\n");
+        return false;
+    }
+    if (unk_2a && singleExtOutputMode()) {
+        if (flag)
+            return true;
+        func_0804ad38("more than one xo for rlock uta..count=%d\n", unk_2a);
+        checkCounts();
+        return false;
+    }
+    unk_2b = flag;
+    unk_0c[unk_2a] = lk;
+    lk->unk_16 = ++unk_2a;
+    return true;
 }
 
 static inline bool hasRegUseOwner(cls0805bcc4 *lk)
