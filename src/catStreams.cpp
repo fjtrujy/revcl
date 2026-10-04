@@ -10,6 +10,11 @@ bool UnlinkFromLinear(Block *blk, Instr *n);
 bool func_0806f4a0(Program *p, instStream *s);
 bool appendStream(Program *p, instStream *a, instStream *b);
 
+static inline void dumpRawStream(instStream *s)
+{
+    s->dump(0);
+}
+
 bool func_08063154(Program *p)
 {
     instStream *s = p->unk_a0;
@@ -20,7 +25,7 @@ bool func_08063154(Program *p)
         }
         if (s->func_0806d908() == 3 && !s->func_0806d968()) {
             func_0804ad38("bad raw mode\n");
-            s->dump(0);
+            dumpRawStream(s);
             return 0;
         }
         instStream *n = s->unk_108;
