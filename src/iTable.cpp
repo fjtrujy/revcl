@@ -1102,7 +1102,8 @@ workTable *workTable::localClone()
     nt->unk_08 = t;
     nt->unk_40 = 0;
     nt->unk_10 = unk_10;
-    for (regUse *r = unk_14.unk_04; r; r = r->unk_04) {
+    regUseList &regs = unk_14;
+    for (regUse *r = regs.unk_04; r; r = r->unk_04) {
         if (!nt->unk_14.append(r->Clone())) {
             func_0804ad38("failed to add cloned regref to list\n");
             delete r;
@@ -1113,7 +1114,7 @@ workTable *workTable::localClone()
         Instr *c = in->clone();
         for (int i = 0; i != c->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->isInRegOpB() ? op->unk_18 : 0;
+            RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
             int mask = op->unk_07 & ~op->unk_27;
             for (int k = 0; k != reg->unk_28; k++) {
