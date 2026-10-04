@@ -239,7 +239,8 @@ bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int 
         func_0804ad38("add new output - out of bounds mod bits requested\n");
         return false;
     }
-    if (!in->unk_34) {
+    iInfo *info = in->unk_34;
+    if (!info) {
         func_0804ad38("instruction has no m_Inst\n");
         return false;
     }
