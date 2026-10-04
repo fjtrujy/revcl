@@ -91,8 +91,9 @@ bool lockLiveRange(cls0805c244 *ll, cls0805bcc4 *out, int *s, int *e)
             return false;
         }
         cls08058718 *rl = &ins->unk_13e8;
-        short line = rl->getRow();
-        if (rl->getRow() != out->unk_32) {
+        int line = rl->getRow();
+        int want = out->unk_32;
+        if ((short)line != (short)want) {
             func_0804ad38("rLine mismatch\n");
             return false;
         }
@@ -121,8 +122,9 @@ bool lockLiveRange(cls0805c244 *ll, cls0805bcc4 *out, int *s, int *e)
             return false;
         }
         cls08058718 *rl = &ci->unk_13e8;
-        short line = rl->getRow();
-        if (rl->getRow() != c->unk_32) {
+        int line = rl->getRow();
+        int want = c->unk_32;
+        if ((short)line != (short)want) {
             func_0804ad38("rline mismatch for input locks\n");
             return false;
         }
@@ -130,12 +132,12 @@ bool lockLiveRange(cls0805c244 *ll, cls0805bcc4 *out, int *s, int *e)
             func_0804ad38("bad pipe for instruction\n");
             return false;
         }
-        if (line <= *s) {
+        if ((short)line <= *s) {
             func_0804ad38("el<=s, but can't age\n");
             return false;
         }
-        if (line > *e)
-            *e = line;
+        if ((short)line > *e)
+            *e = (short)line;
     }
     if (*e < 0)
         *e = *s + 1;
