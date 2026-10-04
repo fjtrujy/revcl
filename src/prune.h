@@ -209,13 +209,15 @@ inline bool doPrune(instStream *s)
     }
     if (t->func_08073754() == 4 || t->func_08073754() == 3)
         return true;
+    Instr *first = t->unk_88.unk_00;
+    Instr *in = first;
     Instr *next;
-    for (Instr *in = t->unk_88.unk_00; in; in = next) {
+    if (first) do {
         next = in->unk_1c.unk_00;
         int r = doPrune(in);
         if (r < 0) {
             func_0804ad38("do  prune failed for instruction\n");
-            in->func_08054008(false);
+            dumpPruneInstruction(in);
             return false;
         }
         if (r == 0) {
@@ -229,11 +231,12 @@ inline bool doPrune(instStream *s)
             if (!t->destroyInstruction(in)) {
                 func_0804ad38("failed to destroy instruction\n");
                 if (in)
-                    in->func_08054008(false);
+                    dumpPruneInstruction(in);
                 return false;
             }
         }
-    }
+        in = next;
+    } while (in);
     return true;
 }
 
