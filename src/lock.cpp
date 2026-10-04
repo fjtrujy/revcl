@@ -609,8 +609,6 @@ static inline bool ownsLock(cls0805c244 *list, cls0805bcc4 *lk)
 {
     if (lk->unk_04 == list)
         return true;
-    func_0804ad38("isok - I don't own it\n");
-    func_0804adf0(-1);
     return false;
 }
 
@@ -632,8 +630,11 @@ bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
             ok = false;
         }
     }
-    if (!ownsLock(this, lk))
+    if (!ownsLock(this, lk)) {
+        func_0804ad38("isok - I don't own it\n");
+        func_0804adf0(-1);
         return false;
+    }
     if (lk->unk_14 == 2) {
         if (unk_24 <= 0) {
             func_0804ad38("isOk - output, but no outputs! - <=0 output locks!\n");
