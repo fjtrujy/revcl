@@ -8,9 +8,19 @@
 bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp);
 bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
 
+static inline bool isRawTable(workTable *wt)
+{
+    return wt->unk_09 == 3;
+}
+
 static inline bool isPipeMode(workTable *wt)
 {
-    return wt->unk_09 == 3 && (wt->unk_0a == 1 || wt->unk_0a == 3);
+    return isRawTable(wt) && (wt->unk_0a == 1 || wt->unk_0a == 3);
+}
+
+static inline void dumpMove(Instr *in)
+{
+    in->func_08054008(false);
 }
 
 bool detectMoves(Program *p)
@@ -41,11 +51,11 @@ bool detectMoves(Program *p)
                 }
                 mv->unk_142c = opc;
                 mv->unk_142e = 0;
-                Operand *d = &mv->unk_38[0];
                 Operand *sr = &mv->unk_38[1];
+                Operand *d = &mv->unk_38[0];
                 if (dstReg == dstReg->unk_04->unk_10) {
                     func_0804ad38("found a move to a const zero register\n");
-                    in->func_08054008(false);
+                    dumpMove(in);
                     return false;
                 }
                 sr->unk_18 = srcReg;
@@ -57,8 +67,9 @@ bool detectMoves(Program *p)
                 d->unk_14 = in->unk_38[dstOp].unk_14;
                 sr->unk_10 = in->unk_38[srcOp].unk_10;
                 d->unk_10 = in->unk_38[dstOp].unk_10;
-                if (wt->unk_09 == 3) {
-                    if (!resolveMovePipe(wt, mv, in->unk_13e8.unk_02)) {
+                if (isRawTable(wt)) {
+                    int pipe = in->unk_13e8.unk_02;
+                    if (!resolveMovePipe(wt, mv, pipe)) {
                         func_0804ad38("failed to resolve a detected move for the pipe I found it in\n");
                         return false;
                     }
