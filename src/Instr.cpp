@@ -133,12 +133,15 @@ bool Instr::func_08053fac()
     return true;
 }
 
-void Instr::func_08054008(bool b)
+void Instr::func_08054008(int flags)
 {
     if (isValid()) {
-        for (int i = 0; i != unk_138b; i++)
+        int count = unk_138b;
+        for (int i = 0; i != count; i++) {
             unk_38[i].func_0805665c(0);
-        if (b) {
+            count = unk_138b;
+        }
+        if (flags & 1) {
             for (int j = 0; j != unk_138b; j++) {
                 Operand *op = &unk_38[j];
                 RegPoolEntry *r = op->unk_18;

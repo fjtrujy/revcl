@@ -728,7 +728,7 @@ public:
     }
     bool func_08053f4c();
     bool func_08053fac();
-    void func_08054008(bool);
+    void func_08054008(int flags);
     bool func_08054138();
     instStream *func_08054168();  // owner instruction stream
     bool func_0805417c();
