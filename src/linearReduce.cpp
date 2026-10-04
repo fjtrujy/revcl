@@ -16,7 +16,13 @@ int dragDown(workTable *wt);
 
 static inline bool isPipeMode(workTable *wt)
 {
-    return wt->unk_09 == 3 && (wt->unk_0a == 1 || wt->unk_0a == 3);
+    int mode = wt->unk_09 - 3;
+    return !mode && (wt->unk_0a == 1 || wt->unk_0a == 3);
+}
+
+static inline void dumpLinearReduce(Program *p)
+{
+    func_0806ed78(p, 0);
 }
 
 bool func_0807e740(Program *p, workTable *wt, unsigned char up, unsigned char down)
@@ -41,7 +47,7 @@ bool func_0807e740(Program *p, workTable *wt, unsigned char up, unsigned char do
             int r = pullUp(wt);
             if (r < 0) {
                 func_0804ad38("failed to pull up\n");
-                func_0806ed78(p, 0);
+                dumpLinearReduce(p);
                 return false;
             }
             if (r)
