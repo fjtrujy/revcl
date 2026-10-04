@@ -148,14 +148,16 @@ bool appendStream(Program *p, instStream *a, instStream *b)
         func_0804ad38("dbgEnd set for ist_1 ->>>>>>>>>>>>>>please code this!\n");
         return 0;
     }
-    workTable *t1 = a->getWorkTable();
+    workTable *t1 = a->getTable();
     workTable *t2 = b->getWorkTable();
     if (!catOnTo(t1, t2)) {
         func_0804ad38("failed to cat table2 onto table1\n");
         return 0;
     }
-    a->unk_2cd = b->unk_2cd;
-    a->unk_2ce = b->unk_2ce;
+    int endType = b->unk_2cd;
+    a->unk_2cd = endType;
+    int branchType = b->unk_2ce;
+    a->unk_2ce = branchType;
     a->unk_2d5 = b->unk_2d5;
     a->unk_2d7 = b->unk_2d7;
     return 1;
