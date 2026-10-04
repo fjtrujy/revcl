@@ -232,30 +232,33 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
 int cls0805c244::checkOverlap(cls0805bcc4 *out, short *pos, int *minPos)
 {
     int ret = 0;
-    if (out->unk_17 > 1) {
-        int s = pos[2];
-        int e = out->unk_17 + s - 1;
-        for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
-            if (lk == out)
-                continue;
-            int os = lk->unk_30;
-            int oe = lk->unk_17 + os;
-            if (oe - 1 < 0)
-                continue;
-            if (func_0805db74(s, e, os, oe - 1)) {
-                ret |= 1;
-                int p = *pos;
-                int v = oe;
-                if (g_080b336c) {
-                    int r = oe % g_080b336c;
-                    int q = p / g_080b336c;
-                    if (r <= p % g_080b336c)
-                        q++;
-                    v = q * g_080b336c + r;
-                }
-                if (*minPos < v)
-                    *minPos = v;
+    if (out->unk_17 <= 1)
+        return 0;
+
+    int s = pos[2];
+    int e = s + out->unk_17 - 1;
+    for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
+        if (lk == out)
+            continue;
+        int os = lk->unk_30;
+        int oe = os + lk->unk_17;
+        if (oe - 1 < 0)
+            continue;
+        if (func_0805db74(s, e, os, oe - 1)) {
+            ret |= 1;
+            int p = ((cls08058718 *)pos)->unk_00;
+            int v;
+            if (!g_080b336c)
+                v = oe;
+            else {
+                int r = oe % g_080b336c;
+                int q = p / g_080b336c;
+                if (r <= p % g_080b336c)
+                    q++;
+                v = q * g_080b336c + r;
             }
+            if (*minPos < v)
+                *minPos = v;
         }
     }
     return ret;
