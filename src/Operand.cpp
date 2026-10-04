@@ -1042,13 +1042,44 @@ const char *opKindName(int kind)
 int func_08057a34(int kind)
 {
     switch (kind) {
+    case 1:
+        return 9;
+    case 3:
+        return 9;
+    case 11:
+        return 9;
+    case 13:
+        return 9;
+    case 14:
+        return 9;
+    case 15:
+        return 9;
+    case 16:
+        return 9;
+    case 35:
+        return 9;
     default:
     case 55:
+        return 0;
     case 0:
         return 0;
-    case 1: case 3: case 11: case 13: case 14: case 15: case 16: case 35:
-        return 9;
-    case 2: case 28: case 29: case 30: case 31: case 32: case 33: case 34: case 36:
+    case 2:
+        return 8;
+    case 28:
+        return 8;
+    case 29:
+        return 8;
+    case 30:
+        return 8;
+    case 31:
+        return 8;
+    case 32:
+        return 8;
+    case 33:
+        return 8;
+    case 34:
+        return 8;
+    case 36:
         return 8;
     case 37:
         return 11;
