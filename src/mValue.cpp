@@ -661,22 +661,23 @@ bool func_0804dbac(mValue *dst, mValue *a, mValue *b)
         printf("xpVal::logor type promote failed\n");
         return false;
     }
-    if (t == mValue::UINT) {
-        if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
-            dst->u = ua || ub;
-            return true;
+    if (t != mValue::UINT) {
+        if (t == mValue::INT) {
+            if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
+                dst->i = ia || ib;
+                return true;
+            }
+            printf("failed to get args\n");
+            return false;
         }
-        printf("failed to get args\n");
-        return false;
-    } else if (t == mValue::INT) {
-        if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
-            dst->i = ia || ib;
-            return true;
-        }
-        printf("failed to get args\n");
+        printf("bad type to expr\n");
         return false;
     }
-    printf("bad type to expr\n");
+    if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
+        dst->u = ua || ub;
+        return true;
+    }
+    printf("failed to get args\n");
     return false;
 }
 
