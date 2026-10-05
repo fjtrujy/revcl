@@ -437,17 +437,17 @@ void func_0804c08c(char *s)
 
 void func_0804c0c8(char *s)
 {
+    char *p = s;
     if (!s || !*s)
         return;
-    int i = 0;
-    while (s[i])
-        i++;
-    while (--i != 0 && (s[i] == 'x' || s[i] == 'X' || s[i] == 'y' || s[i] == 'Y' ||
-                        s[i] == 'z' || s[i] == 'Z' || s[i] == 'w' || s[i] == 'W'))
+    while (*p)
+        p++;
+    for (--p; p != s && (*p == 'x' || *p == 'X' || *p == 'y' || *p == 'Y' ||
+                        *p == 'z' || *p == 'Z' || *p == 'w' || *p == 'W'); --p)
         ;
-    s[i + 1] = 0;
-    if (s[i] == '.')
-        s[i] = 0;
+    p[1] = 0;
+    if (*p == '.')
+        *p = 0;
 }
 
 char *dupString(const char *s)
