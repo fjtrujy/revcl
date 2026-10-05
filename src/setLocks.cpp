@@ -505,13 +505,13 @@ bool reduceExtents(workTable *wt)
                 int minEnd = 30000;
                 Operand *op;
                 for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-                    RegPoolEntry *reg = op->isOutReg() ? op->unk_18 : 0;
+                    RegPoolEntry *reg = registerOperand(op, 2);
                     if (reg) {
                         for (int k = 0; k != reg->unk_28; k++) {
                             if ((op->unk_07 >> k) & 1) {
                                 cnt++;
                                 OpSlot *s = &op->unk_2c[k];
-                                if (s->unk_20 != 0) {
+                                if (s->getRefCount() != 0) {
                                     int e = s->unk_3e;
                                     if (e < minEnd)
                                         minEnd = e;
@@ -519,7 +519,7 @@ bool reduceExtents(workTable *wt)
                             }
                         }
                     }
-                    if (op->inputReg())
+                    if (registerOperand(op, 1))
                         cnt -= func_0804bf50(op->unk_07);
                 }
                 if (minEnd < 30000 && cnt >= 0) {

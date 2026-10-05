@@ -158,6 +158,7 @@ public:
     bool setInOut(cls0805bcc4 *olk);
     bool incRef();
     bool decRef();
+    short getRefCount() { return unk_20; }
     void print();
     bool isOk(int type, bool inserted);
     short func_0805ccc8();
