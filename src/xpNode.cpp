@@ -134,8 +134,15 @@ inline void xpTree::setDepth(xpNode *n, int depth)
 {
     if (n) {
         n->unk_01 = depth;
-        for (int i = 0; i != n->unk_05; i++)
-            setDepth(n->child[i], depth + 1);
+        const int &d = depth;
+        int i = 0;
+        if (n->unk_05) {
+            int childDepth = d + 1;
+            do {
+                setDepth(n->child[i], childDepth);
+                i++;
+            } while (i != n->unk_05);
+        }
     }
 }
 
