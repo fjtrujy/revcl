@@ -20,11 +20,15 @@ public:
     mValue val;
 
     xpNode();
-    ~xpNode() { val.clear(); }
+    ~xpNode()
+    {
+        mValue *v = &val;
+        v->clear();
+    }
     bool func_0804e778();
     void func_0804e794();
     void reset();
-    bool isFull();
+    bool isFull() { return unk_05 >= unk_04; }
     bool decode();
     const char *getLiteral();
 

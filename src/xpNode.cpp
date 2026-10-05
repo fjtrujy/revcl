@@ -80,11 +80,6 @@ void xpNode::reset()
     init();
 }
 
-bool xpNode::isFull()
-{
-    return unk_05 >= unk_04;
-}
-
 bool xpNode::decode()
 {
     if (unk_02) {
@@ -343,7 +338,7 @@ bool xpTree::evalExp(const char *s)
                 func_0804ad38("failed to get new xn .. bah\n");
                 goto fail;
             }
-            p = func_0804ec74(p, n, cur->unk_05 >= cur->unk_04);
+            p = func_0804ec74(p, n, cur->isFull());
             if (!p) {
                 delete n;
                 goto fail;
