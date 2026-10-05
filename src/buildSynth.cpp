@@ -10,6 +10,11 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
+static inline void dumpSynthInstruction(Instr *in)
+{
+    in->func_08054008(false);
+}
+
 
 bool buildSynth(Program *prog, instStream *s, flowBlock *blocks, int count)
 {
@@ -23,9 +28,11 @@ bool buildSynth(Program *prog, instStream *s, flowBlock *blocks, int count)
         return false;
     }
     t->unk_10 = s;
-    int inSynth = 0;
-    int stype = 0;
+    int inSynth;
+    int stype;
     int flags = 0;
+    inSynth = 0;
+    stype = 0;
     for (int i = 0; i != count; i++) {
         flowBlock *b = &blocks[i];
         if (b->unk_14.func_0804b794()) {
@@ -109,8 +116,8 @@ bool buildSynth(Program *prog, instStream *s, flowBlock *blocks, int count)
             break;
         default:
             func_0804ad84("encountered an misplaced instruction in a enter or exit block\n");
-            in->func_08054008(false);
-            goto fail;
+            dumpSynthInstruction(in);
+            return false;
         }
         if (isIO) {
             b->unk_0c[0] = 0;
@@ -122,18 +129,18 @@ bool buildSynth(Program *prog, instStream *s, flowBlock *blocks, int count)
             flags |= in->unk_1389;
     }
     switch (stype) {
-    case 1:
-        s->unk_2cc = 2;
-        break;
-    case 3:
-        s->unk_2cd = 3;
-        break;
     case 11:
         s->unk_2cd = 4;
         if (!s->unk_2d0) {
             func_0804ad38("exitmacro not set.. but end_macro endtype?\n");
             return false;
         }
+        break;
+    case 3:
+        s->unk_2cd = 3;
+        break;
+    case 1:
+        s->unk_2cc = 2;
         break;
     default:
         func_0804ad84("vcl found a problem making an enter/exit block, and I'll improve this error message later\n");
@@ -142,6 +149,4 @@ bool buildSynth(Program *prog, instStream *s, flowBlock *blocks, int count)
     if (flags)
         func_0804acb0("d_viFlags - is set to %x on exit<-----------------------------\n", flags);
     return true;
-fail:
-    return false;
 }
