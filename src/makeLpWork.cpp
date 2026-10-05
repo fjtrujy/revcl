@@ -239,7 +239,7 @@ bool lsqChain(workTable *wt)
                 Operand *op = &in->unk_38[k];
                 if (op->unk_18 != reg)
                     continue;
-                if (!op->isInReg()) {
+                if (!isRegisterOperand(op, 1)) {
                     func_0804ad38("isn't an input, and this code is ..not taking any chances!\n");
                     return false;
                 }
