@@ -259,15 +259,15 @@ bool func_0805449c(Instr *a, Instr *b)
         return false;
     for (int i = 0; i != b->unk_138b; i++) {
         Operand *op = &b->unk_38[i];
-        RegPoolEntry *r = op->getReg();
+        RegPoolEntry *r = registerOperand(op, 1);
         if (r) {
             int want = op->unk_07;
             int mask = 0;
-            int n = a->unk_138b;
-            for (int j = 0; j != n; j++)
-                if (a->unk_38[j].getReg2() == r)
-                    mask |= a->unk_38[j].unk_07;
-            if (want & mask)
+            Instr *in = a;
+            for (int j = 0; j != in->unk_138b; j++)
+                if (registerOperand(&in->unk_38[j], 2) == r)
+                    mask |= in->unk_38[j].unk_07;
+            if (mask & want)
                 return true;
         }
     }
