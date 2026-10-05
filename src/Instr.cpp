@@ -343,9 +343,9 @@ Instr *Instr::clone()
         d->unk_18 = s->unk_18;
         d->unk_07 = s->unk_07;
         d->unk_0c = s->unk_0c;
-        d->unk_14 = s->unk_14;
         d->unk_0d = s->unk_0d;
         d->unk_08 = s->unk_08;
+        d->unk_14 = s->unk_14;
         d->unk_10 = s->unk_10;
         if (s->unk_1c.isValid()) {
             if (!d->unk_1c.set(&s->unk_1c)) {
