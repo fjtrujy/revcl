@@ -519,6 +519,11 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
     return false;
 }
 
+static inline void dumpLinkOperand(Operand *op)
+{
+    op->func_0805665c(0);
+}
+
 bool link_oParts(ol_s *o, ol_s *i, int x, int y)
 {
     if (!o) {
@@ -534,9 +539,9 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         func_0804ad38("link_oParts(2) - output not set \n");
         return false;
     }
-    if (!out->isOutputReg()) {
+    if (!isRegisterOperand(out, 2)) {
         func_0804ad38("link_oParts - output was not output\n");
-        out->func_0805665c(0);
+        dumpLinkOperand(out);
         return false;
     }
     Operand *in = func_0805802c(i);
@@ -544,7 +549,7 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         func_0804ad38("link_oParts(2) - input not set \n");
         return false;
     }
-    if (!in->isInputReg()) {
+    if (!isRegisterOperand(in, 1)) {
         func_0804ad38("link_oParts - input was not input\n");
         return false;
     }
