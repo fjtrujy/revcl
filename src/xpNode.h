@@ -4,6 +4,7 @@
 
 #pragma interface
 
+#include <stdio.h>
 #include "mValue.h"
 #include "os.h"
 
@@ -29,7 +30,18 @@ public:
     void func_0804e794();
     void reset();
     bool isFull() { return unk_05 >= unk_04; }
-    bool decode();
+    bool decode()
+    {
+        if (unk_02) {
+            printf("can't decode a non-literal\n");
+            return false;
+        }
+        if (!val.makeNumeric()) {
+            func_0804ad38("couldn't convert to arithmetic\n");
+            return false;
+        }
+        return true;
+    }
     const char *getLiteral();
 
     inline void clearValue();

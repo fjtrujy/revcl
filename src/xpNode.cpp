@@ -80,19 +80,6 @@ void xpNode::reset()
     init();
 }
 
-bool xpNode::decode()
-{
-    if (unk_02) {
-        printf("can't decode a non-literal\n");
-        return false;
-    }
-    if (!val.makeNumeric()) {
-        func_0804ad38("couldn't convert to arithmetic\n");
-        return false;
-    }
-    return true;
-}
-
 const char *xpNode::getLiteral()
 {
     char *s = val.getString();
@@ -501,16 +488,7 @@ bool xpTree::rec_Eval(xpNode *n)
         }
     }
     case 0: {
-        int ok;
-        if (n->unk_02) {
-            printf("can't decode a non-literal\n");
-            ok = false;
-        } else if (!v->makeNumeric()) {
-            func_0804ad38("couldn't convert to arithmetic\n");
-            ok = false;
-        } else
-            ok = true;
-        if (!ok)
+        if (!n->decode())
             return false;
         return v->isNumeric();
     }
