@@ -429,7 +429,7 @@ int checkDispatchEntry(Instr **ie)
         if (!(((unsigned char)in->unk_138c >> p) & 1))
             return -1;
         for (int i = 0; i != in->unk_138b; i++) {
-            RegPoolEntry *r = in->unk_38[i].getReg2();
+            RegPoolEntry *r = registerOperand(&in->unk_38[i], 2);
             if (!r)
                 continue;
             for (int q = p + 1; q <= 1; q++) {
@@ -439,7 +439,7 @@ int checkDispatchEntry(Instr **ie)
                 if (!(((unsigned char)o->unk_138c >> q) & 1))
                     return -1;
                 for (int j = 0; j != o->unk_138b; j++) {
-                    RegPoolEntry *r2 = o->unk_38[j].getReg2();
+                    RegPoolEntry *r2 = registerOperand(&o->unk_38[j], 2);
                     if (r2 && r2 == r)
                         return -1;
                 }
