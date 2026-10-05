@@ -174,6 +174,11 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
     *dstOp = -1;
     unsigned int v;
     switch (id) {
+    case 0x99:
+        *opc = 0xb4;
+        *dstOp = 0;
+        *srcOp = 1;
+        break;
     case 0x22:
     case 0x30:
         if (in->unk_138f & 8)
@@ -208,11 +213,6 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
         *dstOp = 0;
         *srcOp = 1;
         *opc = 0xb2;
-        break;
-    case 0x99:
-        *opc = 0xb4;
-        *dstOp = 0;
-        *srcOp = 1;
         break;
     default:
         return false;
