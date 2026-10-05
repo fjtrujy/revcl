@@ -354,14 +354,17 @@ int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos)
     int v = e;
     if (r4 < v + g_080b3370) {
         int m = *minPos;
-        if (g_080b336c) {
+        int next;
+        if (!g_080b336c)
+            next = v;
+        else {
             int rem = v % g_080b336c;
             int q = m / g_080b336c;
             if (rem <= m % g_080b336c)
                 q++;
-            v = q * g_080b336c + rem;
+            next = q * g_080b336c + rem;
         }
-        *minPos = v;
+        *minPos = next;
         return 0x10000;
     }
 
