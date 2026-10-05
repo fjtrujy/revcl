@@ -329,7 +329,7 @@ bool undoMove(Block *blk, Instr *mv)
             RegPoolEntry *r = op->unk_18;
             if (r == dup) {
                 op->unk_18 = orig;
-                if (op->isInReg()) {
+                if (isRegisterOperand(op, 1)) {
                     for (int p = 0; p != r->unk_28; p++) {
                         if ((bool)((op->unk_07 >> p) & 1)) {
                             cls0805bcc4 *lk = &op->unk_2c[p];
@@ -349,7 +349,7 @@ bool undoMove(Block *blk, Instr *mv)
                         }
                     }
                 }
-                if (op->isOutReg()) {
+                if (isRegisterOperand(op, 2)) {
                     for (int p = 0; p != r->unk_28; p++) {
                         if ((bool)((op->unk_07 >> p) & 1)) {
                             cls0805c244 *newList = (cls0805c244 *)orig->func_0805a908(p);
