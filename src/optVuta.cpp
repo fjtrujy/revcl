@@ -83,10 +83,14 @@ bool optAnother(workTable *wt, wrangleCand *c)
         if (a > bestA) {
             best = in;
             bestA = a;
-            bestB = in->unk_13f0.unk_08 - in->unk_1418 + (in->unk_13f0.unk_06 >> 2) + cost;
+            int b = in->unk_13f0.unk_08 - in->unk_1418;
+            int h = in->unk_13f0.unk_06;
+            bestB = b + (h >> 2) + cost;
             bestC = in->unk_13f0.unk_00;
         } else if (a == bestA) {
-            int e = in->unk_13f0.unk_08 - in->unk_1418 + (in->unk_13f0.unk_06 >> 2) + cost;
+            int b = in->unk_13f0.unk_08 - in->unk_1418;
+            int h = in->unk_13f0.unk_06;
+            int e = b + (h >> 2) + cost;
             if (e > bestB) {
                 bestB = e;
                 bestC = in->unk_13f0.unk_00;
