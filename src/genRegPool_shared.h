@@ -12,7 +12,7 @@ bool func_0806f6a4(Program *p);
 bool setRange(int start, int end, int lsz);
 int func_0804bf50(unsigned int);
 int setRangeFrom(workTable *t);
-static inline char bitSet(int m, int i)
+static inline int bitSet(int m, int i)
 {
     return (m >> i) & 1;
 }

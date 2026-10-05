@@ -24,47 +24,49 @@ bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always)
     *e = -3;
     *always = false;
     regUseSlot *sl = &ru->unk_20[part];
-    if (bitSet(ru->unk_0e, part)) {
+    if ((char)bitSet(ru->unk_0e, part)) {
         if (sl->unk_3c[0] < 0 || !validPipe(sl->unk_3c[1]) ||
             sl->unk_3c[3] < 0 || !validPipe(sl->unk_3c[4])) {
             func_0804ad38("firstInput<0.. but iBit set\n");
             func_0804adf0(-1);
         }
     }
-    if (bitSet(ru->unk_0f, part)) {
+    if ((char)bitSet(ru->unk_0f, part)) {
         if (sl->unk_3c[5] < 0 || !validPipe(sl->unk_3c[6]) ||
             sl->unk_3c[8] < 0 || !validPipe(sl->unk_3c[9])) {
             func_0804ad38("firstInput<0.. but iBit set\n");
             func_0804adf0(-1);
         }
     }
-    if (bitSet(~(ru->unk_0f | ru->unk_0e) & ru->unk_10, part)) {
+    if ((char)bitSet(ru->unk_10 & ~(ru->unk_0f | ru->unk_0e), part)) {
         *s = -1;
         *e = 30000;
         *always = true;
         return true;
     }
-    if (bitSet(ru->unk_0c, part)) {
+    if ((char)bitSet(ru->unk_0c, part)) {
         *s = -1;
     } else {
-        if (bitSet(ru->unk_0e, part) && sl->unk_3c[0] <= sl->unk_3c[5]) {
+        if ((char)bitSet(ru->unk_0e, part) && sl->unk_3c[0] <= sl->unk_3c[5]) {
             func_0804ad38("first input before first output.. but not xi %d,%d!\n",
                           sl->unk_3c[0], sl->unk_3c[5]);
             func_0804adf0(-1);
         }
-        if (bitSet(ru->unk_0f, part))
+        if ((char)bitSet(ru->unk_0f, part))
             *s = sl->unk_3c[5];
     }
-    if (bitSet(ru->unk_10 | ru->unk_0d, part)) {
+    if ((char)bitSet(ru->unk_10 | ru->unk_0d, part)) {
         *e = 30000;
     } else {
-        if (bitSet(ru->unk_0f, part))
+        if ((char)bitSet(ru->unk_0f, part))
             *e = sl->unk_3c[8] + 1;
-        if (bitSet(ru->unk_0e, part) && sl->unk_3c[3] > *e)
+        if ((char)bitSet(ru->unk_0e, part) && sl->unk_3c[3] > *e)
             *e = sl->unk_3c[3];
     }
-    if (*e <= *s) {
-        func_0804ad38("liverange for regref has e<=s .. %d,%d?\n", *s, *e);
+    int row = *s;
+    if (*e <= row) {
+        row = *e;
+        func_0804ad38("liverange for regref has e<=s .. %d,%d?\n", *s, row);
         return false;
     }
     return true;
