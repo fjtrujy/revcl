@@ -907,6 +907,25 @@ bool Instr::func_08055ae4()
         }
         unk_138b--;
         switch (op->unk_04) {
+        case 23:
+            op->unk_08 = 1;
+            op->unk_04 = 21;
+            op->unk_09 = 2;
+            op->unk_14 = op->unk_18 = func_0806c224(55);
+            op->unk_07 = 1;
+            op->unk_0a = 4;
+            op->unk_0b = 0;
+            op->unk_26 = unk_138b++;
+            op = &unk_38[i + 1];
+            op->unk_08 = 1;
+            op->unk_04 = 18;
+            op->unk_09 = 1;
+            op->unk_14 = op->unk_18 = func_0806c224(57);
+            op->unk_07 = 1;
+            op->unk_0a = -1;
+            op->unk_0b = 1;
+            op->unk_26 = unk_138b++;
+            break;
         case 22:
             op->unk_08 = 1;
             op->unk_04 = 20;
@@ -922,25 +941,6 @@ bool Instr::func_08055ae4()
             op->unk_04 = 19;
             op->unk_09 = 1;
             op->unk_14 = op->unk_18 = func_0806c224(58);
-            op->unk_07 = 1;
-            op->unk_0a = -1;
-            op->unk_0b = 1;
-            op->unk_26 = unk_138b++;
-            break;
-        case 23:
-            op->unk_08 = 1;
-            op->unk_04 = 21;
-            op->unk_09 = 2;
-            op->unk_14 = op->unk_18 = func_0806c224(55);
-            op->unk_07 = 1;
-            op->unk_0a = 4;
-            op->unk_0b = 0;
-            op->unk_26 = unk_138b++;
-            op = &unk_38[i + 1];
-            op->unk_08 = 1;
-            op->unk_04 = 18;
-            op->unk_09 = 1;
-            op->unk_14 = op->unk_18 = func_0806c224(57);
             op->unk_07 = 1;
             op->unk_0a = -1;
             op->unk_0b = 1;
