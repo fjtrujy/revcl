@@ -33,7 +33,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         int latest = 0;
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->inRegOp();
+            RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 for (int j = 0; j != reg->unk_28; j++) {
                     ol_s *ol = op->unk_2c[j].unk_54.unk_00;
@@ -57,7 +57,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         int earliest = 30000;
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->outRegOp();
+            RegPoolEntry *reg = registerOperand(op, 2);
             if (reg) {
                 for (int j = 0; j != reg->unk_28; j++) {
                     for (ol_s *ol = op->unk_2c[j].unk_54.unk_00; ol; ol = ol->unk_00) {
@@ -89,7 +89,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         char *p = buf;
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->inRegOp();
+            RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 p += func_0804adbc(p, " %s: ", reg->func_0805a8e0());
                 int rlo = 30000, rhi = 0;
@@ -98,14 +98,13 @@ bool makeLpWork(instStream *s, int maxSpread)
                     if ((op->unk_07 >> j) & 1) {
                         ol_s *ol = op->unk_2c[j].unk_54.unk_00;
                         if (ol) {
-                            Instr *src = ol->unk_04;
-                            int d = in->unk_0c - src->unk_0c;
+                            int d = in->unk_0c - ol->unk_04->unk_0c;
                             any = true;
                             if (d < rlo)
                                 rlo = d;
                             if (d > rhi)
                                 rhi = d;
-                            p += func_0804adbc(p, "%3d ", d, src);
+                            p += func_0804adbc(p, "%3d ", d, ol->unk_04);
                         } else
                             p += func_0804adbc(p, "xxx ");
                     } else
