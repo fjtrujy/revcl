@@ -581,26 +581,24 @@ bool func_0804d7d4(mValue *dst, mValue *a, mValue *b)
         printf("xpVal::shfl type promote failed\n");
         return false;
     }
-    switch (t) {
-    case mValue::UINT:
-        if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
-            dst->u = ua << ub;
-            break;
+    if (t != mValue::UINT) {
+        if (t == mValue::INT) {
+            if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
+                dst->i = ia << ib;
+                return true;
+            }
+            printf("failed to get args\n");
+            return false;
         }
-        printf("failed to get args\n");
-        return false;
-    case mValue::INT:
-        if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
-            dst->i = ia << ib;
-            break;
-        }
-        printf("failed to get args\n");
-        return false;
-    default:
         printf("bad type to expr\n");
         return false;
     }
-    return true;
+    if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
+        dst->u = ua << ub;
+        return true;
+    }
+    printf("failed to get args\n");
+    return false;
 }
 
 bool func_0804d9c0(mValue *dst, mValue *a, mValue *b)
