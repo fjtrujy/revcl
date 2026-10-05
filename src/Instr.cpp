@@ -503,13 +503,20 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
         func_0804ad38("swizzle detected for ps2 ?\n");
         return false;
     }
-    olList *la = &a->unk_38[aOp].unk_2c[slot].unk_54;
-    olList *lb = &b->unk_38[bOp].unk_2c[slot].unk_54;
-    if (!la->func_080580fc(b, bOp, slot, false) || !lb->func_080580fc(a, aOp, slot, false)) {
-        func_0804ad38("failed to add ol\n");
-        return false;
+    OpSlot *sa = &a->unk_38[aOp].unk_2c[slot];
+    OpSlot *sb = &b->unk_38[bOp].unk_2c[slot];
+    ol_s *oa = sa->unk_54.func_080580fc(b, bOp, slot, false);
+    if (oa) {
+        olList *lb = &sb->unk_54;
+        ol_s *ob = lb->func_080580fc(a, aOp, slot, false);
+        if (!ob) {
+            func_0804ad38("failed to add ol\n");
+            return false;
+        }
+        return true;
     }
-    return true;
+    func_0804ad38("failed to add ol\n");
+    return false;
 }
 
 bool link_oParts(ol_s *o, ol_s *i, int x, int y)
