@@ -12,7 +12,7 @@ extern int g_080de6b4;
 int func_0806aa54(Instr *in);
 int func_08067e18(Program *p, instStream *s);
 
-static inline bool fitsSigned(int v, int bits)
+static inline int fitsSigned(int v, int bits)
 {
     int r = 0;
     int hi = 1 << (bits - 1);
@@ -146,6 +146,11 @@ bool func_0806a74c(Program *p)
     return true;
 }
 
+static inline bool isStringValue(mValue *v)
+{
+    return v->type == mValue::STRING;
+}
+
 int func_0806aa54(Instr *in)
 {
     int opc = in->func_08055ac4();
@@ -166,36 +171,34 @@ int func_0806aa54(Instr *in)
         break;
     case 0x70:
         bits = 15;
-        idx = 0;
         isSigned = false;
         g_080de6ac = in->unk_38[1].unk_18;
         g_080de6b0 = &in->unk_38[2].unk_1c;
+        idx = 0;
         neg = true;
         break;
     }
     if (idx < 0)
         return -1;
-    int ret = -1;
-    if (g_080de6b0->type != mValue::STRING) {
-        if (!g_080de6b0->getInt(&val)) {
-            func_0804ad38("failed to get immediate value\n");
-            return -2;
-        }
-        if (val == 0)
-            return -1;
-        if (isSigned) {
-            if (!fitsSigned(val, bits)) {
-                func_0804ac7c("immediate %d doesn't fit as signed value in %d bits - skipping\n", val, bits);
-                return -1;
-            }
-        } else if (!fitsUnsigned(val, bits)) {
-            func_0804ac7c("immediate %d doesn't fit as unsigned value in %d bits - skipping\n", val, bits);
-            return -1;
-        }
-        g_080de6b4 = neg ? -val : val;
-        ret = idx;
+    if (isStringValue(g_080de6b0))
+        return -1;
+    if (!g_080de6b0->getInt(&val)) {
+        func_0804ad38("failed to get immediate value\n");
+        return -2;
     }
-    return ret;
+    if (val == 0)
+        return -1;
+    if (isSigned) {
+        if (!(char)fitsSigned(val, bits)) {
+            func_0804ac7c("immediate %d doesn't fit as signed value in %d bits - skipping\n", val, bits);
+            return -1;
+        }
+    } else if (!fitsUnsigned(val, bits)) {
+        func_0804ac7c("immediate %d doesn't fit as unsigned value in %d bits - skipping\n", val, bits);
+        return -1;
+    }
+    g_080de6b4 = neg ? -val : val;
+    return idx;
 }
 
 static inline bool immFitsSigned(int v, int bits)
