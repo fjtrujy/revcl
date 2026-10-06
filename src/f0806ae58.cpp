@@ -35,12 +35,11 @@ int propagateMoves(workTable *t)
         int keep = 0;
         int srcWritten = 0;
         int valid = mask;
-        iLink *l = &in->unk_1c;
         int row = in->unk_13e8.unk_00;
-        Instr *n = in->unk_1c.unk_00;
+        Instr *n = in->unk_1c.next();
         Instr *cur = n;
         if (row >= 0) {
-            Instr *p = l->prev();
+            Instr *p = in->unk_1c.prev();
             if (p && p->unk_13e8.unk_00 == row) {
                 bool a;
                 if (p->func_08054c24(dst, &a)) {
@@ -50,15 +49,15 @@ int propagateMoves(workTable *t)
                 bool b;
                 srcWritten = p->func_08054c24(src, &b);
             }
-            if (l->unk_00 && l->unk_00->unk_13e8.unk_00 == row) {
+            if (n && n->unk_13e8.unk_00 == row) {
                 bool a;
-                if (l->unk_00->func_08054c24(dst, &a)) {
+                if (n->func_08054c24(dst, &a)) {
                     func_0804ad38("seem to have two writes on same line!\n");
                     return 0;
                 }
                 bool b;
-                srcWritten |= l->unk_00->func_08054c24(src, &b);
-                cur = l->unk_00->unk_1c.unk_00;
+                srcWritten |= n->func_08054c24(src, &b);
+                cur = n->unk_1c.next();
             }
         }
         int pendSrc = 0;
@@ -77,7 +76,7 @@ int propagateMoves(workTable *t)
                 if (!(used & ~valid) && !(used & srcWritten) && !paired)
                     for (int i = 0; i != cur->unk_138b; i++) {
                         Operand *op = &cur->unk_38[i];
-                        if (op->inputReg() == dst)
+                        if (registerOperand(op, 1) == dst)
                             op->getRegFrom(&in->unk_38[1]);
                         count++;
                     }

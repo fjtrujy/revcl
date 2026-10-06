@@ -554,6 +554,7 @@ struct iLink {
     Instr *unk_04;  // prev
 
     Instr *prev() { return unk_04; }
+    Instr *next() { return unk_00; }
 
     iLink()
     {
