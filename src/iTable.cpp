@@ -477,8 +477,8 @@ int workTable::func_08073754()
 
 bool workTable::func_08073774(unsigned char mode)
 {
-    unsigned char cm = unk_09;
     if (unk_09 != 3 && unk_09 != 5 && mode) {
+        int cm = unk_09;
         func_0804ad38("failed to set vsm mode - because code mode isn't vsm..mode=%d cm=%d\n", mode, cm);
         func_0804aeb0();
         return 0;
