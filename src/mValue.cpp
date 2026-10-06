@@ -831,7 +831,7 @@ bool mValue::parse(const char *s)
     bool isFlt = false;
     bool hasExp = false;
     int expSign = 0;
-    const char *p = s;
+    const char *start = s;
     if (s[0] == '0' && s[1]) {
         switch (s[1]) {
         case 'x':
@@ -839,29 +839,29 @@ bool mValue::parse(const char *s)
             base = 1;
             radix = 16;
             rtype = g_080b3088 ? FLOAT : UINT;
-            p = s + 2;
+            start = s + 2;
             break;
         case 'b':
         case 'B':
             radix = 2;
             base = 2;
-            p = s + 2;
+            start = s + 2;
             break;
         case 'z':
         case 'Z':
             base = 1;
             radix = 16;
             rtype = FLOAT;
-            p = s + 2;
+            start = s + 2;
             break;
         }
     }
     int skip = 0;
-    if (!*p) {
+    if (!*start) {
         printf("badly formed literal %s\n", s);
         return false;
     }
-    for (; *p; p++) {
+    for (const char *p = start; *p; p++) {
         char c = *p;
         if (c >= 'A' && c <= 'Z')
             c += 32;
