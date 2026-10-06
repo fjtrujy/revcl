@@ -1,6 +1,11 @@
 
 #include "backTrace_shared.h"
 
+static inline regUseSlot *registerPart(regUse *u, int part)
+{
+    return &u->unk_20[part];
+}
+
 bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
 {
     regUse *tr = t->unk_234;
@@ -20,7 +25,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
             func_0804ad38("minimal path key was bad\n");
             return false;
         }
-        ol_s *ol = sr->unk_20[part].unk_20.unk_00;
+        ol_s *ol = registerPart(sr, part)->unk_20.unk_00;
         if (!ol)
             func_0804ad38("there's no local setters for thruput chase for ext setter\n");
         for (; ol; ol = ol->unk_00) {
@@ -31,7 +36,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
             }
             n->unk_08 = key;
         }
-        ol = tr->unk_20[part].unk_20.unk_00;
+        ol = registerPart(tr, part)->unk_20.unk_00;
         if (!ol) {
             func_0804ad38("there's no local setters.. for a thruput chase .. for target\n");
             return false;
@@ -46,8 +51,10 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
         }
         if (isPathRaw(p, key)) {
             int dist = s->unk_240;
-            int tend = s->unk_22c - sr->unk_20[part].unk_3c[10];
+            int last = sr->unk_20[part].unk_3c[10];
+            int tend = s->unk_22c;
             int fst = tr->unk_20[part].unk_3c[7];
+            tend -= last;
             if (fst < 0 || tend < 0 || dist < 0) {
                 func_0804ad38("something wrong checking for thruput stalls fst=%d tend=%d path_dist=%d\n",
                               fst, tend, dist);
