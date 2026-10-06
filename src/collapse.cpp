@@ -201,21 +201,11 @@ int func_0806aa54(Instr *in)
     return idx;
 }
 
-static inline bool immFitsSigned(int v, int bits)
+static inline int immFitsUnsigned(int v, int bits)
 {
-    bool r = false;
-    int hi = 1 << (bits - 1);
-    int lo = -hi;
-    if (v >= lo && v < hi)
-        r = true;
-    return r;
-}
-
-static inline bool immFitsUnsigned(int v, int bits)
-{
-    bool r = false;
+    int r = 0;
     if (v >= 0 && v < (1 << bits))
-        r = true;
+        r = 1;
     return r;
 }
 
@@ -241,30 +231,27 @@ bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc)
         break;
     case 0x70:
         *srcOp = 1;
-        sub = true;
         *immOp = 2;
+        sub = true;
         break;
     default:
         return false;
     }
     mValue *v = &in->unk_38[*immOp].unk_1c;
-    bool ret = false;
-    if (v->type != mValue::STRING) {
-        int x = 0;
-        if (!v->getInt(&x)) {
-            func_0804ad38("failed to get immediate value\n");
-        } else {
-            x = sub ? x - g_080de6b4 : x + g_080de6b4;
-            bool fits;
-            if (sgn)
-                fits = immFitsSigned(x, 11);
-            else
-                fits = immFitsUnsigned(x < 0 ? -x : x, 15);
-            if (fits) {
-                *val = x;
-                ret = true;
-            }
-        }
+    if (isStringValue(v))
+        return false;
+    int x = 0;
+    if (!v->getInt(&x)) {
+        func_0804ad38("failed to get immediate value\n");
+        return false;
     }
-    return ret;
+    x = sub ? x - g_080de6b4 : x + g_080de6b4;
+    if (sgn) {
+        if (!(char)fitsSigned(x, 11))
+            return false;
+    } else if (!(char)immFitsUnsigned(x < 0 ? -x : x, 15)) {
+        return false;
+    }
+    *val = x;
+    return true;
 }
