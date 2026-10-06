@@ -406,12 +406,13 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
         return 0;
     }
     int j, i;
-    for (i = from->unk_30, j = to->unk_34; i != from->unk_34; i++, j++) {
+    for (j = to->unk_34, i = from->unk_30; i != from->unk_34; i++, j++) {
         wtRow *sr = &from->unk_2c[i];
         wtRow *dr = &to->unk_2c[j];
         for (int p = 0; p != 2; p++) {
-            Instr *c = 0;
+            Instr *c;
             Instr *in = sr->getEntry(p);
+            c = 0;
             if (dr->getEntry(p)) {
                 func_0804ad38("CloneAppend: would overwrite inst in target\n");
                 return 0;
@@ -425,7 +426,7 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                     int lid = in->unk_13e8.unk_03;
                     if (lid <= lidS && lid >= lidE) {
                         unsigned char f = in->unk_1388;
-                        if ((f && a5) || !f) {
+                        if ((f && a5) || !in->getBranchType()) {
                             c = in->clone();
                             if (!c) {
                                 func_0804ad38("failed to clone instruction\n");
@@ -445,8 +446,11 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                 c->setOwner((cls_unk30 *)to);
                 pos.setRow(j);
                 pos.unk_02 = p;
-                c->unk_13e8.setRow(j);
-                c->unk_13e8.unk_02 = p;
+                cls08058718 *loc = &c->unk_13e8;
+                c->unk_13e8.unk_00 = pos.unk_00;
+                loc->unk_04 = pos.unk_04;
+                loc->unk_03 = pos.unk_03;
+                loc->unk_02 = pos.unk_02;
             }
         }
     }
