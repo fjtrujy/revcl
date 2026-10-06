@@ -152,6 +152,11 @@ int func_080521f0(char *s)
         char *dst = s;
         char *src = s;
         while (*src) {
+            while (*src) {
+                if (*src == '[')
+                    break;
+                *dst++ = *src++;
+            }
             if (*src == '[') {
                 char *p = src + 1;
                 int m = 0;
@@ -175,8 +180,6 @@ int func_080521f0(char *s)
                     func_0804ac7c("possibly misformed instruction modifier detected\n");
                     *dst++ = *src++;
                 }
-            } else {
-                *dst++ = *src++;
             }
         }
         *dst = 0;
