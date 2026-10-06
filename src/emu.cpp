@@ -26,6 +26,39 @@ bool emuTable(Program *p, workTable *wt)
     }
     wt->unk_0c = -1;
     switch (wt->unk_09) {
+    case 3: {
+        int skipped = 0;
+        for (int line = wt->func_0807411c(); line != wt->func_080741c0(); line++) {
+            wtRow *r = wt->func_080724f0(line);
+            if (r) {
+                if (r->unk_08) {
+                    for (int k = 0; k != 2; k++)
+                        if (r->unk_00[k].unk_00) {
+                            func_0804ad38("m_bSkip set .. but line contains instructions\n");
+                            return false;
+                        }
+                    skipped++;
+                    continue;
+                }
+                if (emuInst(p, r, line, false, true) < 0) {
+                    func_0804ad38("failed to Emu an inst\n");
+                    r->func_0807222c(-1);
+                    goto fail;
+                }
+            } else {
+                func_0804ad38("emuuta - failed to get an ie\n");
+                return false;
+            }
+        }
+        wt->unk_0c = p->unk_80;
+        skipped += p->unk_80;
+        if (skipped < wt->getPhysicalLen()) {
+            func_0804ad38("logical len < physical len.. %d<%d!\n", p->unk_80, wt->getPhysicalLen());
+            wt->dump();
+            return false;
+        }
+        break;
+    }
     case 1:
     case 4: {
         Instr *i = wt->unk_88.unk_00;
@@ -40,38 +73,6 @@ bool emuTable(Program *p, workTable *wt)
                 i->func_08054008(false);
                 goto fail;
             }
-        }
-        break;
-    }
-    case 3: {
-        int skipped = 0;
-        for (int line = wt->func_0807411c(); line != wt->func_080741c0(); line++) {
-            wtRow *r = wt->func_080724f0(line);
-            if (!r) {
-                func_0804ad38("emuuta - failed to get an ie\n");
-                return false;
-            }
-            if (r->unk_08) {
-                for (int k = 0; k != 2; k++)
-                    if (r->unk_00[k].unk_00) {
-                        func_0804ad38("m_bSkip set .. but line contains instructions\n");
-                        return false;
-                    }
-                skipped++;
-                continue;
-            }
-            if (emuInst(p, r, line, false, true) < 0) {
-                func_0804ad38("failed to Emu an inst\n");
-                r->func_0807222c(-1);
-                goto fail;
-            }
-        }
-        wt->unk_0c = p->unk_80;
-        skipped += p->unk_80;
-        if (skipped < wt->getPhysicalLen()) {
-            func_0804ad38("logical len < physical len.. %d<%d!\n", p->unk_80, wt->getPhysicalLen());
-            wt->dump();
-            return false;
         }
         break;
     }
