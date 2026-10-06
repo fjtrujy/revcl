@@ -1,12 +1,17 @@
 #include "lock_shared.h"
 
+static inline bool canWrapInputLock(cls0805bcc4 *in)
+{
+    return in->unk_19 == 1;
+}
+
 int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
 {
     cls0805bcc4 *lk = unk_1c;
     int ret;
     int lsz = g_080b336c;
     ret = 0;
-    int p = *pos;
+    int p = ((cls08058718 *)pos)->unk_00;
 
     in->unk_1a = 0;
     if (in->unk_19 == 2) {
@@ -27,29 +32,30 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
         bool inside = true;
         if (p < lo) { lo = p; inside = false; }
         if (p > hi) { hi = p; inside = false; }
-        if (inside)
-            return 0;
-        int span = hi - lo;
-        int room = lsz;
-        if (unk_0c[0])
-            room -= unk_0c[0]->unk_18;
-        else {
-            func_0804ad38("no ext output set. but .. not const for loop\n");
-            func_0804adf0(-1);
+        if (!inside) {
+            int span = hi - lo;
+            int room = lsz;
+            if (unk_0c[0])
+                room -= unk_0c[0]->unk_18;
+            else {
+                func_0804ad38("no ext output set. but .. not const for loop\n");
+                func_0804adf0(-1);
+            }
+            if (span > room) {
+                int need;
+                if (p < par->unk_3e)
+                    need = par->unk_4e - room;
+                else if (canWrapInputLock(in)) {
+                    in->unk_1a = 1;
+                    return 0x100;
+                } else
+                    need = 30000;
+                if (*minPos < need)
+                    *minPos = need;
+                return 0x2000;
+            }
         }
-        if (span <= room)
-            return 0;
-        int need;
-        if (p < par->unk_3e)
-            need = par->unk_4e - room;
-        else if (in->unk_19 == 1) {
-            in->unk_1a = 1;
-            return 0x100;
-        } else
-            need = 30000;
-        if (*minPos < need)
-            *minPos = need;
-        return 0x2000;
+        return 0;
     }
 
     int start = par->unk_3a + in->unk_18;
@@ -63,7 +69,7 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
 
     int d = p - lo;
     if (lsz && d >= lsz) {
-        if (in->unk_19 == 1) {
+        if (canWrapInputLock(in)) {
             in->unk_1a = 3;
             return 0x100;
         }
@@ -92,7 +98,7 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
                 return ret | 0x10;
             }
         } else if (func_0805db74(s, e, ls, le)) {
-            if (g_080de288 && lsz && in->unk_19 == 1) {
+            if (g_080de288 && lsz && canWrapInputLock(in)) {
                 in->unk_1a = 2;
                 ret |= 0x100;
             } else {
