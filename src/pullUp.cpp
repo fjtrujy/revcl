@@ -16,6 +16,10 @@ bool setRange(int start, int end, int lsz);
 int pullUp(workTable *wt);
 int dragDown(workTable *wt);
 
+static inline bool setPullUpRange(workTable *wt, int lsz)
+{
+    return setRange(wt->unk_30, wt->unk_34, lsz);
+}
 
 int pullUp(workTable *wt)
 {
@@ -140,12 +144,14 @@ int pullUp(workTable *wt)
     }
 
     int ret = wt->unk_34 - mrl - 1;
-    if (mrl + 1 > wt->unk_34) {
+    int end = mrl + 1;
+    if (end > wt->unk_34) {
         func_0804ad38("table would grow ! mrl=%d..m_iE=%d\n", mrl, wt->unk_34);
         wt->dump();
         return -1;
     }
-    wt->unk_34 = ++mrl;
-    setRange(wt->unk_30, wt->unk_34, wt->unk_38);
+    wt->unk_34 = end;
+    end = wt->unk_38;
+    setPullUpRange(wt, end);
     return ret;
 }
