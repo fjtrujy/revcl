@@ -112,7 +112,9 @@ void RegPool::Dump()
         return;
     }
     if (unk_04) {
-        for (int i = 0; i != unk_08; i++) {
+        int current = 0;
+        int i = 0;
+        for (; current != unk_08; current = ++i) {
             RegPoolEntry* e = &unk_04[i];
             for (RegPoolEntry* p = e; p; p = 0)
                 ;
