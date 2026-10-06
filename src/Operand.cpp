@@ -450,7 +450,10 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
     case 18: case 19: case 20: case 21:
         func_0804ad38("odecode for a V_STAT\n");
         return false;
-    case 22: case 23: case 24: case 25: case 55:
+    case 55:
+        out->name[0] = 0;
+        return true;
+    case 22: case 23: case 24: case 25:
         out->name[0] = 0;
         return true;
     case 26: mstrcpy(out->name, "MAC");   out->unk_2000 = 1; return true;
