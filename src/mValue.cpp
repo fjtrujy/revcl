@@ -468,45 +468,48 @@ bool func_0804d314(mValue *dst, mValue *a, mValue *b)
     float fa, fb;
     int ia, ib;
     unsigned int ua, ub;
-    if (!a || !b)
-        return false;
+    int t;
+    if (!a)
+        goto fail;
+    if (!b)
+        goto fail;
     if (a->type < mValue::UINT || a->type > mValue::FLOAT)
-        return false;
+        goto fail;
     if (b->type < mValue::UINT || b->type > mValue::FLOAT)
-        return false;
-    int t = a->type;
+        goto fail;
+    t = a->type;
     if ((int)b->type > t)
         t = b->type;
     dst->type = t;
     if (t == mValue::NONE)
         return false;
     switch ((unsigned)t) {
-    case mValue::UINT:
-        if (!getUIntInl(a, &ua) || !getUIntInl(b, &ub)) {
-            printf("failed to get args\n");
-            return false;
+    case mValue::FLOAT:
+        if (getFloatInl(a, &fa) && getFloatInl(b, &fb)) {
+            dst->f = fa / fb;
+            return true;
         }
-        dst->u = ua / ub;
-        break;
+        func_0804ad38("failed to get args\n");
+        return false;
     case mValue::INT:
         if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
             func_0804ad38("failed to get args\n");
             return false;
         }
         dst->i = ia / ib;
-        break;
-    case mValue::FLOAT:
-        if (getFloatInl(a, &fa) && getFloatInl(b, &fb)) {
-            dst->f = fa / fb;
-            break;
+        return true;
+    case mValue::UINT:
+        if (!getUIntInl(a, &ua) || !getUIntInl(b, &ub)) {
+            printf("failed to get args\n");
+            return false;
         }
-        func_0804ad38("failed to get args\n");
-        return false;
-    default:
-        printf("bad type to expr\n");
-        return false;
+        dst->u = ua / ub;
+        return true;
     }
-    return true;
+    printf("bad type to expr\n");
+    return false;
+fail:
+    return false;
 }
 
 static inline bool isNumType(unsigned int t)
