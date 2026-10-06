@@ -10,12 +10,9 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
-static inline void dumpRowQuiet(wtRow *row)
+static inline void dumpRow(wtRow *row)
 {
-    int saved = errorOccurred;
-    errorOccurred = !quiet_080bbd98;
     row->func_0807222c(-1);
-    errorOccurred = saved;
 }
 
 bool buildPassThru(Program *prog, instStream *s, flowBlock *blocks, int count)
@@ -122,13 +119,12 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
                 in->leDump();
                 return false;
             }
-            unsigned char type = in->unk_1388;
-            if (type) {
+            if (in->getBranchType()) {
                 if (branchRow != -1) {
                     func_0804ad38("found more than one branch..in what should be continuous sequence\n");
                     return false;
                 }
-                branchType = type;
+                branchType = in->getBranchType();
                 branchRow = rows;
                 branch = in;
             }
@@ -140,7 +136,10 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
         if (n) {
             if (checkDispatchEntry(&row->unk_00[0].unk_00)) {
                 func_0804ad84("invalid instruction combination\n");
-                dumpRowQuiet(row);
+                int saved = errorOccurred;
+                errorOccurred = !quiet_080bbd98;
+                dumpRow(row);
+                errorOccurred = saved;
                 return false;
             }
             rows++;

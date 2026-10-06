@@ -734,6 +734,7 @@ public:
     bool func_08054138();
     instStream *func_08054168();  // owner instruction stream
     bool func_0805417c();
+    unsigned char getBranchType() { return unk_1388; }
     bool func_080541fc();
     bool func_08054214();
     void leDump();
