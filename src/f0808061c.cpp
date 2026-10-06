@@ -33,13 +33,17 @@ bool func_0808061c(workTable *wt, wrangleFunc f)
         }
     }
     if (wt->unk_38) {
-        if (wt->unk_30 != 0 || wt->unk_34 != wt->unk_38) {
+        int row = wt->unk_30;
+        if (row != 0 || wt->unk_34 != wt->unk_38) {
+            row = wt->unk_38;
             func_0804ad38("wrangle : loop not set up in correctly [%d,%d) vs %d\n",
-                          wt->unk_30, wt->unk_34, wt->unk_38);
+                          wt->unk_30, wt->unk_34, row);
             return false;
         }
     } else {
-        if (wt->unk_30 != 0 || wt->unk_34 >= 0) {
+        int row = wt->unk_30;
+        if (row != 0 || wt->unk_34 >= 0) {
+            row = wt->unk_38;
             func_0804ad38("wrangle - non loop set up correctly [%d,%d)\n", wt->unk_30, wt->unk_34);
             return false;
         }
