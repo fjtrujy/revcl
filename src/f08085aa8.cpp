@@ -9,7 +9,7 @@
 #include "flowBlock.h"
 
 
-bool func_08085aa8(Program *p, flowBlock *blocks, int count, bool newSyntax)
+bool func_08085aa8(Program *p, flowBlock *blocks, int count)
 {
     int i = 0;
     if (!blocks) {

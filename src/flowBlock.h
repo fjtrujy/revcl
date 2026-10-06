@@ -29,7 +29,7 @@ void func_080842b4(flowBlock *blocks, int count);
 flowBlock *func_0808435c(flowBlock *blocks, int count, const char *name);
 int func_080843a0(flowBlock *blocks, int count);
 flowBlock *func_08083768(Program *p, Parser *parser, int a, bool newSyntax, int *count);
-bool func_08085aa8(Program *p, flowBlock *blocks, int count, bool newSyntax);
+bool func_08085aa8(Program *p, flowBlock *blocks, int count);
 bool buildPassThru(Program *prog, instStream *s, flowBlock *blocks, int count);
 bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int loopMode);
 
