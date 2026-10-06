@@ -278,30 +278,39 @@ void regUseList::func_0805bab0()
     }
 }
 
+static inline bool isVirtualRegister(RegPoolEntry *reg)
+{
+    if (reg->unk_14 == true)
+        return true;
+    return false;
+}
+
 void regUseList::func_0805bb10(int regClass)
 {
     regUse *p;
     for (p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
+        RegPoolEntry *phys = reg->unk_18;
         const char *alloc = "UNALLOCATED";
-        if (reg->unk_18)
-            alloc = reg->unk_18->func_0805a8e0();
-        if (reg->unk_14 != true)
+        if (phys)
+            alloc = phys->func_0805a8e0();
+        if (!isVirtualRegister(reg))
             alloc = reg->func_0805a8e0();
-        int mask = p->unk_0c | p->unk_0d | p->unk_0e | p->unk_0f | p->unk_10;
+        int mask = p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d | p->unk_10;
         if (reg->unk_24 == regClass && reg != reg->unk_04->unk_10 && p->isExternal()) {
             const char *thr = "";
-            if (p->unk_10 & ~(p->unk_0c | p->unk_0d | p->unk_0e | p->unk_0f))
+            if (p->unk_10 & ~(p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d))
                 thr = "-THR";
             func_0804acb0(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc, thr);
         }
     }
     for (p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
+        RegPoolEntry *phys = reg->unk_18;
         const char *alloc = "UNALLOCATED";
-        if (reg->unk_18)
-            alloc = reg->unk_18->func_0805a8e0();
-        if (reg->unk_14 != true)
+        if (phys)
+            alloc = phys->func_0805a8e0();
+        if (!isVirtualRegister(reg))
             alloc = reg->func_0805a8e0();
         int mask = p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d | p->unk_10;
         if (reg->unk_24 == regClass && reg != reg->unk_04->unk_10 && !p->isExternal())
