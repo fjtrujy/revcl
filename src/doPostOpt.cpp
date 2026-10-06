@@ -228,6 +228,11 @@ static inline bool isRawTable(workTable *wt)
     return wt->unk_09 == 3;
 }
 
+static inline void dumpOptInstruction(Instr *in)
+{
+    in->func_08054008(false);
+}
+
 bool instStream::setOptTable(workTable *nt)
 {
     if (!nt) {
@@ -264,13 +269,13 @@ bool instStream::setOptTable(workTable *nt)
         if (!c) {
             if (!in->unk_1428) {
                 func_0804ad38("doPostLinearOpt - inst wasn't cloned, but not a move either\n");
-                in->func_08054008(false);
+                dumpOptInstruction(in);
                 return false;
             }
         } else {
             if (c->unk_00) {
                 func_0804ad38("doPostLinear() - original had m_optClone set\n");
-                c->func_08054008(false);
+                dumpOptInstruction(c);
                 return false;
             }
             if (c->func_08054168() != this) {
