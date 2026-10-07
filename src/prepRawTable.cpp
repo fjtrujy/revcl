@@ -5,6 +5,11 @@
 bool setRangeFrom(workTable *t);
 void resetRange();
 
+static inline void dumpRawInstruction(Instr *in)
+{
+    in->func_08054008(false);
+}
+
 bool workTable::prepRawTable()
 {
     int mode = unk_09;
@@ -80,7 +85,7 @@ bool workTable::prepRawTable()
                 lid = loc->unk_03;
                 if (lid) {
                     func_0804ad38("non zero lid for non-loop %d\n", lid);
-                    in->func_08054008(false);
+                    dumpRawInstruction(in);
                     return 0;
                 }
                 loc->unk_03 = 0;
