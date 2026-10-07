@@ -459,29 +459,29 @@ bool buildCandidateList(workTable *wt)
                     minRow = 0;
             }
         }
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        Operand *op = in->unk_38;
+        for (int i = 0; i != in->unk_138b; i++, op++) {
             RegPoolEntry *r = op->unk_18;
             if (!r)
                 continue;
             for (int j = 0; j != r->unk_28; j++) {
-                if (!((op->unk_07 >> j) & 1))
-                    continue;
-                if (!op->isInReg())
-                    continue;
-                OpSlot *s = &op->unk_2c[j];
-                cls0805bcc4 *p = s->getParent();
-                if (!p) {
-                    func_0804ad38("input had no link\n");
-                    func_0804aeb0();
-                    return false;
-                }
-                if (!p->unk_2c)
-                    goto next;
-                if (s->unk_19 != 2) {
-                    int t = p->unk_32 + p->unk_18 + s->unk_18;
-                    if (t > minRow)
-                        minRow = t;
+                if ((op->unk_07 >> j) & 1) {
+                    if (!isRegisterOperand(op, 1))
+                        continue;
+                    OpSlot *s = &op->unk_2c[j];
+                    cls0805bcc4 *p = s->getParent();
+                    if (!p) {
+                        func_0804ad38("input had no link\n");
+                        func_0804aeb0();
+                        return false;
+                    }
+                    if (!p->unk_2c)
+                        goto next;
+                    if (s->unk_19 != 2) {
+                        int t = p->unk_32 + p->unk_18 + s->unk_18;
+                        if (t > minRow)
+                            minRow = t;
+                    }
                 }
             }
             Instr *mv = r->unk_20;
