@@ -10,7 +10,7 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 int func_0806e530(int flags);
-bool fixupBtorBranch(Program *p, instStream *s, int *changed, bool btor);
+bool fixupBtorBranch(Program *p, instStream *s, int *changed);
 void func_0806ed78(Program *p, int a);
 
 
@@ -21,7 +21,8 @@ bool resolveStreamBranches(Program *p)
         switch (s->unk_2cd) {
         case 1: {
             unsigned char bt = s->unk_2ce;
-            if (!bt || (bt & 4)) {
+            int headFlags = bt;
+            if (!(unsigned char)headFlags || (unsigned char)(headFlags & 4)) {
                 if (s->unk_108) {
                     if (!p->linkStreams(s, s->unk_108, 0)) {
                         func_0804ad38("failed to link streams together\n");
@@ -34,8 +35,10 @@ bool resolveStreamBranches(Program *p)
                 }
             }
             int flags = bt;
-            if (flags) {
-                if (!((bt >> 1) & 1)) {
+            if ((unsigned char)flags) {
+                int btorMask = 1;
+                int btor = (bt >> 1) & btorMask;
+                if (!(unsigned char)btor) {
                     int type = func_0806e530(flags);
                     char *label = s->getBranchTargetImmediate();
                     if (!label) {
@@ -61,8 +64,8 @@ bool resolveStreamBranches(Program *p)
                         int type = func_0806e530(s->unk_2ce);
                         char name[2064];
                         for (char *q = br->unk_139c; *q; q++) {
-                            char *d = name;
                             char *r = q;
+                            char *d = name;
                             while (*r != ':')
                                 *d++ = *r++;
                             *d = 0;
@@ -82,6 +85,18 @@ bool resolveStreamBranches(Program *p)
             }
             break;
         }
+        case 4:
+            if (!s->unk_2d0) {
+                func_0804ad38("no macro set in end_macro\n");
+                return false;
+            }
+            /* fall through */
+        case 3:
+            if (s->unk_2ce) {
+                func_0804ad38("branchtype not null for end / cont\n");
+                return false;
+            }
+            break;
         case 2:
             if (s->unk_2ce) {
                 func_0804ad38("branchtype not null for end / cont\n");
@@ -96,18 +111,6 @@ bool resolveStreamBranches(Program *p)
                 return false;
             }
             break;
-        case 4:
-            if (!s->unk_2d0) {
-                func_0804ad38("no macro set in end_macro\n");
-                return false;
-            }
-            /* fall through */
-        case 3:
-            if (s->unk_2ce) {
-                func_0804ad38("branchtype not null for end / cont\n");
-                return false;
-            }
-            break;
         default:
             func_0804ad38("bad end type in stream\n");
             return false;
@@ -118,10 +121,11 @@ bool resolveStreamBranches(Program *p)
     do {
         again = false;
         for (s = p->unk_a0; s; s = s->unk_108) {
-            unsigned char btor = (s->unk_2ce >> 1) & 1;
-            if (btor) {
+            int btorMask = 1;
+            int btor = (s->unk_2ce >> 1) & btorMask;
+            if ((unsigned char)btor) {
                 int changed = 0;
-                if (!fixupBtorBranch(p, s, &changed, btor)) {
+                if (!fixupBtorBranch(p, s, &changed)) {
                     func_0804ad38("failed to fixup a branch-to-register instruction\n");
                     return false;
                 }
@@ -142,7 +146,7 @@ bool resolveStreamBranches(Program *p)
     return true;
 }
 
-bool fixupBtorBranch(Program *p, instStream *s, int *changed, bool btor)
+bool fixupBtorBranch(Program *p, instStream *s, int *changed)
 {
     *changed = 0;
     if (((s->unk_2ce >> 1) & 1) == 0) {

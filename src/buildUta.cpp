@@ -80,4 +80,4 @@ bool buildUta(Program *prog, instStream *s, flowBlock *blocks, int count)
 
 int func_0806e530(int flags);
 void func_0806ed78(Program *p, int a);
-bool fixupBtorBranch(Program *p, instStream *s, int *changed, bool btor);
+bool fixupBtorBranch(Program *p, instStream *s, int *changed);
