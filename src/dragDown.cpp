@@ -7,6 +7,11 @@ bool setRange(int start, int end, int lsz);
 bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl);
 int unresolveMove(Block *blk, Instr *mv);
 
+static inline void refreshDragDownRange(workTable *wt, int lsz)
+{
+    setRange(wt->unk_30, wt->unk_34, lsz);
+}
+
 int dragDown(workTable *wt)
 {
     if (wt->unk_34 == wt->unk_30)
@@ -36,11 +41,10 @@ int dragDown(workTable *wt)
                         func_0804ad38("rl not l!\n");
                         func_0804adf0(-1);
                     }
-                    for (int k = 0; ; k++) {
-                        Operand *op = in->getOp(k);
-                        if (!op)
-                            break;
-                        RegPoolEntry *reg = op->outputRegB();
+                    int k;
+                    Operand *op;
+                    for (k = 0; (op = in->getOp(k)) != 0; k++) {
+                        RegPoolEntry *reg = registerOperand(op, 2);
                         if (reg) {
                             for (int j = 0; j != reg->unk_28; j++) {
                                 OpSlot *sl = &op->unk_2c[j];
@@ -53,7 +57,7 @@ int dragDown(workTable *wt)
                                 }
                             }
                         }
-                        if (op->inputRegC() && op->unk_28)
+                        if (registerOperand(op, 1) && op->unk_28)
                             mn = rl;
                     }
                     if (mn > rl) {
@@ -71,12 +75,14 @@ int dragDown(workTable *wt)
                     if (s < msl)
                         msl = s;
                     if (msl < oStart) {
+                        short mfs = in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2;
                         func_0804ac7c("%s %d-%d < mSline=%d [%d,%d]\n",
                                       in->unk_34->unk_04, in->unk_13e8.getRow(),
-                                      in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2,
+                                      mfs,
                                       msl, wt->unk_30, wt->unk_34);
+                        const char *name = in->unk_34 ? in->unk_34->unk_04 : "NO_BASE_INST";
                         func_0804ac7c("%s: fixing mSline<oStart.. oStart=%d mSline=%d\n",
-                                      in->unk_34 ? in->unk_34->unk_04 : "NO_BASE_INST",
+                                      name,
                                       oStart, msl);
                         msl = oStart;
                     }
@@ -90,7 +96,9 @@ int dragDown(workTable *wt)
     if (wt->unk_34 - msl < wt->unk_44)
         msl = wt->unk_34 - wt->unk_44;
     int ret = msl - oStart;
-    wt->unk_30 = msl;
-    setRange(wt->unk_30, wt->unk_34, wt->unk_38);
+    int &start = wt->unk_30;
+    start = msl;
+    msl = wt->unk_38;
+    refreshDragDownRange(wt, msl);
     return ret;
 }
