@@ -413,7 +413,7 @@ fail:
 bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *nOut)
 {
     char buf[0x810];
-    int i;
+    int *&count = nOut;
 
     if (!t) {
         func_0804ad38("decodeLE: passed a null pointer\n");
@@ -421,14 +421,16 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
     }
     if (*pos == 0) {
         char *tok = t->func_08050be4(0, 0);
+        mNode *n;
         if (func_080506e0(tok) && !t->func_08050f18(0)) {
-            if (*nOut != 0) {
+            if (*count != 0) {
                 func_0804ad84("found a label on a continued line\n");
                 return false;
             }
             {
+                int i = 0;
                 char *s = tok, *d = buf;
-                for (i = 0; *s && i < 0x800; i++)
+                for (; *s && i < 0x800; i++)
                     *d++ = *s++;
                 *d = 0;
             }
@@ -437,7 +439,7 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
             while (*p && *p != ':')
                 p++;
             *p = 0;
-            mNode *n = labels->func_0804b444(buf);
+            n = labels->func_0804b444(buf);
             if (!n) {
                 func_0804ad38("Processor::decodeLE() - couldn't create tail for label list\n");
                 return false;
@@ -448,8 +450,9 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                 char *tok2 = t->func_08050be4(1, 0);
                 if (*tok2 == '[') {
                     {
+                        int i = 0;
                         char *s = tok2, *d = buf + 1;
-                        for (i = 0; *s && i < 0x800; i++)
+                        for (; *s && i < 0x800; i++)
                             *d++ = *s++;
                         *d = 0;
                     }
@@ -458,10 +461,11 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                 }
             }
             if (!func_080522c4(n->unk_18, unk_3d, true)) {
+                int mode = unk_3d;
                 func_0804ad84("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
-                              codeModeName(unk_3d));
+                              codeModeName(mode));
                 t->func_08050c40(-1);
-                return false;
+                goto fail;
             }
         }
     }
@@ -469,27 +473,33 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
         (*pos)++;
 next:
     if (*pos >= func_0805085c(t))
-        return true;
+        goto done;
     if (t->func_08050f18(*pos)) {
         (*pos)++;
         goto next;
     }
     if (t->func_08050f7c(*pos)) {
         (*pos)++;
-        return true;
+        goto done;
     }
-    if (*nOut > 1) {
+    if (*count > 1) {
         func_0804ad84("too many instructions on a line!\n");
         t->func_08050c40(-1);
-        return false;
+        goto fail;
     }
     {
         Instr *ins = getNextInstruction(t, pos);
         if (!ins)
-            return false;
-        out[(*nOut)++] = ins;
+            goto fail;
+        int used = *nOut;
+        out[used] = ins;
+        *count = used + 1;
     }
     goto next;
+fail:
+    return false;
+done:
+    return true;
 }
 
 flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, int *count)
