@@ -1,6 +1,11 @@
 
 #include "backTrace_shared.h"
 
+static inline regUseSlot *registerPart(regUse *u, int part)
+{
+    return &u->unk_20[part];
+}
+
 bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int ofs, bool ext)
 {
     regUse *tr = t->unk_234;
@@ -40,8 +45,8 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
         bool extended = false;
         if (d > 0) {
             if (ext) {
-                if (!p->proc.unk_74.addStall(sr->unk_20[part].unk_08.unk_00,
-                                        tr->unk_20[part].unk_00.unk_00, 0, d)) {
+                if (!p->proc.unk_74.addStall(registerPart(sr, part)->unk_08.unk_00,
+                                        registerPart(tr, part)->unk_00.unk_00, 0, d)) {
                     func_0804ad38("failed to add an external stall\n");
                     return false;
                 }
