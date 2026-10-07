@@ -252,13 +252,12 @@ int func_08087860(void *, Instr *in);
 
 inline int doPrune(Instr *in)
 {
+    int i;
+    Operand *op;
     unsigned char any = 0;
     if (in->unk_13cc)
         return 1;
-    for (int i = 0;; i++) {
-        Operand *op = in->getOp(i);
-        if (!op)
-            break;
+    for (i = 0; (op = in->getOp(i)) != 0; i++) {
         any |= op->unk_2a;
     }
     if (!any)
@@ -272,19 +271,18 @@ inline int doPrune(Instr *in)
         return 0;
     if (info->unk_0c == 1) {
         int m, nIn = 0, inOR = 0, outOR = 0, nOut = 0;
-        Operand *op;
-        for (int i = 0; (op = in->getOp(i)) != 0; i++) {
+        for (i = 0; (op = in->getOp(i)) != 0; i++) {
             if (op->unk_04 != 1 && op->unk_04 != 9)
                 continue;
             if (!op->unk_18) {
                 func_0804ad38("couldn't get a register for V_FL4 or V_ACC operand\n");
                 return -1;
             }
-            if (op->unk_09 == 1) {
+            if (op->isInput()) {
                 inOR |= op->unk_2a;
                 nIn++;
             }
-            if (op->unk_09 == 2) {
+            if (op->isOutput()) {
                 if (nOut && op->unk_2a != outOR) {
                     func_0804ad38("prune - found two inputs with different pBits state for FL4/ACC\n");
                     return -1;
@@ -317,7 +315,7 @@ inline int doPrune(Instr *in)
             m = outOR;
         if (m & ~in->unk_138f) {
             func_0804ad38("inOR was out of range of instruction mod bits nb=%x,mb=%x!\n", m, in->unk_138f);
-            in->func_08054008(false);
+            dumpPruneInstruction(in);
             return -1;
         }
         if (m != in->unk_138f) {
@@ -328,19 +326,15 @@ inline int doPrune(Instr *in)
             errorOccurred = saved;
         }
         in->unk_138f = m;
-        for (int i = 0;; i++) {
-            Operand *op = in->getOp(i);
-            if (!op)
-                break;
+        for (i = 0; (op = in->getOp(i)) != 0; i++) {
             if (op->unk_04 == 1 || op->unk_04 == 9)
                 op->unk_07 = m;
         }
         if (info->unk_20 == func_08087860)
             in->unk_38[1].unk_07 = (((m & 8) >> 3) | (m << 1)) & 0xf;
     }
-    Operand *op;
-    for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *r = op->isOutRegOp() ? op->unk_18 : 0;
+    for (i = 0; (op = in->getOp(i)) != 0; i++) {
+        RegPoolEntry *r = registerOperand(op, 2);
         if (!r || op->unk_2a || !r->unk_14)
             continue;
         RegPool *pool = r->unk_04;
