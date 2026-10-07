@@ -203,46 +203,54 @@ void ubsNode::dump()
         int opnd;
         int mask;
     } list[64];
-    int n, opnd;
+    int n;
     func_0804acb0("Used before set : ");
     n = 0;
-    workTable *wt = unk_14->getWorkTable();
-    regUse *ru;
-    if (!wt || !(ru = wt->unk_14.func_0805b5dc(unk_08))) {
-        func_0804acb0("register %s is used before set at \n",
-                      unk_08->func_0805a8e0(), opnd, unk_14->func_0806d674());
-        return;
+    instStream *use = unk_14;
+    workTable *wt = use->unk_218;
+    bool haveTable = wt != 0;
+    if (!haveTable) {
+        func_0804ad38("work table not set in %s\n", use->func_0806d674());
+        func_0804adf0(-1);
+        wt = use->unk_218;
     }
-    func_0804acb0("register %s is used before set at instruction(s) :\n",
-                  unk_08->func_0805a8e0());
-    for (int i = 0; i != unk_08->unk_28; i++) {
-        if ((unk_0c >> i) & 1) {
-            for (ol_s *p = ru->unk_20[i].unk_00.unk_00; p; p = p->unk_00) {
-                Instr *inst = p->unk_04;
-                int bit = 1 << p->unk_11;
-                opnd = p->unk_10;
-                int j = 0;
-                ubsEntry *e = list;
-                for (; j < n; j++, e++)
-                    if (e->inst == inst && e->opnd == opnd)
-                        break;
-                if (j == n) {
-                    e = 0;
-                    if (n < 64) {
-                        e = &list[n];
-                        e->mask = 0;
-                        n++;
-                    }
+    regUse *ru;
+    if (wt && (ru = wt->unk_14.func_0805b5dc(unk_08))) {
+        func_0804acb0("register %s is used before set at instruction(s) :\n",
+                      unk_08->func_0805a8e0());
+        for (int i = 0; i != unk_08->unk_28; i++) {
+            if ((unk_0c >> i) & 1) {
+                for (ol_s *p = ru->unk_20[i].unk_00.unk_00; p; p = p->unk_00) {
+                    Instr *inst = p->unk_04;
+                    int bit = p->unk_11;
+                    int opnd = p->unk_10;
+                    bit = 1 << bit;
+                    int j;
+                    for (j = 0; j < n &&
+                         (list[j].inst != inst || list[j].opnd != opnd); j++)
+                        ;
+                    ubsEntry *e = 0;
+                    if (j == n) {
+                        if (n < 64) {
+                            e = &list[n];
+                            e->mask = 0;
+                            n++;
+                        }
+                    } else
+                        e = &list[j];
+                    e->inst = inst;
+                    e->mask |= bit;
+                    e->opnd = opnd;
                 }
-                e->inst = inst;
-                e->mask |= bit;
-                e->opnd = opnd;
             }
         }
-    }
-    for (int k = 0; k != n; k++) {
-        func_0804acb0("   ");
-        list[k].inst->leDump(list[k].opnd, list[k].mask);
+        for (int k = 0; k != n; k++) {
+            func_0804acb0("   ");
+            list[k].inst->leDump(list[k].opnd, list[k].mask);
+        }
+    } else {
+        func_0804acb0("register %s is used before set at \n",
+                      unk_08->func_0805a8e0(), unk_14->func_0806d674());
     }
 }
 
