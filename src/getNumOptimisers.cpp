@@ -130,6 +130,11 @@ bool doLinear(Program *p, int smart)
     return true;
 }
 
+static inline const char *loopStallReason(instStream *s)
+{
+    return stallReasonStr(s->unk_2b8);
+}
+
 bool doLoop(Program *p, bool smart)
 {
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {
@@ -164,7 +169,7 @@ bool doLoop(Program *p, bool smart)
                 s->unk_04[i].unk_08 = -1;
                 g_080de730 = optTable[i].name;
                 if (optTable[i].flags & 1) {
-                    const char *why = stallReasonStr(s->unk_2b8);
+                    const char *why = loopStallReason(s);
                     func_0804acb0("lpgen[%d](limit: %s) - '%s' flow %s\n",
                                   size, why, optTable[i].name, s->func_0806d674());
                     workTable *nt = prepUta(p, s, size, 1);
