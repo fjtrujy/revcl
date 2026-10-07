@@ -25,7 +25,8 @@ bool func_0804a61c(unsigned char flags)
 
 static inline bool toolOptMatches(unsigned char mask, char opt)
 {
-    if (mask & toolMask_080b3034) {
+    unsigned int bits = mask;
+    if (toolMask_080b3034 & bits) {
         if (toolOpt_080b3035 == opt)
             return true;
     }
