@@ -394,7 +394,7 @@ bool buildCandidateList2(workTable *wt)
                 continue;
             for (int j = 0; j != r->unk_28; j++) {
                 if ((op->unk_07 >> j) & 1) {
-                    if (op->isInReg()) {
+                    if (isRegisterOperand(op, 1)) {
                         OpSlot *s = &op->unk_2c[j];
                         cls0805bcc4 *p = s->getParent();
                         if (!p) {
