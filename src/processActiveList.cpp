@@ -61,10 +61,8 @@ bool extendBackTrace(Program *p, instStream *n)
         all = true;
 
     for (l = n->unk_128.unk_00; l; l = l->unk_08) {
-        int branch = 0;
-        if (l->unk_14 == 2 || l->unk_14 == 4 || l->unk_14 == 5)
-            branch = 1;
-        if (branch) {
+        int branch = l->unk_14 == 2 || l->unk_14 == 4 || l->unk_14 == 5;
+        if ((char)branch) {
             instStream *prev = n->unk_10c;
             if (!prev) {
                 func_0804ad38("to register branch had no previous\n");
@@ -72,6 +70,7 @@ bool extendBackTrace(Program *p, instStream *n)
             }
             for (linkNode *b = prev->unk_134.unk_00; b; b = b->unk_08) {
                 instStream *d = b->unk_0c;
+                int type = b->unk_14;
                 if (!d) {
                     func_0804ad38("no dest stream set for and link\n");
                     return false;
@@ -85,8 +84,9 @@ bool extendBackTrace(Program *p, instStream *n)
                         func_0804ad38("failed to merge tstores\n");
                         return false;
                     }
+                    type = b->unk_14;
                 }
-                linkNode *back = d->unk_128.func_0806dff4(prev, b->unk_14);
+                linkNode *back = d->unk_128.func_0806dff4(prev, type);
                 if (!back) {
                     func_0804ad38("destination had no link back\n");
                     return false;
