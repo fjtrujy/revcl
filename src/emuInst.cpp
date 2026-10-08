@@ -18,6 +18,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     int stalls = 0;
     Instr *in;
     Operand *op;
+    RegPoolEntry *reg;
     if (!row) {
         func_0804ad38("passed a null pointer to emuVSM\n");
         return -1;
@@ -54,7 +55,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
-            RegPoolEntry *reg = registerOperand(op, 1);
+            reg = registerOperand(op, 1);
             if (reg) {
                 for (int part = 0; part != reg->unk_28; part++)
                     if ((op->unk_07 >> part) & 1) {
@@ -93,27 +94,27 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                         }
                     }
             }
-            RegPoolEntry *out = op->outRegOp();
-            if (out) {
+            reg = registerOperand(op, 2);
+            if (reg) {
                 if (op->unk_07) {
-                    if (out->unk_2c) {
+                    if (reg->unk_2c) {
                         if (commit) {
                             if (in->unk_1434) {
                                 func_0804ad38("multiple set for prevThruput\n");
                                 return -1;
                             }
-                            in->unk_1434 = out->unk_38;
-                        } else if (out->unk_38 != in->unk_1434) {
+                            in->unk_1434 = reg->unk_38;
+                        } else if (reg->unk_38 != in->unk_1434) {
                             func_0804ad38("unexpected value found in prev thru write\n");
                             return -1;
                         }
                     }
-                    out->unk_38 = in;
-                    out->unk_36++;
+                    reg->unk_38 = in;
+                    reg->unk_36++;
                 }
-                for (int part = 0; part != out->unk_28; part++) {
+                for (int part = 0; part != reg->unk_28; part++) {
                     if ((op->unk_07 >> part) & 1) {
-                        rPart *rp = &out->unk_44[part];
+                        rPart *rp = &reg->unk_44[part];
                         if (rp->unk_3e) {
                             ol_s tmp;
                             tmp.init(in, o, part, false);
@@ -163,9 +164,8 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         in = row->unk_00[k].unk_00;
         if (!in)
             continue;
-        Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
-            RegPoolEntry *reg = registerOperand(op, 1);
+            reg = registerOperand(op, 1);
             if (reg) {
                 for (int part = 0; part != reg->unk_28; part++) {
                     if ((op->unk_07 >> part) & 1) {
@@ -201,9 +201,8 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         Instr *in = row->unk_00[k].unk_00;
         if (!in)
             continue;
-        Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
-            RegPoolEntry *reg = registerOperand(op, 2);
+            reg = registerOperand(op, 2);
             if (reg) {
                 for (int part = 0; part != reg->unk_28; part++) {
                     if ((op->unk_07 >> part) & 1) {
