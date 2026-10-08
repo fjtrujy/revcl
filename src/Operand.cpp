@@ -484,6 +484,7 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
 bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
 {
     bool bad2;
+    bool *pbad = &bad2;
     int mask;
     bool bad;
     int m;
@@ -807,9 +808,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->unk_2000 = 1;
         return true;
     case 35: {
+        d = out->name;
         out->unk_200c = 1;
         s = tok;
-        d = out->name;
         while (*s && *s != '(')
             *d++ = *s++;
         *d = 0;
@@ -828,9 +829,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             out->unk_2000 = 15;
             return true;
         }
-        bad2 = false;
-        bool ok = func_08051f08(out->name, &out->unk_2000, &bad2);
-        if (bad2) {
+        *pbad = false;
+        bool ok = func_08051f08(out->name, &out->unk_2000, pbad);
+        if (*pbad) {
             func_0804ad84("bad mod bits in operand\n");
             return false;
         }
@@ -844,9 +845,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     }
     case 36:
+        d = out->name;
         out->unk_200c = 1;
         s = tok;
-        d = out->name;
         while (*s && *s != '(')
             *d++ = *s++;
         *d = 0;
@@ -911,9 +912,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         mstrcpy(out->name, tok);
         return true;
     case 42:
+        d = out->name;
         out->unk_200c = 1;
         s = tok;
-        d = out->name;
         while (*s && *s != '(')
             *d++ = *s++;
         *d = 0;
@@ -935,9 +936,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->unk_2000 = 1;
         return true;
     case 44:
+        d = out->name;
         out->unk_200c = 1;
         s = tok;
-        d = out->name;
         while (*s && *s != '(')
             *d++ = *s++;
         *d = 0;
