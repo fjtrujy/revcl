@@ -98,13 +98,14 @@ bool makeLpWork(instStream *s, int maxSpread)
                     if ((op->unk_07 >> j) & 1) {
                         ol_s *ol = op->unk_2c[j].unk_54.unk_00;
                         if (ol) {
-                            int d = in->unk_0c - ol->unk_04->unk_0c;
+                            Instr *src = ol->unk_04;
+                            int d = in->unk_0c - src->unk_0c;
                             any = true;
                             if (d < rlo)
                                 rlo = d;
                             if (d > rhi)
                                 rhi = d;
-                            p += func_0804adbc(p, "%3d ", d, ol->unk_04);
+                            p += func_0804adbc(p, "%3d ", d);
                         } else
                             p += func_0804adbc(p, "xxx ");
                     } else
