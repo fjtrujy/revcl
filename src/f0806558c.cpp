@@ -61,7 +61,8 @@ bool BuildfDepList(workTable *wt, bool force, bool)
             return false;
         }
     }
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    int haveInstruction = (in = wt->unk_88.unk_00) != 0;
+    while (haveInstruction) {
         bool b40 = false;
         bool b10 = false;
         int ramBits = 0;
@@ -132,7 +133,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
         for (int k = 0; k != in->unk_138b; k++) {
             Operand *op = &in->unk_38[k];
             if (op) {
-                RegPoolEntry *r = op->getReg2();
+                RegPoolEntry *r = registerOperand(op, 2);
                 if (r) {
                     if (r->unk_30 == 48)
                         in->unk_1414 = op->unk_07;
@@ -146,11 +147,13 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                                 }
                     }
                 }
-                RegPoolEntry *w = op->inputReg();
-                if (w && w->unk_30 == 48)
+                r = registerOperand(op, 1);
+                if (r && r->unk_30 == 48)
                     in->unk_1412 = op->unk_07;
             }
         }
+        in = in->unk_1c.unk_00;
+        haveInstruction = in != 0;
     }
     in = wt->unk_88.unk_00;
     Instr *last[4] = { 0, 0, 0, 0 };
