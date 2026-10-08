@@ -135,7 +135,7 @@ static inline const char *loopStallReason(instStream *s)
     return stallReasonStr(s->unk_2b8);
 }
 
-bool doLoop(Program *p, bool smart)
+bool doLoop(Program *p, int smart)
 {
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {
         int i;
@@ -256,7 +256,7 @@ bool doLoop(Program *p, bool smart)
     return true;
 }
 
-bool doRawAndSynth(Program *p, bool smart)
+bool doRawAndSynth(Program *p, int smart)
 {
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {
         if (s->func_0806d908() == 3) {
@@ -356,7 +356,7 @@ bool relaxOpt(Program *p)
     return true;
 }
 
-bool func_08079fdc(Program *p, bool smart, bool sizeReduce)
+bool func_08079fdc(Program *p, int smart, bool sizeReduce)
 {
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {
         if (s->func_0806d908() == 3) {

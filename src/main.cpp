@@ -39,10 +39,10 @@ char *emitProgram(Program *p, char *buf, int comments);
 char *emitLabels(Program *p, char *buf);
 bool loadStalls(Program *p);
 bool doLinear(Program *p, int smart);
-bool doLoop(Program *p, bool smart);
-bool doRawAndSynth(Program *p, bool smart);
+bool doLoop(Program *p, int smart);
+bool doRawAndSynth(Program *p, int smart);
 bool relaxOpt(Program *p);
-bool func_08079fdc(Program *p, bool smart, bool sizeReduce);
+bool func_08079fdc(Program *p, int smart, bool sizeReduce);
 int func_0807aa28(Program *p);
 bool func_0807aee4(Program *p);
 bool bindExternals(Program *p);
@@ -148,10 +148,6 @@ int main(int argc, char **argv)
         case 'Z':
             func_0804ac7c(" disabled immediate fixups - this option is now deprecated and removed\n");
             break;
-        case 'A':
-        case 'a':
-            func_0804acb0("-a option is now on always\n");
-            break;
         case 'c':
             comments = 1;
             break;
@@ -167,6 +163,10 @@ int main(int argc, char **argv)
         case 'f':
             noAlign_080b3016 = true;
             func_0804acb0("will skip align emit\n");
+            break;
+        case 'A':
+        case 'a':
+            func_0804acb0("-a option is now on always\n");
             break;
         case 'g':
             if (argv[i][2] == '+')
@@ -344,7 +344,7 @@ int main(int argc, char **argv)
         func_0804ad38("generic dependency code decided to die\n");
         func_0804adf0(-1);
     }
-    bool smart = dumb = !dumb;
+    int smart = dumb = !dumb;
     if (!noLoops_080b300e) {
         if (!func_08069324(&flow, true)) {
             func_0804ad38("failed to initialise immediate fixups\n");
