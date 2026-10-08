@@ -107,6 +107,23 @@ static inline bool isWhite(const char *s)
     return *q != 0;
 }
 
+static inline void splitLine(char *line, char *&next)
+{
+    char *p = line;
+    while (*p && *p != '\n')
+        p++;
+    char *eol = p;
+    while (*p && isEol(*p))
+        p++;
+    next = p;
+    *eol = 0;
+}
+
+static inline void dumpLineEntry(LocTag *entry, int highlight)
+{
+    entry->func_08050c40(highlight);
+}
+
 bool Parser::func_0804fd80(bool gasp, bool cpp)
 {
     if (!unk_10090) {
@@ -137,19 +154,14 @@ bool Parser::func_0804fd80(bool gasp, bool cpp)
         return false;
     }
     unk_10098 = 0;
-    char *next;
+    LocTag *t;
     int lineNo = 0;
-    char *out = unk_10094;
+    char *next;
+    char *line = unk_10090;
     int commentMode = 0;
-    for (char *line = unk_10090; *line; line = next) {
-        char *p = line;
-        while (*p && *p != '\n')
-            p++;
-        char *eol = p;
-        while (*p && isEol(*p))
-            p++;
-        next = p;
-        *eol = 0;
+    char *out = unk_10094;
+    for (; *line; line = next) {
+        splitLine(line, next);
         bool process = true;
         if (*line == ';' && gasp) {
             if (!func_0805041c(line)) {
@@ -158,11 +170,14 @@ bool Parser::func_0804fd80(bool gasp, bool cpp)
             }
             process = false;
         }
-        if (process && func_08050780(line, g_080b314c)) {
-            LocTag *t = &unk_1009c[unk_10098++];
-            t->unk_04 = lineNo;
+        int checkBlock = process;
+        if ((char)checkBlock && func_08050780(line, g_080b314c)) {
             char *q = next;
-            while (*q) {
+            t = &unk_1009c[unk_10098++];
+            t->unk_04 = lineNo;
+            for (;;) {
+                if (!*q)
+                    break;
                 if (func_08050780(q, g_080b3150))
                     break;
                 while (*q && !isEol(*q))
@@ -188,9 +203,9 @@ bool Parser::func_0804fd80(bool gasp, bool cpp)
         }
         if (process) {
             char *s = line;
-            while (*s && isWhite(s))
+            while (*s && !isWhite(s))
                 s++;
-            LocTag *t = &unk_1009c[unk_10098];
+            t = &unk_1009c[unk_10098];
             if (gasp) {
                 t->unk_0a = unk_1008c;
                 for (int i = 0; i != unk_1008c; i++)
@@ -204,7 +219,7 @@ bool Parser::func_0804fd80(bool gasp, bool cpp)
             out = t->func_0805086c(&commentMode, line);
             if (!out) {
                 func_0804ad38("Parser: failed to tokenise line '%s'\n", line);
-                t->func_08050c40(-1);
+                dumpLineEntry(t, -1);
                 return false;
             }
         }
