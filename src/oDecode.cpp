@@ -425,7 +425,8 @@ fail:
 bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *nOut)
 {
     char buf[0x810];
-    int *&count = nOut;
+    char *s, *d;
+    int i;
 
     if (!t) {
         func_0804ad38("decodeLE: passed a null pointer\n");
@@ -435,13 +436,14 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
         char *tok = t->func_08050be4(0, 0);
         mNode *n;
         if (func_080506e0(tok) && !t->func_08050f18(0)) {
-            if (*count != 0) {
+            if (*nOut != 0) {
                 func_0804ad84("found a label on a continued line\n");
                 return false;
             }
             {
-                int i = 0;
-                char *s = tok, *d = buf;
+                i = 0;
+                s = tok;
+                d = buf;
                 for (; *s && i < 0x800; i++)
                     *d++ = *s++;
                 *d = 0;
@@ -462,8 +464,9 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                 char *tok2 = t->func_08050be4(1, 0);
                 if (*tok2 == '[') {
                     {
-                        int i = 0;
-                        char *s = tok2, *d = buf + 1;
+                        s = tok2;
+                        d = buf + 1;
+                        i = 0;
                         for (; *s && i < 0x800; i++)
                             *d++ = *s++;
                         *d = 0;
@@ -484,30 +487,27 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
     if (t->func_08050f48())
         (*pos)++;
 next:
-    if (*pos >= func_0805085c(t))
-        goto done;
-    if (t->func_08050f18(*pos)) {
+    while (*pos < func_0805085c(t)) {
+        if (!t->func_08050f18(*pos)) {
+            if (t->func_08050f7c(*pos)) {
+                (*pos)++;
+                goto done;
+            }
+            if (*nOut > 1) {
+                func_0804ad84("too many instructions on a line!\n");
+                t->func_08050c40(-1);
+                goto fail;
+            }
+            Instr *ins = getNextInstruction(t, pos);
+            if (!ins)
+                goto fail;
+            out[*nOut] = ins;
+            (*nOut)++;
+            goto next;
+        }
         (*pos)++;
-        goto next;
     }
-    if (t->func_08050f7c(*pos)) {
-        (*pos)++;
-        goto done;
-    }
-    if (*count > 1) {
-        func_0804ad84("too many instructions on a line!\n");
-        t->func_08050c40(-1);
-        goto fail;
-    }
-    {
-        Instr *ins = getNextInstruction(t, pos);
-        if (!ins)
-            goto fail;
-        int used = *nOut;
-        out[used] = ins;
-        *count = used + 1;
-    }
-    goto next;
+    goto done;
 fail:
     return false;
 done:
