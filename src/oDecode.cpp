@@ -520,13 +520,16 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
     p->proc.unk_00 = newSyntax;
     flowBlock *blocks = 0;
 
-    if (type == 1) {
+    switch (type) {
+    case 1:
         p->proc.unk_3d = 1;
         p->proc.unk_65 = 0;
-    } else if (type == 2) {
+        break;
+    case 2:
         p->proc.unk_3d = 3;
         p->proc.unk_65 = 1;
-    } else {
+        break;
+    default:
         func_0804ad38("Processor::Build:: bad build type request\n");
         goto done;
     }
@@ -821,14 +824,12 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
     *count = n;
     ok = true;
 done:
-    if (ok) {
-        if (p->proc.unk_4c.unk_08)
-            func_0804ac7c("scope stack open (depth %d) at end of source\n", p->proc.unk_4c.unk_08);
-    } else {
+    if (!ok) {
         delete[] blocks;
         blocks = 0;
         *count = 0;
-    }
+    } else if (p->proc.unk_4c.unk_08)
+        func_0804ac7c("scope stack open (depth %d) at end of source\n", p->proc.unk_4c.unk_08);
     p->proc.unk_4c.func_0804b1b0();
     return blocks;
 }
