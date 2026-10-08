@@ -241,7 +241,7 @@ bool Program::func_0806efc4(Parser *parser, int a, bool newSyntax)
         delete blocks;
         return false;
     }
-    bool ok = func_08085aa8(this, blocks, count);
+    bool ok = splitParserStream(this, blocks, count);
     if (!ok) {
         for (int i = 0; i != count; i++)
             blocks[i].func_080842f0();

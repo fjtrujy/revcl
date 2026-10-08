@@ -9,7 +9,7 @@
 #include "flowBlock.h"
 
 
-bool func_08085aa8(Program *p, flowBlock *blocks, int count)
+bool splitParserStream(Program *p, flowBlock *blocks, int count)
 {
     int i = 0;
     if (!blocks) {
@@ -24,30 +24,36 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count)
     for (; i != count; i++) {
         flowBlock *b = &blocks[i];
         for (int k = 0; k != 2; k++) {
-            Instr *in = b->unk_0c[k];
-            if (!in || !in->unk_1388)
+            int in = (int)b->unk_0c[k];
+            if (!in || !((Instr *)in)->unk_1388)
                 continue;
-            char *target = in->getBranchTargetImmediate();
+            char *target = ((Instr *)in)->getBranchTargetImmediate();
             if (target) {
                 flowBlock *f = func_0808435c(blocks, count, target);
                 if (!f) {
                     func_0804ad84("vcl couldn't find the label '%s' refered to in instruction :\n", target);
-                    in->leDump(-1);
+                    ((Instr *)in)->leDump(-1);
                     return false;
                 }
                 f->unk_04 = 1;
-            } else if (in->unk_139c) {
-                char *tag = in->unk_139c;
-                while (*tag) {
+            } else {
+                char *tags = ((Instr *)in)->unk_139c;
+                if (!tags)
+                    continue;
+                char *tag = tags;
+                if (!*tag)
+                    continue;
+                do {
                     char buf[2064];
+                    char *scan = tag;
                     char *d = buf;
-                    while (*tag != ':')
-                        *d++ = *tag++;
+                    while (*scan != ':')
+                        *d++ = *scan++;
                     *d = 0;
                     flowBlock *f = func_0808435c(blocks, count, buf);
                     if (!f) {
                         func_0804ad38("failed to find a tagged label '%s' attached to branch:\n", buf);
-                        in->leDump(-1);
+                        ((Instr *)in)->leDump(-1);
                         return false;
                     }
                     if (!p->unk_88.func_0804b234(buf) && !p->unk_88.func_0804b2d4(buf)) {
@@ -55,8 +61,8 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count)
                         return false;
                     }
                     f->unk_04 = 1;
-                    tag++;
-                }
+                    tag = scan + 1;
+                } while (*tag);
             }
         }
     }
@@ -71,13 +77,15 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count)
         char kind = b->unk_05;
         switch ((unsigned char)kind) {
         case 1:
-        case 3:
-            if (mode != (unsigned char)kind || sub != (unsigned char)b->unk_06) {
+        case 3: {
+            unsigned int nextMode = (unsigned char)kind;
+            if (mode != nextMode || sub != (unsigned char)b->unk_06) {
                 uid++;
-                mode = kind;
+                mode = nextMode;
                 sub = b->unk_06;
             }
             break;
+        }
         case 6:
             uid++;
             break;
@@ -93,15 +101,15 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count)
             uid++;
         if (b->unk_14.func_0804b794())
             uid++;
-        short f = b->unk_0a;
-        if (f > 0) {
+        int f = b->unk_0a;
+        if ((short)f > 0) {
             if (mode != 3) {
                 func_0804ad38("+ve flow uid in non raw sequence\n");
                 return false;
             }
-            if (f != lastUid) {
+            if ((short)f != lastUid) {
                 uid++;
-                lastUid = f;
+                lastUid = (short)f;
             }
         } else if (lastUid > 0) {
             lastUid = 0;
@@ -163,16 +171,23 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count)
         short id = b->unk_08;
         mode = b->unk_05;
         sub = b->unk_06;
-        for (flowBlock *q = b; end < count; end++, q++) {
-            if (q->unk_08 != id)
-                break;
-            if (q->func_080843d0()) {
-                if (mode != 1) {
-                    func_0804ad84("mismatched synth instruction encountered\n");
-                    return false;
+        if (end < count) {
+            flowBlock *q = b;
+            do {
+                int candidateId = q->unk_08;
+                if (id != (short)candidateId)
+                    break;
+                if (q->func_080843d0()) {
+                    if (mode == 1) {
+                        mode = 4;
+                    } else {
+                        func_0804ad84("mismatched synth instruction encountered\n");
+                        return false;
+                    }
                 }
-                mode = 4;
-            }
+                end++;
+                q++;
+            } while (end < count);
         }
         int n = end - i;
         instStream *s = new instStream;
@@ -184,16 +199,16 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count)
         mList *labels = &b->unk_14;
         if (!labels->unk_08) {
             char *name = new char[mstrlen(getUniqueName(p)) + 128];
-            if (!name) {
-                func_0804ad38("failed to allocate new label\n");
-                return false;
-            }
-            func_0804adbc(name, "__v_%s_%d", getUniqueName(p), id);
-            if (!s->unk_110.func_0804b444(name)) {
-                func_0804ad38("failed to creat add a default name node\n");
+            if (name) {
+                func_0804adbc(name, "__v_%s_%d", getUniqueName(p), id);
+                if (!s->unk_110.func_0804b444(name)) {
+                    func_0804ad38("failed to creat add a default name node\n");
+                    delete[] name;
+                }
                 delete[] name;
+            } else {
+                goto labelError;
             }
-            delete[] name;
         } else if (!s->unk_110.func_0804b4d0(labels)) {
             func_0804ad38("failed to grab entries from in at top\n");
             return false;
@@ -203,6 +218,12 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count)
         case 1:
             if (!buildUta(p, s, b, n)) {
                 func_0804acb0("buildUta table failed for some reason\n");
+                return false;
+            }
+            break;
+        case 6:
+            if (!buildPassThru(p, s, b, n)) {
+                func_0804acb0("buildPass failed for some reason\n");
                 return false;
             }
             break;
@@ -218,22 +239,14 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count)
                 return false;
             }
             break;
-        case 6:
-            if (!buildPassThru(p, s, b, n)) {
-                func_0804acb0("buildPass failed for some reason\n");
-                return false;
-            }
-            break;
         default:
             func_0804ad38("bad decMode for builder switch\n");
             return false;
         }
         for (int k = 0; k != n; k++)
             blocks[i + k].func_080842f0();
-        if (!p->addStream(s)) {
-            func_0804ad38("flowBuild: failed to add istream\n");
-            return false;
-        }
+        if (!p->addStream(s))
+            goto streamError;
         s->unk_218 = &s->unk_148;
         i = end;
     }
@@ -258,4 +271,10 @@ bool func_08085aa8(Program *p, flowBlock *blocks, int count)
         return false;
     }
     return true;
+streamError:
+    func_0804ad38("flowBuild: failed to add istream\n");
+    return false;
+labelError:
+    func_0804ad38("failed to allocate new label\n");
+    return false;
 }
