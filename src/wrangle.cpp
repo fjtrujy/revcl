@@ -38,14 +38,6 @@ bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 
-static inline void dumpInstrQuiet(Instr *in)
-{
-    int saved = errorOccurred;
-    errorOccurred = !quiet_080bbd98;
-    in->leDump();
-    errorOccurred = saved;
-}
-
 bool func_0807f360(workTable *wt, wrangleFunc f)
 {
     g_080de288 = 0;
@@ -110,6 +102,13 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
     return r;
 }
 
+static inline void savePendingCandidate(Instr *&pending, wrangleCand &saved,
+                                        const wrangleCand &candidate)
+{
+    pending = candidate.unk_00;
+    saved = candidate;
+}
+
 bool func_0807f560(workTable *wt, wrangleFunc f)
 {
     cls08058718 pos;
@@ -128,16 +127,10 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
         }
         wtInstrList *done = &wt->unk_a0;
         if (done->unk_04)
-            wt->unk_54.func_0805874c(done->unk_04->unk_13e8.unk_00);
+            wt->unk_54.func_0805874c(done->unk_04->unk_13e8.getRow());
         else
             wt->unk_54.func_0805874c(0);
-        if (!wt->unk_4c) {
-            if (wt->unk_94.unk_00) {
-                wt->dump();
-                bFaulted = true;
-                wt->unk_4c = 0;
-                goto check_faulted;
-            }
+        if (!wt->unk_4c && !wt->unk_94.unk_00) {
             wt->unk_30 = 0;
             if (!wt->unk_38) {
                 int sz = wt->getCurrentDoneSize();
@@ -174,7 +167,10 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                             break;
                         case 2:
                             if (in->unk_13e8.unk_00 < lim2) {
-                                dumpInstrQuiet(in);
+                                int saved = errorOccurred;
+                                errorOccurred = !quiet_080bbd98;
+                                in->leDump();
+                                errorOccurred = saved;
                                 func_080737b8(in);
                             }
                             break;
@@ -195,6 +191,11 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                 func_0804aeb0();
             }
             return true;
+        } else if (!wt->unk_4c) {
+            wt->dump();
+            bFaulted = true;
+            wt->unk_4c = 0;
+            goto check_faulted;
         } else {
             wrangleCand c;
             c.unk_00 = 0;
@@ -246,10 +247,10 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                 func_0804aeb0();
             }
             if (wt->unk_38) {
-                if (c.unk_00->unk_13d1)
-                    drag(wt, c.unk_00, &pos, wt->unk_38, 0);
-                else
+                if (!c.unk_00->unk_13d1)
                     drag(wt, c.unk_00, &pos, wt->unk_38 >> 1, 0);
+                else
+                    drag(wt, c.unk_00, &pos, wt->unk_38, 0);
             } else {
                 func_0807de00(wt, c.unk_00, &pos);
                 func_0807e1f8(wt, c.unk_00, &pos);
@@ -280,8 +281,7 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                 if (n)
                     ret = checkInsert(wt, c.unk_00, &pos, &minPos);
                 if ((ret & 0x100) && !pending) {
-                    pending = c.unk_00;
-                    mor = c;
+                    savePendingCandidate(pending, mor, c);
                     goto check_pending;
                 }
             }
