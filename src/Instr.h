@@ -158,6 +158,7 @@ public:
     bool setInOut(cls0805bcc4 *olk);
     bool incRef();
     bool decRef();
+    char getPriority() { return unk_1a; }
     short getRefCount() { return unk_20; }
     void print();
     bool isOk(int type, bool inserted);
@@ -280,6 +281,7 @@ struct Operand {
 
     Operand();
     ~Operand();
+    unsigned char getStatus() { return unk_2b; }
     bool func_080563f8();
     void func_0805665c(int);
     char *Emit(char *buf, bool, bool symbolic);
