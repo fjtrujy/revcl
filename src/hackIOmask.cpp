@@ -1,6 +1,6 @@
 #include "Instr.h"
 
-int func_08087860(void *, Instr *in);
+bool func_08087860(void *, Instr *in);
 
 static inline bool isOutput(Operand *op) { return op->unk_09 == 2; }
 static inline bool isInput(Operand *op) { return op->unk_09 == 1; }

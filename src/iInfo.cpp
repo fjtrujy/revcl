@@ -21,7 +21,7 @@ unsigned char iInfo::ramType()
     return 0;
 }
 
-unsigned char iInfo::func_08070020()
+int iInfo::func_08070020()
 {
     if (kind() == 2)
         return unk_19;

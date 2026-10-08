@@ -248,7 +248,7 @@ inline bool doPrune(instStream *s)
     return true;
 }
 
-int func_08087860(void *, Instr *in);
+bool func_08087860(void *, Instr *in);
 
 inline int doPrune(Instr *in)
 {

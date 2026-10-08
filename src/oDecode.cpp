@@ -23,6 +23,7 @@ int g_080b34dc = -1;
 
 Instr *Processor::getNextInstruction(LocTag *t, int *pos)
 {
+    int copyCount = 0;
     ImplicitOp op;
     char buf[0x801];
     char nameBuf[0x400];
@@ -40,6 +41,8 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     int mods;
     char tilde = 0;
     int i;
+    char *s = 0;
+    int mnemonicLen;
     char *p;
     char *q;
     bool hasMods;
@@ -54,18 +57,20 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     }
     {
         char *s = t->func_08050be4(cur, 0);
-        char *d = buf;
-        for (i = 0; *s && i < 0x800; i++)
+        p = buf;
+        char *d = p;
+        for (; *s && copyCount < 0x800; copyCount++)
             *d++ = *s++;
         *d = 0;
     }
     mods = func_080521f0(buf);
     p = buf;
-    if (buf[0] == '~') {
-        p = buf + 1;
-        tilde = 1;
-    }
     q = p;
+    if (*q == '~') {
+        q++;
+        tilde = 1;
+        p = q;
+    }
     while (*q && !(q[0] == '.' && q[1] == '.'))
         q++;
     if (*q == '.') {
@@ -94,8 +99,12 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     in->unk_1420 = loopid;
     in->unk_1389 = mods;
     in->unk_1392 = tilde;
-    bad = false;
-    hasMods = func_08051f08(p + mstrlen(info->unk_04), &mask, &bad);
+    mnemonicLen = mstrlen(info->unk_04);
+    {
+        char *suffix = p + mnemonicLen;
+        bad = false;
+        hasMods = func_08051f08(suffix, &mask, &bad);
+    }
     if (bad) {
         func_0804ad84("instruction has bad .modifier bits\n");
         goto fail;
@@ -106,7 +115,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     case 1:
         if (hasMods) {
             in->unk_138f = mask;
-            if (!(unsigned char)mask) {
+            if (!in->unk_138f) {
                 func_0804ad84("getNextInstruction: instruction had zero mod bits\n");
                 goto fail;
             }
@@ -144,8 +153,8 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     op.unk_2000 = 0;
     op.unk_2008 = 0;
     op.unk_200c = 0;
-    Operand *opd;
-    for (i = 0, opd = in->unk_38; i != in->unk_138b; i++, opd++) {
+    for (i = 0; i != in->unk_138b; i++) {
+        Operand *opd = &in->unk_38[i];
         int next = cur;
         if (opd->unk_08) {
             if (!buildImplicitOperand(opd->unk_04, &op, unk_00)) {
@@ -284,7 +293,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 func_0804ad38("oDecode: not find expected register ! regtype= '%d' operand = %d\n", cls, i);
                 goto fail;
             }
-            char *s = nameBuf;
+            s = nameBuf;
             if (pool->unk_18 && unk_4c.unk_10 && !pool->func_08059418(op.name) && op.name[0] != '_') {
                 for (mNode *n = unk_4c.unk_10; n; n = n->unk_08) {
                     char *np = n->unk_14;
@@ -299,16 +308,18 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                             r++;
                             np++;
                         }
-                        if (!*r && *np == ':')
+                        if (!*r && *np == ':') {
                             found = true;
-                        else {
+                            break;
+                        } else {
                             while (*np && *np != ':')
                                 np++;
                             if (*np == ':')
                                 np++;
                         }
                     }
-                    if ((found && n->unk_18 == 0) || (!found && n->unk_18 == 1)) {
+                    bool apply = n->unk_18 == 0 ? found : n->unk_18 == 1 && !found;
+                    if (apply) {
                         s += func_0804adbc(s, "%d", (int)n->unk_10);
                         break;
                     }
@@ -394,19 +405,20 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     in->unk_18 = *pos;
     in->unk_1a = cur;
 fail:
-    if (ok)
+    if (!ok) {
+        if (in) {
+            func_0804ad84("couldn't decode instruction .. problem is at:\n");
+            t->func_08050c40(cur);
+            if (in->func_080552a8(unk_00, fmtBuf, g_080b34dc))
+                func_0804ad84("expected format is: %s\n", fmtBuf);
+            delete in;
+            in = 0;
+        } else if (t) {
+            func_0804ad84("found a syntax error at :\n");
+            t->func_08050c40(cur);
+        }
+    } else
         *pos = cur;
-    else if (in) {
-        func_0804ad84("couldn't decode instruction .. problem is at:\n");
-        t->func_08050c40(cur);
-        if (in->func_080552a8(unk_00, fmtBuf, g_080b34dc))
-            func_0804ad84("expected format is: %s\n", fmtBuf);
-        delete in;
-        in = 0;
-    } else if (t) {
-        func_0804ad84("found a syntax error at :\n");
-        t->func_08050c40(cur);
-    }
     return in;
 }
 

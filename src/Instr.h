@@ -48,7 +48,7 @@ public:
     unsigned char unk_1a;   // branch target operand index + 1
     char unk_1b;
     int unk_1c;             // EFU mod-bits type (efu_Hook)
-    int (*unk_20)(void *, Instr *);     // per-opcode handler
+    bool (*unk_20)(void *, Instr *);     // per-opcode handler
     char unk_24[0x34 - 0x24];
     char *unk_34;           // mnemonic of the sense-reversed instruction
     char *(*unk_38)(char *buf, Instr *in, bool upper, char *mods, bool b, int zero); // emit hook
@@ -59,7 +59,7 @@ public:
 
     unsigned char func_0806ffb4();
     unsigned char ramType();
-    unsigned char func_08070020();
+    int func_08070020();
     bool func_08070044();
     char func_0807005c();
     void func_08070080();

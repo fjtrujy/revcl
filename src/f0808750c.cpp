@@ -96,7 +96,7 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
 
 RegPoolEntry *getReg(unsigned type, const char *name);
 
-int extHook(void *, Instr *in)
+bool extHook(void *, Instr *in)
 {
     int done = 0;
     for (int i = 0; i != in->unk_138b; i++) {
@@ -127,14 +127,14 @@ int extHook(void *, Instr *in)
     return 1;
 }
 
-int func_08087860(void *, Instr *in)
+bool func_08087860(void *, Instr *in)
 {
     Operand *op = &in->unk_38[1];
     op->unk_07 = (((op->unk_07 & 8) >> 3) | (op->unk_07 << 1)) & 0xf;
     return 1;
 }
 
-int efu_Hook(void *p, Instr *in)
+bool efu_Hook(void *p, Instr *in)
 {
     iInfo *info = (iInfo *)p;
     Operand *op = &in->unk_38[1];
@@ -153,7 +153,7 @@ int efu_Hook(void *p, Instr *in)
 
 bool func_0804bfcc(const char *a, const char *b);
 
-int wr2w_Hook(void *p, Instr *in)
+bool wr2w_Hook(void *p, Instr *in)
 {
     iInfo *info = (iInfo *)p;
     iInfo *n;
@@ -281,7 +281,7 @@ done:
     return p;
 }
 
-int semSynth(void *p, Instr *in)
+bool semSynth(void *p, Instr *in)
 {
     iInfo *info = (iInfo *)p;
     char name[32];
