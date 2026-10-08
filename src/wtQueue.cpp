@@ -171,6 +171,16 @@ optimiser optTable[11] = {
     {"dumb2", 0, 1, (wrangleFunc)optDumb2, 0},
 };
 
+static inline bool isAAOperand(Operand *op)
+{
+    return op->unk_2b == 2;
+}
+
+static inline unsigned char operandLockMode(Operand *op)
+{
+    return op->unk_2b;
+}
+
 bool workTable::qInstruction(Instr *in)
 {
     int i;
@@ -214,11 +224,11 @@ bool workTable::qInstruction(Instr *in)
                           reg->func_0805a8e0());
             func_0804adf0(-1);
         }
-        if (dst->isInRegOpB()) {
-            if (dst->unk_2b == 2)
+        if (isRegisterOperand(dst, 1)) {
+            if (isAAOperand(dst))
                 dst->unk_09 = 3;
         }
-        if (dst->isInRegOpB()) {
+        if (isRegisterOperand(dst, 1)) {
             if (g_080b336c && func_0806c6c4(reg) && dst->unk_2b != 2)
                 dst->unk_2b = 1;
             for (int k = 0; k != reg->unk_28; k++) {
@@ -240,7 +250,8 @@ bool workTable::qInstruction(Instr *in)
                     }
                     out = o->unk_20[k].func_0805b830();
                 } else {
-                    ol_s *ol = src->unk_2c[k].unk_54.unk_00;
+                    olList *uses = &src->unk_2c[k].unk_54;
+                    ol_s *ol = uses->unk_00;
                     if (!ol || ol->unk_00) {
                         func_0804ad38("more or less than one oploc for non-extern input\n");
                         func_0804adf0(-1);
@@ -267,7 +278,7 @@ bool workTable::qInstruction(Instr *in)
                     out = &sop->unk_2c[k];
                     a = dst->unk_29;
                 }
-                lk->unk_19 = dst->unk_2b;
+                lk->unk_19 = operandLockMode(dst);
                 if (!ll->addInput(out, lk, a, dst->unk_0b)) {
                     func_0804ad38("failed to register input operand\n");
                     return false;
@@ -275,13 +286,13 @@ bool workTable::qInstruction(Instr *in)
                 }
             }
         }
-        if (dst->isReg2() && dst->unk_2b != 2 && g_080b336c && func_0806c6c4(reg) && !rr->unk_0d)
+        if (isRegisterOperand(dst, 2) && dst->unk_2b != 2 && g_080b336c && func_0806c6c4(reg) && !rr->unk_0d)
             dst->unk_2b = 1;
     }
 
     for (i = 0; i != c->unk_138b; i++) {
         Operand *op = c->getOp(i);
-        RegPoolEntry *reg = op->outputReg();
+        RegPoolEntry *reg = registerOperand(op, 2);
         if (!reg)
             continue;
         for (int k = 0; k != reg->unk_28; k++) {
@@ -315,21 +326,29 @@ bool workTable::qInstruction(Instr *in)
 
     for (i = 0; i != c->unk_138b; i++) {
         Operand *op = c->getOp(i);
-        RegPoolEntry *reg = op->inputRegB();
+        RegPoolEntry *reg = registerOperand(op, 1);
         if (!reg)
             continue;
         Operand *o2;
         for (int j = 0; (o2 = c->getOp(j)) != 0; j++) {
-            if (o2->getReg2() != reg)
+            if (registerOperand(o2, 2) != reg)
                 continue;
-            for (int k = 0; k != reg->unk_28; k++) {
-                if (((op->unk_07 & o2->unk_07) >> k) & 1) {
-                    if (!op->unk_2c[k].setInOut(&o2->unk_2c[k])) {
-                        func_0804ad38("failed to set in out\n");
-                        func_0804adf0(-1);
-                        return false;
+            int k = 0;
+            if (k != reg->unk_28) {
+                OpSlot *outputLock = o2->unk_2c;
+                OpSlot *inputLock = op->unk_2c;
+                do {
+                    if (((op->unk_07 & o2->unk_07) >> k) & 1) {
+                        if (!inputLock->setInOut(outputLock)) {
+                            func_0804ad38("failed to set in out\n");
+                            func_0804adf0(-1);
+                            return false;
+                        }
                     }
-                }
+                    k++;
+                    outputLock++;
+                    inputLock++;
+                } while (k != reg->unk_28);
             }
         }
     }
