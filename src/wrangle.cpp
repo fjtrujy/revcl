@@ -459,8 +459,9 @@ bool buildCandidateList(workTable *wt)
                     minRow = 0;
             }
         }
-        Operand *op = in->unk_38;
-        for (int i = 0; i != in->unk_138b; i++, op++) {
+        unsigned char count = in->unk_138b;
+        for (int i = 0; i != count; i++, count = in->unk_138b) {
+            Operand *op = &in->unk_38[i];
             RegPoolEntry *r = op->unk_18;
             if (!r)
                 continue;
