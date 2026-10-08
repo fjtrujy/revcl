@@ -18,7 +18,13 @@ struct ol_s {
         short unk_10_11;    // operand index and bit compared together
     };
     unsigned char unk_12;
-    unsigned char unk_13;   // flags, bit0 = external
+    union {
+        unsigned char unk_13;   // flags, bit0 = external
+        struct {
+            unsigned char external : 1;
+            unsigned char externalUsed : 1;
+        } flags;
+    };
 
     inline ol_s();
     inline ~ol_s();

@@ -70,8 +70,8 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         func_0804ad38("distance to end -ve..error\n");
                         return 0;
                     }
-                    te += kl;
-                    int d = src->unk_0a + op->unk_29 - te - 1;
+                    int total = te + kl;
+                    int d = src->unk_0a + op->unk_29 - total - 1;
                     if ((setter->func_08055548() || same) && d > best)
                         best = d;
                 }
@@ -128,8 +128,8 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         func_0804ad38("distance to end -ve..error\n");
                         return 0;
                     }
-                    fs += kl;
-                    int d = op->unk_0a + dst->unk_29 - fs - 1;
+                    int total = fs + kl;
+                    int d = op->unk_0a + dst->unk_29 - total - 1;
                     if (user->func_08055548() && d > best)
                         best = d;
                 }
@@ -139,7 +139,8 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     in->func_0805601c(best);
             }
             if (reg->unk_2c && !noExt) {
-                for (ol_s *ol = sl->unk_18.unk_00; ol; ol = ol->unk_00) {
+                ol_s *ol;
+                for (ol = sl->unk_18.unk_00; ol; ol = ol->unk_00) {
                     int key = ol->unk_08;
                     if (!key) {
                         func_0804ad38("can't have a null minkey for ext\n");
@@ -155,7 +156,8 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         func_0804ad38("failed to get the setters ist\n");
                         return 0;
                     }
-                    int kl = guessKeyLen(p, key, ss->unk_2c0, id);
+                    int sourceId = ss->unk_2c0;
+                    int kl = guessKeyLen(p, key, sourceId, id);
                     if (kl < 0) {
                         func_0804ad38("minimal length .. bah\n");
                         return 0;
@@ -165,14 +167,14 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         func_0804ad38("distance to end -ve..error\n");
                         return 0;
                     }
-                    te += kl;
-                    int d = in->unk_13cf - te - 1;
+                    int total = te + kl;
+                    int d = in->unk_13cf - total - 1;
                     if (in->func_08055548() && d > sl->unk_30) {
                         changed = 1;
                         sl->unk_30 = d;
                     }
                 }
-                for (ol_s *ol = sl->unk_28.unk_00; ol; ol = ol->unk_00) {
+                for (ol = sl->unk_28.unk_00; ol; ol = ol->unk_00) {
                     int key = ol->unk_08;
                     if (!key) {
                         func_0804ad38("can't have a null minkey for ext\n");
@@ -198,7 +200,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         func_0804ad38("distance from start -ve..error\n");
                         return 0;
                     }
-                    int d = kl + fs + 1;
+                    int d = fs + kl + 1;
                     if (in->func_08055548() && d < sl->unk_32) {
                         changed = 1;
                         sl->unk_32 = d;
@@ -215,7 +217,8 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 workTable *wa = a->getTable();
                 workTable *wb = b->getTable();
                 if (wa->unk_09 == 3 && wb->unk_09 == 3) {
-                    int k1 = guessKeyLen(p, tp->src, a->unk_2c0, id);
+                    int sourceId = a->unk_2c0;
+                    int k1 = guessKeyLen(p, tp->src, sourceId, id);
                     if (k1 < 0) {
                         func_0804ad38("failed to guess the key length\n");
                         return 0;
@@ -225,18 +228,18 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         func_0804ad38("distance to dst is bad\n");
                         return 0;
                     }
+                    Instr *w = wa->unk_88.unk_04;
                     Operand *wo = 0;
-                    Instr *w;
-                    for (w = wa->unk_88.unk_04; w; w = w->unk_1c.unk_04)
+                    for (; w; w = w->unk_1c.unk_04)
                         if ((wo = w->func_080557a4(reg, 1 << k)) != 0)
                             break;
                     if (!wo) {
                         func_0804ad38("can't get last writer\n");
                         return 0;
                     }
+                    Instr *u = wb->unk_88.unk_00;
                     Operand *uo = 0;
-                    Instr *u;
-                    for (u = wb->unk_88.unk_00; u; u = u->unk_1c.unk_00)
+                    for (; u; u = u->unk_1c.unk_00)
                         if ((uo = u->func_08055720(reg, 1 << k)) != 0)
                             break;
                     if (!uo) {
@@ -248,7 +251,9 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         func_0804ad38("<ve to end \n");
                         return 0;
                     }
-                    int d = wo->unk_0a + uo->unk_29 - (k1 + te + k2 + getFromStart(u)) - 1;
+                    int fs = getFromStart(u);
+                    int total = te + k1 + k2 + fs;
+                    int d = wo->unk_0a + uo->unk_29 - total - 1;
                     if (d > wt->unk_44)
                         wt->unk_44 = d;
                 }
@@ -259,7 +264,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
         for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
             for (int i = 0; i != in->unk_138b; i++) {
                 Operand *op = &in->unk_38[i];
-                RegPoolEntry *r = op->outputReg();
+                RegPoolEntry *r = isRegisterOperand(op, 2) ? op->unk_18 : 0;
                 if (r && r->unk_2c) {
                     regUse *u = ul->func_0805b5dc(r);
                     if (!u) {
@@ -268,31 +273,40 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     }
                     for (int k = 0; k != r->unk_28; k++)
                         if ((op->unk_07 >> k) & 1) {
-                            in->func_08055fbc(u->unk_20[k].unk_30);
-                            in->func_08055ffc(in->unk_13cf - u->unk_20[k].unk_32);
+                            regUseSlot *slot = &u->unk_20[k];
+                            in->func_08055fbc(slot->unk_30);
+                            int bound = in->unk_13cf - slot->unk_32;
+                            in->func_08055ffc(bound);
                         }
                 }
             }
     }
-    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    Instr *in;
+    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
         for (int i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            if (!op->unk_18)
-                continue;
-            regUse *u = ul->func_0805b5dc(op->unk_18);
-            if (op->inputRegB())
-                op->unk_28 = u->unk_12 & op->unk_27;
-            if (op->outputReg())
-                op->unk_28 = u->unk_13 & op->unk_27;
-            op->unk_28 |= u->unk_14;
+            RegPoolEntry *reg = op->unk_18;
+            if (reg) {
+                regUse *u = ul->func_0805b5dc(reg);
+                if (isRegisterOperand(op, 1))
+                    op->unk_28 = u->unk_12 & op->unk_27;
+                if (isRegisterOperand(op, 2))
+                    op->unk_28 = u->unk_13 & op->unk_27;
+                op->unk_28 |= u->unk_14;
+            }
         }
-    switch (s->unk_2cd) {
-    case 2:
-    case 3:
-        for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
-            if (in->func_08055ac4() == 0xa5)
-                in->func_0805601c(2);
-        break;
+    int endType = s->getEndType();
+    if ((unsigned char)endType == 2) {
+        goto branchBound;
     }
+    if ((unsigned char)endType == 3) {
+        goto branchBound;
+    }
+success:
     return 1;
+branchBound:
+    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+        if (in->func_08055ac4() == 0xa5)
+            in->func_0805601c(2);
+    goto success;
 }

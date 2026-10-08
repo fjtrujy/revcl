@@ -23,7 +23,7 @@ inline bool ol_s::isExt()
 
 inline bool ol_s::isExtUsed()
 {
-    return (unk_13 >> 1) & 1;
+    return flags.externalUsed;
 }
 
 inline ol_s::ol_s()

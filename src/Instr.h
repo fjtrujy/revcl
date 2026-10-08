@@ -389,10 +389,10 @@ struct Operand {
             r = true;
         return r;
     }
-    bool isOutRegOp()
+    char isOutRegOp()
     {
         int r = 0;
-        if (unk_09 == 2 && !isZeroReg())
+        if (unk_09 == 2 && !isZero())
             r = 1;
         return r;
     }
@@ -508,6 +508,7 @@ struct Operand {
             r = 1;
         return (bool)r;
     }
+    bool hasRegister() { return unk_18 != 0; }
     bool isInput() { return unk_09 == 1; }
     bool isOutput() { return unk_09 == 2; }
     RegPoolEntry *inReg()
