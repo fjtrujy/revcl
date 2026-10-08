@@ -87,9 +87,9 @@ int iGroupLog::logTable(workTable *wt)
                     RegPoolEntry *r = op->unk_18;
                     if (r == reg && op->unk_27)
                         for (int k = 0; k != r->unk_28; k++) {
-                            if (op->isReg2() && ((op->unk_27 >> k) & 1))
+                            if (isRegisterOperand(op, 2) && ((op->unk_27 >> k) & 1))
                                 in->func_08055aa8();
-                            if (op->isInRegB() && ((op->unk_27 >> k) & 1))
+                            if (isRegisterOperand(op, 1) && ((op->unk_27 >> k) & 1))
                                 in->func_08055a88();
                         }
                 }
@@ -100,7 +100,7 @@ int iGroupLog::logTable(workTable *wt)
                     if (in->unk_0e_1)
                         for (int j = 0; j != in->unk_138b; j++) {
                             Operand *op = &in->unk_38[j];
-                            RegPoolEntry *r = op->outRegOp();
+                            RegPoolEntry *r = registerOperand(op, 2);
                             if (r)
                                 for (int k = 0; k != r->unk_28; k++)
                                     for (ol_s *o = op->unk_2c[k].unk_54.func_08058370(); o; o = o->func_080583ac()) {
@@ -113,7 +113,7 @@ int iGroupLog::logTable(workTable *wt)
                     if (in->unk_0e_0)
                         for (int j = 0; j != in->unk_138b; j++) {
                             Operand *op = &in->unk_38[j];
-                            RegPoolEntry *r = op->regOp();
+                            RegPoolEntry *r = registerOperand(op, 1);
                             if (r)
                                 for (int k = 0; k != r->unk_28; k++)
                                     for (ol_s *o = op->unk_2c[k].unk_54.func_08058370(); o; o = o->func_080583ac())
@@ -124,9 +124,7 @@ int iGroupLog::logTable(workTable *wt)
             int n = 0;
             for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
                 if (in->unk_0e == 3) {
-                    const char *name = "NO_BASE_INST";
-                    if (in->unk_34)
-                        name = in->unk_34->unk_04;
+                    const char *name = in->unk_34 ? in->unk_34->unk_04 : "NO_BASE_INST";
                     func_0804acb0("  [%4d] %d %s\n", n++, in->unk_0c, name);
                 }
             func_0804acb0("  ..%d matches\n", n);
