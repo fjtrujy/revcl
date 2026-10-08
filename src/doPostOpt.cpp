@@ -11,6 +11,11 @@
 typedef bool (*wrangleFunc)(workTable *, int *);
 
 
+static inline void dumpOptInstruction(Instr *in)
+{
+    in->func_08054008(false);
+}
+
 bool workTable::doPostOpt(int rawMode)
 {
     if (!unk_2c) {
@@ -49,11 +54,10 @@ bool workTable::doPostOpt(int rawMode)
         wtInstrList *lin = &unk_88;
         expected = lin->unk_08;
         int count = 0;
-        int et = owner->unk_2cd;
-        if (et == 2) {
+        if (owner->getEndType() == 2) {
             if (unk_34 - unk_30 <= 1)
                 unk_34 = unk_30 + 2;
-        } else if (et == 3) {
+        } else if (owner->getEndType() == 3) {
             if (unk_34 - unk_30 <= 1)
                 unk_34 = unk_30 + 2;
         }
@@ -61,6 +65,9 @@ bool workTable::doPostOpt(int rawMode)
         int maxLid = 0;
         int len;
         switch (rawMode) {
+        default:
+            func_0804ad38("bad raw mode into doPostOpt()\n");
+            return false;
         case 1:
         case 2:
             len = unk_34 - unk_30;
@@ -69,9 +76,6 @@ bool workTable::doPostOpt(int rawMode)
         case 4:
             len = pw->func_08072eec();
             break;
-        default:
-            func_0804ad38("bad raw mode into doPostOpt()\n");
-            return false;
         }
         if (!func_08073774(rawMode)) {
             func_0804ad38("doPostOpt : failed to set raw mode..\n");
@@ -91,11 +95,8 @@ bool workTable::doPostOpt(int rawMode)
             for (int p = 0; p != 2; p++) {
                 Instr *in = ie[p];
                 if (in) {
-                    int nBranch = -1;
+                    int nBranch;
                     switch (rawMode) {
-                    case 1:
-                        in->unk_1394 = in->unk_13e8.unk_04 - unk_30;
-                        break;
                     case 2: {
                         int t = in->unk_13e8.unk_04;
                         in->unk_1394 = t;
@@ -103,6 +104,12 @@ bool workTable::doPostOpt(int rawMode)
                             func_0804ad38("postopt - istart set for fixed mode \n");
                             return false;
                         }
+                        break;
+                    }
+                    case 1: {
+                        nBranch = -1;
+                        int t = in->unk_13e8.unk_04;
+                        in->unk_1394 = t - unk_30;
                         break;
                     }
                     case 3:
@@ -124,15 +131,10 @@ bool workTable::doPostOpt(int rawMode)
                         func_0804ad38("raw post mode for postopt\n");
                         return false;
                     }
-                    if (in->unk_1428) {
-                        if (in->unk_30) {
-                            func_0804ad38("owner not 0 for move\n");
-                            return false;
-                        }
-                    } else {
+                    if (!in->unk_1428) {
                         if (in->unk_30 != (cls_unk30 *)this) {
                             func_0804ad38("owner not this for non-move...%p\n", in->unk_30);
-                            in->func_08054008(false);
+                            dumpOptInstruction(in);
                             return false;
                         }
                         if (!logUnlinkFromLinear(in)) {
@@ -140,13 +142,18 @@ bool workTable::doPostOpt(int rawMode)
                             return false;
                         }
                         count++;
+                    } else {
+                        if (in->unk_30) {
+                            func_0804ad38("owner not 0 for move\n");
+                            return false;
+                        }
                     }
                     if (!UnlinkFromDone((Block *)this, in)) {
                         func_0804ad38("doPostOpt -  unlink from done list failed\n");
                         return false;
                     }
                     if (in->unk_1388) {
-                        if (++nBranch) {
+                        if (nBranch + 1) {
                             func_0804ad38("doPostOpt - more than one branch\n");
                             return false;
                         }
@@ -164,7 +171,9 @@ bool workTable::doPostOpt(int rawMode)
                         func_0804ad38("i_lid set not in loop\n");
                         return false;
                     }
-                    if (iloc != row + lid * g_080b336c) {
+                    int rebuilt = lid * g_080b336c;
+                    rebuilt += row;
+                    if (iloc != rebuilt) {
                         func_0804ad38("badly formed iloc in instruction\n");
                         return false;
                     }
@@ -206,11 +215,12 @@ bool workTable::doPostOpt(int rawMode)
             if (!ie)
                 func_0804ad38("can't get ie during postopt\n");
             for (int p = 0; p != 2; p++) {
-                if (!ie[p])
-                    continue;
-                if (!logAddLinear_Tail(ie[p])) {
-                    func_0804ad38("failed to add in to linear tale\n");
-                    return false;
+                Instr *in = ie[p];
+                if (in) {
+                    if (!logAddLinear_Tail(in)) {
+                        func_0804ad38("failed to add in to linear tale\n");
+                        return false;
+                    }
                 }
             }
         }
@@ -226,11 +236,6 @@ bool workTable::doPostOpt(int rawMode)
 static inline bool isRawTable(workTable *wt)
 {
     return wt->unk_09 == 3;
-}
-
-static inline void dumpOptInstruction(Instr *in)
-{
-    in->func_08054008(false);
 }
 
 bool instStream::setOptTable(workTable *nt)

@@ -66,6 +66,7 @@ public:
     bool flowReset();
     const char *branchTypeName();
     const char *endTypeName();
+    unsigned char getEndType() { return unk_2cd; }
     const char *startTypeName();
     char *emit(char *buf, int a, int *p1, int *p2);
     int checkStartEnd()
