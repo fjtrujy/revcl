@@ -741,6 +741,11 @@ bool func_0805f550(Block *b)
     return true;
 }
 
+static inline int lockLatency(cls0805bcc4 *input, cls0805bcc4 *parent)
+{
+    return input->unk_18 + parent->unk_18;
+}
+
 bool dynCalcStats(workTable *wt)
 {
     Block *b = (Block *)wt;
@@ -757,19 +762,20 @@ bool dynCalcStats(workTable *wt)
     }
 
     for (in = b->unk_94; in; in = in->unk_24.unk_00) {
+        Operand *op;
         int h = 0;
         for (i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->inputRegB();
+            op = &in->unk_38[i];
+            RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 for (int p = 0; p != reg->unk_28; p++) {
                     OpSlot *s = &op->unk_2c[p];
                     bool bit = (op->unk_07 >> p) & 1;
-                    if (bit && s->unk_19 != 2) {
+                    if (bit && !isAAInputLock(s)) {
                         cls0805bcc4 *par = s->getParent();
-                        int lat = s->unk_18 + par->unk_18;
+                        int lat = lockLatency(s, par);
                         int t = 0;
-                        if (par->unk_2d != 2)
+                        if (!isRegLock(par))
                             t = par->ownerInstr()->unk_140a + lat;
                         if (t > h)
                             h = t;
@@ -778,8 +784,8 @@ bool dynCalcStats(workTable *wt)
             }
         }
         for (i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->getReg2();
+            op = &in->unk_38[i];
+            RegPoolEntry *reg = registerOperand(op, 2);
             if (reg) {
                 for (int p = 0; p != reg->unk_28; p++) {
                     rPart *rp = reg->getRP(p);
@@ -799,15 +805,15 @@ bool dynCalcStats(workTable *wt)
         if (h > b->unk_04)
             b->unk_04 = h;
         for (i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->getReg();
+            op = &in->unk_38[i];
+            RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 for (int p = 0; p != reg->unk_28; p++) {
-                    OpSlot *s = &op->unk_2c[p];
                     bool bit = (op->unk_07 >> p) & 1;
                     if (bit) {
+                        OpSlot *s = &op->unk_2c[p];
                         rPart *rp = reg->getRP(p);
-                        if (s->unk_19 != 2) {
+                        if (!isAAInputLock(s)) {
                             if (rp->unk_42 == -1) {
                                 rp->unk_42 = in->unk_140a;
                                 rp->unk_44 = in->unk_140a;
@@ -823,8 +829,8 @@ bool dynCalcStats(workTable *wt)
             }
         }
         for (i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->getReg2();
+            op = &in->unk_38[i];
+            RegPoolEntry *reg = registerOperand(op, 2);
             if (reg) {
                 for (int p = 0; p != reg->unk_28; p++) {
                     bool bit = (op->unk_07 >> p) & 1;
@@ -844,16 +850,17 @@ bool dynCalcStats(workTable *wt)
     for (in = b->unk_98; in; in = in->unk_24.unk_04) {
         for (i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->getReg();
+            RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 for (int p = 0; p != reg->unk_28; p++) {
                     OpSlot *s = &op->unk_2c[p];
                     bool bit = (op->unk_07 >> p) & 1;
-                    if (bit && s->unk_19 != 2) {
+                    if (bit && !isAAInputLock(s)) {
                         cls0805bcc4 *par = s->getParent();
-                        if (par->unk_2d != 2) {
+                        if (!isRegLock(par)) {
                             Instr *pi = par->ownerInstr();
-                            int v = in->unk_140a - (par->unk_18 + s->unk_18);
+                            int lat = lockLatency(s, par);
+                            int v = in->unk_140a - lat;
                             if (v < 0) {
                                 func_0804ad38("-ve ip?\n");
                                 in->func_08054008(false);
@@ -873,14 +880,14 @@ bool dynCalcStats(workTable *wt)
     for (in = b->unk_94; in; in = in->unk_24.unk_00) {
         for (i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
-            RegPoolEntry *reg = op->getReg();
+            RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 for (int p = 0; p != reg->unk_28; p++) {
                     OpSlot *s = &op->unk_2c[p];
                     bool bit = (op->unk_07 >> p) & 1;
-                    if (bit && s->unk_19 != 2) {
+                    if (bit && !isAAInputLock(s)) {
                         cls0805bcc4 *par = s->getParent();
-                        if (par->unk_2d != 2) {
+                        if (!isRegLock(par)) {
                             Instr *pi = par->ownerInstr();
                             int lat;
                             if (s->unk_15)
