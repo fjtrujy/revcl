@@ -13,7 +13,7 @@ int g_080de74c;
 int g_080de750;
 volatile char g_080de754;
 int g_080de758;
-char g_080de75c;
+volatile char g_080de75c;
 
 bool func_0807f560(workTable *wt, wrangleFunc f);
 bool dynCalcStats(workTable *wt);

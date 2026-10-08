@@ -12,7 +12,7 @@ typedef bool (*wrangleFunc)(workTable *, int *);
 void adjustMoveCount(Block *blk, Instr *mv, int n);
 extern int timeout_080b3010;
 extern int g_080de758;
-extern char g_080de75c;
+extern volatile char g_080de75c;
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 

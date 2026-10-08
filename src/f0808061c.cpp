@@ -59,7 +59,7 @@ bool func_0808061c(workTable *wt, wrangleFunc f)
         g_080de758 = wt->unk_94.unk_08 / 5 + 4;
     if (g_080de758 < timeout_080b3010)
         g_080de758 = timeout_080b3010;
-    if (!setWatchdog(&g_080de75c, g_080de758)) {
+    if (!setWatchdog((char *)&g_080de75c, g_080de758)) {
         func_0804ad38("failed to set OS_setWatchdog\n");
         return false;
     }
@@ -110,8 +110,8 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
                 bool b2 = minSfx2 >= 0 && minSfx2 < maxBranchLid;
                 bool b1 = minSfx1 >= 0 && minSfx1 < maxBranchLid - wt->unk_7a;
                 if (b2 || b1) {
-                    int lim2 = maxBranchLid * wt->unk_38;
                     wt->unk_7c = maxBranchLid;
+                    int lim2 = maxBranchLid * wt->unk_38;
                     int lim1 = (maxBranchLid - wt->unk_7a) * wt->unk_38;
                     g_080de72c = 0;
                     for (Instr *in = wt->unk_a0.unk_00; in; in = in->unk_24.unk_00) {
@@ -142,7 +142,8 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
                     }
                     func_0804acb0("sidefx : loop@ %d critical at %d recoverable at %d minSafe=%d..so abort\n",
                                   maxBranchLid, minSfx2, minSfx1, (int)wt->unk_7a);
-                    goto faulted;
+                    wt->unk_4c = 0;
+                    goto after_pending_test;
                 }
             }
             if (!wt->changeMode(3)) {
@@ -151,15 +152,18 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
             }
             return true;
         }
-        if (wt->unk_a0.unk_04)
-            wt->unk_54.func_0805874c(wt->unk_a0.unk_04->unk_13e8.unk_00);
-        else
-            wt->unk_54.func_0805874c(0);
+        {
+            cls08058718 *lastPos = &wt->unk_54;
+            if (wt->unk_a0.unk_04)
+                lastPos->func_0805874c(wt->unk_a0.unk_04->unk_13e8.getRow());
+            else
+                lastPos->func_0805874c(0);
+        }
         pending = 0;
         while (wt->unk_4c) {
             if (!f(wt, (int *)&c)) {
                 wt->unk_4c = 0;
-                goto check_pending;
+                goto after_insert_test;
             }
             {
                 int lsz = wt->unk_38;
@@ -224,11 +228,8 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
                             func_0804adf0(-1);
                         }
                     }
-                    if (DoInsert(wt, c.unk_00, &pos)) {
-                        if (wt->unk_4c)
-                            goto next;
-                        goto check_pending;
-                    }
+                    if (DoInsert(wt, c.unk_00, &pos))
+                        goto after_insert_test;
                     func_0804ad38("was ok to insert..but failed!\n");
                     wt->dump();
                     func_0804adf0(-1);
@@ -250,6 +251,10 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
                     wt->unk_4c = c.unk_00->unk_2c;
             }
         }
+        goto check_pending;
+    after_insert_test:
+        if (wt->unk_4c)
+            goto next;
     check_pending:
         if (pending) {
             c = mor;
@@ -272,8 +277,9 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
                     func_0804ac7c("finst not set for no slots\n");
             }
         }
+    after_pending_test:
         if (wt->unk_4c)
-            continue;
+            goto next;
         goto undo;
     switch_pipe:
         wt->unk_ac = 1;
@@ -281,11 +287,14 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
         g_080de72c = wt->unk_a0.unk_00;
     faulted:
         wt->unk_4c = 0;
+        goto after_pending_test;
     undo:
         {
+            if (!g_080de72c) {
+                wtInstrList *faultDone = &wt->unk_a0;
+                g_080de72c = faultDone->unk_04;
+            }
             wtInstrList *done = &wt->unk_a0;
-            if (!g_080de72c)
-                g_080de72c = done->unk_04;
             while (done->unk_04 != g_080de72c) {
                 Instr *in = done->unk_04;
                 in->func_08054214();
@@ -299,7 +308,7 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
                     func_0804adf0(-1);
                 }
             }
-            while (wt->unk_a0.unk_00) {
+            while (done->unk_00) {
                 Instr *in = done->unk_04;
                 if (!UndoInsert(wt, in)) {
                     func_0804ad38("undo insert: failed to remove done list tail\n");
@@ -313,6 +322,7 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
                 if (in) {
                     in->unk_1418 = 0;
                     in->unk_141a++;
+                    int cap;
                     if (wt->unk_38 && in->unk_141a > wt->unk_38 * 16) {
                         if (mv) {
                             if (!undoMovesTo((Block *)wt, in)) {
@@ -321,10 +331,15 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
                             }
                             in = 0;
                         }
-                        if (in)
-                            in->unk_141a = wt->unk_38 * 16;
-                    } else if (in->unk_141a > wt->unk_04 * 8)
-                        in->unk_141a = wt->unk_04 * 8;
+                        if (!in)
+                            continue;
+                        cap = wt->unk_38 * 16;
+                    } else {
+                        if (in->unk_141a <= wt->unk_04 * 8)
+                            continue;
+                        cap = wt->unk_04 * 8;
+                    }
+                    in->unk_141a = cap;
                 }
             }
             g_080de72c = 0;
