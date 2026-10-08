@@ -230,7 +230,7 @@ public:
 };
 
 bool freeLockLists(cls0805c244 *p);
-bool func_0805db74(int s1, int e1, int s2, int e2);
+bool lockRangesOverlap(int s1, int e1, int s2, int e2);
 cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part);
 const char *rlmtName(unsigned char t);
 

@@ -118,7 +118,7 @@ int cls0805c244::canMoveInputLock(cls0805bcc4 *in, short *pos, int slotBit)
             if (lk->unk_22) {
                 if (ws < le && we >= ls)
                     return 0x10;
-            } else if (func_0805db74(ws, we, ls, le))
+            } else if (lockRangesOverlap(ws, we, ls, le))
                 return 0x20;
         } while ((lk = lk->unk_08) != 0);
     }
@@ -206,7 +206,7 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int slotBit)
         int ls = lk->unk_34;
         int le = lk->unk_4c;
         wrapRangeLocal(ls, le);
-        if (func_0805db74(s, e, ls, le))
+        if (lockRangesOverlap(s, e, ls, le))
             return 2;
     }
     if (ret)
