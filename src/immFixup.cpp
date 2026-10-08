@@ -81,12 +81,37 @@ static inline bool bit0(unsigned char m)
     return m & 1;
 }
 
+static inline bool bit0Clear(unsigned char m)
+{
+    m ^= 1;
+    return m & 1;
+}
+
 static inline bool hasAaData(Instr *in)
 {
-    bool r = true;
-    if (in->unk_13d4 == 0 && in->unk_13d5 == 0 && in->unk_13d6 == -1)
-        r = in->unk_13d8.isValid();
-    return r;
+    if (in->unk_13d4 != 0 || in->unk_13d5 != 0 ||
+        in->unk_13d6 != -1 || in->unk_13d8.isValid())
+        return true;
+    return false;
+}
+
+static inline bool immValid(mValue *v)
+{
+    return v->isValid();
+}
+
+static inline bool prepareAaBefore(Instr *vi, aaDesc *aa, aaUse *u)
+{
+    if (hasAaData(vi)) {
+        func_0804ad38("instruction already has aa data loaded .. mode before\n");
+        vi->func_08054008(false);
+        immValid(&vi->unk_13d8);
+        return false;
+    }
+    vi->unk_13d5 = 1;
+    vi->unk_13d4 = aa->unk_04;
+    vi->unk_13d6 = u->unk_04;
+    return true;
 }
 
 bool aaFixup(instStream *s)
@@ -103,8 +128,8 @@ bool aaFixup(instStream *s)
             func_0804adf0(-1);
         }
         Instr *in = ru->unk_1c;
-        aaDesc *aa = func_0806c768(in);
         olList *vis = &ru->unk_20[0].unk_00;
+        aaDesc *aa = func_0806c768(in);
         if (!aa || !bit0(ru->unk_0c) || !bit0(ru->unk_0d) || ru->unk_18 != 1)
             continue;
         RegPoolEntry *outReg = in->unk_38[aa->unk_06].unk_18;
@@ -121,25 +146,19 @@ bool aaFixup(instStream *s)
             aaUse *u = func_0806c7f8(vi);
             if (u && ol->unk_10 == u->unk_04 && vop->unk_07 == 1) {
                 mValue *v = &vi->unk_13d8;
-                if (hasAaData(vi)) {
-                    func_0804ad38("instruction already has aa data loaded .. mode before\n");
-                    vi->func_08054008(false);
-                    v->isValid();
+                if (!prepareAaBefore(vi, aa, u))
                     return false;
-                }
-                vi->unk_13d5 = 1;
-                vi->unk_13d4 = aa->unk_04;
-                vi->unk_13d6 = u->unk_04;
-                if (aa->unk_07 < 0)
+                if (aa->unk_07 >= 0) {
+                    if (!v->set(&in->unk_38[aa->unk_07].unk_1c)) {
+                        func_0804ad38("failed to set xaaImm for before\n");
+                        return false;
+                    }
+                } else
                     v->setInt(aa->unk_08);
-                else if (!v->set(&in->unk_38[aa->unk_07].unk_1c)) {
-                    func_0804ad38("failed to set xaaImm for before\n");
-                    return false;
-                }
             }
         }
         Operand *out = in->getOp(aa->unk_06);
-        if (!out || out->unk_09 != 2 || !bit0(out->unk_07)) {
+        if (!out || !out->isOutput() || bit0Clear(out->unk_07)) {
             func_0804ad38("failed to get output operand for aa\n");
             func_0804adf0(-1);
         }
@@ -152,22 +171,23 @@ bool aaFixup(instStream *s)
             }
             aaUse *u = func_0806c7f8(vi);
             if (u && ol->unk_10 == u->unk_04 && vop->unk_07 == 1) {
-                mValue *v = &vi->unk_13d8;
                 if (hasAaData(vi)) {
                     func_0804ad38("instruction already has aa data loaded.. mode after\n");
                     vi->func_08054008(false);
-                    v->isValid();
+                    immValid(&vi->unk_13d8);
                     return false;
                 }
+                mValue *v = &vi->unk_13d8;
                 vi->unk_13d5 = 2;
                 vi->unk_13d4 = aa->unk_04;
                 vi->unk_13d6 = u->unk_04;
-                if (aa->unk_07 < 0)
+                if (aa->unk_07 >= 0) {
+                    if (!v->set(&in->unk_38[aa->unk_07].unk_1c)) {
+                        func_0804ad38("failed to set xaaImm after\n");
+                        return false;
+                    }
+                } else
                     v->setInt(aa->unk_08);
-                else if (!v->set(&in->unk_38[aa->unk_07].unk_1c)) {
-                    func_0804ad38("failed to set xaaImm after\n");
-                    return false;
-                }
             }
         }
     }
@@ -448,11 +468,6 @@ bool Init_immFixup(instStream *s)
     for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
         initImm(in);
     return true;
-}
-
-static inline bool immValid(mValue *v)
-{
-    return v->isValid();
 }
 
 void Instr::hasImmValue()
