@@ -392,7 +392,6 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         break;
     }
     case 55:
-        break;
     default:
         func_0804ad38("asked to emit an unknown/unemittable operand\n");
         return 0;
