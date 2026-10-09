@@ -110,19 +110,18 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
     return ret;
 }
 
-static inline int nextLoopPosition(int v, int row, int n)
+static inline void nextLoopPosition(int v, int row, int n, int &next)
 {
-    int next;
-    if (n) {
+    if (!n)
+        next = v;
+    else {
         int r = v % n;
         int rem = row % n;
-        row /= n;
+        int q = row / n;
         if (r <= rem)
-            row++;
-        next = row * n + r;
-    } else
-        next = v;
-    return next;
+            q++;
+        next = q * n + r;
+    }
 }
 
 int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
@@ -158,6 +157,7 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
 
     bool ext = false;
     int lim;
+    int he;
     if (!out->unk_20)
         lim = first;
     else {
@@ -191,7 +191,7 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
                 ret |= 0x4000;
             }
             int hs = h->unk_3e + lsz;
-            int he = h->unk_4e + lsz;
+            he = h->unk_4e + lsz;
             if (hs < last) {
                 *minPos = 30000;
                 return 0x20000;
@@ -232,9 +232,9 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
         } else if (lockRangesOverlap(s, e, ls, le)) {
             first -= p;
             int v = lk->unk_4e - first + 1;
-            v = nextLoopPosition(v, ((cls08058718 *)pos)->unk_00, g_080b336c);
-            if (*minPos < v)
-                *minPos = v;
+            nextLoopPosition(v, ((cls08058718 *)pos)->unk_00, g_080b336c, he);
+            if (*minPos < he)
+                *minPos = he;
             return ret | 2;
         }
     }
