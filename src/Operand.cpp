@@ -230,6 +230,16 @@ void Operand::func_0805665c(int)
     }
 }
 
+static inline int operandZeroValue(Operand *op)
+{
+    int z = 0;
+    if (op->unk_18) {
+        if (op->unk_18 == op->unk_18->unk_04->unk_10)
+            z = 1;
+    }
+    return z;
+}
+
 char *Operand::Emit(char *buf, bool, bool symbolic)
 {
     const char *rn = 0;
@@ -238,9 +248,9 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     if (!func_080563f8())
         return 0;
     if (unk_18) {
-        int z = unk_18 == unk_18->unk_04->unk_10;
-        if ((bool)z != isZero()) {
-            func_0804ad38("Operand::Emit - zero mismatch..%s but %d\n", unk_18->func_0805a8e0(), z);
+        bool z = unk_18 == unk_18->unk_04->unk_10;
+        if (z != operandZeroValue(this)) {
+            func_0804ad38("Operand::Emit - zero mismatch..%s but %d\n", unk_18->func_0805a8e0(), operandZeroValue(this));
             return 0;
         }
     }
@@ -253,13 +263,14 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             rn = unk_14->func_0805a8e0();
         }
     } else {
-        if (unk_18) {
-            if (unk_18->unk_14) {
+        RegPoolEntry *reg = unk_18;
+        if (reg) {
+            if (reg->unk_14) {
                 func_0804ad38("non symbolic emit.. but found a virtual register in an operand!\n");
                 return 0;
             }
-            rn = unk_18->func_0805a8e0();
-            unk_18->unk_35 |= unk_07;
+            rn = reg->func_0805a8e0();
+            reg->unk_35 |= unk_07;
         }
     }
     switch (unk_04) {
