@@ -48,7 +48,10 @@ bool instStream::func_0806563c(bool a, bool b)
 bool BuildfDepList(workTable *wt, bool force, bool)
 {
     Instr *in;
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    in = wt->unk_88.unk_00;
+    if (!in)
+        goto finalize;
+    for (; in; in = in->unk_1c.unk_00) {
         in->unk_1410 = 0;
         in->unk_1412 = 0;
         in->unk_1414 = 0;
@@ -61,100 +64,103 @@ bool BuildfDepList(workTable *wt, bool force, bool)
             return false;
         }
     }
-    int haveInstruction = (in = wt->unk_88.unk_00) != 0;
-    while (haveInstruction) {
-        bool b40 = false;
-        bool b10 = false;
-        int ramBits = 0;
-        Operand *ea = 0;
-        bool b20 = false;
-        if (in->unk_13d0 & 0x08) {
-            func_0804ad38("found an instruction barrier fdep - this should be done with --barrier fixup!\n");
-            in->leDump();
-            return false;
-        }
-        if (in->unk_13d0 & 0x10)
-            b10 = true;
-        if (in->unk_13d0 & 0x20)
-            b20 = true;
-        if (in->unk_13d0 & 0x40)
-            b40 = true;
-        if (in->unk_13ce == 2) {
-            ea = getEA(in);
-            if (!ea) {
-                func_0804ad38("failed to get ea op for store\n");
+    {
+        int haveInstruction = (in = (Instr *)*(void **)&wt->unk_88.unk_00) != 0;
+        while (haveInstruction) {
+            bool b40 = false;
+            bool b10 = false;
+            int ramBits = 0;
+            Operand *ea = 0;
+            bool b20 = false;
+            if (in->unk_13d0 & 0x08) {
+                func_0804ad38("found an instruction barrier fdep - this should be done with --barrier fixup!\n");
+                in->leDump();
                 return false;
             }
-            b10 = true;
-            b20 = true;
-            ramBits = in->getRamBits();
-            if (!ramBits)
-                func_0804ac7c("found store instruction with no ram bits\n");
-        }
-        if (in->unk_13ce == 1) {
-            ea = getEA(in);
-            if (!ea) {
-                func_0804ad38("failed to get ea op for load\n");
+            if (in->unk_13d0 & 0x10)
+                b10 = true;
+            if (in->unk_13d0 & 0x20)
+                b20 = true;
+            if (in->unk_13d0 & 0x40)
+                b40 = true;
+            if (in->unk_13ce == 2) {
+                ea = getEA(in);
+                if (!ea) {
+                    func_0804ad38("failed to get ea op for store\n");
+                    return false;
+                }
+                b10 = true;
+                b20 = true;
+                ramBits = in->getRamBits();
+                if (!ramBits)
+                    func_0804ac7c("found store instruction with no ram bits\n");
+            }
+            if (in->unk_13ce == 1) {
+                ea = getEA(in);
+                if (!ea) {
+                    func_0804ad38("failed to get ea op for load\n");
+                    return false;
+                }
+                b20 = true;
+                ramBits = in->getRamBits();
+                if (!ramBits)
+                    func_0804ac7c("found load instruction with no ram bits\n");
+            }
+            if (b20 || b10 || b40) {
+                for (Instr *o = in->unk_1c.unk_04; o; o = o->unk_1c.unk_04) {
+                    bool dep = false;
+                    int type = (unsigned char)o->unk_13ce;
+                    if (((b20 && type == 2) || (b10 && type == 1))
+                        && (!ea || ((o->getRamBits() & ramBits)
+                                    && (force || tagsMatch(o, in) || sameEA(in, o)))))
+                        dep = true;
+                    else if (b40 && (o->unk_13d0 & 0x40)) {
+                        b40 = false;
+                        dep = true;
+                    } else {
+                        if (in->unk_13ce == 2 && (o->unk_13d0 & 0x20))
+                            dep = true;
+                        if (in->unk_13ce == 1 && (o->unk_13d0 & 0x10))
+                            dep = true;
+                    }
+                    if (dep) {
+                        if (!fdep_Link(o, in)) {
+                            func_0804ad38("failed to add ol for fdeps \n");
+                            func_0804adf0(-1);
+                        }
+                    }
+                }
+            } else if (in->unk_139c) {
+                func_0804ad38("tag string, but no match criteria set\n");
                 return false;
             }
-            b20 = true;
-            ramBits = in->getRamBits();
-            if (!ramBits)
-                func_0804ac7c("found load instruction with no ram bits\n");
-        }
-        if (b20 || b10 || b40) {
-            for (Instr *o = in->unk_1c.unk_04; o; o = o->unk_1c.unk_04) {
-                bool dep = false;
-                int type = (unsigned char)o->unk_13ce;
-                if (((b20 && type == 2) || (b10 && type == 1))
-                    && (!ea || ((o->getRamBits() & ramBits)
-                                && (force || tagsMatch(o, in) || sameEA(in, o)))))
-                    dep = true;
-                else if (b40 && (o->unk_13d0 & 0x40)) {
-                    b40 = false;
-                    dep = true;
-                } else {
-                    if (in->unk_13ce == 2 && (o->unk_13d0 & 0x20))
-                        dep = true;
-                    if (in->unk_13ce == 1 && (o->unk_13d0 & 0x10))
-                        dep = true;
-                }
-                if (dep) {
-                    if (!fdep_Link(o, in)) {
-                        func_0804ad38("failed to add ol for fdeps \n");
-                        func_0804adf0(-1);
+            for (int k = 0; k != in->unk_138b; k++) {
+                Operand *op = &in->unk_38[k];
+                if (op) {
+                    RegPoolEntry *r = registerOperand(op, 2);
+                    if (r) {
+                        if (r->unk_30 == 48)
+                            in->unk_1414 = op->unk_07;
+                        if (r->unk_30 == 48 || r->unk_30 == 49) {
+                            for (int p = 0; p != r->unk_28; p++)
+                                if ((op->unk_07 >> p) & 1)
+                                    for (ol_s *l = op->unk_2c[p].unk_54.unk_00; l; l = l->unk_00) {
+                                        Instr *x = l->unk_04;
+                                        if (x)
+                                            func_08065fd4(in, x);
+                                    }
+                        }
                     }
+                    r = registerOperand(op, 1);
+                    if (r && r->unk_30 == 48)
+                        in->unk_1412 = op->unk_07;
                 }
             }
-        } else if (in->unk_139c) {
-            func_0804ad38("tag string, but no match criteria set\n");
-            return false;
+            in = in->unk_1c.unk_00;
+            haveInstruction = in != 0;
         }
-        for (int k = 0; k != in->unk_138b; k++) {
-            Operand *op = &in->unk_38[k];
-            if (op) {
-                RegPoolEntry *r = registerOperand(op, 2);
-                if (r) {
-                    if (r->unk_30 == 48)
-                        in->unk_1414 = op->unk_07;
-                    if (r->unk_30 == 48 || r->unk_30 == 49) {
-                        for (int p = 0; p != r->unk_28; p++)
-                            if ((op->unk_07 >> p) & 1)
-                                for (ol_s *l = op->unk_2c[p].unk_54.unk_00; l; l = l->unk_00) {
-                                    Instr *x = l->unk_04;
-                                    if (x)
-                                        func_08065fd4(in, x);
-                                }
-                    }
-                }
-                r = registerOperand(op, 1);
-                if (r && r->unk_30 == 48)
-                    in->unk_1412 = op->unk_07;
-            }
-        }
-        in = in->unk_1c.unk_00;
-        haveInstruction = in != 0;
     }
+finalize:
     in = wt->unk_88.unk_00;
     Instr *last[4] = { 0, 0, 0, 0 };
     for (; in; in = in->unk_1c.unk_00) {
