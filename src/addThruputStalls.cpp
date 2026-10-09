@@ -6,6 +6,11 @@ static inline regUseSlot *registerPart(regUse *u, int part)
     return &u->unk_20[part];
 }
 
+static inline short *thruputTimes(regUse *u, int part)
+{
+    return &u->unk_20[part].unk_3c[10];
+}
+
 bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
 {
     regUse *tr = t->unk_234;
@@ -61,10 +66,12 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
                 return false;
             }
             int total = fst + (tend + dist);
-            if (total < sr->unk_20[part].unk_3c[11]) {
+            last = thruputTimes(sr, part)[1];
+            if (total < last) {
                 ol_s *setter = sr->unk_20[part].func_0805ba2c(0, true);
+                last = thruputTimes(sr, part)[1];
                 if (!p->proc.unk_74.addStall(setter, tr->unk_20[part].unk_20.unk_00, 1,
-                                        sr->unk_20[part].unk_3c[11] - total)) {
+                                        last - total)) {
                     func_0804ad38("failed to add an interstream latency stall\n");
                     return false;
                 }
