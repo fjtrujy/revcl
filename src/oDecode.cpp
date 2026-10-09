@@ -318,8 +318,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                                 np++;
                         }
                     }
-                    bool apply = n->unk_18 == 0 ? found : n->unk_18 == 1 && !found;
-                    if (apply) {
+                    if ((found && n->unk_18 == 0) || (!found && n->unk_18 == 1)) {
                         s += func_0804adbc(s, "%d", (int)n->unk_10);
                         break;
                     }
