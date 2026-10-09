@@ -10,8 +10,8 @@ class workTable;
 
 class loopDebris {
 public:
-    loopDebris();
-    ~loopDebris();
+    loopDebris() throw();
+    ~loopDebris() throw();
     bool init(const char *baseName, int a, bool flag);
     void func_0806770c();
     instStream *getEnterStream();

@@ -6,13 +6,13 @@
 
 char *dupString(const char *s);
 
-loopDebris::loopDebris()
+loopDebris::loopDebris() throw()
 {
     m_entryName = 0;
     m_exitName = 0;
 }
 
-loopDebris::~loopDebris()
+loopDebris::~loopDebris() throw()
 {
     if (m_entryName)
         delete [] m_entryName;
