@@ -882,8 +882,8 @@ bool dynCalcStats(workTable *wt)
             Operand *op = &in->unk_38[i];
             RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
-                for (int p = 0; p != reg->unk_28; p++) {
-                    OpSlot *s = &op->unk_2c[p];
+                OpSlot *s = op->unk_2c;
+                for (int p = 0; p != reg->unk_28; p++, s++) {
                     bool bit = (op->unk_07 >> p) & 1;
                     if (bit && !isAAInputLock(s)) {
                         cls0805bcc4 *par = s->getParent();
