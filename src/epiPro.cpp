@@ -249,10 +249,10 @@ static inline void initDebris(loopDebris *ld, const char *baseName, int a, bool 
         func_0804ad38("loopDebris:: init - no base name set!\n");
         return;
     }
-    ld->unk_10 = flag;
     ld->m_entryName = 0;
     ld->m_exitName = 0;
     ld->unk_00 = 0;
+    ld->unk_10 = flag;
     ld->m_nPro = 0;
     ld->m_nEpi = 0;
     ld->unk_14 = a;
