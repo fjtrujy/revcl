@@ -47,10 +47,18 @@ Regenerating the inventory must be deterministic.
 The inventory also writes `vuc/config/sections.tsv`. See
 `vuc/docs/toolchain-investigation.md` for the compiler evidence and open probes.
 
-**No matching percentage exists yet.** `status` intentionally reports
+**No whole-binary matching percentage exists yet.** `status` intentionally reports
 `UNAVAILABLE`, rather than misrepresenting a structural inventory as matched
-bytes. Relocation-aware object comparison, GCC 3.3.3 compiler reproduction,
-and the `diff`/`score` subcommands are still to be implemented.
+bytes. An isolated relocation-aware **single-function** experiment is available
+through `vuc/scripts/match_probe.py`; it is not the general `diff`/`score`
+pipeline. The historical GCC 3.3.3 compiler and complete scorer remain pending.
+
+The existing x86_64 Lima VM can execute a separately extracted, SHA-pinned
+GCC 3.3.5 compatibility toolchain (`vuc/scripts/bootstrap_compat_gcc.sh`).
+This compiler is not an exact VUC toolchain. Its initial `-O2` hypothesis for
+`AsmOutput_WritePrologue` matches 22/30 code bytes and 92/92 mapped literal
+bytes; details, commands, and constraints are documented in
+`vuc/docs/toolchain-investigation.md`.
 
 ## Milestones
 

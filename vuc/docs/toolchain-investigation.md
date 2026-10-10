@@ -40,7 +40,10 @@ C++/iostream call sites and modern-for-2004 GCC-generated prologues.
 The inspected macOS host reports Apple Clang 17 as `gcc` and Apple LLVM
 `objdump`; no `docker` or `podman` executable was found on PATH. The
 VCL's ignored `tools/rh9/` directory and local `.venv/` are absent.
-Consequently, no original-compiler build comparison has yet been performed.
+An existing x86_64 Lima VM, `revcl-oracle` (Debian 12), is available and
+supports execution of 32-bit ELF tools after installing the guest's
+`libc6-i386` and `libc6-dev-i386` packages. This changes only that guest's
+system packages and does not install the old compiler into its `/usr`.
 
 ## V1 reproducibility checklist
 
@@ -57,8 +60,8 @@ Consequently, no original-compiler build comparison has yet been performed.
 4. Only after the compiler has passed probes, add build execution and
    relocation-aware matching for candidate functions and data. Keep debug/symbol
    fidelity as separate score components from executable code bytes.
-5. Do not report a binary matching percentage until the scorer is validated
-   against exact and deliberately perturbed test objects.
+5. Do not report a whole-binary matching percentage until the full scorer is
+   validated against exact and deliberately perturbed test objects.
 
 ## Reproduction commands
 
@@ -85,7 +88,68 @@ python3 vuc/scripts/compiler_probe.py --compiler /path/to/g++ --out /tmp/vuc-pro
 ```
 
 The resulting `manifest.json` includes compiler identity, commands, source
-hash, candidate object hashes and compilation outcomes. These are fingerprints
-for future comparisons, **not** proof of the original compiler flags or a
-binary matching score. Apple Clang can smoke-test the harness but must never
-be accepted as the historical compiler. The matching toolchain remains absent.
+hash, candidate object hashes, ELF32-i386 identification and compilation
+outcomes. These are fingerprints for future comparisons, **not** proof of the
+original compiler flags or a whole-binary matching score. Apple Clang can
+smoke-test the harness but must never be accepted as the historical compiler.
+
+## Compatibility compiler bootstrap (not the exact original)
+
+The original January 2004 compiler signature corresponds to Debian's
+`gcc-3.3` source package `1:3.3.3ds3-0pre3`, as confirmed by its
+[historical Debian bug record](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=203835).
+Debian's [public snapshot archive](https://snapshot.debian.org/) only has
+main Debian FTP imports from 2005 onward. An exact i386 package for this
+January 2004 prerelease was **not** recovered in this session.
+
+A separately verified **GCC 3.3.5** (`Debian 1:3.3.5-13`) compatibility
+toolchain is instead available from Debian's historical archive. All six
+package SHA-256 values and the package URLs are pinned in
+`vuc/scripts/bootstrap_compat_gcc.sh`. This compiler is deliberately labeled
+noncanonical: it cannot prove code-generation equivalence to either VUC
+GCC 3.3.3 prerelease. It is useful for building genuine ELF32-i386 objects,
+exercising matching tools and testing compiler-independent hypotheses.
+
+From the host:
+
+```sh
+limactl start revcl-oracle
+limactl shell revcl-oracle -- sh -c 'sudo apt-get update && sudo apt-get install --no-install-recommends -y libc6-i386 libc6-dev-i386 binutils'
+limactl shell revcl-oracle -- sh /path/to/revcl/vuc/scripts/bootstrap_compat_gcc.sh /tmp/vuc-gcc335
+limactl shell revcl-oracle -- python3 /path/to/revcl/vuc/scripts/compiler_probe.py --compiler /tmp/vuc-gcc335/g++-compat --out /tmp/vuc-gcc335/probe-results
+```
+
+The last command produced six of six valid ELF32-i386 relocatable objects in
+the VM. The wrapper forces 32-bit assembly (`-Wa,--32`) and uses the extracted
+GCC 3.3.5 C++ headers; it does not change the VCL reconstruction. Scratch
+objects and downloaded compiler packages remain under `/tmp/vuc-gcc335/`.
+
+## First strictly resolved code comparison
+
+The `AsmOutput_WritePrologue` function at `0x08049b40` is 30 bytes and
+references a banner string at `0x080720a0` plus an iostream insertion
+through the PLT at `0x080497bc`. These addresses were observed in the
+original VUC disassembly and read-only data dump.
+
+```sh
+# Inside the existing revcl-oracle VM:
+/tmp/vuc-gcc335/g++-compat -O2 -c \
+  /path/to/revcl/vuc/probes/asm_output_hypothesis.cpp \
+  -o /tmp/vuc-gcc335/asm_output.o
+python3 /path/to/revcl/vuc/scripts/match_probe.py \
+  --object /tmp/vuc-gcc335/asm_output.o
+```
+
+The first tested hypothesis, built with noncanonical GCC 3.3.5 `-O2`,
+has **22 of 30 instruction bytes matching**, after resolving both
+`R_386_32` and `R_386_PC32` relocations, and **92 of 92 matching bytes**
+in the emitted literal section. It is **not exact**: eight instruction bytes
+differ because the old GCC loads the receiver and writes the arguments in
+a different order. The `-O2 -frename-registers` variant also gave 22/30;
+`-O1`, `-Os`, and `-O2 -fomit-frame-pointer` produced different function
+lengths (29, 20, and 28 bytes). These observations are *not* sufficient to
+infer VUC's original flags.
+
+The comparator deliberately rejects unsupported relocation types, unknown
+symbol addresses, literal-data mismatches and different function sizes.
+This is a scoped probe, **not** the full VUC relocation-aware scorer.

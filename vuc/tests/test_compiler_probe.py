@@ -13,6 +13,13 @@ spec.loader.exec_module(probe)
 
 
 class CompilerProbeTests(unittest.TestCase):
+    def test_elf32_i386_detection(self):
+        fixture = b"\x7fELF\x01\x01" + b"\0" * 10 + b"\x01\x00\x03\x00"
+        self.assertTrue(probe.is_elf32_i386(fixture))
+        self.assertFalse(probe.is_elf32_i386(fixture[:18]))
+        self.assertFalse(probe.is_elf32_i386(b"\0" * 20))
+        self.assertFalse(probe.is_elf32_i386(fixture[:18] + b"\x3e\x00"))
+
     def test_missing_compiler_fails(self):
         with tempfile.TemporaryDirectory() as out:
             with self.assertRaises(OSError):
@@ -24,6 +31,7 @@ class CompilerProbeTests(unittest.TestCase):
             report = probe.run_probe(shutil.which("clang++"), out, {"O0": ["-O0"]})
             self.assertFalse(report["historical_toolchain_verified"])
             self.assertIn("sha256", report["candidates"]["O0"])
+            self.assertIn("elf32_i386_relocatable", report["candidates"]["O0"])
             self.assertTrue((Path(out) / "manifest.json").is_file())
 
 

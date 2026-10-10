@@ -8,10 +8,18 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "vuc/probes/compiler_fingerprint.cpp"
+
+
+def is_elf32_i386(data):
+    """Distinguish an i386 object from a successful native-host build."""
+    return (len(data) >= 20 and data[:6] == b"\x7fELF\x01\x01"
+            and struct.unpack_from("<H", data, 16)[0] == 1
+            and struct.unpack_from("<H", data, 18)[0] == 3)
 
 
 def version(command):
@@ -32,8 +40,10 @@ def run_probe(compiler, output, flags):
         record = {"command": command, "exit_code": result.returncode,
                   "stderr": result.stderr[-2000:]}
         if result.returncode == 0:
-            record["sha256"] = hashlib.sha256(obj.read_bytes()).hexdigest()
+            raw = obj.read_bytes()
+            record["sha256"] = hashlib.sha256(raw).hexdigest()
             record["size"] = obj.stat().st_size
+            record["elf32_i386_relocatable"] = is_elf32_i386(raw)
         candidates[name] = record
     manifest = {"source": str(SOURCE.relative_to(ROOT)),
                 "source_sha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
