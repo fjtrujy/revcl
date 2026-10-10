@@ -1,0 +1,24 @@
+{
+  "function": "_Z41__static_initialization_and_destruction_0ii",
+  "address": "0x0806a2e0",
+  "size": 66,
+  "source": "vuc/src/IostreamInit.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZNSt8ios_base4InitC1Ev": "0x0804974c",
+    ".text.__tcf_0": "0x0806a520",
+    "__dso_handle": "0x08077004",
+    "__cxa_atexit": "0x0804972c"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZSt8__ioinit": "0x0808bcb0"
+    }
+  }
+}

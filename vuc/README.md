@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **66 independently verified exact function-symbol records**
-covering 2394/2394 instruction bytes, including the original relocation for
+The strict gate now checks **80 independently verified exact function-symbol records**
+covering 3318/3318 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -115,8 +115,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 66 EXACT,
-8 EXPERIMENTAL and 224 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 80 EXACT,
+8 EXPERIMENTAL and 210 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -136,7 +136,9 @@ The independent `IsFoldable(IR::Operator_Data*)` branch-chain
 reconstruction also matches all 41 original instruction bytes.
 Twenty per-translation-unit iostream destructor callbacks and
 `_GLOBAL__I_constantsTabStop` are also individually byte-exact.
-These are compiler-generated lifecycle functions, not 21 separate
+All 14 matching 66-byte iostream initializer helpers have now been
+reconstructed, including the `constantsTabStop` helper. These
+35 accepted startup/teardown function records are not 35 separate
 reconstructed application algorithms. See
 `vuc/docs/2026-10-10-iostream-startup-batch.md`.
 

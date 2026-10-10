@@ -16,6 +16,7 @@ class IostreamCleanupInventoryTests(unittest.TestCase):
     def setUpClass(cls):
         cls.raw, cls.target = inventory.match.decomp.load()
         cls.records = inventory.derive(cls.raw, cls.target)
+        cls.initializers = inventory.derive_initializers(cls.raw, cls.target)
 
     def test_original_elf_has_twenty_distinct_thunks(self):
         self.assertEqual(len(self.records), 20)
@@ -39,6 +40,31 @@ class IostreamCleanupInventoryTests(unittest.TestCase):
         modified[loc] ^= 1
         with self.assertRaisesRegex(ValueError, "unrecognized original"):
             inventory.derive(bytes(modified), self.target)
+
+    def test_thirteen_other_66_byte_initializers_are_original_elf_derived(self):
+        self.assertEqual(len(self.initializers), 13)
+        self.assertEqual(len({x["address"] for x in self.initializers}), 13)
+        self.assertTrue(all(x["size"] == 66 and x["source"] == inventory.SOURCE
+                            for x in self.initializers))
+        self.assertNotIn("0x08049af0", {x["address"] for x in self.initializers})
+
+    def test_initializer_configs_are_deterministic_and_have_real_callbacks(self):
+        callbacks = {int(x["address"], 0) for x in self.records}
+        for item in self.initializers:
+            self.assertEqual(json.loads(inventory.initializer_path_for(item).read_text()), item)
+            ref = int(item["relocations"][".text.__tcf_0"], 0)
+            self.assertIn(ref, callbacks)
+            self.assertEqual(item["relocations"]["_ZNSt8ios_base4InitC1Ev"],
+                             "0x0804974c")
+
+    def test_corrupted_original_initializer_rejected(self):
+        modified = bytearray(self.raw)
+        section = next(x for x in self.target["sections"] if x["name"] == ".text")
+        addr = int(self.initializers[0]["address"], 0)
+        loc = section["offset"] + addr - section["address"]
+        modified[loc] ^= 1
+        with self.assertRaisesRegex(ValueError, "unrecognized original"):
+            inventory.derive_initializers(bytes(modified), self.target)
 
 
 if __name__ == "__main__":

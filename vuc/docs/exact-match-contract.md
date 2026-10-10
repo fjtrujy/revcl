@@ -90,12 +90,13 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `script_lex()` | 39/39 | `-O2 -frename-registers` |
 | `IsFoldable(IR::Operator_Data*)` | 41/41 | `-O2 -frename-registers -falign-jumps=1` |
 | `__tcf_0` (20 original iostream cleanup functions) | 20 × 16/16 | `-O2 -frename-registers -fuse-cxa-atexit`, named BSS objects |
+| `__static_initialization_and_destruction_0(int,int)` (14 66-byte original iostream helpers) | 14 × 66/66 | `-O2 -frename-registers -fuse-cxa-atexit -ffunction-sections -falign-jumps=1` |
 | `_GLOBAL__I_constantsTabStop` | 31/31 | `-O2 -frename-registers -fuse-cxa-atexit -ffunction-sections` |
 
-**66/66 exact function-symbol records, 2394/2394 checked code bytes.** This counts only the
+**80/80 exact function-symbol records, 3318/3318 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 100 supported relocations across the accepted candidate functions
+ELF. All 170 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -103,7 +104,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-66 EXACT, 8 EXPERIMENTAL and 224 UNRESOLVED entries. Generate it using
+80 EXACT, 8 EXPERIMENTAL and 210 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 

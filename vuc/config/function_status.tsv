@@ -3,7 +3,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08049a44	0	UNRESOLVED	-	-	call_gmon_start
 0x08049a70	0	UNRESOLVED	-	-	__do_global_dtors_aux
 0x08049ab0	0	UNRESOLVED	-	-	frame_dummy
-0x08049af0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x08049af0	66	EXACT	vuc/config/iostream_static_constants_probe.json	vuc/src/IostreamGlobal_constantsTabStop.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08049b40	30	EXPERIMENTAL	vuc/config/asm_output_jan25_probe.json	vuc/probes/asm_output_hypothesis.cpp	_Z23AsmOutput_WritePrologueRSt14basic_ofstreamIcSt11char_traitsIcEE
 0x08049b60	30	EXACT	vuc/config/asm_output_epilogue_probe.json	vuc/src/AsmOutput.cpp	_Z23AsmOutput_WriteEpilogueRSt14basic_ofstreamIcSt11char_traitsIcEE
 0x08049b80	145	UNRESOLVED	-	-	_Z11AlignStringPKci
@@ -74,7 +74,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08050c40	5	UNRESOLVED	-	-	_ZN2IR9Expr_Data16zzzzMakeRTTIWorkEv
 0x08050c50	66	UNRESOLVED	-	-	_Z13IsCommutativePN2IR13Operator_DataE
 0x08050ca0	64	UNRESOLVED	-	-	_ZN11MLHashTableI12MLGameStringS0_9MLHashFunIS0_ELi513EE5clearEv
-0x08050ce0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x08050ce0	66	EXACT	vuc/config/iostream_static_08050ce0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08050d30	450	UNRESOLVED	-	-	_Z13BindInlineAsmP10ASTAsmStmtR11SymbolTable
 0x08050f00	711	UNRESOLVED	-	-	_Z12GenInlineAsmR12MLGameStringRSt6vectorI11AsmVariableSaIS2_EER15InstructionList
 0x080511d0	16	EXACT	vuc/config/iostream_cleanup_080511d0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
@@ -98,7 +98,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08051980	46	UNRESOLVED	-	-	__tcf_1
 0x080519b0	31	UNRESOLVED	-	-	_GLOBAL__I__ZN11Instruction9instrDataE
 0x080519d0	265	UNRESOLVED	-	-	_ZNSt6vectorIP11InstructionSaIS1_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS1_S3_EERKS1_
-0x08051ae0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x08051ae0	66	EXACT	vuc/config/iostream_static_08051ae0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08051b30	416	UNRESOLVED	-	-	_Z13BroadcastMoveRKN2IR8RegisterES2_R15InstructionList
 0x08051cd0	1315	UNRESOLVED	-	-	_Z15AssembleExprRegRKN2IR8RegisterEPNS_9Expr_DataER15InstructionListi
 0x08052200	7990	UNRESOLVED	-	-	_Z8AssembleRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
@@ -109,7 +109,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08054720	1654	UNRESOLVED	-	-	_Z8AssemblePN2IR9Stmt_DataER15InstructionList
 0x08054da0	5110	UNRESOLVED	-	-	_Z14AssembleAssignPN2IR9Stmt_DataER15InstructionList
 0x080561a0	31	UNRESOLVED	-	-	_GLOBAL__I__Z13BroadcastMoveRKN2IR8RegisterES2_R15InstructionList
-0x080561c0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x080561c0	66	EXACT	vuc/config/iostream_static_080561c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08056210	9258	UNRESOLVED	-	-	_Z19AssembleBinOpFloat4RKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
 0x08058640	7588	UNRESOLVED	-	-	_Z16AssembleBinOpIntRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
 0x0805a3f0	193	UNRESOLVED	-	-	_Z13AssembleBinOpRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
@@ -117,7 +117,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0805a4d0	31	UNRESOLVED	-	-	_GLOBAL__I__Z19AssembleBinOpFloat4RKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
 0x0805a4f0	117	UNRESOLVED	-	-	_Z9GetOpTypePN2IR9Expr_DataE
 0x0805a570	77	UNRESOLVED	-	-	_Z17IsAccumulatorablePN2IR13Operator_DataE
-0x0805a5c0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0805a5c0	66	EXACT	vuc/config/iostream_static_0805a5c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805a610	1206	UNRESOLVED	-	-	_ZN8ListFile8GenerateEPKc
 0x0805aad0	133	UNRESOLVED	-	-	_ZN8ListFile9PrintLineEiRSt14basic_ofstreamIcSt11char_traitsIcEE
 0x0805ab60	88	UNRESOLVED	-	-	_ZN8ListFile5PrintEiiRSt14basic_ofstreamIcSt11char_traitsIcEE
@@ -127,11 +127,11 @@ address	size	status	manifest	candidate_source	symbol
 0x0805b020	31	UNRESOLVED	-	-	_GLOBAL__I__ZN8ListFile8GenerateEPKc
 0x0805b040	668	UNRESOLVED	-	-	_ZNSt6vectorISsSaISsEE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPSsS1_EERKSs
 0x0805b2e0	161	UNRESOLVED	-	-	_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIPSsSt6vectorISsSaISsEEEES6_ET0_T_S8_S7_12__false_type
-0x0805b390	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0805b390	66	EXACT	vuc/config/iostream_static_0805b390_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805b3e0	777	UNRESOLVED	-	-	_Z14ParseArgumentsiPPc
 0x0805b6f0	16	EXACT	vuc/config/iostream_cleanup_0805b6f0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0805b700	31	UNRESOLVED	-	-	_GLOBAL__I_inputFileName
-0x0805b720	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0805b720	66	EXACT	vuc/config/iostream_static_0805b720_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805b770	98	UNRESOLVED	-	-	_Z5PrintP10ASTFunCallRSo
 0x0805b7e0	2231	UNRESOLVED	-	-	_Z5PrintP7ASTStmtRSo
 0x0805c0a0	1089	UNRESOLVED	-	-	_Z5PrintP7ASTExprRSo
@@ -144,12 +144,12 @@ address	size	status	manifest	candidate_source	symbol
 0x0805cbf0	80	UNRESOLVED	-	-	_Z5PrintIP7ASTStmtEvR11ASTNodeListIT_ERSoPKc
 0x0805cc40	80	UNRESOLVED	-	-	_Z5PrintIP10ASTVarDeclEvR11ASTNodeListIT_ERSoPKc
 0x0805cc90	80	UNRESOLVED	-	-	_Z5PrintIP7ASTDeclEvR11ASTNodeListIT_ERSoPKc
-0x0805cce0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0805cce0	66	EXACT	vuc/config/iostream_static_0805cce0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805cd30	14922	UNRESOLVED	-	-	_Z12script_parsev
 0x08060780	16	EXACT	vuc/config/iostream_cleanup_08060780_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x08060790	31	EXPERIMENTAL	vuc/config/iostream_global_script_debug_probe.json	vuc/probes/IostreamGlobal_script_debug.cpp	_GLOBAL__I_script_debug
 0x080607b0	5	UNRESOLVED	-	-	_ZN7ASTNode3apaEv
-0x080607c0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x080607c0	66	EXACT	vuc/config/iostream_static_080607c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08060810	1698	UNRESOLVED	-	-	_ZN11yyFlexLexer5yylexEv
 0x08060ec0	138	UNRESOLVED	-	-	_ZN11yyFlexLexerC2EPSiPSo
 0x08060f50	138	UNRESOLVED	-	-	_ZN11yyFlexLexerC1EPSiPSo
@@ -176,7 +176,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08061980	31	UNRESOLVED	-	-	_GLOBAL__I__ZN11yyFlexLexer5yylexEv
 0x080619a0	14	EXACT	vuc/config/flex_destructor_c1_probe.json	vuc/src/FlexLexer.cpp	_ZN9FlexLexerD1Ev
 0x080619b0	18	EXACT	vuc/config/flex_destructor_c0_probe.json	vuc/src/FlexLexer.cpp	_ZN9FlexLexerD0Ev
-0x080619d0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x080619d0	66	EXACT	vuc/config/iostream_static_080619d0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08061a20	2510	UNRESOLVED	-	-	_Z20CheckActualParamListRK11ASTNodeListIP7ASTExprERKSt6vectorI4TypeSaIS6_EERK12MLGameString
 0x080623f0	118	UNRESOLVED	-	-	_Z5CheckP10ASTFunCall
 0x08062470	6119	UNRESOLVED	-	-	_Z5CheckP7ASTStmt
@@ -191,10 +191,10 @@ address	size	status	manifest	candidate_source	symbol
 0x0806a160	45	EXACT	vuc/config/check_list_stmt_exact_probe.json	vuc/src/CheckLists.cpp	_Z5CheckIP7ASTStmtEvR11ASTNodeListIT_E
 0x0806a190	45	EXACT	vuc/config/check_list_decl_exact_probe.json	vuc/src/CheckLists.cpp	_Z5CheckIP7ASTDeclEvR11ASTNodeListIT_E
 0x0806a1c0	151	UNRESOLVED	-	-	_ZNK4Type12IsAssignableERKS_b
-0x0806a260	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0806a260	66	EXACT	vuc/config/iostream_static_0806a260_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806a2b0	16	EXACT	vuc/config/iostream_cleanup_0806a2b0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0806a2c0	31	UNRESOLVED	-	-	_GLOBAL__I_StdAfx.cppxtsrAa
-0x0806a2e0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0806a2e0	66	EXACT	vuc/config/iostream_static_0806a2e0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806a330	185	UNRESOLVED	-	-	_ZN11SymbolTable5EnterERK12MLGameStringP16SymbolTableEntry
 0x0806a3f0	115	UNRESOLVED	-	-	_ZN11SymbolTable4FindERK12MLGameStringb
 0x0806a470	140	UNRESOLVED	-	-	_ZN11SymbolTable10BeginScopeEv
@@ -204,7 +204,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806a550	746	UNRESOLVED	-	-	_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS6_S8_EERKS6_
 0x0806a840	149	UNRESOLVED	-	-	_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIP11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS3_ELi513EESt6vectorIS8_SaIS8_EEEESD_ET0_T_SF_SE_12__false_type
 0x0806a8e0	114	UNRESOLVED	-	-	_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EE8FindCopyERKS0_
-0x0806a960	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0806a960	66	EXACT	vuc/config/iostream_static_0806a960_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806a9b0	352	UNRESOLVED	-	-	_Z9TranslateRK4Typeji
 0x0806ab10	644	UNRESOLVED	-	-	_Z17TranslateCallInfoP10ASTFunCall
 0x0806ada0	119	UNRESOLVED	-	-	_Z9TranslateR11ASTNodeListIP7ASTStmtE
@@ -229,7 +229,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806e300	5	UNRESOLVED	-	-	_ZN2IR11Module_Data16zzzzMakeRTTIWorkEv
 0x0806e310	663	UNRESOLVED	-	-	_Z9TranslateN10ASTBinExpr8OperatorE4Typejj
 0x0806e5b0	306	UNRESOLVED	-	-	_Z17TranslateFragListI12MLGameStringE11ASTNodeListIPN2IR13Fragment_DataEERS1_IT_E
-0x0806e6f0	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0806e6f0	66	EXACT	vuc/config/iostream_static_0806e6f0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806e740	44	EXACT	vuc/config/value_default_c2_probe.json	vuc/src/Value.cpp	_ZN5ValueC2Ev
 0x0806e770	44	EXACT	vuc/config/value_default_c1_probe.json	vuc/src/Value.cpp	_ZN5ValueC1Ev
 0x0806e7a0	42	EXACT	vuc/config/value_dispatch_exact_probe.json	vuc/src/Value.cpp	_ZN5Value3SetEPK7ASTExpr

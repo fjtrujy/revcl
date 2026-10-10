@@ -64,7 +64,45 @@ with its different original linked displacement.
 
 This flag is a *matching-toolchain hypothesis*, **not evidence** that
 the original compiler used `-ffunction-sections`, nor proof that
-we have reconstructed the called initializer or full source file.
+we have reconstructed the complete original translation unit.
+
+## All fourteen 66-byte iostream initializer helpers
+
+The canonical ELF contains **14** copies of the same-shaped
+`__static_initialization_and_destruction_0(int,int)` function with
+**66 instruction bytes** each. This historical GCC-generated code:
+
+1. Checks the compiler's magic initialization parameters.
+2. Calls `std::ios_base::Init::Init()` on that translation unit's
+   independently addressed `_ZSt8__ioinit` object.
+3. Registers the translation unit's own `__tcf_0` callback with
+   `__cxa_atexit` and the original `__dso_handle`.
+
+Compiling ordinary `#include <iostream>` with source-date GCC
+`-O2 -frename-registers -fuse-cxa-atexit -ffunction-sections
+-falign-jumps=1` produces **66 matching instruction bytes** in
+every case after mapping these five original relocations:
+`std::ios_base::Init::Init()`, `_ZSt8__ioinit`,
+the corresponding original `__tcf_0`, `__dso_handle`, and
+`__cxa_atexit`.
+
+For `constantsTabStop`, the helper at `0x08049af0` comes from
+the accepted named-global source fragment, alongside its exact
+31-byte `_GLOBAL__I_constantsTabStop` and 16-byte cleanup
+callback. The other 13 66-byte helpers are accepted from the
+isolated iostream-source fragment.
+
+The generator `iostream_cleanup_inventory.py --write` now also
+derives and verifies these **13 additional** helper configurations
+directly from the original ELF. It rejects unexpected instruction
+patterns, original PLT targets, absent cleanup-callback records,
+and unmapped original BSS symbols. It deliberately excludes
+`0x08049af0`, which has its own named-global manifest.
+
+Original initializer helpers larger than 66 bytes remain unresolved.
+The 66-byte helper family and its associated 16-byte teardown
+callbacks are compiler-generated lifecycle scaffolding, **not
+evidence of recovering the original application's class logic**.
 
 Other original wrappers for `matchStack`, `exportModule` and
 `script_debug` each have a 31-byte body, but the tested source
@@ -88,17 +126,18 @@ Together with previous accepted milestones:
 
 | Category | Count |
 | --- | ---: |
-| Original function-symbol records accepted | **66 / 66** |
-| Exact instruction bytes in accepted records | **2,394 / 2,394** |
-| Resolved ELF32 relocations | **100** |
+| Original function-symbol records accepted | **80 / 80** |
+| Exact instruction bytes in accepted records | **3,318 / 3,318** |
+| Resolved ELF32 relocations | **170** |
 | Per-manifest verified literal bytes | **29** |
 | Non-exact experimental function symbols | 8 |
-| Other unresolved function symbols | 224 |
+| Other unresolved function symbols | 210 |
 | Total original text function symbols | 298 |
 
 The counts include **20 structurally identical compiler-generated
-iostream teardown callbacks**. They are not 20 distinct reconstructed
-application algorithms. None of these numbers is a claimed whole-ELF
+iostream teardown callbacks and 14 similar initialization helpers**.
+They are not 34 distinct reconstructed application algorithms.
+None of these numbers is a claimed whole-ELF
 match percentage.
 
 ## Reproduction
@@ -111,10 +150,10 @@ python3 -m unittest discover -s vuc/tests -q
 limactl shell revcl-oracle -- python3 \
   /path/to/revcl/vuc/scripts/match_candidates.py \
   --compiler /tmp/vuc-binutils215/g++-jan25-as215 \
-  --out /tmp/vuc-binutils215/exact-gate-66
+  --out /tmp/vuc-binutils215/exact-gate-80
 ```
 
-All 66 accepted records must compare exactly. The exploratory
+All 80 accepted records must compare exactly. The exploratory
 manifest must fail, because partially reconstructed functions
 remain. The mandatory final task is still **byte-for-byte matching
 of the entire original executable**, including linker layout,

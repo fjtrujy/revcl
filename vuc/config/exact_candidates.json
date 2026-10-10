@@ -64,5 +64,19 @@
   "vuc/config/iostream_cleanup_0806e040_probe.json",
   "vuc/config/iostream_cleanup_0806f9c0_probe.json",
   "vuc/config/iostream_cleanup_08071570_probe.json",
-  "vuc/config/iostream_global_constantsTabStop_probe.json"
+  "vuc/config/iostream_global_constantsTabStop_probe.json",
+  "vuc/config/iostream_static_constants_probe.json",
+  "vuc/config/iostream_static_08050ce0_probe.json",
+  "vuc/config/iostream_static_08051ae0_probe.json",
+  "vuc/config/iostream_static_080561c0_probe.json",
+  "vuc/config/iostream_static_0805a5c0_probe.json",
+  "vuc/config/iostream_static_0805b390_probe.json",
+  "vuc/config/iostream_static_0805b720_probe.json",
+  "vuc/config/iostream_static_0805cce0_probe.json",
+  "vuc/config/iostream_static_080607c0_probe.json",
+  "vuc/config/iostream_static_080619d0_probe.json",
+  "vuc/config/iostream_static_0806a260_probe.json",
+  "vuc/config/iostream_static_0806a2e0_probe.json",
+  "vuc/config/iostream_static_0806a960_probe.json",
+  "vuc/config/iostream_static_0806e6f0_probe.json"
 ]
