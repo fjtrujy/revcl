@@ -427,13 +427,13 @@ bool buildCandidateList2(workTable *wt)
                     }
                 }
             }
-            Instr *mv = r->unk_20;
-            if (mv && in != mv && mv->unk_13e8.unk_04 < 0)
+            if (r->unk_20 && in != r->unk_20 && r->unk_20->unk_13e8.unk_04 < 0)
                 goto next;
         }
         if (wt->unk_38) {
+            int type = (unsigned char)in->unk_138e;
             int lim = 0;
-            switch ((unsigned char)in->unk_138e) {
+            switch (type) {
             case 0:
                 break;
             case 1:
