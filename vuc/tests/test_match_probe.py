@@ -12,6 +12,34 @@ spec.loader.exec_module(match)
 
 
 class MatchProbeTests(unittest.TestCase):
+    def test_separate_original_literal_addresses_are_byte_authenticated(self):
+        # One compiler object concatenates three C strings; the original ELF
+        # linker placed each independently. No section-wide rebasing is valid.
+        candidate = b"(\0, \0)\0"
+        original = b"xxxx(\0yy, \0zzz)\0"
+        original_section = {"offset": 0, "address": 0x1000, "size": len(original)}
+        mapping = [{"offset": 0, "size": 2, "address": "0x1004"},
+                   {"offset": 2, "size": 3, "address": "0x1008"},
+                   {"offset": 5, "size": 2, "address": "0x100e"}]
+        self.assertEqual(match.validate_literal_ranges(candidate, original,
+                                                        original_section, mapping), 7)
+        self.assertEqual(match.resolve_literal_range(mapping, 3), 0x1009)
+        self.assertEqual(match.resolve_literal_range(mapping, 5), 0x100e)
+
+        with self.assertRaisesRegex(ValueError, "one mapped range"):
+            match.resolve_literal_range(mapping, 7)
+        with self.assertRaisesRegex(ValueError, "unmapped bytes"):
+            match.validate_literal_ranges(candidate, original, original_section, mapping[:-1])
+        with self.assertRaisesRegex(ValueError, "overlapping"):
+            match.validate_literal_ranges(candidate, original, original_section,
+                                          mapping + [mapping[0]])
+        with self.assertRaisesRegex(ValueError, "bytes differ"):
+            match.validate_literal_ranges(b"!" + candidate[1:], original,
+                                          original_section, mapping)
+        with self.assertRaisesRegex(ValueError, "outside original"):
+            broken = [dict(mapping[0], address="0x2000"), *mapping[1:]]
+            match.validate_literal_ranges(candidate, original, original_section, broken)
+
     def test_named_bss_object_rebase(self):
         guard = (0, 0, 8, 1, 0, 4)
         instance = (0, 0x20, 0x2fc4, 1, 0, 4)

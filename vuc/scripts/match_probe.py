@@ -130,7 +130,7 @@ def verify_original_objects(raw, target, object_map):
 
 
 def prepare_named_function(raw, name, reloc_targets, original_address,
-                           relocation_objects=None):
+                           relocation_objects=None, literal_ranges=None):
     """Resolve relocations only inside a named function in an ELF32 object."""
     sections, headers = elf_sections(raw)
     symsec = sections[".symtab"][1]
@@ -158,6 +158,7 @@ def prepare_named_function(raw, name, reloc_targets, original_address,
     code = bytearray(section_bytes(raw, section)[start:start + size])
     count = 0
     relocation_objects = {} if relocation_objects is None else relocation_objects
+    literal_ranges = {} if literal_ranges is None else literal_ranges
     for sec in headers:
         if sec[1] != 9 or sec[7] != section_index:  # SHT_REL for this section
             continue
@@ -199,6 +200,11 @@ def prepare_named_function(raw, name, reloc_targets, original_address,
                         raise ValueError("unmapped relocation target: " + label)
                     address = int(reloc_targets[label], 0) + linked_symbol_offset(referenced, len(headers))
                     value = relocate_word(kind, address, addend, original_address + local)
+            elif label in literal_ranges:
+                if kind != 1 or referenced[3] & 15 != 3:
+                    raise ValueError("literal range mapping requires absolute section relocation")
+                address = resolve_literal_range(literal_ranges[label], addend + referenced[1])
+                value = relocate_word(kind, address, 0, original_address + local)
             elif label in relocation_objects:
                 if kind != 1 or referenced[3] & 15 != 3:
                     raise ValueError("named object rebasing requires an absolute section relocation")
@@ -242,6 +248,54 @@ def compare_string_sections(raw, mapping, target_data, target):
     return count
 
 
+def resolve_literal_range(ranges, offset):
+    """Resolve only through one explicitly authenticated literal range."""
+    matches = [item for item in ranges
+               if item["offset"] <= offset < item["offset"] + item["size"]]
+    if len(matches) != 1:
+        raise ValueError("literal relocation is not inside one mapped range")
+    item = matches[0]
+    return int(item["address"], 0) + offset - item["offset"]
+
+
+def verify_literal_ranges(object_bytes, target_data, target, mapping):
+    """Require exact byte coverage of candidate literals, with no guessed layout."""
+    if not mapping:
+        return 0
+    sections, _ = elf_sections(object_bytes)
+    target_rodata = next(s for s in target["sections"] if s["name"] == ".rodata")
+    count = 0
+    for section_name, ranges in mapping.items():
+        if (not section_name.startswith(".rodata") or section_name not in sections
+                or not isinstance(ranges, list) or not ranges):
+            raise ValueError("invalid literal section range mapping")
+        candidate = section_bytes(object_bytes, sections[section_name][1])
+        count += validate_literal_ranges(candidate, target_data, target_rodata, ranges)
+    return count
+
+
+def validate_literal_ranges(candidate, target_data, target_rodata, ranges):
+    """Prove complete, disjoint literal coverage with original byte identity."""
+    covered = bytearray(len(candidate))
+    for item in ranges:
+        offset, length = item["offset"], item["size"]
+        address = int(item["address"], 0)
+        if (not isinstance(offset, int) or not isinstance(length, int)
+                or offset < 0 or length <= 0 or offset + length > len(candidate)
+                or any(covered[offset:offset + length])):
+            raise ValueError("invalid or overlapping literal range")
+        start = target_rodata["offset"] + address - target_rodata["address"]
+        if (address < target_rodata["address"]
+                or start + length > target_rodata["offset"] + target_rodata["size"]):
+            raise ValueError("mapped literal range outside original .rodata")
+        if candidate[offset:offset + length] != target_data[start:start + length]:
+            raise ValueError("mapped literal range bytes differ at " + item["address"])
+        covered[offset:offset + length] = b"\x01" * length
+    if not all(covered):
+        raise ValueError("candidate literal section contains unmapped bytes")
+    return len(candidate)
+
+
 def compare(candidate, original):
     if len(candidate) != len(original):
         raise ValueError("function lengths differ: %d vs %d" % (len(candidate), len(original)))
@@ -265,12 +319,16 @@ def run(object_path, config_path=CONFIG):
         raise ValueError("original function outside .text")
     original = data[start:start + original_size]
     object_bytes = Path(object_path).read_bytes()
+    literal_ranges = config.get("relocation_literals", {})
+    if any(section in config["relocations"] for section in literal_ranges):
+        raise ValueError("ambiguous whole-section and range literal mappings")
     literal_count = compare_string_sections(object_bytes, config["relocations"], data, target)
+    literal_count += verify_literal_ranges(object_bytes, data, target, literal_ranges)
     object_map = config.get("relocation_objects", {})
     verify_original_objects(data, target, object_map)
     candidate, reloc_count = prepare_named_function(object_bytes, config["function"],
                                                     config["relocations"], original_address,
-                                                    object_map)
+                                                    object_map, literal_ranges)
     result = compare(candidate, original)
     result["relocations"] = reloc_count
     result["verified_literal_bytes"] = literal_count

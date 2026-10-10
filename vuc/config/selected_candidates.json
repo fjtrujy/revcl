@@ -125,5 +125,8 @@
   "vuc/config/yy_lexer_input_probe.json",
   "vuc/config/yy_destructor_D2_probe.json",
   "vuc/config/yy_destructor_D1_probe.json",
-  "vuc/config/yy_destructor_D0_probe.json"
+  "vuc/config/yy_destructor_D0_probe.json",
+  "vuc/config/ml_temp_default_C1_probe.json",
+  "vuc/config/ml_temp_default_C2_probe.json",
+  "vuc/config/print_ast_fun_call_probe.json"
 ]

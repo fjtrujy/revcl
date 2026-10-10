@@ -132,7 +132,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0805b6f0	16	EXACT	vuc/config/iostream_cleanup_0805b6f0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0805b700	31	UNRESOLVED	-	-	_GLOBAL__I_inputFileName
 0x0805b720	66	EXACT	vuc/config/iostream_static_0805b720_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
-0x0805b770	98	UNRESOLVED	-	-	_Z5PrintP10ASTFunCallRSo
+0x0805b770	98	EXPERIMENTAL	vuc/config/print_ast_fun_call_probe.json	vuc/probes/print_ast_fun_call.cpp	_Z5PrintP10ASTFunCallRSo
 0x0805b7e0	2231	UNRESOLVED	-	-	_Z5PrintP7ASTStmtRSo
 0x0805c0a0	1089	UNRESOLVED	-	-	_Z5PrintP7ASTExprRSo
 0x0805c4f0	765	UNRESOLVED	-	-	_Z5PrintP11ASTLValExprRSo
@@ -283,8 +283,8 @@ address	size	status	manifest	candidate_source	symbol
 0x08071a50	238	UNRESOLVED	-	-	_ZN16MLTempStringData13VFormatStringEPKcPc
 0x08071b40	110	EXPERIMENTAL	vuc/config/ml_temp_format_c2_probe.json	vuc/probes/ml_temp_format_inline.cpp	_ZN12MLTempStringC2EPKcz
 0x08071bb0	110	EXPERIMENTAL	vuc/config/ml_temp_format_c1_probe.json	vuc/probes/ml_temp_format_inline.cpp	_ZN12MLTempStringC1EPKcz
-0x08071c20	101	UNRESOLVED	-	-	_ZN12MLTempStringC2Ev
-0x08071c90	102	UNRESOLVED	-	-	_ZN12MLTempStringC1Ev
+0x08071c20	101	EXPERIMENTAL	vuc/config/ml_temp_default_C2_probe.json	vuc/probes/ml_temp_default.cpp	_ZN12MLTempStringC2Ev
+0x08071c90	102	EXACT	vuc/config/ml_temp_default_C1_probe.json	vuc/src/MLTempStringDefault.cpp	_ZN12MLTempStringC1Ev
 0x08071d00	117	UNRESOLVED	-	-	_ZN12MLTempString3SetEPKcz
 0x08071d80	53	EXACT	vuc/config/ml_temp_append_exact_probe.json	vuc/src/MLGameString.cpp	_ZN12MLTempStringpLERKS_
 0x08071dc0	58	EXACT	vuc/config/ml_temp_plus_exact_probe.json	vuc/src/MLGameString.cpp	_ZN12MLTempStringplERKS_
