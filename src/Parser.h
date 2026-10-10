@@ -32,6 +32,7 @@ public:
     char *func_0805086c(int *commentMode, char *in);
     void func_08050c40(int);
     char *func_08050be4(int i, char *type);
+    char *func_08050be4(int i) { return func_08050be4(i, 0); }
     bool func_08050eec();
     bool func_08050f18(int i);
     bool func_08050f48();

@@ -56,7 +56,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         goto fail;
     }
     {
-        char *s = t->func_08050be4(cur, 0);
+        char *s = t->func_08050be4(cur);
         p = buf;
         char *d = p;
         for (; *s && copyCount < 0x800; copyCount++)
