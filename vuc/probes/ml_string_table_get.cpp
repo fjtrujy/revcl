@@ -8,8 +8,8 @@ class MLHashTable {
 public:
     struct Node {
         Key key;
-        Value value;
         unsigned hash;
+        Value value;
         Node *next;
     };
     MLHashTable() {
@@ -35,6 +35,6 @@ private:
 
 MLGameStringTable *MLGameStringTable::Get()
 {
-    static MLGameStringTable table;
-    return &table;
+    static MLGameStringTable gst;
+    return &gst;
 }

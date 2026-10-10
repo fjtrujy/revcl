@@ -2,13 +2,8 @@
 // Exact helper bodies are checked independently against the original ELF.
 #include "MLGameString.h"
 #include "MLHashTable.h"
+#include "MLHashFunGameString.h"
 #include <cstring>
-
-template <> class MLHashFun<MLGameString> {
-public:
-    unsigned Hash(const MLGameString &key);
-    bool IsEqual(const MLGameString &lhs, const MLGameString &rhs);
-};
 
 unsigned MLHashFun<MLGameString>::Hash(const MLGameString &key)
 {
@@ -60,6 +55,8 @@ void MLHashTable<Key, Value, Hasher, Buckets>::clear()
 template void MLHashTable<int, int, MLHashFun<int>, 513>::clear();
 struct SymbolTableEntry;
 template void MLHashTable<MLGameString, SymbolTableEntry *,
+                          MLHashFun<MLGameString>, 513>::clear();
+template void MLHashTable<MLGameString, MLGameString,
                           MLHashFun<MLGameString>, 513>::clear();
 template class MLHashTable<const char *, MLGameStringData *,
                            MLHashFun<const char *>, 513>;

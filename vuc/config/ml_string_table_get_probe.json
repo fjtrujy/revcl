@@ -9,9 +9,14 @@
     "-fuse-cxa-atexit"
   ],
   "relocations": {
-    ".bss": "0x0808bce0",
     "__dso_handle": "0x08077004",
     ".text": "0x08071d90",
     "__cxa_atexit": "0x0804972c"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZGVZN17MLGameStringTable3GetEvE3gst": "0x0808bce0",
+      "_ZZN17MLGameStringTable3GetEvE3gst": "0x0808bd00"
+    }
   }
 }

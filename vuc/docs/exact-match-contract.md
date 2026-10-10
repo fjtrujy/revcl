@@ -92,11 +92,26 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `__tcf_0` (20 original iostream cleanup functions) | 20 × 16/16 | `-O2 -frename-registers -fuse-cxa-atexit`, named BSS objects |
 | `__static_initialization_and_destruction_0(int,int)` (14 66-byte original iostream helpers) | 14 × 66/66 | `-O2 -frename-registers -fuse-cxa-atexit -ffunction-sections -falign-jumps=1` |
 | `_GLOBAL__I_constantsTabStop` | 31/31 | `-O2 -frename-registers -fuse-cxa-atexit -ffunction-sections` |
+| `MLHashTable<MLGameString,MLGameString,...>::clear()` | 64/64 | `-O2 -frename-registers -falign-jumps=1` |
+| `IsCommutative(IR::Operator_Data*)` | 66/66 | `-O2 -frename-registers` |
+| `InstructionList::Add(Instruction*)` | 55/55 | `-O2 -frename-registers -falign-jumps=1` |
+| `Print(ASTNodeList<ASTExpr*>&,...)` | 80/80 | `-O2 -frename-registers` |
+| `Print(ASTNodeList<ASTStmt*>&,...)` | 80/80 | `-O2 -frename-registers` |
+| `Print(ASTNodeList<ASTVarDecl*>&,...)` | 80/80 | `-O2 -frename-registers` |
+| `Print(ASTNodeList<ASTDecl*>&,...)` | 80/80 | `-O2 -frename-registers` |
+| `ConvVal(...,float&)` | 51/51 | `-O2 -frename-registers` |
+| `ConvVal(...,int&)` | 60/60 | `-O2 -frename-registers` |
+| `ConvVal(...,unsigned&)` | 60/60 | `-O2 -frename-registers` |
+| `yyFlexLexer::LexerError()` | 54/54 | `-O2 -frename-registers` |
+| `MLHashTable<MLGameString,SymbolTableEntry*,...>::FindCopy()` | 114/114 | `-O2 -frename-registers -falign-jumps=1` |
+| `MLHashTable<MLGameString,MLGameString,...>::FindPtr()` | 114/114 | `-O2 -frename-registers -falign-jumps=1` |
+| `AlignConstant(char const*)` | 69/69 | `-O2 -frename-registers`, original string literal |
+| `yyFlexLexer::yy_switch_to_buffer()` | 75/75 | `-O2 -frename-registers` |
 
-**80/80 exact function-symbol records, 3318/3318 checked code bytes.** This counts only the
+**95/95 exact function-symbol records, 4420/4420 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 170 supported relocations across the accepted candidate functions
+ELF. All 199 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -104,7 +119,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-80 EXACT, 8 EXPERIMENTAL and 210 UNRESOLVED entries. Generate it using
+95 EXACT, 8 EXPERIMENTAL and 195 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 

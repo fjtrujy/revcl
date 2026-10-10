@@ -1,0 +1,14 @@
+{
+  "function": "_Z7ConvValRK12MLGameStringRj",
+  "address": "0x0804f650",
+  "size": 60,
+  "source": "vuc/src/ConvVal.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZNK12MLGameString5c_strEv": "0x08071800",
+    "__strtol_internal": "0x0804984c"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "function": "_Z13AlignConstantPKc",
+  "address": "0x08049c20",
+  "size": 69,
+  "source": "vuc/src/AlignConstant.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "constantsTabStop": "0x0808aac4",
+    "_Z11AlignStringPKci": "0x08049b80",
+    "strstr": "0x0804981c",
+    ".rodata": "0x080721d7"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "function": "_ZN11MLHashTableI12MLGameStringS0_9MLHashFunIS0_ELi513EE5clearEv",
+  "address": "0x08050ca0",
+  "size": 64,
+  "source": "vuc/src/MLHashTable.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZdlPv": "0x0804973c"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "function": "_ZN11MLHashTableI12MLGameStringS0_9MLHashFunIS0_ELi513EE7FindPtrERKS0_",
+  "address": "0x08050ba0",
+  "size": 114,
+  "source": "vuc/src/MLHashTableFindPtr.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZN9MLHashFunI12MLGameStringE4HashERKS0_": "0x08071990",
+    "_ZN9MLHashFunI12MLGameStringE7IsEqualERKS0_S3_": "0x080719b0"
+  }
+}

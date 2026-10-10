@@ -14,5 +14,6 @@ public:
     Node *heads[Buckets];
     void clear();
     Value FindCopy(const Key &key);
+    Value *FindPtr(const Key &key);
 };
 #endif

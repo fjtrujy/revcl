@@ -1,6 +1,7 @@
 // Byte-exact FindCopy specialization, kept in a provisional separate unit.
 // The historical original unit boundary remains to be reconstructed.
 #include "MLGameString.h"
+#include "MLHashFunGameString.h"
 #include "MLHashTable.h"
 
 template <class Key, class Value, class Hasher, int Buckets>
@@ -19,3 +20,8 @@ Value MLHashTable<Key, Value, Hasher, Buckets>::FindCopy(const Key &key)
 template MLGameStringData *
 MLHashTable<const char *, MLGameStringData *, MLHashFun<const char *>, 513>::
     FindCopy(const char *const &key);
+
+struct SymbolTableEntry;
+template SymbolTableEntry *
+MLHashTable<MLGameString, SymbolTableEntry *, MLHashFun<MLGameString>, 513>::
+    FindCopy(const MLGameString &key);

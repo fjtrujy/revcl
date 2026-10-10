@@ -78,5 +78,20 @@
   "vuc/config/iostream_static_0806a260_probe.json",
   "vuc/config/iostream_static_0806a2e0_probe.json",
   "vuc/config/iostream_static_0806a960_probe.json",
-  "vuc/config/iostream_static_0806e6f0_probe.json"
+  "vuc/config/iostream_static_0806e6f0_probe.json",
+  "vuc/config/hash_game_string_clear_probe.json",
+  "vuc/config/ir_commutative_exact_probe.json",
+  "vuc/config/instruction_list_add_exact_probe.json",
+  "vuc/config/print_list_expr_exact_probe.json",
+  "vuc/config/print_list_stmt_exact_probe.json",
+  "vuc/config/print_list_var_exact_probe.json",
+  "vuc/config/print_list_decl_exact_probe.json",
+  "vuc/config/conv_val_float_exact_probe.json",
+  "vuc/config/conv_val_int_exact_probe.json",
+  "vuc/config/conv_val_uint_exact_probe.json",
+  "vuc/config/flex_lexer_error_probe.json",
+  "vuc/config/hash_symbol_findcopy_probe.json",
+  "vuc/config/hash_string_findptr_probe.json",
+  "vuc/config/yy_switch_buffer_probe.json",
+  "vuc/config/align_constant_exact_probe.json"
 ]
