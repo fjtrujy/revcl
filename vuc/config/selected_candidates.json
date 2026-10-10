@@ -118,5 +118,7 @@
   "vuc/config/main_probe.json",
   "vuc/config/ast_arena_cleanup_probe.json",
   "vuc/config/instruction_addl_probe.json",
-  "vuc/config/translate_frag_probe.json"
+  "vuc/config/translate_frag_probe.json",
+  "vuc/config/arena_ast_probe.json",
+  "vuc/config/arena_instr_probe.json"
 ]

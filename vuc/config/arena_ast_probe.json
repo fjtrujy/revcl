@@ -2,14 +2,18 @@
   "function": "_ZN7ASTNodenwEj",
   "address": "0x0804a880",
   "size": 86,
-  "source": "vuc/probes/arena_new.cpp",
+  "source": "vuc/src/ASTNodeArena.cpp",
   "flags": [
     "-O2",
     "-frename-registers"
   ],
   "relocations": {
     "_ZN7ASTNode3memE": "0x0808abf8",
-    "_ZN11Instruction9instrDataE": "0x0808bc78",
     "_Znwj": "0x080499ec"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZN7ASTNode3memE": "0x0808abf8"
+    }
   }
 }
