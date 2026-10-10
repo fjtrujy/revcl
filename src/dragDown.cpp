@@ -12,6 +12,12 @@ static inline void refreshDragDownRange(workTable *wt, int lsz)
     setRange(wt->unk_30, wt->unk_34, lsz);
 }
 
+static inline void limitDragDownStart(workTable *wt, int &start)
+{
+    if (wt->unk_34 - start < wt->unk_44)
+        start = wt->unk_34 - wt->unk_44;
+}
+
 int dragDown(workTable *wt)
 {
     if (wt->unk_34 == wt->unk_30)
@@ -93,12 +99,13 @@ int dragDown(workTable *wt)
             return 0;
     } while (moved);
 
-    if (wt->unk_34 - msl < wt->unk_44)
-        msl = wt->unk_34 - wt->unk_44;
-    int ret = msl - oStart;
+    limitDragDownStart(wt, msl);
+    int newStart = msl;
+    int ret = newStart - oStart;
     int &start = wt->unk_30;
-    start = msl;
-    msl = wt->unk_38;
-    refreshDragDownRange(wt, msl);
+    start = newStart;
+    newStart = wt->unk_38;
+    msl = newStart;
+    refreshDragDownRange(wt, newStart);
     return ret;
 }
