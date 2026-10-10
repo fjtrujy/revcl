@@ -28,5 +28,9 @@
   "vuc/config/ml_temp_data_get_probe.json",
   "vuc/config/symboltable_end_exact_probe.json",
   "vuc/config/flex_output_exact_probe.json",
-  "vuc/config/value_dispatch_exact_probe.json"
+  "vuc/config/value_dispatch_exact_probe.json",
+  "vuc/config/semant_check_exact_probe.json",
+  "vuc/config/check_list_var_exact_probe.json",
+  "vuc/config/check_list_stmt_exact_probe.json",
+  "vuc/config/check_list_decl_exact_probe.json"
 ]

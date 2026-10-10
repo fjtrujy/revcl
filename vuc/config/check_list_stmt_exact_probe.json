@@ -1,0 +1,14 @@
+{
+  "function": "_Z5CheckIP7ASTStmtEvR11ASTNodeListIT_E",
+  "address": "0x0806a160",
+  "size": 45,
+  "source": "vuc/src/CheckLists.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_Z5CheckP7ASTStmt": "0x08062470"
+  }
+}

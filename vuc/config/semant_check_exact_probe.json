@@ -1,0 +1,14 @@
+{
+  "function": "_Z12Semant_CheckP9ASTModule",
+  "address": "0x0806a080",
+  "size": 40,
+  "source": "vuc/src/SemantCheck.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Z5CheckIP10ASTVarDeclEvR11ASTNodeListIT_E": "0x0806a0e0",
+    "_Z5CheckIP7ASTDeclEvR11ASTNodeListIT_E": "0x0806a190"
+  }
+}

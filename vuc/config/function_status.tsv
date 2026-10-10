@@ -183,13 +183,13 @@ address	size	status	manifest	candidate_source	symbol
 0x08063c60	19262	UNRESOLVED	-	-	_Z5CheckP7ASTExpr
 0x080687a0	5174	UNRESOLVED	-	-	_Z5CheckP11ASTLValExpr
 0x08069be0	1183	UNRESOLVED	-	-	_Z5CheckP7ASTDecl
-0x0806a080	40	UNRESOLVED	-	-	_Z12Semant_CheckP9ASTModule
+0x0806a080	40	EXACT	vuc/config/semant_check_exact_probe.json	vuc/src/SemantCheck.cpp	_Z12Semant_CheckP9ASTModule
 0x0806a0b0	16	UNRESOLVED	-	-	__tcf_0
 0x0806a0c0	31	UNRESOLVED	-	-	_GLOBAL__I__Z20CheckActualParamListRK11ASTNodeListIP7ASTExprERKSt6vectorI4TypeSaIS6_EERK12MLGameString
-0x0806a0e0	45	UNRESOLVED	-	-	_Z5CheckIP10ASTVarDeclEvR11ASTNodeListIT_E
+0x0806a0e0	45	EXACT	vuc/config/check_list_var_exact_probe.json	vuc/src/CheckLists.cpp	_Z5CheckIP10ASTVarDeclEvR11ASTNodeListIT_E
 0x0806a110	66	UNRESOLVED	-	-	_Z5CheckIP7ASTExprEvR11ASTNodeListIT_E
-0x0806a160	45	UNRESOLVED	-	-	_Z5CheckIP7ASTStmtEvR11ASTNodeListIT_E
-0x0806a190	45	UNRESOLVED	-	-	_Z5CheckIP7ASTDeclEvR11ASTNodeListIT_E
+0x0806a160	45	EXACT	vuc/config/check_list_stmt_exact_probe.json	vuc/src/CheckLists.cpp	_Z5CheckIP7ASTStmtEvR11ASTNodeListIT_E
+0x0806a190	45	EXACT	vuc/config/check_list_decl_exact_probe.json	vuc/src/CheckLists.cpp	_Z5CheckIP7ASTDeclEvR11ASTNodeListIT_E
 0x0806a1c0	151	UNRESOLVED	-	-	_ZNK4Type12IsAssignableERKS_b
 0x0806a260	66	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
 0x0806a2b0	16	UNRESOLVED	-	-	__tcf_0
