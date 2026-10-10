@@ -57,11 +57,15 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `MLGameString(MLTempString const&)` ctor C1 / C2 | 49/49 each | `-O2 -frename-registers` |
 | `MLHashFun<MLGameString>::Hash()` | 20/20 | `-O2 -frename-registers` |
 | `Value` default ctor C1 / C2 | 44/44 each | `-O2 -frename-registers` |
+| `MLGameStringData(char const*, bool)` ctor C1 / C2 | 111/111 each | `-O2 -frename-registers` |
+| `MLHashFun<char const*>::IsEqual()` | 40/40 | `-O2 -frename-registers -falign-jumps=1` |
+| `MLHashTable<int,int,...>::clear()` | 64/64 | `-O2 -frename-registers -falign-jumps=1` |
+| `MLHashTable<char const*,MLGameStringData*,...>::clear()` | 64/64 | `-O2 -frename-registers -falign-jumps=1` |
 
-**15/15 exact functions, 438/438 checked code bytes.** This counts only the
+**20/20 exact functions, 828/828 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 11 supported relocations across the accepted candidate functions
+ELF. All 22 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -69,7 +73,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-15 EXACT, 1 EXPERIMENTAL and 282 UNRESOLVED entries. Generate it using
+20 EXACT, 1 EXPERIMENTAL and 277 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 

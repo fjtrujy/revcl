@@ -17,13 +17,13 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_functions(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         names = [json.loads(suite.within_repo(p).read_text())["function"] for p in configs]
-        self.assertEqual(len(names), 16)
+        self.assertEqual(len(names), 21)
         self.assertEqual(len(set(names)), len(names))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 15)
+        self.assertEqual(len(exact_configs), 20)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]

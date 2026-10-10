@@ -262,9 +262,9 @@ address	size	status	manifest	candidate_source	symbol
 0x08071530	63	UNRESOLVED	-	-	main
 0x08071570	16	UNRESOLVED	-	-	__tcf_0
 0x08071580	31	UNRESOLVED	-	-	_GLOBAL__I_currFileName
-0x080715a0	64	UNRESOLVED	-	-	_ZN11MLHashTableIii9MLHashFunIiELi513EE5clearEv
-0x080715e0	111	UNRESOLVED	-	-	_ZN16MLGameStringDataC2EPKcb
-0x08071650	111	UNRESOLVED	-	-	_ZN16MLGameStringDataC1EPKcb
+0x080715a0	64	EXACT	vuc/config/hash_int_clear_probe.json	vuc/src/MLHashTable.cpp	_ZN11MLHashTableIii9MLHashFunIiELi513EE5clearEv
+0x080715e0	111	EXACT	vuc/config/string_data_c2_probe.json	vuc/src/MLGameString.cpp	_ZN16MLGameStringDataC2EPKcb
+0x08071650	111	EXACT	vuc/config/string_data_c1_probe.json	vuc/src/MLGameString.cpp	_ZN16MLGameStringDataC1EPKcb
 0x080716c0	14	EXACT	vuc/config/ml_string_default_c2_probe.json	vuc/src/MLGameString.cpp	_ZN12MLGameStringC2Ev
 0x080716d0	14	EXACT	vuc/config/ml_string_default_c1_probe.json	vuc/src/MLGameString.cpp	_ZN12MLGameStringC1Ev
 0x080716e0	52	EXACT	vuc/config/ml_string_char_c2_probe.json	vuc/src/MLGameString.cpp	_ZN12MLGameStringC2EPKcb
@@ -290,9 +290,9 @@ address	size	status	manifest	candidate_source	symbol
 0x08071dc0	58	UNRESOLVED	-	-	_ZN12MLTempStringplERKS_
 0x08071e00	22	UNRESOLVED	-	-	__tcf_0
 0x08071e20	114	UNRESOLVED	-	-	_ZN11MLHashTableIPKcP16MLGameStringData9MLHashFunIS1_ELi513EE8FindCopyERKS1_
-0x08071ea0	64	UNRESOLVED	-	-	_ZN11MLHashTableIPKcP16MLGameStringData9MLHashFunIS1_ELi513EE5clearEv
+0x08071ea0	64	EXACT	vuc/config/hash_string_clear_probe.json	vuc/src/MLHashTable.cpp	_ZN11MLHashTableIPKcP16MLGameStringData9MLHashFunIS1_ELi513EE5clearEv
 0x08071ee0	86	UNRESOLVED	-	-	_ZN9MLHashFunIPKcE4HashERKS1_
-0x08071f40	40	UNRESOLVED	-	-	_ZN9MLHashFunIPKcE7IsEqualERKS1_S4_
+0x08071f40	40	EXACT	vuc/config/hash_cstr_equal_probe.json	vuc/src/MLHashTable.cpp	_ZN9MLHashFunIPKcE7IsEqualERKS1_S4_
 0x08071f70	84	UNRESOLVED	-	-	__libc_csu_init
 0x08071fd0	80	UNRESOLVED	-	-	__libc_csu_fini
 0x08072020	0	UNRESOLVED	-	-	__i686.get_pc_thunk.bx

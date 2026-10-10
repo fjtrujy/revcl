@@ -1,0 +1,14 @@
+{
+  "function": "_ZN9MLHashFunIPKcE7IsEqualERKS1_S4_",
+  "address": "0x08071f40",
+  "size": 40,
+  "source": "vuc/src/MLHashTable.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "strcmp": "0x080496ac"
+  }
+}

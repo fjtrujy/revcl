@@ -14,5 +14,10 @@
   "vuc/config/ml_string_char_c2_probe.json",
   "vuc/config/ml_string_char_c1_probe.json",
   "vuc/config/ml_string_temp_c2_probe.json",
-  "vuc/config/ml_string_temp_c1_probe.json"
+  "vuc/config/ml_string_temp_c1_probe.json",
+  "vuc/config/hash_int_clear_probe.json",
+  "vuc/config/hash_string_clear_probe.json",
+  "vuc/config/hash_cstr_equal_probe.json",
+  "vuc/config/string_data_c2_probe.json",
+  "vuc/config/string_data_c1_probe.json"
 ]

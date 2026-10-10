@@ -6,6 +6,9 @@
 struct MLGameStringData {
     unsigned hash;
     const char *text;
+    unsigned length;
+    bool temporary;
+    MLGameStringData(const char *value, bool temporary);
 };
 
 struct MLTempString {
@@ -13,6 +16,12 @@ struct MLTempString {
 };
 
 template <class T> class MLHashFun;
+
+template <> class MLHashFun<const char *> {
+public:
+    unsigned Hash(const char * const &value);
+    bool IsEqual(const char * const &lhs, const char * const &rhs);
+};
 
 class MLGameString {
 public:
