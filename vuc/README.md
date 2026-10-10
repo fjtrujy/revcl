@@ -92,8 +92,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-gcc333-jan25/candidate-suite
 ```
 
-The strict gate now checks **11 independently verified exact functions**
-covering 236/236 instruction bytes, including the original relocation for
+The strict gate now checks **15 independently verified exact functions**
+covering 438/438 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -106,6 +106,11 @@ The original ELF also supplies 22 `.cpp` translation-unit records and 79
 locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
+Regenerate the exhaustive **298-symbol** reconstruction queue using
+`python3 vuc/scripts/coverage.py --write` (currently 15 EXACT,
+1 EXPERIMENTAL and 282 UNRESOLVED). The complete original
+`MLGameString` class member-function cluster is byte-exact (9/9 functions,
+273/273 instruction bytes). See `vuc/docs/mlgamestring-milestone.md`.
 
 ## Milestones
 

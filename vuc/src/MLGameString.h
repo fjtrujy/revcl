@@ -8,12 +8,18 @@ struct MLGameStringData {
     const char *text;
 };
 
+struct MLTempString {
+    const char *text;
+};
+
 template <class T> class MLHashFun;
 
 class MLGameString {
 public:
     MLGameString();
     MLGameString(const MLGameString &other);
+    MLGameString(const char *text, bool temporary);
+    MLGameString(const MLTempString &temporary);
     const char *c_str() const;
 
 private:
