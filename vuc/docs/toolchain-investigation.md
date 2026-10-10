@@ -71,3 +71,21 @@ python3 -m unittest discover -s vuc/tests -v
 
 The `inventory --write` operation regenerates `target.json`,
 `functions.tsv`, and `sections.tsv` deterministically from the ZIP.
+
+## Compiler fingerprint probes
+
+The period-compatible C++ probe at `vuc/probes/compiler_fingerprint.cpp`
+exercises iostream insertion, STL containers, virtual methods, static object
+initialization and C++ exception handling. The dedicated runner compiles six
+candidate option sets (`-O0`, `-O1`, `-O2`, `-O2 -frename-registers`,
+`-O2 -fomit-frame-pointer`, `-Os`) with an **explicitly supplied compiler**:
+
+```sh
+python3 vuc/scripts/compiler_probe.py --compiler /path/to/g++ --out /tmp/vuc-probes
+```
+
+The resulting `manifest.json` includes compiler identity, commands, source
+hash, candidate object hashes and compilation outcomes. These are fingerprints
+for future comparisons, **not** proof of the original compiler flags or a
+binary matching score. Apple Clang can smoke-test the harness but must never
+be accepted as the historical compiler. The matching toolchain remains absent.
