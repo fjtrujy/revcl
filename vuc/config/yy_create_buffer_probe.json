@@ -1,0 +1,15 @@
+{
+  "function": "_ZN11yyFlexLexer16yy_create_bufferEPSii",
+  "address": "0x080617b0",
+  "size": 139,
+  "source": "vuc/probes/yy_create_buffer.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "malloc": "0x0804977c",
+    "_ZN11yyFlexLexer14yy_init_bufferEP15yy_buffer_statePSi": "0x080618a0",
+    ".rodata": "0x08074de0"
+  }
+}

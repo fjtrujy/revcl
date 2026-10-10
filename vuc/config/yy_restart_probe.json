@@ -1,0 +1,14 @@
+{
+  "function": "_ZN11yyFlexLexer9yyrestartEPSi",
+  "address": "0x080616d0",
+  "size": 93,
+  "source": "vuc/src/FlexLexerRestart.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZN11yyFlexLexer14yy_init_bufferEP15yy_buffer_statePSi": "0x080618a0",
+    "_ZN11yyFlexLexer20yy_load_buffer_stateEv": "0x08061780"
+  }
+}

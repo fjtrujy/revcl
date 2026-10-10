@@ -1,0 +1,11 @@
+{
+  "function": "_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIPK4TypeSt6vectorIS2_SaIS2_EEEEPS2_ET0_T_SB_SA_12__false_type",
+  "address": "0x0804f0e0",
+  "size": 79,
+  "source": "vuc/src/TypeUninitializedCopy.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

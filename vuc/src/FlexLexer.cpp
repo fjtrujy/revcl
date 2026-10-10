@@ -24,6 +24,9 @@ struct yy_buffer_state {
 
 class yyFlexLexer {
 public:
+    virtual ~yyFlexLexer();
+    virtual int yylex();
+    virtual yy_buffer_state *yy_create_buffer(std::istream *, int);
     void LexerOutput(const char *text, int length);
     void LexerError(const char *text);
     void yy_switch_to_buffer(yy_buffer_state *next);
@@ -31,7 +34,6 @@ public:
     void yy_flush_buffer(yy_buffer_state *state);
     void yy_init_buffer(yy_buffer_state *state, std::istream *file);
 private:
-    char reserved0_[0x04];
     char *yytext_ptr_;
     char reserved1_[0x18];
     std::istream *input_;
