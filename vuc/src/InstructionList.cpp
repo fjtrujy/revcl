@@ -16,6 +16,8 @@ public:
     void Add(Instruction *instruction);
     void Print(std::ostream &output);
     void AddL(const MLGameString &name);
+    static MLGameString GenTmp(const char *name);
+    static MLGameString GenLabel(const char *name);
     std::vector<Instruction *> instructions_;
 };
 
@@ -34,4 +36,18 @@ void InstructionList::Print(std::ostream &output)
 void InstructionList::AddL(const MLGameString &name)
 {
     Add(new Instruction(name));
+}
+
+MLGameString InstructionList::GenLabel(const char *name)
+{
+    static int id = 1;
+    MLTempString temporary("L_%03d_%s\\@:", id++, name);
+    return MLGameString(temporary);
+}
+
+MLGameString InstructionList::GenTmp(const char *name)
+{
+    static int id = 1;
+    MLTempString temporary("%s_%03d", name, id++);
+    return MLGameString(temporary);
 }

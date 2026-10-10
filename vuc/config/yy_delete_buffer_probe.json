@@ -2,7 +2,7 @@
   "function": "_ZN11yyFlexLexer16yy_delete_bufferEP15yy_buffer_state",
   "address": "0x08061840",
   "size": 87,
-  "source": "vuc/probes/yy_delete_buffer.cpp",
+  "source": "vuc/src/FlexLexer.cpp",
   "flags": [
     "-O2",
     "-frename-registers"

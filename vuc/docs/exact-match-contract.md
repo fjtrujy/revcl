@@ -135,11 +135,16 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `_GLOBAL__I__Z10IsFoldable...` | 31/31 | `-O2 -frename-registers -fuse-cxa-atexit -ffunction-sections -falign-jumps=1` |
 | `__static_initialization_and_destruction_0` for predicate/environment TU | 193/193 | same toolchain flags, 13 original relocations |
 | `__static_initialization_and_destruction_0` for `currFileName` TU | 88/88 | `-O2 -frename-registers -fuse-cxa-atexit -ffunction-sections` |
+| `InstructionList::GenTmp(char const*)` | 85/85 | `-O2 -frename-registers -falign-jumps=1`, original 8-byte string literal |
+| `__uninitialized_copy_aux<AsmVariable const*,AsmVariable*>()` | 67/67 | `-O2 -frename-registers`, implicit memberwise copy |
+| `__uninitialized_copy_aux<AsmVariable*,AsmVariable*>()` | 74/74 | `-O2 -frename-registers`, implicit memberwise copy |
+| `yyFlexLexer::yy_delete_buffer()` | 87/87 | `-O2 -frename-registers`, two `free` relocations |
+| `InstructionList::GenLabel(char const*)` | 85/85 | `-O2 -frename-registers -falign-jumps=1`, original format literal and counter |
 
-**136/136 exact function-symbol records, 7073/7073 checked code bytes.** This counts only the
+**141/141 exact function-symbol records, 7471/7471 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 309 supported relocations across the accepted candidate functions
+ELF. All 321 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -147,7 +152,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-136 EXACT, 11 EXPERIMENTAL and 151 UNRESOLVED entries. Generate it using
+141 EXACT, 11 EXPERIMENTAL and 146 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 

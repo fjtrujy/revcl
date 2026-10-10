@@ -134,5 +134,10 @@
   "vuc/config/get_op_type_probe.json",
   "vuc/config/iostream_global_is_foldable_probe.json",
   "vuc/config/iostream_static_is_foldable_probe.json",
-  "vuc/config/iostream_static_curr_file_probe.json"
+  "vuc/config/iostream_static_curr_file_probe.json",
+  "vuc/config/instruction_gen_tmp_probe.json",
+  "vuc/config/uninitialized_asm_const_probe.json",
+  "vuc/config/uninitialized_asm_mut_probe.json",
+  "vuc/config/yy_delete_buffer_probe.json",
+  "vuc/config/instruction_gen_label_probe.json"
 ]

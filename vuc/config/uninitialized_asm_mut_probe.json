@@ -2,7 +2,7 @@
   "function": "_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIP11AsmVariableSt6vectorIS2_SaIS2_EEEES7_ET0_T_S9_S8_12__false_type",
   "address": "0x08051450",
   "size": 74,
-  "source": "vuc/probes/stl_uninitialized_copy.cpp",
+  "source": "vuc/src/AsmVariableUninitializedCopy.cpp",
   "flags": [
     "-O2",
     "-frename-registers"

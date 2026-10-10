@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **136 independently verified exact function-symbol records**
-covering 7073/7073 instruction bytes, including the original relocation for
+The strict gate now checks **141 independently verified exact function-symbol records**
+covering 7471/7471 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -115,8 +115,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 136 EXACT,
-11 EXPERIMENTAL and 151 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 141 EXACT,
+11 EXPERIMENTAL and 146 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -142,6 +142,12 @@ The separate original `currFileName` translation unit's 88-byte
 static initializer is also exact, while its 31-byte global wrapper
 remains explicitly experimental at 29/31. See
 `vuc/docs/2026-10-10-curr-file-and-whole-elf-gate.md`.
+The original `InstructionList::GenTmp()` and both historical
+`AsmVariable` STL uninitialized-copy helpers now match exactly using
+ordinary C++ source; see `vuc/docs/2026-10-10-asmvariable-gentmp-batch.md`.
+The matching suite also includes byte-exact `GenLabel()` and
+`yyFlexLexer::yy_delete_buffer()`; their original relocations and
+named data objects are checked in the same strict manifest.
 The independent final executable gate is
 `python3 vuc/scripts/whole_elf_gate.py --candidate /path/to/rebuilt-vuc`.
 It accepts only complete byte equality with the authenticated ZIP

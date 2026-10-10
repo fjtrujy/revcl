@@ -33,6 +33,7 @@ public:
     void yy_load_buffer_state();
     void yy_flush_buffer(yy_buffer_state *state);
     void yy_init_buffer(yy_buffer_state *state, std::istream *file);
+    void yy_delete_buffer(yy_buffer_state *state);
 private:
     char *yytext_ptr_;
     char reserved1_[0x18];
@@ -93,4 +94,12 @@ void yyFlexLexer::yy_flush_buffer(yy_buffer_state *state)
     state->yy_at_bol = 0;
     if (state == current_)
         yy_load_buffer_state();
+}
+
+void yyFlexLexer::yy_delete_buffer(yy_buffer_state *state)
+{
+    if (!state) return;
+    if (state == current_) current_ = 0;
+    if (state->yy_is_our_buffer) std::free(state->buffer);
+    std::free(state);
 }
