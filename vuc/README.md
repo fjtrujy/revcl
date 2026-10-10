@@ -51,7 +51,8 @@ The inventory also writes `vuc/config/sections.tsv`. See
 `UNAVAILABLE`, rather than misrepresenting a structural inventory as matched
 bytes. An isolated relocation-aware **single-function** experiment is available
 through `vuc/scripts/match_probe.py`; it is not the general `diff`/`score`
-pipeline. The historical GCC 3.3.3 compiler and complete scorer remain pending.
+pipeline. A date-matched GCC 3.3.3 compiler-only toolchain now exists, but
+the original Debian binaries and the complete scorer remain pending.
 
 The existing x86_64 Lima VM can execute a separately extracted, SHA-pinned
 GCC 3.3.5 compatibility toolchain (`vuc/scripts/bootstrap_compat_gcc.sh`).
@@ -76,6 +77,22 @@ against the original function symbol, size, and address before comparison.
 The audit reports checked bytes and exact candidate functions, **not** a
 whole-program matching percentage. Multi-function object files are supported
 as long as the requested function and its relocations can be resolved.
+
+The curated reproducible suite in `vuc/config/selected_candidates.json` can
+compile and compare four functions automatically using:
+
+```sh
+limactl shell revcl-oracle -- python3 \
+  /path/to/revcl/vuc/scripts/match_candidates.py \
+  --compiler /tmp/vuc-gcc333-jan25/g++-jan25-candidate \
+  --out /tmp/vuc-gcc333-jan25/candidate-suite
+```
+
+The first suite finds **two exact functions**, `ListFile::GetNumLines()`
+(18/18 bytes) and `Instruction::ToString()` (9/9 bytes, with its external
+relocation resolved). Across four checked functions, 59/70 code bytes match;
+this is candidate-scoped evidence, **not** a whole-binary percentage. See
+`vuc/docs/candidate-matches-2026-10-10.md` for details and Debian patch clues.
 
 ## Milestones
 

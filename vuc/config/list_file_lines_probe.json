@@ -1,0 +1,7 @@
+{
+  "function": "_ZN8ListFile11GetNumLinesEv",
+  "address": "0x0805aff0",
+  "size": 18,
+  "source": "vuc/probes/simple_methods.cpp",
+  "relocations": {}
+}
