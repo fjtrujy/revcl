@@ -126,8 +126,8 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
             func_0804aeb0();
         }
         wtInstrList *done = &wt->unk_a0;
-        if (done->unk_04)
-            wt->unk_54.func_0805874c(done->unk_04->unk_13e8.getRow());
+        if (done->last())
+            wt->unk_54.func_0805874c(done->last()->unk_13e8.getRow());
         else
             wt->unk_54.func_0805874c(0);
         if (!wt->unk_4c && !wt->unk_94.unk_00) {
@@ -322,6 +322,12 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                         g_080de72c = 0;
                     }
                     break;
+                case -1:
+                default:
+                    func_0804ad38("oh no genmove failed .. return code %d!\n", r);
+                    wt->dump();
+                    func_0804aeb0();
+                    break;
                 case 1:
                     if (wt->unk_ad && !wt->unk_ac) {
                         wt->unk_ac = 1;
@@ -329,17 +335,11 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                         g_080de72c = wt->unk_a0.unk_00;
                     }
                     break;
-                case -1:
                 case 2:
                 case 3:
                     break;
                 case 4:
                     func_0804ad38("a move isn't needed after all\n");
-                    func_0804aeb0();
-                    break;
-                default:
-                    func_0804ad38("oh no genmove failed .. return code %d!\n", r);
-                    wt->dump();
                     func_0804aeb0();
                     break;
                 }
@@ -356,9 +356,9 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
             if (g_080de72c)
                 g_080de72c->func_08054008(false);
             else
-                g_080de72c = done->unk_04;
-            while (done->unk_04 != g_080de72c) {
-                Instr *in = done->unk_04;
+                g_080de72c = done->last();
+            while (done->last() != g_080de72c) {
+                Instr *in = done->last();
                 in->func_08054214();
                 if (!UndoInsert(wt, in)) {
                     func_0804ad38("in finst track..undoinsert failed\n");
@@ -371,7 +371,7 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                 }
             }
             while (wt->unk_a0.unk_00) {
-                Instr *in = done->unk_04;
+                Instr *in = done->last();
                 if (!UndoInsert(wt, in)) {
                     func_0804ad38("undo insert: failed to remove done list tail\n");
                     func_0804aeb0();
