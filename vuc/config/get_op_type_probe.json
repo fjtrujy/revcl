@@ -1,0 +1,14 @@
+{
+  "function": "_Z9GetOpTypePN2IR9Expr_DataE",
+  "address": "0x0805a4f0",
+  "size": 117,
+  "source": "vuc/src/GetOpType.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Znwj": "0x080499ec",
+    "_ZTVN2IR9UInt_DataE": "0x08072518"
+  }
+}

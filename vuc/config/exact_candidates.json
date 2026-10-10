@@ -130,5 +130,6 @@
   "vuc/config/noop_0806e2e0_probe.json",
   "vuc/config/noop_0806e2f0_probe.json",
   "vuc/config/noop_0806e300_probe.json",
-  "vuc/config/noop_0806e9a0_probe.json"
+  "vuc/config/noop_0806e9a0_probe.json",
+  "vuc/config/get_op_type_probe.json"
 ]

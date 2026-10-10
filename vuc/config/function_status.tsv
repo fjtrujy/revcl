@@ -115,7 +115,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0805a3f0	193	UNRESOLVED	-	-	_Z13AssembleBinOpRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
 0x0805a4c0	16	EXACT	vuc/config/iostream_cleanup_0805a4c0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0805a4d0	31	UNRESOLVED	-	-	_GLOBAL__I__Z19AssembleBinOpFloat4RKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
-0x0805a4f0	117	UNRESOLVED	-	-	_Z9GetOpTypePN2IR9Expr_DataE
+0x0805a4f0	117	EXACT	vuc/config/get_op_type_probe.json	vuc/src/GetOpType.cpp	_Z9GetOpTypePN2IR9Expr_DataE
 0x0805a570	77	UNRESOLVED	-	-	_Z17IsAccumulatorablePN2IR13Operator_DataE
 0x0805a5c0	66	EXACT	vuc/config/iostream_static_0805a5c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805a610	1206	UNRESOLVED	-	-	_ZN8ListFile8GenerateEPKc
