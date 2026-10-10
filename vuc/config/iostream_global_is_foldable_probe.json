@@ -1,0 +1,16 @@
+{
+  "function": "_GLOBAL__I__Z10IsFoldablePN2IR13Operator_DataE",
+  "address": "0x08050b80",
+  "size": 31,
+  "source": "vuc/src/IRPredicatesEnvironments.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x0804f4d0"
+  }
+}

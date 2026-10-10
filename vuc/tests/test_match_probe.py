@@ -83,6 +83,11 @@ class MatchProbeTests(unittest.TestCase):
         section = (0, 0x130, 0, 3, 0, 2)
         self.assertEqual(match.linked_symbol_offset(local_function, 10), 0)
         self.assertEqual(match.linked_symbol_offset(section, 10), 0x130)
+        # The same rule applies to an explicit named BSS symbol: adding
+        # candidate st_value would shift localEnv by the temporary table
+        # layout rather than using its authenticated original ELF address.
+        global_object = (0, 0x820, 0x804, 17, 0, 3)
+        self.assertEqual(match.linked_symbol_offset(global_object, 10), 0)
         # An undefined function has no candidate section and keeps its value.
         undefined = (0, 0, 0, 18, 0, 0)
         self.assertEqual(match.linked_symbol_offset(undefined, 10), 0)

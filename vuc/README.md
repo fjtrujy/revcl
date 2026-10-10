@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **133 independently verified exact function-symbol records**
-covering 6761/6761 instruction bytes, including the original relocation for
+The strict gate now checks **135 independently verified exact function-symbol records**
+covering 6985/6985 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -115,8 +115,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 133 EXACT,
-10 EXPERIMENTAL and 155 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 135 EXACT,
+10 EXPERIMENTAL and 153 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -134,6 +134,10 @@ The following batch recovers virtual FlexLexer destructor entries,
 See `vuc/docs/2026-10-10-lexer-bind-batch.md`.
 The independent `IsFoldable(IR::Operator_Data*)` branch-chain
 reconstruction also matches all 41 original instruction bytes.
+The original `IsFoldable` startup translation unit is now reconstructed
+coherently with both 513-bucket hash environments: its 193-byte static
+initializer and 31-byte global initialization wrapper are fully exact.
+See `vuc/docs/2026-10-10-predicate-environment-unit.md`.
 Twenty per-translation-unit iostream destructor callbacks and
 `_GLOBAL__I_constantsTabStop` are also individually byte-exact.
 All 14 matching 66-byte iostream initializer helpers have now been

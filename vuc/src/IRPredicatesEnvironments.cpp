@@ -1,4 +1,10 @@
-// Byte-exact VUC IsFoldable() fragment; original IR types remain provisional.
+// Reconstructed VUC translation unit: predicates and global hash environments.
+// Original ELF symbols, instruction bytes and relocations are byte-exact;
+// spelling and complete historical file boundaries remain provisional.
+#include <iostream>
+#include "MLHashTable.h"
+#include "MLHashFunGameString.h"
+
 namespace IR {
 struct Operator_Data {
     unsigned tag;
@@ -27,3 +33,6 @@ bool IsCommutative(IR::Operator_Data *op)
     if (op->kind == 9) return true;
     return op->kind == 8;
 }
+
+MLHashTable<MLGameString, MLGameString, MLHashFun<MLGameString>, 513> globalEnv;
+MLHashTable<MLGameString, MLGameString, MLHashFun<MLGameString>, 513> localEnv;

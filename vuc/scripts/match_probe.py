@@ -94,11 +94,13 @@ def resolve_object_target(symbols, section_index, addend, mapped_objects):
 def linked_symbol_offset(entry, section_count):
     """Return an object-relative addend only for section/undefined symbols.
 
-    An STT_FUNC defined inside the candidate already denotes that named
-    function's base. Its st_value is the offset within the candidate object,
-    not an addition to the explicitly configured original linked address.
+    Defined STT_FUNC and STT_OBJECT symbols already denote their named
+    bases. Their st_value fields are candidate-section offsets, *not*
+    additions to explicitly configured original linked addresses.
+    STT_SECTION relocations still use the section-local addend to resolve
+    the particular symbol or literal inside the original section.
     """
-    if entry[3] & 15 == 2 and entry[5] < section_count:
+    if (entry[3] & 15) in (1, 2) and 0 < entry[5] < section_count:
         return 0
     return entry[1]
 

@@ -12,6 +12,10 @@ public:
         Node *next;
     };
     Node *heads[Buckets];
+    MLHashTable() {
+        for (int i = 0; i < Buckets; ++i)
+            heads[i] = 0;
+    }
     ~MLHashTable() { clear(); }
     void clear();
     Value FindCopy(const Key &key);

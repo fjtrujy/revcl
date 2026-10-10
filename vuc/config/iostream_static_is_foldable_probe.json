@@ -1,0 +1,28 @@
+{
+  "function": "_Z41__static_initialization_and_destruction_0ii",
+  "address": "0x0804f4d0",
+  "size": 193,
+  "source": "vuc/src/IRPredicatesEnvironments.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "localEnv": "0x0808b460",
+    ".text.__tcf_2": "0x080502b0",
+    "__dso_handle": "0x08077004",
+    "__cxa_atexit": "0x0804972c",
+    "_ZNSt8ios_base4InitC1Ev": "0x0804974c",
+    ".text.__tcf_0": "0x08050290",
+    "globalEnv": "0x0808ac40",
+    ".text.__tcf_1": "0x080502a0"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZSt8__ioinit": "0x0808ac20"
+    }
+  }
+}
