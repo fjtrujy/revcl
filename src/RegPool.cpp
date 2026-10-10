@@ -111,12 +111,13 @@ void RegPool::Dump()
         func_0804ad38("RegPool::Dump() POOL_WITH_NO_NAME\n");
         return;
     }
+    int current = 0;
     if (unk_04) {
-        int current = 0;
         int i = 0;
         for (; current != unk_08; current = ++i) {
             RegPoolEntry* e = &unk_04[i];
-            for (RegPoolEntry* p = e; p; p = 0)
+            int offset = (char*)e - (char*)unk_04;
+            for (int p = offset; p; p = 0)
                 ;
         }
         if (unk_18) {
