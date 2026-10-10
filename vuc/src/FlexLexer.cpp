@@ -1,6 +1,13 @@
 // Byte-exact VUC yyFlexLexer::LexerOutput() provisional source fragment.
 // The full generated lexer and its original class declaration are unresolved.
 #include <ostream>
+class FlexLexer {
+public:
+    virtual ~FlexLexer();
+};
+
+FlexLexer::~FlexLexer() {}
+
 class yyFlexLexer {
 public:
     void LexerOutput(const char *text, int length);

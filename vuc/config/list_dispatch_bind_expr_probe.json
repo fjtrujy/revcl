@@ -1,0 +1,13 @@
+{
+  "function": "_Z4BindIP7ASTExprEvR11ASTNodeListIT_ER11SymbolTable",
+  "address": "0x0804ed50",
+  "size": 57,
+  "source": "vuc/probes/list_dispatch.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Z4BindP7ASTExprR11SymbolTable": "0x0804b830"
+  }
+}

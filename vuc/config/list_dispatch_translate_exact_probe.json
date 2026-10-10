@@ -1,0 +1,14 @@
+{
+  "function": "_Z9TranslateIP10ASTVarDeclEvR11ASTNodeListIT_E",
+  "address": "0x0806e070",
+  "size": 45,
+  "source": "vuc/src/ListDispatch.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_Z9TranslateP7ASTDecl": "0x0806ce20"
+  }
+}

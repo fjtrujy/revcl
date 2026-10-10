@@ -41,9 +41,13 @@ def run(compiler, out, manifests, options=None):
         config_path = within_repo(relative)
         config = json.loads(config_path.read_text())
         name = config["function"]
-        if name in seen:
+        # The original ELF includes multiple local STT_FUNC records called
+        # __tcf_0 (one per historical TU). Distinguish by the original ELF
+        # address, not by unmangled/mangled spelling alone.
+        identity = (name, int(config["address"], 0))
+        if identity in seen:
             raise ValueError("duplicate function: " + name)
-        seen.add(name)
+        seen.add(identity)
         source = within_repo(config["source"])
         candidate_flags = config.get("flags", flags)
         if not isinstance(candidate_flags, list) or not candidate_flags or not all(

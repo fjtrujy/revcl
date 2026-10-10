@@ -1,0 +1,15 @@
+{
+  "function": "_GLOBAL__I_constantsTabStop",
+  "address": "0x0804a700",
+  "size": 31,
+  "source": "vuc/src/IostreamGlobal_constantsTabStop.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x08049af0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "function": "__tcf_0",
+  "address": "0x08071570",
+  "size": 16,
+  "source": "vuc/src/IostreamInit.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit"
+  ],
+  "relocations": {
+    "_ZNSt8ios_base4InitD1Ev": "0x080499dc"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZSt8__ioinit": "0x0808bcbc"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "function": "_Z4BindI12MLGameStringEvR11ASTNodeListIT_ER11SymbolTable",
+  "address": "0x0804f060",
+  "size": 57,
+  "source": "vuc/src/BindLists.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Z4BindR12MLGameStringR11SymbolTable": "0x0804cd30"
+  }
+}

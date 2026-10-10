@@ -1,0 +1,15 @@
+{
+  "function": "_GLOBAL__I_script_debug",
+  "address": "0x08060790",
+  "size": 31,
+  "source": "vuc/probes/IostreamGlobal_script_debug.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x0805cce0"
+  }
+}

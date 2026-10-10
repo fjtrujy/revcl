@@ -1,0 +1,12 @@
+{
+  "function": "_Z10IsFoldablePN2IR13Operator_DataE",
+  "address": "0x0804f5a0",
+  "size": 41,
+  "source": "vuc/src/IRPredicates.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {}
+}

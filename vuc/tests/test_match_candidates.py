@@ -14,16 +14,17 @@ spec.loader.exec_module(suite)
 
 
 class CandidateSuiteTests(unittest.TestCase):
-    def test_baseline_manifest_has_unique_functions(self):
+    def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
-        names = [json.loads(suite.within_repo(p).read_text())["function"] for p in configs]
-        self.assertEqual(len(names), 39)
-        self.assertEqual(len(set(names)), len(names))
+        records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
+        self.assertEqual(len(records), 74)
+        # Local function spelling may repeat across original C++ units.
+        self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 34)
+        self.assertEqual(len(exact_configs), 66)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -115,6 +116,21 @@ class CandidateSuiteTests(unittest.TestCase):
                                                 "length": 18, "verified_literal_bytes": 0}):
                     with self.assertRaisesRegex(ValueError, "duplicate function"):
                         suite.run("compiler", out, [config, config])
+
+    def test_duplicate_local_name_with_distinct_original_addresses_is_allowed(self):
+        paths = ["vuc/config/iostream_cleanup_0804a6f0_probe.json",
+                 "vuc/config/iostream_cleanup_0804a7c0_probe.json"]
+        result = {"function": "__tcf_0", "exact": True, "exact_bytes": 16,
+                  "length": 16, "verified_literal_bytes": 0}
+        with tempfile.TemporaryDirectory() as out:
+            with patch.object(suite.subprocess, "run",
+                              return_value=subprocess.CompletedProcess([], 0, "", "")) as comp:
+                with patch.object(suite.matcher, "run", return_value=result):
+                    summary = suite.run("compiler", out, paths)
+        self.assertEqual(comp.call_count, 1)
+        self.assertEqual(summary["functions_checked"], 2)
+        self.assertEqual(summary["checked_code_bytes"], 32)
+        self.assertTrue(summary["all_candidates_exact"])
 
 
 if __name__ == "__main__":

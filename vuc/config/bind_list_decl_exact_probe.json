@@ -1,0 +1,13 @@
+{
+  "function": "_Z4BindIP7ASTDeclEvR11ASTNodeListIT_ER11SymbolTable",
+  "address": "0x0804f0a0",
+  "size": 57,
+  "source": "vuc/src/BindLists.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Z4BindP7ASTDeclR11SymbolTable": "0x0804bf80"
+  }
+}

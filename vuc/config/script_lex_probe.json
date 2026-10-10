@@ -1,0 +1,14 @@
+{
+  "function": "_Z10script_lexv",
+  "address": "0x0806fa50",
+  "size": 39,
+  "source": "vuc/src/ScriptLexer.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "lexer": "0x0808bcc0",
+    "script_line": "0x0808bcc4"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "function": "_ZN9FlexLexerD0Ev",
+  "address": "0x080619b0",
+  "size": 18,
+  "source": "vuc/src/FlexLexer.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZTV9FlexLexer": "0x08075be0",
+    "_ZdlPv": "0x0804973c"
+  }
+}
