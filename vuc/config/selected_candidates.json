@@ -143,5 +143,7 @@
   "vuc/config/noop_0806e9a0_probe.json",
   "vuc/config/get_op_type_probe.json",
   "vuc/config/iostream_global_is_foldable_probe.json",
-  "vuc/config/iostream_static_is_foldable_probe.json"
+  "vuc/config/iostream_static_is_foldable_probe.json",
+  "vuc/config/iostream_static_curr_file_probe.json",
+  "vuc/config/iostream_global_curr_file_probe.json"
 ]

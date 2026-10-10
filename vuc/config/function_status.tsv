@@ -254,14 +254,14 @@ address	size	status	manifest	candidate_source	symbol
 0x0806f8b0	257	UNRESOLVED	-	-	_ZN5Value16TypeConvertForceE6TypeIDRKS_S2_RS_S3_
 0x0806f9c0	16	EXACT	vuc/config/iostream_cleanup_0806f9c0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0806f9d0	31	UNRESOLVED	-	-	_GLOBAL__I__ZN5ValueC2Ev
-0x0806f9f0	88	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0806f9f0	88	EXACT	vuc/config/iostream_static_curr_file_probe.json	vuc/src/CurrFileInitialization.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806fa50	39	EXACT	vuc/config/script_lex_probe.json	vuc/src/ScriptLexer.cpp	_Z10script_lexv
 0x0806fa80	161	UNRESOLVED	-	-	_Z12script_errorPKc
 0x0806fb30	2059	UNRESOLVED	-	-	_Z9ParseFilev
 0x08070340	4583	UNRESOLVED	-	-	_Z13ExportSymbolsP9ASTModule
 0x08071530	63	EXACT	vuc/config/main_probe.json	vuc/src/Main.cpp	main
 0x08071570	16	EXACT	vuc/config/iostream_cleanup_08071570_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x08071580	31	UNRESOLVED	-	-	_GLOBAL__I_currFileName
+0x08071580	31	EXPERIMENTAL	vuc/config/iostream_global_curr_file_probe.json	vuc/probes/iostream_curr_file.cpp	_GLOBAL__I_currFileName
 0x080715a0	64	EXACT	vuc/config/hash_int_clear_probe.json	vuc/src/MLHashTable.cpp	_ZN11MLHashTableIii9MLHashFunIiELi513EE5clearEv
 0x080715e0	111	EXACT	vuc/config/string_data_c2_probe.json	vuc/src/MLGameString.cpp	_ZN16MLGameStringDataC2EPKcb
 0x08071650	111	EXACT	vuc/config/string_data_c1_probe.json	vuc/src/MLGameString.cpp	_ZN16MLGameStringDataC1EPKcb
