@@ -150,5 +150,6 @@
   "vuc/config/uninitialized_asm_const_probe.json",
   "vuc/config/uninitialized_asm_mut_probe.json",
   "vuc/config/yy_delete_buffer_probe.json",
-  "vuc/config/instruction_gen_label_probe.json"
+  "vuc/config/instruction_gen_label_probe.json",
+  "vuc/config/symbol_begin_scope_probe.json"
 ]

@@ -1,0 +1,21 @@
+{
+  "function": "_ZN15InstructionList8GenLabelEPKc",
+  "address": "0x080517e0",
+  "size": 85,
+  "source": "vuc/src/InstructionList.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    ".rodata": "0x0807266a",
+    "_ZN12MLTempStringC1EPKcz": "0x08071bb0",
+    "_ZN12MLGameStringC1ERK12MLTempString": "0x080717c0"
+  },
+  "relocation_objects": {
+    ".data": {
+      "_ZZN15InstructionList8GenLabelEPKcE2id": "0x08077840"
+    }
+  }
+}

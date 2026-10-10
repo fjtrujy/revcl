@@ -1,0 +1,16 @@
+{
+  "function": "_ZN11SymbolTable10BeginScopeEv",
+  "address": "0x0806a470",
+  "size": 140,
+  "source": "vuc/src/SymbolTableBeginScope.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EEC1ERKS5_": "0x0804f420",
+    "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EE5clearEv": "0x0804f020",
+    "_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS6_S8_EERKS6_": "0x0806a550",
+    "_Unwind_Resume": "0x0804998c"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "function": "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EEC1ERKS5_",
+  "address": "0x0804f420",
+  "size": 166,
+  "source": "vuc/probes/hash_copy_constructor.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Znwj": "0x080499ec",
+    "_ZN12MLGameStringC1ERKS_": "0x08071770",
+    "_ZdlPv": "0x0804973c",
+    "_Unwind_Resume": "0x0804998c"
+  }
+}

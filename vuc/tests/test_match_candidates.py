@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 152)
+        self.assertEqual(len(records), 153)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 141)
+        self.assertEqual(len(exact_configs), 142)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -32,6 +32,19 @@ class CandidateSuiteTests(unittest.TestCase):
         for manifest in all_configs - set(exact_configs):
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
             self.assertTrue(source.startswith("vuc/probes/"), source)
+
+    def test_manifest_sources_and_configs_are_committed(self):
+        """A passing local VM is insufficient if clean clones lack its inputs."""
+        if not (ROOT / ".git").exists():
+            self.skipTest("git working tree required for committed source audit")
+        tracked = set(subprocess.check_output(
+            ["git", "ls-files", "-z"], cwd=ROOT).decode().split("\0"))
+        for filename in (suite.EXACT_MANIFEST, suite.DEFAULT_MANIFEST):
+            for config_name in json.loads(filename.read_text()):
+                with self.subTest(manifest=filename.name, config=config_name):
+                    self.assertIn(config_name, tracked)
+                    config = json.loads(suite.within_repo(config_name).read_text())
+                    self.assertIn(config["source"], tracked)
 
     def test_original_tu_flag_hypothesis_is_explicit(self):
         with tempfile.TemporaryDirectory() as out:

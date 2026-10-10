@@ -197,7 +197,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806a2e0	66	EXACT	vuc/config/iostream_static_0806a2e0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806a330	185	UNRESOLVED	-	-	_ZN11SymbolTable5EnterERK12MLGameStringP16SymbolTableEntry
 0x0806a3f0	115	EXACT	vuc/config/symboltable_find_probe.json	vuc/src/SymbolTableFind.cpp	_ZN11SymbolTable4FindERK12MLGameStringb
-0x0806a470	140	UNRESOLVED	-	-	_ZN11SymbolTable10BeginScopeEv
+0x0806a470	140	EXACT	vuc/config/symbol_begin_scope_probe.json	vuc/src/SymbolTableBeginScope.cpp	_ZN11SymbolTable10BeginScopeEv
 0x0806a500	27	EXACT	vuc/config/symboltable_end_exact_probe.json	vuc/src/SymbolTable.cpp	_ZN11SymbolTable8EndScopeEv
 0x0806a520	16	EXACT	vuc/config/iostream_cleanup_0806a520_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0806a530	31	UNRESOLVED	-	-	_GLOBAL__I__ZN11SymbolTable5EnterERK12MLGameStringP16SymbolTableEntry

@@ -16,6 +16,8 @@ public:
         for (int i = 0; i < Buckets; ++i)
             heads[i] = 0;
     }
+    // The original non-inlined copy constructor is named in the VUC ELF.
+    MLHashTable(const MLHashTable &other);
     ~MLHashTable() { clear(); }
     void clear();
     Value FindCopy(const Key &key);
