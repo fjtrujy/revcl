@@ -1,0 +1,11 @@
+{
+  "function": "_ZN2IR9Type_Data16zzzzMakeRTTIWorkEv",
+  "address": "0x08050c20",
+  "size": 5,
+  "source": "vuc/src/IRRTTIDummies.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

@@ -120,5 +120,15 @@
   "vuc/config/yy_destructor_D0_probe.json",
   "vuc/config/ml_temp_default_C1_probe.json",
   "vuc/config/ast_arena_global_init_probe.json",
-  "vuc/config/ast_arena_initializer_probe.json"
+  "vuc/config/ast_arena_initializer_probe.json",
+  "vuc/config/noop_08050c20_probe.json",
+  "vuc/config/noop_08050c30_probe.json",
+  "vuc/config/noop_08050c40_probe.json",
+  "vuc/config/noop_080517d0_probe.json",
+  "vuc/config/noop_080607b0_probe.json",
+  "vuc/config/noop_0806e2d0_probe.json",
+  "vuc/config/noop_0806e2e0_probe.json",
+  "vuc/config/noop_0806e2f0_probe.json",
+  "vuc/config/noop_0806e300_probe.json",
+  "vuc/config/noop_0806e9a0_probe.json"
 ]

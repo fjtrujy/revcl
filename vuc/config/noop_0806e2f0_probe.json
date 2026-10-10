@@ -1,0 +1,11 @@
+{
+  "function": "_ZN2IR13Fragment_Data16zzzzMakeRTTIWorkEv",
+  "address": "0x0806e2f0",
+  "size": 5,
+  "source": "vuc/src/IRRTTIDummies.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

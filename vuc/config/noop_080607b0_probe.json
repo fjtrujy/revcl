@@ -1,0 +1,11 @@
+{
+  "function": "_ZN7ASTNode3apaEv",
+  "address": "0x080607b0",
+  "size": 5,
+  "source": "vuc/src/EmptyHooks.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

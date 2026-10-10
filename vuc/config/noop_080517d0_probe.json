@@ -1,0 +1,11 @@
+{
+  "function": "_ZN15InstructionList13GenerateImageEPh",
+  "address": "0x080517d0",
+  "size": 5,
+  "source": "vuc/src/EmptyHooks.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}
