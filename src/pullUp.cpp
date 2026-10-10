@@ -71,8 +71,8 @@ int pullUp(workTable *wt)
                 if (mrl >= wt->unk_34) {
                     func_0804ad38("mRline would be pushed after m_iEnd..%d, %d\n", mrl, wt->unk_34);
                     wt->dump();
-                    func_0804ad38("faulting instruction is (mte=%d):\n",
-                                  in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6);
+                    int diagnosticMte = in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6;
+                    func_0804ad38("faulting instruction is (mte=%d):\n", diagnosticMte);
                     in->leDump();
                     return -1;
                 }
@@ -83,7 +83,8 @@ int pullUp(workTable *wt)
     if (mrl - wt->unk_30 + 1 < wt->unk_44)
         mrl = wt->unk_30 + wt->unk_44 - 1;
 
-    if (br) {
+    int branchPresent = br != 0;
+    if (branchPresent) {
         int l = mrl - 1;
         bool done = false;
         if (l < wt->unk_30)
