@@ -1,0 +1,14 @@
+{
+  "function": "_ZN5Value3SetEPK7ASTExpr",
+  "address": "0x0806e7a0",
+  "size": 42,
+  "source": "vuc/src/Value.cpp",
+  "flags": [
+    "-O2",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZN5Value3SetEPK11ASTLValExpr": "0x0806e9a0",
+    "_ZN5Value3SetEPK15ASTConstValExpr": "0x0806e7d0"
+  }
+}

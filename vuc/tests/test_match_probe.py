@@ -12,6 +12,40 @@ spec.loader.exec_module(match)
 
 
 class MatchProbeTests(unittest.TestCase):
+    def test_named_bss_object_rebase(self):
+        guard = (0, 0, 8, 1, 0, 4)
+        instance = (0, 0x20, 0x2fc4, 1, 0, 4)
+        symbols = [("guard", guard), ("instance", instance)]
+        mapping = {"guard": "0x0808bce8", "instance": "0x0808c520"}
+        self.assertEqual(match.resolve_object_target(symbols, 4, 0, mapping), 0x0808bce8)
+        self.assertEqual(match.resolve_object_target(symbols, 4, 0x20, mapping), 0x0808c520)
+        self.assertEqual(match.resolve_object_target(symbols, 4, 0x20 + 0x1fbf, mapping),
+                         0x0808e4df)
+        self.assertEqual(match.resolve_object_target(symbols, 4, 0x20 + 0x2fc0, mapping),
+                         0x0808f4e0)
+
+    def test_named_bss_object_rebase_must_be_unique_and_known(self):
+        first = (0, 0, 8, 1, 0, 4)
+        with self.assertRaisesRegex(ValueError, "one named object"):
+            match.resolve_object_target([("a", first)], 4, 0x20, {"a": "0x123"})
+        with self.assertRaisesRegex(ValueError, "unmapped original object"):
+            match.resolve_object_target([("a", first)], 4, 0, {})
+        with self.assertRaisesRegex(ValueError, "one named object"):
+            match.resolve_object_target([("a", first), ("b", first)], 4, 0,
+                                        {"a": "0x123", "b": "0x123"})
+
+    def test_object_rebasing_uses_original_elf_symbols(self):
+        raw, target = match.decomp.load()
+        pairs = {
+            ".bss": {
+                "_ZGVZN16MLTempStringData3GetEvE3tsd": "0x0808bce8",
+                "_ZZN16MLTempStringData3GetEvE3tsd": "0x0808c520",
+            }
+        }
+        match.verify_original_objects(raw, target, pairs)
+        incorrect = {".bss": {"_ZZN16MLTempStringData3GetEvE3tsd": "0x0808c524"}}
+        with self.assertRaisesRegex(ValueError, "symbol mismatch"):
+            match.verify_original_objects(raw, target, incorrect)
     def test_i386_absolute_relocation(self):
         self.assertEqual(match.relocate_word(1, 0x080720a0, 0, 0x08049b42), 0x080720a0)
 

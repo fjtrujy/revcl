@@ -1,0 +1,19 @@
+{
+  "function": "_ZN16MLTempStringData3GetEv",
+  "address": "0x080719d0",
+  "size": 77,
+  "source": "vuc/src/MLTempStringData.cpp",
+  "flags": [
+    "-O2",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "memset": "0x0804996c"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZGVZN16MLTempStringData3GetEvE3tsd": "0x0808bce8",
+      "_ZZN16MLTempStringData3GetEvE3tsd": "0x0808c520"
+    }
+  }
+}

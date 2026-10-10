@@ -1,0 +1,13 @@
+{
+  "function": "_ZN11yyFlexLexer11LexerOutputEPKci",
+  "address": "0x080611a0",
+  "size": 18,
+  "source": "vuc/src/FlexLexer.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZNSo5writeEPKci": "0x0804999c"
+  }
+}

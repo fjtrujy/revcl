@@ -1,0 +1,13 @@
+{
+  "function": "_ZN11SymbolTable8EndScopeEv",
+  "address": "0x0806a500",
+  "size": 27,
+  "source": "vuc/src/SymbolTable.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EE5clearEv": "0x0804f020"
+  }
+}

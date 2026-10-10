@@ -1,0 +1,11 @@
+{
+  "function": "_Z10IsFoldablePN2IR13Operator_DataE",
+  "address": "0x0804f5a0",
+  "size": 41,
+  "source": "vuc/probes/is_foldable.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **25 independently verified exact functions**
-covering 1084/1084 instruction bytes, including the original relocation for
+The strict gate now checks **30 independently verified exact functions**
+covering 1362/1362 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -115,11 +115,16 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 25 EXACT,
-2 EXPERIMENTAL and 271 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 30 EXACT,
+5 EXPERIMENTAL and 263 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
+The latest batch adds exact `MLHashTable::FindCopy()`,
+`MLTempStringData::Get()`, `SymbolTable::EndScope()`,
+`yyFlexLexer::LexerOutput()` and `Value::Set(ASTExpr const*)`.
+See `vuc/docs/2026-10-10-findcopy-tempdata-batch.md` for the C++
+reconstruction and strict named-object relocation evidence.
 
 **DWARF limitation:** the canonical executable contains four compilation
 units, all belonging to glibc startup (`start.S`, `init.c`, `crti.S`,

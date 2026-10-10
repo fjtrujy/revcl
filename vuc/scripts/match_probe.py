@@ -72,7 +72,53 @@ def prepare_object(raw, reloc_targets, original_address):
     return bytes(text), count
 
 
-def prepare_named_function(raw, name, reloc_targets, original_address):
+def resolve_object_target(symbols, section_index, addend, mapped_objects):
+    """Rebase a section relocation through a concrete, named object symbol.
+
+    The compiler's .bss section-relative addends are not the final linked
+    offsets: startup objects and linker order may move independent objects.
+    Only a uniquely containing STT_OBJECT with an explicit original address
+    may resolve a relocation. Never infer or fabricate bytes from a mismatch.
+    """
+    candidates = [(label, entry) for label, entry in symbols
+                  if entry[5] == section_index and entry[3] & 15 == 1
+                  and entry[2] and entry[1] <= addend < entry[1] + entry[2]]
+    if len(candidates) != 1:
+        raise ValueError("section relocation is not inside one named object")
+    label, entry = candidates[0]
+    if label not in mapped_objects:
+        raise ValueError("unmapped original object address: " + label)
+    return int(mapped_objects[label], 0) + addend - entry[1]
+
+
+def verify_original_objects(raw, target, object_map):
+    """Authenticate every rebased object's original name/address/section."""
+    sections = target["sections"]
+    by_name = {s["name"]: (i, s) for i, s in enumerate(sections)}
+    symtab = by_name[".symtab"][1]
+    strings = sections[symtab["link"]]
+    names = raw[strings["offset"]:strings["offset"] + strings["size"]]
+    records = {}
+    for off in range(symtab["offset"], symtab["offset"] + symtab["size"], decomp.SYM.size):
+        name, address, size, info, _, shndx = decomp.SYM.unpack_from(raw, off)
+        if info & 15 != 1 or not size:
+            continue
+        records.setdefault(decomp.cstr(names, name), []).append((address, size, shndx))
+    for section, objects in object_map.items():
+        if section not in by_name or not isinstance(objects, dict):
+            raise ValueError("invalid original relocation section")
+        secindex, metadata = by_name[section]
+        for label, original_address in objects.items():
+            address = int(original_address, 0)
+            if not metadata["address"] <= address < metadata["address"] + metadata["size"]:
+                raise ValueError("relocation object outside original section")
+            matches = [r for r in records.get(label, []) if r[0] == address and r[2] == secindex]
+            if len(matches) != 1:
+                raise ValueError("original relocation object symbol mismatch: " + label)
+
+
+def prepare_named_function(raw, name, reloc_targets, original_address,
+                           relocation_objects=None):
     """Resolve relocations only inside a named function in an ELF32 object."""
     sections, headers = elf_sections(raw)
     symsec = sections[".symtab"][1]
@@ -99,6 +145,7 @@ def prepare_named_function(raw, name, reloc_targets, original_address):
         raise ValueError("invalid function size or offset")
     code = bytearray(section_bytes(raw, section)[start:start + size])
     count = 0
+    relocation_objects = {} if relocation_objects is None else relocation_objects
     for sec in headers:
         if sec[1] != 9 or sec[7] != section_index:  # SHT_REL for this section
             continue
@@ -115,11 +162,43 @@ def prepare_named_function(raw, name, reloc_targets, original_address):
             if index >= len(symbols):
                 raise ValueError("invalid relocation symbol index")
             label, referenced = symbols[index]
-            if label not in reloc_targets:
-                raise ValueError("unmapped relocation target: " + label)
-            address = int(reloc_targets[label], 0) + referenced[1]
             addend = struct.unpack_from("<i", code, local)[0]
-            value = relocate_word(kind, address, addend, original_address + local)
+            if referenced[3] & 15 == 1:
+                # Inline methods may emit their static objects as SHN_COMMON
+                # instead of ordinary .bss symbols. Such symbols carry an
+                # alignment in st_value, not a section-relative address.
+                object_mappings = [(key, objects[label]) for key, objects in
+                                   relocation_objects.items() if label in objects]
+                if len(object_mappings) > 1:
+                    raise ValueError("ambiguous mapped original object: " + label)
+                if object_mappings:
+                    object_section, mapped_address = object_mappings[0]
+                    if referenced[5] < len(headers):
+                        candidate_section = next((key for key, (number, _) in sections.items()
+                                                  if number == referenced[5]), None)
+                        if candidate_section != object_section:
+                            raise ValueError("candidate object section differs from original")
+                    # A direct STT_OBJECT relocation already denotes this
+                    # object's base, unlike STT_SECTION + section addend.
+                    address = int(mapped_address, 0)
+                    value = relocate_word(kind, address, addend, original_address + local)
+                else:
+                    if label not in reloc_targets:
+                        raise ValueError("unmapped relocation target: " + label)
+                    address = int(reloc_targets[label], 0) + referenced[1]
+                    value = relocate_word(kind, address, addend, original_address + local)
+            elif label in relocation_objects:
+                if kind != 1 or referenced[3] & 15 != 3:
+                    raise ValueError("named object rebasing requires an absolute section relocation")
+                address = resolve_object_target(symbols, referenced[5],
+                                                addend + referenced[1],
+                                                relocation_objects[label])
+                value = relocate_word(kind, address, 0, original_address + local)
+            else:
+                if label not in reloc_targets:
+                    raise ValueError("unmapped relocation target: " + label)
+                address = int(reloc_targets[label], 0) + referenced[1]
+                value = relocate_word(kind, address, addend, original_address + local)
             struct.pack_into("<I", code, local, value)
             count += 1
     return bytes(code), count
@@ -175,8 +254,11 @@ def run(object_path, config_path=CONFIG):
     original = data[start:start + original_size]
     object_bytes = Path(object_path).read_bytes()
     literal_count = compare_string_sections(object_bytes, config["relocations"], data, target)
+    object_map = config.get("relocation_objects", {})
+    verify_original_objects(data, target, object_map)
     candidate, reloc_count = prepare_named_function(object_bytes, config["function"],
-                                                    config["relocations"], original_address)
+                                                    config["relocations"], original_address,
+                                                    object_map)
     result = compare(candidate, original)
     result["relocations"] = reloc_count
     result["verified_literal_bytes"] = literal_count

@@ -3,14 +3,9 @@
 // ELF32 bytes with GCC 3.3.3 -O2 -frename-registers.
 // The full translation unit and original flags are not yet authenticated.
 #include "MLGameString.h"
+#include "MLTempStringData.h"
 #include <cstring>
 #include <cstdarg>
-
-class MLTempStringData {
-public:
-    char *FormatString(const char *format, ...);
-    char *VFormatString(const char *format, char *arguments);
-};
 
 char *MLTempStringData::FormatString(const char *format, ...)
 {

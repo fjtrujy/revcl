@@ -1,0 +1,21 @@
+{
+  "function": "_ZN12MLTempStringC2EPKcz",
+  "address": "0x08071b40",
+  "size": 110,
+  "source": "vuc/probes/ml_temp_format_inline.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "memset": "0x0804996c",
+    "_ZN16MLTempStringData13VFormatStringEPKcPc": "0x08071a50"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZGVZN16MLTempStringData3GetEvE3tsd": "0x0808bce8",
+      "_ZZN16MLTempStringData3GetEvE3tsd": "0x0808c520"
+    }
+  }
+}

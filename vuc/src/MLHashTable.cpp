@@ -1,6 +1,7 @@
 // Reconstructed VUC MLHashTable.cpp fragment.
 // Exact helper bodies are checked independently against the original ELF.
 #include "MLGameString.h"
+#include "MLHashTable.h"
 #include <cstring>
 
 template <> class MLHashFun<MLGameString> {
@@ -45,19 +46,6 @@ bool MLHashFun<const char *>::IsEqual(const char * const &lhs,
 }
 
 template <class Key, class Value, class Hasher, int Buckets>
-class MLHashTable {
-public:
-    struct Node {
-        Key key;
-        Value value;
-        unsigned hash;
-        Node *next;
-    };
-    Node *heads[Buckets];
-    void clear();
-};
-
-template <class Key, class Value, class Hasher, int Buckets>
 void MLHashTable<Key, Value, Hasher, Buckets>::clear()
 {
     for (int index = 0; index < Buckets; ++index) {
@@ -69,6 +57,6 @@ void MLHashTable<Key, Value, Hasher, Buckets>::clear()
     }
 }
 
-template class MLHashTable<int, int, MLHashFun<int>, 513>;
+template void MLHashTable<int, int, MLHashFun<int>, 513>::clear();
 template class MLHashTable<const char *, MLGameStringData *,
                            MLHashFun<const char *>, 513>;

@@ -1,0 +1,14 @@
+{
+  "function": "_Z17Printer_UglyPrintP9ASTModuleRSo",
+  "address": "0x0805cb40",
+  "size": 40,
+  "source": "vuc/probes/ugly_print.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    ".rodata": "0x08073070",
+    "_Z5PrintIP7ASTDeclEvR11ASTNodeListIT_ERSoPKc": "0x0805cc90"
+  }
+}

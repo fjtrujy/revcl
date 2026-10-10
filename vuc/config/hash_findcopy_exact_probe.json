@@ -1,0 +1,15 @@
+{
+  "function": "_ZN11MLHashTableIPKcP16MLGameStringData9MLHashFunIS1_ELi513EE8FindCopyERKS1_",
+  "address": "0x08071e20",
+  "size": 114,
+  "source": "vuc/src/MLHashTableFindCopy.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZN9MLHashFunIPKcE4HashERKS1_": "0x08071ee0",
+    "_ZN9MLHashFunIPKcE7IsEqualERKS1_S4_": "0x08071f40"
+  }
+}
