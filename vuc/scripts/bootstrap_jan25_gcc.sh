@@ -3,6 +3,7 @@
 # This is a source-derived candidate, NOT an authenticated Debian 0pre3 package.
 # Run inside a Linux x86_64 VM with 32-bit runtime support, make, bison, flex,
 # curl, sha256sum, gcc, GNU binutils and glibc development files installed.
+# Building the compiler only avoids the unsupported historical target runtime.
 set -eu
 
 if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
@@ -66,12 +67,31 @@ fi
 
 (
     cd "$work/build"
+    make -j"$jobs" all-libiberty
+)
+
+(
+    cd "$work/build/gcc"
     BISON_PKGDATADIR="$work/old-bison/usr/share/bison" \
-        make -j"$jobs" all-gcc BISON="$work/old-bison/usr/bin/bison"
+        make -j"$jobs" xgcc cc1plus BISON="$work/old-bison/usr/bin/bison" \
+        BOOT_CFLAGS=-O0 CFLAGS=-O0
 ) > "$work/build.log" 2>&1 || {
     tail -n 30 "$work/build.log" >&2
     exit 1
 }
 
-"$work/build/gcc/xgcc" -B"$work/build/gcc/" -v 2>&1 | tail -n 3
+headers=${VUC_CXX_HEADERS:-/tmp/vuc-gcc335/root/usr/include/c++/3.3}
+cat > "$work/g++-jan25-candidate" <<EOF
+#!/bin/sh
+exec "$work/build/gcc/xgcc" -B"$work/build/gcc/" -x c++ \\
+    -nostdinc++ -isystem "$headers" \\
+    -isystem "$headers/i486-linux" -isystem "$headers/backward" \\
+    -isystem /usr/include/i386-linux-gnu -isystem /usr/include \\
+    -Wa,--32 "\$@"
+EOF
+chmod +x "$work/g++-jan25-candidate"
+"$work/g++-jan25-candidate" --version | head -n 1
+if [ ! -d "$headers" ]; then
+    echo "WARNING: external compatibility C++ headers missing: $headers" >&2
+fi
 printf '%s\n' "Source-date candidate built; NOT an authenticated Debian GCC 3.3.3 0pre3 toolchain."

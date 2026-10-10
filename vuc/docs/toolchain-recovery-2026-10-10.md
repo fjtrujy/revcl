@@ -92,9 +92,57 @@ limactl shell revcl-oracle -- sh \
 
 The script pins downloads by SHA-256, configures a compiler-only
 `i686-linux-gnu` cross toolchain and builds it without altering VCL.
-The original Debian patch set, exact binutils version, historical glibc,
-and C++ runtime linkage remain unverified until corresponding artifacts
-are recovered and code-generation probes are compared.
+GCC 3.3.3's old C++ frontend and i386 code generator **built successfully**
+in the existing Debian 12 x86_64 Lima VM. The resulting
+`/tmp/vuc-gcc333-jan25/build/gcc/xgcc --version` prints
+`xgcc (GCC) 3.3.3 20040125 (prerelease)`. It is a modern-host cross compiler
+using that historical compiler source, not the original Debian binary.
+
+The `all-gcc` runtime phase fails because its target startup/libgcc files
+need a period-compatible i386 sysroot, including i386 development headers.
+The reproducible recipe instead builds and verifies compiler-only targets
+`xgcc` and `cc1plus`. It creates a runnable
+`/tmp/vuc-gcc333-jan25/g++-jan25-candidate` wrapper with 32-bit assembler
+mode and compatibility headers. Those C++ headers currently come from the
+separately pinned Debian GCC **3.3.5** development package (2005), not the
+unrecovered exact 2004 libstdc++ development package.
+
+All six optimization configurations passed and generated real ELF32 i386
+relocatable objects. The flags are inspected through
+`vuc/scripts/compiler_probe.py`; its manifest correctly marks this compiler
+as a version-matched **candidate**, not historically authenticated.
+
+## Tested VUC function and compiler options
+
+The original `AsmOutput_WritePrologue` is 30 bytes. Compiling the plausible
+source in `vuc/probes/asm_output_hypothesis.cpp` with the recovered GCC
+`-O2` yields 22/30 matching function bytes and 92/92 matching literal bytes,
+after resolving two i386 relocations. GCC 3.3.3 emits `.rodata` rather than
+GCC 3.3.5's `.rodata.str1.32`; the Jan-2004 relocation manifest is
+`vuc/config/asm_output_jan25_probe.json`.
+
+Run the reproducible flag sweep:
+
+```sh
+python3 /path/to/revcl/vuc/scripts/compare_variants.py \
+    --compiler /tmp/vuc-gcc333-jan25/g++-jan25-candidate \
+    --out /tmp/vuc-gcc333-jan25/variant-comparisons
+```
+
+The sweep includes O0/O1/O2/Os, register renaming, scheduling, GCSE,
+peepholes, reordering, aliasing and several x86 architectures. None matched
+all 30 bytes. Standard `-O2`, `-O2 -frename-registers`, and several related
+variants matched 22/30. `-O2 -fno-schedule-insns2` matched 14/30. The
+`-O2 -march=i386/i486/pentium` variants emitted bodies with different sizes,
+whereas `-O2 -march=i686` preserved a 30-byte function. A rejected flag
+(`-mtune=pentium3`) is recorded as a failure, not a comparison result.
+
+**These experiments neither prove nor disprove exact Debian compiler
+equivalence.** Source changes can affect the small register-ordering
+differences, and we still lack Debian-specific patches, the 2004 C++ headers,
+exact binutils, and period glibc. The next acceptance requirement is an
+evidence-backed code-generation match on multiple independent functions,
+followed by toolchain and linker provenance verification.
 
 Do not equate a matching compiler version string with a proven complete
 byte-exact build environment.

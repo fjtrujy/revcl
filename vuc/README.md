@@ -60,6 +60,15 @@ This compiler is not an exact VUC toolchain. Its initial `-O2` hypothesis for
 bytes; details, commands, and constraints are documented in
 `vuc/docs/toolchain-investigation.md`.
 
+A closer, date-matched **GCC 3.3.3 (20040125 prerelease)** compiler-only
+toolchain is now reproducible from the original GCC branch revision via
+`vuc/scripts/bootstrap_jan25_gcc.sh`. It successfully compiles six ELF32-i386
+probes. The exact Debian `0pre3` binaries, downstream patches and historical
+libstdc++ headers are not yet authenticated. See
+`vuc/docs/toolchain-recovery-2026-10-10.md` for source hashes, VM commands,
+build workarounds and compiler-flag experiments. Use
+`vuc/scripts/compare_variants.py` for function-scoped optimization testing.
+
 For multiple candidate functions, `vuc/scripts/audit.py --jobs /path/to/jobs.json`
 accepts a JSON list of `{ "config": "/path/to/manifest.json",
 "object": "/path/to/compiled.o" }` entries. Every candidate is validated
