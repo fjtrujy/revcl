@@ -1,0 +1,21 @@
+{
+  "target": "archive/upstream/vuc/downloads/X86linux_vuc2004_1.zip::X86linux_vuc2004_1/vuc",
+  "sha256": "14c77997057f279ab25a3591c6a379d6e4744f2b1551271d43602948c037d8cf",
+  "file_size": 314338,
+  "elf": {
+    "class": "ELF32",
+    "machine": "i386",
+    "entry": 134519328
+  },
+  "text": {
+    "address": 134519328,
+    "size": 165440
+  },
+  "compilers": [
+    "GCC: (GNU) 3.3.3 20031206 (prerelease) (Debian)",
+    "GCC: (GNU) 3.3.3 20040125 (prerelease) (Debian)"
+  ],
+  "section_count": 35,
+  "symbol_count": 716,
+  "function_symbol_count": 298
+}
