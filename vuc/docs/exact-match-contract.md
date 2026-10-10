@@ -141,11 +141,12 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `yyFlexLexer::yy_delete_buffer()` | 87/87 | `-O2 -frename-registers`, two `free` relocations |
 | `InstructionList::GenLabel(char const*)` | 85/85 | `-O2 -frename-registers -falign-jumps=1`, original format literal and counter |
 | `SymbolTable::BeginScope()` | 140/140 | `-O2 -frename-registers`, out-of-line hash-table copy constructor |
+| `__tcf_0` (singleton MLGameStringTable teardown at 0x08071e00) | 22/22 | `-O2 -frename-registers -fuse-cxa-atexit`, original static `gst` |
 
-**142/142 exact function-symbol records, 7611/7611 checked code bytes.** This counts only the
+**143/143 exact function-symbol records, 7633/7633 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 326 supported relocations across the accepted candidate functions
+ELF. All 328 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -153,7 +154,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-142 EXACT, 11 EXPERIMENTAL and 145 UNRESOLVED entries. Generate it using
+143 EXACT, 11 EXPERIMENTAL and 144 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 

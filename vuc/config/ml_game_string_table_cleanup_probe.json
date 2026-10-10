@@ -1,0 +1,19 @@
+{
+  "function": "__tcf_0",
+  "address": "0x08071e00",
+  "size": 22,
+  "source": "vuc/src/MLGameStringTableLifecycle.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit"
+  ],
+  "relocations": {
+    "_ZN11MLHashTableIPKcP16MLGameStringData9MLHashFunIS1_ELi513EE5clearEv": "0x08071ea0"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZZN17MLGameStringTable3GetEvE3gst": "0x0808bd00"
+    }
+  }
+}

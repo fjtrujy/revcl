@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 153)
+        self.assertEqual(len(records), 154)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 142)
+        self.assertEqual(len(exact_configs), 143)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -45,6 +45,13 @@ class CandidateSuiteTests(unittest.TestCase):
                     self.assertIn(config_name, tracked)
                     config = json.loads(suite.within_repo(config_name).read_text())
                     self.assertIn(config["source"], tracked)
+
+    def test_singleton_cleanup_exact_does_not_promote_its_nonexact_getter(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        exploratory = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertIn("vuc/config/ml_game_string_table_cleanup_probe.json", accepted)
+        self.assertNotIn("vuc/config/ml_string_table_get_probe.json", accepted)
+        self.assertIn("vuc/config/ml_string_table_get_probe.json", exploratory)
 
     def test_original_tu_flag_hypothesis_is_explicit(self):
         with tempfile.TemporaryDirectory() as out:

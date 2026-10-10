@@ -140,5 +140,6 @@
   "vuc/config/uninitialized_asm_mut_probe.json",
   "vuc/config/yy_delete_buffer_probe.json",
   "vuc/config/instruction_gen_label_probe.json",
-  "vuc/config/symbol_begin_scope_probe.json"
+  "vuc/config/symbol_begin_scope_probe.json",
+  "vuc/config/ml_game_string_table_cleanup_probe.json"
 ]
