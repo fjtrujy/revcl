@@ -20,8 +20,10 @@ SHA-256: `14c77997057f279ab25a3591c6a379d6e4744f2b1551271d43602948c037d8cf`
 - 165,440 bytes in `.text` (including runtime startup/finalization code).
 - Dependencies: `libstdc++.so.5`, `libgcc_s.so.1`, `libm.so.6`, `libc.so.6`.
 - Two distinct GCC 3.3.3 Debian prerelease build dates occur in `.comment`:
-  20031206 and 20040125. Whether these identify separately compiled VUC
-  objects, bundled libraries, or startup code has **not** been established.
+  20031206 (4 tags) and 20040125 (24 tags). Whether these identify separately
+  compiled VUC objects, bundled libraries, or startup code has **not** been established.
+- All 298 named `.text` function symbols have distinct addresses; this is
+  not yet a complete inventory of all functions in the executable.
 
 Unlike the original VCL executable, VUC uses STL/iostream and retains symbols.
 Do not assume the VCL GCC 3.2.2 flags, toolchain or matching behavior apply.
@@ -42,6 +44,8 @@ python3 -m unittest discover -s vuc/tests -v
 The inventory reads and verifies the original bytes **inside the archive**.
 `asm` uses a temporary extracted executable; it does not change the archive.
 Regenerating the inventory must be deterministic.
+The inventory also writes `vuc/config/sections.tsv`. See
+`vuc/docs/toolchain-investigation.md` for the compiler evidence and open probes.
 
 **No matching percentage exists yet.** `status` intentionally reports
 `UNAVAILABLE`, rather than misrepresenting a structural inventory as matched

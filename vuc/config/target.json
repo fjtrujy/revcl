@@ -17,5 +17,10 @@
   ],
   "section_count": 35,
   "symbol_count": 716,
-  "function_symbol_count": 298
+  "function_symbol_count": 298,
+  "unique_function_addresses": 298,
+  "compiler_comment_counts": {
+    "GCC: (GNU) 3.3.3 20031206 (prerelease) (Debian)": 4,
+    "GCC: (GNU) 3.3.3 20040125 (prerelease) (Debian)": 24
+  }
 }

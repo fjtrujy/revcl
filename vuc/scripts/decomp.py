@@ -70,14 +70,17 @@ def load():
     funcs = sorted([s for s in symbols if s["type"] == 2 and s["section"] == ".text"],
                    key=lambda s: (s["address"], s["name"]))
     comments = next(s for s in sections if s["name"] == ".comment")
-    compilers = sorted(set(x.decode("ascii", "replace") for x in
-                           data[comments["offset"]:comments["offset"] + comments["size"]].split(b"\0")
-                           if x.startswith(b"GCC:")))
+    compiler_tags = [x.decode("ascii", "replace") for x in
+                     data[comments["offset"]:comments["offset"] + comments["size"]].split(b"\0")
+                     if x.startswith(b"GCC:")]
+    compilers = sorted(set(compiler_tags))
+    compiler_counts = {tag: compiler_tags.count(tag) for tag in compilers}
     return data, {"target": str(ARCHIVE.relative_to(ROOT)) + "::" + MEMBER,
                   "sha256": digest, "file_size": len(data),
                   "elf": {"class": "ELF32", "machine": "i386", "entry": header[4]},
                   "text": {"address": text["address"], "size": text["size"]},
-                  "compilers": compilers, "sections": sections,
+                  "compilers": compilers, "compiler_comment_counts": compiler_counts,
+                  "sections": sections,
                   "symbols": symbols, "functions": funcs}
 
 
@@ -87,12 +90,20 @@ def write_baseline(info):
     public["section_count"] = len(info["sections"])
     public["symbol_count"] = len(info["symbols"])
     public["function_symbol_count"] = len(info["functions"])
+    public["unique_function_addresses"] = len({f["address"] for f in info["functions"]})
+    public["compiler_comment_counts"] = info["compiler_comment_counts"]
     (CONFIG / "target.json").write_text(json.dumps(public, indent=2) + "\n")
     with (CONFIG / "functions.tsv").open("w") as stream:
         stream.write("address\tsize\tbinding\tname\n")
         for f in info["functions"]:
             stream.write("0x%08x\t%d\t%d\t%s\n" %
                          (f["address"], f["size"], f["binding"], f["name"]))
+    with (CONFIG / "sections.tsv").open("w") as stream:
+        stream.write("index\tname\ttype\tflags\taddress\toffset\tsize\n")
+        for s in info["sections"]:
+            stream.write("%d\t%s\t%d\t0x%x\t0x%08x\t%d\t%d\n" %
+                         (s["index"], s["name"], s["type"], s["flags"],
+                          s["address"], s["offset"], s["size"]))
 
 
 def find_function(info, key):

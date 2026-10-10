@@ -29,6 +29,8 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(len(self.info["functions"]), 298)
         self.assertEqual(self.info["text"]["size"], 165440)
         self.assertTrue(any(s["name"] == ".debug_info" for s in self.info["sections"]))
+        self.assertEqual(sum(self.info["compiler_comment_counts"].values()), 28)
+        self.assertEqual(sorted(self.info["compiler_comment_counts"].values()), [4, 24])
 
     def test_symbol_lookup(self):
         symbol = "_Z23AsmOutput_WritePrologueRSt14basic_ofstreamIcSt11char_traitsIcEE"
@@ -44,6 +46,10 @@ class InventoryTests(unittest.TestCase):
         lines = (ROOT / "vuc/config/functions.tsv").read_text().splitlines()
         self.assertEqual(len(lines), 1 + len(self.info["functions"]))
         self.assertEqual(lines[0], "address\tsize\tbinding\tname")
+        self.assertEqual(baseline["unique_function_addresses"],
+                         len({f["address"] for f in self.info["functions"]}))
+        section_lines = (ROOT / "vuc/config/sections.tsv").read_text().splitlines()
+        self.assertEqual(len(section_lines), 1 + len(self.info["sections"]))
 
     def test_status_never_fabricates_score(self):
         result = subprocess.run([sys.executable, str(SCRIPT), "status"],
