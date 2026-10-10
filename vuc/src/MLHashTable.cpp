@@ -6,11 +6,36 @@
 template <> class MLHashFun<MLGameString> {
 public:
     unsigned Hash(const MLGameString &key);
+    bool IsEqual(const MLGameString &lhs, const MLGameString &rhs);
 };
 
 unsigned MLHashFun<MLGameString>::Hash(const MLGameString &key)
 {
     return key.data_ ? key.data_->hash : 0;
+}
+
+bool MLHashFun<MLGameString>::IsEqual(const MLGameString &lhs,
+                                    const MLGameString &rhs)
+{
+    return lhs == rhs;
+}
+
+unsigned MLHashFun<const char *>::Hash(const char *const &value)
+{
+    unsigned hash = 0;
+    const char *first = value;
+    const char *last = first + strlen(first);
+    while (first < last) {
+        for (int n = 2; n >= 0; --n) {
+            unsigned char bit = hash & 1;
+            hash >>= 1;
+            if (bit)
+                hash |= 0x80000000u;
+        }
+        hash += (signed char)*first;
+        ++first;
+    }
+    return hash;
 }
 
 bool MLHashFun<const char *>::IsEqual(const char * const &lhs,

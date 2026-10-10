@@ -1,0 +1,14 @@
+{
+  "function": "_ZN12MLTempStringplERKS_",
+  "address": "0x08071dc0",
+  "size": 58,
+  "source": "vuc/src/MLGameString.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    ".rodata": "0x080727df",
+    "_ZN12MLTempStringC1EPKcz": "0x08071bb0"
+  }
+}

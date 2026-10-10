@@ -4,6 +4,31 @@
 // The full translation unit and original flags are not yet authenticated.
 #include "MLGameString.h"
 #include <cstring>
+#include <cstdarg>
+
+class MLTempStringData {
+public:
+    char *FormatString(const char *format, ...);
+    char *VFormatString(const char *format, char *arguments);
+};
+
+char *MLTempStringData::FormatString(const char *format, ...)
+{
+    va_list arguments;
+    va_start(arguments, format);
+    char *result = VFormatString(format, (char *)arguments);
+    va_end(arguments);
+    return result;
+}
+
+MLTempString &MLTempString::operator+=(const MLTempString &other)
+{
+    const char *second = other.text;
+    const char *first = text;
+    Set("%s%s", first, second);
+    return *this;
+}
+
 
 class MLGameStringTable {
 public:
@@ -42,4 +67,11 @@ MLGameString::MLGameString(const MLTempString &temporary)
 const char *MLGameString::c_str() const
 {
     return data_->text;
+}
+
+MLTempString MLTempString::operator+(const MLTempString &other)
+{
+    const char *second = other.text;
+    const char *first = text;
+    return MLTempString("%s%s", first, second);
 }

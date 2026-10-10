@@ -1,0 +1,13 @@
+{
+  "function": "_ZN16MLTempStringData12FormatStringEPKcz",
+  "address": "0x08071a20",
+  "size": 35,
+  "source": "vuc/src/MLGameString.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZN16MLTempStringData13VFormatStringEPKcPc": "0x08071a50"
+  }
+}

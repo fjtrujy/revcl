@@ -1,0 +1,11 @@
+{
+  "function": "_ZN9MLHashFunI12MLGameStringE7IsEqualERKS0_S3_",
+  "address": "0x080719b0",
+  "size": 24,
+  "source": "vuc/src/MLHashTable.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

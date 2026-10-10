@@ -42,6 +42,9 @@ ordering. This is an inventory, not a recovered link map or source tree.
 Compiler: source-date GCC `3.3.3 20040125 (prerelease)`, built in the
 existing `revcl-oracle` Linux VM. The original Debian `0pre3` patch set,
 2004 libstdc++ headers and final linker toolchain remain unauthenticated.
+The matching pipeline uses the separately recovered GNU **as 2.15** because
+modern binutils 2.40 emits different alignment padding; the exact original
+assembler version and linker remain unauthenticated.
 Using `-frename-registers` on selected candidates gives exact bytes; this
 is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 
@@ -61,11 +64,16 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `MLHashFun<char const*>::IsEqual()` | 40/40 | `-O2 -frename-registers -falign-jumps=1` |
 | `MLHashTable<int,int,...>::clear()` | 64/64 | `-O2 -frename-registers -falign-jumps=1` |
 | `MLHashTable<char const*,MLGameStringData*,...>::clear()` | 64/64 | `-O2 -frename-registers -falign-jumps=1` |
+| `MLHashFun<char const*>::Hash()` | 86/86 | `-O2 -frename-registers`, GNU as 2.15 |
+| `MLHashFun<MLGameString>::IsEqual()` | 24/24 | `-O2 -frename-registers` |
+| `MLTempStringData::FormatString()` | 35/35 | `-O2 -frename-registers` |
+| `MLTempString::operator+=()` | 53/53 | `-O2 -frename-registers` |
+| `MLTempString::operator+()` | 58/58 | `-O2 -frename-registers` |
 
-**20/20 exact functions, 828/828 checked code bytes.** This counts only the
+**25/25 exact functions, 1084/1084 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 22 supported relocations across the accepted candidate functions
+ELF. All 28 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -73,7 +81,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-20 EXACT, 1 EXPERIMENTAL and 277 UNRESOLVED entries. Generate it using
+25 EXACT, 1 EXPERIMENTAL and 272 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 
@@ -89,15 +97,15 @@ On the host with the existing Lima VM and January compiler bootstrap:
 # Accepted VUC source fragments: command must exit zero
 limactl shell revcl-oracle -- python3 \
   /path/to/revcl/vuc/scripts/match_candidates.py \
-  --compiler /tmp/vuc-gcc333-jan25/g++-jan25-candidate \
-  --out /tmp/vuc-gcc333-jan25/exact-gate
+  --compiler /tmp/vuc-binutils215/g++-jan25-as215 \
+  --out /tmp/vuc-binutils215/exact-gate
 
 # All experimental candidates: deliberately exits nonzero until all are exact
 limactl shell revcl-oracle -- python3 \
   /path/to/revcl/vuc/scripts/match_candidates.py \
-  --compiler /tmp/vuc-gcc333-jan25/g++-jan25-candidate \
+  --compiler /tmp/vuc-binutils215/g++-jan25-as215 \
   --manifest /path/to/revcl/vuc/config/selected_candidates.json \
-  --out /tmp/vuc-gcc333-jan25/diagnostic-gate
+  --out /tmp/vuc-binutils215/diagnostic-gate
 
 python3 -m unittest discover -s vuc/tests -v
 python3 vuc/scripts/source_units.py --write

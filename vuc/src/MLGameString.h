@@ -13,6 +13,10 @@ struct MLGameStringData {
 
 struct MLTempString {
     const char *text;
+    MLTempString(const char *format, ...);
+    void Set(const char *format, ...);
+    MLTempString &operator+=(const MLTempString &other);
+    MLTempString operator+(const MLTempString &other);
 };
 
 template <class T> class MLHashFun;
@@ -30,6 +34,9 @@ public:
     MLGameString(const char *text, bool temporary);
     MLGameString(const MLTempString &temporary);
     const char *c_str() const;
+    bool operator==(const MLGameString &other) const {
+        return data_ == other.data_;
+    }
 
 private:
     MLGameStringData *data_;

@@ -146,3 +146,17 @@ followed by toolchain and linker provenance verification.
 
 Do not equate a matching compiler version string with a proven complete
 byte-exact build environment.
+
+## Later finding: archived GNU as 2.15 restores exact padding
+
+After recovering the original source-level hash loop, the historical GCC
+frontend produced equivalent instructions but its output assembled by Debian
+12 binutils 2.40 still differed in loop-alignment padding. An extracted,
+SHA-256-pinned Debian GNU as 2.15 produces the original 86-byte hash-loop
+body **exactly**, with its relocation resolved. The original VUC assembler
+version is **not** authenticated; this is a suitable compatible toolchain
+candidate for function-level validation, not the final ELF build environment.
+
+For the reproducible version and complete accepted-source results, see
+`vuc/scripts/bootstrap_binutils215.sh` and
+`vuc/docs/historical-assembler-milestone.md`.

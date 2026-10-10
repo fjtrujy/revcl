@@ -70,6 +70,14 @@ libstdc++ headers are not yet authenticated. See
 build workarounds and compiler-flag experiments. Use
 `vuc/scripts/compare_variants.py` for function-scoped optimization testing.
 
+The historical GNU **binutils 2.15** assembler is now reproducibly extracted
+from a SHA-256-pinned Debian i386 package via
+`vuc/scripts/bootstrap_binutils215.sh`. This resolves the original x86
+alignment padding for `MLHashFun<char const*>::Hash()`. It is an
+evidence-backed compatible assembler, **not** authenticated as the VUC
+linker's original binutils release. See
+`vuc/docs/historical-assembler-milestone.md` for the findings.
+
 For multiple candidate functions, `vuc/scripts/audit.py --jobs /path/to/jobs.json`
 accepts a JSON list of `{ "config": "/path/to/manifest.json",
 "object": "/path/to/compiled.o" }` entries. Every candidate is validated
@@ -88,12 +96,12 @@ Run the strict gate using:
 ```sh
 limactl shell revcl-oracle -- python3 \
   /path/to/revcl/vuc/scripts/match_candidates.py \
-  --compiler /tmp/vuc-gcc333-jan25/g++-jan25-candidate \
-  --out /tmp/vuc-gcc333-jan25/candidate-suite
+  --compiler /tmp/vuc-binutils215/g++-jan25-as215 \
+  --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **20 independently verified exact functions**
-covering 828/828 instruction bytes, including the original relocation for
+The strict gate now checks **25 independently verified exact functions**
+covering 1084/1084 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -107,8 +115,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 20 EXACT,
-1 EXPERIMENTAL and 277 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 25 EXACT,
+1 EXPERIMENTAL and 272 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
