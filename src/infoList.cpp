@@ -212,8 +212,9 @@ void ubsNode::dump()
     if (!haveTable) {
         func_0804ad38("work table not set in %s\n", use->func_0806d674());
         func_0804adf0(-1);
-        wt = use->unk_218;
     }
+    if (!haveTable)
+        wt = use->unk_218;
     regUse *ru;
     if (wt && (ru = wt->unk_14.func_0805b5dc(unk_08))) {
         func_0804acb0("register %s is used before set at instruction(s) :\n",
