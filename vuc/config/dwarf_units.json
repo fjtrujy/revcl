@@ -1,0 +1,35 @@
+{
+  "scope": "DWARF compile-unit roots only",
+  "compilation_units": 4,
+  "application_units": [],
+  "units": [
+    {
+      "low_pc": 134519328,
+      "high_pc": 134519362,
+      "name": "../sysdeps/i386/elf/start.S",
+      "comp_dir": "/home/drow/deb-cvs/nptl/glibc-2.3.2.ds1/build-tree/glibc-2.3.2/csu",
+      "producer": "GNU AS 2.14.90.0.7",
+      "offset": 0
+    },
+    {
+      "high_pc": 134519364,
+      "low_pc": 134519364,
+      "name": "init.c",
+      "comp_dir": "/home/drow/deb-cvs/nptl/glibc-2.3.2.ds1/build-tree/glibc-2.3.2/csu",
+      "producer": "GNU C 3.3.3 20031206 (prerelease) (Debian)",
+      "offset": 140
+    },
+    {
+      "name": "/home/drow/deb-cvs/nptl/glibc-2.3.2.ds1/build-tree/i386-libc/csu/crti.S",
+      "comp_dir": "/home/drow/deb-cvs/nptl/glibc-2.3.2.ds1/build-tree/glibc-2.3.2/csu",
+      "producer": "GNU AS 2.14.90.0.7",
+      "offset": 2344
+    },
+    {
+      "name": "/home/drow/deb-cvs/nptl/glibc-2.3.2.ds1/build-tree/i386-libc/csu/crtn.S",
+      "comp_dir": "/home/drow/deb-cvs/nptl/glibc-2.3.2.ds1/build-tree/glibc-2.3.2/csu",
+      "producer": "GNU AS 2.14.90.0.7",
+      "offset": 2520
+    }
+  ]
+}

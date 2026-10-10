@@ -24,5 +24,6 @@
   "vuc/config/ml_hash_string_equal_exact_probe.json",
   "vuc/config/ml_tempstring_format_exact_probe.json",
   "vuc/config/ml_temp_append_exact_probe.json",
-  "vuc/config/ml_temp_plus_exact_probe.json"
+  "vuc/config/ml_temp_plus_exact_probe.json",
+  "vuc/config/ml_string_table_get_probe.json"
 ]

@@ -17,7 +17,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_functions(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         names = [json.loads(suite.within_repo(p).read_text())["function"] for p in configs]
-        self.assertEqual(len(names), 26)
+        self.assertEqual(len(names), 27)
         self.assertEqual(len(set(names)), len(names))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):

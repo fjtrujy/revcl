@@ -116,10 +116,19 @@ locally scoped text-function records. Regenerate these with
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
 `python3 vuc/scripts/coverage.py --write` (currently 25 EXACT,
-1 EXPERIMENTAL and 272 UNRESOLVED). The complete original
+2 EXPERIMENTAL and 271 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
+
+**DWARF limitation:** the canonical executable contains four compilation
+units, all belonging to glibc startup (`start.S`, `init.c`, `crti.S`,
+`crtn.S`); there are **no retained VUC application DWARF C++ units**.
+The ELF symbol table is a separate and more useful source of VUC function
+names. Run `python3 vuc/scripts/dwarf_inventory.py --write` to regenerate
+the original ZIP-backed DWARF provenance, and see
+`vuc/docs/dwarf-evidence-and-get.md`. `MLGameStringTable::Get()` is
+under experimental source reconstruction, not accepted as byte-exact.
 
 ## Milestones
 

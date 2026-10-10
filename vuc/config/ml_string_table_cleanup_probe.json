@@ -1,0 +1,15 @@
+{
+  "function": "__tcf_0",
+  "address": "0x08071e00",
+  "size": 22,
+  "source": "vuc/probes/ml_string_table_get.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit"
+  ],
+  "relocations": {
+    ".bss": "0x0808bce0",
+    "_ZN11MLHashTableIPKcP16MLGameStringData9MLHashFunIS1_ELi513EE5clearEv": "0x08071ea0"
+  }
+}
