@@ -1,0 +1,13 @@
+{
+  "function": "_ZN11yyFlexLexer10LexerInputEPci",
+  "address": "0x08061130",
+  "size": 97,
+  "source": "vuc/src/FlexLexerInput.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZNSi3getERc": "0x080496ec"
+  }
+}

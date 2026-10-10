@@ -1,0 +1,11 @@
+{
+  "function": "_ZN11yyFlexLexer14switch_streamsEPSiPSo",
+  "address": "0x080610d0",
+  "size": 96,
+  "source": "vuc/src/FlexLexerSwitchStreams.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

@@ -112,5 +112,10 @@
   "vuc/config/instruction_addl_probe.json",
   "vuc/config/translate_frag_probe.json",
   "vuc/config/arena_ast_probe.json",
-  "vuc/config/arena_instr_probe.json"
+  "vuc/config/arena_instr_probe.json",
+  "vuc/config/yy_switch_streams_probe.json",
+  "vuc/config/yy_lexer_input_probe.json",
+  "vuc/config/yy_destructor_D2_probe.json",
+  "vuc/config/yy_destructor_D1_probe.json",
+  "vuc/config/yy_destructor_D0_probe.json"
 ]

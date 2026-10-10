@@ -153,11 +153,11 @@ address	size	status	manifest	candidate_source	symbol
 0x08060810	1698	UNRESOLVED	-	-	_ZN11yyFlexLexer5yylexEv
 0x08060ec0	138	UNRESOLVED	-	-	_ZN11yyFlexLexerC2EPSiPSo
 0x08060f50	138	UNRESOLVED	-	-	_ZN11yyFlexLexerC1EPSiPSo
-0x08060fe0	78	UNRESOLVED	-	-	_ZN11yyFlexLexerD2Ev
-0x08061030	78	UNRESOLVED	-	-	_ZN11yyFlexLexerD1Ev
-0x08061080	78	UNRESOLVED	-	-	_ZN11yyFlexLexerD0Ev
-0x080610d0	96	UNRESOLVED	-	-	_ZN11yyFlexLexer14switch_streamsEPSiPSo
-0x08061130	97	UNRESOLVED	-	-	_ZN11yyFlexLexer10LexerInputEPci
+0x08060fe0	78	EXACT	vuc/config/yy_destructor_D2_probe.json	vuc/src/FlexLexerDestructors.cpp	_ZN11yyFlexLexerD2Ev
+0x08061030	78	EXACT	vuc/config/yy_destructor_D1_probe.json	vuc/src/FlexLexerDestructors.cpp	_ZN11yyFlexLexerD1Ev
+0x08061080	78	EXACT	vuc/config/yy_destructor_D0_probe.json	vuc/src/FlexLexerDestructors.cpp	_ZN11yyFlexLexerD0Ev
+0x080610d0	96	EXACT	vuc/config/yy_switch_streams_probe.json	vuc/src/FlexLexerSwitchStreams.cpp	_ZN11yyFlexLexer14switch_streamsEPSiPSo
+0x08061130	97	EXACT	vuc/config/yy_lexer_input_probe.json	vuc/src/FlexLexerInput.cpp	_ZN11yyFlexLexer10LexerInputEPci
 0x080611a0	18	EXACT	vuc/config/flex_output_exact_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer11LexerOutputEPKci
 0x080611c0	550	UNRESOLVED	-	-	_ZN11yyFlexLexer18yy_get_next_bufferEv
 0x080613f0	205	UNRESOLVED	-	-	_ZN11yyFlexLexer21yy_get_previous_stateEv
