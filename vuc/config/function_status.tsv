@@ -20,7 +20,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0804a880	86	EXACT	vuc/config/arena_ast_probe.json	vuc/src/ASTNodeArena.cpp	_ZN7ASTNodenwEj
 0x0804a8e0	16	EXACT	vuc/config/iostream_cleanup_0804a8e0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0804a8f0	46	EXACT	vuc/config/ast_arena_cleanup_probe.json	vuc/src/ASTNodeArenaCleanup.cpp	__tcf_1
-0x0804a920	31	UNRESOLVED	-	-	_GLOBAL__I__ZN7ASTNode3memE
+0x0804a920	31	EXACT	vuc/config/ast_arena_global_init_probe.json	vuc/src/ASTNodeArenaCleanup.cpp	_GLOBAL__I__ZN7ASTNode3memE
 0x0804a940	393	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
 0x0804aad0	304	UNRESOLVED	-	-	_Z4BindP10ASTFunCallR11SymbolTable
 0x0804ac00	3119	UNRESOLVED	-	-	_Z4BindP7ASTStmtR11SymbolTable

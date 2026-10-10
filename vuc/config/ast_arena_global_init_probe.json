@@ -1,0 +1,15 @@
+{
+  "function": "_GLOBAL__I__ZN7ASTNode3memE",
+  "address": "0x0804a920",
+  "size": 31,
+  "source": "vuc/src/ASTNodeArenaCleanup.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x0804a7f0"
+  }
+}
