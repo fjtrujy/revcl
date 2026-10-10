@@ -104,5 +104,11 @@
   "vuc/config/listfile_printline_probe.json",
   "vuc/config/global_env_tcf_1_probe.json",
   "vuc/config/global_env_tcf_2_probe.json",
-  "vuc/config/assemble_module_probe.json"
+  "vuc/config/assemble_module_probe.json",
+  "vuc/config/instruction_list_print_probe.json",
+  "vuc/config/check_expr_list_probe.json",
+  "vuc/config/main_probe.json",
+  "vuc/config/ast_arena_cleanup_probe.json",
+  "vuc/config/instruction_addl_probe.json",
+  "vuc/config/translate_frag_probe.json"
 ]

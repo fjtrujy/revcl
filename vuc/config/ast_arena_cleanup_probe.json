@@ -1,0 +1,20 @@
+{
+  "function": "__tcf_1",
+  "address": "0x0804a8f0",
+  "size": 46,
+  "source": "vuc/src/ASTNodeArenaCleanup.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit"
+  ],
+  "relocations": {
+    "_ZN7ASTNode3memE": "0x0808abf8",
+    "_ZdlPv": "0x0804973c"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZN7ASTNode3memE": "0x0808abf8"
+    }
+  }
+}

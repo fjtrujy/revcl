@@ -1,0 +1,15 @@
+{
+  "function": "main",
+  "address": "0x08071530",
+  "size": 63,
+  "source": "vuc/src/Main.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Z14ParseArgumentsiPPc": "0x0805b3e0",
+    "_Z9ParseFilev": "0x0806fb30",
+    "error": "0x0808bccc"
+  }
+}

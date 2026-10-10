@@ -1,0 +1,13 @@
+{
+  "function": "_Z5CheckIP7ASTExprEvR11ASTNodeListIT_E",
+  "address": "0x0806a110",
+  "size": 66,
+  "source": "vuc/src/CheckExprList.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Z5CheckP7ASTExpr": "0x08063c60"
+  }
+}

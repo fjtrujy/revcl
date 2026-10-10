@@ -1,0 +1,18 @@
+{
+  "function": "_Z13TranslateFragRK12MLGameString",
+  "address": "0x0806dd30",
+  "size": 87,
+  "source": "vuc/src/TranslateFrag.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_Znwj": "0x080499ec",
+    "_ZN12MLGameStringC1ERKS_": "0x08071770",
+    "_ZdlPv": "0x0804973c",
+    "_Unwind_Resume": "0x0804998c",
+    "_ZTVN2IR13Fragment_DataE": "0x08076068"
+  }
+}
