@@ -119,5 +119,6 @@
   "vuc/config/yy_destructor_D1_probe.json",
   "vuc/config/yy_destructor_D0_probe.json",
   "vuc/config/ml_temp_default_C1_probe.json",
-  "vuc/config/ast_arena_global_init_probe.json"
+  "vuc/config/ast_arena_global_init_probe.json",
+  "vuc/config/ast_arena_initializer_probe.json"
 ]

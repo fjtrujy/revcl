@@ -1,0 +1,26 @@
+{
+  "function": "_Z41__static_initialization_and_destruction_0ii",
+  "address": "0x0804a7f0",
+  "size": 138,
+  "source": "vuc/src/ASTNodeArenaCleanup.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    "_ZNSt8ios_base4InitC1Ev": "0x0804974c",
+    ".text.__tcf_0": "0x0804a8e0",
+    "__dso_handle": "0x08077004",
+    "__cxa_atexit": "0x0804972c",
+    "_Znwj": "0x080499ec",
+    ".text.__tcf_1": "0x0804a8f0"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZSt8__ioinit": "0x0808abf4",
+      "_ZN7ASTNode3memE": "0x0808abf8"
+    }
+  }
+}

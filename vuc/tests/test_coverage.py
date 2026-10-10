@@ -21,9 +21,9 @@ class CoverageTests(unittest.TestCase):
 
     def test_every_original_function_is_accounted_for(self):
         self.assertEqual(len(self.rows), 298)
-        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 121)
+        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 122)
         self.assertEqual(sum(r[2] == "EXPERIMENTAL" for r in self.rows), 10)
-        self.assertEqual(sum(r[2] == "UNRESOLVED" for r in self.rows), 167)
+        self.assertEqual(sum(r[2] == "UNRESOLVED" for r in self.rows), 166)
         self.assertEqual(coverage.OUTPUT.read_text(), coverage.table(self.rows))
 
     def test_complete_mlgamestring_member_cluster_is_exact(self):

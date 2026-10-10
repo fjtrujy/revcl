@@ -24,19 +24,21 @@ scaffolding for that same subsystem, not an additional original
 application algorithm.
 
 The larger original initializer helper at `0x0804a7f0`
-has a 138-byte body that allocates the initial chunk, sets
-its cursor and predecessor, registers teardown, and initializes
-`std::ios_base::Init`. A conventional C++ constructor fragment
-with the same behavior currently reproduces **118/138 bytes**:
-the register scheduling and initial arena field stores differ.
-It remains experimental until every original instruction byte
-and each relocation agree; no machine-code padding is permitted.
+is **now also 138/138 byte-exact**, with all **10** original
+ELF relocations resolved. The ordinary C++ `ArenaCleanup`
+constructor allocates 0x10008 bytes, initializes the linked
+arena cursor at chunk+4 and null predecessor at chunk+0x10004,
+then registers teardown and initializes `std::ios_base::Init`.
+The source order of the two chunk stores was necessary to obtain
+the original compiler's register allocation. This reconstructed
+initializer is compiler-generated lifecycle code, not a distinct
+application algorithm or proof of original translation-unit layout.
 
-The new strict gate is **121/121 original function-symbol records,
-6,456/6,456 instruction bytes, 277 resolved relocations,
+The new strict gate is **122/122 original function-symbol records,
+6,594/6,594 instruction bytes, 287 resolved relocations,
 36 verified referenced literal bytes**. The unit test suite
-passes 51 tests. The original symbol ledger contains 121 EXACT,
-10 EXPERIMENTAL and 167 UNRESOLVED out of 298 named functions.
+passes 51 tests. The original symbol ledger contains 122 EXACT,
+10 EXPERIMENTAL and 166 UNRESOLVED out of 298 named functions.
 
 The entire original ELF is **not byte-exact**. Function-level
 matching is a necessary but insufficient subset of the full

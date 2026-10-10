@@ -4,6 +4,12 @@
 class ASTNode { public: static char *mem; };
 char *ASTNode::mem;
 struct ArenaCleanup {
+    ArenaCleanup() {
+        char *chunk = (char *)::operator new(0x10008);
+        *(char **)chunk = chunk + 4;
+        *(char **)(chunk + 0x10004) = 0;
+        ASTNode::mem = chunk;
+    }
     ~ArenaCleanup() {
         while (ASTNode::mem) {
             char *current = ASTNode::mem;
