@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **100 independently verified exact function-symbol records**
-covering 4811/4811 instruction bytes, including the original relocation for
+The strict gate now checks **106 independently verified exact function-symbol records**
+covering 5268/5268 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -115,8 +115,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 100 EXACT,
-8 EXPERIMENTAL and 190 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 106 EXACT,
+8 EXPERIMENTAL and 184 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -152,6 +152,10 @@ relocations, but remains non-exact at 94/106 bytes.
 The current checkpoint adds the exact `yyFlexLexer::yyrestart()`
 and two GCC 3.3 `std::__uninitialized_copy_aux` instantiations
 for `Type`. See `vuc/docs/2026-10-10-restart-stl-copy-batch.md`.
+The next batch exactly reconstructs scoped symbol lookup, both
+`ListFile` printing methods, both global hash environment teardown
+callbacks, and `AssembleModule()`. See
+`vuc/docs/2026-10-10-symbol-list-environment-batch.md`.
 The lexer initialization/flush methods are now also exact, and the
 relocation matcher correctly distinguishes defined STT_FUNC bases
 from section-relative offsets. See

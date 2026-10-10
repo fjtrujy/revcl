@@ -112,11 +112,17 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `yyFlexLexer::yyrestart(std::istream*)` | 93/93 | `-O2 -frename-registers` |
 | `std::__uninitialized_copy_aux<ConstTypeIterator,Type*>()` | 79/79 | `-O2 -frename-registers` |
 | `std::__uninitialized_copy_aux<TypeIterator,TypeIterator>()` | 86/86 | `-O2 -frename-registers` |
+| `SymbolTable::Find(MLGameString const&,bool)` | 115/115 | `-O2 -frename-registers` |
+| `ListFile::Print(int,int,std::ofstream&)` | 88/88 | `-O2 -frename-registers -falign-jumps=1` |
+| `ListFile::PrintLine(int,std::ofstream&)` | 133/133 | `-O2 -frename-registers`, `std::string::_Rep::_S_terminal` |
+| `__tcf_1` (original `globalEnv` cleanup) | 16/16 | `-O2 -frename-registers -fuse-cxa-atexit` |
+| `__tcf_2` (original `localEnv` cleanup) | 16/16 | `-O2 -frename-registers -fuse-cxa-atexit` |
+| `AssembleModule(IR::Module_Data*,InstructionList&)` | 89/89 | `-O2 -frename-registers` |
 
-**100/100 exact function-symbol records, 4811/4811 checked code bytes.** This counts only the
+**106/106 exact function-symbol records, 5268/5268 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 203 supported relocations across the accepted candidate functions
+ELF. All 218 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -124,7 +130,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-100 EXACT, 8 EXPERIMENTAL and 190 UNRESOLVED entries. Generate it using
+106 EXACT, 8 EXPERIMENTAL and 184 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 

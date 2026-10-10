@@ -59,8 +59,8 @@ address	size	status	manifest	candidate_source	symbol
 0x0804ffb0	359	UNRESOLVED	-	-	_Z22Canonize_TryReduceExprIjEbPN2IR9Expr_DataERT_
 0x08050120	359	UNRESOLVED	-	-	_Z22Canonize_TryReduceExprIiEbPN2IR9Expr_DataERT_
 0x08050290	16	EXACT	vuc/config/iostream_cleanup_08050290_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x080502a0	16	UNRESOLVED	-	-	__tcf_1
-0x080502b0	16	UNRESOLVED	-	-	__tcf_2
+0x080502a0	16	EXACT	vuc/config/global_env_tcf_1_probe.json	vuc/src/GlobalEnvironments.cpp	__tcf_1
+0x080502b0	16	EXACT	vuc/config/global_env_tcf_2_probe.json	vuc/src/GlobalEnvironments.cpp	__tcf_2
 0x080502c0	410	UNRESOLVED	-	-	_Z17Canonize_FoldExprPN2IR9Expr_DataE
 0x08050460	224	UNRESOLVED	-	-	_Z15Canonize_ReducePN2IR13Fragment_DataE
 0x08050540	315	UNRESOLVED	-	-	_Z11ReduceBinOpIjEbPN2IR13Operator_DataERKT_S5_RS3_
@@ -102,7 +102,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08051b30	416	UNRESOLVED	-	-	_Z13BroadcastMoveRKN2IR8RegisterES2_R15InstructionList
 0x08051cd0	1315	UNRESOLVED	-	-	_Z15AssembleExprRegRKN2IR8RegisterEPNS_9Expr_DataER15InstructionListi
 0x08052200	7990	UNRESOLVED	-	-	_Z8AssembleRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
-0x08054140	89	UNRESOLVED	-	-	_Z14AssembleModulePN2IR11Module_DataER15InstructionList
+0x08054140	89	EXACT	vuc/config/assemble_module_probe.json	vuc/src/AssembleModule.cpp	_Z14AssembleModulePN2IR11Module_DataER15InstructionList
 0x080541a0	16	EXACT	vuc/config/iostream_cleanup_080541a0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x080541b0	919	UNRESOLVED	-	-	_Z15AssembleFunCallRKN2IR11FunCallInfoERKNS_8RegisterERK12MLGameStringR11ASTNodeListIPNS_9Expr_DataEER15InstructionList
 0x08054550	457	UNRESOLVED	-	-	_Z8AssemblePN2IR13Fragment_DataER15InstructionList
@@ -119,8 +119,8 @@ address	size	status	manifest	candidate_source	symbol
 0x0805a570	77	UNRESOLVED	-	-	_Z17IsAccumulatorablePN2IR13Operator_DataE
 0x0805a5c0	66	EXACT	vuc/config/iostream_static_0805a5c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805a610	1206	UNRESOLVED	-	-	_ZN8ListFile8GenerateEPKc
-0x0805aad0	133	UNRESOLVED	-	-	_ZN8ListFile9PrintLineEiRSt14basic_ofstreamIcSt11char_traitsIcEE
-0x0805ab60	88	UNRESOLVED	-	-	_ZN8ListFile5PrintEiiRSt14basic_ofstreamIcSt11char_traitsIcEE
+0x0805aad0	133	EXACT	vuc/config/listfile_printline_probe.json	vuc/src/ListFilePrintLine.cpp	_ZN8ListFile9PrintLineEiRSt14basic_ofstreamIcSt11char_traitsIcEE
+0x0805ab60	88	EXACT	vuc/config/listfile_print_probe.json	vuc/src/ListFile.cpp	_ZN8ListFile5PrintEiiRSt14basic_ofstreamIcSt11char_traitsIcEE
 0x0805abc0	1071	UNRESOLVED	-	-	_ZN8ListFile11WriteToFileEPKc
 0x0805aff0	18	EXACT	vuc/config/list_file_lines_probe.json	vuc/src/ListFile.cpp	_ZN8ListFile11GetNumLinesEv
 0x0805b010	16	EXACT	vuc/config/iostream_cleanup_0805b010_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
@@ -196,7 +196,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806a2c0	31	UNRESOLVED	-	-	_GLOBAL__I_StdAfx.cppxtsrAa
 0x0806a2e0	66	EXACT	vuc/config/iostream_static_0806a2e0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806a330	185	UNRESOLVED	-	-	_ZN11SymbolTable5EnterERK12MLGameStringP16SymbolTableEntry
-0x0806a3f0	115	UNRESOLVED	-	-	_ZN11SymbolTable4FindERK12MLGameStringb
+0x0806a3f0	115	EXACT	vuc/config/symboltable_find_probe.json	vuc/src/SymbolTableFind.cpp	_ZN11SymbolTable4FindERK12MLGameStringb
 0x0806a470	140	UNRESOLVED	-	-	_ZN11SymbolTable10BeginScopeEv
 0x0806a500	27	EXACT	vuc/config/symboltable_end_exact_probe.json	vuc/src/SymbolTable.cpp	_ZN11SymbolTable8EndScopeEv
 0x0806a520	16	EXACT	vuc/config/iostream_cleanup_0806a520_probe.json	vuc/src/IostreamInit.cpp	__tcf_0

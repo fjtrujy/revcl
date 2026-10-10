@@ -1,0 +1,13 @@
+{
+  "function": "_Z14AssembleModulePN2IR11Module_DataER15InstructionList",
+  "address": "0x08054140",
+  "size": 89,
+  "source": "vuc/src/AssembleModule.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Z8AssemblePN2IR13Fragment_DataER15InstructionList": "0x08054550"
+  }
+}

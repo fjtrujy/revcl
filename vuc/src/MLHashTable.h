@@ -12,6 +12,7 @@ public:
         Node *next;
     };
     Node *heads[Buckets];
+    ~MLHashTable() { clear(); }
     void clear();
     Value FindCopy(const Key &key);
     Value *FindPtr(const Key &key);

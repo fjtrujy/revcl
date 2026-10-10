@@ -1,0 +1,13 @@
+{
+  "function": "_ZN11SymbolTable4FindERK12MLGameStringb",
+  "address": "0x0806a3f0",
+  "size": 115,
+  "source": "vuc/src/SymbolTableFind.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EE8FindCopyERKS0_": "0x0806a8e0"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "function": "_ZN8ListFile9PrintLineEiRSt14basic_ofstreamIcSt11char_traitsIcEE",
+  "address": "0x0805aad0",
+  "size": 133,
+  "source": "vuc/src/ListFilePrintLine.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZN8ListFile11GetNumLinesEv": "0x0805aff0",
+    "_ZNSs4_Rep11_S_terminalE": "0x0808aa6c",
+    "_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc": "0x080497bc",
+    "_ZNSolsEPFRSoS_E": "0x0804969c",
+    "_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_": "0x0804993c",
+    ".rodata": "0x08072dd0"
+  }
+}

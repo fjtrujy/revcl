@@ -1,0 +1,15 @@
+{
+  "function": "_ZN8ListFile5PrintEiiRSt14basic_ofstreamIcSt11char_traitsIcEE",
+  "address": "0x0805ab60",
+  "size": 88,
+  "source": "vuc/src/ListFile.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZN8ListFile11GetNumLinesEv": "0x0805aff0",
+    "_ZN8ListFile9PrintLineEiRSt14basic_ofstreamIcSt11char_traitsIcEE": "0x0805aad0"
+  }
+}

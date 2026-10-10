@@ -1,0 +1,20 @@
+{
+  "function": "__tcf_2",
+  "address": "0x080502b0",
+  "size": 16,
+  "source": "vuc/src/GlobalEnvironments.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit"
+  ],
+  "relocations": {
+    "localEnv": "0x0808b460",
+    "_ZN11MLHashTableI12MLGameStringS0_9MLHashFunIS0_ELi513EE5clearEv": "0x08050ca0"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "localEnv": "0x0808b460"
+    }
+  }
+}
