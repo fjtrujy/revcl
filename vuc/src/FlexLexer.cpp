@@ -10,11 +10,16 @@ public:
 FlexLexer::~FlexLexer() {}
 
 struct yy_buffer_state {
-    void *file;
+    std::istream *file;
     char *buffer;
     char *yy_buf_pos;
-    int yy_buf_size;
+    int reserved_0c;
     int yy_n_chars;
+    int yy_is_our_buffer;
+    int yy_is_interactive_internal;
+    int yy_fill_buffer;
+    int yy_is_interactive;
+    int yy_at_bol;
 };
 
 class yyFlexLexer {
@@ -23,8 +28,13 @@ public:
     void LexerError(const char *text);
     void yy_switch_to_buffer(yy_buffer_state *next);
     void yy_load_buffer_state();
+    void yy_flush_buffer(yy_buffer_state *state);
+    void yy_init_buffer(yy_buffer_state *state, std::istream *file);
 private:
-    char reserved_[0x24];
+    char reserved0_[0x04];
+    char *yytext_ptr_;
+    char reserved1_[0x18];
+    std::istream *input_;
     std::ostream *output_;
     yy_buffer_state *current_;
     char yy_hold_char_;
@@ -33,6 +43,8 @@ private:
     char *yy_c_buf_p_;
     char reserved2_[8];
     int yy_did_buffer_switch_on_eof_;
+    char reserved3_[0x28];
+    unsigned yy_buffer_char_index_;
 };
 
 void yyFlexLexer::LexerOutput(const char *text, int length)
@@ -58,4 +70,25 @@ void yyFlexLexer::yy_switch_to_buffer(yy_buffer_state *next)
     current_ = next;
     yy_load_buffer_state();
     yy_did_buffer_switch_on_eof_ = 1;
+}
+
+void yyFlexLexer::yy_init_buffer(yy_buffer_state *state, std::istream *file)
+{
+    yy_flush_buffer(state);
+    state->yy_is_interactive = 1;
+    state->yy_is_interactive_internal = 0;
+    state->file = file;
+}
+
+void yyFlexLexer::yy_flush_buffer(yy_buffer_state *state)
+{
+    if (!state) return;
+    state->yy_n_chars = 0;
+    state->buffer[yy_buffer_char_index_] = 0;
+    state->buffer[yy_buffer_char_index_ + 1] = 0;
+    state->yy_buf_pos = state->buffer;
+    state->yy_fill_buffer = 1;
+    state->yy_at_bol = 0;
+    if (state == current_)
+        yy_load_buffer_state();
 }

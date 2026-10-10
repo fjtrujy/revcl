@@ -101,5 +101,7 @@
   "vuc/config/hash_symbol_findcopy_probe.json",
   "vuc/config/hash_string_findptr_probe.json",
   "vuc/config/yy_switch_buffer_probe.json",
-  "vuc/config/align_constant_exact_probe.json"
+  "vuc/config/align_constant_exact_probe.json",
+  "vuc/config/yy_init_buffer_probe.json",
+  "vuc/config/yy_flush_buffer_probe.json"
 ]

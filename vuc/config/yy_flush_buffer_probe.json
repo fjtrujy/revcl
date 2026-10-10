@@ -1,0 +1,14 @@
+{
+  "function": "_ZN11yyFlexLexer15yy_flush_bufferEP15yy_buffer_state",
+  "address": "0x080618e0",
+  "size": 80,
+  "source": "vuc/src/FlexLexer.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZN11yyFlexLexer20yy_load_buffer_stateEv": "0x08061780"
+  }
+}

@@ -91,6 +91,18 @@ def resolve_object_target(symbols, section_index, addend, mapped_objects):
     return int(mapped_objects[label], 0) + addend - entry[1]
 
 
+def linked_symbol_offset(entry, section_count):
+    """Return an object-relative addend only for section/undefined symbols.
+
+    An STT_FUNC defined inside the candidate already denotes that named
+    function's base. Its st_value is the offset within the candidate object,
+    not an addition to the explicitly configured original linked address.
+    """
+    if entry[3] & 15 == 2 and entry[5] < section_count:
+        return 0
+    return entry[1]
+
+
 def verify_original_objects(raw, target, object_map):
     """Authenticate every rebased object's original name/address/section."""
     sections = target["sections"]
@@ -185,7 +197,7 @@ def prepare_named_function(raw, name, reloc_targets, original_address,
                 else:
                     if label not in reloc_targets:
                         raise ValueError("unmapped relocation target: " + label)
-                    address = int(reloc_targets[label], 0) + referenced[1]
+                    address = int(reloc_targets[label], 0) + linked_symbol_offset(referenced, len(headers))
                     value = relocate_word(kind, address, addend, original_address + local)
             elif label in relocation_objects:
                 if kind != 1 or referenced[3] & 15 != 3:
@@ -197,7 +209,7 @@ def prepare_named_function(raw, name, reloc_targets, original_address,
             else:
                 if label not in reloc_targets:
                     raise ValueError("unmapped relocation target: " + label)
-                address = int(reloc_targets[label], 0) + referenced[1]
+                address = int(reloc_targets[label], 0) + linked_symbol_offset(referenced, len(headers))
                 value = relocate_word(kind, address, addend, original_address + local)
             struct.pack_into("<I", code, local, value)
             count += 1

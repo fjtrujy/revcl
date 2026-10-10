@@ -169,8 +169,8 @@ address	size	status	manifest	candidate_source	symbol
 0x08061780	39	UNRESOLVED	-	-	_ZN11yyFlexLexer20yy_load_buffer_stateEv
 0x080617b0	139	UNRESOLVED	-	-	_ZN11yyFlexLexer16yy_create_bufferEPSii
 0x08061840	87	UNRESOLVED	-	-	_ZN11yyFlexLexer16yy_delete_bufferEP15yy_buffer_state
-0x080618a0	53	UNRESOLVED	-	-	_ZN11yyFlexLexer14yy_init_bufferEP15yy_buffer_statePSi
-0x080618e0	80	UNRESOLVED	-	-	_ZN11yyFlexLexer15yy_flush_bufferEP15yy_buffer_state
+0x080618a0	53	EXACT	vuc/config/yy_init_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer14yy_init_bufferEP15yy_buffer_statePSi
+0x080618e0	80	EXACT	vuc/config/yy_flush_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer15yy_flush_bufferEP15yy_buffer_state
 0x08061930	54	EXACT	vuc/config/flex_lexer_error_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer10LexerErrorEPKc
 0x08061970	16	EXACT	vuc/config/iostream_cleanup_08061970_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x08061980	31	UNRESOLVED	-	-	_GLOBAL__I__ZN11yyFlexLexer5yylexEv

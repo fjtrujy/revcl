@@ -49,6 +49,16 @@ class MatchProbeTests(unittest.TestCase):
     def test_i386_absolute_relocation(self):
         self.assertEqual(match.relocate_word(1, 0x080720a0, 0, 0x08049b42), 0x080720a0)
 
+    def test_local_defined_function_uses_original_base_not_candidate_offset(self):
+        # ELF32 STT_FUNC, local, defined section 2, at object byte 0x130.
+        local_function = (0, 0x130, 80, 2, 0, 2)
+        section = (0, 0x130, 0, 3, 0, 2)
+        self.assertEqual(match.linked_symbol_offset(local_function, 10), 0)
+        self.assertEqual(match.linked_symbol_offset(section, 10), 0x130)
+        # An undefined function has no candidate section and keeps its value.
+        undefined = (0, 0, 0, 18, 0, 0)
+        self.assertEqual(match.linked_symbol_offset(undefined, 10), 0)
+
     def test_i386_pc_relative_relocation(self):
         value = match.relocate_word(2, 0x080497bc, -4, 0x08049b56)
         self.assertEqual(struct.pack("<I", value), bytes.fromhex("62fcffff"))
