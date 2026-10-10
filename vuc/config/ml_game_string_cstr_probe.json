@@ -2,6 +2,7 @@
   "function": "_ZNK12MLGameString5c_strEv",
   "address": "0x08071800",
   "size": 13,
-  "source": "vuc/probes/simple_methods.cpp",
+  "source": "vuc/src/MLGameString.cpp",
+  "flags": ["-O2", "-frename-registers"],
   "relocations": {}
 }

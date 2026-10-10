@@ -1,0 +1,13 @@
+[
+  "vuc/config/instruction_to_string_probe.json",
+  "vuc/config/list_file_lines_probe.json",
+  "vuc/config/ml_game_string_cstr_probe.json",
+  "vuc/config/asm_output_epilogue_probe.json",
+  "vuc/config/ml_string_default_c2_probe.json",
+  "vuc/config/ml_string_default_c1_probe.json",
+  "vuc/config/ml_string_copy_c2_probe.json",
+  "vuc/config/ml_string_copy_c1_probe.json",
+  "vuc/config/ml_hash_string_probe.json",
+  "vuc/config/value_default_c2_probe.json",
+  "vuc/config/value_default_c1_probe.json"
+]

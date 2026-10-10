@@ -2,7 +2,7 @@
   "function": "_ZN11Instruction8ToStringEv",
   "address": "0x08051900",
   "size": 9,
-  "source": "vuc/probes/instruction_to_string.cpp",
+  "source": "vuc/src/Instruction.cpp",
   "relocations": {
     "_ZNK12MLGameString5c_strEv": "0x08071800"
   }

@@ -78,8 +78,12 @@ The audit reports checked bytes and exact candidate functions, **not** a
 whole-program matching percentage. Multi-function object files are supported
 as long as the requested function and its relocations can be resolved.
 
-The curated reproducible suite in `vuc/config/selected_candidates.json` can
-compile and compare four functions automatically using:
+The **mandatory exact-only gate** is `vuc/config/exact_candidates.json`
+(the default for `match_candidates.py`). It compiles the accepted source
+fragments in `vuc/src/` and returns a nonzero exit status on **any** non-exact
+function. Per-function compiler flags are recorded explicitly in the JSON
+manifests; they are tested hypotheses, not authenticated original TU flags.
+Run the strict gate using:
 
 ```sh
 limactl shell revcl-oracle -- python3 \
@@ -88,11 +92,20 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-gcc333-jan25/candidate-suite
 ```
 
-The first suite finds **two exact functions**, `ListFile::GetNumLines()`
-(18/18 bytes) and `Instruction::ToString()` (9/9 bytes, with its external
-relocation resolved). Across four checked functions, 59/70 code bytes match;
-this is candidate-scoped evidence, **not** a whole-binary percentage. See
-`vuc/docs/candidate-matches-2026-10-10.md` for details and Debian patch clues.
+The strict gate now checks **11 independently verified exact functions**
+covering 236/236 instruction bytes, including the original relocation for
+`Instruction::ToString()`. The exploratory manifest
+`vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
+it must fail when supplied with `--manifest`. Unmatched sources remain in
+`vuc/probes/`, never in the accepted source tree. This is candidate-scoped
+verification; final completion requires byte equality for the **entire VUC
+binary**, not just its selected functions. See
+`vuc/docs/exact-match-contract.md` for the acceptance contract.
+
+The original ELF also supplies 22 `.cpp` translation-unit records and 79
+locally scoped text-function records. Regenerate these with
+`python3 vuc/scripts/source_units.py --write`. Global functions are not
+assigned to source units merely from symbol-table ordering.
 
 ## Milestones
 

@@ -17,8 +17,44 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_functions(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         names = [json.loads(suite.within_repo(p).read_text())["function"] for p in configs]
-        self.assertEqual(len(names), 4)
+        self.assertEqual(len(names), 12)
         self.assertEqual(len(set(names)), len(names))
+
+    def test_exact_regression_set_is_subset_of_diagnostics(self):
+        all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
+        self.assertEqual(len(exact_configs), 11)
+        self.assertTrue(set(exact_configs).issubset(all_configs))
+        for manifest in exact_configs:
+            source = json.loads(suite.within_repo(manifest).read_text())["source"]
+            self.assertTrue(source.startswith("vuc/src/"), source)
+        for manifest in all_configs - set(exact_configs):
+            source = json.loads(suite.within_repo(manifest).read_text())["source"]
+            self.assertTrue(source.startswith("vuc/probes/"), source)
+
+    def test_original_tu_flag_hypothesis_is_explicit(self):
+        with tempfile.TemporaryDirectory() as out:
+            with patch.object(suite.subprocess, "run",
+                              return_value=subprocess.CompletedProcess([], 0, "", "")) as run_mock:
+                with patch.object(suite.matcher, "run", return_value={
+                    "function": "c_str", "exact": True, "exact_bytes": 13,
+                    "length": 13, "verified_literal_bytes": 0}):
+                    result = suite.run("compiler", out,
+                                       ["vuc/config/ml_game_string_cstr_probe.json"])
+            command = run_mock.call_args.args[0]
+            self.assertIn("-frename-registers", command)
+            self.assertEqual(result["results"][0]["candidate_flags"],
+                             ["-O2", "-frename-registers"])
+
+    def test_cli_fails_for_any_partial_function(self):
+        result = {"all_candidates_exact": False, "acceptance": "FAIL",
+                  "fully_exact_functions": 1, "functions_checked": 2,
+                  "matching_code_bytes": 9, "checked_code_bytes": 18}
+        with tempfile.TemporaryDirectory() as out:
+            with patch("sys.argv", ["match_candidates.py", "--compiler", "mock-gcc",
+                                    "--out", out]):
+                with patch.object(suite, "run", return_value=result):
+                    self.assertEqual(suite.main(), 1)
 
     def test_rejects_path_escape(self):
         with self.assertRaisesRegex(ValueError, "escapes repository"):
@@ -38,13 +74,28 @@ class CandidateSuiteTests(unittest.TestCase):
                               return_value=subprocess.CompletedProcess([], 0, "", "")) as compile_mock:
                 with patch.object(suite.matcher, "run", side_effect=results):
                     summary = suite.run("compiler", out, configs)
-            self.assertEqual(compile_mock.call_count, 1)
+            self.assertEqual(compile_mock.call_count, 2)
             self.assertEqual(summary["functions_checked"], 2)
             self.assertEqual(summary["fully_exact_functions"], 1)
             self.assertEqual(summary["matching_code_bytes"], 28)
             self.assertEqual(summary["checked_code_bytes"], 31)
             self.assertIsNone(summary["whole_binary_score"])
+            self.assertFalse(summary["all_candidates_exact"])
+            self.assertEqual(summary["acceptance"], "FAIL")
             self.assertTrue((Path(out) / "candidate_summary.json").is_file())
+
+    def test_exact_candidates_can_pass_only_without_partial_matches(self):
+        with tempfile.TemporaryDirectory() as out:
+            with patch.object(suite.subprocess, "run",
+                              return_value=subprocess.CompletedProcess([], 0, "", "")):
+                with patch.object(suite.matcher, "run", return_value={
+                    "function": "ListFile", "exact": True, "exact_bytes": 18,
+                    "length": 18, "verified_literal_bytes": 0}):
+                    summary = suite.run("compiler", out,
+                                        ["vuc/config/list_file_lines_probe.json"])
+            self.assertTrue(summary["all_candidates_exact"])
+            self.assertEqual(summary["acceptance"], "PASS")
+            self.assertIsNone(summary["whole_binary_score"])
 
     def test_compiler_failure_is_not_a_match(self):
         with tempfile.TemporaryDirectory() as out:

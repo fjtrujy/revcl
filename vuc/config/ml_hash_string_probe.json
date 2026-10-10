@@ -1,0 +1,11 @@
+{
+  "function": "_ZN9MLHashFunI12MLGameStringE4HashERKS0_",
+  "address": "0x08071990",
+  "size": 20,
+  "source": "vuc/src/MLHashTable.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

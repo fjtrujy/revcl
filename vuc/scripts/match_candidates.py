@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Compile and audit a curated set of VUC function hypotheses.
+"""Compile and verify VUC hypotheses with mandatory byte-exact acceptance.
 
-A candidate suite reports only verified named functions, never whole-binary
-coverage. All objects and reports are written under an explicit scratch path.
+Partial function matches are diagnostics only; they cannot pass the suite.
+Whole-binary equality is a separate, still-unavailable final acceptance gate.
+All outputs are written under an explicit scratch path.
 """
 import argparse
 import hashlib
@@ -14,6 +15,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "vuc/config/selected_candidates.json"
+EXACT_MANIFEST = ROOT / "vuc/config/exact_candidates.json"
 spec = importlib.util.spec_from_file_location("vuc_match", ROOT / "vuc/scripts/match_probe.py")
 matcher = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(matcher)
@@ -43,11 +45,16 @@ def run(compiler, out, manifests, options=None):
             raise ValueError("duplicate function: " + name)
         seen.add(name)
         source = within_repo(config["source"])
-        key = str(source)
+        candidate_flags = config.get("flags", flags)
+        if not isinstance(candidate_flags, list) or not candidate_flags or not all(
+                isinstance(flag, str) and flag.startswith("-") for flag in candidate_flags):
+            raise ValueError("invalid candidate compiler flags: " + name)
+        key = (str(source), tuple(candidate_flags))
         if key not in compiled:
-            # Hash full source path to avoid collisions between equal filenames.
-            obj = out / (source.stem + "-" + hashlib.sha256(key.encode()).hexdigest()[:10] + ".o")
-            command = [str(compiler), *flags, "-c", str(source), "-o", str(obj)]
+            # Hash source and flags: one object per reproducible build recipe.
+            identity = str(source) + "\x00" + "\x00".join(candidate_flags)
+            obj = out / (source.stem + "-" + hashlib.sha256(identity.encode()).hexdigest()[:10] + ".o")
+            command = [str(compiler), *candidate_flags, "-c", str(source), "-o", str(obj)]
             invocation = subprocess.run(command, capture_output=True, text=True)
             if invocation.returncode:
                 raise RuntimeError("compilation failed for " + str(source) + ": " +
@@ -55,11 +62,14 @@ def run(compiler, out, manifests, options=None):
             compiled[key] = obj
         result = matcher.run(compiled[key], config_path)
         result["source"] = config["source"]
+        result["candidate_flags"] = list(candidate_flags)
         results.append(result)
 
     summary = {
         "scope": "explicit_candidate_functions_only",
         "whole_binary_score": None,
+        "all_candidates_exact": all(r["exact"] for r in results),
+        "acceptance": "PASS" if all(r["exact"] for r in results) else "FAIL",
         "compiler": str(compiler),
         "flags": flags,
         "functions_checked": len(results),
@@ -77,15 +87,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--compiler", required=True, help="explicit historic C++ wrapper")
     parser.add_argument("--out", required=True, help="scratch directory for compiled objects/results")
-    parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
+    parser.add_argument("--manifest", default=str(EXACT_MANIFEST),
+                        help="default: verified exact-function regression set")
     args = parser.parse_args()
     entries = json.loads(Path(args.manifest).read_text())
     result = run(args.compiler, args.out, entries)
     print("%d/%d exact candidate functions; %d/%d matching bytes in checked functions" %
           (result["fully_exact_functions"], result["functions_checked"],
            result["matching_code_bytes"], result["checked_code_bytes"]))
+    print("Candidate byte-exact acceptance: " + result["acceptance"])
     print("Whole-binary score: UNAVAILABLE")
-    return 0
+    return 0 if result["all_candidates_exact"] else 1
 
 
 if __name__ == "__main__":

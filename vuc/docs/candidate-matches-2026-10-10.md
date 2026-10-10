@@ -1,5 +1,9 @@
 # VUC code-generation verification — 10 October 2026
 
+> This records the *initial four-function baseline*, before per-source compiler
+> flag hypotheses and exact acceptance were introduced. For the authoritative
+> **11-function exact-only regression set**, see `exact-match-contract.md`.
+
 ## Setup and scope
 
 Original target: the SHA-256-verified `X86linux_vuc2004_1/vuc` member

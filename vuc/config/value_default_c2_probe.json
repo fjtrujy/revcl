@@ -1,0 +1,11 @@
+{
+  "function": "_ZN5ValueC2Ev",
+  "address": "0x0806e740",
+  "size": 44,
+  "source": "vuc/src/Value.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

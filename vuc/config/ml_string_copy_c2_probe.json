@@ -1,0 +1,11 @@
+{
+  "function": "_ZN12MLGameStringC2ERKS_",
+  "address": "0x08071760",
+  "size": 15,
+  "source": "vuc/src/MLGameString.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {}
+}

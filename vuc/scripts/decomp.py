@@ -147,7 +147,7 @@ def main():
     elif args.command == "status":
         print("VUC target verified: %d bytes, %d text function symbols" %
               (len(data), len(info["functions"])))
-        print("Matching score: UNAVAILABLE (historical compiler and comparator not yet configured)")
+        print("Matching score: UNAVAILABLE (whole-binary rebuild and comparison not validated)")
     else:
         f = find_function(info, args.function)
         if args.command == "info":
