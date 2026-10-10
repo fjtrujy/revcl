@@ -153,3 +153,24 @@ infer VUC's original flags.
 The comparator deliberately rejects unsupported relocation types, unknown
 symbol addresses, literal-data mismatches and different function sizes.
 This is a scoped probe, **not** the full VUC relocation-aware scorer.
+
+## Candidate-scoped batch auditing
+
+The matching probe now locates a requested function using the ELF symbol
+table, including its section and offset, and processes only relocations that
+fall within that symbol's body. Compiling the prologue hypothesis alongside
+an unrelated second function in the **same object file** produced the same
+22/30 comparison result, demonstrating that other functions do not change
+the selected comparison's scope.
+
+A JSON job manifest can list multiple candidate objects and function
+configurations; execute it with `python3 vuc/scripts/audit.py --jobs FILE`.
+The result gives candidate-function totals, fully exact function count,
+code bytes matched within these named candidates, and literal bytes checked.
+It explicitly returns `whole_binary_score: null` and rejects duplicate
+function entries or invalid original symbol identities.
+
+The next step is resolving additional symbol/relocation cases and mapping
+original translation-unit boundaries before introducing a meaningful
+whole-binary scoring command. The exact GCC 3.3.3 compiler remains missing;
+the GCC 3.3.5 comparison is useful diagnostic evidence, not a replacement.

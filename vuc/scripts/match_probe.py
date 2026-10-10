@@ -72,6 +72,59 @@ def prepare_object(raw, reloc_targets, original_address):
     return bytes(text), count
 
 
+def prepare_named_function(raw, name, reloc_targets, original_address):
+    """Resolve relocations only inside a named function in an ELF32 object."""
+    sections, headers = elf_sections(raw)
+    symsec = sections[".symtab"][1]
+    names = section_bytes(raw, headers[symsec[6]])
+    symbols = []
+    for pos in range(symsec[4], symsec[4] + symsec[5], decomp.SYM.size):
+        entry = decomp.SYM.unpack_from(raw, pos)
+        label = decomp.cstr(names, entry[0])
+        if entry[5] < len(headers) and entry[3] & 15 == 3:
+            label = next((key for key, (index, _) in sections.items()
+                          if index == entry[5]), label)
+        symbols.append((label, entry))
+    candidates = [(label, entry) for label, entry in symbols
+                  if label == name and entry[3] & 15 == 2 and entry[4] == 0]
+    if len(candidates) != 1:
+        raise ValueError("expected exactly one defined function symbol: " + name)
+    _, entry = candidates[0]
+    section_index = entry[5]
+    if section_index >= len(headers):
+        raise ValueError("function section index out of range")
+    section = headers[section_index]
+    start, size = entry[1], entry[2]
+    if not size or start + size > section[5]:
+        raise ValueError("invalid function size or offset")
+    code = bytearray(section_bytes(raw, section)[start:start + size])
+    count = 0
+    for sec in headers:
+        if sec[1] != 9 or sec[7] != section_index:  # SHT_REL for this section
+            continue
+        if sec[9] != 8:
+            raise ValueError("unexpected relocation entry size")
+        for pos in range(sec[4], sec[4] + sec[5], 8):
+            offset, info = struct.unpack_from("<II", raw, pos)
+            if not start <= offset < start + size:
+                continue
+            local = offset - start
+            if local + 4 > size:
+                raise ValueError("relocation crosses function boundary")
+            index, kind = info >> 8, info & 255
+            if index >= len(symbols):
+                raise ValueError("invalid relocation symbol index")
+            label, referenced = symbols[index]
+            if label not in reloc_targets:
+                raise ValueError("unmapped relocation target: " + label)
+            address = int(reloc_targets[label], 0) + referenced[1]
+            addend = struct.unpack_from("<i", code, local)[0]
+            value = relocate_word(kind, address, addend, original_address + local)
+            struct.pack_into("<I", code, local, value)
+            count += 1
+    return bytes(code), count
+
+
 def relocate_word(kind, address, addend, place):
     if kind == 1:  # R_386_32
         return (address + addend) & 0xffffffff
@@ -111,6 +164,10 @@ def run(object_path, config_path=CONFIG):
     data, target = decomp.load()
     original_address = int(config["address"], 0)
     original_size = config["size"]
+    named = [s for s in target["functions"] if s["name"] == config["function"]
+             and s["address"] == original_address and s["size"] == original_size]
+    if len(named) != 1:
+        raise ValueError("configured function does not match canonical VUC symbols")
     src = next(x for x in target["sections"] if x["name"] == ".text")
     start = src["offset"] + original_address - src["address"]
     if original_address < src["address"] or start + original_size > src["offset"] + src["size"]:
@@ -118,8 +175,8 @@ def run(object_path, config_path=CONFIG):
     original = data[start:start + original_size]
     object_bytes = Path(object_path).read_bytes()
     literal_count = compare_string_sections(object_bytes, config["relocations"], data, target)
-    candidate, reloc_count = prepare_object(object_bytes,
-                                            config["relocations"], original_address)
+    candidate, reloc_count = prepare_named_function(object_bytes, config["function"],
+                                                    config["relocations"], original_address)
     result = compare(candidate, original)
     result["relocations"] = reloc_count
     result["verified_literal_bytes"] = literal_count
@@ -131,8 +188,9 @@ def run(object_path, config_path=CONFIG):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--object", required=True)
+    parser.add_argument("--config", default=str(CONFIG), help="function/relocation manifest")
     args = parser.parse_args()
-    result = run(args.object)
+    result = run(args.object, args.config)
     print(json.dumps(result, indent=2))
     return 0
 

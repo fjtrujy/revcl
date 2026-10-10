@@ -60,6 +60,14 @@ This compiler is not an exact VUC toolchain. Its initial `-O2` hypothesis for
 bytes; details, commands, and constraints are documented in
 `vuc/docs/toolchain-investigation.md`.
 
+For multiple candidate functions, `vuc/scripts/audit.py --jobs /path/to/jobs.json`
+accepts a JSON list of `{ "config": "/path/to/manifest.json",
+"object": "/path/to/compiled.o" }` entries. Every candidate is validated
+against the original function symbol, size, and address before comparison.
+The audit reports checked bytes and exact candidate functions, **not** a
+whole-program matching percentage. Multi-function object files are supported
+as long as the requested function and its relocations can be resolved.
+
 ## Milestones
 
 - **V0 — Inventory and isolation:** initial canonical manifest and entrypoint
