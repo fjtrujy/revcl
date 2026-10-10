@@ -265,9 +265,17 @@ static inline void initDebris(loopDebris *ld, const char *baseName, int a, bool 
 
 static inline const char *recName(epiRec *e)
 {
-    if (!e->unk_14)
-        return "!UNNAMED!";
-    return e->unk_14->func_0806d674();
+    int name = (int)e->unk_14;
+    if (!name)
+        name = (int)"!UNNAMED!";
+    else
+        name = (int)((instStream *)name)->func_0806d674();
+    return (const char *)name;
+}
+
+static inline epiRec &mainRec(loopDebris *ld)
+{
+    return ld->m_main;
 }
 
 bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
@@ -282,7 +290,8 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         func_0804ad38("work table is not looping!\n");
         return false;
     }
-    if (s->unk_270 <= 0 || s->unk_274 < 0) {
+    int count = s->unk_270;
+    if (count <= 0 || (count = s->unk_274) < 0) {
         func_0804ad38("ExplodeLoop - called - but - known min/ known safe is bad (%d,%d)\n",
                       s->unk_270, s->unk_274);
         return false;
@@ -290,8 +299,8 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     int mlid = wt->unk_3c;
     int clid = wt->getCondLid();
     int lsz = wt->func_080741b4();
-    bool isCond = wt->func_08073754() == 4;
-    initDebris(ld, baseName, (unsigned char)wt->unk_08, isCond);
+    bool userFixed = wt->func_08073754() == 4;
+    initDebris(ld, baseName, (unsigned char)wt->unk_08, userFixed);
     Instr *cond = wt->func_08073060();
     if (mlid < 0 || clid < 0 || clid > mlid || !cond) {
         func_0804ad38("iTable::BuildEPStreams - well - mlid or clid or no conditional ? something was wrong [clid=%d mlid=%d] %x\n",
@@ -310,7 +319,9 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         return false;
     }
 
-    int last = s->unk_270 - 1 + clid;
+    count = s->unk_270;
+    --count;
+    int last = count + clid;
     if (last >= mlid)
         last = mlid;
     epiRec *pro = 0;
@@ -384,10 +395,11 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
                 func_0804adf0(-1);
             }
             epiRec *e = ld->allocEpi(n);
-            int lid = p->unk_0c + 1;
-            e->unk_08 = lid;
+            e->unk_08 = p->unk_0c + 1;
+            int proBase = p->unk_04;
+            int lid = e->unk_08;
             for (int k = clid + 1; k <= mlid; k++, lid++) {
-                if (!cloneAppend(wt, e->unk_18, lid, lid - p->unk_04 + 1, false, true, false)) {
+                if (!cloneAppend(wt, e->unk_18, lid, lid - proBase + 1, false, true, false)) {
                     func_0804ad38("failed to attach to epi sequence!\n");
                     return false;
                 }
@@ -398,12 +410,14 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     ld->func_0806770c();
     for (int i = 0; i != ld->m_nPro; i++) {
         epiRec *p = ld->getProRec(i);
-        epiRec *next = (i == ld->m_nPro - 1) ? &ld->m_main : ld->getProRec(i + 1);
+        epiRec *next = (i == ld->m_nPro - 1) ? &mainRec(ld) : ld->getProRec(i + 1);
         if (!next) {
             func_0804ad38("failed to get next\n");
             func_0804adf0(-1);
         }
-        if (!p->unk_14 || !next->unk_14) {
+        instStream *nextStream = next->unk_14;
+        instStream *proStream = p->unk_14;
+        if (!proStream || !nextStream) {
             func_0804ad38("no istream set for prologue or next\n");
             func_0804adf0(-1);
         }
