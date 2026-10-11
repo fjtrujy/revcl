@@ -27,9 +27,11 @@ experimental candidate manifests, and the original ELF local
 source-file provenance records in `vuc/config/source_units.tsv`.
 
 It validates uniqueness of original function addresses and rejects
-overlapping nonexact named-function spans. It reports both short
-original functions and larger address-contiguous runs that have no
-accepted exact functions, providing a usable implementation order.
+overlapping positive-size named-function spans, including those crossing
+an exact-function boundary. It reports both short
+original functions and larger symbol-order runs bounded by exact functions,
+providing a usable implementation order. Unattributed gaps between named
+functions are reported separately, never as verified instruction bytes.
 Compiler-generated startup symbol names and glibc startup helper
 names are filtered from a separate application-oriented shortlist,
 but **never** from the canonical original function counts.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Find bounded groups of original VUC functions not yet byte-exact.
+"""Find original VUC functions and unaccepted symbol-order stretches.
 
 All identities come from the authenticated original ZIP and the exact-only
 manifest. This is a *source reconstruction work queue*, never a binary score:
@@ -49,10 +49,22 @@ def is_compiler_startup_name(symbol):
 
 
 def build_queue(rows, source_files, top=20):
-    """Return original-address-bounded, never-overlapping nonexact runs."""
+    """Return nonexact named symbol runs, bounded by EXACT functions.
+
+    Code padding, anonymous functions and unsized symbols may occupy gaps.
+    Such gaps are explicitly unattributed, not assumed to be code matches.
+    """
     ordered = sorted(rows, key=lambda record: record[0])
     if len({record[0] for record in ordered}) != len(ordered):
         raise ValueError("duplicate original text function addresses")
+    previous_end = None
+    for address, size, _, _, _, _ in ordered:
+        if size < 0:
+            raise ValueError("negative original text function size")
+        if size:
+            if previous_end is not None and address < previous_end:
+                raise ValueError("overlapping original named function spans")
+            previous_end = address + size
     groups = []
     current = []
 
@@ -69,6 +81,8 @@ def build_queue(rows, source_files, top=20):
             "end_of_last_symbol": "0x%08x" % (last[0] + last[1]),
             "symbol_count": len(funcs),
             "symbol_bytes": sum(x["size"] for x in funcs),
+            "unattributed_span_bytes": last[0] + last[1] - first[0]
+                                        - sum(x["size"] for x in funcs),
             "functions": funcs
         })
         current.clear()
@@ -78,10 +92,6 @@ def build_queue(rows, source_files, top=20):
         if state == "EXACT":
             finish()
         elif size > 0:
-            if current:
-                previous = current[-1]
-                if address < previous[0] + previous[1]:
-                    raise ValueError("overlapping original unresolved named function spans")
             current.append(row)
     finish()
 
@@ -125,7 +135,7 @@ def main():
           "%(experimental_named_function_records)d | unresolved: "
           "%(unresolved_named_function_records)d" % result["summary"])
     print("Nonexact, positive-size named symbols: %(unresolved_positive_size_functions)d "
-          "across %(unresolved_runs)d address runs (NOT an ELF match score)" % result["summary"])
+          "across %(unresolved_runs)d symbol-order runs (NOT an ELF match score)" % result["summary"])
     print("\nShortest nonexact original named functions:")
     for f in result["smallest_nonexact"]:
         provenance = (" [%s]" % f["source_file"]) if f["source_file"] else ""
@@ -134,10 +144,11 @@ def main():
     for f in result["smallest_nonexact_nonstartup"]:
         provenance = (" [%s]" % f["source_file"]) if f["source_file"] else ""
         print("%s %4d %-12s %s%s" % (f["address"], f["size"], f["status"], f["symbol"], provenance))
-    print("\nLargest nonexact runs (named function bytes only):")
+    print("\nLargest nonexact symbol-order runs (gaps are unattributed):")
     for g in result["largest_nonexact_runs"]:
-        print("%s..%s %6d bytes across %d function symbols" %
-              (g["start"], g["end_of_last_symbol"], g["symbol_bytes"], g["symbol_count"]))
+        print("%s..%s %6d named-function bytes, %d unattributed span bytes, %d symbols" %
+              (g["start"], g["end_of_last_symbol"], g["symbol_bytes"],
+               g["unattributed_span_bytes"], g["symbol_count"]))
 
 
 if __name__ == "__main__":

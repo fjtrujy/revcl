@@ -235,8 +235,8 @@ original-address work queue:
 python3 vuc/scripts/nonexact_work_queue.py --top 15
 ```
 
-It lists small non-exact application functions and larger contiguous
-unaccepted named-function ranges, without claiming a binary match score
+It lists small non-exact application functions and larger symbol-order
+unaccepted ranges, reporting gaps separately without claiming a binary score
 or guessing global source-unit ownership. See
 `vuc/docs/2026-10-11-nonexact-code-queue.md`.
 

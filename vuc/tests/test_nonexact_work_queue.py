@@ -34,6 +34,8 @@ class NonexactWorkQueueTests(unittest.TestCase):
         self.assertEqual(report["summary"]["unresolved_runs"], 2)
         self.assertEqual(report["largest_nonexact_runs"][0]["symbol_bytes"], 20)
         self.assertEqual(report["largest_nonexact_runs"][1]["symbol_bytes"], 20)
+        self.assertEqual(sum(g["unattributed_span_bytes"]
+                             for g in report["largest_nonexact_runs"]), 4)
         self.assertEqual(report["smallest_nonexact"][0]["size"], 8)
         self.assertEqual(report["smallest_nonexact"][0]["source_file"], "local.cpp")
         self.assertIsNone(report["smallest_nonexact"][1]["source_file"])
@@ -47,6 +49,16 @@ class NonexactWorkQueueTests(unittest.TestCase):
                    entry(0x1008, 8, "EXPERIMENTAL", "two")]
         with self.assertRaisesRegex(ValueError, "overlapping original"):
             queue.build_queue(overlap, {})
+        overlaps_accepted = [entry(0x1000, 16, "UNRESOLVED", "one"),
+                             entry(0x1008, 8, "EXACT", "two")]
+        with self.assertRaisesRegex(ValueError, "overlapping original"):
+            queue.build_queue(overlaps_accepted, {})
+        overlaps_after_accepted = [entry(0x1000, 16, "EXACT", "one"),
+                                   entry(0x1008, 8, "UNRESOLVED", "two")]
+        with self.assertRaisesRegex(ValueError, "overlapping original"):
+            queue.build_queue(overlaps_after_accepted, {})
+        with self.assertRaisesRegex(ValueError, "negative original"):
+            queue.build_queue([entry(0x1000, -1, "UNRESOLVED", "bad")], {})
 
     def test_local_source_ownership_does_not_infer_global_symbols(self):
         with tempfile.TemporaryDirectory() as name:
