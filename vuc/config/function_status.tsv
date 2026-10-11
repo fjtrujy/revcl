@@ -247,8 +247,8 @@ address	size	status	manifest	candidate_source	symbol
 0x0806f240	254	UNRESOLVED	-	-	_ZNK5ValueleERKS_
 0x0806f340	325	UNRESOLVED	-	-	_ZNK5ValueaaERKS_
 0x0806f490	309	UNRESOLVED	-	-	_ZNK5ValueooERKS_
-0x0806f5d0	143	UNRESOLVED	-	-	_ZNK5ValueanERKS_
-0x0806f660	143	UNRESOLVED	-	-	_ZNK5ValueorERKS_
+0x0806f5d0	143	EXACT	vuc/config/value_bitwise_and_probe.json	vuc/src/ValueBitwise.cpp	_ZNK5ValueanERKS_
+0x0806f660	143	EXACT	vuc/config/value_bitwise_or_probe.json	vuc/src/ValueBitwise.cpp	_ZNK5ValueorERKS_
 0x0806f6f0	221	UNRESOLVED	-	-	_ZNK5Value8ToStringEv
 0x0806f7d0	220	UNRESOLVED	-	-	_ZN5Value11TypeConvertERKS_S1_RS_S2_
 0x0806f8b0	257	UNRESOLVED	-	-	_ZN5Value16TypeConvertForceE6TypeIDRKS_S2_RS_S3_

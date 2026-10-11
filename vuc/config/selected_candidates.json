@@ -158,5 +158,7 @@
   "vuc/config/stl_string_uninitialized_probe.json",
   "vuc/config/scope_allocate_and_copy_probe.json",
   "vuc/config/instruction_arena_static_probe.json",
-  "vuc/config/instruction_arena_global_probe.json"
+  "vuc/config/instruction_arena_global_probe.json",
+  "vuc/config/value_bitwise_and_probe.json",
+  "vuc/config/value_bitwise_or_probe.json"
 ]

@@ -1,0 +1,13 @@
+{
+  "function": "_ZNK5ValueanERKS_",
+  "address": "0x0806f5d0",
+  "size": 143,
+  "source": "vuc/src/ValueBitwise.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZN5Value16TypeConvertForceE6TypeIDRKS_S2_RS_S3_": "0x0806f8b0"
+  }
+}
