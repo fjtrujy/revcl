@@ -5,7 +5,8 @@
   "source": "vuc/probes/script_error.cpp",
   "flags": [
     "-O2",
-    "-frename-registers"
+    "-frename-registers",
+    "-falign-jumps=1"
   ],
   "relocations": {
     "_ZSt4cout": "0x0808a7a0",

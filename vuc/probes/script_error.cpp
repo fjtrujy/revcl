@@ -7,6 +7,7 @@ extern bool error;
 void script_error(const char *message)
 {
     error = true;
-    std::cout << currFileName << "(" << script_line << "):"
+    std::cout << currFileName;
+    std::cout << "(" << script_line << "):"
               << message << std::endl;
 }

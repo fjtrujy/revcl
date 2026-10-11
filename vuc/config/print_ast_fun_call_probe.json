@@ -4,8 +4,7 @@
   "size": 98,
   "source": "vuc/probes/print_ast_fun_call.cpp",
   "flags": [
-    "-O2",
-    "-frename-registers"
+    "-O2"
   ],
   "relocations": {
     "_Z5PrintP11ASTLValExprRSo": "0x0805c4f0",
