@@ -63,7 +63,7 @@ bool func_0808061c(workTable *wt, wrangleFunc f)
         func_0804ad38("failed to set OS_setWatchdog\n");
         return false;
     }
-    bool r = func_080807e8(wt, f);
+    bool r = wrangleMode0Worker(wt, f);
     if (!clearWatchdog()) {
         func_0804ad38("failed to clear watchdog timer\n");
         return false;
@@ -71,7 +71,7 @@ bool func_0808061c(workTable *wt, wrangleFunc f)
     return r;
 }
 
-bool func_080807e8(workTable *wt, wrangleFunc f)
+bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
 {
     cls08058718 pos;
     for (;;) {
@@ -244,11 +244,12 @@ bool func_080807e8(workTable *wt, wrangleFunc f)
                     func_0804ad38("instruction wasn't on candidate list\n");
                     func_0804adf0(-1);
                 }
+                Instr *const *candidateSlot = &c.unk_00;
                 wt->unk_50--;
                 if (prev)
-                    prev->unk_2c = c.unk_00->unk_2c;
+                    prev->unk_2c = (*candidateSlot)->unk_2c;
                 else
-                    wt->unk_4c = c.unk_00->unk_2c;
+                    wt->unk_4c = (*candidateSlot)->unk_2c;
             }
         }
         goto check_pending;

@@ -21,7 +21,7 @@ bool dynCalcStats(workTable *wt);
 bool func_0806558c(Instr *i, int *row);
 bool func_0807f2c4(Block *blk, Instr *mv);
 bool func_08080460(workTable *wt, Instr *in, int *row, int *pipe);
-bool func_080807e8(workTable *wt, wrangleFunc f);
+bool wrangleMode0Worker(workTable *wt, wrangleFunc f);
 bool func_08081610(workTable *wt, Instr *in, int *row, int *pipe);
 bool buildCandidateList2(workTable *wt);
 bool func_0808158c(workTable *wt, wrangleCand *c);
