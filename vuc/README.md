@@ -240,6 +240,11 @@ unaccepted ranges, reporting gaps separately without claiming a binary score
 or guessing global source-unit ownership. See
 `vuc/docs/2026-10-11-nonexact-code-queue.md`.
 
+The FlexLexer buffer-state reload remains non-exact after testing 15
+ordinary C++ load/store orders with the original ELF comparator. See
+`vuc/docs/2026-10-11-lexer-load-order-investigation.md` for reproducible
+register-lifetime evidence; none of those candidates is accepted.
+
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
 or unrelated local files. Never change historical archives.
