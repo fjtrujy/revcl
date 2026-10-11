@@ -1,0 +1,14 @@
+{
+  "function": "_ZNK5ValuegtERKS_",
+  "address": "0x0806ef40",
+  "size": 254,
+  "source": "vuc/src/ValueComparison.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-ffast-math"
+  ],
+  "relocations": {
+    "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"
+  }
+}

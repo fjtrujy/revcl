@@ -163,5 +163,11 @@
   "vuc/config/value_bitwise_or_probe.json",
   "vuc/config/value_arithmetic_minus_probe.json",
   "vuc/config/check_ast_fun_call_probe.json",
-  "vuc/config/stdafx_global_wrapper_probe.json"
+  "vuc/config/stdafx_global_wrapper_probe.json",
+  "vuc/config/value_comparison_eq_probe.json",
+  "vuc/config/value_comparison_ne_probe.json",
+  "vuc/config/value_relational_gt_probe.json",
+  "vuc/config/value_relational_lt_probe.json",
+  "vuc/config/value_relational_ge_probe.json",
+  "vuc/config/value_relational_le_probe.json"
 ]
