@@ -118,6 +118,7 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `yyFlexLexer::~yyFlexLexer()` D1 | 78/78 | `-O2 -frename-registers`, original vtables |
 | `yyFlexLexer::~yyFlexLexer()` D0 | 78/78 | `-O2 -frename-registers`, original vtables |
 | `MLTempString::MLTempString()` C1 | 102/102 | `-O2 -frename-registers`, exact singleton guard and empty literal |
+| `MLTempString::MLTempString(char const*,...)` C1 | 110/110 | `-O2 -frename-registers -falign-jumps=1`, C2 remains non-exact |
 | `_GLOBAL__I__ZN7ASTNode3memE` | 31/31 | `-O2 -frename-registers -fuse-cxa-atexit -ffunction-sections`, original helper call |
 | `SymbolTable::Find(MLGameString const&,bool)` | 115/115 | `-O2 -frename-registers` |
 | `ListFile::Print(int,int,std::ofstream&)` | 88/88 | `-O2 -frename-registers -falign-jumps=1` |
@@ -146,10 +147,10 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `Value::operator&(Value const&) const` | 143/143 | `-O2 -frename-registers`, normal C++ bitwise operator |
 | `Value::operator|(Value const&) const` | 143/143 | `-O2 -frename-registers`, normal C++ bitwise operator |
 
-**153/153 exact function-symbol records, 9144/9144 checked code bytes.** This counts only the
+**154/154 exact function-symbol records, 9254/9254 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 391 supported relocations across the accepted candidate functions
+ELF. All 399 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -157,7 +158,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-153 EXACT, 10 EXPERIMENTAL and 135 UNRESOLVED entries. Generate it using
+154 EXACT, 9 EXPERIMENTAL and 135 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 

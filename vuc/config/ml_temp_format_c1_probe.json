@@ -2,7 +2,7 @@
   "function": "_ZN12MLTempStringC1EPKcz",
   "address": "0x08071bb0",
   "size": 110,
-  "source": "vuc/probes/ml_temp_format_inline.cpp",
+  "source": "vuc/src/MLTempStringFormatted.cpp",
   "flags": [
     "-O2",
     "-frename-registers",
