@@ -11,6 +11,12 @@ static inline short *thruputTimes(regUse *u, int part)
     return &u->unk_20[part].unk_3c[10];
 }
 
+static inline int thruputTail(instStream *s, regUse *u, int part)
+{
+    int last = u->unk_20[part].unk_3c[10];
+    return s->unk_22c - last;
+}
+
 bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
 {
     regUse *tr = t->unk_234;
@@ -56,17 +62,15 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
         }
         if (isPathRaw(p, key)) {
             int dist = s->unk_240;
-            int last = sr->unk_20[part].unk_3c[10];
-            int tend = s->unk_22c;
+            int tend = thruputTail(s, sr, part);
             int fst = tr->unk_20[part].unk_3c[7];
-            tend -= last;
             if (fst < 0 || tend < 0 || dist < 0) {
                 func_0804ad38("something wrong checking for thruput stalls fst=%d tend=%d path_dist=%d\n",
                               fst, tend, dist);
                 return false;
             }
             int total = fst + (tend + dist);
-            last = thruputTimes(sr, part)[1];
+            int last = thruputTimes(sr, part)[1];
             if (total < last) {
                 ol_s *setter = sr->unk_20[part].func_0805ba2c(0, true);
                 last = thruputTimes(sr, part)[1];
