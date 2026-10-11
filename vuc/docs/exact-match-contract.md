@@ -136,6 +136,7 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `__static_initialization_and_destruction_0` for predicate/environment TU | 193/193 | same toolchain flags, 13 original relocations |
 | `__static_initialization_and_destruction_0` for `currFileName` TU | 88/88 | `-O2 -frename-registers -fuse-cxa-atexit -ffunction-sections` |
 | `InstructionList::GenTmp(char const*)` | 85/85 | `-O2 -frename-registers -falign-jumps=1`, original 8-byte string literal |
+| `Value::operator-(Value const&) const` | 221/221 | `-O2 -frename-registers -falign-jumps=1`, original `TypeConvert` call |
 | `__uninitialized_copy_aux<AsmVariable const*,AsmVariable*>()` | 67/67 | `-O2 -frename-registers`, implicit memberwise copy |
 | `__uninitialized_copy_aux<AsmVariable*,AsmVariable*>()` | 74/74 | `-O2 -frename-registers`, implicit memberwise copy |
 | `yyFlexLexer::yy_delete_buffer()` | 87/87 | `-O2 -frename-registers`, two `free` relocations |
@@ -145,10 +146,10 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `Value::operator&(Value const&) const` | 143/143 | `-O2 -frename-registers`, normal C++ bitwise operator |
 | `Value::operator|(Value const&) const` | 143/143 | `-O2 -frename-registers`, normal C++ bitwise operator |
 
-**152/152 exact function-symbol records, 8923/8923 checked code bytes.** This counts only the
+**153/153 exact function-symbol records, 9144/9144 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 390 supported relocations across the accepted candidate functions
+ELF. All 391 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -156,7 +157,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-152 EXACT, 10 EXPERIMENTAL and 136 UNRESOLVED entries. Generate it using
+153 EXACT, 10 EXPERIMENTAL and 135 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 

@@ -1,0 +1,14 @@
+{
+  "source": "vuc/src/ValueMinus.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"
+  },
+  "function": "_ZNK5ValuemiERKS_",
+  "address": "0x0806ea90",
+  "size": 221
+}
