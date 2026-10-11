@@ -1,0 +1,35 @@
+{
+  "function": "_Z12script_errorPKc",
+  "address": "0x0806fa80",
+  "size": 161,
+  "source": "vuc/probes/script_error.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZSt4cout": "0x0808a7a0",
+    "currFileName": "0x08077b80",
+    "error": "0x0808bccc",
+    "script_line": "0x0808bcc4",
+    "_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc": "0x080497bc",
+    "_ZNSolsEm": "0x0804990c",
+    "_ZNSolsEl": "0x0804967c",
+    "_ZNSolsEPFRSoS_E": "0x0804969c",
+    "_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_": "0x0804993c"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {
+        "offset": 0,
+        "size": 2,
+        "address": "0x08075c5d"
+      },
+      {
+        "offset": 2,
+        "size": 3,
+        "address": "0x080766dc"
+      }
+    ]
+  }
+}
