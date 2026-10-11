@@ -1,5 +1,6 @@
 """Strict VUC ELF32 relocation and function-byte comparison tests."""
 import importlib.util
+import json
 from pathlib import Path
 import struct
 import unittest
@@ -39,6 +40,21 @@ class MatchProbeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "outside original"):
             broken = [dict(mapping[0], address="0x2000"), *mapping[1:]]
             match.validate_literal_ranges(candidate, original, original_section, broken)
+
+    def test_export_module_initializer_literals_have_three_original_addresses(self):
+        raw, target = match.decomp.load()
+        original_rodata = next(s for s in target["sections"] if s["name"] == ".rodata")
+        config = json.loads((ROOT / "vuc/config/export_module_static_initializer_probe.json")
+                            .read_text())
+        mapped = config["relocation_literals"][".rodata"]
+        literals = (b"@@enclosing_function\0" b"@@enclosing_loop\0"
+                    b"vector::reserve\0")
+        self.assertEqual(match.validate_literal_ranges(literals, raw, original_rodata,
+                                                       mapped), len(literals))
+        changed = bytearray(literals)
+        changed[-2] ^= 1
+        with self.assertRaisesRegex(ValueError, "bytes differ"):
+            match.validate_literal_ranges(bytes(changed), raw, original_rodata, mapped)
 
     def test_named_bss_object_rebase(self):
         guard = (0, 0, 8, 1, 0, 4)

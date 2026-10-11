@@ -71,7 +71,6 @@
   "vuc/config/iostream_cleanup_08071570_probe.json",
   "vuc/config/iostream_global_constantsTabStop_probe.json",
   "vuc/config/iostream_global_matchStack_probe.json",
-  "vuc/config/iostream_global_exportModule_probe.json",
   "vuc/config/iostream_global_script_debug_probe.json",
   "vuc/config/iostream_static_constants_probe.json",
   "vuc/config/iostream_static_08050ce0_probe.json",
@@ -152,5 +151,8 @@
   "vuc/config/yy_delete_buffer_probe.json",
   "vuc/config/instruction_gen_label_probe.json",
   "vuc/config/symbol_begin_scope_probe.json",
-  "vuc/config/ml_game_string_table_cleanup_probe.json"
+  "vuc/config/ml_game_string_table_cleanup_probe.json",
+  "vuc/config/scope_vector_teardown_probe.json",
+  "vuc/config/export_module_scope_wrapper_probe.json",
+  "vuc/config/export_module_static_initializer_probe.json"
 ]

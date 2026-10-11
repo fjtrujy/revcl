@@ -141,5 +141,8 @@
   "vuc/config/yy_delete_buffer_probe.json",
   "vuc/config/instruction_gen_label_probe.json",
   "vuc/config/symbol_begin_scope_probe.json",
-  "vuc/config/ml_game_string_table_cleanup_probe.json"
+  "vuc/config/ml_game_string_table_cleanup_probe.json",
+  "vuc/config/scope_vector_teardown_probe.json",
+  "vuc/config/export_module_scope_wrapper_probe.json",
+  "vuc/config/export_module_static_initializer_probe.json"
 ]

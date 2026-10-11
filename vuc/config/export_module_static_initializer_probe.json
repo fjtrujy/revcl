@@ -1,0 +1,55 @@
+{
+  "function": "_Z41__static_initialization_and_destruction_0ii",
+  "address": "0x0804a940",
+  "size": 393,
+  "source": "vuc/src/ScopeVectorLifecycle.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections",
+    "-falign-jumps=8"
+  ],
+  "relocations": {
+    "_ZNSt8ios_base4InitC1Ev": "0x0804974c",
+    ".text.__tcf_0": "0x0804ebb0",
+    "__dso_handle": "0x08077004",
+    "__cxa_atexit": "0x0804972c",
+    "enclosingFunID": "0x0808ac00",
+    "enclosingLoopID": "0x0808ac04",
+    "_ZN12MLGameStringC1EPKcb": "0x080716e0",
+    "float4MemSymbols": "0x0808ac08",
+    "_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE7reserveEj": "0x0804ec50",
+    ".text.__tcf_1": "0x0804ebc0",
+    "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EE5clearEv": "0x0804f020",
+    "_Unwind_Resume": "0x0804998c",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE10deallocateEPvj": "0x0804997c"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZSt8__ioinit": "0x0808abfc",
+      "enclosingFunID": "0x0808ac00",
+      "enclosingLoopID": "0x0808ac04",
+      "float4MemSymbols": "0x0808ac08"
+    }
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {
+        "offset": 0,
+        "size": 21,
+        "address": "0x08072252"
+      },
+      {
+        "offset": 21,
+        "size": 17,
+        "address": "0x08072267"
+      },
+      {
+        "offset": 38,
+        "size": 16,
+        "address": "0x08072306"
+      }
+    ]
+  }
+}

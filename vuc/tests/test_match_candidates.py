@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 154)
+        self.assertEqual(len(records), 156)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 143)
+        self.assertEqual(len(exact_configs), 146)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -52,6 +52,14 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("vuc/config/ml_game_string_table_cleanup_probe.json", accepted)
         self.assertNotIn("vuc/config/ml_string_table_get_probe.json", accepted)
         self.assertIn("vuc/config/ml_string_table_get_probe.json", exploratory)
+
+    def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        for name in ("scope_vector_teardown_probe.json",
+                     "export_module_scope_wrapper_probe.json",
+                     "export_module_static_initializer_probe.json"):
+            self.assertIn("vuc/config/" + name, accepted)
+        self.assertNotIn("vuc/config/scope_vector_reserve_probe.json", accepted)
 
     def test_original_tu_flag_hypothesis_is_explicit(self):
         with tempfile.TemporaryDirectory() as out:

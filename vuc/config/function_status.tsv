@@ -21,7 +21,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0804a8e0	16	EXACT	vuc/config/iostream_cleanup_0804a8e0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0804a8f0	46	EXACT	vuc/config/ast_arena_cleanup_probe.json	vuc/src/ASTNodeArenaCleanup.cpp	__tcf_1
 0x0804a920	31	EXACT	vuc/config/ast_arena_global_init_probe.json	vuc/src/ASTNodeArenaCleanup.cpp	_GLOBAL__I__ZN7ASTNode3memE
-0x0804a940	393	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0804a940	393	EXACT	vuc/config/export_module_static_initializer_probe.json	vuc/src/ScopeVectorLifecycle.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0804aad0	304	UNRESOLVED	-	-	_Z4BindP10ASTFunCallR11SymbolTable
 0x0804ac00	3119	UNRESOLVED	-	-	_Z4BindP7ASTStmtR11SymbolTable
 0x0804b830	959	UNRESOLVED	-	-	_Z4BindP7ASTExprR11SymbolTable
@@ -32,8 +32,8 @@ address	size	status	manifest	candidate_source	symbol
 0x0804d7c0	4538	UNRESOLVED	-	-	_Z16AddFloat4MembersR11SymbolTable
 0x0804e980	552	UNRESOLVED	-	-	_Z11Binder_BindP9ASTModule
 0x0804ebb0	16	EXACT	vuc/config/iostream_cleanup_0804ebb0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x0804ebc0	107	UNRESOLVED	-	-	__tcf_1
-0x0804ec30	31	EXPERIMENTAL	vuc/config/iostream_global_exportModule_probe.json	vuc/probes/IostreamGlobal_exportModule.cpp	_GLOBAL__I_exportModule
+0x0804ebc0	107	EXACT	vuc/config/scope_vector_teardown_probe.json	vuc/src/ScopeVectorLifecycle.cpp	__tcf_1
+0x0804ec30	31	EXACT	vuc/config/export_module_scope_wrapper_probe.json	vuc/src/ScopeVectorLifecycle.cpp	_GLOBAL__I_exportModule
 0x0804ec50	241	UNRESOLVED	-	-	_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE7reserveEj
 0x0804ed50	57	EXACT	vuc/config/bind_list_expr_exact_probe.json	vuc/src/BindLists.cpp	_Z4BindIP7ASTExprEvR11ASTNodeListIT_ER11SymbolTable
 0x0804ed90	57	EXACT	vuc/config/bind_list_stmt_exact_probe.json	vuc/src/BindLists.cpp	_Z4BindIP7ASTStmtEvR11ASTNodeListIT_ER11SymbolTable

@@ -1,0 +1,21 @@
+{
+  "function": "__tcf_1",
+  "address": "0x0804ebc0",
+  "size": 107,
+  "source": "vuc/src/ScopeVectorLifecycle.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-fno-exceptions"
+  ],
+  "relocations": {
+    "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EE5clearEv": "0x0804f020",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE10deallocateEPvj": "0x0804997c"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "float4MemSymbols": "0x0808ac08"
+    }
+  }
+}
