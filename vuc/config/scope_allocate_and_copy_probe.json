@@ -1,0 +1,21 @@
+{
+  "function": "_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE20_M_allocate_and_copyIPS6_EESA_jT_SB_",
+  "address": "0x0804f130",
+  "size": 143,
+  "source": "vuc/src/ScopeAllocateAndCopy.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1",
+    "-falign-labels=2"
+  ],
+  "relocations": {
+    "_ZSt24__uninitialized_copy_auxIP11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EES7_ET0_T_S9_S8_12__false_type": "0x0804f220",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE8allocateEj": "0x0804968c",
+    "__cxa_begin_catch": "0x0804995c",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE10deallocateEPvj": "0x0804997c",
+    "__cxa_rethrow": "0x0804979c",
+    "__cxa_end_catch": "0x0804983c",
+    "_Unwind_Resume": "0x0804998c"
+  }
+}
