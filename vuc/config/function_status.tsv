@@ -126,7 +126,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0805b010	16	EXACT	vuc/config/iostream_cleanup_0805b010_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0805b020	31	UNRESOLVED	-	-	_GLOBAL__I__ZN8ListFile8GenerateEPKc
 0x0805b040	668	UNRESOLVED	-	-	_ZNSt6vectorISsSaISsEE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPSsS1_EERKSs
-0x0805b2e0	161	UNRESOLVED	-	-	_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIPSsSt6vectorISsSaISsEEEES6_ET0_T_S8_S7_12__false_type
+0x0805b2e0	161	EXACT	vuc/config/stl_string_uninitialized_probe.json	vuc/src/StringUninitializedCopy.cpp	_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIPSsSt6vectorISsSaISsEEEES6_ET0_T_S8_S7_12__false_type
 0x0805b390	66	EXACT	vuc/config/iostream_static_0805b390_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805b3e0	777	UNRESOLVED	-	-	_Z14ParseArgumentsiPPc
 0x0805b6f0	16	EXACT	vuc/config/iostream_cleanup_0805b6f0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0

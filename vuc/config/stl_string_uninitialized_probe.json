@@ -1,0 +1,18 @@
+{
+  "function": "_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIPSsSt6vectorISsSaISsEEEES6_ET0_T_S8_S7_12__false_type",
+  "address": "0x0805b2e0",
+  "size": 161,
+  "source": "vuc/src/StringUninitializedCopy.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZNSsC1ERKSs": "0x080498bc",
+    "__cxa_begin_catch": "0x0804995c",
+    "_ZNSs4_Rep10_M_destroyERKSaIcE": "0x0804991c",
+    "__cxa_rethrow": "0x0804979c",
+    "__cxa_end_catch": "0x0804983c",
+    "_Unwind_Resume": "0x0804998c"
+  }
+}
