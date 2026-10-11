@@ -228,6 +228,18 @@ under experimental source reconstruction, not accepted as byte-exact.
 
 ## Isolation and license
 
+For the next exact source-reconstruction batch, use the read-only
+original-address work queue:
+
+```sh
+python3 vuc/scripts/nonexact_work_queue.py --top 15
+```
+
+It lists small non-exact application functions and larger contiguous
+unaccepted named-function ranges, without claiming a binary match score
+or guessing global source-unit ownership. See
+`vuc/docs/2026-10-11-nonexact-code-queue.md`.
+
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
 or unrelated local files. Never change historical archives.
