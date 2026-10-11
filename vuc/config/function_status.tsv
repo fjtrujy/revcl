@@ -178,7 +178,7 @@ address	size	status	manifest	candidate_source	symbol
 0x080619b0	18	EXACT	vuc/config/flex_destructor_c0_probe.json	vuc/src/FlexLexer.cpp	_ZN9FlexLexerD0Ev
 0x080619d0	66	EXACT	vuc/config/iostream_static_080619d0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08061a20	2510	UNRESOLVED	-	-	_Z20CheckActualParamListRK11ASTNodeListIP7ASTExprERKSt6vectorI4TypeSaIS6_EERK12MLGameString
-0x080623f0	118	UNRESOLVED	-	-	_Z5CheckP10ASTFunCall
+0x080623f0	118	EXACT	vuc/config/check_ast_fun_call_probe.json	vuc/src/CheckASTFunCall.cpp	_Z5CheckP10ASTFunCall
 0x08062470	6119	UNRESOLVED	-	-	_Z5CheckP7ASTStmt
 0x08063c60	19262	UNRESOLVED	-	-	_Z5CheckP7ASTExpr
 0x080687a0	5174	UNRESOLVED	-	-	_Z5CheckP11ASTLValExpr

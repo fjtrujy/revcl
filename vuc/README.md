@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **154 independently verified exact function-symbol records**
-covering 9254/9254 instruction bytes, including the original relocation for
+The strict gate now checks **155 independently verified exact function-symbol records**
+covering 9372/9372 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -112,14 +112,17 @@ binary**, not just its selected functions. See
 The two original `Value` bitwise operators now each reproduce their
 complete 143-byte functions; see
 `vuc/docs/2026-10-11-value-bitwise-batch.md`.
+The reconstructed `Check(ASTFunCall*)` uses the historical implicit
+`Type` copy constructor to reproduce all 118 instruction bytes.
+See `vuc/docs/2026-10-11-ast-function-check-batch.md`.
 
 The original ELF also supplies 22 `.cpp` translation-unit records and 79
 locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 154 EXACT,
-9 EXPERIMENTAL and 135 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 155 EXACT,
+9 EXPERIMENTAL and 134 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.

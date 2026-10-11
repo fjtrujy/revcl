@@ -1,0 +1,15 @@
+{
+  "function": "_Z5CheckP10ASTFunCall",
+  "address": "0x080623f0",
+  "size": 118,
+  "source": "vuc/src/CheckASTFunCall.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_Z5CheckP11ASTLValExpr": "0x080687a0",
+    "_Z5CheckIP7ASTExprEvR11ASTNodeListIT_E": "0x0806a110",
+    "_Z20CheckActualParamListRK11ASTNodeListIP7ASTExprERKSt6vectorI4TypeSaIS6_EERK12MLGameString": "0x08061a20"
+  }
+}
