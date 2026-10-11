@@ -57,17 +57,16 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     }
     {
         char *s = t->func_08050be4(cur);
-        p = buf;
-        char *d = p;
+        char *d = buf;
+        p = d;
         for (; *s && copyCount < 0x800; copyCount++)
             *d++ = *s++;
         *d = 0;
     }
-    mods = func_080521f0(buf);
-    p = buf;
+    mods = func_080521f0(p);
     q = p;
-    if (*q == '~') {
-        q++;
+    if (buf[0] == '~') {
+        q = buf + 1;
         tilde = 1;
         p = q;
     }
