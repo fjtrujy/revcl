@@ -1,0 +1,26 @@
+{
+  "function": "_Z41__static_initialization_and_destruction_0ii",
+  "address": "0x080514a0",
+  "size": 138,
+  "source": "vuc/src/InstructionArenaLifecycle.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    "_ZNSt8ios_base4InitC1Ev": "0x0804974c",
+    ".text.__tcf_0": "0x08051970",
+    "__dso_handle": "0x08077004",
+    "__cxa_atexit": "0x0804972c",
+    "_Znwj": "0x080499ec",
+    ".text.__tcf_1": "0x08051980"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZSt8__ioinit": "0x0808bc74",
+      "_ZN11Instruction9instrDataE": "0x0808bc78"
+    }
+  }
+}

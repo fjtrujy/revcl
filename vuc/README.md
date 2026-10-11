@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **148 independently verified exact function-symbol records**
-covering 8468/8468 instruction bytes, including the original relocation for
+The strict gate now checks **150 independently verified exact function-symbol records**
+covering 8637/8637 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -115,8 +115,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 148 EXACT,
-10 EXPERIMENTAL and 140 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 150 EXACT,
+10 EXPERIMENTAL and 138 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.

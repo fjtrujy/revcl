@@ -1,0 +1,15 @@
+{
+  "function": "_GLOBAL__I__ZN11Instruction9instrDataE",
+  "address": "0x080519b0",
+  "size": 31,
+  "source": "vuc/src/InstructionArenaLifecycle.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x080514a0"
+  }
+}
