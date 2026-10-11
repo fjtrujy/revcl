@@ -102,8 +102,7 @@ int dragDown(workTable *wt)
     limitDragDownStart(wt, msl);
     int newStart = msl;
     int ret = newStart - oStart;
-    int &start = wt->unk_30;
-    start = newStart;
+    wt->unk_30 = newStart;
     newStart = wt->unk_38;
     msl = newStart;
     refreshDragDownRange(wt, newStart);
