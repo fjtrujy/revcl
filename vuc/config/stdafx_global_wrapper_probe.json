@@ -1,0 +1,17 @@
+{
+  "function": "_GLOBAL__I_StdAfx.cppxtsrAa",
+  "address": "0x0806a2c0",
+  "size": 31,
+  "source": "vuc/src/StdAfx.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x0806a260"
+  },
+  "compiler_generated_unit": "StdAfx.cpp"
+}

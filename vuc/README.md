@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **155 independently verified exact function-symbol records**
-covering 9372/9372 instruction bytes, including the original relocation for
+The strict gate now checks **156 independently verified exact function-symbol records**
+covering 9403/9403 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -109,6 +109,10 @@ it must fail when supplied with `--manifest`. Unmatched sources remain in
 verification; final completion requires byte equality for the **entire VUC
 binary**, not just its selected functions. See
 `vuc/docs/exact-match-contract.md` for the acceptance contract.
+The original `StdAfx.cpp` startup wrapper is now byte-exact. The
+matcher recognizes GCC 3.3's source-file-keyed random suffix without
+relaxing the original symbol or relocation checks. See
+`vuc/docs/2026-10-11-stdafx-source-unit.md`.
 The two original `Value` bitwise operators now each reproduce their
 complete 143-byte functions; see
 `vuc/docs/2026-10-11-value-bitwise-batch.md`.
@@ -121,8 +125,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 155 EXACT,
-9 EXPERIMENTAL and 134 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 156 EXACT,
+9 EXPERIMENTAL and 133 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.

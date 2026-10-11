@@ -3,6 +3,7 @@ import importlib.util
 import json
 from pathlib import Path
 import struct
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -107,6 +108,55 @@ class MatchProbeTests(unittest.TestCase):
         # An undefined function has no candidate section and keeps its value.
         undefined = (0, 0, 0, 18, 0, 0)
         self.assertEqual(match.linked_symbol_offset(undefined, 10), 0)
+
+    def test_source_file_keyed_gcc_constructor_matches_random_suffix(self):
+        # GCC 3.3's six-character temporary suffix changes between builds.
+        fn = (0, 0, 31, 2, 0, 1)  # local STT_FUNC in text section
+        symbols = [
+            ("_GLOBAL__I__Users_example_StdAfx.cppMoVYF4", fn),
+            ("_GLOBAL__I_other.cppMoVYF4", fn),
+        ]
+        original = "_GLOBAL__I_StdAfx.cppxtsrAa"
+        label, found = match.identify_compiler_generated_constructor(
+            symbols, original, "StdAfx.cpp")
+        self.assertEqual(label, symbols[0][0])
+        self.assertEqual(found, fn)
+        with self.assertRaisesRegex(ValueError, "provenance"):
+            match.identify_compiler_generated_constructor(
+                symbols, original, "Unrelated.cpp")
+        with self.assertRaisesRegex(ValueError, "one source-file-keyed"):
+            match.identify_compiler_generated_constructor(
+                symbols + [("_GLOBAL__I__other_StdAfx.cpp123456", fn)],
+                original, "StdAfx.cpp")
+        with self.assertRaisesRegex(ValueError, "one source-file-keyed"):
+            match.identify_compiler_generated_constructor(
+                [("_GLOBAL__I__Users_example_StdAfx.cppMoVYF4",
+                  (0, 0, 31, 18, 0, 1))],
+                original, "StdAfx.cpp")
+
+    def test_stdafx_keyed_constructor_has_canonical_original_source_unit(self):
+        source_units = (ROOT / "vuc/config/source_units.tsv").read_text()
+        self.assertIn("StdAfx.cpp\t", source_units)
+        row = next(line for line in source_units.splitlines()
+                   if line.startswith("StdAfx.cpp\t"))
+        self.assertIn("0x0806a2c0", row)
+        config = json.loads((ROOT / "vuc/config/stdafx_global_wrapper_probe.json")
+                            .read_text())
+        self.assertEqual(config["compiler_generated_unit"], "StdAfx.cpp")
+        self.assertEqual(config["function"], "_GLOBAL__I_StdAfx.cppxtsrAa")
+        self.assertEqual(config["relocations"][
+            ".text._Z41__static_initialization_and_destruction_0ii"],
+            "0x0806a260")
+
+    def test_compiler_constructor_rejects_source_basename_mismatch(self):
+        config = json.loads(
+            (ROOT / "vuc/config/stdafx_global_wrapper_probe.json").read_text())
+        config["source"] = "vuc/src/IostreamInit.cpp"
+        with tempfile.TemporaryDirectory() as scratch:
+            candidate_config = Path(scratch) / "invalid.json"
+            candidate_config.write_text(json.dumps(config))
+            with self.assertRaisesRegex(ValueError, "source file mismatch"):
+                match.run(Path(scratch) / "unused.o", candidate_config)
 
     def test_i386_pc_relative_relocation(self):
         value = match.relocate_word(2, 0x080497bc, -4, 0x08049b56)

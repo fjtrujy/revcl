@@ -17,6 +17,9 @@ spec = importlib.util.spec_from_file_location("vuc_match_probe",
 match = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(match)
 SOURCE = "vuc/src/IostreamInit.cpp"
+STDAFX_SOURCE = "vuc/src/StdAfx.cpp"
+STDAFX_INIT_ADDR = 0x0806a260
+STDAFX_CLEANUP_ADDR = 0x0806a2b0
 DEST = ROOT / "vuc/config"
 D1_PLT = 0x080499dc
 INIT_PLT = 0x0804974c
@@ -44,12 +47,16 @@ def derive(raw, target):
             raise ValueError("unexpected original cleanup target at " + hex(addr))
         objects = {".bss": {"_ZSt8__ioinit": "0x%08x" % obj}}
         match.verify_original_objects(raw, target, objects)
+        from_stdafx = addr == STDAFX_CLEANUP_ADDR
         valid.append({
             "function": "__tcf_0",
             "address": "0x%08x" % addr,
             "size": 16,
-            "source": SOURCE,
-            "flags": ["-O2", "-frename-registers", "-fuse-cxa-atexit"],
+            "source": STDAFX_SOURCE if from_stdafx else SOURCE,
+            "flags": (["-O2", "-frename-registers", "-fuse-cxa-atexit",
+                       "-ffunction-sections", "-falign-jumps=1"]
+                      if from_stdafx else
+                      ["-O2", "-frename-registers", "-fuse-cxa-atexit"]),
             "relocations": {"_ZNSt8ios_base4InitD1Ev": "0x%08x" % D1_PLT},
             "relocation_objects": objects,
         })
@@ -94,7 +101,7 @@ def derive_initializers(raw, target):
             "function": "_Z41__static_initialization_and_destruction_0ii",
             "address": "0x%08x" % addr,
             "size": 66,
-            "source": SOURCE,
+            "source": STDAFX_SOURCE if addr == STDAFX_INIT_ADDR else SOURCE,
             "flags": ["-O2", "-frename-registers", "-fuse-cxa-atexit",
                       "-ffunction-sections", "-falign-jumps=1"],
             "relocations": {

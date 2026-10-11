@@ -8,6 +8,7 @@ import argparse
 import importlib.util
 import json
 from pathlib import Path
+import re
 import struct
 import sys
 
@@ -131,8 +132,31 @@ def verify_original_objects(raw, target, object_map):
                 raise ValueError("original relocation object symbol mismatch: " + label)
 
 
+def identify_compiler_generated_constructor(symbols, original_name, source_filename):
+    """Match GCC 3.3's source-file-keyed _GLOBAL__I_ with a random suffix.
+
+    GCC generates a new six-character temporary suffix on every compile.
+    This exception is restricted to exactly one local STT_FUNC matching
+    the authenticated original compilation-unit basename.
+    """
+    if (not isinstance(source_filename, str)
+            or not re.fullmatch(r"[A-Za-z0-9_.-]+\.cpp", source_filename)
+            or not re.fullmatch(r"_GLOBAL__I_" + re.escape(source_filename)
+                                + r"[A-Za-z0-9]{6}", original_name)):
+        raise ValueError("invalid compiler-generated constructor provenance")
+    pattern = re.compile(r"_GLOBAL__I_.*" + re.escape(source_filename)
+                         + r"[A-Za-z0-9]{6}")
+    candidates = [(label, entry) for label, entry in symbols
+                  if pattern.fullmatch(label) and entry[3] & 15 == 2
+                  and entry[3] >> 4 == 0 and entry[4] == 0]
+    if len(candidates) != 1:
+        raise ValueError("expected one source-file-keyed compiler constructor")
+    return candidates[0]
+
+
 def prepare_named_function(raw, name, reloc_targets, original_address,
-                           relocation_objects=None, literal_ranges=None):
+                           relocation_objects=None, literal_ranges=None,
+                           compiler_generated_unit=None):
     """Resolve relocations only inside a named function in an ELF32 object."""
     sections, headers = elf_sections(raw)
     symsec = sections[".symtab"][1]
@@ -145,11 +169,15 @@ def prepare_named_function(raw, name, reloc_targets, original_address,
             label = next((key for key, (index, _) in sections.items()
                           if index == entry[5]), label)
         symbols.append((label, entry))
-    candidates = [(label, entry) for label, entry in symbols
-                  if label == name and entry[3] & 15 == 2 and entry[4] == 0]
-    if len(candidates) != 1:
-        raise ValueError("expected exactly one defined function symbol: " + name)
-    _, entry = candidates[0]
+    if compiler_generated_unit is not None:
+        _, entry = identify_compiler_generated_constructor(
+            symbols, name, compiler_generated_unit)
+    else:
+        candidates = [(label, entry) for label, entry in symbols
+                      if label == name and entry[3] & 15 == 2 and entry[4] == 0]
+        if len(candidates) != 1:
+            raise ValueError("expected exactly one defined function symbol: " + name)
+        _, entry = candidates[0]
     section_index = entry[5]
     if section_index >= len(headers):
         raise ValueError("function section index out of range")
@@ -320,6 +348,9 @@ def run(object_path, config_path=CONFIG):
     if original_address < src["address"] or start + original_size > src["offset"] + src["size"]:
         raise ValueError("original function outside .text")
     original = data[start:start + original_size]
+    if ("compiler_generated_unit" in config
+            and Path(config["source"]).name != config["compiler_generated_unit"]):
+        raise ValueError("compiler-generated constructor source file mismatch")
     object_bytes = Path(object_path).read_bytes()
     literal_ranges = config.get("relocation_literals", {})
     if any(section in config["relocations"] for section in literal_ranges):
@@ -330,7 +361,8 @@ def run(object_path, config_path=CONFIG):
     verify_original_objects(data, target, object_map)
     candidate, reloc_count = prepare_named_function(object_bytes, config["function"],
                                                     config["relocations"], original_address,
-                                                    object_map, literal_ranges)
+                                                    object_map, literal_ranges,
+                                                    config.get("compiler_generated_unit"))
     result = compare(candidate, original)
     result["relocations"] = reloc_count
     result["verified_literal_bytes"] = literal_count

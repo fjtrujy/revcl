@@ -2,11 +2,13 @@
   "function": "__tcf_0",
   "address": "0x0806a2b0",
   "size": 16,
-  "source": "vuc/src/IostreamInit.cpp",
+  "source": "vuc/src/StdAfx.cpp",
   "flags": [
     "-O2",
     "-frename-registers",
-    "-fuse-cxa-atexit"
+    "-fuse-cxa-atexit",
+    "-ffunction-sections",
+    "-falign-jumps=1"
   ],
   "relocations": {
     "_ZNSt8ios_base4InitD1Ev": "0x080499dc"

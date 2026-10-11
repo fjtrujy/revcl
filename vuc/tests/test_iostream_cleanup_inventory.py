@@ -44,8 +44,11 @@ class IostreamCleanupInventoryTests(unittest.TestCase):
     def test_thirteen_other_66_byte_initializers_are_original_elf_derived(self):
         self.assertEqual(len(self.initializers), 13)
         self.assertEqual(len({x["address"] for x in self.initializers}), 13)
-        self.assertTrue(all(x["size"] == 66 and x["source"] == inventory.SOURCE
-                            for x in self.initializers))
+        self.assertTrue(all(x["size"] == 66 for x in self.initializers))
+        self.assertEqual(
+            next(x["source"] for x in self.initializers
+                 if x["address"] == "0x0806a260"),
+            inventory.STDAFX_SOURCE)
         self.assertNotIn("0x08049af0", {x["address"] for x in self.initializers})
 
     def test_initializer_configs_are_deterministic_and_have_real_callbacks(self):

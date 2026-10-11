@@ -2,7 +2,7 @@
   "function": "_Z41__static_initialization_and_destruction_0ii",
   "address": "0x0806a260",
   "size": 66,
-  "source": "vuc/src/IostreamInit.cpp",
+  "source": "vuc/src/StdAfx.cpp",
   "flags": [
     "-O2",
     "-frename-registers",
