@@ -244,6 +244,10 @@ The FlexLexer buffer-state reload remains non-exact after testing 15
 ordinary C++ load/store orders with the original ELF comparator. See
 `vuc/docs/2026-10-11-lexer-load-order-investigation.md` for reproducible
 register-lifetime evidence; none of those candidates is accepted.
+The separate original `AsmOutput_TabConstants()` constant-width scan
+has a source/relocation/literal-complete 118/127-byte hypothesis,
+but is also not accepted; see
+`vuc/docs/2026-10-11-asm-output-tab-constants-investigation.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
