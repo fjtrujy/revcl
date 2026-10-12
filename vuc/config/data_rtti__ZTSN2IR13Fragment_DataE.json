@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTSN2IR13Fragment_DataE",
+  "address": "0x0807658f",
+  "size": 21,
+  "section": ".rodata",
+  "source": "vuc/src/IRRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

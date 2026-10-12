@@ -20,13 +20,19 @@ class NamedDataCandidateTests(unittest.TestCase):
         cls.configs = json.loads(suite.EXACT_MANIFEST.read_text())
         cls.canonical_raw, cls.canonical_target = suite.matcher.match.decomp.load()
 
-    def test_nine_original_independent_data_objects(self):
-        self.assertEqual(len(self.configs), 9)
+    def test_ninety_original_independent_data_objects(self):
+        self.assertEqual(len(self.configs), 90)
         records = [json.loads(suite.within_repo(name).read_text()) for name in self.configs]
-        self.assertEqual(len({(r["symbol"], r["address"]) for r in records}), 9)
-        self.assertEqual(sum(r["size"] for r in records), 68364)
+        self.assertEqual(len({(r["symbol"], r["address"]) for r in records}), 90)
+        self.assertEqual(sum(r["size"] for r in records), 69688)
         for r in records:
-            self.assertEqual(r["section"], ".data")
+            if r["symbol"].startswith("_ZTS"):
+                self.assertEqual(r["section"], ".rodata")
+                self.assertEqual(r["relocations"], {})
+                self.assertIn(r["source"], ("vuc/src/IRRttiNames.cpp",
+                                           "vuc/src/ASTRttiNames.cpp"))
+            else:
+                self.assertEqual(r["section"], ".data")
             if r["source"] == "vuc/src/GlobalBuffers.cpp":
                 self.assertEqual(r["relocations"], {})
                 self.assertIn("-fno-zero-initialized-in-bss", r["flags"])
@@ -35,16 +41,18 @@ class NamedDataCandidateTests(unittest.TestCase):
                 r["symbol"], r["address"], r["size"], 1)
             self.assertEqual(addr, int(r["address"], 0))
             self.assertEqual(length, r["size"])
-            self.assertEqual(name, ".data")
+            self.assertEqual(name, r["section"])
             sec = self.canonical_target["sections"][section_id]
             begin = sec["offset"] + addr - sec["address"]
-            expected = (b"\x86\x22\x07\x08" if r["symbol"] == "currFileName"
+            expected = ((r["symbol"][4:] + "\0").encode("ascii")
+                        if r["symbol"].startswith("_ZTS")
+                        else b"\x86\x22\x07\x08" if r["symbol"] == "currFileName"
                         else b"\x01\x00\x00\x00" if r["symbol"].endswith("E2id")
                         else bytes(length))
             self.assertEqual(self.canonical_raw[begin:begin + length], expected,
                              r["symbol"])
 
-    def test_all_nine_are_built_in_three_translation_units_and_must_be_exact(self):
+    def test_all_ninety_are_built_in_five_translation_units_and_must_be_exact(self):
         def matched(obj, config):
             record = json.loads(Path(config).read_text())
             return {"symbol": record["symbol"], "size": record["size"],
@@ -55,11 +63,11 @@ class NamedDataCandidateTests(unittest.TestCase):
                               return_value=subprocess.CompletedProcess([], 0, "", "")) as compiler:
                 with patch.object(suite.matcher, "run", side_effect=matched):
                     result = suite.run("compiler", folder, self.configs)
-            self.assertEqual(compiler.call_count, 3)
-            self.assertEqual(result["data_objects_checked"], 9)
-            self.assertEqual(result["fully_exact_data_objects"], 9)
-            self.assertEqual(result["checked_data_bytes"], 68364)
-            self.assertEqual(result["matching_data_bytes"], 68364)
+            self.assertEqual(compiler.call_count, 5)
+            self.assertEqual(result["data_objects_checked"], 90)
+            self.assertEqual(result["fully_exact_data_objects"], 90)
+            self.assertEqual(result["checked_data_bytes"], 69688)
+            self.assertEqual(result["matching_data_bytes"], 69688)
             self.assertEqual(result["resolved_relocations"], 1)
             self.assertTrue(result["all_candidates_exact"])
             self.assertIsNone(result["whole_binary_score"])
@@ -79,10 +87,11 @@ class NamedDataCandidateTests(unittest.TestCase):
                     result = suite.run("compiler", folder, self.configs)
             self.assertEqual(result["acceptance"], "FAIL")
             self.assertEqual(result["fully_exact_data_objects"], 0)
-            self.assertEqual(result["matching_data_bytes"], 68364-9)
+            self.assertEqual(result["matching_data_bytes"], 69688-90)
 
     def test_pointer_literal_relocation_requires_both_original_and_candidate_literal(self):
-        record = json.loads(suite.within_repo(self.configs[-1]).read_text())
+        record = json.loads(
+            suite.within_repo("vuc/config/data_currFileName.json").read_text())
         relocation = record["relocations"]["0x0"]
         matcher = suite.matcher
         headers = [(0, 0, 0, 0, 0, 0), (0, 1, 0, 0, 0, 0)]

@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTS12ASTBreakStmt",
+  "address": "0x08074ab5",
+  "size": 15,
+  "section": ".rodata",
+  "source": "vuc/src/ASTRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

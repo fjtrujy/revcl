@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTSN2IR15FragImport_DataE",
+  "address": "0x080762c8",
+  "size": 23,
+  "section": ".rodata",
+  "source": "vuc/src/IRRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

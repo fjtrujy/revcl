@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTS16ASTLValArrayExpr",
+  "address": "0x08074b99",
+  "size": 19,
+  "section": ".rodata",
+  "source": "vuc/src/ASTRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

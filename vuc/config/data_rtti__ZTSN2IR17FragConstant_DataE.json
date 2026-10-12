@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTSN2IR17FragConstant_DataE",
+  "address": "0x080762af",
+  "size": 25,
+  "section": ".rodata",
+  "source": "vuc/src/IRRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

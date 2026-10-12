@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTS9ASTModule",
+  "address": "0x08074bf3",
+  "size": 11,
+  "section": ".rodata",
+  "source": "vuc/src/ASTRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

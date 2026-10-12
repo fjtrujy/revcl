@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTSN2IR7Eq_DataE",
+  "address": "0x08076616",
+  "size": 14,
+  "section": ".rodata",
+  "source": "vuc/src/IRRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

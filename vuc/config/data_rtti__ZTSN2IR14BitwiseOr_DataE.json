@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTSN2IR14BitwiseOr_DataE",
+  "address": "0x08076600",
+  "size": 22,
+  "section": ".rodata",
+  "source": "vuc/src/IRRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

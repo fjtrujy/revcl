@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTS11yyFlexLexer",
+  "address": "0x08075bd0",
+  "size": 14,
+  "section": ".rodata",
+  "source": "vuc/src/ASTRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZTSN2IR10BinOp_DataE",
+  "address": "0x0807258e",
+  "size": 18,
+  "section": ".rodata",
+  "source": "vuc/src/IRRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}
