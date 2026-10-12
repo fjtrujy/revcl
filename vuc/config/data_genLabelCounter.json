@@ -1,0 +1,13 @@
+{
+  "symbol": "_ZZN15InstructionList8GenLabelEPKcE2id",
+  "address": "0x08077840",
+  "size": 4,
+  "section": ".data",
+  "source": "vuc/src/InstructionList.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {}
+}

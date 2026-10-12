@@ -110,20 +110,24 @@ verification; final completion requires byte equality for the **entire VUC
 binary**, not just its selected functions. See
 `vuc/docs/exact-match-contract.md` for the acceptance contract.
 
-An independent **initialized-data acceptance gate** now checks **6/6
-original named `.data` objects, 68,352/68,352 bytes**, including the
-64 KiB `asmBuffer`, two 1 KiB text buffers, and three 256-byte
-file/path buffers. It uses ordinary GCC 3.3 C++ global declarations,
-strict ELF object-identity validation and its own manifest. These
-bytes are **not function bytes**, and matching individual objects does
-**not** establish original section layout or complete ELF identity.
-See `vuc/docs/2026-10-12-exact-initialized-buffers.md` and run:
+An independent **initialized-data acceptance gate** now checks
+**9/9 original named `.data` objects, 68,364/68,364 bytes**,
+including the 64 KiB `asmBuffer`, two 1 KiB text buffers, three
+256-byte file/path buffers, and both original
+`InstructionList` static counters (initialized to 1) and the
+relocated `currFileName` pointer to an authenticated NUL literal.
+It uses ordinary GCC 3.3 C++ global declarations and strict
+ELF object/section-relocation validation. **One data relocation**
+is resolved. These are **not function bytes**, and individual
+object matches do **not** establish original section layout or
+complete ELF identity. See
+`vuc/docs/2026-10-12-exact-initialized-buffers.md` and run:
 
 ```sh
 limactl shell revcl-oracle -- python3 \
   /path/to/revcl/vuc/scripts/match_data_candidates.py \
   --compiler /tmp/vuc-binutils215/g++-jan25-as215 \
-  --out /tmp/vuc-binutils215/data-buffers-oct12
+  --out /tmp/vuc-binutils215/data-nine-oct12
 ```
 The original `StdAfx.cpp` startup wrapper is now byte-exact. The
 matcher recognizes GCC 3.3's source-file-keyed random suffix without

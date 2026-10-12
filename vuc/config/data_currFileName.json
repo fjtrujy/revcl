@@ -1,0 +1,22 @@
+{
+  "symbol": "currFileName",
+  "address": "0x08077b80",
+  "size": 4,
+  "section": ".data",
+  "source": "vuc/src/CurrFileInitialization.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    "0x0": {
+      "symbol": ".rodata",
+      "address": "0x08072286",
+      "type": 3,
+      "original_section": ".rodata",
+      "literal_hex": "00"
+    }
+  }
+}

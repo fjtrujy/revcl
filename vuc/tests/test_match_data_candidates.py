@@ -20,16 +20,16 @@ class NamedDataCandidateTests(unittest.TestCase):
         cls.configs = json.loads(suite.EXACT_MANIFEST.read_text())
         cls.canonical_raw, cls.canonical_target = suite.matcher.match.decomp.load()
 
-    def test_six_original_independent_data_objects(self):
-        self.assertEqual(len(self.configs), 6)
+    def test_nine_original_independent_data_objects(self):
+        self.assertEqual(len(self.configs), 9)
         records = [json.loads(suite.within_repo(name).read_text()) for name in self.configs]
-        self.assertEqual(len({(r["symbol"], r["address"]) for r in records}), 6)
-        self.assertEqual(sum(r["size"] for r in records), 68352)
+        self.assertEqual(len({(r["symbol"], r["address"]) for r in records}), 9)
+        self.assertEqual(sum(r["size"] for r in records), 68364)
         for r in records:
             self.assertEqual(r["section"], ".data")
-            self.assertEqual(r["relocations"], {})
-            self.assertEqual(r["source"], "vuc/src/GlobalBuffers.cpp")
-            self.assertIn("-fno-zero-initialized-in-bss", r["flags"])
+            if r["source"] == "vuc/src/GlobalBuffers.cpp":
+                self.assertEqual(r["relocations"], {})
+                self.assertIn("-fno-zero-initialized-in-bss", r["flags"])
             addr, length, section_id, name = suite.matcher.original_symbol(
                 self.canonical_raw, self.canonical_target,
                 r["symbol"], r["address"], r["size"], 1)
@@ -38,25 +38,29 @@ class NamedDataCandidateTests(unittest.TestCase):
             self.assertEqual(name, ".data")
             sec = self.canonical_target["sections"][section_id]
             begin = sec["offset"] + addr - sec["address"]
-            self.assertEqual(self.canonical_raw[begin:begin + length],
-                             bytes(length), r["symbol"])
+            expected = (b"\x86\x22\x07\x08" if r["symbol"] == "currFileName"
+                        else b"\x01\x00\x00\x00" if r["symbol"].endswith("E2id")
+                        else bytes(length))
+            self.assertEqual(self.canonical_raw[begin:begin + length], expected,
+                             r["symbol"])
 
-    def test_all_six_are_built_once_and_must_be_exact(self):
+    def test_all_nine_are_built_in_three_translation_units_and_must_be_exact(self):
         def matched(obj, config):
             record = json.loads(Path(config).read_text())
             return {"symbol": record["symbol"], "size": record["size"],
                     "exact_bytes": record["size"], "exact": True,
-                    "resolved_relocations": 0}
+                    "resolved_relocations": 1 if record["symbol"] == "currFileName" else 0}
         with tempfile.TemporaryDirectory() as folder:
             with patch.object(suite.subprocess, "run",
                               return_value=subprocess.CompletedProcess([], 0, "", "")) as compiler:
                 with patch.object(suite.matcher, "run", side_effect=matched):
                     result = suite.run("compiler", folder, self.configs)
-            self.assertEqual(compiler.call_count, 1)
-            self.assertEqual(result["data_objects_checked"], 6)
-            self.assertEqual(result["fully_exact_data_objects"], 6)
-            self.assertEqual(result["checked_data_bytes"], 68352)
-            self.assertEqual(result["matching_data_bytes"], 68352)
+            self.assertEqual(compiler.call_count, 3)
+            self.assertEqual(result["data_objects_checked"], 9)
+            self.assertEqual(result["fully_exact_data_objects"], 9)
+            self.assertEqual(result["checked_data_bytes"], 68364)
+            self.assertEqual(result["matching_data_bytes"], 68364)
+            self.assertEqual(result["resolved_relocations"], 1)
             self.assertTrue(result["all_candidates_exact"])
             self.assertIsNone(result["whole_binary_score"])
             self.assertFalse(result["whole_binary_byte_exact"])
@@ -75,7 +79,36 @@ class NamedDataCandidateTests(unittest.TestCase):
                     result = suite.run("compiler", folder, self.configs)
             self.assertEqual(result["acceptance"], "FAIL")
             self.assertEqual(result["fully_exact_data_objects"], 0)
-            self.assertEqual(result["matching_data_bytes"], 68352-6)
+            self.assertEqual(result["matching_data_bytes"], 68364-9)
+
+    def test_pointer_literal_relocation_requires_both_original_and_candidate_literal(self):
+        record = json.loads(suite.within_repo(self.configs[-1]).read_text())
+        relocation = record["relocations"]["0x0"]
+        matcher = suite.matcher
+        headers = [(0, 0, 0, 0, 0, 0), (0, 1, 0, 0, 0, 0)]
+        section_symbol = (0, 0, 0, 3, 0, 1)
+        with patch.object(matcher.match, "section_bytes", return_value=b"\x00"):
+            self.assertEqual(matcher.verify_literal_relocation(
+                b"", headers, section_symbol, self.canonical_raw,
+                self.canonical_target, relocation, 0), 0x08072286)
+            with self.assertRaisesRegex(ValueError, "addend"):
+                matcher.verify_literal_relocation(
+                    b"", headers, section_symbol, self.canonical_raw,
+                    self.canonical_target, relocation, 1)
+            with self.assertRaisesRegex(ValueError, "original ELF literal"):
+                modified = bytearray(self.canonical_raw)
+                section = next(x for x in self.canonical_target["sections"]
+                               if x["name"] == ".rodata")
+                offset = section["offset"] + 0x08072286 - section["address"]
+                modified[offset] = ord("X")
+                matcher.verify_literal_relocation(
+                    b"", headers, section_symbol, bytes(modified),
+                    self.canonical_target, relocation, 0)
+        with patch.object(matcher.match, "section_bytes", return_value=b"X"):
+            with self.assertRaisesRegex(ValueError, "candidate literal"):
+                matcher.verify_literal_relocation(
+                    b"", headers, section_symbol, self.canonical_raw,
+                    self.canonical_target, relocation, 0)
 
     def test_duplicate_and_escape_are_rejected(self):
         with tempfile.TemporaryDirectory() as folder:

@@ -25,10 +25,16 @@ def read_named_symbols(raw, sections, headers):
     """Return name, raw ELF symbol, and address/section information."""
     symsection = sections[".symtab"][1]
     strings = match.section_bytes(raw, headers[symsection[6]])
+    section_names = {index: name for name, (index, _) in sections.items()}
     result = []
     for position in range(symsection[4], symsection[4] + symsection[5], match.decomp.SYM.size):
         entry = match.decomp.SYM.unpack_from(raw, position)
         name = match.decomp.cstr(strings, entry[0])
+        # ELF STT_SECTION records normally have st_name == 0. readelf
+        # displays their section name by resolving st_shndx; do the same
+        # here instead of treating an authentic .rodata relocation as empty.
+        if not name and (entry[3] & 15) == 3:
+            name = section_names.get(entry[5], "")
         result.append((name, entry))
     return result
 
@@ -56,6 +62,41 @@ def original_symbol(raw, target, label, address=None, size=None, kind=None):
     if len(found) != 1:
         raise ValueError("expected one authenticated original ELF symbol: " + label)
     return found[0]
+
+
+def verify_literal_relocation(candidate_raw, headers, symbol, original_raw,
+                              original_target, record, candidate_addend):
+    """Authenticate a section-relative reference to an unnamed original literal.
+
+    The manifest must fix the original location *and* its exact literal bytes.
+    Only zero-addend section-symbol relocations are supported, so no guessed
+    candidate section base can be mistaken for the original linked address.
+    """
+    if (symbol[3] & 15) != 3 or not 0 < symbol[5] < len(headers):
+        raise ValueError("literal must use a defined ELF section symbol")
+    if record.get("type") != 3:
+        raise ValueError("literal manifest must authenticate STT_SECTION")
+    if candidate_addend != 0 or symbol[1] != 0:
+        raise ValueError("unsupported literal section offset/addend")
+    literal = bytes.fromhex(record["literal_hex"])
+    if not literal:
+        raise ValueError("empty literal verification is not sufficient")
+    source_section = headers[symbol[5]]
+    if source_section[1] == 8:
+        raise ValueError("candidate literal is not file-backed")
+    source = match.section_bytes(candidate_raw, source_section)
+    if source[:len(literal)] != literal:
+        raise ValueError("candidate literal contents are not exact")
+    sections = {x["name"]: x for x in original_target["sections"]}
+    section = sections[record["original_section"]]
+    address = int(record["address"], 0)
+    if (section["type"] == 8 or not section["address"] <= address
+            or address + len(literal) > section["address"] + section["size"]):
+        raise ValueError("original literal is not within a file-backed section")
+    offset = section["offset"] + address - section["address"]
+    if original_raw[offset:offset + len(literal)] != literal:
+        raise ValueError("original ELF literal contents are not exact")
+    return address
 
 
 def compare_named_data(candidate_raw, config, original_raw, original_target):
@@ -112,13 +153,18 @@ def compare_named_data(candidate_raw, config, original_raw, original_target):
             record = expected[local]
             if candidate_name != record["symbol"]:
                 raise ValueError("data relocation symbol does not match original manifest")
-            original_symbol(original_raw, original_target, candidate_name,
-                            record["address"], kind=record["type"])
             raw_addend = struct.unpack_from("<i", source_data, local)[0]
-            real_address = int(record["address"], 0)
-            # For STT_FUNC/STT_OBJECT, the candidate symbol's st_value
-            # is *not* a second copy of the original linked offset.
-            real_address += match.linked_symbol_offset(symbol, len(headers))
+            if "literal_hex" in record:
+                real_address = verify_literal_relocation(
+                    candidate_raw, headers, symbol, original_raw, original_target,
+                    record, raw_addend)
+            else:
+                original_symbol(original_raw, original_target, candidate_name,
+                                record["address"], kind=record["type"])
+                real_address = int(record["address"], 0)
+                # For STT_FUNC/STT_OBJECT, st_value is not a second copy of
+                # the original linker's already-resolved symbol offset.
+                real_address += match.linked_symbol_offset(symbol, len(headers))
             effective = match.relocate_word(kind, real_address, raw_addend,
                                              addr + local)
             struct.pack_into("<I", source_data, local, effective & 0xffffffff)

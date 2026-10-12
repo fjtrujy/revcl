@@ -4,6 +4,51 @@ Date: 2026-10-12. Branch: `vuc`.
 
 ## Independent original ELF data verification
 
+### Extension: original counters and relocated pointer
+
+The follow-up gate now verifies **nine** independently named original
+`.data` objects, **68,364/68,364** exact initialized bytes, and **one
+resolved R_386_32 relocation**:
+
+| Additional object | Linked address | Bytes | Source |
+| --- | --- | ---: | --- |
+| `InstructionList::GenLabel()::id` | `0x08077840` | 4/4 | `InstructionList.cpp` |
+| `InstructionList::GenTmp()::id` | `0x08077844` | 4/4 | `InstructionList.cpp` |
+| `currFileName` | `0x08077b80` | 4/4 | `CurrFileInitialization.cpp` |
+
+Both counters are initialized to integer **1**, not zero. The original
+`currFileName` object's bytes are `86 22 07 08` (little-endian
+pointer `0x08072286`). The candidate produces an ordinary ELF32
+`R_386_32` relocation against an unnamed `.rodata` section symbol,
+not a hardcoded original pointer. The strict data matcher resolves
+the original pointer using the explicitly authenticated ELF address
+and independently compares the **NUL literal byte** at that target
+in *both* the compiled candidate and canonical original ELF.
+
+An ELF `STT_SECTION` symbol normally has an empty string-table name.
+The matcher now derives its visible `.rodata` name from the section
+index, without relaxing the usual original-symbol checks for named
+function/object references. Literal section relocations are allowed
+only for explicitly configured zero-addend relocations with exact
+candidate and original literal bytes. The test suite rejects a
+modified candidate pointed-to string, modified original literal, and
+nonzero relocation addends.
+
+The gate passed **9/9 exact**, 68,364/68,364 bytes, with
+**one resolved relocation**. The host suite passed **77 tests**.
+This later extension supersedes the six-object counts in the initial
+milestone sections below; those sections remain as the reproducible
+history of the original six-buffer subset.
+
+Reproduce the extended strict gate:
+
+```sh
+limactl shell revcl-oracle -- python3 \
+  /path/to/revcl/vuc/scripts/match_data_candidates.py \
+  --compiler /tmp/vuc-binutils215/g++-jan25-as215 \
+  --out /tmp/vuc-binutils215/data-nine-oct12
+```
+
 A new strict acceptance manifest at
 `vuc/config/exact_data_candidates.json` verifies six initialized
 `.data` symbols against the **canonical ZIP-backed VUC 2004.1 ELF**.
