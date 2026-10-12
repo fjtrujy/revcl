@@ -1,0 +1,23 @@
+{
+  "symbol": "_ZTIN2IR9Stmt_DataE",
+  "address": "0x08076564",
+  "size": 8,
+  "section": ".rodata",
+  "source": "vuc/src/IRRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "0x0": {
+      "symbol": "_ZTVN10__cxxabiv117__class_type_infoE",
+      "original_symbol": "_ZTVN10__cxxabiv117__class_type_infoE@@GLIBCPP_3.2",
+      "address": "0x0808aa40",
+      "type": 1
+    },
+    "0x4": {
+      "symbol": "_ZTSN2IR9Stmt_DataE",
+      "address": "0x080765a4",
+      "type": 1
+    }
+  }
+}

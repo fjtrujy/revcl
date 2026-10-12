@@ -1,39 +1,39 @@
-// C++ RTTI type-name fragments verified against original VUC ELF.
-// These empty declaration shapes are name-only placeholders.
-// Their class fields, inheritance, vtables and object layout remain
-// completely unverified and must never be inferred from this file.
+// C++ RTTI type-name and single-base inheritance fragments.
+// Class names and single-inheritance links are original ELF evidence.
+// Member fields, virtual methods, and runtime object layouts remain
+// unverified. These data-only probes emit no reconstructed functions.
 #include <typeinfo>
 
-struct ASTAsmStmt {};
-struct ASTBinExpr {};
-struct ASTForStmt {};
-struct ASTFunCall {};
-struct ASTVarDecl {};
-struct ASTFuncDecl {};
-struct ASTLValExpr {};
-struct yyFlexLexer {};
-struct ASTBlockStmt {};
-struct ASTBreakStmt {};
-struct ASTAssignStmt {};
-struct ASTLValIDExpr {};
-struct ASTReturnStmt {};
-struct ASTFunCallExpr {};
-struct ASTFunCallStmt {};
-struct ASTLValMemExpr {};
-struct ASTVarDeclStmt {};
-struct ASTArrayVarDecl {};
-struct ASTConstValExpr {};
-struct ASTFunctionDecl {};
-struct ASTLValArrayExpr {};
-struct ASTDecl {};
-struct ASTExpr {};
 struct ASTNode {};
-struct ASTStmt {};
-struct ASTDoStmt {};
-struct ASTIfStmt {};
-struct ASTModule {};
-struct ASTUnExpr {};
+struct ASTStmt : public ASTNode {};
+struct ASTAsmStmt : public ASTStmt {};
+struct ASTExpr : public ASTNode {};
+struct ASTBinExpr : public ASTExpr {};
+struct ASTForStmt : public ASTStmt {};
+struct ASTFunCall : public ASTNode {};
+struct ASTDecl : public ASTNode {};
+struct ASTVarDecl : public ASTDecl {};
+struct ASTFuncDecl : public ASTDecl {};
+struct ASTLValExpr : public ASTExpr {};
 struct FlexLexer {};
+struct yyFlexLexer : public FlexLexer {};
+struct ASTBlockStmt : public ASTStmt {};
+struct ASTBreakStmt : public ASTStmt {};
+struct ASTAssignStmt : public ASTStmt {};
+struct ASTLValIDExpr : public ASTLValExpr {};
+struct ASTReturnStmt : public ASTStmt {};
+struct ASTFunCallExpr : public ASTExpr {};
+struct ASTFunCallStmt : public ASTStmt {};
+struct ASTLValMemExpr : public ASTLValExpr {};
+struct ASTVarDeclStmt : public ASTStmt {};
+struct ASTArrayVarDecl : public ASTVarDecl {};
+struct ASTConstValExpr : public ASTExpr {};
+struct ASTFunctionDecl : public ASTDecl {};
+struct ASTLValArrayExpr : public ASTLValExpr {};
+struct ASTDoStmt : public ASTStmt {};
+struct ASTIfStmt : public ASTStmt {};
+struct ASTModule : public ASTNode {};
+struct ASTUnExpr : public ASTExpr {};
 
 const std::type_info &vuc_rtti_name_top_00 = typeid(ASTAsmStmt);
 const std::type_info &vuc_rtti_name_top_01 = typeid(ASTBinExpr);

@@ -1,0 +1,28 @@
+{
+  "symbol": "_ZTI13ASTReturnStmt",
+  "address": "0x08074a84",
+  "size": 12,
+  "section": ".rodata",
+  "source": "vuc/src/ASTRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "0x0": {
+      "symbol": "_ZTVN10__cxxabiv120__si_class_type_infoE",
+      "original_symbol": "_ZTVN10__cxxabiv120__si_class_type_infoE@@GLIBCPP_3.2",
+      "address": "0x0808a9e8",
+      "type": 1
+    },
+    "0x4": {
+      "symbol": "_ZTS13ASTReturnStmt",
+      "address": "0x08074ac4",
+      "type": 1
+    },
+    "0x8": {
+      "symbol": "_ZTI7ASTStmt",
+      "address": "0x08074c2c",
+      "type": 1
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "symbol": "_ZTI14ASTLValMemExpr",
+  "address": "0x080749e8",
+  "size": 12,
+  "section": ".rodata",
+  "source": "vuc/src/ASTRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "0x0": {
+      "symbol": "_ZTVN10__cxxabiv120__si_class_type_infoE",
+      "original_symbol": "_ZTVN10__cxxabiv120__si_class_type_infoE@@GLIBCPP_3.2",
+      "address": "0x0808a9e8",
+      "type": 1
+    },
+    "0x4": {
+      "symbol": "_ZTS14ASTLValMemExpr",
+      "address": "0x08074b88",
+      "type": 1
+    },
+    "0x8": {
+      "symbol": "_ZTI11ASTLValExpr",
+      "address": "0x08074c14",
+      "type": 1
+    }
+  }
+}

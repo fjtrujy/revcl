@@ -159,7 +159,15 @@ def compare_named_data(candidate_raw, config, original_raw, original_target):
                     candidate_raw, headers, symbol, original_raw, original_target,
                     record, raw_addend)
             else:
-                original_symbol(original_raw, original_target, candidate_name,
+                original_name = record.get("original_symbol", candidate_name)
+                # GNU symbol versioning may append @@VERSION to an imported
+                # object's original executable symbol. The relocatable object
+                # refers to the unversioned name. Any alias must be the same
+                # symbol with an explicit original default-version suffix.
+                if (original_name != candidate_name
+                        and not original_name.startswith(candidate_name + "@@")):
+                    raise ValueError("original symbol version alias is not authenticated")
+                original_symbol(original_raw, original_target, original_name,
                                 record["address"], kind=record["type"])
                 real_address = int(record["address"], 0)
                 # For STT_FUNC/STT_OBJECT, st_value is not a second copy of

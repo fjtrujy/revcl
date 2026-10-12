@@ -3,6 +3,7 @@ import importlib.util
 import json
 from pathlib import Path
 import subprocess
+import struct
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -20,17 +21,20 @@ class NamedDataCandidateTests(unittest.TestCase):
         cls.configs = json.loads(suite.EXACT_MANIFEST.read_text())
         cls.canonical_raw, cls.canonical_target = suite.matcher.match.decomp.load()
 
-    def test_ninety_original_independent_data_objects(self):
-        self.assertEqual(len(self.configs), 90)
+    def test_original_initialized_data_and_rtti_objects(self):
+        self.assertEqual(len(self.configs), 171)
         records = [json.loads(suite.within_repo(name).read_text()) for name in self.configs]
-        self.assertEqual(len({(r["symbol"], r["address"]) for r in records}), 90)
-        self.assertEqual(sum(r["size"] for r in records), 69688)
+        self.assertEqual(len({(r["symbol"], r["address"]) for r in records}), 171)
+        self.assertEqual(sum(r["size"] for r in records), 70624)
         for r in records:
-            if r["symbol"].startswith("_ZTS"):
+            if r["symbol"].startswith(("_ZTS", "_ZTI")):
                 self.assertEqual(r["section"], ".rodata")
-                self.assertEqual(r["relocations"], {})
                 self.assertIn(r["source"], ("vuc/src/IRRttiNames.cpp",
                                            "vuc/src/ASTRttiNames.cpp"))
+                if r["symbol"].startswith("_ZTS"):
+                    self.assertEqual(r["relocations"], {})
+                else:
+                    self.assertEqual(len(r["relocations"]), 2 if r["size"] == 8 else 3)
             else:
                 self.assertEqual(r["section"], ".data")
             if r["source"] == "vuc/src/GlobalBuffers.cpp":
@@ -44,31 +48,40 @@ class NamedDataCandidateTests(unittest.TestCase):
             self.assertEqual(name, r["section"])
             sec = self.canonical_target["sections"][section_id]
             begin = sec["offset"] + addr - sec["address"]
-            expected = ((r["symbol"][4:] + "\0").encode("ascii")
-                        if r["symbol"].startswith("_ZTS")
-                        else b"\x86\x22\x07\x08" if r["symbol"] == "currFileName"
-                        else b"\x01\x00\x00\x00" if r["symbol"].endswith("E2id")
-                        else bytes(length))
+            if r["symbol"].startswith("_ZTI"):
+                reconstructed = bytearray(length)
+                for offset, target in r["relocations"].items():
+                    pointer = int(target["address"], 0)
+                    if target["symbol"].startswith("_ZTVN10__cxxabiv1"):
+                        pointer += 8  # Original C++ ABI typeinfo vtable address-point
+                    struct.pack_into("<I", reconstructed, int(offset, 0), pointer)
+                expected = bytes(reconstructed)
+            else:
+                expected = ((r["symbol"][4:] + "\0").encode("ascii")
+                            if r["symbol"].startswith("_ZTS")
+                            else b"\x86\x22\x07\x08" if r["symbol"] == "currFileName"
+                            else b"\x01\x00\x00\x00" if r["symbol"].endswith("E2id")
+                            else bytes(length))
             self.assertEqual(self.canonical_raw[begin:begin + length], expected,
                              r["symbol"])
 
-    def test_all_ninety_are_built_in_five_translation_units_and_must_be_exact(self):
+    def test_all_171_are_built_in_six_translation_units_and_must_be_exact(self):
         def matched(obj, config):
             record = json.loads(Path(config).read_text())
             return {"symbol": record["symbol"], "size": record["size"],
                     "exact_bytes": record["size"], "exact": True,
-                    "resolved_relocations": 1 if record["symbol"] == "currFileName" else 0}
+                "resolved_relocations": len(record["relocations"])}
         with tempfile.TemporaryDirectory() as folder:
             with patch.object(suite.subprocess, "run",
                               return_value=subprocess.CompletedProcess([], 0, "", "")) as compiler:
                 with patch.object(suite.matcher, "run", side_effect=matched):
                     result = suite.run("compiler", folder, self.configs)
-            self.assertEqual(compiler.call_count, 5)
-            self.assertEqual(result["data_objects_checked"], 90)
-            self.assertEqual(result["fully_exact_data_objects"], 90)
-            self.assertEqual(result["checked_data_bytes"], 69688)
-            self.assertEqual(result["matching_data_bytes"], 69688)
-            self.assertEqual(result["resolved_relocations"], 1)
+            self.assertEqual(compiler.call_count, 6)
+            self.assertEqual(result["data_objects_checked"], 171)
+            self.assertEqual(result["fully_exact_data_objects"], 171)
+            self.assertEqual(result["checked_data_bytes"], 70624)
+            self.assertEqual(result["matching_data_bytes"], 70624)
+            self.assertEqual(result["resolved_relocations"], 235)
             self.assertTrue(result["all_candidates_exact"])
             self.assertIsNone(result["whole_binary_score"])
             self.assertFalse(result["whole_binary_byte_exact"])
@@ -87,7 +100,7 @@ class NamedDataCandidateTests(unittest.TestCase):
                     result = suite.run("compiler", folder, self.configs)
             self.assertEqual(result["acceptance"], "FAIL")
             self.assertEqual(result["fully_exact_data_objects"], 0)
-            self.assertEqual(result["matching_data_bytes"], 69688-90)
+            self.assertEqual(result["matching_data_bytes"], 70624-171)
 
     def test_pointer_literal_relocation_requires_both_original_and_candidate_literal(self):
         record = json.loads(

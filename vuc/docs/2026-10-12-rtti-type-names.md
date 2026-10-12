@@ -61,9 +61,13 @@ have no relocations within their own objects. The matching of 1,324
 additional RTTI bytes is not an increase in original matched
 machine-instruction bytes.
 
-The original C++ inheritance/typeinfo objects remain a subsequent
-separate task. The current strict function gate remains **165/165**
-named original function records, **11,283/11,283 instruction bytes**.
+**Subsequent milestone (2026-10-12):** The original C++ inheritance
+and 81 typeinfo objects have now been reconstructed exactly as
+original named data, as detailed in
+`vuc/docs/2026-10-12-rtti-inheritance-objects.md`. This section
+describes the earlier name-only checkpoint. The current strict
+function gate is **166/166** named original function records,
+**11,314/11,314 instruction bytes**.
 That is not complete executable byte equality.
 
 ## Reproduction and negative tests

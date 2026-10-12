@@ -1,0 +1,28 @@
+{
+  "symbol": "_ZTIN2IR17FragConstant_DataE",
+  "address": "0x0807625c",
+  "size": 12,
+  "section": ".rodata",
+  "source": "vuc/src/IRRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "0x0": {
+      "symbol": "_ZTVN10__cxxabiv120__si_class_type_infoE",
+      "original_symbol": "_ZTVN10__cxxabiv120__si_class_type_infoE@@GLIBCPP_3.2",
+      "address": "0x0808a9e8",
+      "type": 1
+    },
+    "0x4": {
+      "symbol": "_ZTSN2IR17FragConstant_DataE",
+      "address": "0x080762af",
+      "type": 1
+    },
+    "0x8": {
+      "symbol": "_ZTIN2IR13Fragment_DataE",
+      "address": "0x0807656c",
+      "type": 1
+    }
+  }
+}

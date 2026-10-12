@@ -1,61 +1,61 @@
-// C++ RTTI type-name fragments verified against original VUC ELF.
-// These empty declaration shapes are name-only placeholders.
-// Their class fields, inheritance, vtables and object layout remain
-// completely unverified and must never be inferred from this file.
+// C++ RTTI type-name and single-base inheritance fragments.
+// Class names and single-inheritance links are original ELF evidence.
+// Member fields, virtual methods, and runtime object layouts remain
+// unverified. These data-only probes emit no reconstructed functions.
 #include <typeinfo>
 
 namespace IR {
-struct Array_Data {};
-struct BinOp_Data {};
-struct Float_Data {};
-struct Assign_Data {};
-struct Float4_Data {};
-struct IndReg_Data {};
+struct Type_Data {};
+struct Array_Data : public Type_Data {};
+struct Expr_Data {};
+struct BinOp_Data : public Expr_Data {};
+struct Float_Data : public Type_Data {};
+struct Stmt_Data {};
+struct Assign_Data : public Stmt_Data {};
+struct Float4_Data : public Type_Data {};
+struct IndReg_Data : public Expr_Data {};
 struct Module_Data {};
-struct FunCall_Data {};
-struct IntCast_Data {};
-struct ConstLit_Data {};
+struct FunCall_Data : public Expr_Data {};
+struct UnOperator_Data {};
+struct IntCast_Data : public UnOperator_Data {};
+struct ConstLit_Data : public Expr_Data {};
 struct Fragment_Data {};
 struct Operator_Data {};
-struct BitwiseOr_Data {};
-struct ConstExpr_Data {};
-struct FloatCast_Data {};
-struct OrdModule_Data {};
-struct BitwiseAnd_Data {};
-struct Float4Cast_Data {};
-struct FragImport_Data {};
-struct UnOperator_Data {};
-struct FunCallStmt_Data {};
-struct FragConstant_Data {};
-struct FragFunction_Data {};
-struct Do_Data {};
-struct Eq_Data {};
-struct Gt_Data {};
-struct If_Data {};
-struct Lt_Data {};
-struct Or_Data {};
-struct Add_Data {};
-struct And_Data {};
-struct Asm_Data {};
-struct Div_Data {};
-struct For_Data {};
-struct Gte_Data {};
-struct Int_Data {};
-struct Lte_Data {};
-struct Mem_Data {};
-struct Mul_Data {};
-struct NEq_Data {};
-struct Neg_Data {};
-struct Not_Data {};
-struct Reg_Data {};
-struct Seq_Data {};
-struct Sub_Data {};
-struct Expr_Data {};
-struct Jump_Data {};
-struct Stmt_Data {};
-struct Type_Data {};
-struct UInt_Data {};
-struct UnOp_Data {};
+struct BitwiseOr_Data : public Operator_Data {};
+struct ConstExpr_Data : public Expr_Data {};
+struct FloatCast_Data : public UnOperator_Data {};
+struct OrdModule_Data : public Module_Data {};
+struct BitwiseAnd_Data : public Operator_Data {};
+struct Float4Cast_Data : public UnOperator_Data {};
+struct FragImport_Data : public Fragment_Data {};
+struct FunCallStmt_Data : public Stmt_Data {};
+struct FragConstant_Data : public Fragment_Data {};
+struct FragFunction_Data : public Fragment_Data {};
+struct Do_Data : public Stmt_Data {};
+struct Eq_Data : public Operator_Data {};
+struct Gt_Data : public Operator_Data {};
+struct If_Data : public Stmt_Data {};
+struct Lt_Data : public Operator_Data {};
+struct Or_Data : public Operator_Data {};
+struct Add_Data : public Operator_Data {};
+struct And_Data : public Operator_Data {};
+struct Asm_Data : public Stmt_Data {};
+struct Div_Data : public Operator_Data {};
+struct For_Data : public Stmt_Data {};
+struct Gte_Data : public Operator_Data {};
+struct Int_Data : public Type_Data {};
+struct Lte_Data : public Operator_Data {};
+struct Mem_Data : public Expr_Data {};
+struct Mul_Data : public Operator_Data {};
+struct NEq_Data : public Operator_Data {};
+struct Neg_Data : public UnOperator_Data {};
+struct Not_Data : public UnOperator_Data {};
+struct Reg_Data : public Expr_Data {};
+struct Seq_Data : public Stmt_Data {};
+struct Sub_Data : public Operator_Data {};
+struct Jump_Data : public Stmt_Data {};
+struct UInt_Data : public Type_Data {};
+struct UnOp_Data : public Expr_Data {};
 }
 
 const std::type_info &vuc_rtti_name_IR_00 = typeid(IR::Array_Data);

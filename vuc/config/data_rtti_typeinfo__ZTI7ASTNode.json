@@ -1,0 +1,23 @@
+{
+  "symbol": "_ZTI7ASTNode",
+  "address": "0x08074c00",
+  "size": 8,
+  "section": ".rodata",
+  "source": "vuc/src/ASTRttiNames.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "0x0": {
+      "symbol": "_ZTVN10__cxxabiv117__class_type_infoE",
+      "original_symbol": "_ZTVN10__cxxabiv117__class_type_infoE@@GLIBCPP_3.2",
+      "address": "0x0808aa40",
+      "type": 1
+    },
+    "0x4": {
+      "symbol": "_ZTS7ASTNode",
+      "address": "0x08074c61",
+      "type": 1
+    }
+  }
+}
