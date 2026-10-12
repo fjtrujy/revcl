@@ -308,6 +308,11 @@ the 513-bucket hash-scope STL copy helper are also non-exact. Their
 original-size comparisons, relocation evidence, and bounded compiler
 experiments are preserved in
 `vuc/docs/2026-10-12-line-comment-and-scope-copy-batch.md`.
+The additional 30-byte prologue stream insertion, `GetNextWord`,
+formatted-instruction insertion, default string-constructor source unit,
+and `Value` addition probes also remain non-exact. See
+`vuc/docs/2026-10-12-stream-and-constructor-probes.md` for bounded
+compiler comparisons and original-symbol evidence.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
