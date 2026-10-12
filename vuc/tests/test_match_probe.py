@@ -162,6 +162,35 @@ class MatchProbeTests(unittest.TestCase):
         value = match.relocate_word(2, 0x080497bc, -4, 0x08049b56)
         self.assertEqual(struct.pack("<I", value), bytes.fromhex("62fcffff"))
 
+    def test_i386_authenticated_pic_relocations(self):
+        got = 0x0808a668
+        place = 0x08071fe0
+        self.assertEqual(match.relocate_word(10, got, 2, place, got), 0x1868a)
+        self.assertEqual(match.relocate_word(9, 0x08077000, 0, place, got),
+                         (0x08077000 - got) & 0xffffffff)
+        self.assertEqual(match.relocate_word(4, 0x08072060, -4, 0x08072001, got),
+                         0x5b)
+        with self.assertRaisesRegex(ValueError, "requires original GOT"):
+            match.relocate_word(9, 0x08077000, 0, place)
+
+    def test_pic_relocations_authenticate_original_got_and_abs_symbols(self):
+        raw, original = match.decomp.load()
+        canonical = {
+            "_GLOBAL_OFFSET_TABLE_": "0x0808a668",
+            "__fini_array_start": "0x08077000",
+            "__fini_array_end": "0x08077000",
+            "_fini": "0x08072060",
+        }
+        match.verify_original_pic_symbols(raw, original, "0x0808a668", canonical)
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            match.verify_original_pic_symbols(raw, original, "0x0808a66c", canonical)
+        altered = dict(canonical, __fini_array_start="0x08077004")
+        with self.assertRaisesRegex(ValueError, "unverified original PIC"):
+            match.verify_original_pic_symbols(raw, original, "0x0808a668", altered)
+        altered = dict(canonical, _fini="0x08072064")
+        with self.assertRaisesRegex(ValueError, "unverified original PIC"):
+            match.verify_original_pic_symbols(raw, original, "0x0808a668", altered)
+
     def test_unknown_relocation_rejected(self):
         with self.assertRaisesRegex(ValueError, "unsupported relocation"):
             match.relocate_word(255, 0, 0, 0)

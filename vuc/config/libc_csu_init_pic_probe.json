@@ -1,0 +1,20 @@
+{
+  "function": "__libc_csu_init",
+  "address": "0x08071f70",
+  "size": 84,
+  "source": "vuc/probes/libc_csu_hidden.c",
+  "flags": [
+    "-xc",
+    "-O2",
+    "-fPIC",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "pic_got": "0x0808a668",
+  "relocations": {
+    "_GLOBAL_OFFSET_TABLE_": "0x0808a668",
+    "__init_array_start": "0x08077000",
+    "__init_array_end": "0x08077000",
+    "_init": "0x080495c4"
+  }
+}

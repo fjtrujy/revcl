@@ -294,6 +294,6 @@ address	size	status	manifest	candidate_source	symbol
 0x08071ee0	86	EXACT	vuc/config/hash_cstring_exact_probe.json	vuc/src/MLHashTable.cpp	_ZN9MLHashFunIPKcE4HashERKS1_
 0x08071f40	40	EXACT	vuc/config/hash_cstr_equal_probe.json	vuc/src/MLHashTable.cpp	_ZN9MLHashFunIPKcE7IsEqualERKS1_S4_
 0x08071f70	84	UNRESOLVED	-	-	__libc_csu_init
-0x08071fd0	80	UNRESOLVED	-	-	__libc_csu_fini
+0x08071fd0	80	EXACT	vuc/config/libc_csu_fini_pic_probe.json	vuc/src/LibcCsu.c	__libc_csu_fini
 0x08072020	0	UNRESOLVED	-	-	__i686.get_pc_thunk.bx
 0x08072030	0	UNRESOLVED	-	-	__do_global_ctors_aux

@@ -132,6 +132,44 @@ def verify_original_objects(raw, target, object_map):
                 raise ValueError("original relocation object symbol mismatch: " + label)
 
 
+def verify_original_pic_symbols(raw, target, pic_got, relocations):
+    """Authenticate all explicitly mapped original PIC targets by ELF symbol.
+
+    The GOT base and init/fini array boundaries have distinct ELF symbol
+    types, including zero-sized SHN_ABS symbols, so a normal STT_OBJECT-only
+    verifier is insufficient. Do not infer addresses from desired output.
+    """
+    if pic_got is None:
+        return
+    sections = target["sections"]
+    symtab = next(sec for sec in sections if sec["name"] == ".symtab")
+    names_section = sections[symtab["link"]]
+    names = raw[names_section["offset"]:names_section["offset"] + names_section["size"]]
+    recorded = {}
+    for off in range(symtab["offset"], symtab["offset"] + symtab["size"], decomp.SYM.size):
+        label_offset, address, size, info, _, shindex = decomp.SYM.unpack_from(raw, off)
+        recorded.setdefault(decomp.cstr(names, label_offset), []).append(
+            (address, size, info & 15, shindex)
+        )
+    got = int(pic_got, 0)
+    mapped_got = relocations.get("_GLOBAL_OFFSET_TABLE_")
+    if mapped_got is None or int(mapped_got, 0) != got:
+        raise ValueError("PIC GOT does not match explicit original relocation")
+    for label, address in relocations.items():
+        # Only named original symbols participate in PIC relocation mapping;
+        # text section / literal-relative offsets belong to the other gates.
+        if label.startswith("."):
+            continue
+        matches = [r for r in recorded.get(label, [])
+                   if r[0] == int(address, 0)]
+        if len(matches) != 1:
+            raise ValueError("unverified original PIC relocation symbol: " + label)
+    got_entries = [r for r in recorded.get("_GLOBAL_OFFSET_TABLE_", [])
+                   if r[0] == got and r[2] == 1]
+    if len(got_entries) != 1:
+        raise ValueError("original PIC GOT symbol is missing or malformed")
+
+
 def identify_compiler_generated_constructor(symbols, original_name, source_filename):
     """Match GCC 3.3's source-file-keyed _GLOBAL__I_ with a random suffix.
 
@@ -156,7 +194,7 @@ def identify_compiler_generated_constructor(symbols, original_name, source_filen
 
 def prepare_named_function(raw, name, reloc_targets, original_address,
                            relocation_objects=None, literal_ranges=None,
-                           compiler_generated_unit=None):
+                           compiler_generated_unit=None, pic_got=None):
     """Resolve relocations only inside a named function in an ELF32 object."""
     sections, headers = elf_sections(raw)
     symsec = sections[".symtab"][1]
@@ -206,6 +244,8 @@ def prepare_named_function(raw, name, reloc_targets, original_address,
                 raise ValueError("invalid relocation symbol index")
             label, referenced = symbols[index]
             addend = struct.unpack_from("<i", code, local)[0]
+            if kind in (9, 10) and pic_got is None:
+                raise ValueError("PIC GOT relocation requires original GOT base")
             if referenced[3] & 15 == 1:
                 # Inline methods may emit their static objects as SHN_COMMON
                 # instead of ordinary .bss symbols. Such symbols carry an
@@ -224,39 +264,43 @@ def prepare_named_function(raw, name, reloc_targets, original_address,
                     # A direct STT_OBJECT relocation already denotes this
                     # object's base, unlike STT_SECTION + section addend.
                     address = int(mapped_address, 0)
-                    value = relocate_word(kind, address, addend, original_address + local)
+                    value = relocate_word(kind, address, addend, original_address + local, pic_got)
                 else:
                     if label not in reloc_targets:
                         raise ValueError("unmapped relocation target: " + label)
                     address = int(reloc_targets[label], 0) + linked_symbol_offset(referenced, len(headers))
-                    value = relocate_word(kind, address, addend, original_address + local)
+                    value = relocate_word(kind, address, addend, original_address + local, pic_got)
             elif label in literal_ranges:
                 if kind != 1 or referenced[3] & 15 != 3:
                     raise ValueError("literal range mapping requires absolute section relocation")
                 address = resolve_literal_range(literal_ranges[label], addend + referenced[1])
-                value = relocate_word(kind, address, 0, original_address + local)
+                value = relocate_word(kind, address, 0, original_address + local, pic_got)
             elif label in relocation_objects:
                 if kind != 1 or referenced[3] & 15 != 3:
                     raise ValueError("named object rebasing requires an absolute section relocation")
                 address = resolve_object_target(symbols, referenced[5],
                                                 addend + referenced[1],
                                                 relocation_objects[label])
-                value = relocate_word(kind, address, 0, original_address + local)
+                value = relocate_word(kind, address, 0, original_address + local, pic_got)
             else:
                 if label not in reloc_targets:
                     raise ValueError("unmapped relocation target: " + label)
                 address = int(reloc_targets[label], 0) + linked_symbol_offset(referenced, len(headers))
-                value = relocate_word(kind, address, addend, original_address + local)
+                value = relocate_word(kind, address, addend, original_address + local, pic_got)
             struct.pack_into("<I", code, local, value)
             count += 1
     return bytes(code), count
 
 
-def relocate_word(kind, address, addend, place):
+def relocate_word(kind, address, addend, place, pic_got=None):
     if kind == 1:  # R_386_32
         return (address + addend) & 0xffffffff
-    if kind == 2:  # R_386_PC32
+    if kind in (2, 4, 10):  # R_386_PC32, R_386_PLT32, R_386_GOTPC
         return (address + addend - place) & 0xffffffff
+    if kind == 9:  # R_386_GOTOFF
+        if pic_got is None:
+            raise ValueError("PIC GOTOFF requires original GOT base")
+        return (address + addend - pic_got) & 0xffffffff
     raise ValueError("unsupported relocation type %d" % kind)
 
 
@@ -359,10 +403,13 @@ def run(object_path, config_path=CONFIG):
     literal_count += verify_literal_ranges(object_bytes, data, target, literal_ranges)
     object_map = config.get("relocation_objects", {})
     verify_original_objects(data, target, object_map)
+    got = config.get("pic_got")
+    verify_original_pic_symbols(data, target, got, config["relocations"])
     candidate, reloc_count = prepare_named_function(object_bytes, config["function"],
                                                     config["relocations"], original_address,
                                                     object_map, literal_ranges,
-                                                    config.get("compiler_generated_unit"))
+                                                    config.get("compiler_generated_unit"),
+                                                    None if got is None else int(got, 0))
     result = compare(candidate, original)
     result["relocations"] = reloc_count
     result["verified_literal_bytes"] = literal_count
