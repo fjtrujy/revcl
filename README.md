@@ -43,7 +43,9 @@ scripts/decomp score --readme --html   # refresh this block and tmp/progress.htm
 
 Open `tmp/progress.html` for the visual comparison of the original and the
 rebuilt bytes and the progress history (`progress/history.csv`); its
-`#run` tab ("Agent run") follows a running `iterate.py` live. Details: [`docs/decompilation.md`](docs/decompilation.md)
+`#run` tab ("Agent run") follows a running `iterate.py` live. Click a section
+title to collapse or expand it; each section remembers its state across reloads.
+Details: [`docs/decompilation.md`](docs/decompilation.md)
 (approach, toolchain, scoring), [`docs/workflow.md`](docs/workflow.md) (agent
 loop), [`docs/matching-notes.md`](docs/matching-notes.md) (compiler idioms),
 [`AGENTS.md`](AGENTS.md) (rules for agents).
