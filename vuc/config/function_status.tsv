@@ -151,8 +151,8 @@ address	size	status	manifest	candidate_source	symbol
 0x080607b0	5	EXACT	vuc/config/noop_080607b0_probe.json	vuc/src/EmptyHooks.cpp	_ZN7ASTNode3apaEv
 0x080607c0	66	EXACT	vuc/config/iostream_static_080607c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08060810	1698	UNRESOLVED	-	-	_ZN11yyFlexLexer5yylexEv
-0x08060ec0	138	UNRESOLVED	-	-	_ZN11yyFlexLexerC2EPSiPSo
-0x08060f50	138	UNRESOLVED	-	-	_ZN11yyFlexLexerC1EPSiPSo
+0x08060ec0	138	EXACT	vuc/config/flex_ctor_c2_oct12_probe.json	vuc/src/FlexLexerConstructors.cpp	_ZN11yyFlexLexerC2EPSiPSo
+0x08060f50	138	EXACT	vuc/config/flex_ctor_c1_oct12_probe.json	vuc/src/FlexLexerConstructors.cpp	_ZN11yyFlexLexerC1EPSiPSo
 0x08060fe0	78	EXACT	vuc/config/yy_destructor_D2_probe.json	vuc/src/FlexLexerDestructors.cpp	_ZN11yyFlexLexerD2Ev
 0x08061030	78	EXACT	vuc/config/yy_destructor_D1_probe.json	vuc/src/FlexLexerDestructors.cpp	_ZN11yyFlexLexerD1Ev
 0x08061080	78	EXACT	vuc/config/yy_destructor_D0_probe.json	vuc/src/FlexLexerDestructors.cpp	_ZN11yyFlexLexerD0Ev
