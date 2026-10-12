@@ -5,7 +5,10 @@
   "source": "vuc/src/ListFilePrintLine.cpp",
   "flags": [
     "-O2",
-    "-frename-registers"
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections",
+    "-fno-zero-initialized-in-bss"
   ],
   "relocations": {
     "_ZN8ListFile11GetNumLinesEv": "0x0805aff0",

@@ -1,4 +1,7 @@
-// Byte-exact VUC ListFile::PrintLine provisional source fragment.
+// Byte-exact VUC ListFile::PrintLine and inputFileName startup fragment.
+// This provisional source-unit grouping is supported by original wrapper bytes.
+#include <iostream>
+char inputFileName[256] = {};
 #include <vector>
 #include <string>
 #include <fstream>

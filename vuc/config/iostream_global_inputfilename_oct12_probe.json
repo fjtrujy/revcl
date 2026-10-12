@@ -1,0 +1,16 @@
+{
+  "function": "_GLOBAL__I_inputFileName",
+  "address": "0x0805b700",
+  "size": 31,
+  "source": "vuc/src/ListFilePrintLine.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections",
+    "-fno-zero-initialized-in-bss"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x0805b390"
+  }
+}

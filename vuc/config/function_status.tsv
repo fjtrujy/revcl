@@ -130,7 +130,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0805b390	66	EXACT	vuc/config/iostream_static_0805b390_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805b3e0	777	UNRESOLVED	-	-	_Z14ParseArgumentsiPPc
 0x0805b6f0	16	EXACT	vuc/config/iostream_cleanup_0805b6f0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x0805b700	31	UNRESOLVED	-	-	_GLOBAL__I_inputFileName
+0x0805b700	31	EXACT	vuc/config/iostream_global_inputfilename_oct12_probe.json	vuc/src/ListFilePrintLine.cpp	_GLOBAL__I_inputFileName
 0x0805b720	66	EXACT	vuc/config/iostream_static_0805b720_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805b770	98	EXPERIMENTAL	vuc/config/print_ast_fun_call_probe.json	vuc/probes/print_ast_fun_call.cpp	_Z5PrintP10ASTFunCallRSo
 0x0805b7e0	2231	UNRESOLVED	-	-	_Z5PrintP7ASTStmtRSo

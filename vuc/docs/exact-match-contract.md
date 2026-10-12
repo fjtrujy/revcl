@@ -157,6 +157,7 @@ is a **candidate flag hypothesis**, not proof of the original per-TU flags.
 | `__libc_csu_fini()` | 80/80 | GCC 3.3.3 C, `-O2 -fPIC`, authenticated GOT and five PIC relocations |
 | `yyFlexLexer::yyFlexLexer(std::istream*,std::ostream*)` C1 | 138/138 | `-O2 -frename-registers`, original vtable |
 | `yyFlexLexer::yyFlexLexer(std::istream*,std::ostream*)` C2 | 138/138 | `-O2 -frename-registers`, original vtable |
+| `_GLOBAL__I_inputFileName` | 31/31 | Combined `ListFile::PrintLine()` TU, original helper target |
 
 The original `_GLOBAL__I_StdAfx.cppxtsrAa` constructor wrapper is
 also **31/31 exact bytes**, with one mapped call relocation.
@@ -164,10 +165,10 @@ The adjacent 66-byte initializer and 16-byte iostream cleanup callback
 now use the same reconstructed `StdAfx.cpp` source fragment.
 
 
-**165/165 exact function-symbol records, 11283/11283 checked code bytes.** This counts only the
+**166/166 exact function-symbol records, 11314/11314 checked code bytes.** This counts only the
 explicitly accepted candidates, not all original functions. The end of the
 `AsmOutput_WriteEpilogue` string literal is also checked from the original
-ELF. All 416 supported relocations across the accepted candidate functions
+ELF. All 417 supported relocations across the accepted candidate functions
 are resolved and verified. The **nine** original `MLGameString` member functions
 are now exact as a class-method cluster (273/273 bytes). This does **not**
 establish that the entire original `MLGameString.cpp` translation unit is
@@ -175,7 +176,7 @@ complete or byte-identical.
 
 `vuc/config/function_status.tsv` provides a symbol-by-symbol reconstruction
 queue for all 298 identified text function symbols. It currently contains
-165 EXACT, 9 EXPERIMENTAL and 124 UNRESOLVED entries. Generate it using
+166 EXACT, 9 EXPERIMENTAL and 123 UNRESOLVED entries. Generate it using
 `python3 vuc/scripts/coverage.py --write` against the authenticated original
 ELF and the two candidate manifests. It is **not** an executable byte score.
 
