@@ -1,0 +1,8 @@
+[
+  "vuc/config/data_buffer_line.json",
+  "vuc/config/data_buffer_word.json",
+  "vuc/config/data_buffer_inputFileName.json",
+  "vuc/config/data_buffer_outputFileName.json",
+  "vuc/config/data_buffer_inputPath.json",
+  "vuc/config/data_buffer_asmBuffer.json"
+]

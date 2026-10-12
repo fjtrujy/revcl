@@ -1,0 +1,12 @@
+{
+  "symbol": "outputFileName",
+  "address": "0x08077960",
+  "size": 256,
+  "section": ".data",
+  "source": "vuc/src/GlobalBuffers.cpp",
+  "flags": [
+    "-O2",
+    "-fno-zero-initialized-in-bss"
+  ],
+  "relocations": {}
+}

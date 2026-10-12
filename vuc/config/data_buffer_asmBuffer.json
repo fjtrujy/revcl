@@ -1,0 +1,12 @@
+{
+  "symbol": "asmBuffer",
+  "address": "0x08077ba0",
+  "size": 65536,
+  "section": ".data",
+  "source": "vuc/src/GlobalBuffers.cpp",
+  "flags": [
+    "-O2",
+    "-fno-zero-initialized-in-bss"
+  ],
+  "relocations": {}
+}

@@ -1,0 +1,12 @@
+{
+  "symbol": "word",
+  "address": "0x08077440",
+  "size": 1024,
+  "section": ".data",
+  "source": "vuc/src/GlobalBuffers.cpp",
+  "flags": [
+    "-O2",
+    "-fno-zero-initialized-in-bss"
+  ],
+  "relocations": {}
+}
