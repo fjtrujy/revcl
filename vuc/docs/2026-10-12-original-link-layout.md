@@ -110,6 +110,32 @@ original symbol names, and rejection of malformed program headers,
 misaligned load segments, modified section addresses, and invalid
 relocation symbol indices/target addresses.
 
+## Evaluate a future independently linked candidate
+
+The same script can now parse a **separately built** ELF32 executable
+from its own section-name string table rather than assuming the
+canonical original sections. To compare its structural linker layout:
+
+```sh
+python3 vuc/scripts/original_link_layout.py \
+  --compare-candidate /path/to/independently-built-vuc
+```
+
+This checks header fields, segment ranges/permissions, named sections,
+their aligned physical/virtual addresses and the dynamic relocation
+targets, types and symbol names. It reports each distinct mismatch
+up to a 50-entry display limit and a full mismatch count. Invalid
+candidate ELF tables or inconsistent load mappings cause failure.
+
+**Layout equality is not executable byte equality.** A unit test
+deliberately modifies an original `.text` instruction byte and
+verifies that the candidate still passes *layout* comparison while
+the returned whole-file equality field remains `null`. This makes
+it impossible to silently promote layout agreement to either the
+function-byte acceptance set or the final executable match.
+Use `whole_elf_gate.py --candidate` for the separate mandatory
+whole-file binary comparison.
+
 ## Next work
 
 Use the reference to guide original binutils/linker-script

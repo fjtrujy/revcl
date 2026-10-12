@@ -50,6 +50,46 @@ class OriginalLinkLayoutTests(unittest.TestCase):
         self.assertEqual(records[0]["dynamic_symbol_name"], "__gmon_start__")
         self.assertEqual(records[1]["dynamic_symbol_name"], "_ZSt4cout")
 
+    def test_candidate_layout_is_parsed_without_original_section_inventory(self):
+        candidate = layout.inspect_candidate(self.raw)
+        comparison = layout.compare_link_layout(self.report, candidate)
+        self.assertTrue(comparison["layout_equal"])
+        self.assertEqual(comparison["difference_count"], 0)
+        self.assertIsNone(comparison["whole_elf_byte_exact"])
+        self.assertIsNone(comparison["verified_instruction_or_data_bytes"])
+        self.assertEqual(candidate["sections"][12]["name"], ".text")
+
+    def test_candidate_with_changed_instruction_still_has_same_layout(self):
+        # This deliberately demonstrates why matching layout is NOT byte equality.
+        candidate = bytearray(self.raw)
+        text = next(s for s in self.info["sections"] if s["name"] == ".text")
+        candidate[text["offset"] + 30] ^= 1
+        comparison = layout.compare_link_layout(
+            self.report, layout.inspect_candidate(candidate))
+        self.assertTrue(comparison["layout_equal"])
+        self.assertIsNone(comparison["whole_elf_byte_exact"])
+
+    def test_candidate_load_permission_differences_are_reported(self):
+        candidate = bytearray(self.raw)
+        header = layout.decomp.ELF_HEADER.unpack_from(candidate)
+        index = header[5] + 2 * header[9]
+        struct.pack_into("<I", candidate, index + 24, 7)
+        comparison = layout.compare_link_layout(
+            self.report, layout.inspect_candidate(candidate))
+        self.assertFalse(comparison["layout_equal"])
+        self.assertEqual(comparison["difference_count"], 1)
+        self.assertEqual(comparison["differences"][0]["field"], "flags")
+        self.assertEqual(comparison["differences"][0]["category"], "program_headers")
+
+    def test_invalid_candidate_section_name_table_rejected(self):
+        candidate = bytearray(self.raw)
+        header = layout.decomp.ELF_HEADER.unpack_from(candidate)
+        string_index = header[13]
+        string_entry = header[6] + header[11] * string_index
+        struct.pack_into("<I", candidate, string_entry + 16, len(candidate) - 1)
+        with self.assertRaisesRegex(ValueError, "section names out of bounds"):
+            layout.inspect_candidate(candidate)
+
     def test_dynamic_relocation_target_outside_load_is_rejected(self):
         original = bytearray(self.raw)
         section = next(x for x in self.info["sections"] if x["name"] == ".rel.plt")

@@ -5,6 +5,7 @@ All offsets and segment addresses come from the SHA-256-validated original.
 The output is an exact *reference layout*, not an assembled candidate.
 """
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import struct
@@ -41,6 +42,80 @@ def subtract_intervals(start, end, covered):
     if cursor < end:
         gaps.append({"file_offset": cursor, "size": end - cursor})
     return gaps
+
+
+def candidate_section_inventory(raw):
+    """Read candidate section names without consulting original section names."""
+    if len(raw) < decomp.ELF_HEADER.size:
+        raise ValueError("candidate too short for ELF32")
+    h = decomp.ELF_HEADER.unpack_from(raw)
+    shoff, size, count, names_index = h[6], h[11], h[12], h[13]
+    if size != SHDR.size or names_index >= count:
+        raise ValueError("invalid candidate section header dimensions")
+    if shoff + size * count > len(raw):
+        raise ValueError("candidate section table out of bounds")
+    string_header = SHDR.unpack_from(raw, shoff + names_index * size)
+    start, length = string_header[4], string_header[5]
+    if start + length > len(raw):
+        raise ValueError("candidate section names out of bounds")
+    strings = raw[start:start + length]
+    sections = []
+    for index in range(count):
+        name, kind, flags, address, offset, count_bytes, _, _, _, _ = SHDR.unpack_from(
+            raw, shoff + index * size)
+        if name >= len(strings):
+            raise ValueError("invalid candidate section name")
+        sections.append({
+            "index": index, "name": decomp.cstr(strings, name), "type": kind,
+            "flags": flags, "address": address, "offset": offset,
+            "size": count_bytes,
+        })
+    return {"sections": sections}
+
+
+def inspect_candidate(raw):
+    result = parse_layout(raw, candidate_section_inventory(raw))
+    result["scope"] = "candidate-ELF32-layout-only"
+    result.pop("original_sha256")
+    result["candidate_sha256"] = hashlib.sha256(raw).hexdigest()
+    return result
+
+
+def compare_link_layout(original, candidate):
+    """Compare *only* linked metadata, never count verified code/data bytes."""
+    fields = ("elf_header", "program_headers", "sections", "dynamic_relocations")
+    differences = []
+    if original["original_file_size"] != candidate["original_file_size"]:
+        differences.append({
+            "category": "file_size", "original": original["original_file_size"],
+            "candidate": candidate["original_file_size"],
+        })
+    for category in fields:
+        lhs, rhs = original[category], candidate[category]
+        if isinstance(lhs, dict):
+            lhs, rhs = [lhs], [rhs]
+        if len(lhs) != len(rhs):
+            differences.append({
+                "category": category, "field": "record_count",
+                "original": len(lhs), "candidate": len(rhs),
+            })
+        for index, (before, after) in enumerate(zip(lhs, rhs)):
+            for name in sorted(set(before) | set(after)):
+                if before.get(name) != after.get(name):
+                    differences.append({
+                        "category": category, "index": index, "field": name,
+                        "original": before.get(name),
+                        "candidate": after.get(name),
+                    })
+    return {
+        "scope": "ELF32-linker-layout-structure-only",
+        "layout_equal": not differences,
+        "difference_count": len(differences),
+        "differences": differences[:50],
+        "differences_truncated": len(differences) > 50,
+        "whole_elf_byte_exact": None,
+        "verified_instruction_or_data_bytes": None,
+    }
 
 
 def parse_layout(raw, info):
@@ -193,6 +268,8 @@ def main(argv=None):
     group.add_argument("--write", action="store_true", help="rewrite pinned reference JSON")
     group.add_argument("--check", action="store_true", help="compare against committed reference")
     group.add_argument("--summary", action="store_true", help="print only selected facts")
+    group.add_argument("--compare-candidate", type=Path,
+                       help="compare a separately rebuilt ELF layout, not its bytes")
     args = parser.parse_args(argv)
     raw, parsed = decomp.load()
     result = parse_layout(raw, parsed)
@@ -215,6 +292,11 @@ def main(argv=None):
         print("Original dynamic relocation entries:",
               len(result["dynamic_relocations"]))
         print("Linked candidate and whole-ELF equality: NOT ESTABLISHED")
+    elif args.compare_candidate:
+        candidate = inspect_candidate(args.compare_candidate.read_bytes())
+        comparison = compare_link_layout(result, candidate)
+        print(json.dumps(comparison, indent=2))
+        return 0 if comparison["layout_equal"] else 1
     else:
         print(json.dumps(result, indent=2))
     return 0
