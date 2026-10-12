@@ -965,11 +965,11 @@ char *mValue::asChars()
         g_080bcda0 = 0;
     char *p = g_080bbda0 + g_080bcda0;
     switch (type) {
-    case UINT:
-        func_0804adbc(p, "%u", u);
-        break;
     case INT:
         func_0804adbc(p, "%d", i);
+        break;
+    case UINT:
+        func_0804adbc(p, "%u", u);
         break;
     case FLOAT:
         func_0804adbc(p, "%1.9e", f);
