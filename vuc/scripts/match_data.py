@@ -69,14 +69,15 @@ def verify_literal_relocation(candidate_raw, headers, symbol, original_raw,
     """Authenticate a section-relative reference to an unnamed original literal.
 
     The manifest must fix the original location *and* its exact literal bytes.
-    Only zero-addend section-symbol relocations are supported, so no guessed
-    candidate section base can be mistaken for the original linked address.
+    The candidate addend identifies a literal *within the candidate section*,
+    not an original linked address. Both source and original bytes must match
+    an explicitly declared, independently checked literal and original VA.
     """
     if (symbol[3] & 15) != 3 or not 0 < symbol[5] < len(headers):
         raise ValueError("literal must use a defined ELF section symbol")
     if record.get("type") != 3:
         raise ValueError("literal manifest must authenticate STT_SECTION")
-    if candidate_addend != 0 or symbol[1] != 0:
+    if candidate_addend < 0 or symbol[1] != 0:
         raise ValueError("unsupported literal section offset/addend")
     literal = bytes.fromhex(record["literal_hex"])
     if not literal:
@@ -85,7 +86,7 @@ def verify_literal_relocation(candidate_raw, headers, symbol, original_raw,
     if source_section[1] == 8:
         raise ValueError("candidate literal is not file-backed")
     source = match.section_bytes(candidate_raw, source_section)
-    if source[:len(literal)] != literal:
+    if source[candidate_addend:candidate_addend + len(literal)] != literal:
         raise ValueError("candidate literal contents are not exact")
     sections = {x["name"]: x for x in original_target["sections"]}
     section = sections[record["original_section"]]
@@ -158,6 +159,10 @@ def compare_named_data(candidate_raw, config, original_raw, original_target):
                 real_address = verify_literal_relocation(
                     candidate_raw, headers, symbol, original_raw, original_target,
                     record, raw_addend)
+                # The original VA is pinned to this individual verified literal.
+                # The candidate's R_386_32 addend is only its offset inside
+                # the candidate literal section, not another original addend.
+                linked_addend = 0
             else:
                 original_name = record.get("original_symbol", candidate_name)
                 # GNU symbol versioning may append @@VERSION to an imported
@@ -173,7 +178,8 @@ def compare_named_data(candidate_raw, config, original_raw, original_target):
                 # For STT_FUNC/STT_OBJECT, st_value is not a second copy of
                 # the original linker's already-resolved symbol offset.
                 real_address += match.linked_symbol_offset(symbol, len(headers))
-            effective = match.relocate_word(kind, real_address, raw_addend,
+                linked_addend = raw_addend
+            effective = match.relocate_word(kind, real_address, linked_addend,
                                              addr + local)
             struct.pack_into("<I", source_data, local, effective & 0xffffffff)
             seen.add(local)

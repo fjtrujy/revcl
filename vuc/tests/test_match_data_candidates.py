@@ -134,7 +134,7 @@ class NamedDataCandidateTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "addend"):
                 matcher.verify_literal_relocation(
                     b"", headers, section_symbol, self.canonical_raw,
-                    self.canonical_target, relocation, 1)
+                    self.canonical_target, relocation, -1)
             with self.assertRaisesRegex(ValueError, "original ELF literal"):
                 modified = bytearray(self.canonical_raw)
                 section = next(x for x in self.canonical_target["sections"]
@@ -149,6 +149,37 @@ class NamedDataCandidateTests(unittest.TestCase):
                 matcher.verify_literal_relocation(
                     b"", headers, section_symbol, self.canonical_raw,
                     self.canonical_target, relocation, 0)
+
+    def test_literal_relocation_accepts_checked_nonzero_candidate_section_offset(self):
+        matcher = suite.matcher
+        headers = [(0, 0, 0, 0, 0, 0), (0, 1, 0, 0, 0, 0)]
+        section_symbol = (0, 0, 0, 3, 0, 1)
+        record = {
+            "symbol": ".rodata", "type": 3,
+            "original_section": ".rodata", "address": "0x08072316",
+            "literal_hex": b"int\x00".hex(),
+        }
+        # The candidate string's section-relative offset is seven, but its
+        # authenticated original address is *already* the linked destination.
+        # It must not be added a second time during ELF relocation resolution.
+        with patch.object(matcher.match, "section_bytes",
+                          return_value=b"unused\x00int\x00"):
+            self.assertEqual(matcher.verify_literal_relocation(
+                b"", headers, section_symbol, self.canonical_raw,
+                self.canonical_target, record, 7), 0x08072316)
+            with self.assertRaisesRegex(ValueError, "candidate literal"):
+                matcher.verify_literal_relocation(
+                    b"", headers, section_symbol, self.canonical_raw,
+                    self.canonical_target, record, 6)
+            with self.assertRaisesRegex(ValueError, "addend"):
+                matcher.verify_literal_relocation(
+                    b"", headers, section_symbol, self.canonical_raw,
+                    self.canonical_target, record, -1)
+            with self.assertRaisesRegex(ValueError, "original ELF literal"):
+                wrong = dict(record, address="0x0807231a")
+                matcher.verify_literal_relocation(
+                    b"", headers, section_symbol, self.canonical_raw,
+                    self.canonical_target, wrong, 7)
 
     def test_duplicate_and_escape_are_rejected(self):
         with tempfile.TemporaryDirectory() as folder:

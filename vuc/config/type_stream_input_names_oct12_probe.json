@@ -1,0 +1,62 @@
+{
+  "symbol": "_ZZrsRSiR4TypeE2tn",
+  "address": "0x0807700c",
+  "size": 28,
+  "section": ".data",
+  "source": "vuc/probes/type_stream_names_oct12.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "0x0": {
+      "symbol": ".rodata",
+      "type": 3,
+      "original_section": ".rodata",
+      "address": "0x0807308a",
+      "literal_hex": "6572726f7200"
+    },
+    "0x4": {
+      "symbol": ".rodata",
+      "type": 3,
+      "original_section": ".rodata",
+      "address": "0x08072316",
+      "literal_hex": "696e7400"
+    },
+    "0x8": {
+      "symbol": ".rodata",
+      "type": 3,
+      "original_section": ".rodata",
+      "address": "0x0807231a",
+      "literal_hex": "626f6f6c00"
+    },
+    "0xc": {
+      "symbol": ".rodata",
+      "type": 3,
+      "original_section": ".rodata",
+      "address": "0x0807231f",
+      "literal_hex": "666c6f617400"
+    },
+    "0x10": {
+      "symbol": ".rodata",
+      "type": 3,
+      "original_section": ".rodata",
+      "address": "0x08072325",
+      "literal_hex": "666c6f61743400"
+    },
+    "0x14": {
+      "symbol": ".rodata",
+      "type": 3,
+      "original_section": ".rodata",
+      "address": "0x0807225e",
+      "literal_hex": "66756e6374696f6e00"
+    },
+    "0x18": {
+      "symbol": ".rodata",
+      "type": 3,
+      "original_section": ".rodata",
+      "address": "0x0807232c",
+      "literal_hex": "766f696400"
+    }
+  }
+}
