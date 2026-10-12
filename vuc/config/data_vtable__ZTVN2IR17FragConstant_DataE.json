@@ -1,0 +1,22 @@
+{
+  "symbol": "_ZTVN2IR17FragConstant_DataE",
+  "address": "0x08076058",
+  "size": 12,
+  "section": ".rodata",
+  "source": "vuc/src/IRVtableProbes.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "0x04": {
+      "symbol": "_ZTIN2IR17FragConstant_DataE",
+      "address": "0x0807625c",
+      "type": 1
+    },
+    "0x08": {
+      "symbol": "_ZN2IR13Fragment_Data16zzzzMakeRTTIWorkEv",
+      "address": "0x0806e2f0",
+      "type": 2
+    }
+  }
+}

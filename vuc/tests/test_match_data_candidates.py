@@ -22,18 +22,28 @@ class NamedDataCandidateTests(unittest.TestCase):
         cls.canonical_raw, cls.canonical_target = suite.matcher.match.decomp.load()
 
     def test_original_initialized_data_and_rtti_objects(self):
-        self.assertEqual(len(self.configs), 171)
+        self.assertEqual(len(self.configs), 240)
         records = [json.loads(suite.within_repo(name).read_text()) for name in self.configs]
-        self.assertEqual(len({(r["symbol"], r["address"]) for r in records}), 171)
-        self.assertEqual(sum(r["size"] for r in records), 70624)
+        self.assertEqual(len({(r["symbol"], r["address"]) for r in records}), 240)
+        self.assertEqual(sum(r["size"] for r in records), 71520)
         for r in records:
-            if r["symbol"].startswith(("_ZTS", "_ZTI")):
+            if r["symbol"].startswith(("_ZTS", "_ZTI", "_ZTV")):
                 self.assertEqual(r["section"], ".rodata")
-                self.assertIn(r["source"], ("vuc/src/IRRttiNames.cpp",
-                                           "vuc/src/ASTRttiNames.cpp"))
+                if r["symbol"].startswith("_ZTV"):
+                    if r["symbol"] in ("_ZTV11yyFlexLexer", "_ZTV9FlexLexer"):
+                        self.assertEqual(r["source"], "vuc/src/FlexLexerDestructors.cpp")
+                        self.assertEqual(len(r["relocations"]),
+                                         12 if r["symbol"] == "_ZTV11yyFlexLexer" else 9)
+                    else:
+                        self.assertIn(r["source"], ("vuc/src/IRVtableProbes.cpp",
+                                                     "vuc/src/ASTVtableProbes.cpp"))
+                        self.assertEqual(len(r["relocations"]), 2)
+                else:
+                    self.assertIn(r["source"], ("vuc/src/IRRttiNames.cpp",
+                                               "vuc/src/ASTRttiNames.cpp"))
                 if r["symbol"].startswith("_ZTS"):
                     self.assertEqual(r["relocations"], {})
-                else:
+                elif r["symbol"].startswith("_ZTI"):
                     self.assertEqual(len(r["relocations"]), 2 if r["size"] == 8 else 3)
             else:
                 self.assertEqual(r["section"], ".data")
@@ -48,7 +58,7 @@ class NamedDataCandidateTests(unittest.TestCase):
             self.assertEqual(name, r["section"])
             sec = self.canonical_target["sections"][section_id]
             begin = sec["offset"] + addr - sec["address"]
-            if r["symbol"].startswith("_ZTI"):
+            if r["symbol"].startswith(("_ZTI", "_ZTV")):
                 reconstructed = bytearray(length)
                 for offset, target in r["relocations"].items():
                     pointer = int(target["address"], 0)
@@ -65,7 +75,7 @@ class NamedDataCandidateTests(unittest.TestCase):
             self.assertEqual(self.canonical_raw[begin:begin + length], expected,
                              r["symbol"])
 
-    def test_all_171_are_built_in_six_translation_units_and_must_be_exact(self):
+    def test_all_240_are_built_in_nine_translation_units_and_must_be_exact(self):
         def matched(obj, config):
             record = json.loads(Path(config).read_text())
             return {"symbol": record["symbol"], "size": record["size"],
@@ -76,12 +86,12 @@ class NamedDataCandidateTests(unittest.TestCase):
                               return_value=subprocess.CompletedProcess([], 0, "", "")) as compiler:
                 with patch.object(suite.matcher, "run", side_effect=matched):
                     result = suite.run("compiler", folder, self.configs)
-            self.assertEqual(compiler.call_count, 6)
-            self.assertEqual(result["data_objects_checked"], 171)
-            self.assertEqual(result["fully_exact_data_objects"], 171)
-            self.assertEqual(result["checked_data_bytes"], 70624)
-            self.assertEqual(result["matching_data_bytes"], 70624)
-            self.assertEqual(result["resolved_relocations"], 235)
+            self.assertEqual(compiler.call_count, 9)
+            self.assertEqual(result["data_objects_checked"], 240)
+            self.assertEqual(result["fully_exact_data_objects"], 240)
+            self.assertEqual(result["checked_data_bytes"], 71520)
+            self.assertEqual(result["matching_data_bytes"], 71520)
+            self.assertEqual(result["resolved_relocations"], 390)
             self.assertTrue(result["all_candidates_exact"])
             self.assertIsNone(result["whole_binary_score"])
             self.assertFalse(result["whole_binary_byte_exact"])
@@ -100,7 +110,7 @@ class NamedDataCandidateTests(unittest.TestCase):
                     result = suite.run("compiler", folder, self.configs)
             self.assertEqual(result["acceptance"], "FAIL")
             self.assertEqual(result["fully_exact_data_objects"], 0)
-            self.assertEqual(result["matching_data_bytes"], 70624-171)
+            self.assertEqual(result["matching_data_bytes"], 71520-240)
 
     def test_pointer_literal_relocation_requires_both_original_and_candidate_literal(self):
         record = json.loads(

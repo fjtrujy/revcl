@@ -1,0 +1,73 @@
+{
+  "symbol": "_ZTV11yyFlexLexer",
+  "address": "0x08074c80",
+  "section": ".rodata",
+  "size": 52,
+  "source": "vuc/src/FlexLexerDestructors.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "0x04": {
+      "symbol": "_ZTI11yyFlexLexer",
+      "address": "0x08075bc4",
+      "type": 1
+    },
+    "0x08": {
+      "symbol": "_ZN11yyFlexLexerD1Ev",
+      "address": "0x08061030",
+      "type": 2
+    },
+    "0x0c": {
+      "symbol": "_ZN11yyFlexLexerD0Ev",
+      "address": "0x08061080",
+      "type": 2
+    },
+    "0x10": {
+      "symbol": "_ZN11yyFlexLexer19yy_switch_to_bufferEP15yy_buffer_state",
+      "address": "0x08061730",
+      "type": 2
+    },
+    "0x14": {
+      "symbol": "_ZN11yyFlexLexer16yy_create_bufferEPSii",
+      "address": "0x080617b0",
+      "type": 2
+    },
+    "0x18": {
+      "symbol": "_ZN11yyFlexLexer16yy_delete_bufferEP15yy_buffer_state",
+      "address": "0x08061840",
+      "type": 2
+    },
+    "0x1c": {
+      "symbol": "_ZN11yyFlexLexer9yyrestartEPSi",
+      "address": "0x080616d0",
+      "type": 2
+    },
+    "0x20": {
+      "symbol": "_ZN11yyFlexLexer5yylexEv",
+      "address": "0x08060810",
+      "type": 2
+    },
+    "0x24": {
+      "symbol": "_ZN11yyFlexLexer14switch_streamsEPSiPSo",
+      "address": "0x080610d0",
+      "type": 2
+    },
+    "0x28": {
+      "symbol": "_ZN11yyFlexLexer10LexerInputEPci",
+      "address": "0x08061130",
+      "type": 2
+    },
+    "0x2c": {
+      "symbol": "_ZN11yyFlexLexer11LexerOutputEPKci",
+      "address": "0x080611a0",
+      "type": 2
+    },
+    "0x30": {
+      "symbol": "_ZN11yyFlexLexer10LexerErrorEPKc",
+      "address": "0x08061930",
+      "type": 2
+    }
+  }
+}

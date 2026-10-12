@@ -111,8 +111,8 @@ binary**, not just its selected functions. See
 `vuc/docs/exact-match-contract.md` for the acceptance contract.
 
 An independent **named-data acceptance gate** now checks
-**171/171 original named initialized-data and RTTI objects,
-70,624/70,624 bytes**,
+**240/240 original named initialized-data, RTTI, and vtable objects,
+71,520/71,520 bytes**,
 including the 64 KiB `asmBuffer`, two 1 KiB text buffers, three
 256-byte file/path buffers, and both original
 `InstructionList` static counters (initialized to 1) and the
@@ -123,14 +123,16 @@ historical GCC 3.3 from ordinary C++ `typeid` declarations and
 **72 authenticated single-inheritance relationships**.
 Nine typeinfo objects are root classes.
 It uses ordinary GCC 3.3 C++ global declarations and strict
-ELF object/section-relocation validation. **235 data relocations**
+ELF object/section-relocation validation. **390 data relocations**
 are resolved. These are **not function bytes**, and individual
 object matches do **not** establish original section layout or
 complete ELF identity. The class inheritance links are supported by
 the original typeinfo objects; virtual methods, vtable layouts and
 instance fields remain unverified.
-See `vuc/docs/2026-10-12-exact-initialized-buffers.md` and
-`vuc/docs/2026-10-12-rtti-inheritance-objects.md`, then run:
+See `vuc/docs/2026-10-12-exact-initialized-buffers.md`,
+`vuc/docs/2026-10-12-rtti-inheritance-objects.md`, and
+`vuc/docs/2026-10-12-flexlexer-vtable.md`, and
+`vuc/docs/2026-10-12-inherited-vtables.md`, then run:
 
 ```sh
 limactl shell revcl-oracle -- python3 \

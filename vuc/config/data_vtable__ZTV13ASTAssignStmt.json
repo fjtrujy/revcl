@@ -1,0 +1,22 @@
+{
+  "symbol": "_ZTV13ASTAssignStmt",
+  "address": "0x08074888",
+  "size": 12,
+  "section": ".rodata",
+  "source": "vuc/src/ASTVtableProbes.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "0x04": {
+      "symbol": "_ZTI13ASTAssignStmt",
+      "address": "0x08074a54",
+      "type": 1
+    },
+    "0x08": {
+      "symbol": "_ZN7ASTNode3apaEv",
+      "address": "0x080607b0",
+      "type": 2
+    }
+  }
+}

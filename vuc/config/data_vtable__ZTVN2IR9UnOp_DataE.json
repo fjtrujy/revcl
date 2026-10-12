@@ -1,0 +1,22 @@
+{
+  "symbol": "_ZTVN2IR9UnOp_DataE",
+  "address": "0x080724d8",
+  "size": 12,
+  "section": ".rodata",
+  "source": "vuc/src/IRVtableProbes.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "0x04": {
+      "symbol": "_ZTIN2IR9UnOp_DataE",
+      "address": "0x08072554",
+      "type": 1
+    },
+    "0x08": {
+      "symbol": "_ZN2IR9Expr_Data16zzzzMakeRTTIWorkEv",
+      "address": "0x08050c40",
+      "type": 2
+    }
+  }
+}

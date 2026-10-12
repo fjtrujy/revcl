@@ -1,0 +1,64 @@
+{
+  "symbol": "_ZTV9FlexLexer",
+  "address": "0x08075be0",
+  "section": ".rodata",
+  "size": 40,
+  "source": "vuc/src/FlexLexerDestructors.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "0x04": {
+      "symbol": "_ZTI9FlexLexer",
+      "address": "0x08075c08",
+      "type": 1
+    },
+    "0x08": {
+      "symbol": "_ZN9FlexLexerD1Ev",
+      "address": "0x080619a0",
+      "type": 2
+    },
+    "0x0c": {
+      "symbol": "_ZN9FlexLexerD0Ev",
+      "address": "0x080619b0",
+      "type": 2
+    },
+    "0x10": {
+      "symbol": "__cxa_pure_virtual",
+      "address": "0x0804964c",
+      "type": 2,
+      "original_symbol": "__cxa_pure_virtual@@CXXABI_1.2"
+    },
+    "0x14": {
+      "symbol": "__cxa_pure_virtual",
+      "address": "0x0804964c",
+      "type": 2,
+      "original_symbol": "__cxa_pure_virtual@@CXXABI_1.2"
+    },
+    "0x18": {
+      "symbol": "__cxa_pure_virtual",
+      "address": "0x0804964c",
+      "type": 2,
+      "original_symbol": "__cxa_pure_virtual@@CXXABI_1.2"
+    },
+    "0x1c": {
+      "symbol": "__cxa_pure_virtual",
+      "address": "0x0804964c",
+      "type": 2,
+      "original_symbol": "__cxa_pure_virtual@@CXXABI_1.2"
+    },
+    "0x20": {
+      "symbol": "__cxa_pure_virtual",
+      "address": "0x0804964c",
+      "type": 2,
+      "original_symbol": "__cxa_pure_virtual@@CXXABI_1.2"
+    },
+    "0x24": {
+      "symbol": "__cxa_pure_virtual",
+      "address": "0x0804964c",
+      "type": 2,
+      "original_symbol": "__cxa_pure_virtual@@CXXABI_1.2"
+    }
+  }
+}

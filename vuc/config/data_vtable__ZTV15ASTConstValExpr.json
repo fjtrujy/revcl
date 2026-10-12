@@ -1,0 +1,22 @@
+{
+  "symbol": "_ZTV15ASTConstValExpr",
+  "address": "0x08074948",
+  "size": 12,
+  "section": ".rodata",
+  "source": "vuc/src/ASTVtableProbes.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "0x04": {
+      "symbol": "_ZTI15ASTConstValExpr",
+      "address": "0x080749c4",
+      "type": 1
+    },
+    "0x08": {
+      "symbol": "_ZN7ASTNode3apaEv",
+      "address": "0x080607b0",
+      "type": 2
+    }
+  }
+}
