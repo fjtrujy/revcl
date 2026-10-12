@@ -238,5 +238,9 @@
   "vuc/config/data_vtable__ZTVN2IR9Jump_DataE.json",
   "vuc/config/data_vtable__ZTVN2IR9UInt_DataE.json",
   "vuc/config/data_vtable__ZTVN2IR9UnOp_DataE.json",
-  "vuc/config/data_flex_base_vtable_exact.json"
+  "vuc/config/data_flex_base_vtable_exact.json",
+  "vuc/config/data_runtime_abi__fp_hw.json",
+  "vuc/config/data_runtime_abi__IO_stdin_used.json",
+  "vuc/config/data_streambuf_pback_c.json",
+  "vuc/config/data_streambuf_pback_w.json"
 ]

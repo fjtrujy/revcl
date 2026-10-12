@@ -27,7 +27,7 @@ class OriginalRttiNameTests(unittest.TestCase):
 
     def test_manifest_matches_exact_elf_generated_records(self):
         names = json.loads((ROOT/"vuc/config/exact_data_candidates.json").read_text())
-        self.assertEqual(len(names), 240)
+        self.assertEqual(len(names), 244)
         for record in self.records:
             path = inventory.config_path(record)
             self.assertTrue(path.is_file())

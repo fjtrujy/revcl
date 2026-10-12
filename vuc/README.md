@@ -111,8 +111,8 @@ binary**, not just its selected functions. See
 `vuc/docs/exact-match-contract.md` for the acceptance contract.
 
 An independent **named-data acceptance gate** now checks
-**240/240 original named initialized-data, RTTI, and vtable objects,
-71,520/71,520 bytes**,
+**244/244 original named initialized-data, RTTI, vtable and ABI objects,
+71,536/71,536 bytes**,
 including the 64 KiB `asmBuffer`, two 1 KiB text buffers, three
 256-byte file/path buffers, and both original
 `InstructionList` static counters (initialized to 1) and the
@@ -132,7 +132,8 @@ instance fields remain unverified.
 See `vuc/docs/2026-10-12-exact-initialized-buffers.md`,
 `vuc/docs/2026-10-12-rtti-inheritance-objects.md`, and
 `vuc/docs/2026-10-12-flexlexer-vtable.md`, and
-`vuc/docs/2026-10-12-inherited-vtables.md`, then run:
+`vuc/docs/2026-10-12-inherited-vtables.md`, and
+`vuc/docs/2026-10-12-runtime-and-streambuf-abi.md`, then run:
 
 ```sh
 limactl shell revcl-oracle -- python3 \

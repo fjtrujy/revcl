@@ -1,0 +1,11 @@
+{
+  "symbol": "_fp_hw",
+  "address": "0x08072080",
+  "size": 4,
+  "section": ".rodata",
+  "source": "vuc/src/RuntimeAbiConstants.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}

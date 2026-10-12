@@ -1,0 +1,11 @@
+{
+  "symbol": "_ZNSt15basic_streambufIcSt11char_traitsIcEE13_S_pback_sizeE",
+  "address": "0x0807223c",
+  "size": 4,
+  "section": ".rodata",
+  "source": "vuc/src/StreambufPbackConstants.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {}
+}
