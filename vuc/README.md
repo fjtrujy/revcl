@@ -303,6 +303,11 @@ The separate original `AsmOutput_TabConstants()` constant-width scan
 has a source/relocation/literal-complete 118/127-byte hypothesis,
 but is also not accepted; see
 `vuc/docs/2026-10-11-asm-output-tab-constants-investigation.md`.
+The next source-level probes for `InstructionList::AddLineComment()` and
+the 513-bucket hash-scope STL copy helper are also non-exact. Their
+original-size comparisons, relocation evidence, and bounded compiler
+experiments are preserved in
+`vuc/docs/2026-10-12-line-comment-and-scope-copy-batch.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

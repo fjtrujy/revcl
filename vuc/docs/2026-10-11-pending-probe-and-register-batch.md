@@ -101,6 +101,32 @@ under `vuc/probes` and none enters the accepted `vuc/src` or
 `vuc/config/exact_candidates.json` set. A non-exact match is a
 failure of the mandatory byte-exact acceptance contract.
 
+## Continuation: reconstructed translation units and pointer arithmetic
+
+The follow-up `evaluate_script_error_tu.py` combines the accepted
+`script_lex()` function and the experimental `script_error()` using
+both source-definition orders. With the January 2004 compiler and
+`-O2 -frename-registers -falign-jumps=1`, both combined units
+retain the already accepted **39/39** for `script_lex()`, while
+`script_error()` remains **155/161** with exactly the same six
+register-encoding differences. Omitting `-frename-registers` changes
+their function lengths (38 and 160) and is non-exact. This rules out
+that specific source neighbor/order as the cause of the diagnostic
+register discrepancy.
+
+`evaluate_align_string_shapes.py` tests ten source-level variants
+of the original 145-byte `AlignString()` function: pointer offset
+recomputation, loop order, local pointer lifetimes and conventional
+`for` / `while` forms. None reproduces the original function
+length; the best original-shaped 142-byte reconstruction remains
+experimental. The original's final `strcat()` pointer offset is
+materially different from the compiler's optimized form, so an
+ordinary rewrite alone did not reproduce its register allocation.
+
+Both follow-up scripts compile scratch objects in the Linux VM,
+resolve actual original symbols and reject partial matches. They do
+not alter the exact accepted source set.
+
 ## Reproduction
 
 ```sh
@@ -119,6 +145,8 @@ limactl shell revcl-oracle -- python3 \
 Additional source and flag sweeps are reproducible using:
 `evaluate_value_mul_source_context.py`,
 `evaluate_value_mul_flag_pairs.py`,
+`evaluate_script_error_tu.py`,
+`evaluate_align_string_shapes.py`,
 `evaluate_script_error_source_order.py` and
 `evaluate_script_error_flags.py`.
 
