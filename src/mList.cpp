@@ -58,6 +58,15 @@ mNode *mList::func_0804b234(const char *name)
     return node;
 }
 
+bool mNode::func_0804b75c()
+{
+    if (unk_14)
+        delete[] unk_14;
+    unk_14 = 0;
+    unk_0c = 0;
+    return true;
+}
+
 mNode *mList::func_0804b284(const char *name)
 {
     mNode *node = unk_0c;
@@ -216,15 +225,6 @@ bool mNode::setName(const char *name)
             return false;
         mstrcpy(unk_14, name);
     }
-    return true;
-}
-
-bool mNode::func_0804b75c()
-{
-    if (unk_14)
-        delete[] unk_14;
-    unk_14 = 0;
-    unk_0c = 0;
     return true;
 }
 
