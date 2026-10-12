@@ -141,6 +141,21 @@ limactl shell revcl-oracle -- python3 \
   --compiler /tmp/vuc-binutils215/g++-jan25-as215 \
   --out /tmp/vuc-binutils215/data-typeinfo-171-oct12
 ```
+The additional **uninitialized source-layout gate** verifies 12/12
+canonical ELF `.bss` symbol declarations (18,437 bytes of allocated
+storage) against historically compiled C++ source. Unlike initialized
+data, `.bss` is `SHT_NOBITS` and has **zero file-backed bytes**:
+these declarations must never inflate byte-exact data or function
+coverage. Original linked allocation addresses and whole-ELF
+identity remain unverified. See
+`vuc/docs/2026-10-12-bss-source-declarations.md` and run:
+
+```sh
+limactl shell revcl-oracle -- python3 \
+  /path/to/revcl/vuc/scripts/match_bss_candidates.py \
+  --compiler /tmp/vuc-binutils215/g++-jan25-as215 \
+  --out /tmp/vuc-binutils215/bss-oct12-confirm
+```
 The original `StdAfx.cpp` startup wrapper is now byte-exact. The
 matcher recognizes GCC 3.3's source-file-keyed random suffix without
 relaxing the original symbol or relocation checks. See
