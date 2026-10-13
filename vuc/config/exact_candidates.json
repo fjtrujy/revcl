@@ -185,6 +185,8 @@
   "vuc/config/lexer_yylex_startup_oct13_probe.json",
   "vuc/config/type_is_assignable_probe.json",
   "vuc/config/yy_load_buffer_probe.json",
+  "vuc/config/yy_try_nul_trans_oct13_probe.json",
+  "vuc/config/yy_get_previous_state_oct13_probe.json",
   "vuc/config/ml_string_table_get_probe.json",
   "vuc/config/instruction_add_format_probe.json",
   "vuc/config/instruction_addb_format_exact_oct13_probe.json",

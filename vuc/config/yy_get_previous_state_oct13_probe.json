@@ -1,0 +1,16 @@
+{
+  "function": "_ZN11yyFlexLexer21yy_get_previous_stateEv",
+  "address": "0x080613f0",
+  "size": 205,
+  "source": "vuc/src/YyGetPreviousState.cpp",
+  "flags": ["-O2", "-frename-registers"],
+  "relocations": {
+    "yy_accept": "0x08074f40",
+    "yy_ec": "0x08075060",
+    "yy_base": "0x08075540",
+    "yy_def": "0x08075660",
+    "yy_chk": "0x080759a0",
+    "yy_nxt": "0x08075780",
+    "yy_meta": "0x08075460"
+  }
+}

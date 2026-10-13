@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 205)
+        self.assertEqual(len(records), 207)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 190)
+        self.assertEqual(len(exact_configs), 192)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -177,6 +177,45 @@ class CandidateSuiteTests(unittest.TestCase):
         source = suite.within_repo(record["source"]).read_text()
         self.assertLess(source.index("bool Value::TypeConvert("),
                         source.index("bool Value::TypeConvertForce("))
+
+    def test_flex_nul_transition_preserves_signed_table_and_original_relocations(self):
+        name = "vuc/config/yy_try_nul_trans_oct13_probe.json"
+        exact = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertIn(name, exact)
+        record = json.loads(suite.within_repo(name).read_text())
+        self.assertEqual(record["address"], "0x080614c0")
+        self.assertEqual(record["size"], 161)
+        self.assertEqual(record["source"], "vuc/src/YyTryNulTrans.cpp")
+        self.assertEqual(record["flags"], ["-O2", "-frename-registers"])
+        self.assertEqual(record["relocations"], {
+            "yy_accept": "0x08074f40", "yy_base": "0x08075540",
+            "yy_def": "0x08075660", "yy_chk": "0x080759a0",
+            "yy_nxt": "0x08075780", "yy_meta": "0x08075460",
+        })
+        source = suite.within_repo(record["source"]).read_text()
+        self.assertIn("extern const short yy_base[];", source)
+        self.assertNotIn("extern const unsigned short yy_base[];", source)
+        self.assertIn("while (yy_chk[yy_base[yy_current_state] + yy_c]", source)
+
+    def test_flex_previous_state_uses_signed_tables_and_original_load_order(self):
+        name = "vuc/config/yy_get_previous_state_oct13_probe.json"
+        exact = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertIn(name, exact)
+        record = json.loads(suite.within_repo(name).read_text())
+        self.assertEqual(record["address"], "0x080613f0")
+        self.assertEqual(record["size"], 205)
+        self.assertEqual(record["source"], "vuc/src/YyGetPreviousState.cpp")
+        self.assertEqual(record["flags"], ["-O2", "-frename-registers"])
+        self.assertEqual(record["relocations"], {
+            "yy_accept": "0x08074f40", "yy_ec": "0x08075060",
+            "yy_base": "0x08075540", "yy_def": "0x08075660",
+            "yy_chk": "0x080759a0", "yy_nxt": "0x08075780",
+            "yy_meta": "0x08075460",
+        })
+        source = suite.within_repo(record["source"]).read_text()
+        self.assertIn("extern const short yy_base[];", source)
+        self.assertLess(source.index("unsigned char yy_ch = *yy_cp;"),
+                        source.index("unsigned char yy_c = 1;"))
 
     def test_currfile_wrapper_has_real_diagnostic_source_context(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

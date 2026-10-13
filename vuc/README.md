@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **190 independently verified exact function-symbol records**
-covering 13144/13144 instruction bytes, including the original relocation for
+The strict gate now checks **192 independently verified exact function-symbol records**
+covering 13510/13510 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -438,6 +438,17 @@ its genuine preceding TypeConvert definition. Two separate GCC 3.3.3
 build-date controls and typed arena records still leave `AlignString`
 at **143/145** and the `Instruction` destructor at **45/46**.
 See `vuc/docs/2026-10-13-forced-conversion-and-near-exact-controls.md`.
+The recovered Flex NUL transition `yyFlexLexer::yy_try_NUL_trans(int)`
+is now **161/161 byte-exact** with all eight original table relocations.
+The key evidence is the original signed `short yy_base[]` table, which
+restores the three missing sign-extension bytes without code forcing.
+See `vuc/docs/2026-10-13-flex-nul-transition-byte-exact.md`.
+The neighboring `yyFlexLexer::yy_get_previous_state()` is also
+**205/205 byte-exact** with all nine original table relocations.
+Caching the input character in a genuine local variable before the
+NUL initialization recovers seven GCC-scheduled bytes; the same signed
+scanner tables independently explain both functions. See
+`vuc/docs/2026-10-13-flex-previous-state-byte-exact.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

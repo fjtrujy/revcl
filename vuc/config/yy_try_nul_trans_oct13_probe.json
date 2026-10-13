@@ -1,0 +1,15 @@
+{
+  "function": "_ZN11yyFlexLexer16yy_try_NUL_transEi",
+  "address": "0x080614c0",
+  "size": 161,
+  "source": "vuc/src/YyTryNulTrans.cpp",
+  "flags": ["-O2", "-frename-registers"],
+  "relocations": {
+    "yy_accept": "0x08074f40",
+    "yy_base": "0x08075540",
+    "yy_def": "0x08075660",
+    "yy_chk": "0x080759a0",
+    "yy_nxt": "0x08075780",
+    "yy_meta": "0x08075460"
+  }
+}
