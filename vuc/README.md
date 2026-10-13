@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **192 independently verified exact function-symbol records**
-covering 13510/13510 instruction bytes, including the original relocation for
+The strict gate now checks **194 independently verified exact function-symbol records**
+covering 13847/13847 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -449,6 +449,11 @@ Caching the input character in a genuine local variable before the
 NUL initialization recovers seven GCC-scheduled bytes; the same signed
 scanner tables independently explain both functions. See
 `vuc/docs/2026-10-13-flex-previous-state-byte-exact.md`.
+Two additional genuine Flex buffer methods are now exact:
+`yyFlexLexer::yyinput()` **170/170** through the original
+`yyrestart`/EOF switch fallthrough, and `yyFlexLexer::yyunput()`
+**167/167** with its authenticated original 32-byte fatal-error
+literal. See `vuc/docs/2026-10-13-flex-input-unput-byte-exact.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

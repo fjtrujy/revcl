@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 207)
+        self.assertEqual(len(records), 209)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 192)
+        self.assertEqual(len(exact_configs), 194)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -216,6 +216,39 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("extern const short yy_base[];", source)
         self.assertLess(source.index("unsigned char yy_ch = *yy_cp;"),
                         source.index("unsigned char yy_c = 1;"))
+
+    def test_flex_yyinput_exact_original_eof_fallthrough(self):
+        name = "vuc/config/yyinput_reconstruct_oct13_probe.json"
+        exact = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertIn(name, exact)
+        config = json.loads(suite.within_repo(name).read_text())
+        self.assertEqual(config["address"], "0x08061620")
+        self.assertEqual(config["size"], 170)
+        self.assertEqual(config["flags"], ["-O2", "-frename-registers"])
+        self.assertEqual(config["source"], "vuc/src/YyInput.cpp")
+        self.assertEqual(config["relocations"], {
+            "_ZN11yyFlexLexer18yy_get_next_bufferEv": "0x080611c0",
+        })
+        src = suite.within_repo(config["source"]).read_text()
+        self.assertIn("case 2:\n                yyrestart(yyin);\n            case 1:", src)
+        self.assertIn("int offset = yy_c_buf_p - yytext_ptr;", src)
+
+    def test_flex_yyunput_exact_buffer_shift_and_error_literal(self):
+        name = "vuc/config/yyunput_reconstruct_oct13_probe.json"
+        exact = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertIn(name, exact)
+        config = json.loads(suite.within_repo(name).read_text())
+        self.assertEqual(config["address"], "0x08061570")
+        self.assertEqual(config["size"], 167)
+        self.assertEqual(config["flags"], ["-O2", "-frename-registers"])
+        self.assertEqual(config["source"], "vuc/src/YyUnput.cpp")
+        self.assertEqual(config["relocations"], {})
+        self.assertEqual(config["relocation_literals"][".rodata"], [
+            {"offset": 0, "size": 32, "address": "0x08074dc0"},
+        ])
+        src = suite.within_repo(config["source"]).read_text()
+        self.assertIn("*--dest = *--source;", src)
+        self.assertIn('LexerError("flex scanner push-back overflow")', src)
 
     def test_currfile_wrapper_has_real_diagnostic_source_context(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

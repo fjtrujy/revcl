@@ -162,8 +162,8 @@ address	size	status	manifest	candidate_source	symbol
 0x080611c0	550	UNRESOLVED	-	-	_ZN11yyFlexLexer18yy_get_next_bufferEv
 0x080613f0	205	EXACT	vuc/config/yy_get_previous_state_oct13_probe.json	vuc/src/YyGetPreviousState.cpp	_ZN11yyFlexLexer21yy_get_previous_stateEv
 0x080614c0	161	EXACT	vuc/config/yy_try_nul_trans_oct13_probe.json	vuc/src/YyTryNulTrans.cpp	_ZN11yyFlexLexer16yy_try_NUL_transEi
-0x08061570	167	UNRESOLVED	-	-	_ZN11yyFlexLexer7yyunputEiPc
-0x08061620	170	UNRESOLVED	-	-	_ZN11yyFlexLexer7yyinputEv
+0x08061570	167	EXACT	vuc/config/yyunput_reconstruct_oct13_probe.json	vuc/src/YyUnput.cpp	_ZN11yyFlexLexer7yyunputEiPc
+0x08061620	170	EXACT	vuc/config/yyinput_reconstruct_oct13_probe.json	vuc/src/YyInput.cpp	_ZN11yyFlexLexer7yyinputEv
 0x080616d0	93	EXACT	vuc/config/yy_restart_probe.json	vuc/src/FlexLexerRestart.cpp	_ZN11yyFlexLexer9yyrestartEPSi
 0x08061730	75	EXACT	vuc/config/yy_switch_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer19yy_switch_to_bufferEP15yy_buffer_state
 0x08061780	39	EXACT	vuc/config/yy_load_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer20yy_load_buffer_stateEv

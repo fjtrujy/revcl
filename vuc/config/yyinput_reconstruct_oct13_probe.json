@@ -1,0 +1,10 @@
+{
+  "function": "_ZN11yyFlexLexer7yyinputEv",
+  "address": "0x08061620",
+  "size": 170,
+  "source": "vuc/src/YyInput.cpp",
+  "flags": ["-O2", "-frename-registers"],
+  "relocations": {
+    "_ZN11yyFlexLexer18yy_get_next_bufferEv": "0x080611c0"
+  }
+}

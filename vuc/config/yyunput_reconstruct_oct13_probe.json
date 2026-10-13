@@ -1,0 +1,13 @@
+{
+  "function": "_ZN11yyFlexLexer7yyunputEiPc",
+  "address": "0x08061570",
+  "size": 167,
+  "source": "vuc/src/YyUnput.cpp",
+  "flags": ["-O2", "-frename-registers"],
+  "relocations": {},
+  "relocation_literals": {
+    ".rodata": [
+      {"offset": 0, "size": 32, "address": "0x08074dc0"}
+    ]
+  }
+}
