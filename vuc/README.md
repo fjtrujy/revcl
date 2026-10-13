@@ -319,6 +319,9 @@ formatted-instruction insertion, default string-constructor source unit,
 and `Value` addition probes also remain non-exact. See
 `vuc/docs/2026-10-12-stream-and-constructor-probes.md` for bounded
 compiler comparisons and original-symbol evidence.
+An additional genuine `Instruction`-method/lifecycle combined-unit
+control preserves four exact neighbors but leaves `__tcf_1` at 45/46;
+see `vuc/docs/2026-10-13-instruction-unit-follow-up.md`.
 After rebasing onto the latest VCL `main`, the transferable GCC source-
 reconstruction techniques were reviewed with explicit GCC 3.3 caveats.
 The VUC compiler's `-da` RTL dumps and a verified register-renaming
