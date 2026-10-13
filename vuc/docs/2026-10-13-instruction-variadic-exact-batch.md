@@ -67,6 +67,18 @@ function and is not promoted. The bounded genuine C++ branch-form
 script `vuc/probes/evaluate_instruction_line_context_oct13.py` is
 preserved for continued investigation.
 
+An additional **54-configuration** historical GCC 3.3.3 alignment
+matrix in `vuc/probes/evaluate_instruction_line_alignment_oct13.py`
+tests 2-, 4- and 8-byte jump alignment, 1-, 2- and 4-byte label/loop
+alignment, and normal versus register-renaming builds. The best
+authenticated comparison remains **147/162** with four-byte jumps,
+one-byte labels and register renaming. Other options either move more
+instructions or produce an incompatible original-function length
+(most notably 170 bytes with eight-byte jump alignment). This
+reinforces that exactness probably depends on the original control-flow
+block frequencies or translation-unit context, not on arbitrary
+padding/alignment flags. The experimental candidate remains unaccepted.
+
 ## Acceptance
 
 With the other three complete application functions in this batch,
