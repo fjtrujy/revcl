@@ -190,7 +190,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806a110	66	EXACT	vuc/config/check_expr_list_probe.json	vuc/src/CheckExprList.cpp	_Z5CheckIP7ASTExprEvR11ASTNodeListIT_E
 0x0806a160	45	EXACT	vuc/config/check_list_stmt_exact_probe.json	vuc/src/CheckLists.cpp	_Z5CheckIP7ASTStmtEvR11ASTNodeListIT_E
 0x0806a190	45	EXACT	vuc/config/check_list_decl_exact_probe.json	vuc/src/CheckLists.cpp	_Z5CheckIP7ASTDeclEvR11ASTNodeListIT_E
-0x0806a1c0	151	UNRESOLVED	-	-	_ZNK4Type12IsAssignableERKS_b
+0x0806a1c0	151	EXACT	vuc/config/type_is_assignable_probe.json	vuc/src/TypeAssignable.cpp	_ZNK4Type12IsAssignableERKS_b
 0x0806a260	66	EXACT	vuc/config/iostream_static_0806a260_probe.json	vuc/src/StdAfx.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806a2b0	16	EXACT	vuc/config/iostream_cleanup_0806a2b0_probe.json	vuc/src/StdAfx.cpp	__tcf_0
 0x0806a2c0	31	EXACT	vuc/config/stdafx_global_wrapper_probe.json	vuc/src/StdAfx.cpp	_GLOBAL__I_StdAfx.cppxtsrAa

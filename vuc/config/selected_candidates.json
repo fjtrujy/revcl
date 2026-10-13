@@ -188,5 +188,6 @@
   "vuc/config/inline_asm_startup_context_oct13_probe.json",
   "vuc/config/ir2asm_broadcast_startup_oct13_probe.json",
   "vuc/config/ir2asm_binexpr_startup_oct13_probe.json",
-  "vuc/config/lexer_yylex_startup_oct13_probe.json"
+  "vuc/config/lexer_yylex_startup_oct13_probe.json",
+  "vuc/config/type_is_assignable_probe.json"
 ]

@@ -1,0 +1,12 @@
+{
+  "function": "_ZNK4Type12IsAssignableERKS_b",
+  "address": "0x0806a1c0",
+  "size": 151,
+  "source": "vuc/src/TypeAssignable.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=4"
+  ],
+  "relocations": {}
+}

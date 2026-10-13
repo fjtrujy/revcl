@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 190)
+        self.assertEqual(len(records), 191)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 182)
+        self.assertEqual(len(exact_configs), 183)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -210,6 +210,21 @@ class CandidateSuiteTests(unittest.TestCase):
             "vuc/config/lexer_yylex_startup_oct13_probe.json").read_text())
         self.assertNotIn("-frename-registers", scanner["flags"])
         self.assertNotIn("vuc/config/iostream_global_script_debug_probe.json", accepted)
+
+    def test_type_is_assignable_exact_uses_original_branch_shape(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        manifest = "vuc/config/type_is_assignable_probe.json"
+        self.assertIn(manifest, accepted)
+        config = json.loads(suite.within_repo(manifest).read_text())
+        self.assertEqual(config["function"], "_ZNK4Type12IsAssignableERKS_b")
+        self.assertEqual(config["address"], "0x0806a1c0")
+        self.assertEqual(config["size"], 151)
+        self.assertEqual(config["source"], "vuc/src/TypeAssignable.cpp")
+        self.assertIn("-falign-jumps=4", config["flags"])
+        self.assertEqual(config["relocations"], {})
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("(other.flags & flags) == flags", source)
+        self.assertIn("return false;", source)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
