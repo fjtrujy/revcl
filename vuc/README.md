@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **183 independently verified exact function-symbol records**
-covering 12138/12138 instruction bytes, including the original relocation for
+The strict gate now checks **185 independently verified exact function-symbol records**
+covering 12283/12283 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -169,6 +169,12 @@ The next milestone reconstructs a full **151/151-byte**
 `Type::IsAssignable(Type const&, bool) const` application method using
 normal nested C++ compatibility checks and GCC 3.3.3 four-byte jump
 alignment. See `vuc/docs/2026-10-13-type-isassignable-exact-batch.md`.
+The same application-code batch reconstructs lexer buffer loading
+**39/39** by recovering the actual five-field assignment order, and
+`MLGameStringTable::Get()` **106/106** by retaining real source-unit
+predecessors and resolving its destructor callback through a genuine
+named `.text.__tcf_0` relocation. See
+`vuc/docs/2026-10-13-lexer-load-and-string-table-exact.md`.
 
 An independent **named-data acceptance gate** now checks
 **244/244 original named initialized-data, RTTI, vtable and ABI objects,
@@ -232,8 +238,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 183 EXACT,
-8 EXPERIMENTAL and 107 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 185 EXACT,
+6 EXPERIMENTAL and 107 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.

@@ -2,15 +2,16 @@
   "function": "_ZN17MLGameStringTable3GetEv",
   "address": "0x08071810",
   "size": 106,
-  "source": "vuc/probes/ml_string_table_get.cpp",
+  "source": "vuc/src/MLGameStringTableUnit.cpp",
   "flags": [
     "-O2",
     "-frename-registers",
-    "-fuse-cxa-atexit"
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
   ],
   "relocations": {
     "__dso_handle": "0x08077004",
-    ".text": "0x08071d90",
+    ".text.__tcf_0": "0x08071e00",
     "__cxa_atexit": "0x0804972c"
   },
   "relocation_objects": {

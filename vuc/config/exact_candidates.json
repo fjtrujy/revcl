@@ -181,5 +181,7 @@
   "vuc/config/ir2asm_binexpr_startup_oct13_probe.json",
   "vuc/config/script_debug_real_parser_oct13_probe.json",
   "vuc/config/lexer_yylex_startup_oct13_probe.json",
-  "vuc/config/type_is_assignable_probe.json"
+  "vuc/config/type_is_assignable_probe.json",
+  "vuc/config/yy_load_buffer_probe.json",
+  "vuc/config/ml_string_table_get_probe.json"
 ]

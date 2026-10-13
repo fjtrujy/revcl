@@ -24,7 +24,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 183)
+        self.assertEqual(len(exact_configs), 185)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -46,11 +46,11 @@ class CandidateSuiteTests(unittest.TestCase):
                     config = json.loads(suite.within_repo(config_name).read_text())
                     self.assertIn(config["source"], tracked)
 
-    def test_singleton_cleanup_exact_does_not_promote_its_nonexact_getter(self):
+    def test_string_singleton_getter_and_cleanup_are_both_exact(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
         exploratory = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         self.assertIn("vuc/config/ml_game_string_table_cleanup_probe.json", accepted)
-        self.assertNotIn("vuc/config/ml_string_table_get_probe.json", accepted)
+        self.assertIn("vuc/config/ml_string_table_get_probe.json", accepted)
         self.assertIn("vuc/config/ml_string_table_get_probe.json", exploratory)
 
     def test_printer_unit_exactness_excludes_partial_ast_call(self):
@@ -149,13 +149,17 @@ class CandidateSuiteTests(unittest.TestCase):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
         exploratory = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         for name in ("symboltable_enter_oct13_probe.json",
-                     "yy_load_full_unit_oct14_probe.json",
                      "instruction_arena_cleanup_unit_oct14_probe.json"):
             path = "vuc/config/" + name
             self.assertIn(path, exploratory)
             self.assertNotIn(path, accepted)
             self.assertTrue(json.loads(suite.within_repo(path).read_text())["source"].startswith(
                 "vuc/probes/"))
+
+        historical = "vuc/config/yy_load_full_unit_oct14_probe.json"
+        self.assertNotIn(historical, exploratory)
+        self.assertNotIn(historical, accepted)
+        self.assertTrue(suite.within_repo(historical).is_file())
 
     def test_semant_global_wrapper_preserves_exact_call_and_entrypoint(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
@@ -225,6 +229,36 @@ class CandidateSuiteTests(unittest.TestCase):
         source = suite.within_repo(config["source"]).read_text()
         self.assertIn("(other.flags & flags) == flags", source)
         self.assertIn("return false;", source)
+
+    def test_lexer_buffer_load_uses_original_store_order(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        path = "vuc/config/yy_load_buffer_probe.json"
+        self.assertIn(path, accepted)
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x08061780")
+        self.assertEqual(config["size"], 39)
+        self.assertEqual(config["source"], "vuc/src/FlexLexer.cpp")
+        self.assertEqual(config["relocations"], {})
+        source = suite.within_repo(config["source"]).read_text()
+        assignments = ["yy_n_chars_ = current_->yy_n_chars;",
+                       "yy_c_buf_p_ = current_->yy_buf_pos;",
+                       "yytext_ptr_ = yy_c_buf_p_;",
+                       "input_ = current_->file;",
+                       "yy_hold_char_ = *yy_c_buf_p_;"]
+        self.assertEqual(sorted(source.index(a) for a in assignments),
+                         [source.index(a) for a in assignments])
+
+    def test_string_table_get_real_destructor_relocation(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        path = "vuc/config/ml_string_table_get_probe.json"
+        self.assertIn(path, accepted)
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x08071810")
+        self.assertEqual(config["size"], 106)
+        self.assertEqual(config["source"], "vuc/src/MLGameStringTableUnit.cpp")
+        self.assertIn("-ffunction-sections", config["flags"])
+        self.assertEqual(config["relocations"][".text.__tcf_0"], "0x08071e00")
+        self.assertNotIn(".text", config["relocations"])
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

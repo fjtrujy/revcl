@@ -21,8 +21,8 @@ class CoverageTests(unittest.TestCase):
 
     def test_every_original_function_is_accounted_for(self):
         self.assertEqual(len(self.rows), 298)
-        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 183)
-        self.assertEqual(sum(r[2] == "EXPERIMENTAL" for r in self.rows), 8)
+        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 185)
+        self.assertEqual(sum(r[2] == "EXPERIMENTAL" for r in self.rows), 6)
         self.assertEqual(sum(r[2] == "UNRESOLVED" for r in self.rows), 107)
         self.assertEqual(coverage.OUTPUT.read_text(), coverage.table(self.rows))
 

@@ -103,3 +103,12 @@ void yyFlexLexer::yy_delete_buffer(yy_buffer_state *state)
     if (state->yy_is_our_buffer) std::free(state->buffer);
     std::free(state);
 }
+
+void yyFlexLexer::yy_load_buffer_state()
+{
+    yy_n_chars_ = current_->yy_n_chars;
+    yy_c_buf_p_ = current_->yy_buf_pos;
+    yytext_ptr_ = yy_c_buf_p_;
+    input_ = current_->file;
+    yy_hold_char_ = *yy_c_buf_p_;
+}

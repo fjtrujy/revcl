@@ -2,7 +2,7 @@
   "function": "_ZN11yyFlexLexer20yy_load_buffer_stateEv",
   "address": "0x08061780",
   "size": 39,
-  "source": "vuc/probes/yy_load_buffer.cpp",
+  "source": "vuc/src/FlexLexer.cpp",
   "flags": [
     "-O2",
     "-frename-registers"
