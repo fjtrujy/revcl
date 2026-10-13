@@ -17,7 +17,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 199)
+        self.assertEqual(len(records), 200)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -319,15 +319,51 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(config["relocations"]["strstr"], "0x0804981c")
         self.assertEqual(config["relocations"]["constantsTabStop"], "0x0808aac4")
         literals = config["relocation_literals"][".rodata"]
-        self.assertEqual([l["size"] for l in literals], [92, 19, 8, 5])
-        self.assertEqual(sum(l["size"] for l in literals), 124)
+        self.assertEqual([l["size"] for l in literals], [92, 19, 3, 8, 5])
+        self.assertEqual(sum(l["size"] for l in literals), 127)
         self.assertEqual([l["address"] for l in literals],
-                         ["0x080720a0", "0x080721c4", "0x080721f0", "0x080721fb"])
+                         ["0x080720a0", "0x080721c4", "0x080721d7",
+                          "0x080721f0", "0x080721fb"])
         source = suite.within_repo(config["source"]).read_text()
         names = ("void AsmOutput_WritePrologue", "void AsmOutput_WriteEpilogue",
-                 "char *AlignString", "void AsmOutput_TabConstants")
+                 "char *AlignString", "char *AlignConstant",
+                 "void AsmOutput_TabConstants")
         self.assertEqual(sorted(source.index(name) for name in names),
                          [source.index(name) for name in names])
+
+    def test_align_string_strictly_experimental_with_real_unit_literals(self):
+        selected = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        path = "vuc/config/align_string_probe.json"
+        self.assertIn(path, selected)
+        self.assertNotIn(path, accepted)
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x08049b80")
+        self.assertEqual(config["size"], 145)
+        self.assertEqual(config["source"], "vuc/probes/align_string_real_unit_oct13.cpp")
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=4"])
+        self.assertIn('#include "../src/AsmOutputUnit.cpp"',
+                      suite.within_repo(config["source"]).read_text())
+        self.assertEqual(config["relocation_objects"][".bss"]
+                         ["_ZZ11AlignStringPKciE9formatted"], "0x0808aae0")
+        self.assertEqual(sum(x["size"] for x in config["relocation_literals"]
+                             [".rodata"]), 127)
+
+    def test_align_constant_exact_shares_real_asm_source_unit(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        path = "vuc/config/align_constant_exact_probe.json"
+        self.assertIn(path, accepted)
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x08049c20")
+        self.assertEqual(config["size"], 69)
+        self.assertEqual(config["source"], "vuc/src/AsmOutputUnit.cpp")
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=4"])
+        self.assertNotIn(".rodata", config["relocations"])
+        self.assertEqual(len(config["relocations"]), 3)
+        self.assertEqual(sum(x["size"] for x in config["relocation_literals"]
+                             [".rodata"]), 127)
 
     def test_new_partial_controls_remain_outside_exact_manifest(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

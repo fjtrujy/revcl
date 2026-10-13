@@ -22,14 +22,27 @@ char *AlignString(const char *text, int alignment)
     if (space) {
         int offset = space - formatted;
         if (offset < alignment) {
-            int padding = alignment - offset;
-            for (int i = 0; i < padding; ++i)
+            int i;
+            for (i = 0; i < alignment - offset; ++i)
                 space[i] = ' ';
-            space[padding] = 0;
-            strcat(space, text + offset);
+            space[i] = 0;
+            strcat(space, text + (space - formatted));
         }
     }
     return formatted;
+}
+
+extern int constantsTabStop;
+
+char *AlignConstant(const char *text)
+{
+    char *aligned = AlignString(text, constantsTabStop);
+    char *marker = strstr(aligned, "0x");
+    if (marker) {
+        marker[0] = 'H';
+        marker[1] = '\'';
+    }
+    return aligned;
 }
 
 #include <cstring>

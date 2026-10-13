@@ -183,12 +183,20 @@ with all relocations and literal bytes verified. See
 `vuc/docs/2026-10-13-instruction-variadic-exact-batch.md`.
 The authentic AsmOutput compilation-unit predecessor order now makes
 `AsmOutput_TabConstants(InstructionList&)` **127/127**, with seven
-original relocations and **124 verified source-unit string-literal
-bytes**; standalone code was 118/127. It remains a per-function claim,
+original relocations and **127 verified source-unit string-literal
+bytes** including the genuine `AlignConstant` method. `AlignConstant`
+also remains **69/69** in the same source object, and `AlignString` is
+tracked as **143/145** with eight relocations, rather than being promoted.
+Standalone TabConstants code was 118/127. These remain per-function claims,
 not a complete exact AsmOutput.cpp or linked ELF. The real-context
 controls also record a 131/139 Flex buffer allocator, a 155/161 parser
 diagnostic, and a 61/77 accumulator check as experimental functions.
 See `vuc/docs/2026-10-13-asmoutput-tabconstants-exact-and-bounded-controls.md`.
+The latest rebase incorporates `main` at `cd35047` (VCL `Operand::Emit`
+reconstruction), including its GCC 3.2.2 lexical switch-case order and
+integer-predicate evidence. Bounded VUC GCC 3.3.3 controls did not
+reproduce those techniques unchanged. See
+`vuc/docs/2026-10-13-operand-main-rebase-and-asm-source-unit.md`.
 
 An independent **named-data acceptance gate** now checks
 **244/244 original named initialized-data, RTTI, vtable and ABI objects,
@@ -253,7 +261,7 @@ locally scoped text-function records. Regenerate these with
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
 `python3 vuc/scripts/coverage.py --write` (currently 188 EXACT,
-11 EXPERIMENTAL and 99 UNRESOLVED). The complete original
+12 EXPERIMENTAL and 98 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.

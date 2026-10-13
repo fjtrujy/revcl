@@ -197,5 +197,6 @@
   "vuc/config/asm_output_tab_constants_probe.json",
   "vuc/config/script_error_probe.json",
   "vuc/config/yy_create_buffer_probe.json",
-  "vuc/config/ir_accumulatorable_probe.json"
+  "vuc/config/ir_accumulatorable_probe.json",
+  "vuc/config/align_string_probe.json"
 ]

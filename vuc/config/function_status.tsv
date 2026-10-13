@@ -6,8 +6,8 @@ address	size	status	manifest	candidate_source	symbol
 0x08049af0	66	EXACT	vuc/config/iostream_static_constants_probe.json	vuc/src/IostreamGlobal_constantsTabStop.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08049b40	30	EXPERIMENTAL	vuc/config/asm_output_jan25_probe.json	vuc/probes/asm_output_hypothesis.cpp	_Z23AsmOutput_WritePrologueRSt14basic_ofstreamIcSt11char_traitsIcEE
 0x08049b60	30	EXACT	vuc/config/asm_output_epilogue_probe.json	vuc/src/AsmOutput.cpp	_Z23AsmOutput_WriteEpilogueRSt14basic_ofstreamIcSt11char_traitsIcEE
-0x08049b80	145	UNRESOLVED	-	-	_Z11AlignStringPKci
-0x08049c20	69	EXACT	vuc/config/align_constant_exact_probe.json	vuc/src/AlignConstant.cpp	_Z13AlignConstantPKc
+0x08049b80	145	EXPERIMENTAL	vuc/config/align_string_probe.json	vuc/probes/align_string_real_unit_oct13.cpp	_Z11AlignStringPKci
+0x08049c20	69	EXACT	vuc/config/align_constant_exact_probe.json	vuc/src/AsmOutputUnit.cpp	_Z13AlignConstantPKc
 0x08049c70	382	UNRESOLVED	-	-	_Z26AsmOutput_PrintInstructionP11InstructionRSt14basic_ofstreamIcSt11char_traitsIcEE
 0x08049df0	127	EXACT	vuc/config/asm_output_tab_constants_probe.json	vuc/src/AsmOutputUnit.cpp	_Z22AsmOutput_TabConstantsR15InstructionList
 0x08049e70	2168	UNRESOLVED	-	-	_Z14AsmOutput_EmitR15InstructionList
