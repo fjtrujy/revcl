@@ -179,5 +179,8 @@
   "vuc/config/canonize2_context_exact_oct13.json",
   "vuc/config/value_global_genuine_context_oct13.json",
   "vuc/config/iostream_global_symboltable_oct13_probe.json",
-  "vuc/config/iostream_listfile_real_oct13_probe.json"
+  "vuc/config/iostream_listfile_real_oct13_probe.json",
+  "vuc/config/symboltable_enter_oct13_probe.json",
+  "vuc/config/yy_load_full_unit_oct14_probe.json",
+  "vuc/config/instruction_arena_cleanup_unit_oct14_probe.json"
 ]

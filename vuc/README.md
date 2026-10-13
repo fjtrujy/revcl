@@ -142,6 +142,10 @@ original `ListFile::Generate` global startup wrapper at 31/31 bytes,
 with independently verified neighboring ListFile methods. The long
 `Generate` method itself remains partial; see
 `vuc/docs/2026-10-13-listfile-generate-source-unit.md`.
+Near-exact `Printer` function-call printing, `Instruction` arena cleanup,
+lexer buffer loading, and hash-node insertion now have bounded,
+source-level negative controls; see
+`vuc/docs/2026-10-13-printer-instruction-lexer-controls.md`.
 The failed original-era AST `matchStack` container alternatives and the
 unfixed `currFileName` wrapper after a real entry-point neighbor are
 retained as reproducible controls in
@@ -210,7 +214,7 @@ locally scoped text-function records. Regenerate these with
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
 `python3 vuc/scripts/coverage.py --write` (currently 175 EXACT,
-6 EXPERIMENTAL and 117 UNRESOLVED). The complete original
+9 EXPERIMENTAL and 114 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.

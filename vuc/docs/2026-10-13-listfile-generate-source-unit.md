@@ -50,8 +50,8 @@ that development hypothesis without fabrication or binary editing.
 ## Remaining constraints
 
 This increases strict coverage to **175/298 original functions** and
-**11,770/11,770 instruction bytes**, with six experimental and
-117 unresolved function records. No source was inserted solely to
+**11,770/11,770 instruction bytes**. Following the partial-candidate
+batch, nine are experimental and 114 remain unresolved. No source was inserted solely to
 influence instruction bytes: all recovered methods correspond to
 original retained VUC symbols. The complete historical `ListFile`
 algorithm, source headers, linker, and whole-ELF byte identity remain

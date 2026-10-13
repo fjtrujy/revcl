@@ -1,0 +1,13 @@
+{
+ "function":"_ZN11SymbolTable5EnterERK12MLGameStringP16SymbolTableEntry",
+ "address":"0x0806a330","size":185,
+ "source":"vuc/probes/symboltable_enter_oct13.cpp",
+ "flags":["-O2","-frename-registers"],
+ "relocations":{
+   "_Znwj":"0x080499ec",
+   "_ZN9MLHashFunI12MLGameStringE4HashERKS0_":"0x08071990",
+   "_ZN12MLGameStringC1ERKS_":"0x08071770",
+   "_ZdlPv":"0x0804973c",
+   "_Unwind_Resume":"0x0804998c"
+ }
+}

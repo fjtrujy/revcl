@@ -77,6 +77,7 @@ limactl shell revcl-oracle -- python3 \
 ```
 
 This milestone increases the accepted inventory to **174/298 exact
-function records**, **11,739/11,739 instruction bytes**, six
-experimental and 118 unresolved original function records. It does not
+function records**, **11,739/11,739 instruction bytes**. After the
+subsequent bounded partial-candidate batch, the ledger has nine
+experimental and 114 unresolved original function records. It does not
 establish whole-ELF byte-for-byte identity.

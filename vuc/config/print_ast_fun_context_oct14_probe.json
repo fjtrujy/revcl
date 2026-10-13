@@ -1,0 +1,38 @@
+{
+  "function": "_Z5PrintP10ASTFunCallRSo",
+  "address": "0x0805b770",
+  "size": 98,
+  "source": "vuc/src/Printer.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "_Z5PrintP11ASTLValExprRSo": "0x0805c4f0",
+    "_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc": "0x080497bc",
+    "_Z5PrintIP7ASTExprEvR11ASTNodeListIT_ERSoPKc": "0x0805cba0"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {
+        "offset": 0,
+        "size": 2,
+        "address": "0x08075c5d"
+      },
+      {
+        "offset": 2,
+        "size": 3,
+        "address": "0x080730a6"
+      },
+      {
+        "offset": 5,
+        "size": 2,
+        "address": "0x08072803"
+      },
+      {
+        "offset": 7,
+        "size": 2,
+        "address": "0x08073070"
+      }
+    ]
+  }
+}

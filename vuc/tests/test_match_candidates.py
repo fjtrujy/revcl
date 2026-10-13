@@ -17,7 +17,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 181)
+        self.assertEqual(len(records), 184)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -144,6 +144,18 @@ class CandidateSuiteTests(unittest.TestCase):
         for neighbor in ("list_file_lines_probe.json", "listfile_print_probe.json",
                          "listfile_printline_probe.json"):
             self.assertIn("vuc/config/" + neighbor, accepted)
+
+    def test_partial_source_contexts_are_not_exactly_accepted(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        exploratory = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        for name in ("symboltable_enter_oct13_probe.json",
+                     "yy_load_full_unit_oct14_probe.json",
+                     "instruction_arena_cleanup_unit_oct14_probe.json"):
+            path = "vuc/config/" + name
+            self.assertIn(path, exploratory)
+            self.assertNotIn(path, accepted)
+            self.assertTrue(json.loads(suite.within_repo(path).read_text())["source"].startswith(
+                "vuc/probes/"))
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
