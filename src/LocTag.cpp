@@ -5,6 +5,12 @@
 
 char *dupString(const char *s);
 
+bool func_0805082c(LocTag *t)
+{
+    return (t->unk_00 && t->unk_8c) || (!t->unk_00 && !t->unk_8c);
+}
+
+
 char *LocTag::func_0805086c(int *mode, char *in)
 {
     if (!unk_00) {
@@ -61,6 +67,27 @@ char *LocTag::func_0805086c(int *mode, char *in)
             te = 0;
         }
         switch (state) {
+        case 0:
+            if (!isTok) {
+                if (*p == ',') {
+                    if (!last) {
+                        func_0804acb0("unexpected comma encountered\n");
+                        return 0;
+                    }
+                    last->unk_02 = 1;
+                    last = 0;
+                }
+                *out++ = 0;
+                state = 1;
+                te = 0;
+            } else {
+                if (!te) {
+                    func_0804ad38("tokeniser had unexpected null TE\n");
+                    return 0;
+                }
+                *out++ = *p;
+            }
+            break;
         case 1:
             if (te) {
                 func_0804ad38("tokeniser had unexpected non-null te\n");
@@ -86,27 +113,6 @@ char *LocTag::func_0805086c(int *mode, char *in)
                 }
                 last->unk_02 = 1;
                 last = 0;
-            }
-            break;
-        case 0:
-            if (!isTok) {
-                if (*p == ',') {
-                    if (!last) {
-                        func_0804acb0("unexpected comma encountered\n");
-                        return 0;
-                    }
-                    last->unk_02 = 1;
-                    last = 0;
-                }
-                *out++ = 0;
-                state = 1;
-                te = 0;
-            } else {
-                if (!te) {
-                    func_0804ad38("tokeniser had unexpected null TE\n");
-                    return 0;
-                }
-                *out++ = *p;
             }
             break;
         }
