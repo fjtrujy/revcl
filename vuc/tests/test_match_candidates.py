@@ -24,7 +24,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 194)
+        self.assertEqual(len(exact_configs), 195)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -271,6 +271,33 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("while (num_to_read <= 0)", source)
         self.assertIn("std::realloc(old_buf, b->yy_buf_size + 2)", source)
 
+    def test_align_string_promotes_only_authenticated_minimal_source(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        exploratory = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        new = "vuc/config/align_string_exact_oct13.json"
+        self.assertIn(new, accepted)
+        self.assertIn(new, exploratory)
+        self.assertNotIn("vuc/config/align_string_probe.json", accepted)
+        self.assertNotIn("vuc/config/align_string_probe.json", exploratory)
+        config = json.loads(suite.within_repo(new).read_text())
+        self.assertEqual(config["address"], "0x08049b80")
+        self.assertEqual(config["size"], 145)
+        self.assertEqual(config["source"], "vuc/src/AlignString.cpp")
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=4"])
+        self.assertEqual(config["relocations"], {
+            "strcpy": "0x08049a0c", "strchr": "0x0804962c",
+            "strcat": "0x0804989c",
+        })
+        self.assertEqual(config["relocation_objects"][".bss"], {
+            "_ZZ11AlignStringPKciE9formatted": "0x0808aae0",
+        })
+        self.assertNotIn("relocation_literals", config)
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("static char formatted[256];", source)
+        self.assertIn("char *space = strchr(formatted, ' ');", source)
+        self.assertNotIn("AsmOutput_WritePrologue", source)
+
     def test_currfile_wrapper_has_real_diagnostic_source_context(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
         config_name = "vuc/config/iostream_currfile_real_context_oct13.json"
@@ -496,11 +523,11 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(sorted(source.index(name) for name in names),
                          [source.index(name) for name in names])
 
-    def test_align_string_strictly_experimental_with_real_unit_literals(self):
+    def test_align_string_historical_partial_remains_documented(self):
         selected = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
         path = "vuc/config/align_string_probe.json"
-        self.assertIn(path, selected)
+        self.assertNotIn(path, selected)
         self.assertNotIn(path, accepted)
         config = json.loads(suite.within_repo(path).read_text())
         self.assertEqual(config["address"], "0x08049b80")

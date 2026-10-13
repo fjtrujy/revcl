@@ -1,0 +1,17 @@
+{
+  "function": "_Z11AlignStringPKci",
+  "address": "0x08049b80",
+  "size": 145,
+  "source": "vuc/src/AlignString.cpp",
+  "flags": ["-O2", "-frename-registers", "-falign-jumps=4"],
+  "relocations": {
+    "strcpy": "0x08049a0c",
+    "strchr": "0x0804962c",
+    "strcat": "0x0804989c"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZZ11AlignStringPKciE9formatted": "0x0808aae0"
+    }
+  }
+}

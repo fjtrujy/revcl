@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **194 independently verified exact function-symbol records**
-covering 13847/13847 instruction bytes, including the original relocation for
+The strict gate now checks **195 independently verified exact function-symbol records**
+covering 13992/13992 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -465,6 +465,12 @@ Additional genuine compiler/source controls for this 430/550 partial,
 plus two unresolved SymbolScope uninitialized-copy templates, found no
 new exact bytes. Negative evidence and reproduction commands are retained
 in `vuc/docs/2026-10-13-flex-followup-compiler-negative-controls.md`.
+The next rebase onto VCL `main` at `ea1221c` provides genuine deferred
+implementation-owner evidence. Applying the source-context lesson to
+VUC recovers `AlignString()` **145/145 byte-exact**, including all eight
+original PLT/BSS relocations, from a minimal ordinary C++03 file;
+the earlier AsmOutput source-unit probe had only 143/145. See
+`vuc/docs/2026-10-13-visitcache-main-rebase-alignstring-exact.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
