@@ -248,8 +248,8 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     if (!func_080563f8())
         return 0;
     if (unk_18) {
-        bool z = unk_18 == unk_18->unk_04->unk_10;
-        if (z != operandZeroValue(this)) {
+        int z = unk_18 == unk_18->unk_04->unk_10;
+        if ((char)z != (char)operandZeroValue(this)) {
             func_0804ad38("Operand::Emit - zero mismatch..%s but %d\n", unk_18->func_0805a8e0(), operandZeroValue(this));
             return 0;
         }
@@ -288,6 +288,10 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         if (unk_07 & 8)
             goto emit_w;
         return 0;
+    case 14:
+    emit_y:
+        buf += func_0804adbc(buf, "%sy", rn);
+        break;
     case 4:
         buf += func_0804adbc(buf, "I");
         break;
@@ -300,6 +304,10 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     case 7:
         buf += func_0804adbc(buf, "Q");
         break;
+    case 15:
+    emit_z:
+        buf += func_0804adbc(buf, "%sz", rn);
+        break;
     case 8:
         buf += func_0804adbc(buf, "R");
         break;
@@ -309,20 +317,32 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     case 10:
         buf += func_0804adbc(buf, "ACCxyz");
         break;
-    case 11:
-        buf += func_0804adbc(buf, "%sxyz", rn);
-        break;
-    case 14:
-    emit_y:
-        buf += func_0804adbc(buf, "%sy", rn);
-        break;
-    case 15:
-    emit_z:
-        buf += func_0804adbc(buf, "%sz", rn);
-        break;
     case 16:
     emit_w:
         buf += func_0804adbc(buf, "%sw", rn);
+        break;
+    case 11:
+        buf += func_0804adbc(buf, "%sxyz", rn);
+        break;
+    case 1:
+    case 2:
+        buf += func_0804adbc(buf, "%s", rn);
+        break;
+    case 39:
+    case 40:
+    case 41:
+    case 42:
+        buf += func_0804adbc(buf, "%s", rn);
+        break;
+    case 43:
+    case 44:
+        buf += func_0804adbc(buf, "%s", rn);
+        break;
+    case 54:
+        buf += func_0804adbc(buf, "%s", rn);
+        break;
+    case 34:
+        buf += func_0804adbc(buf, "%s", rn);
         break;
     case 27: {
         mValue *imm = &unk_1c;
@@ -341,6 +361,20 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         }
         break;
     }
+    case 29:
+    case 46: {
+        if (!rn) {
+            func_0804ad38("null rn - abort _BLAH_EA_IMM\n");
+            return 0;
+        }
+        char *s = unk_1c.asChars();
+        if (!s) {
+            func_0804ad38("failed to get chars from ximm blah_ea_imm\n");
+            return 0;
+        }
+        buf += func_0804adbc(buf, "%s(%s)", s, rn);
+        break;
+    }
     case 31: {
         char *s = unk_1c.asChars();
         if (!s)
@@ -354,18 +388,6 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         }
     case 28:
         buf += func_0804adbc(buf, "(%s)", rn);
-        break;
-    case 1:
-    case 2:
-    case 34:
-    case 39:
-    case 40:
-    case 41:
-    case 42:
-    case 43:
-    case 44:
-    case 54:
-        buf += func_0804adbc(buf, "%s", rn);
         break;
     case 32:
         if (!rn) {
@@ -388,20 +410,6 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         }
         buf += func_0804adbc("ramreg-[%s]", rn);
         break;
-    case 29:
-    case 46: {
-        if (!rn) {
-            func_0804ad38("null rn - abort _BLAH_EA_IMM\n");
-            return 0;
-        }
-        char *s = unk_1c.asChars();
-        if (!s) {
-            func_0804ad38("failed to get chars from ximm blah_ea_imm\n");
-            return 0;
-        }
-        buf += func_0804adbc(buf, "%s(%s)", s, rn);
-        break;
-    }
     case 55:
     default:
         func_0804ad38("asked to emit an unknown/unemittable operand\n");
