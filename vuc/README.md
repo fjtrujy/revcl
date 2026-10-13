@@ -432,6 +432,12 @@ and 82 initialized literal bytes authenticated, and improves
 `Value::operator/()` to **178/235** bytes with its real TypeConvert
 relocation. Both remain experimental, not accepted as exact; see
 `vuc/docs/2026-10-13-value-tostring-and-division-partials.md`.
+The next source-level control batch reconstructs the 257-byte original
+`Value::TypeConvertForce()` as a **193/257** experimental partial with
+its genuine preceding TypeConvert definition. Two separate GCC 3.3.3
+build-date controls and typed arena records still leave `AlignString`
+at **143/145** and the `Instruction` destructor at **45/46**.
+See `vuc/docs/2026-10-13-forced-conversion-and-near-exact-controls.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

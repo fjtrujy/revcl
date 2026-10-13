@@ -17,7 +17,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 204)
+        self.assertEqual(len(records), 205)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -162,6 +162,21 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual([entry["address"] for entry in ranges],
                          ["0x0807669c", "0x08072971", "0x08076690",
                           "0x08076699"])
+
+    def test_value_forced_conversion_is_experimental_source_context(self):
+        name = "vuc/config/value_type_convert_force_oct13_probe.json"
+        exact = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        selected = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(name, exact)
+        self.assertIn(name, selected)
+        record = json.loads(suite.within_repo(name).read_text())
+        self.assertEqual(record["address"], "0x0806f8b0")
+        self.assertEqual(record["size"], 257)
+        self.assertEqual(record["relocations"], {})
+        self.assertEqual(record["source"], "vuc/probes/ValueTypeConvertForceUnit.cpp")
+        source = suite.within_repo(record["source"]).read_text()
+        self.assertLess(source.index("bool Value::TypeConvert("),
+                        source.index("bool Value::TypeConvertForce("))
 
     def test_currfile_wrapper_has_real_diagnostic_source_context(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

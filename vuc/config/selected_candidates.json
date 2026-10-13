@@ -165,6 +165,7 @@
   "vuc/config/value_arithmetic_minus_probe.json",
   "vuc/config/value_multiply_exact_oct13.json",
   "vuc/config/value_type_convert_exact_oct13.json",
+  "vuc/config/value_type_convert_force_oct13_probe.json",
   "vuc/config/value_to_string_oct13_probe.json",
   "vuc/config/value_division_partial_oct13.json",
   "vuc/config/check_ast_fun_call_probe.json",
