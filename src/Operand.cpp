@@ -477,6 +477,11 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
     case 26: mstrcpy(out->name, "MAC");   out->unk_2000 = 1; return true;
     case 28: out->unk_2000 = 1; return true;
     case 37: mstrcpy(out->name, "ramreg"); return true;
+    case 54:
+        mstrcpy(out->unk_800, "$ra");
+        mstrcpy(out->name, "$ra");
+        out->unk_2000 = 3;
+        return true;
     case 40: out->unk_2000 = 3; return true;
     case 45: mstrcpy(out->name, "CLIPA"); out->unk_2000 = 1; return true;
     default:
@@ -491,11 +496,6 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
     case 51: mstrcpy(out->name, "FACC");  out->unk_2000 = 1; return true;
     case 52: mstrcpy(out->name, "FDIV");  out->unk_2000 = 1; return true;
     case 53: mstrcpy(out->name, "SHFTA"); out->unk_2000 = 1; return true;
-    case 54:
-        mstrcpy(out->unk_800, "$ra");
-        mstrcpy(out->name, "$ra");
-        out->unk_2000 = 3;
-        return true;
     }
 }
 
