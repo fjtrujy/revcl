@@ -313,6 +313,12 @@ formatted-instruction insertion, default string-constructor source unit,
 and `Value` addition probes also remain non-exact. See
 `vuc/docs/2026-10-12-stream-and-constructor-probes.md` for bounded
 compiler comparisons and original-symbol evidence.
+After rebasing onto the latest VCL `main`, the transferable GCC source-
+reconstruction techniques were reviewed with explicit GCC 3.3 caveats.
+The VUC compiler's `-da` RTL dumps and a verified register-renaming
+diagnostic are documented in
+`vuc/docs/2026-10-13-vcl-main-technique-review.md`; none of the VCL-
+specific compiler or source-unit exceptions is assumed to apply to VUC.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
