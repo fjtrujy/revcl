@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 175)
+        self.assertEqual(len(records), 176)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 166)
+        self.assertEqual(len(exact_configs), 168)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -52,6 +52,16 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("vuc/config/ml_game_string_table_cleanup_probe.json", accepted)
         self.assertNotIn("vuc/config/ml_string_table_get_probe.json", accepted)
         self.assertIn("vuc/config/ml_string_table_get_probe.json", exploratory)
+
+    def test_printer_unit_exactness_excludes_partial_ast_call(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        for filename in ("ugly_printer_unit_oct13_probe.json",
+                         "iostream_global_printer_oct13_probe.json"):
+            config_path = "vuc/config/" + filename
+            self.assertIn(config_path, accepted)
+            config = json.loads(suite.within_repo(config_path).read_text())
+            self.assertEqual(config["source"], "vuc/src/Printer.cpp")
+        self.assertNotIn("vuc/config/print_ast_fun_call_probe.json", accepted)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

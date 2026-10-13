@@ -137,9 +137,9 @@ address	size	status	manifest	candidate_source	symbol
 0x0805c0a0	1089	UNRESOLVED	-	-	_Z5PrintP7ASTExprRSo
 0x0805c4f0	765	UNRESOLVED	-	-	_Z5PrintP11ASTLValExprRSo
 0x0805c7f0	844	UNRESOLVED	-	-	_Z5PrintP7ASTDeclRSo
-0x0805cb40	40	EXPERIMENTAL	vuc/config/ugly_print_probe.json	vuc/probes/ugly_print.cpp	_Z17Printer_UglyPrintP9ASTModuleRSo
+0x0805cb40	40	EXACT	vuc/config/ugly_printer_unit_oct13_probe.json	vuc/src/Printer.cpp	_Z17Printer_UglyPrintP9ASTModuleRSo
 0x0805cb70	16	EXACT	vuc/config/iostream_cleanup_0805cb70_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x0805cb80	31	UNRESOLVED	-	-	_GLOBAL__I__Z5PrintP10ASTFunCallRSo
+0x0805cb80	31	EXACT	vuc/config/iostream_global_printer_oct13_probe.json	vuc/src/Printer.cpp	_GLOBAL__I__Z5PrintP10ASTFunCallRSo
 0x0805cba0	80	EXACT	vuc/config/print_list_expr_exact_probe.json	vuc/src/PrintASTLists.cpp	_Z5PrintIP7ASTExprEvR11ASTNodeListIT_ERSoPKc
 0x0805cbf0	80	EXACT	vuc/config/print_list_stmt_exact_probe.json	vuc/src/PrintASTLists.cpp	_Z5PrintIP7ASTStmtEvR11ASTNodeListIT_ERSoPKc
 0x0805cc40	80	EXACT	vuc/config/print_list_var_exact_probe.json	vuc/src/PrintASTVarList.cpp	_Z5PrintIP10ASTVarDeclEvR11ASTNodeListIT_ERSoPKc
