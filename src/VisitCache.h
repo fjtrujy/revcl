@@ -1,6 +1,5 @@
-// Growable table of bit rows used by back tracing ("VisitCache"); members are inline,
-// emitted via #pragma implementation in flowMon.cpp. init/startRecord/endRecord live in
-// VisitCache_inline.h (only flowMon.cpp includes it), so other units call them.
+// Growable table of bit rows used by back tracing ("VisitCache"). Deferred members
+// are emitted by VisitCache.cpp; only that owner includes VisitCache_inline.h.
 #ifndef VISITCACHE_H
 #define VISITCACHE_H
 

@@ -1,8 +1,4 @@
-#pragma implementation "subCache.h"
-#pragma implementation "VisitCache.h"
-#pragma implementation "VisitCache_inline.h"
 #include "Program.h"
-#include "VisitCache_inline.h"
 #include "instStream.h"
 #include "workTable.h"
 #include "RegPool.h"

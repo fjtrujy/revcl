@@ -1,5 +1,5 @@
-// VisitCache members (init/release/Extend/startRecord/setBit/endRecord) that only flowMon.cpp inlines; other units (backTrace.cpp) see just
-// the declarations in VisitCache.h and call the out-of-line copies.
+// VisitCache member definitions owned by VisitCache.cpp. Other units see only
+// VisitCache.h declarations and call the out-of-line copies.
 #ifndef VISITCACHE_INLINE_H
 #define VISITCACHE_INLINE_H
 

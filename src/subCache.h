@@ -1,4 +1,4 @@
-// Per-flow-UID bit table ("subCache"); members are inline, emitted via #pragma implementation.
+// Per-flow-UID bit table ("subCache"); inline members are emitted by subCache.cpp.
 #ifndef SUBCACHE_H
 #define SUBCACHE_H
 
