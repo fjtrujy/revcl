@@ -55,7 +55,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0804f650	60	EXACT	vuc/config/conv_val_uint_exact_probe.json	vuc/src/ConvVal.cpp	_Z7ConvValRK12MLGameStringRj
 0x0804f690	955	UNRESOLVED	-	-	_Z15Canonize_ReducePN2IR9Expr_DataE
 0x0804fa50	1277	UNRESOLVED	-	-	_Z15Canonize_RotatePN2IR9Expr_DataE
-0x0804ff50	85	UNRESOLVED	-	-	_Z16Canonize2_ReducePN2IR11Module_DataE
+0x0804ff50	85	EXACT	vuc/config/canonize2_context_exact_oct13.json	vuc/src/ConvVal.cpp	_Z16Canonize2_ReducePN2IR11Module_DataE
 0x0804ffb0	359	UNRESOLVED	-	-	_Z22Canonize_TryReduceExprIjEbPN2IR9Expr_DataERT_
 0x08050120	359	UNRESOLVED	-	-	_Z22Canonize_TryReduceExprIiEbPN2IR9Expr_DataERT_
 0x08050290	16	EXACT	vuc/config/iostream_cleanup_08050290_probe.json	vuc/src/IostreamInit.cpp	__tcf_0

@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 177)
+        self.assertEqual(len(records), 178)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 170)
+        self.assertEqual(len(exact_configs), 171)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -77,6 +77,20 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(helper["relocation_objects"][".bss"]["matchStack"],
                          "0x0808abe4")
         self.assertEqual(helper["relocation_literals"][".rodata"][0]["size"], 14)
+
+    def test_canonize_reduce_has_original_conversion_predecessors(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        targets = ("canonize2_context_exact_oct13.json",
+                   "conv_val_float_exact_probe.json",
+                   "conv_val_int_exact_probe.json",
+                   "conv_val_uint_exact_probe.json")
+        for filename in targets:
+            config_path = "vuc/config/" + filename
+            self.assertIn(config_path, accepted)
+            config = json.loads(suite.within_repo(config_path).read_text())
+            self.assertEqual(config["source"], "vuc/src/ConvVal.cpp")
+            self.assertIn("-falign-jumps=1", config["flags"])
+        self.assertNotIn("vuc/config/canonize2_reduce_probe.json", accepted)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

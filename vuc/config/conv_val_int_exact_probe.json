@@ -5,7 +5,8 @@
   "source": "vuc/src/ConvVal.cpp",
   "flags": [
     "-O2",
-    "-frename-registers"
+    "-frename-registers",
+    "-falign-jumps=1"
   ],
   "relocations": {
     "_ZNK12MLGameString5c_strEv": "0x08071800",
