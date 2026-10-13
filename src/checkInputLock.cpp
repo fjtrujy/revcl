@@ -5,6 +5,19 @@ static inline bool canWrapInputLock(cls0805bcc4 *in)
     return in->unk_19 == 1;
 }
 
+static inline void wrapInputRange(int &s, int &e)
+{
+    int n = g_080b336c;
+    if (n) {
+        if (s >= n) {
+            do {
+                s -= n;
+                e -= n;
+            } while (s >= n);
+        }
+    }
+}
+
 int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
 {
     cls0805bcc4 *lk = unk_1c;
@@ -79,7 +92,7 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
 
     int s = par->unk_34;
     int e = s + d;
-    wrapRangeLocal(s, e);
+    wrapInputRange(s, e);
 
     bool isExt = false;
     if (lsz && par == unk_0c[0])
