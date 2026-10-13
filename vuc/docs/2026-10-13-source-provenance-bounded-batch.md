@@ -96,6 +96,26 @@ translation-unit context rather than manually storing into the original
 stack slot or hardcoding field writes to mimic the disassembly.
 A separate volatile-result control emitted 132 bytes and did not help.
 
+## Value multiplication with genuine neighboring methods
+
+`vuc/probes/evaluate_value_full_inline_context_oct13.py` compares
+`Value::operator*()` at `0x0806eb70` with the larger, genuine method
+context in `vuc/src/Value.cpp` rather than only the isolated arithmetic
+fragment. That source unit defines the real Value setters, arithmetic,
+and comparisons, but its provisional *out-of-line* `Value` constructor
+introduces an `_ZN5ValueC1Ev` call relocation that the original 222-byte
+function does **not** contain. Strict comparison therefore rejects the
+out-of-line constructor mode rather than inventing a new relocation.
+
+Defining the same ordinary constructor **inline** in the original-like
+class declaration eliminates that extra call and restores **219/222**
+original instruction bytes, with the three original offsets **155, 162,
+164** still different (ECX instead of EDX for the integer multiplication).
+Placing the genuine multiply member before the addition member leaves
+those three differences unchanged. A non-renaming compiler run matches
+only 144/222 bytes; register renaming remains essential here. Neither
+variant is exact and no accepted Value function was replaced.
+
 ## glibc csu initializer and historical architecture flags
 
 The original `__libc_csu_init` is **84 bytes** with saved EDI/ESI/EBX
@@ -131,6 +151,7 @@ limactl shell revcl-oracle -- python3 "$R/probes/evaluate_printer_ast_layout_oct
 limactl shell revcl-oracle -- python3 "$R/probes/evaluate_printer_register_flags_oct13.py"
 limactl shell revcl-oracle -- python3 "$R/probes/evaluate_translate_seq_shapes_oct13.py"
 limactl shell revcl-oracle -- python3 "$R/probes/evaluate_translate_rtti_hierarchy_oct13.py"
+limactl shell revcl-oracle -- python3 "$R/probes/evaluate_value_full_inline_context_oct13.py"
 limactl shell revcl-oracle -- python3 "$R/probes/evaluate_libc_csu_prologue_oct13.py"
 limactl shell revcl-oracle -- python3 "$R/probes/evaluate_libc_csu_architecture_oct13.py"
 ```
