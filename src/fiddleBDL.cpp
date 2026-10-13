@@ -61,92 +61,94 @@ bool fiddleBDL(workTable *wt)
         }
 
         cls08058718 posP;
-        cls08058718 posB;
-        short row = wt->unk_34;
-        row -= 3;
-        posP.setRow(row);
-        row = wt->unk_34;
-        row -= 2;
-        posB.setRow(row);
-        bool ok = true;
-        if (br != brow->unk_00[1].unk_00) {
-            func_0804ad38("the branch wasn't where I thought it was\n");
-            return false;
-        }
-        Instr *prev = prow->unk_00[1].unk_00;
-        if (func_0805449c(prev, br))
-            return true;
-
-        if (prev && !wt->takeOut(prev)) {
-            func_0804ad38("failed to takeout in_p\n");
-            return false;
-        }
-        if (func_0807dc44(wt, br, &posP))
-            ok = false;
-        if (prev) {
-            if (!moveLocks(prev, &posP)) {
-                func_0804ad38("failed to undo takeout\n");
+        {
+            cls08058718 posB;
+            short row = wt->unk_34;
+            row -= 3;
+            posP.setRow(row);
+            row = wt->unk_34;
+            row -= 2;
+            posB.setRow(row);
+            bool ok = true;
+            if (br != brow->unk_00[1].unk_00) {
+                func_0804ad38("the branch wasn't where I thought it was\n");
                 return false;
             }
-            if (!wt->putIn(prev)) {
+            Instr *prev = prow->unk_00[1].unk_00;
+            if (func_0805449c(prev, br))
+                return true;
+
+            if (prev && !wt->takeOut(prev)) {
                 func_0804ad38("failed to takeout in_p\n");
                 return false;
             }
-        }
-        if (!ok)
-            goto success;
+            if (func_0807dc44(wt, br, &posP))
+                ok = false;
+            if (prev) {
+                if (!moveLocks(prev, &posP)) {
+                    func_0804ad38("failed to undo takeout\n");
+                    return false;
+                }
+                if (!wt->putIn(prev)) {
+                    func_0804ad38("failed to takeout in_p\n");
+                    return false;
+                }
+            }
+            if (!ok)
+                goto success;
 
-        if (prev) {
+            if (prev) {
+                if (!wt->takeOut(br)) {
+                    func_0804ad38("failed to takeout in_b\n");
+                    return false;
+                }
+                if (func_0807dc44(wt, prev, &posB))
+                    ok = false;
+                int m2 = prev->unk_13b6 < prev->unk_13b4 ? prev->unk_13b4 : prev->unk_13b6;
+                if ((short)m2)
+                    ok = false;
+                if (!moveLocks(br, &posB)) {
+                    func_0804ad38("failed to undo branch\n");
+                    return false;
+                }
+                if (!wt->putIn(br)) {
+                    func_0804ad38("failed to put branch back in\n");
+                    return false;
+                }
+            }
+            if (!ok)
+                goto success;
+
             if (!wt->takeOut(br)) {
                 func_0804ad38("failed to takeout in_b\n");
                 return false;
             }
-            if (func_0807dc44(wt, prev, &posB))
-                ok = false;
-            int m2 = prev->unk_13b6 < prev->unk_13b4 ? prev->unk_13b4 : prev->unk_13b6;
-            if ((short)m2)
-                ok = false;
-            if (!moveLocks(br, &posB)) {
-                func_0804ad38("failed to undo branch\n");
+            if (prev && !wt->takeOut(prev)) {
+                func_0804ad38("failed to takeout in_p\n");
                 return false;
+            }
+            if (!moveLocks(br, &posP)) {
+                func_0804ad38("after all that - failed to move branch\n");
+                return false;
+            }
+            if (prev) {
+                if (!moveLocks(prev, &posB)) {
+                    func_0804ad38("after all that - failed to prev\n");
+                    return false;
+                }
+                if (!wt->putIn(prev)) {
+                    func_0804ad38("failed to put prev back in\n");
+                    return false;
+                }
             }
             if (!wt->putIn(br)) {
                 func_0804ad38("failed to put branch back in\n");
                 return false;
             }
-        }
-        if (!ok)
-            goto success;
-
-        if (!wt->takeOut(br)) {
-            func_0804ad38("failed to takeout in_b\n");
-            return false;
-        }
-        if (prev && !wt->takeOut(prev)) {
-            func_0804ad38("failed to takeout in_p\n");
-            return false;
-        }
-        if (!moveLocks(br, &posP)) {
-            func_0804ad38("after all that - failed to move branch\n");
-            return false;
-        }
-        if (prev) {
-            if (!moveLocks(prev, &posB)) {
-                func_0804ad38("after all that - failed to prev\n");
-                return false;
-            }
-            if (!wt->putIn(prev)) {
-                func_0804ad38("failed to put prev back in\n");
-                return false;
-            }
-        }
-        if (!wt->putIn(br)) {
-            func_0804ad38("failed to put branch back in\n");
-            return false;
-        }
-        wt->unk_34--;
+            wt->unk_34--;
 success:
-        return true;
+            ;
+        }
     }
 done:
     return true;
