@@ -1,3 +1,5 @@
 #pragma implementation "VisitCache.h"
 #pragma implementation "VisitCache_inline.h"
+#pragma implementation "dumpPathKey_inline.h"
 #include "VisitCache_inline.h"
+#include "dumpPathKey_inline.h"
