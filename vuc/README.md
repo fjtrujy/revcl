@@ -124,6 +124,10 @@ The following application-code milestone also resolves
 `Canonize2_Reduce()` **85/85** by compiling the three genuine, already
 byte-exact `ConvVal` overloads before it. See
 `vuc/docs/2026-10-13-canonize2-conversion-context.md`.
+The failed original-era AST `matchStack` container alternatives and the
+unfixed `currFileName` wrapper after a real entry-point neighbor are
+retained as reproducible controls in
+`vuc/docs/2026-10-13-startup-source-context-controls.md`.
 
 An independent **named-data acceptance gate** now checks
 **244/244 original named initialized-data, RTTI, vtable and ABI objects,

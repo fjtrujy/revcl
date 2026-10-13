@@ -64,6 +64,18 @@ its static initializer) is still incomplete. This source fragment
 must eventually be unified with the remaining `Canonize2.cpp`
 functions and global environment owner for complete ELF linking.
 
+The broader source-unit control
+`vuc/probes/canonize_with_genuine_neighbors_oct13.cpp` compiles the
+reconstructed IR predicates, global environment declarations, numeric
+conversions, and canonizer together. In one object with
+`-fuse-cxa-atexit -ffunction-sections -falign-jumps=1`, the canonizer,
+five previously accepted application functions, two global cleanup
+callbacks and the global initializer wrapper are still exact. However,
+the separately accepted **193-byte** static initialization helper
+regresses to **185/193**. That is why this broader experimental unit
+has **not** replaced the accepted environment source, and no
+whole-translation-unit exactness is claimed.
+
 ## Acceptance and limitations
 
 The exact manifest has **171** original function-symbol records and
