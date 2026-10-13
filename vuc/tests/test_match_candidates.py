@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 195)
+        self.assertEqual(len(records), 199)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 187)
+        self.assertEqual(len(exact_configs), 188)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -282,7 +282,7 @@ class CandidateSuiteTests(unittest.TestCase):
                                  "0x08051910")
                 self.assertEqual(config["relocations"]["_Unwind_Resume"],
                                  "0x0804998c")
-                self.assertEqual(len(config["relocations"]), 7)
+        self.assertEqual(len(config["relocations"]), 7)
 
         near = "vuc/config/instruction_add_line_comment_context_oct13_probe.json"
         experimental = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
@@ -305,6 +305,47 @@ class CandidateSuiteTests(unittest.TestCase):
                          "vuc/probes/ml_temp_set_return.cpp")
         self.assertEqual(set_config["flags"], ["-O2"])
         self.assertEqual(len(set_config["relocations"]), 2)
+
+    def test_asmoutput_tab_constants_is_exact_in_real_source_order(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        config_name = "vuc/config/asm_output_tab_constants_probe.json"
+        self.assertIn(config_name, accepted)
+        config = json.loads(suite.within_repo(config_name).read_text())
+        self.assertEqual(config["function"], "_Z22AsmOutput_TabConstantsR15InstructionList")
+        self.assertEqual(config["address"], "0x08049df0")
+        self.assertEqual(config["size"], 127)
+        self.assertEqual(config["source"], "vuc/src/AsmOutputUnit.cpp")
+        self.assertIn("-frename-registers", config["flags"])
+        self.assertEqual(config["relocations"]["strstr"], "0x0804981c")
+        self.assertEqual(config["relocations"]["constantsTabStop"], "0x0808aac4")
+        literals = config["relocation_literals"][".rodata"]
+        self.assertEqual([l["size"] for l in literals], [92, 19, 8, 5])
+        self.assertEqual(sum(l["size"] for l in literals), 124)
+        self.assertEqual([l["address"] for l in literals],
+                         ["0x080720a0", "0x080721c4", "0x080721f0", "0x080721fb"])
+        source = suite.within_repo(config["source"]).read_text()
+        names = ("void AsmOutput_WritePrologue", "void AsmOutput_WriteEpilogue",
+                 "char *AlignString", "void AsmOutput_TabConstants")
+        self.assertEqual(sorted(source.index(name) for name in names),
+                         [source.index(name) for name in names])
+
+    def test_new_partial_controls_remain_outside_exact_manifest(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        selected = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        cases = (
+            ("script_error_probe.json", 161, "0x0806fa80"),
+            ("yy_create_buffer_probe.json", 139, "0x080617b0"),
+            ("ir_accumulatorable_probe.json", 77, "0x0805a570"),
+        )
+        for name, size, address in cases:
+            with self.subTest(config=name):
+                path = "vuc/config/" + name
+                self.assertIn(path, selected)
+                self.assertNotIn(path, accepted)
+                config = json.loads(suite.within_repo(path).read_text())
+                self.assertEqual(config["size"], size)
+                self.assertEqual(config["address"], address)
+                self.assertTrue(config["source"].startswith("vuc/probes/"))
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

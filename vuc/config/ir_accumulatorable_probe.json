@@ -2,10 +2,11 @@
   "function": "_Z17IsAccumulatorablePN2IR13Operator_DataE",
   "address": "0x0805a570",
   "size": 77,
-  "source": "vuc/probes/ir_accumulatorable.cpp",
+  "source": "vuc/probes/accumulatorable_genuine_context_oct13.cpp",
   "flags": [
     "-O2",
-    "-frename-registers"
+    "-frename-registers",
+    "-falign-jumps=1"
   ],
   "relocations": {}
 }

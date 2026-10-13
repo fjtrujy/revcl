@@ -2,8 +2,8 @@
   "function": "_Z22AsmOutput_TabConstantsR15InstructionList",
   "address": "0x08049df0",
   "size": 127,
-  "source": "vuc/probes/asm_output_tab_constants.cpp",
-  "flags": ["-O2", "-falign-jumps=4"],
+  "source": "vuc/src/AsmOutputUnit.cpp",
+  "flags": ["-O2", "-frename-registers", "-falign-jumps=4"],
   "relocations": {
     "_ZN11Instruction8ToStringEv": "0x08051900",
     "strstr": "0x0804981c",
@@ -11,8 +11,10 @@
   },
   "relocation_literals": {
     ".rodata": [
-      {"offset": 0, "size": 8, "address": "0x080721f0"},
-      {"offset": 8, "size": 5, "address": "0x080721fb"}
+      {"offset": 0, "size": 92, "address": "0x080720a0"},
+      {"offset": 92, "size": 19, "address": "0x080721c4"},
+      {"offset": 111, "size": 8, "address": "0x080721f0"},
+      {"offset": 119, "size": 5, "address": "0x080721fb"}
     ]
   }
 }

@@ -193,5 +193,9 @@
   "vuc/config/instruction_add_format_probe.json",
   "vuc/config/instruction_addb_format_exact_oct13_probe.json",
   "vuc/config/instruction_add_line_comment_context_oct13_probe.json",
-  "vuc/config/ml_temp_set_probe.json"
+  "vuc/config/ml_temp_set_probe.json",
+  "vuc/config/asm_output_tab_constants_probe.json",
+  "vuc/config/script_error_probe.json",
+  "vuc/config/yy_create_buffer_probe.json",
+  "vuc/config/ir_accumulatorable_probe.json"
 ]

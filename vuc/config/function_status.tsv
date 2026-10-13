@@ -9,7 +9,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08049b80	145	UNRESOLVED	-	-	_Z11AlignStringPKci
 0x08049c20	69	EXACT	vuc/config/align_constant_exact_probe.json	vuc/src/AlignConstant.cpp	_Z13AlignConstantPKc
 0x08049c70	382	UNRESOLVED	-	-	_Z26AsmOutput_PrintInstructionP11InstructionRSt14basic_ofstreamIcSt11char_traitsIcEE
-0x08049df0	127	UNRESOLVED	-	-	_Z22AsmOutput_TabConstantsR15InstructionList
+0x08049df0	127	EXACT	vuc/config/asm_output_tab_constants_probe.json	vuc/src/AsmOutputUnit.cpp	_Z22AsmOutput_TabConstantsR15InstructionList
 0x08049e70	2168	UNRESOLVED	-	-	_Z14AsmOutput_EmitR15InstructionList
 0x0804a6f0	16	EXACT	vuc/config/iostream_cleanup_0804a6f0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0804a700	31	EXACT	vuc/config/iostream_global_constantsTabStop_probe.json	vuc/src/IostreamGlobal_constantsTabStop.cpp	_GLOBAL__I_constantsTabStop
@@ -116,7 +116,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0805a4c0	16	EXACT	vuc/config/iostream_cleanup_0805a4c0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0805a4d0	31	EXACT	vuc/config/ir2asm_binexpr_startup_oct13_probe.json	vuc/src/IR2AsmBinExprUnit.cpp	_GLOBAL__I__Z19AssembleBinOpFloat4RKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
 0x0805a4f0	117	EXACT	vuc/config/get_op_type_probe.json	vuc/src/GetOpType.cpp	_Z9GetOpTypePN2IR9Expr_DataE
-0x0805a570	77	UNRESOLVED	-	-	_Z17IsAccumulatorablePN2IR13Operator_DataE
+0x0805a570	77	EXPERIMENTAL	vuc/config/ir_accumulatorable_probe.json	vuc/probes/accumulatorable_genuine_context_oct13.cpp	_Z17IsAccumulatorablePN2IR13Operator_DataE
 0x0805a5c0	66	EXACT	vuc/config/iostream_static_0805a5c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805a610	1206	UNRESOLVED	-	-	_ZN8ListFile8GenerateEPKc
 0x0805aad0	133	EXACT	vuc/config/listfile_printline_probe.json	vuc/src/ListFilePrintLine.cpp	_ZN8ListFile9PrintLineEiRSt14basic_ofstreamIcSt11char_traitsIcEE
@@ -167,7 +167,7 @@ address	size	status	manifest	candidate_source	symbol
 0x080616d0	93	EXACT	vuc/config/yy_restart_probe.json	vuc/src/FlexLexerRestart.cpp	_ZN11yyFlexLexer9yyrestartEPSi
 0x08061730	75	EXACT	vuc/config/yy_switch_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer19yy_switch_to_bufferEP15yy_buffer_state
 0x08061780	39	EXACT	vuc/config/yy_load_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer20yy_load_buffer_stateEv
-0x080617b0	139	UNRESOLVED	-	-	_ZN11yyFlexLexer16yy_create_bufferEPSii
+0x080617b0	139	EXPERIMENTAL	vuc/config/yy_create_buffer_probe.json	vuc/probes/yy_create_buffer.cpp	_ZN11yyFlexLexer16yy_create_bufferEPSii
 0x08061840	87	EXACT	vuc/config/yy_delete_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer16yy_delete_bufferEP15yy_buffer_state
 0x080618a0	53	EXACT	vuc/config/yy_init_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer14yy_init_bufferEP15yy_buffer_statePSi
 0x080618e0	80	EXACT	vuc/config/yy_flush_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer15yy_flush_bufferEP15yy_buffer_state
@@ -256,7 +256,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806f9d0	31	EXACT	vuc/config/value_global_genuine_context_oct13.json	vuc/src/Value.cpp	_GLOBAL__I__ZN5ValueC2Ev
 0x0806f9f0	88	EXACT	vuc/config/iostream_static_curr_file_probe.json	vuc/src/CurrFileInitialization.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806fa50	39	EXACT	vuc/config/script_lex_probe.json	vuc/src/ScriptLexer.cpp	_Z10script_lexv
-0x0806fa80	161	UNRESOLVED	-	-	_Z12script_errorPKc
+0x0806fa80	161	EXPERIMENTAL	vuc/config/script_error_probe.json	vuc/probes/script_error.cpp	_Z12script_errorPKc
 0x0806fb30	2059	UNRESOLVED	-	-	_Z9ParseFilev
 0x08070340	4583	UNRESOLVED	-	-	_Z13ExportSymbolsP9ASTModule
 0x08071530	63	EXACT	vuc/config/main_probe.json	vuc/src/Main.cpp	main
