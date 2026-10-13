@@ -24,7 +24,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 172)
+        self.assertEqual(len(exact_configs), 173)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -105,6 +105,17 @@ class CandidateSuiteTests(unittest.TestCase):
         for method in ("value_default_c1_probe.json", "value_default_c2_probe.json",
                        "value_dispatch_exact_probe.json"):
             self.assertIn("vuc/config/" + method, accepted)
+
+    def test_currfile_wrapper_has_real_diagnostic_source_context(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        config_name = "vuc/config/iostream_currfile_real_context_oct13.json"
+        self.assertIn(config_name, accepted)
+        config = json.loads(suite.within_repo(config_name).read_text())
+        self.assertEqual(config["source"], "vuc/src/VucCompilerUnit.cpp")
+        self.assertEqual(config["address"], "0x08071580")
+        self.assertEqual(config["size"], 31)
+        self.assertEqual(config["relocations"][".text._Z41__static_initialization_and_destruction_0ii"],
+                         "0x0806f9f0")
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

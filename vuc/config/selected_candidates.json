@@ -145,7 +145,7 @@
   "vuc/config/iostream_global_is_foldable_probe.json",
   "vuc/config/iostream_static_is_foldable_probe.json",
   "vuc/config/iostream_static_curr_file_probe.json",
-  "vuc/config/iostream_global_curr_file_probe.json",
+  "vuc/config/iostream_currfile_real_context_oct13.json",
   "vuc/config/instruction_gen_tmp_probe.json",
   "vuc/config/uninitialized_asm_const_probe.json",
   "vuc/config/uninitialized_asm_mut_probe.json",
