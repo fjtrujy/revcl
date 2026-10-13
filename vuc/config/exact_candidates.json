@@ -175,5 +175,10 @@
   "vuc/config/iostream_global_symboltable_oct13_probe.json",
   "vuc/config/iostream_listfile_real_oct13_probe.json",
   "vuc/config/iostream_semant_real_oct13_probe.json",
-  "vuc/config/iostream_translate_real_oct13_probe.json"
+  "vuc/config/iostream_translate_real_oct13_probe.json",
+  "vuc/config/inline_asm_startup_context_oct13_probe.json",
+  "vuc/config/ir2asm_broadcast_startup_oct13_probe.json",
+  "vuc/config/ir2asm_binexpr_startup_oct13_probe.json",
+  "vuc/config/script_debug_real_parser_oct13_probe.json",
+  "vuc/config/lexer_yylex_startup_oct13_probe.json"
 ]

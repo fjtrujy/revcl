@@ -79,7 +79,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08050f00	711	UNRESOLVED	-	-	_Z12GenInlineAsmR12MLGameStringRSt6vectorI11AsmVariableSaIS2_EER15InstructionList
 0x080511d0	16	EXACT	vuc/config/iostream_cleanup_080511d0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x080511e0	135	UNRESOLVED	-	-	_Z11GetNextWordPKc
-0x08051270	31	UNRESOLVED	-	-	_GLOBAL__I__Z13BindInlineAsmP10ASTAsmStmtR11SymbolTable
+0x08051270	31	EXACT	vuc/config/inline_asm_startup_context_oct13_probe.json	vuc/src/InlineAsmUnit.cpp	_GLOBAL__I__Z13BindInlineAsmP10ASTAsmStmtR11SymbolTable
 0x08051290	444	UNRESOLVED	-	-	_ZNSt6vectorI11AsmVariableSaIS0_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS0_S2_EERKS0_
 0x08051450	74	EXACT	vuc/config/uninitialized_asm_mut_probe.json	vuc/src/AsmVariableUninitializedCopy.cpp	_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIP11AsmVariableSt6vectorIS2_SaIS2_EEEES7_ET0_T_S9_S8_12__false_type
 0x080514a0	138	EXACT	vuc/config/instruction_arena_static_probe.json	vuc/src/InstructionArenaLifecycle.cpp	_Z41__static_initialization_and_destruction_0ii
@@ -108,13 +108,13 @@ address	size	status	manifest	candidate_source	symbol
 0x08054550	457	UNRESOLVED	-	-	_Z8AssemblePN2IR13Fragment_DataER15InstructionList
 0x08054720	1654	UNRESOLVED	-	-	_Z8AssemblePN2IR9Stmt_DataER15InstructionList
 0x08054da0	5110	UNRESOLVED	-	-	_Z14AssembleAssignPN2IR9Stmt_DataER15InstructionList
-0x080561a0	31	UNRESOLVED	-	-	_GLOBAL__I__Z13BroadcastMoveRKN2IR8RegisterES2_R15InstructionList
+0x080561a0	31	EXACT	vuc/config/ir2asm_broadcast_startup_oct13_probe.json	vuc/src/IR2AsmBroadcastUnit.cpp	_GLOBAL__I__Z13BroadcastMoveRKN2IR8RegisterES2_R15InstructionList
 0x080561c0	66	EXACT	vuc/config/iostream_static_080561c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08056210	9258	UNRESOLVED	-	-	_Z19AssembleBinOpFloat4RKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
 0x08058640	7588	UNRESOLVED	-	-	_Z16AssembleBinOpIntRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
 0x0805a3f0	193	UNRESOLVED	-	-	_Z13AssembleBinOpRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
 0x0805a4c0	16	EXACT	vuc/config/iostream_cleanup_0805a4c0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x0805a4d0	31	UNRESOLVED	-	-	_GLOBAL__I__Z19AssembleBinOpFloat4RKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
+0x0805a4d0	31	EXACT	vuc/config/ir2asm_binexpr_startup_oct13_probe.json	vuc/src/IR2AsmBinExprUnit.cpp	_GLOBAL__I__Z19AssembleBinOpFloat4RKN2IR8RegisterEPNS_9Expr_DataER15InstructionList
 0x0805a4f0	117	EXACT	vuc/config/get_op_type_probe.json	vuc/src/GetOpType.cpp	_Z9GetOpTypePN2IR9Expr_DataE
 0x0805a570	77	UNRESOLVED	-	-	_Z17IsAccumulatorablePN2IR13Operator_DataE
 0x0805a5c0	66	EXACT	vuc/config/iostream_static_0805a5c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
@@ -147,7 +147,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0805cce0	66	EXACT	vuc/config/iostream_static_0805cce0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0805cd30	14922	UNRESOLVED	-	-	_Z12script_parsev
 0x08060780	16	EXACT	vuc/config/iostream_cleanup_08060780_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x08060790	31	EXPERIMENTAL	vuc/config/iostream_global_script_debug_probe.json	vuc/probes/IostreamGlobal_script_debug.cpp	_GLOBAL__I_script_debug
+0x08060790	31	EXACT	vuc/config/script_debug_real_parser_oct13_probe.json	vuc/src/ScriptParserUnit.cpp	_GLOBAL__I_script_debug
 0x080607b0	5	EXACT	vuc/config/noop_080607b0_probe.json	vuc/src/EmptyHooks.cpp	_ZN7ASTNode3apaEv
 0x080607c0	66	EXACT	vuc/config/iostream_static_080607c0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08060810	1698	UNRESOLVED	-	-	_ZN11yyFlexLexer5yylexEv
@@ -173,7 +173,7 @@ address	size	status	manifest	candidate_source	symbol
 0x080618e0	80	EXACT	vuc/config/yy_flush_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer15yy_flush_bufferEP15yy_buffer_state
 0x08061930	54	EXACT	vuc/config/flex_lexer_error_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer10LexerErrorEPKc
 0x08061970	16	EXACT	vuc/config/iostream_cleanup_08061970_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x08061980	31	UNRESOLVED	-	-	_GLOBAL__I__ZN11yyFlexLexer5yylexEv
+0x08061980	31	EXACT	vuc/config/lexer_yylex_startup_oct13_probe.json	vuc/src/ScriptScannerUnit.cpp	_GLOBAL__I__ZN11yyFlexLexer5yylexEv
 0x080619a0	14	EXACT	vuc/config/flex_destructor_c1_probe.json	vuc/src/FlexLexer.cpp	_ZN9FlexLexerD1Ev
 0x080619b0	18	EXACT	vuc/config/flex_destructor_c0_probe.json	vuc/src/FlexLexer.cpp	_ZN9FlexLexerD0Ev
 0x080619d0	66	EXACT	vuc/config/iostream_static_080619d0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii

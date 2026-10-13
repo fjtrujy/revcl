@@ -1,0 +1,15 @@
+{
+  "function": "_GLOBAL__I__Z13BindInlineAsmP10ASTAsmStmtR11SymbolTable",
+  "address": "0x08051270",
+  "size": 31,
+  "source": "vuc/src/InlineAsmUnit.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x08050ce0"
+  }
+}

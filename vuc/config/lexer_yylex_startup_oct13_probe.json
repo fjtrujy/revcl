@@ -1,0 +1,14 @@
+{
+  "function": "_GLOBAL__I__ZN11yyFlexLexer5yylexEv",
+  "address": "0x08061980",
+  "size": 31,
+  "source": "vuc/src/ScriptScannerUnit.cpp",
+  "flags": [
+    "-O2",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x080607c0"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "function": "_GLOBAL__I__Z19AssembleBinOpFloat4RKN2IR8RegisterEPNS_9Expr_DataER15InstructionList",
+  "address": "0x0805a4d0",
+  "size": 31,
+  "source": "vuc/src/IR2AsmBinExprUnit.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections"
+  ],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x080561c0"
+  }
+}

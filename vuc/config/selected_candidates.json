@@ -72,7 +72,7 @@
   "vuc/config/iostream_cleanup_08071570_probe.json",
   "vuc/config/iostream_global_constantsTabStop_probe.json",
   "vuc/config/iostream_global_matchStack_probe.json",
-  "vuc/config/iostream_global_script_debug_probe.json",
+  "vuc/config/script_debug_real_parser_oct13_probe.json",
   "vuc/config/iostream_static_constants_probe.json",
   "vuc/config/iostream_static_08050ce0_probe.json",
   "vuc/config/iostream_static_08051ae0_probe.json",
@@ -184,5 +184,9 @@
   "vuc/config/yy_load_full_unit_oct14_probe.json",
   "vuc/config/instruction_arena_cleanup_unit_oct14_probe.json",
   "vuc/config/iostream_semant_real_oct13_probe.json",
-  "vuc/config/iostream_translate_real_oct13_probe.json"
+  "vuc/config/iostream_translate_real_oct13_probe.json",
+  "vuc/config/inline_asm_startup_context_oct13_probe.json",
+  "vuc/config/ir2asm_broadcast_startup_oct13_probe.json",
+  "vuc/config/ir2asm_binexpr_startup_oct13_probe.json",
+  "vuc/config/lexer_yylex_startup_oct13_probe.json"
 ]
