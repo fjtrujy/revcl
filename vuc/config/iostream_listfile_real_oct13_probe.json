@@ -1,0 +1,7 @@
+{
+ "function":"_GLOBAL__I__ZN8ListFile8GenerateEPKc",
+ "address":"0x0805b020","size":31,
+ "source":"vuc/src/ListFileUnit.cpp",
+ "flags":["-O2","-frename-registers","-fuse-cxa-atexit","-ffunction-sections"],
+ "relocations":{".text._Z41__static_initialization_and_destruction_0ii":"0x0805a5c0"}
+}

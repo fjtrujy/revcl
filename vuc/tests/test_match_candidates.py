@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 179)
+        self.assertEqual(len(records), 181)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 173)
+        self.assertEqual(len(exact_configs), 175)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -116,6 +116,34 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(config["size"], 31)
         self.assertEqual(config["relocations"][".text._Z41__static_initialization_and_destruction_0ii"],
                          "0x0806f9f0")
+
+    def test_symboltable_startup_is_exact_without_promoting_enter(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        wrapper = "vuc/config/iostream_global_symboltable_oct13_probe.json"
+        self.assertIn(wrapper, accepted)
+        info = json.loads(suite.within_repo(wrapper).read_text())
+        self.assertEqual(info["address"], "0x0806a530")
+        self.assertEqual(info["size"], 31)
+        self.assertEqual(info["source"], "vuc/src/SymbolTableUnit.cpp")
+        self.assertEqual(info["relocations"][".text._Z41__static_initialization_and_destruction_0ii"],
+                         "0x0806a2e0")
+        self.assertNotIn("vuc/config/symboltable_enter_oct13_probe.json", accepted)
+        for neighbor in ("symboltable_find_probe.json", "symbol_begin_scope_probe.json"):
+            self.assertIn("vuc/config/" + neighbor, accepted)
+
+    def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        wrapper = "vuc/config/iostream_listfile_real_oct13_probe.json"
+        self.assertIn(wrapper, accepted)
+        info = json.loads(suite.within_repo(wrapper).read_text())
+        self.assertEqual(info["address"], "0x0805b020")
+        self.assertEqual(info["size"], 31)
+        self.assertEqual(info["source"], "vuc/src/ListFileUnit.cpp")
+        self.assertEqual(info["relocations"][".text._Z41__static_initialization_and_destruction_0ii"],
+                         "0x0805a5c0")
+        for neighbor in ("list_file_lines_probe.json", "listfile_print_probe.json",
+                         "listfile_printline_probe.json"):
+            self.assertIn("vuc/config/" + neighbor, accepted)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
