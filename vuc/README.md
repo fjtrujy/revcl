@@ -471,6 +471,12 @@ VUC recovers `AlignString()` **145/145 byte-exact**, including all eight
 original PLT/BSS relocations, from a minimal ordinary C++03 file;
 the earlier AsmOutput source-unit probe had only 143/145. See
 `vuc/docs/2026-10-13-visitcache-main-rebase-alignstring-exact.md`.
+The subsequent rebase onto VCL `main` at `8d609de` preserves all 195
+accepted functions. The new deferred `dumpPathKey` compiler-state
+evidence motivated bounded genuine Instruction arena method-order,
+Flex buffer alignment and AST statement-list optimizer controls; none
+improved their existing byte scores. See
+`vuc/docs/2026-10-13-dumppathkey-rebase-negative-controls.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
