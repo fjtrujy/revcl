@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **175 independently verified exact function-symbol records**
-covering 11770/11770 instruction bytes, including the original relocation for
+The strict gate now checks **177 independently verified exact function-symbol records**
+covering 11832/11832 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -142,6 +142,14 @@ original `ListFile::Generate` global startup wrapper at 31/31 bytes,
 with independently verified neighboring ListFile methods. The long
 `Generate` method itself remains partial; see
 `vuc/docs/2026-10-13-listfile-generate-source-unit.md`.
+The original semantic-analysis startup wrapper now matches 31/31 bytes
+in a real `CheckActualParamList`, `Check(ASTFunCall*)`, and
+`Semant_Check` source-unit context. The full argument validator remains
+provisional; see `vuc/docs/2026-10-13-semant-startup-source-unit.md`.
+The original `Translate(Type const&, unsigned int, int)`-keyed startup
+wrapper is also 31/31 from an IR type-dispatch source-level hypothesis.
+See `vuc/docs/2026-10-13-semant-translate-startup-batch.md` for both
+newly accepted startup functions and their incomplete application bodies.
 Near-exact `Printer` function-call printing, `Instruction` arena cleanup,
 lexer buffer loading, and hash-node insertion now have bounded,
 source-level negative controls; see
@@ -213,8 +221,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 175 EXACT,
-9 EXPERIMENTAL and 114 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 177 EXACT,
+9 EXPERIMENTAL and 112 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.

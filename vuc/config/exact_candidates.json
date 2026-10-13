@@ -173,5 +173,7 @@
   "vuc/config/value_global_genuine_context_oct13.json",
   "vuc/config/iostream_currfile_real_context_oct13.json",
   "vuc/config/iostream_global_symboltable_oct13_probe.json",
-  "vuc/config/iostream_listfile_real_oct13_probe.json"
+  "vuc/config/iostream_listfile_real_oct13_probe.json",
+  "vuc/config/iostream_semant_real_oct13_probe.json",
+  "vuc/config/iostream_translate_real_oct13_probe.json"
 ]

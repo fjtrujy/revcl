@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 184)
+        self.assertEqual(len(records), 186)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 175)
+        self.assertEqual(len(exact_configs), 177)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -156,6 +156,30 @@ class CandidateSuiteTests(unittest.TestCase):
             self.assertNotIn(path, accepted)
             self.assertTrue(json.loads(suite.within_repo(path).read_text())["source"].startswith(
                 "vuc/probes/"))
+
+    def test_semant_global_wrapper_preserves_exact_call_and_entrypoint(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        manifest = "vuc/config/iostream_semant_real_oct13_probe.json"
+        self.assertIn(manifest, accepted)
+        config = json.loads(suite.within_repo(manifest).read_text())
+        self.assertEqual(config["source"], "vuc/src/SemantUnit.cpp")
+        self.assertEqual(config["address"], "0x0806a0c0")
+        self.assertEqual(config["size"], 31)
+        self.assertEqual(config["relocations"][".text._Z41__static_initialization_and_destruction_0ii"],
+                         "0x080619d0")
+        self.assertIn("vuc/config/check_ast_fun_call_probe.json", accepted)
+        self.assertIn("vuc/config/semant_check_exact_probe.json", accepted)
+
+    def test_translate_type_startup_wrapper_is_original_exact(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        manifest = "vuc/config/iostream_translate_real_oct13_probe.json"
+        self.assertIn(manifest, accepted)
+        config = json.loads(suite.within_repo(manifest).read_text())
+        self.assertEqual(config["source"], "vuc/src/TranslateTypeUnit.cpp")
+        self.assertEqual(config["address"], "0x0806e050")
+        self.assertEqual(config["size"], 31)
+        self.assertEqual(config["relocations"][".text._Z41__static_initialization_and_destruction_0ii"],
+                         "0x0806a960")
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
