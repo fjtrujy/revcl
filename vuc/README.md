@@ -461,6 +461,10 @@ with `realloc` relocation and three authenticated original error
 strings. It is not yet exact; original source-unit padding/layout
 provenance remains unresolved. See
 `vuc/docs/2026-10-13-rebase-main-flex-next-buffer-partial.md`.
+Additional genuine compiler/source controls for this 430/550 partial,
+plus two unresolved SymbolScope uninitialized-copy templates, found no
+new exact bytes. Negative evidence and reproduction commands are retained
+in `vuc/docs/2026-10-13-flex-followup-compiler-negative-controls.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
