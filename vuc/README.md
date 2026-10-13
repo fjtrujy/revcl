@@ -410,6 +410,12 @@ The VUC compiler's `-da` RTL dumps and a verified register-renaming
 diagnostic are documented in
 `vuc/docs/2026-10-13-vcl-main-technique-review.md`; none of the VCL-
 specific compiler or source-unit exceptions is assumed to apply to VUC.
+Further bounded historical-source controls for the real AsmOutput unit,
+AST function-call printer, RTTI-backed sequence translation, and glibc
+startup are recorded in
+`vuc/docs/2026-10-13-source-provenance-bounded-batch.md`.
+These are reproducible negative experiments and source-provenance findings,
+not newly accepted byte-exact functions.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
