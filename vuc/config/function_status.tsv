@@ -253,7 +253,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806f7d0	220	UNRESOLVED	-	-	_ZN5Value11TypeConvertERKS_S1_RS_S2_
 0x0806f8b0	257	UNRESOLVED	-	-	_ZN5Value16TypeConvertForceE6TypeIDRKS_S2_RS_S3_
 0x0806f9c0	16	EXACT	vuc/config/iostream_cleanup_0806f9c0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x0806f9d0	31	UNRESOLVED	-	-	_GLOBAL__I__ZN5ValueC2Ev
+0x0806f9d0	31	EXACT	vuc/config/value_global_genuine_context_oct13.json	vuc/src/Value.cpp	_GLOBAL__I__ZN5ValueC2Ev
 0x0806f9f0	88	EXACT	vuc/config/iostream_static_curr_file_probe.json	vuc/src/CurrFileInitialization.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806fa50	39	EXACT	vuc/config/script_lex_probe.json	vuc/src/ScriptLexer.cpp	_Z10script_lexv
 0x0806fa80	161	UNRESOLVED	-	-	_Z12script_errorPKc

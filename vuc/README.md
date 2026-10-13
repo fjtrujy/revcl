@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **171 independently verified exact function-symbol records**
-covering 11646/11646 instruction bytes, including the original relocation for
+The strict gate now checks **172 independently verified exact function-symbol records**
+covering 11677/11677 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -124,6 +124,10 @@ The following application-code milestone also resolves
 `Canonize2_Reduce()` **85/85** by compiling the three genuine, already
 byte-exact `ConvVal` overloads before it. See
 `vuc/docs/2026-10-13-canonize2-conversion-context.md`.
+The `Value.cpp` source-unit reconstruction similarly recovers the
+31/31-byte `Value` global initialization wrapper alongside genuine
+arithmetic and comparison members; see
+`vuc/docs/2026-10-13-value-startup-context-batch.md`.
 The failed original-era AST `matchStack` container alternatives and the
 unfixed `currFileName` wrapper after a real entry-point neighbor are
 retained as reproducible controls in
@@ -191,8 +195,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 171 EXACT,
-7 EXPERIMENTAL and 120 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 172 EXACT,
+7 EXPERIMENTAL and 119 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.

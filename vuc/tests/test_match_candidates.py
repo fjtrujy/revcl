@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 178)
+        self.assertEqual(len(records), 179)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 171)
+        self.assertEqual(len(exact_configs), 172)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -91,6 +91,20 @@ class CandidateSuiteTests(unittest.TestCase):
             self.assertEqual(config["source"], "vuc/src/ConvVal.cpp")
             self.assertIn("-falign-jumps=1", config["flags"])
         self.assertNotIn("vuc/config/canonize2_reduce_probe.json", accepted)
+
+    def test_value_constructor_unit_global_wrapper_is_exact(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        path = "vuc/config/value_global_genuine_context_oct13.json"
+        self.assertIn(path, accepted)
+        record = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(record["address"], "0x0806f9d0")
+        self.assertEqual(record["size"], 31)
+        self.assertEqual(record["source"], "vuc/src/Value.cpp")
+        self.assertEqual(record["relocations"][".text._Z41__static_initialization_and_destruction_0ii"],
+                         "0x0806e6f0")
+        for method in ("value_default_c1_probe.json", "value_default_c2_probe.json",
+                       "value_dispatch_exact_probe.json"):
+            self.assertIn("vuc/config/" + method, accepted)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

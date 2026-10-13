@@ -1,0 +1,10 @@
+{
+  "function": "_GLOBAL__I__ZN5ValueC2Ev",
+  "address": "0x0806f9d0",
+  "size": 31,
+  "source": "vuc/src/Value.cpp",
+  "flags": ["-O2", "-frename-registers", "-fuse-cxa-atexit", "-ffunction-sections"],
+  "relocations": {
+    ".text._Z41__static_initialization_and_destruction_0ii": "0x0806e6f0"
+  }
+}
