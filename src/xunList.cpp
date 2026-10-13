@@ -18,17 +18,6 @@ xpOp *func_0804f6c0(int type)
     return 0;
 }
 
-void func_0804f6ec()
-{
-    while (g_080bcda4) {
-        xun *p = g_080bcda4;
-        g_080bcda4 = p->next;
-        delete p;
-    }
-    g_080bcda4 = 0;
-    g_080bcda8 = 0;
-}
-
 bool func_0804f75c(const char *s)
 {
     if (!s) {
