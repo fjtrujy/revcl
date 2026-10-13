@@ -1,0 +1,16 @@
+{
+  "function": "_ZN15InstructionList4AddBEPKcz",
+  "address": "0x08051610",
+  "size": 146,
+  "source": "vuc/src/InstructionList.cpp",
+  "flags": ["-O2", "-frename-registers"],
+  "relocations": {
+    "vsprintf": "0x0804961c",
+    "_ZN11InstructionnwEj": "0x08051910",
+    "_ZN12MLGameStringC1EPKcb": "0x08071720",
+    "_ZN12MLGameStringC1ERKS_": "0x08071770",
+    "_ZN15InstructionList3AddEP11Instruction": "0x08051530",
+    "_ZdlPv": "0x0804973c",
+    "_Unwind_Resume": "0x0804998c"
+  }
+}

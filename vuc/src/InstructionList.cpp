@@ -2,6 +2,8 @@
 #include <vector>
 #include <ostream>
 #include <cstddef>
+#include <cstdio>
+#include <cstdarg>
 #include "MLGameString.h"
 struct Instruction {
     MLGameString text;
@@ -14,6 +16,8 @@ struct Instruction {
 class InstructionList {
 public:
     void Add(Instruction *instruction);
+    void Add(const char *format, ...);
+    void AddB(const char *format, ...);
     void Print(std::ostream &output);
     void AddL(const MLGameString &name);
     static MLGameString GenTmp(const char *name);
@@ -50,4 +54,28 @@ MLGameString InstructionList::GenTmp(const char *name)
     static int id = 1;
     MLTempString temporary("%s_%03d", name, id++);
     return MLGameString(temporary);
+}
+
+void InstructionList::Add(const char *format, ...)
+{
+    char line[1024];
+    va_list arguments;
+    va_start(arguments, format);
+    vsprintf(line, format, arguments);
+    va_end(arguments);
+    Instruction *instruction = new Instruction(MLGameString(line, false));
+    instruction->kind = 0;
+    Add(instruction);
+}
+
+void InstructionList::AddB(const char *format, ...)
+{
+    char line[1024];
+    va_list arguments;
+    va_start(arguments, format);
+    vsprintf(line, format, arguments);
+    va_end(arguments);
+    Instruction *instruction = new Instruction(MLGameString(line, false));
+    instruction->kind = 1;
+    Add(instruction);
 }

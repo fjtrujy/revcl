@@ -84,10 +84,10 @@ address	size	status	manifest	candidate_source	symbol
 0x08051450	74	EXACT	vuc/config/uninitialized_asm_mut_probe.json	vuc/src/AsmVariableUninitializedCopy.cpp	_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIP11AsmVariableSt6vectorIS2_SaIS2_EEEES7_ET0_T_S9_S8_12__false_type
 0x080514a0	138	EXACT	vuc/config/instruction_arena_static_probe.json	vuc/src/InstructionArenaLifecycle.cpp	_Z41__static_initialization_and_destruction_0ii
 0x08051530	55	EXACT	vuc/config/instruction_list_add_exact_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList3AddEP11Instruction
-0x08051570	146	UNRESOLVED	-	-	_ZN15InstructionList3AddEPKcz
-0x08051610	146	UNRESOLVED	-	-	_ZN15InstructionList4AddBEPKcz
+0x08051570	146	EXACT	vuc/config/instruction_add_format_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList3AddEPKcz
+0x08051610	146	EXACT	vuc/config/instruction_addb_format_exact_oct13_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList4AddBEPKcz
 0x080516b0	107	EXACT	vuc/config/instruction_addl_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList4AddLERK12MLGameString
-0x08051720	162	UNRESOLVED	-	-	_ZN15InstructionList14AddLineCommentEi
+0x08051720	162	EXPERIMENTAL	vuc/config/instruction_add_line_comment_context_oct13_probe.json	vuc/probes/instruction_line_with_unit_oct13.cpp	_ZN15InstructionList14AddLineCommentEi
 0x080517d0	5	EXACT	vuc/config/noop_080517d0_probe.json	vuc/src/EmptyHooks.cpp	_ZN15InstructionList13GenerateImageEPh
 0x080517e0	85	EXACT	vuc/config/instruction_gen_label_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList8GenLabelEPKc
 0x08051840	85	EXACT	vuc/config/instruction_gen_tmp_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList6GenTmpEPKc
@@ -285,7 +285,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08071bb0	110	EXACT	vuc/config/ml_temp_format_c1_probe.json	vuc/src/MLTempStringFormatted.cpp	_ZN12MLTempStringC1EPKcz
 0x08071c20	101	EXPERIMENTAL	vuc/config/ml_temp_default_C2_probe.json	vuc/probes/ml_temp_default.cpp	_ZN12MLTempStringC2Ev
 0x08071c90	102	EXACT	vuc/config/ml_temp_default_C1_probe.json	vuc/src/MLTempStringDefault.cpp	_ZN12MLTempStringC1Ev
-0x08071d00	117	UNRESOLVED	-	-	_ZN12MLTempString3SetEPKcz
+0x08071d00	117	EXPERIMENTAL	vuc/config/ml_temp_set_probe.json	vuc/probes/ml_temp_set_return.cpp	_ZN12MLTempString3SetEPKcz
 0x08071d80	53	EXACT	vuc/config/ml_temp_append_exact_probe.json	vuc/src/MLGameString.cpp	_ZN12MLTempStringpLERKS_
 0x08071dc0	58	EXACT	vuc/config/ml_temp_plus_exact_probe.json	vuc/src/MLGameString.cpp	_ZN12MLTempStringplERKS_
 0x08071e00	22	EXACT	vuc/config/ml_game_string_table_cleanup_probe.json	vuc/src/MLGameStringTableLifecycle.cpp	__tcf_0

@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 191)
+        self.assertEqual(len(records), 195)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 185)
+        self.assertEqual(len(exact_configs), 187)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -259,6 +259,52 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("-ffunction-sections", config["flags"])
         self.assertEqual(config["relocations"][".text.__tcf_0"], "0x08071e00")
         self.assertNotIn(".text", config["relocations"])
+
+    def test_instruction_list_variadic_add_and_addb_are_exact(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        checks = (
+            ("instruction_add_format_probe.json", "0x08051570",
+             "_ZN15InstructionList3AddEPKcz"),
+            ("instruction_addb_format_exact_oct13_probe.json", "0x08051610",
+             "_ZN15InstructionList4AddBEPKcz"),
+        )
+        for filename, address, function in checks:
+            with self.subTest(filename=filename):
+                path = "vuc/config/" + filename
+                self.assertIn(path, accepted)
+                config = json.loads(suite.within_repo(path).read_text())
+                self.assertEqual(config["source"], "vuc/src/InstructionList.cpp")
+                self.assertEqual(config["function"], function)
+                self.assertEqual(config["address"], address)
+                self.assertEqual(config["size"], 146)
+                self.assertEqual(config["relocations"]["vsprintf"], "0x0804961c")
+                self.assertEqual(config["relocations"]["_ZN11InstructionnwEj"],
+                                 "0x08051910")
+                self.assertEqual(config["relocations"]["_Unwind_Resume"],
+                                 "0x0804998c")
+                self.assertEqual(len(config["relocations"]), 7)
+
+        near = "vuc/config/instruction_add_line_comment_context_oct13_probe.json"
+        experimental = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertIn(near, experimental)
+        self.assertNotIn(near, accepted)
+        near_config = json.loads(suite.within_repo(near).read_text())
+        self.assertEqual(near_config["source"],
+                         "vuc/probes/instruction_line_with_unit_oct13.cpp")
+        self.assertEqual(near_config["size"], 162)
+        self.assertEqual(sum(r["size"] for r in
+                             near_config["relocation_literals"][".rodata"]), 22)
+
+        set_probe = "vuc/config/ml_temp_set_probe.json"
+        self.assertIn(set_probe, experimental)
+        self.assertNotIn(set_probe, accepted)
+        set_config = json.loads(suite.within_repo(set_probe).read_text())
+        self.assertEqual(set_config["address"], "0x08071d00")
+        self.assertEqual(set_config["size"], 117)
+        self.assertEqual(set_config["source"],
+                         "vuc/probes/ml_temp_set_return.cpp")
+        self.assertEqual(set_config["flags"], ["-O2"])
+        self.assertEqual(len(set_config["relocations"]), 2)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

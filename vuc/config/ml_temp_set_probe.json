@@ -1,0 +1,19 @@
+{
+  "function": "_ZN12MLTempString3SetEPKcz",
+  "address": "0x08071d00",
+  "size": 117,
+  "source": "vuc/probes/ml_temp_set_return.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "memset": "0x0804996c",
+    "_ZN16MLTempStringData13VFormatStringEPKcPc": "0x08071a50"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZGVZN16MLTempStringData3GetEvE3tsd": "0x0808bce8",
+      "_ZZN16MLTempStringData3GetEvE3tsd": "0x0808c520"
+    }
+  }
+}
