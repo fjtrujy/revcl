@@ -13,9 +13,9 @@ address	size	status	manifest	candidate_source	symbol
 0x08049e70	2168	UNRESOLVED	-	-	_Z14AsmOutput_EmitR15InstructionList
 0x0804a6f0	16	EXACT	vuc/config/iostream_cleanup_0804a6f0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0804a700	31	EXACT	vuc/config/iostream_global_constantsTabStop_probe.json	vuc/src/IostreamGlobal_constantsTabStop.cpp	_GLOBAL__I_constantsTabStop
-0x0804a720	145	UNRESOLVED	-	-	_Z41__static_initialization_and_destruction_0ii
+0x0804a720	145	EXACT	vuc/config/ast_matchstack_init_oct13_probe.json	vuc/src/AST.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0804a7c0	16	EXACT	vuc/config/iostream_cleanup_0804a7c0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
-0x0804a7d0	31	EXPERIMENTAL	vuc/config/iostream_global_matchStack_probe.json	vuc/probes/IostreamGlobal_matchStack.cpp	_GLOBAL__I_matchStack
+0x0804a7d0	31	EXACT	vuc/config/iostream_global_matchStack_probe.json	vuc/src/AST.cpp	_GLOBAL__I_matchStack
 0x0804a7f0	138	EXACT	vuc/config/ast_arena_initializer_probe.json	vuc/src/ASTNodeArenaCleanup.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0804a880	86	EXACT	vuc/config/arena_ast_probe.json	vuc/src/ASTNodeArena.cpp	_ZN7ASTNodenwEj
 0x0804a8e0	16	EXACT	vuc/config/iostream_cleanup_0804a8e0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0

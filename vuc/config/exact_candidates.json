@@ -166,5 +166,7 @@
   "vuc/config/flex_ctor_c2_oct12_probe.json",
   "vuc/config/iostream_global_inputfilename_oct12_probe.json",
   "vuc/config/ugly_printer_unit_oct13_probe.json",
-  "vuc/config/iostream_global_printer_oct13_probe.json"
+  "vuc/config/iostream_global_printer_oct13_probe.json",
+  "vuc/config/ast_matchstack_init_oct13_probe.json",
+  "vuc/config/iostream_global_matchStack_probe.json"
 ]

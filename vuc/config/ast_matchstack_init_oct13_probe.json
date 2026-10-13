@@ -1,0 +1,24 @@
+{
+  "function": "_Z41__static_initialization_and_destruction_0ii",
+  "address": "0x0804a720",
+  "size": 145,
+  "source": "vuc/src/AST.cpp",
+  "flags": ["-O2", "-frename-registers", "-fuse-cxa-atexit", "-ffunction-sections"],
+  "relocations": {
+    "_ZNSt8ios_base4InitC1Ev": "0x0804974c",
+    ".text.__tcf_0": "0x0804a7c0",
+    "__dso_handle": "0x08077004",
+    "__cxa_atexit": "0x0804972c",
+    "_ZN12MLGameStringC1EPKcb": "0x080716e0"
+  },
+  "relocation_objects": {
+    ".bss": {
+      "_ZSt8__ioinit": "0x0808abe0",
+      "matchStack": "0x0808abe4",
+      "_ZN13ASTReturnStmt7regNameE": "0x0808abf0"
+    }
+  },
+  "relocation_literals": {
+    ".rodata": [{"offset": 0, "size": 14, "address": "0x08072244"}]
+  }
+}

@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 176)
+        self.assertEqual(len(records), 177)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 168)
+        self.assertEqual(len(exact_configs), 170)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -62,6 +62,21 @@ class CandidateSuiteTests(unittest.TestCase):
             config = json.loads(suite.within_repo(config_path).read_text())
             self.assertEqual(config["source"], "vuc/src/Printer.cpp")
         self.assertNotIn("vuc/config/print_ast_fun_call_probe.json", accepted)
+
+    def test_ast_matchstack_initializer_and_wrapper_share_real_source(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        for filename in ("ast_matchstack_init_oct13_probe.json",
+                         "iostream_global_matchStack_probe.json"):
+            path = "vuc/config/" + filename
+            self.assertIn(path, accepted)
+            self.assertEqual(json.loads(suite.within_repo(path).read_text())["source"],
+                             "vuc/src/AST.cpp")
+        helper = json.loads(suite.within_repo(
+            "vuc/config/ast_matchstack_init_oct13_probe.json").read_text())
+        self.assertEqual(helper["size"], 145)
+        self.assertEqual(helper["relocation_objects"][".bss"]["matchStack"],
+                         "0x0808abe4")
+        self.assertEqual(helper["relocation_literals"][".rodata"][0]["size"], 14)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

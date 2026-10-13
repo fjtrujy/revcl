@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **168 independently verified exact function-symbol records**
-covering 11385/11385 instruction bytes, including the original relocation for
+The strict gate now checks **170 independently verified exact function-symbol records**
+covering 11561/11561 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -115,6 +115,11 @@ source-unit context, producing both `Printer_UglyPrint()` at **40/40**
 and its generated iostream initialization wrapper at **31/31**.
 See `vuc/docs/2026-10-13-printer-source-unit-exact-batch.md` for
 the historical compiler and original ELF relocation/literal evidence.
+The next AST.cpp milestone reproduces its **145/145** static
+initialization helper and **31/31** `matchStack` startup wrapper in
+one original-shaped C++ unit, while retaining the already exact 16-byte
+iostream cleanup callback. See
+`vuc/docs/2026-10-13-ast-matchstack-static-init.md`.
 
 An independent **named-data acceptance gate** now checks
 **244/244 original named initialized-data, RTTI, vtable and ABI objects,
@@ -178,8 +183,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 168 EXACT,
-8 EXPERIMENTAL and 122 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 170 EXACT,
+7 EXPERIMENTAL and 121 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
