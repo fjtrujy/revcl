@@ -59,6 +59,8 @@ bool emuTable(Program *p, workTable *wt)
         }
         break;
     }
+fail:
+    return false;
     case 1:
     case 4: {
         Instr *i = wt->unk_88.unk_00;
@@ -82,8 +84,6 @@ bool emuTable(Program *p, workTable *wt)
         break;
     }
     return true;
-fail:
-    return false;
 }
 
 static inline void reportRegRefFailure()
