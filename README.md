@@ -27,7 +27,7 @@ A byte-for-byte matching C++ decompilation of
 Progress (matched bytes / file size):
 
 <!-- progress:start -->
-**470,200 / 482,736 bytes (97.40%)** of `vcl_14beta7_x86` matched — code 262,071 / 268,717 (1140 / 1192 functions exact, 213,144 bytes), data 149,121 bytes, unwind tables 47,617 bytes, linker/runtime 11,391 bytes
+**469,853 / 482,736 bytes (97.33%)** of `vcl_14beta7_x86` matched — code 262,088 / 268,717 (1141 / 1192 functions exact, 213,809 bytes), data 149,121 bytes, unwind tables 47,201 bytes, linker/runtime 11,443 bytes
 <!-- progress:end -->
 
 Setup and daily use:
@@ -43,9 +43,7 @@ scripts/decomp score --readme --html   # refresh this block and tmp/progress.htm
 
 Open `tmp/progress.html` for the visual comparison of the original and the
 rebuilt bytes and the progress history (`progress/history.csv`); its
-`#run` tab ("Agent run") follows a running `iterate.py` live. Click a section
-title to collapse or expand it; each section remembers its state across reloads.
-Details: [`docs/decompilation.md`](docs/decompilation.md)
+`#run` tab ("Agent run") follows a running `iterate.py` live. Details: [`docs/decompilation.md`](docs/decompilation.md)
 (approach, toolchain, scoring), [`docs/workflow.md`](docs/workflow.md) (agent
 loop), [`docs/matching-notes.md`](docs/matching-notes.md) (compiler idioms),
 [`AGENTS.md`](AGENTS.md) (rules for agents).
