@@ -1,0 +1,14 @@
+{
+  "function": "_ZNK5ValuemlERKS_",
+  "address": "0x0806eb70",
+  "size": 222,
+  "source": "vuc/src/ValueArithmeticUnit.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"
+  }
+}

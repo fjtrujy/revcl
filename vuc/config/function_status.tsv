@@ -237,7 +237,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806e9a0	5	EXACT	vuc/config/noop_0806e9a0_probe.json	vuc/src/EmptyHooks.cpp	_ZN5Value3SetEPK11ASTLValExpr
 0x0806e9b0	219	UNRESOLVED	-	-	_ZNK5ValueplERKS_
 0x0806ea90	221	EXACT	vuc/config/value_arithmetic_minus_probe.json	vuc/src/ValueMinus.cpp	_ZNK5ValuemiERKS_
-0x0806eb70	222	UNRESOLVED	-	-	_ZNK5ValuemlERKS_
+0x0806eb70	222	EXACT	vuc/config/value_multiply_exact_oct13.json	vuc/src/ValueArithmeticUnit.cpp	_ZNK5ValuemlERKS_
 0x0806ec50	235	UNRESOLVED	-	-	_ZNK5ValuedvERKS_
 0x0806ed40	254	EXACT	vuc/config/value_comparison_eq_probe.json	vuc/src/ValueComparison.cpp	_ZNK5ValueeqERKS_
 0x0806ee40	254	EXACT	vuc/config/value_comparison_ne_probe.json	vuc/src/ValueComparison.cpp	_ZNK5ValueneERKS_

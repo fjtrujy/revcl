@@ -100,8 +100,8 @@ limactl shell revcl-oracle -- python3 \
   --out /tmp/vuc-binutils215/exact-suite
 ```
 
-The strict gate now checks **188 independently verified exact function-symbol records**
-covering 12702/12702 instruction bytes, including the original relocation for
+The strict gate now checks **189 independently verified exact function-symbol records**
+covering 12924/12924 instruction bytes, including the original relocation for
 `Instruction::ToString()`. The exploratory manifest
 `vuc/config/selected_candidates.json` also includes the **unmatched** prologue;
 it must fail when supplied with `--manifest`. Unmatched sources remain in
@@ -416,6 +416,11 @@ startup are recorded in
 `vuc/docs/2026-10-13-source-provenance-bounded-batch.md`.
 These are reproducible negative experiments and source-provenance findings,
 not newly accepted byte-exact functions.
+After the VCL `main` rebase at `bbe5056`, the restored real `Value::operator-`
+source-unit predecessor makes `Value::operator*` **222/222 byte-exact**
+under historical GCC 3.3.3, while preserving the **221/221** subtraction.
+See `vuc/docs/2026-10-13-operand-main-rebase-and-value-arithmetic-exact.md`
+for the genuine C++ source, relocation verification and negative controls.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
