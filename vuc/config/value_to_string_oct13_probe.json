@@ -1,0 +1,19 @@
+{
+  "function": "_ZNK5Value8ToStringEv",
+  "address": "0x0806f6f0",
+  "size": 221,
+  "source": "vuc/probes/ValueToStringUnit.cpp",
+  "flags": ["-O2", "-frename-registers", "-falign-jumps=4"],
+  "relocations": {
+    "sprintf": "0x080499bc",
+    "_ZN12MLGameStringC1EPKcb": "0x08071720"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {"offset": 0, "size": 64, "address": "0x0807669c"},
+      {"offset": 64, "size": 3, "address": "0x08072971"},
+      {"offset": 67, "size": 12, "address": "0x08076690"},
+      {"offset": 79, "size": 3, "address": "0x08076699"}
+    ]
+  }
+}

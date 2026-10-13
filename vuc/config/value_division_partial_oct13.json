@@ -1,0 +1,10 @@
+{
+  "function": "_ZNK5ValuedvERKS_",
+  "address": "0x0806ec50",
+  "size": 235,
+  "source": "vuc/probes/ValueDivisionUnit.cpp",
+  "flags": ["-O2", "-frename-registers", "-falign-jumps=8"],
+  "relocations": {
+    "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"
+  }
+}

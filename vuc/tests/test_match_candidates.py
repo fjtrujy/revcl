@@ -17,7 +17,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 202)
+        self.assertEqual(len(records), 204)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -141,6 +141,27 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("switch (left.type)", source)
         self.assertIn("switch (right.type)", source)
         self.assertTrue(source.rstrip().endswith("return false;\n}"))
+
+    def test_value_tostring_and_division_remain_experimental(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        exploratory = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        for manifest, address, length in (
+            ("vuc/config/value_to_string_oct13_probe.json", "0x0806f6f0", 221),
+            ("vuc/config/value_division_partial_oct13.json", "0x0806ec50", 235),
+        ):
+            self.assertIn(manifest, exploratory)
+            self.assertNotIn(manifest, accepted)
+            config = json.loads(suite.within_repo(manifest).read_text())
+            self.assertEqual(config["address"], address)
+            self.assertEqual(config["size"], length)
+            self.assertTrue(config["source"].startswith("vuc/probes/"))
+        tostring = json.loads(suite.within_repo(
+            "vuc/config/value_to_string_oct13_probe.json").read_text())
+        ranges = tostring["relocation_literals"][".rodata"]
+        self.assertEqual(sum(entry["size"] for entry in ranges), 82)
+        self.assertEqual([entry["address"] for entry in ranges],
+                         ["0x0807669c", "0x08072971", "0x08076690",
+                          "0x08076699"])
 
     def test_currfile_wrapper_has_real_diagnostic_source_context(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

@@ -426,6 +426,12 @@ The next milestone reconstructs the original 220-byte
 Value assignments and a shared failure return after nested switches.
 Its isolated historical source and bounded negative source-unit controls
 are documented in `vuc/docs/2026-10-13-typeconvert-exact-and-source-context.md`.
+The following partial source-context batch reconstructs
+`Value::ToString()` at **159/221** bytes with all eight relocations
+and 82 initialized literal bytes authenticated, and improves
+`Value::operator/()` to **178/235** bytes with its real TypeConvert
+relocation. Both remain experimental, not accepted as exact; see
+`vuc/docs/2026-10-13-value-tostring-and-division-partials.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
