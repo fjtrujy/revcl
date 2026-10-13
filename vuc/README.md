@@ -477,6 +477,13 @@ evidence motivated bounded genuine Instruction arena method-order,
 Flex buffer alignment and AST statement-list optimizer controls; none
 improved their existing byte scores. See
 `vuc/docs/2026-10-13-dumppathkey-rebase-negative-controls.md`.
+The follow-up RTL pass study reproduces the one-byte Instruction
+arena destructor mismatch (45/46) in both original GCC 3.3.3 snapshots:
+the generated dead stack-discard target is EBX rather than original
+ECX. Real printer source-order and deferred-ownership controls retain
+96/98, while 180 Seq_Data constructor/loop variants cannot reproduce
+the original 119-byte translator. See
+`vuc/docs/2026-10-13-rtl-printer-ir-negative-batch.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
