@@ -17,14 +17,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 201)
+        self.assertEqual(len(records), 202)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 189)
+        self.assertEqual(len(exact_configs), 190)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -124,6 +124,23 @@ class CandidateSuiteTests(unittest.TestCase):
                  "Value Value::operator*(")
         self.assertEqual([source.index(name) for name in names],
                          sorted(source.index(name) for name in names))
+
+    def test_value_type_convert_has_authentic_copy_and_shared_failure(self):
+        config_name = "vuc/config/value_type_convert_exact_oct13.json"
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertIn(config_name, accepted)
+        config = json.loads(suite.within_repo(config_name).read_text())
+        self.assertEqual(config["address"], "0x0806f7d0")
+        self.assertEqual(config["size"], 220)
+        self.assertEqual(config["relocations"], {})
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=1"])
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("left = first;", source)
+        self.assertIn("right = second;", source)
+        self.assertIn("switch (left.type)", source)
+        self.assertIn("switch (right.type)", source)
+        self.assertTrue(source.rstrip().endswith("return false;\n}"))
 
     def test_currfile_wrapper_has_real_diagnostic_source_context(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
