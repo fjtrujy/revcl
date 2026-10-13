@@ -17,7 +17,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 209)
+        self.assertEqual(len(records), 210)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -249,6 +249,27 @@ class CandidateSuiteTests(unittest.TestCase):
         src = suite.within_repo(config["source"]).read_text()
         self.assertIn("*--dest = *--source;", src)
         self.assertIn('LexerError("flex scanner push-back overflow")', src)
+
+    def test_flex_next_buffer_remains_a_relocation_checked_partial(self):
+        manifest = "vuc/config/yy_get_next_buffer_oct13_probe.json"
+        exact = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        exploratory = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(manifest, exact)
+        self.assertIn(manifest, exploratory)
+        config = json.loads(suite.within_repo(manifest).read_text())
+        self.assertEqual(config["address"], "0x080611c0")
+        self.assertEqual(config["size"], 550)
+        self.assertEqual(config["source"], "vuc/probes/yy_get_next_buffer_partial_oct13.cpp")
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=1"])
+        self.assertEqual(config["relocations"], {"realloc": "0x0804988c"})
+        ranges = config["relocation_literals"][".rodata"]
+        self.assertEqual(sum(item["size"] for item in ranges), 152)
+        self.assertEqual([item["address"] for item in ranges if item["size"] > 20],
+                         ["0x08075ba6", "0x08074d40", "0x08074d80"])
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("while (num_to_read <= 0)", source)
+        self.assertIn("std::realloc(old_buf, b->yy_buf_size + 2)", source)
 
     def test_currfile_wrapper_has_real_diagnostic_source_context(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

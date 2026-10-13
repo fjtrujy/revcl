@@ -159,7 +159,7 @@ address	size	status	manifest	candidate_source	symbol
 0x080610d0	96	EXACT	vuc/config/yy_switch_streams_probe.json	vuc/src/FlexLexerSwitchStreams.cpp	_ZN11yyFlexLexer14switch_streamsEPSiPSo
 0x08061130	97	EXACT	vuc/config/yy_lexer_input_probe.json	vuc/src/FlexLexerInput.cpp	_ZN11yyFlexLexer10LexerInputEPci
 0x080611a0	18	EXACT	vuc/config/flex_output_exact_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer11LexerOutputEPKci
-0x080611c0	550	UNRESOLVED	-	-	_ZN11yyFlexLexer18yy_get_next_bufferEv
+0x080611c0	550	EXPERIMENTAL	vuc/config/yy_get_next_buffer_oct13_probe.json	vuc/probes/yy_get_next_buffer_partial_oct13.cpp	_ZN11yyFlexLexer18yy_get_next_bufferEv
 0x080613f0	205	EXACT	vuc/config/yy_get_previous_state_oct13_probe.json	vuc/src/YyGetPreviousState.cpp	_ZN11yyFlexLexer21yy_get_previous_stateEv
 0x080614c0	161	EXACT	vuc/config/yy_try_nul_trans_oct13_probe.json	vuc/src/YyTryNulTrans.cpp	_ZN11yyFlexLexer16yy_try_NUL_transEi
 0x08061570	167	EXACT	vuc/config/yyunput_reconstruct_oct13_probe.json	vuc/src/YyUnput.cpp	_ZN11yyFlexLexer7yyunputEiPc

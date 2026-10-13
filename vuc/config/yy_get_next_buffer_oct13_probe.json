@@ -1,0 +1,19 @@
+{
+  "function": "_ZN11yyFlexLexer18yy_get_next_bufferEv",
+  "address": "0x080611c0",
+  "size": 550,
+  "source": "vuc/probes/yy_get_next_buffer_partial_oct13.cpp",
+  "flags": ["-O2", "-frename-registers", "-falign-jumps=1"],
+  "relocations": {
+    "realloc": "0x0804988c"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {"offset": 0, "size": 29, "address": "0x08075ba6"},
+      {"offset": 29, "size": 3, "address": "0x08074d6c"},
+      {"offset": 32, "size": 44, "address": "0x08074d40"},
+      {"offset": 76, "size": 20, "address": "0x08074d6c"},
+      {"offset": 96, "size": 56, "address": "0x08074d80"}
+    ]
+  }
+}

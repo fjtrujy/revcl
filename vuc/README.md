@@ -454,6 +454,13 @@ Two additional genuine Flex buffer methods are now exact:
 `yyrestart`/EOF switch fallthrough, and `yyFlexLexer::yyunput()`
 **167/167** with its authenticated original 32-byte fatal-error
 literal. See `vuc/docs/2026-10-13-flex-input-unput-byte-exact.md`.
+After rebasing all 101 VUC commits onto VCL `main` at `a0b6acf`,
+the previously unresolved Flex `yy_get_next_buffer()` now has a
+genuine **430/550** original-length experimental C++ reconstruction,
+with `realloc` relocation and three authenticated original error
+strings. It is not yet exact; original source-unit padding/layout
+provenance remains unresolved. See
+`vuc/docs/2026-10-13-rebase-main-flex-next-buffer-partial.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

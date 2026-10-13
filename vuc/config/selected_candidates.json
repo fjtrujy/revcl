@@ -199,6 +199,7 @@
   "vuc/config/yy_get_previous_state_oct13_probe.json",
   "vuc/config/yyinput_reconstruct_oct13_probe.json",
   "vuc/config/yyunput_reconstruct_oct13_probe.json",
+  "vuc/config/yy_get_next_buffer_oct13_probe.json",
   "vuc/config/instruction_add_format_probe.json",
   "vuc/config/instruction_addb_format_exact_oct13_probe.json",
   "vuc/config/instruction_add_line_comment_context_oct13_probe.json",
