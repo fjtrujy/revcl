@@ -245,8 +245,8 @@ address	size	status	manifest	candidate_source	symbol
 0x0806f040	254	EXACT	vuc/config/value_relational_lt_probe.json	vuc/src/ValueComparison.cpp	_ZNK5ValueltERKS_
 0x0806f140	254	EXACT	vuc/config/value_relational_ge_probe.json	vuc/src/ValueComparison.cpp	_ZNK5ValuegeERKS_
 0x0806f240	254	EXACT	vuc/config/value_relational_le_probe.json	vuc/src/ValueComparison.cpp	_ZNK5ValueleERKS_
-0x0806f340	325	UNRESOLVED	-	-	_ZNK5ValueaaERKS_
-0x0806f490	309	UNRESOLVED	-	-	_ZNK5ValueooERKS_
+0x0806f340	325	EXPERIMENTAL	vuc/config/value_logical_and_partial_oct14_probe.json	vuc/probes/value_logical_and_partial_oct14.cpp	_ZNK5ValueaaERKS_
+0x0806f490	309	EXACT	vuc/config/value_logical_or_exact_oct14_probe.json	vuc/src/ValueLogicalOr.cpp	_ZNK5ValueooERKS_
 0x0806f5d0	143	EXACT	vuc/config/value_bitwise_and_probe.json	vuc/src/ValueBitwise.cpp	_ZNK5ValueanERKS_
 0x0806f660	143	EXACT	vuc/config/value_bitwise_or_probe.json	vuc/src/ValueBitwise.cpp	_ZNK5ValueorERKS_
 0x0806f6f0	221	EXPERIMENTAL	vuc/config/value_to_string_oct13_probe.json	vuc/probes/ValueToStringUnit.cpp	_ZNK5Value8ToStringEv

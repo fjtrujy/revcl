@@ -26,14 +26,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 221)
+        self.assertEqual(len(records), 223)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 199)
+        self.assertEqual(len(exact_configs), 200)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -181,6 +181,27 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(manifest["flags"],
                          ["-O2", "-frename-registers", "-falign-jumps=1"])
         self.assertEqual(len(manifest["relocations"]), 6)
+
+    def test_value_logical_or_is_exact_and_and_remains_experimental(self):
+        exact = json.loads(suite.EXACT_MANIFEST.read_text())
+        selected = json.loads(suite.DEFAULT_MANIFEST.read_text())
+        exact_path = "vuc/config/value_logical_or_exact_oct14_probe.json"
+        and_path = "vuc/config/value_logical_and_partial_oct14_probe.json"
+        self.assertIn(exact_path, exact)
+        self.assertIn(and_path, selected)
+        self.assertNotIn(and_path, exact)
+        or_config = json.loads(suite.within_repo(exact_path).read_text())
+        self.assertEqual(or_config["address"], "0x0806f490")
+        self.assertEqual(or_config["size"], 309)
+        self.assertEqual(or_config["source"], "vuc/src/ValueLogicalOr.cpp")
+        self.assertEqual(or_config["relocations"], {
+            "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"})
+        and_config = json.loads(suite.within_repo(and_path).read_text())
+        self.assertEqual(and_config["size"], 325)
+        self.assertEqual(and_config["source"],
+                         "vuc/probes/value_logical_and_partial_oct14.cpp")
+        or_source = suite.within_repo(or_config["source"]).read_text()
+        self.assertIn(")) && ((result.values[1]", or_source)
 
     def test_manifest_sources_and_configs_are_committed(self):
         """A passing local VM is insufficient if clean clones lack its inputs."""

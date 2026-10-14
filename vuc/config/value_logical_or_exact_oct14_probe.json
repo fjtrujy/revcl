@@ -1,0 +1,17 @@
+{
+  "function": "_ZNK5ValueooERKS_",
+  "address": "0x0806f490",
+  "size": 309,
+  "source": "vuc/src/ValueLogicalOr.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-ffast-math",
+    "-falign-jumps=8",
+    "-falign-labels=1",
+    "-falign-loops=4"
+  ],
+  "relocations": {
+    "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"
+  }
+}

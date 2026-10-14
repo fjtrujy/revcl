@@ -1,0 +1,17 @@
+{
+  "function": "_ZNK5ValueaaERKS_",
+  "address": "0x0806f340",
+  "size": 325,
+  "source": "vuc/probes/value_logical_and_partial_oct14.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-ffast-math",
+    "-falign-jumps=1",
+    "-falign-labels=8",
+    "-falign-loops=1"
+  ],
+  "relocations": {
+    "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"
+  }
+}

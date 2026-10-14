@@ -674,6 +674,19 @@ VUC's historical user guide restricts redistribution of modified compiler
 versions. Treat reconstructed source distribution as unresolved until reviewed;
 the root repository's MIT license does not automatically settle those rights.
 
+The latest batch, rebased on VCL `main` at `01d48ed`, recovered the originally
+unresolved **`Value::operator||` at `0x0806f490` as 309/309 byte-exact**,
+including its original `TypeConvert` relocation. Original ELF x87 branches
+establish the important vector semantics: OR within each two-input float pair,
+**AND across the four pairs**. Both historical GCC 3.3.3 snapshots emit all
+309 original bytes from `vuc/src/ValueLogicalOr.cpp` under the selected
+compiler controls. The same batch recovered an original-length, relocation-
+authenticated **188/325 experimental `Value::operator&&`** partial; it remains
+in `vuc/probes/`, not the exact manifest. Coverage advances to **200 EXACT /
+23 EXPERIMENTAL / 75 UNRESOLVED** of 298, and **14,930** verified original
+instruction bytes. Reproducible evidence and negative controls are in
+`vuc/docs/2026-10-14-value-logical-or-byte-exact-and-partial.md`.
+
 The next `vuc` investigation checked **475** additional ordinary GCC 3.3.3
 source/compiler recipes without changing the accepted inventory or the
 selected 75/306 `TranslateFragList<MLGameString>` partial. Among them,

@@ -197,5 +197,6 @@
   "vuc/config/align_string_exact_oct13.json",
   "vuc/config/string_table_add_oct14_probe.json",
   "vuc/config/instruction_add_line_comment_context_oct13_probe.json",
-  "vuc/config/scope_copy_exact_oct14_probe.json"
+  "vuc/config/scope_copy_exact_oct14_probe.json",
+  "vuc/config/value_logical_or_exact_oct14_probe.json"
 ]
