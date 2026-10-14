@@ -674,6 +674,18 @@ VUC's historical user guide restricts redistribution of modified compiler
 versions. Treat reconstructed source distribution as unresolved until reviewed;
 the root repository's MIT license does not automatically settle those rights.
 
+The subsequent VUC reconstruction batch recovered the formerly unresolved
+`MLHashTable<MLGameString, SymbolTableEntry*, ..., 513>` original 166-byte
+copy constructor as a **genuine 80/166-byte original-length experimental
+partial**, with **all four original relocation sites** independently
+verified under both 2004-era GCC 3.3.3 snapshots. Its provisional explicit
+`Node` constructor and saved next pointer are isolated in `vuc/probes/`,
+not in accepted headers or the exact manifest. The original stack-owned
+bucket index remains unmatched. Inventory: **200 EXACT / 24 EXPERIMENTAL /
+74 UNRESOLVED**, with the same **14,930** accepted original instruction
+bytes. See
+`vuc/docs/2026-10-14-hash-copy-constructor-80-byte-partial.md`.
+
 The latest batch, rebased on VCL `main` at `01d48ed`, recovered the originally
 unresolved **`Value::operator||` at `0x0806f490` as 309/309 byte-exact**,
 including its original `TypeConvert` relocation. Original ELF x87 branches

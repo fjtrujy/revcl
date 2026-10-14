@@ -26,7 +26,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 223)
+        self.assertEqual(len(records), 224)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -205,6 +205,21 @@ class CandidateSuiteTests(unittest.TestCase):
             "-falign-jumps=16", "-falign-labels=1", "-falign-loops=1"])
         or_source = suite.within_repo(or_config["source"]).read_text()
         self.assertIn(")) && ((result.values[1]", or_source)
+
+    def test_hash_copy_node_arguments_are_experimental_only(self):
+        path = "vuc/config/hash_copy_node_args_partial_oct14_probe.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x0804f420")
+        self.assertEqual(config["size"], 166)
+        self.assertEqual(len(config["relocations"]), 4)
+        self.assertEqual(config["source"],
+                         "vuc/probes/hash_copy_node_args_partial_oct14.cpp")
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn('#include "MLHashTableCopyNodePartial.h"', source)
+        self.assertIn("Node *next = node->next", source)
+        self.assertIn("new Node(node->key, node->hash, node->value", source)
 
     def test_manifest_sources_and_configs_are_committed(self):
         """A passing local VM is insufficient if clean clones lack its inputs."""

@@ -221,5 +221,6 @@
   "vuc/config/translate_frag_list_string_oct14_probe.json",
   "vuc/config/scope_copy_exact_oct14_probe.json",
   "vuc/config/value_logical_or_exact_oct14_probe.json",
-  "vuc/config/value_logical_and_partial_oct14_probe.json"
+  "vuc/config/value_logical_and_partial_oct14_probe.json",
+  "vuc/config/hash_copy_node_args_partial_oct14_probe.json"
 ]
