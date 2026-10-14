@@ -208,7 +208,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806a9b0	352	UNRESOLVED	-	-	_Z9TranslateRK4Typeji
 0x0806ab10	644	UNRESOLVED	-	-	_Z17TranslateCallInfoP10ASTFunCall
 0x0806ada0	119	EXPERIMENTAL	vuc/config/translate_stmt_list_partial_oct14_probe.json	vuc/probes/translate_stmt_list_partial_oct14.cpp	_Z9TranslateR11ASTNodeListIP7ASTStmtE
-0x0806ae20	256	EXPERIMENTAL	vuc/config/translate_expr_list_oct14_probe.json	vuc/probes/translate_expr_list_partial_oct14.cpp	_Z9TranslateR11ASTNodeListIP7ASTExprE
+0x0806ae20	256	EXPERIMENTAL	vuc/config/translate_expr_list_oct14_probe.json	vuc/probes/translate_expr_list_partial_improved_oct14.cpp	_Z9TranslateR11ASTNodeListIP7ASTExprE
 0x0806af20	3749	UNRESOLVED	-	-	_Z9TranslateP7ASTStmt
 0x0806bdd0	290	UNRESOLVED	-	-	_Z14TranslateConstRK12MLGameStringRK4Type
 0x0806bf00	2501	UNRESOLVED	-	-	_Z9TranslateP7ASTExprji

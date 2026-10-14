@@ -573,6 +573,13 @@ authenticated. The ledger is **197 EXACT / 19 EXPERIMENTAL /
 `VFormatString` literal audit verified five original source strings
 and rejected candidates with unmapped literal alignment gaps. See
 `vuc/docs/2026-10-14-four-tracked-partials-and-vformat-literal-gate.md`.
+The following AST expression-list source/ABI batch improved the selected
+experimental `Translate(ASTNodeList<ASTExpr*>&)` candidate from
+**90/256** to **112/256**, with both genuine ELF relocations checked.
+This is a 22-byte improvement, **not byte-exact**, and does not change
+the accepted manifest or the **197 EXACT / 19 EXPERIMENTAL /
+82 UNRESOLVED** ledger. See
+`vuc/docs/2026-10-14-expr-list-112-byte-partial.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

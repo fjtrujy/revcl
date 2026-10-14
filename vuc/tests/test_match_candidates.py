@@ -73,6 +73,25 @@ class CandidateSuiteTests(unittest.TestCase):
                 self.assertEqual(config["size"], length)
                 self.assertEqual(len(config["relocations"]), targets)
 
+    def test_improved_ast_expr_list_remains_experimental(self):
+        path = "vuc/config/translate_expr_list_oct14_probe.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["source"],
+                         "vuc/probes/translate_expr_list_partial_improved_oct14.cpp")
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=4",
+                          "-fno-reorder-blocks"])
+        self.assertEqual(config["size"], 256)
+        self.assertEqual(config["relocations"], {
+            "_Z9TranslateP7ASTExprji": "0x0806bf00",
+            "_Znaj": "0x080499ac",
+        })
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("int old_size=length;", source)
+        self.assertIn("int index=i; ++i;", source)
+
     def test_manifest_sources_and_configs_are_committed(self):
         """A passing local VM is insufficient if clean clones lack its inputs."""
         if not (ROOT / ".git").exists():
