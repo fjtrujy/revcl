@@ -495,7 +495,7 @@ bool reduceExtents(workTable *wt)
     int moved;
     do {
         moved = 0;
-        for (int r = wt->unk_30; r != wt->unk_34; r++) {
+        for (int r = wt->unk_30; __builtin_expect(r != wt->unk_34, 1); r++) {
             wtRow *row = wt->func_080724f0(r);
             for (int p = 0; p != 2; p++) {
                 Instr *in = row->getEntry(p);
@@ -523,7 +523,7 @@ bool reduceExtents(workTable *wt)
                     if (registerOperand(op, 1))
                         cnt -= func_0804bf50(op->unk_07);
                 }
-                if (minEnd < 30000 && cnt >= 0) {
+                if (minEnd < 30000 && __builtin_expect(cnt >= 0, 1)) {
                     int t = minEnd;
                     cls08058718 pos;
                     bool found = false;
