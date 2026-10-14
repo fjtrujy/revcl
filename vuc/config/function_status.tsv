@@ -87,7 +87,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08051570	146	EXACT	vuc/config/instruction_add_format_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList3AddEPKcz
 0x08051610	146	EXACT	vuc/config/instruction_addb_format_exact_oct13_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList4AddBEPKcz
 0x080516b0	107	EXACT	vuc/config/instruction_addl_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList4AddLERK12MLGameString
-0x08051720	162	EXPERIMENTAL	vuc/config/instruction_add_line_comment_context_oct13_probe.json	vuc/probes/instruction_line_with_unit_oct13.cpp	_ZN15InstructionList14AddLineCommentEi
+0x08051720	162	EXACT	vuc/config/instruction_add_line_comment_context_oct13_probe.json	vuc/src/InstructionListLineCommentUnit.cpp	_ZN15InstructionList14AddLineCommentEi
 0x080517d0	5	EXACT	vuc/config/noop_080517d0_probe.json	vuc/src/EmptyHooks.cpp	_ZN15InstructionList13GenerateImageEPh
 0x080517e0	85	EXACT	vuc/config/instruction_gen_label_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList8GenLabelEPKc
 0x08051840	85	EXACT	vuc/config/instruction_gen_tmp_probe.json	vuc/src/InstructionList.cpp	_ZN15InstructionList6GenTmpEPKc

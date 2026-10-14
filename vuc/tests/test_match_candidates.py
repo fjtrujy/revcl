@@ -33,7 +33,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 196)
+        self.assertEqual(len(exact_configs), 197)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -485,13 +485,15 @@ class CandidateSuiteTests(unittest.TestCase):
                                  "0x0804998c")
         self.assertEqual(len(config["relocations"]), 7)
 
-        near = "vuc/config/instruction_add_line_comment_context_oct13_probe.json"
+        line_comment = "vuc/config/instruction_add_line_comment_context_oct13_probe.json"
         experimental = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
-        self.assertIn(near, experimental)
-        self.assertNotIn(near, accepted)
-        near_config = json.loads(suite.within_repo(near).read_text())
+        self.assertIn(line_comment, experimental)
+        self.assertIn(line_comment, accepted)
+        near_config = json.loads(suite.within_repo(line_comment).read_text())
         self.assertEqual(near_config["source"],
-                         "vuc/probes/instruction_line_with_unit_oct13.cpp")
+                         "vuc/src/InstructionListLineCommentUnit.cpp")
+        self.assertEqual(near_config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=8"])
         self.assertEqual(near_config["size"], 162)
         self.assertEqual(sum(r["size"] for r in
                              near_config["relocation_literals"][".rodata"]), 22)

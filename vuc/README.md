@@ -532,6 +532,13 @@ and 513-bucket copy construction with historical GCC 3.3.3. No new exact
 function was recovered; reproducible source/branch/stack-lifetime
 negative evidence is preserved in
 `vuc/docs/2026-10-14-small-function-lifetime-negative-batch.md`.
+After rebasing `vuc` onto VCL `origin/main` at `60d0b9a`, the newest
+VCL guard-arm and branch-likelihood evidence unlocked the previously
+147/162 partial `InstructionList::AddLineComment(int)` at **162/162**
+with historical GCC 3.3.3 (`-falign-jumps=8`). All 7 relocation sites
+and 22 original literal bytes match. The separately compiled accepted
+source unit preserves existing InstructionList literal-section matches.
+See `vuc/docs/2026-10-14-line-comment-exact-after-vcl-rebase.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
