@@ -585,6 +585,11 @@ class CandidateSuiteTests(unittest.TestCase):
                 self.assertEqual(config["size"], size)
                 self.assertEqual(config["address"], address)
                 self.assertTrue(config["source"].startswith("vuc/probes/"))
+                if name == "ir_accumulatorable_probe.json":
+                    self.assertEqual(config["source"],
+                                     "vuc/probes/ir_accumulatorable_joint_oct14.cpp")
+                    self.assertEqual(config["flags"],
+                                     ["-O2", "-frename-registers", "-falign-jumps=8"])
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

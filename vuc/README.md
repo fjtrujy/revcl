@@ -539,6 +539,14 @@ with historical GCC 3.3.3 (`-falign-jumps=8`). All 7 relocation sites
 and 22 original literal bytes match. The separately compiled accepted
 source unit preserves existing InstructionList literal-section matches.
 See `vuc/docs/2026-10-14-line-comment-exact-after-vcl-rebase.md`.
+After rebasing once more onto VCL `origin/main` at `1693559`, joint
+historical-GCC branch-likelihood controls improve the experimental
+`IsAccumulatorable(IR::Operator_Data*)` from **61/77** to **74/77**
+original bytes. The three residual bytes are the final conditional
+branch orientation and the following unconditional displacement;
+this is **not byte-exact** and is excluded from the exact manifest.
+All 197 already exact VUC functions remain accepted. See
+`vuc/docs/2026-10-14-vcl-setlocks-accumulator-74-byte-partial.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
