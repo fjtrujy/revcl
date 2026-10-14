@@ -48,6 +48,7 @@ bool instStream::func_0806563c(bool a, bool b)
 bool BuildfDepList(workTable *wt, bool force, bool)
 {
     Instr *in;
+    Instr *phaseHead;
     in = wt->unk_88.unk_00;
     if (!in)
         goto finalize;
@@ -65,8 +66,12 @@ bool BuildfDepList(workTable *wt, bool force, bool)
         }
     }
     {
-        int haveInstruction = (in = (Instr *)*(void **)&wt->unk_88.unk_00) != 0;
-        while (haveInstruction) {
+        phaseHead = wt->unk_88.unk_00;
+        in = phaseHead;
+        if (!phaseHead)
+            goto finalize_ready;
+        int haveInstruction = phaseHead != 0;
+        while (__builtin_expect(haveInstruction, 1)) {
             bool b40 = false;
             bool b10 = false;
             int ramBits = 0;
@@ -161,9 +166,12 @@ bool BuildfDepList(workTable *wt, bool force, bool)
         }
     }
 finalize:
-    in = wt->unk_88.unk_00;
+    phaseHead = wt->unk_88.unk_00;
+finalize_ready:
+    in = phaseHead;
     Instr *last[4] = { 0, 0, 0, 0 };
-    for (; in; in = in->unk_1c.unk_00) {
+    // After entry, phaseHead is only a non-null continuation flag.
+    for (; phaseHead; phaseHead = (Instr *)((in = in->unk_1c.unk_00) != 0)) {
         int p;
         for (p = 0; p != 4; p++)
             if (((in->unk_1414 >> p) & 1) && !((in->unk_1412 >> p) & 1))
