@@ -1,0 +1,17 @@
+{
+  "function": "_Z13AssembleBinOpRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList",
+  "address": "0x0805a3f0",
+  "size": 193,
+  "source": "vuc/probes/assemble_binop_dispatch_partial_oct14.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=4"
+  ],
+  "relocations": {
+    "_Z9GetOpTypePN2IR9Expr_DataE": "0x0805a4f0",
+    "_Z16AssembleBinOpIntRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList": "0x08058640",
+    "_Z19AssembleBinOpFloat4RKN2IR8RegisterEPNS_9Expr_DataER15InstructionList": "0x08056210",
+    "_ZN12MLGameStringC1ERKS_": "0x08071770"
+  }
+}

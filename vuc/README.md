@@ -508,6 +508,13 @@ MLHashTable/STL copying. See
 `vuc/docs/2026-10-14-unresolved-fragment-scope-batch.md` for authentic
 template-source hypotheses, historical compiler measurements and remaining
 source-unit/register-allocation mismatches; none is accepted as exact.
+The next unresolved-only batch recovered the original 193-byte
+`AssembleBinOp` dispatcher ABI, four specialist/default branches and all
+four call relocations. A GCC 3.3.3-only compiler-frequency hypothesis
+matches **162/193** bytes; it is deliberately kept in `vuc/probes/` rather
+than accepted source because original authoring is not authenticated.
+See `vuc/docs/2026-10-14-assemble-binop-unresolved-partial.md` for the
+complete compiler matrix and an independent statement-list negative sweep.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
