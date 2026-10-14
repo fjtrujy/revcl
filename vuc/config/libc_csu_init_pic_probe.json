@@ -2,13 +2,11 @@
   "function": "__libc_csu_init",
   "address": "0x08071f70",
   "size": 84,
-  "source": "vuc/probes/libc_csu_hidden.c",
+  "source": "vuc/src/LibcCsu.c",
   "flags": [
     "-xc",
     "-O2",
-    "-fPIC",
-    "-frename-registers",
-    "-falign-jumps=1"
+    "-fPIC"
   ],
   "pic_got": "0x0808a668",
   "relocations": {

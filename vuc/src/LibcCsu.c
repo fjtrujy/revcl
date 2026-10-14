@@ -1,5 +1,5 @@
-/* Source-level reconstruction of glibc startup with an accepted byte-exact
- * __libc_csu_fini; __libc_csu_init is NOT yet exact.
+/* Source-level reconstruction of the original glibc startup unit.
+ * Both __libc_csu_init and __libc_csu_fini match original i386 bytes.
  */
 typedef void (*startup_hook)(void);
 extern startup_hook __init_array_start[] __attribute__((visibility("hidden")));
@@ -11,12 +11,13 @@ extern void _fini(void);
 
 void __libc_csu_init(int argc, char **argv, char **envp)
 {
-    unsigned int count;
-    unsigned int i;
+    unsigned int i = 0;
     _init();
-    count = __init_array_end - __init_array_start;
-    for (i = 0; i < count; ++i)
+    const unsigned int count = __init_array_end - __init_array_start;
+    while (i < count) {
         (*__init_array_start[i])();
+        ++i;
+    }
 }
 
 void __libc_csu_fini(void)

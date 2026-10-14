@@ -21,9 +21,18 @@ class CoverageTests(unittest.TestCase):
 
     def test_every_original_function_is_accounted_for(self):
         self.assertEqual(len(self.rows), 298)
-        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 197)
+        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 198)
         self.assertEqual(sum(r[2] == "EXPERIMENTAL" for r in self.rows), 19)
-        self.assertEqual(sum(r[2] == "UNRESOLVED" for r in self.rows), 82)
+        self.assertEqual(sum(r[2] == "UNRESOLVED" for r in self.rows), 81)
+
+    def test_original_glibc_init_and_fini_are_both_exact(self):
+        for name, address in (("__libc_csu_init", 0x08071f70),
+                              ("__libc_csu_fini", 0x08071fd0)):
+            with self.subTest(symbol=name):
+                row = next(r for r in self.rows if r[0] == address)
+                self.assertEqual(row[2], "EXACT")
+                self.assertEqual(row[5], name)
+                self.assertEqual(row[4], "vuc/src/LibcCsu.c")
         self.assertEqual(coverage.OUTPUT.read_text(), coverage.table(self.rows))
 
     def test_complete_mlgamestring_member_cluster_is_exact(self):

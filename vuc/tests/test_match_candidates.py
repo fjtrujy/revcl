@@ -26,14 +26,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 216)
+        self.assertEqual(len(records), 217)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 197)
+        self.assertEqual(len(exact_configs), 198)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -41,6 +41,22 @@ class CandidateSuiteTests(unittest.TestCase):
         for manifest in all_configs - set(exact_configs):
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
             self.assertTrue(source.startswith("vuc/probes/"), source)
+
+    def test_csu_init_and_fini_exact_same_source_and_compiler_flags(self):
+        accepted = json.loads(suite.EXACT_MANIFEST.read_text())
+        for member, address, size in (
+            ("init", "0x08071f70", 84),
+            ("fini", "0x08071fd0", 80),
+        ):
+            config_path = "vuc/config/libc_csu_" + member + "_pic_probe.json"
+            with self.subTest(member=member):
+                self.assertIn(config_path, accepted)
+                config = json.loads(suite.within_repo(config_path).read_text())
+                self.assertEqual(config["source"], "vuc/src/LibcCsu.c")
+                self.assertEqual(config["flags"], ["-xc", "-O2", "-fPIC"])
+                self.assertEqual(config["address"], address)
+                self.assertEqual(config["size"], size)
+                self.assertEqual(len(config["relocations"]), 4)
 
     def test_stmt_list_partial_is_tracked_but_never_exact(self):
         partial = "vuc/config/translate_stmt_list_partial_oct14_probe.json"

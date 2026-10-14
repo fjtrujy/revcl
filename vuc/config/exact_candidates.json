@@ -163,6 +163,7 @@
   "vuc/config/value_relational_lt_probe.json",
   "vuc/config/value_relational_ge_probe.json",
   "vuc/config/value_relational_le_probe.json",
+  "vuc/config/libc_csu_init_pic_probe.json",
   "vuc/config/libc_csu_fini_pic_probe.json",
   "vuc/config/flex_ctor_c1_oct12_probe.json",
   "vuc/config/flex_ctor_c2_oct12_probe.json",

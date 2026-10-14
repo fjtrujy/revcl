@@ -580,6 +580,16 @@ This is a 22-byte improvement, **not byte-exact**, and does not change
 the accepted manifest or the **197 EXACT / 19 EXPERIMENTAL /
 82 UNRESOLVED** ledger. See
 `vuc/docs/2026-10-14-expr-list-112-byte-partial.md`.
+The next batch recovered **byte-exact `__libc_csu_init` (84/84)** from
+ordinary C glibc startup source, compiled **together with already exact
+`__libc_csu_fini` (80/80)** in the original unit. Both historical GCC
+3.3.3 snapshots match both functions under `-xc -O2 -fPIC` with all
+ten original PIC relocation sites authenticated. The ledger is now
+**198 EXACT / 19 EXPERIMENTAL / 81 UNRESOLVED**, with **14,501**
+accepted exact instruction bytes. An independent `__builtin_memcpy`
+probe also recovered GCC's `cld; rep movsl` copy idiom in ASTExpr
+translation but no original-length improvement over 112/256. See
+`vuc/docs/2026-10-14-libc-csu-init-byte-exact.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
