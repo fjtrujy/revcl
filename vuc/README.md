@@ -484,6 +484,12 @@ ECX. Real printer source-order and deferred-ownership controls retain
 96/98, while 180 Seq_Data constructor/loop variants cannot reproduce
 the original 119-byte translator. See
 `vuc/docs/2026-10-13-rtl-printer-ir-negative-batch.md`.
+The next Value addition alignment investigation distinguishes the original
+unpadded vector case from the scalar case aligned at +0xd0; 80 genuine
+GCC alignment combinations retain the best 172/219 original-length match.
+The C++ word-scanner experiments reproduce byte-sized delimiter comparisons
+but still lack the original pointer/position register allocation. See
+`vuc/docs/2026-10-14-value-plus-word-scanner-controls.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
