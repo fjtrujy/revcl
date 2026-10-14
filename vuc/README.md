@@ -555,6 +555,14 @@ the 74/77 accumulator prefix, 45/46 arena cleanup, 96/98 AST printer,
 95/101 temporary-string C2 and 111/117 temporary-string Set remain
 unaltered. The reproducible negative evidence is retained in
 `vuc/docs/2026-10-14-historical-snapshots-accumulator-compiler-controls.md`.
+The next unresolved-function batch retained an original-length **60/119**
+partial for `Translate(ASTNodeList<ASTStmt*>&)` with all three real
+relocations checked. It is tracked as EXPERIMENTAL, not byte-exact;
+the ledger becomes **197 EXACT / 15 EXPERIMENTAL / 86 UNRESOLVED**.
+The same batch corrected `Canonize_Reduce(IR::Fragment_Data*)`'s
+provisional statement-field offset from +0x14 to the original +0x18;
+its independently verified partial remains 78/224. See
+`vuc/docs/2026-10-14-stmtlist-partial-and-fragment-abi.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

@@ -1,0 +1,14 @@
+{
+  "function": "_Z9TranslateR11ASTNodeListIP7ASTStmtE",
+  "address": "0x0806ada0",
+  "size": 119,
+  "source": "vuc/probes/translate_stmt_list_partial_oct14.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "_Z9TranslateP7ASTStmt": "0x0806af20",
+    "_Znwj": "0x080499ec",
+    "_ZTVN2IR8Seq_DataE": "0x080760d8"
+  }
+}

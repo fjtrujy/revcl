@@ -10,7 +10,9 @@ struct Stmt_Data;
 struct Fragment_Data {
     void *vtable; int kind;
     MLGameString name; MLGameString output;
-    void *unused; Stmt_Data *stmt;
+    // The original fragment kind-2 reduction reads its statement at +0x18.
+    // Two 32-bit fields precede it; their semantic meaning is not yet known.
+    void *unknown_[2]; Stmt_Data *stmt;
 };
 }
 typedef MLHashTable<MLGameString, MLGameString, MLHashFun<MLGameString>, 513> Env;

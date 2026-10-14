@@ -26,7 +26,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 211)
+        self.assertEqual(len(records), 212)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -41,6 +41,18 @@ class CandidateSuiteTests(unittest.TestCase):
         for manifest in all_configs - set(exact_configs):
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
             self.assertTrue(source.startswith("vuc/probes/"), source)
+
+    def test_stmt_list_partial_is_tracked_but_never_exact(self):
+        partial = "vuc/config/translate_stmt_list_partial_oct14_probe.json"
+        selected = json.loads(suite.DEFAULT_MANIFEST.read_text())
+        accepted = json.loads(suite.EXACT_MANIFEST.read_text())
+        self.assertIn(partial, selected)
+        self.assertNotIn(partial, accepted)
+        manifest = json.loads(suite.within_repo(partial).read_text())
+        self.assertEqual(manifest["address"], "0x0806ada0")
+        self.assertEqual(manifest["size"], 119)
+        self.assertEqual(manifest["flags"], ["-O2"])
+        self.assertEqual(len(manifest["relocations"]), 3)
 
     def test_manifest_sources_and_configs_are_committed(self):
         """A passing local VM is insufficient if clean clones lack its inputs."""
