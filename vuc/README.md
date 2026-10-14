@@ -496,6 +496,12 @@ source-layout, historical-provenance, and exact-match lessons from all
 in `vuc/docs/2026-10-14-vcl-main-byte-matching-playbook.md`. VCL
 GCC 3.2.2 compiler quirks and authorized speculative source-unit
 partitions remain hypotheses, not assumptions about VUC GCC 3.3.3.
+The following structural-control batch tested genuine Value return/case
+topologies, division x87 lifetimes, Flex buffer ownership, printer inline
+getters, and MLTempString real predecessor methods with the historical VUC
+compiler. None improved the existing partial scores; the reproducible
+negative controls and exact byte offsets are recorded in
+`vuc/docs/2026-10-14-structural-control-and-real-prefix-negative-batch.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
