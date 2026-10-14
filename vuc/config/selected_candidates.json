@@ -217,5 +217,6 @@
   "vuc/config/canonize_fragment_oct14_probe.json",
   "vuc/config/value_addition_partial_oct14_probe.json",
   "vuc/config/translate_frag_list_var_oct14_probe.json",
-  "vuc/config/translate_frag_list_decl_oct14_probe.json"
+  "vuc/config/translate_frag_list_decl_oct14_probe.json",
+  "vuc/config/translate_frag_list_string_oct14_probe.json"
 ]

@@ -26,7 +26,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 219)
+        self.assertEqual(len(records), 220)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -145,6 +145,19 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(manifest["size"], 120)
         self.assertEqual(manifest["flags"],
                          ["-O2", "-frename-registers", "-falign-jumps=8"])
+        self.assertEqual(len(manifest["relocations"]), 6)
+
+    def test_string_fragment_list_partial_is_never_accepted_as_exact(self):
+        path = "vuc/config/translate_frag_list_string_oct14_probe.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        manifest = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(manifest["address"], "0x0806e5b0")
+        self.assertEqual(manifest["size"], 306)
+        self.assertEqual(manifest["source"],
+                         "vuc/probes/translate_frag_list_string_partial_oct14.cpp")
+        self.assertEqual(manifest["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=1"])
         self.assertEqual(len(manifest["relocations"]), 6)
 
     def test_manifest_sources_and_configs_are_committed(self):

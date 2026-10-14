@@ -228,7 +228,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806e2f0	5	EXACT	vuc/config/noop_0806e2f0_probe.json	vuc/src/IRRTTIDummies.cpp	_ZN2IR13Fragment_Data16zzzzMakeRTTIWorkEv
 0x0806e300	5	EXACT	vuc/config/noop_0806e300_probe.json	vuc/src/IRRTTIDummies.cpp	_ZN2IR11Module_Data16zzzzMakeRTTIWorkEv
 0x0806e310	663	UNRESOLVED	-	-	_Z9TranslateN10ASTBinExpr8OperatorE4Typejj
-0x0806e5b0	306	UNRESOLVED	-	-	_Z17TranslateFragListI12MLGameStringE11ASTNodeListIPN2IR13Fragment_DataEERS1_IT_E
+0x0806e5b0	306	EXPERIMENTAL	vuc/config/translate_frag_list_string_oct14_probe.json	vuc/probes/translate_frag_list_string_partial_oct14.cpp	_Z17TranslateFragListI12MLGameStringE11ASTNodeListIPN2IR13Fragment_DataEERS1_IT_E
 0x0806e6f0	66	EXACT	vuc/config/iostream_static_0806e6f0_probe.json	vuc/src/IostreamInit.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806e740	44	EXACT	vuc/config/value_default_c2_probe.json	vuc/src/Value.cpp	_ZN5ValueC2Ev
 0x0806e770	44	EXACT	vuc/config/value_default_c1_probe.json	vuc/src/Value.cpp	_ZN5ValueC1Ev

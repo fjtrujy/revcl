@@ -615,6 +615,18 @@ constructor and fragment-list copy guards produced no original-length
 improvement. Ledger remains **198 EXACT / 21 EXPERIMENTAL /
 79 UNRESOLVED**. See
 `vuc/docs/2026-10-14-scope-copy-75-byte-exact-prefix.md`.
+After rebasing onto VCL `origin/main` at `62fdece`, a bounded GCC 3.3.3
+source-lifetime and branch-probability investigation established an
+original-length **72/306** partial for the previously unresolved
+`TranslateFragList<MLGameString>` at `0x0806e5b0`. Both historical GCC
+snapshots verify all **6/6** authentic relocations; the candidate retains
+ordinary exception cleanup and compiler-generated `rep movsl` array copying.
+It is **EXPERIMENTAL**, not byte-exact, and stays in `vuc/probes/` rather
+than the accepted source or exact manifest. Separate historical controls
+leave the shorter Scope-copy 75-byte prefix unresolved. The ledger is now
+**198 EXACT / 22 EXPERIMENTAL / 78 UNRESOLVED** of 298 named functions,
+with all **14,501** previously exact instruction bytes unchanged. See
+`vuc/docs/2026-10-14-string-fraglist-relocation-partial-and-compiler-controls.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

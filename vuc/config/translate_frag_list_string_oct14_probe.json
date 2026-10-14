@@ -1,0 +1,19 @@
+{
+  "function": "_Z17TranslateFragListI12MLGameStringE11ASTNodeListIPN2IR13Fragment_DataEERS1_IT_E",
+  "address": "0x0806e5b0",
+  "size": 306,
+  "source": "vuc/probes/translate_frag_list_string_partial_oct14.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_Znwj": "0x080499ec",
+    "_ZTVN2IR13Fragment_DataE": "0x08076068",
+    "_ZN12MLGameStringC1ERKS_": "0x08071770",
+    "_Znaj": "0x080499ac",
+    "_ZdlPv": "0x0804973c",
+    "_Unwind_Resume": "0x0804998c"
+  }
+}
