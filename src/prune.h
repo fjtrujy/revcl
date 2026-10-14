@@ -113,10 +113,11 @@ inline int tryPrune(Instr *in, bool raw)
     if (!in->unk_34)
         return 0;
     if (raw) {
-        Operand *r, *op;
+        Operand *r, *op, *lookup;
         for (int i = 0;
-             (op = i < 0 ? (r = in->getOp(i)) :
-                       (r = i < in->unk_138b ? &in->unk_38[i] : 0)) != 0; i++) {
+             ((i < 0 ? (lookup = in->getOp(i)) :
+                       (lookup = i < in->unk_138b ? &in->unk_38[i] : 0)),
+              r = lookup, op = lookup, lookup = 0, op) != 0; i++) {
             if (r->isInput())
                 (RegPoolEntry *&)r = r->unk_18;
             else
