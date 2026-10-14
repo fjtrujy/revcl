@@ -28,9 +28,13 @@ fi
 printf '%s  %s\n' "$source_sha" "$work/gcc-jan25.tar.gz" | sha256sum -c
 
 if [ ! -f "$work/bison_1.875d-1_i386.deb" ]; then
-    curl --fail --location --retry 2 --show-error --silent \
+    if ! curl --fail --location --retry 2 --show-error --silent \
         https://archive.debian.org/debian/pool/main/b/bison/bison_1.875d-1_i386.deb \
-        --output "$work/bison_1.875d-1_i386.deb"
+        --output "$work/bison_1.875d-1_i386.deb"; then
+        curl --fail --location --retry 2 --show-error --silent \
+            https://cloudfront.debian.net/debian-archive/debian/pool/main/b/bison/bison_1.875d-1_i386.deb \
+            --output "$work/bison_1.875d-1_i386.deb"
+    fi
 fi
 printf '%s  %s\n' "$bison_sha" "$work/bison_1.875d-1_i386.deb" | sha256sum -c
 
@@ -74,9 +78,21 @@ fi
     cd "$work/build/gcc"
     BISON_PKGDATADIR="$work/old-bison/usr/share/bison" \
         make -j"$jobs" xgcc cc1plus BISON="$work/old-bison/usr/bin/bison" \
-        BOOT_CFLAGS=-O0 CFLAGS=-O0
+        BOOT_CFLAGS='-O0 -fgnu89-inline' CFLAGS='-O0 -fgnu89-inline'
 ) > "$work/build.log" 2>&1 || {
     tail -n 30 "$work/build.log" >&2
+    exit 1
+}
+
+# Modern host GCC otherwise elides a GNU89 inline definition referenced by
+# the old C++ frontend (libc_name_p in cp/cfns.h). Populate private target
+# headers as well, just as for the December 2003 source snapshot.
+(
+    cd "$work/build/gcc"
+    make -j"$jobs" stmp-int-hdrs \
+        BOOT_CFLAGS='-O0 -fgnu89-inline' CFLAGS='-O0 -fgnu89-inline'
+) > "$work/headers-build.log" 2>&1 || {
+    tail -n 30 "$work/headers-build.log" >&2
     exit 1
 }
 

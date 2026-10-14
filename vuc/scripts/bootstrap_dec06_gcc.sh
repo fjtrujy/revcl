@@ -29,9 +29,13 @@ fi
 printf '%s  %s\n' "$source_sha" "$work/gcc-dec06.tar.gz" | sha256sum -c
 
 if [ ! -f "$work/bison_1.875d-1_i386.deb" ]; then
-    curl --fail --location --retry 2 --show-error --silent \
+    if ! curl --fail --location --retry 2 --show-error --silent \
         https://archive.debian.org/debian/pool/main/b/bison/bison_1.875d-1_i386.deb \
-        --output "$work/bison_1.875d-1_i386.deb"
+        --output "$work/bison_1.875d-1_i386.deb"; then
+        curl --fail --location --retry 2 --show-error --silent \
+            https://cloudfront.debian.net/debian-archive/debian/pool/main/b/bison/bison_1.875d-1_i386.deb \
+            --output "$work/bison_1.875d-1_i386.deb"
+    fi
 fi
 printf '%s  %s\n' "$bison_sha" "$work/bison_1.875d-1_i386.deb" | sha256sum -c
 
