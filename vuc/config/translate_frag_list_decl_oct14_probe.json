@@ -1,0 +1,15 @@
+{
+  "function": "_Z17TranslateFragListIP7ASTDeclE11ASTNodeListIPN2IR13Fragment_DataEERS2_IT_E",
+  "address": "0x0806e190",
+  "size": 240,
+  "source": "vuc/probes/translate_frag_list_oct14.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_Z13TranslateFragP7ASTDecl": "0x0806d2c0",
+    "_Znaj": "0x080499ac"
+  }
+}

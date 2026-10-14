@@ -502,6 +502,12 @@ getters, and MLTempString real predecessor methods with the historical VUC
 compiler. None improved the existing partial scores; the reproducible
 negative controls and exact byte offsets are recorded in
 `vuc/docs/2026-10-14-structural-control-and-real-prefix-negative-batch.md`.
+The separate `vuc-unresolved-oct14` branch explores the previously
+unresolved 240-byte `TranslateFragList` specializations and 513-bucket
+MLHashTable/STL copying. See
+`vuc/docs/2026-10-14-unresolved-fragment-scope-batch.md` for authentic
+template-source hypotheses, historical compiler measurements and remaining
+source-unit/register-allocation mismatches; none is accepted as exact.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
