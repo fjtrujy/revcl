@@ -2,11 +2,12 @@
   "function": "_Z17TranslateFragListIP10ASTVarDeclE11ASTNodeListIPN2IR13Fragment_DataEERS2_IT_E",
   "address": "0x0806e0a0",
   "size": 240,
-  "source": "vuc/probes/translate_frag_list_var_partial_oct14.cpp",
+  "source": "vuc/probes/translate_frag_list_var_partial_improved_oct14.cpp",
   "flags": [
     "-O2",
     "-frename-registers",
-    "-falign-jumps=4"
+    "-falign-jumps=4",
+    "-fno-reorder-blocks"
   ],
   "relocations": {
     "_Z13TranslateFragP7ASTDecl": "0x0806d2c0",

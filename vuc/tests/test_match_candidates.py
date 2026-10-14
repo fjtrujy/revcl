@@ -108,6 +108,32 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("int old_size=length;", source)
         self.assertIn("int index=i; ++i;", source)
 
+    def test_improved_fragment_lists_remain_experimental(self):
+        selected = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        for kind, address in (("var", "0x0806e0a0"),
+                              ("decl", "0x0806e190")):
+            path = "vuc/config/translate_frag_list_" + kind + "_oct14_probe.json"
+            with self.subTest(kind=kind):
+                self.assertIn(path, selected)
+                self.assertNotIn(path, accepted)
+                config = json.loads(suite.within_repo(path).read_text())
+                self.assertEqual(config["source"],
+                                 "vuc/probes/translate_frag_list_" + kind +
+                                 "_partial_improved_oct14.cpp")
+                self.assertEqual(config["address"], address)
+                self.assertEqual(config["size"], 240)
+                self.assertEqual(config["flags"],
+                                 ["-O2", "-frename-registers", "-falign-jumps=4",
+                                  "-fno-reorder-blocks"])
+                self.assertEqual(config["relocations"], {
+                    "_Z13TranslateFragP7ASTDecl": "0x0806d2c0",
+                    "_Znaj": "0x080499ac",
+                })
+                source = suite.within_repo(config["source"]).read_text()
+                self.assertIn("int old_size=length;", source)
+                self.assertIn("int index=i; ++i;", source)
+
     def test_manifest_sources_and_configs_are_committed(self):
         """A passing local VM is insufficient if clean clones lack its inputs."""
         if not (ROOT / ".git").exists():

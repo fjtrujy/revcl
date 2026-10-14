@@ -596,6 +596,14 @@ two original-sized `TranslateFragList` template instantiations,
 relocations each. They are EXPERIMENTAL, not newly exact. Ledger:
 **198 EXACT / 21 EXPERIMENTAL / 79 UNRESOLVED**. See
 `vuc/docs/2026-10-14-fragment-list-two-partials.md`.
+The next AST list-source transfer batch improved both selected fragment-list
+specializations from **41/240** to **110/240** exact original-offset
+instruction bytes each, with **2/2** authenticated call relocations
+per function. The 138-byte total improvement is experimental,
+**not** two newly byte-exact functions; the source still uses a
+scalar copy rather than the original `rep movsl`. The ledger remains
+**198 EXACT / 21 EXPERIMENTAL / 79 UNRESOLVED**. See
+`vuc/docs/2026-10-14-fragment-list-110-byte-partials.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
