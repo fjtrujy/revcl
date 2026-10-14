@@ -731,3 +731,15 @@ No additional whole byte-exact function was found; the accepted ledger stays
 **200 EXACT / 23 EXPERIMENTAL / 75 UNRESOLVED**, with 14,930 exact function
 bytes. Wrong-length variants and regressions were not promoted. Evidence:
 `vuc/docs/2026-10-14-value-and-190-byte-partial-and-negative-controls.md`.
+
+The October 15 VUC batch improved the **contiguous byte-exact entry prefix**
+for the experimental `MLTempString` default **C2** constructor
+(`0x08071c20`) from **22 to 37 bytes** by compiling its genuine
+formatted-constructor predecessor in the historical source unit. Its total
+strict match remains **95/101** bytes and all **9** relocations are verified
+under both GCC 3.3.3 snapshots; this is **not** a new exact function.
+A separate 671-source/compiler-recipe investigation retained the selected
+`Value::ToString` **159/221** original-length partial and all its authentic
+literal/call relocations. Accepted totals remain 200 exact functions, 24
+experimental, and 74 unresolved. Reproduction and negative evidence:
+`vuc/docs/2026-10-15-mltemp-c2-original-owner-37-byte-prefix.md`.

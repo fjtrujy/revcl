@@ -2,10 +2,9 @@
   "function": "_ZN12MLTempStringC2Ev",
   "address": "0x08071c20",
   "size": 101,
-  "source": "vuc/probes/ml_temp_default.cpp",
+  "source": "vuc/probes/ml_temp_constructor_unit_oct12.cpp",
   "flags": [
-    "-O2",
-    "-frename-registers"
+    "-O2"
   ],
   "relocations": {
     "memset": "0x0804996c",

@@ -210,6 +210,23 @@ class CandidateSuiteTests(unittest.TestCase):
         or_source = suite.within_repo(or_config["source"]).read_text()
         self.assertIn(")) && ((result.values[1]", or_source)
 
+    def test_mltemp_default_c2_selects_original_constructor_source_order(self):
+        """The genuine formatted predecessor yields a longer exact C2 prefix."""
+        path = "vuc/config/ml_temp_default_C2_probe.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x08071c20")
+        self.assertEqual(config["size"], 101)
+        self.assertEqual(config["source"],
+                         "vuc/probes/ml_temp_constructor_unit_oct12.cpp")
+        self.assertEqual(config["flags"], ["-O2"])
+        self.assertEqual(len(config["relocations"]), 3)
+        self.assertEqual(len(config["relocation_objects"][".bss"]), 2)
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertLess(source.index("MLTempString::MLTempString(const char *format"),
+                        source.index("MLTempString::MLTempString()"))
+
     def test_hash_copy_node_arguments_are_experimental_only(self):
         path = "vuc/config/hash_copy_node_args_partial_oct14_probe.json"
         self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
