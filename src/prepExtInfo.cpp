@@ -40,45 +40,46 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 OpSlot *part = op->getPart(ol->unk_11);
                 short best = 0;
                 ol_s *e = part->unk_54.unk_00;
-                if (!e) {
+                if (e) {
+                    for (; e; e = e->unk_00) {
+                        int key = e->unk_08;
+                        if (!key) {
+                            func_0804ad38("can't have a null minkey for ext\n");
+                            return 0;
+                        }
+                        Instr *setter = e->unk_04;
+                        Operand *src = func_0805802c(e);
+                        instStream *ss = setter->func_08054168();
+                        if (!ss) {
+                            func_0804ad38("failed to get the setters ist\n");
+                            return 0;
+                        }
+                        int sid = ss->unk_2c0;
+                        bool same = sid == id;
+                        int kl = guessKeyLen(p, key, sid, id);
+                        if (kl < 0) {
+                            func_0804ad38("minimal length .. bah\n");
+                            return 0;
+                        }
+                        int te = getToEnd(setter);
+                        if (te < 0) {
+                            func_0804ad38("distance to end -ve..error\n");
+                            return 0;
+                        }
+                        int total = te + kl;
+                        int d = src->unk_0a + op->unk_29 - total - 1;
+                        if ((setter->func_08055548() || same) && d > best)
+                            best = d;
+                    }
+                    if (op->unk_0b)
+                        in->func_08055fbc(best);
+                    else
+                        in->func_08055fdc(best);
+                } else {
                     func_0804ad38("no external setter for prepExtInfo.. register is %s.%d\n",
                                   reg->func_0805a8e0(), k);
                     return 0;
                 }
-                for (; e; e = e->unk_00) {
-                    int key = e->unk_08;
-                    if (!key) {
-                        func_0804ad38("can't have a null minkey for ext\n");
-                        return 0;
-                    }
-                    Instr *setter = e->unk_04;
-                    Operand *src = func_0805802c(e);
-                    instStream *ss = setter->func_08054168();
-                    if (!ss) {
-                        func_0804ad38("failed to get the setters ist\n");
-                        return 0;
-                    }
-                    int sid = ss->unk_2c0;
-                    bool same = sid == id;
-                    int kl = guessKeyLen(p, key, sid, id);
-                    if (kl < 0) {
-                        func_0804ad38("minimal length .. bah\n");
-                        return 0;
-                    }
-                    int te = getToEnd(setter);
-                    if (te < 0) {
-                        func_0804ad38("distance to end -ve..error\n");
-                        return 0;
-                    }
-                    int total = te + kl;
-                    int d = src->unk_0a + op->unk_29 - total - 1;
-                    if ((setter->func_08055548() || same) && d > best)
-                        best = d;
-                }
-                if (op->unk_0b)
-                    in->func_08055fbc(best);
-                else
-                    in->func_08055fdc(best);
             }
             for (ol_s *ol = sl->unk_08.unk_00; ol; ol = ol->unk_00) {
                 Instr *in = ol->unk_04;
@@ -90,53 +91,55 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 Operand *op = &in->unk_38[ol->unk_10];
                 olList *xl = &op->getPart(ol->unk_11)->unk_54;
                 ol_s *e = xl->func_080583d8();
-                if (ol->isExtUsed() && !e) {
+                if (!ol->isExtUsed() || e) {
+                    if (!e || ol->isExtUsed()) {
+                        for (; e; e = e->func_08058414()) {
+                            int key = e->unk_08;
+                            if (!key) {
+                                func_0804ad38("can't have a null minkey for ext\n");
+                                return 0;
+                            }
+                            Instr *user = e->unk_04;
+                            Operand *dst = func_0805802c(e);
+                            if (!user || !dst) {
+                                func_0804ad38("no setting instruction/operand\n");
+                                return 0;
+                            }
+                            instStream *ss = user->func_08054168();
+                            if (!ss) {
+                                func_0804ad38("failed to get the setters ist\n");
+                                return 0;
+                            }
+                            int kl = guessKeyLen(p, key, id, ss->unk_2c0);
+                            if (kl < 0) {
+                                func_0804ad38("minimal length .. bah\n");
+                                return 0;
+                            }
+                            int fs = getFromStart(user);
+                            if (fs < 0) {
+                                func_0804ad38("distance to end -ve..error\n");
+                                return 0;
+                            }
+                            int total = fs + kl;
+                            int d = op->unk_0a + dst->unk_29 - total - 1;
+                            if (user->func_08055548() && d > best)
+                                best = d;
+                        }
+                        if (op->unk_0b)
+                            in->func_08055ffc(best);
+                        else
+                            in->func_0805601c(best);
+                    } else {
+                        func_0804ad38("operand doesn't think there's any external users, but - there's an entry on it's ext list\n");
+                        ol->func_08057fec();
+                        xl->func_08057e9c();
+                        return 0;
+                    }
+                } else {
                     func_0804ad38("operand is tagged as being used externally - but.. there's no ext entry on it's oll?\n");
                     ol->func_08057fec();
                     return 0;
                 }
-                if (e && !ol->isExtUsed()) {
-                    func_0804ad38("operand doesn't think there's any external users, but - there's an entry on it's ext list\n");
-                    ol->func_08057fec();
-                    xl->func_08057e9c();
-                    return 0;
-                }
-                for (; e; e = e->func_08058414()) {
-                    int key = e->unk_08;
-                    if (!key) {
-                        func_0804ad38("can't have a null minkey for ext\n");
-                        return 0;
-                    }
-                    Instr *user = e->unk_04;
-                    Operand *dst = func_0805802c(e);
-                    if (!user || !dst) {
-                        func_0804ad38("no setting instruction/operand\n");
-                        return 0;
-                    }
-                    instStream *ss = user->func_08054168();
-                    if (!ss) {
-                        func_0804ad38("failed to get the setters ist\n");
-                        return 0;
-                    }
-                    int kl = guessKeyLen(p, key, id, ss->unk_2c0);
-                    if (kl < 0) {
-                        func_0804ad38("minimal length .. bah\n");
-                        return 0;
-                    }
-                    int fs = getFromStart(user);
-                    if (fs < 0) {
-                        func_0804ad38("distance to end -ve..error\n");
-                        return 0;
-                    }
-                    int total = fs + kl;
-                    int d = op->unk_0a + dst->unk_29 - total - 1;
-                    if (user->func_08055548() && d > best)
-                        best = d;
-                }
-                if (op->unk_0b)
-                    in->func_08055ffc(best);
-                else
-                    in->func_0805601c(best);
             }
             if (reg->unk_2c && !noExt) {
                 ol_s *ol;
