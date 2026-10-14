@@ -215,5 +215,7 @@
   "vuc/config/assemble_binop_dispatch_oct14_probe.json",
   "vuc/config/translate_expr_list_oct14_probe.json",
   "vuc/config/canonize_fragment_oct14_probe.json",
-  "vuc/config/value_addition_partial_oct14_probe.json"
+  "vuc/config/value_addition_partial_oct14_probe.json",
+  "vuc/config/translate_frag_list_var_oct14_probe.json",
+  "vuc/config/translate_frag_list_decl_oct14_probe.json"
 ]

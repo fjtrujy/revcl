@@ -590,6 +590,12 @@ accepted exact instruction bytes. An independent `__builtin_memcpy`
 probe also recovered GCC's `cld; rep movsl` copy idiom in ASTExpr
 translation but no original-length improvement over 112/256. See
 `vuc/docs/2026-10-14-libc-csu-init-byte-exact.md`.
+The next partial-focused batch independently rechecked and registered
+two original-sized `TranslateFragList` template instantiations,
+`ASTVarDecl*` and `ASTDecl*`, **41/240** bytes and **2/2** authenticated
+relocations each. They are EXPERIMENTAL, not newly exact. Ledger:
+**198 EXACT / 21 EXPERIMENTAL / 79 UNRESOLVED**. See
+`vuc/docs/2026-10-14-fragment-list-two-partials.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
