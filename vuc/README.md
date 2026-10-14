@@ -260,8 +260,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 188 EXACT,
-12 EXPERIMENTAL and 98 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 195 EXACT,
+15 EXPERIMENTAL and 88 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -490,6 +490,12 @@ GCC alignment combinations retain the best 172/219 original-length match.
 The C++ word-scanner experiments reproduce byte-sized delimiter comparisons
 but still lack the original pointer/position register allocation. See
 `vuc/docs/2026-10-14-value-plus-word-scanner-controls.md`.
+After rebasing on VCL `main` at `1aadee5`, the reusable compiler,
+source-layout, historical-provenance, and exact-match lessons from all
+19 VCL matching-evidence reports and the recent 13 commits are indexed
+in `vuc/docs/2026-10-14-vcl-main-byte-matching-playbook.md`. VCL
+GCC 3.2.2 compiler quirks and authorized speculative source-unit
+partitions remain hypotheses, not assumptions about VUC GCC 3.3.3.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
