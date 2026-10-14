@@ -23,14 +23,16 @@ int g_080b34dc = -1;
 
 Instr *Processor::getNextInstruction(LocTag *t, int *pos)
 {
-    int copyCount = 0;
+    int copyCount;
     ImplicitOp op;
     char buf[0x801];
     char nameBuf[0x400];
     char fmtBuf[0x400];
     int cur = *pos;
-    short loopid = 0;
+    short loopid;
     bool explicitMods = false;
+    loopid = 0;
+    copyCount = 0;
     bool forcedMods = false;
     bool ok = false;
     int opBits = -1;
