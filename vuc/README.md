@@ -673,3 +673,14 @@ bytes. See `vuc/docs/2026-10-14-string-fraglist-late-index-75-byte-partial.md`.
 VUC's historical user guide restricts redistribution of modified compiler
 versions. Treat reconstructed source distribution as unresolved until reviewed;
 the root repository's MIT license does not automatically settle those rights.
+
+The next `vuc` investigation checked **475** additional ordinary GCC 3.3.3
+source/compiler recipes without changing the accepted inventory or the
+selected 75/306 `TranslateFragList<MLGameString>` partial. Among them,
+an inlined `ASTNodeList::Add` `++length` form scores 85 overlapping bytes
+but emits **311** rather than the original 306 bytes; combined source
+lifetimes do not recover the required 306-byte form. The near-exact
+`Print(ASTFunCall*)` remains **96/98** after 192 historical two-snapshot
+register/source-owner trials, and the best printer object's altered build
+scope regresses two already exact neighbors. Reproduction and acceptance
+details: `vuc/docs/2026-10-14-add-ownership-and-printer-register-batch.md`.
