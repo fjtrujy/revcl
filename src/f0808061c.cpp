@@ -153,11 +153,10 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             return true;
         }
         {
-            cls08058718 *lastPos = &wt->unk_54;
             if (wt->unk_a0.unk_04)
-                lastPos->func_0805874c(wt->unk_a0.unk_04->unk_13e8.getRow());
+                wt->unk_54.func_0805874c(wt->unk_a0.unk_04->unk_13e8.getRow());
             else
-                lastPos->func_0805874c(0);
+                wt->unk_54.func_0805874c(0);
         }
         pending = 0;
         while (wt->unk_4c) {
@@ -258,7 +257,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             goto next;
     check_pending:
         if (pending) {
-            c = mor;
+            __builtin_memcpy(&c, &mor, sizeof(c));
             int r = getMove((Block *)wt, c.unk_00, c.unk_04);
             if (r < 0) {
                 func_0804ad38("oh no genmove failed!\n");
@@ -309,7 +308,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                     func_0804adf0(-1);
                 }
             }
-            while (done->unk_00) {
+            while (wt->unk_a0.unk_00) {
                 Instr *in = done->unk_04;
                 if (!UndoInsert(wt, in)) {
                     func_0804ad38("undo insert: failed to remove done list tail\n");
