@@ -211,7 +211,7 @@ bool checkOpt3(Program *p)
                                     return false;
                                 }
                                 if (wt->unk_09 == 3) {
-                                    if (oi->unk_13e8.getRow() < last) {
+                                    if (__builtin_expect(oi->unk_13e8.getRow() < last, 0)) {
                                         func_0804ad38("local oplocs  aren't in order\n");
                                         return false;
                                     }
