@@ -520,6 +520,12 @@ list's 0x3c00 translation argument and fragment canonicalization's 513-bucket
 hash-node constructor/exception lifetime. Two original-length diagnostic
 matches, **90/256** and **78/224**, remain in `vuc/probes/`, not the exact
 candidate set. See `vuc/docs/2026-10-14-exprlist-canonize-fragment-partials.md`.
+The renamed `vuc` branch then recovered a new **263/263-byte exact**
+`MLGameStringTable::Add(const char*, bool)` at `0x08071880`, including
+all ten original relocation sites. The decisive genuine C++03 source
+is a named `const char* const&` alias of the string-data pointer before
+hash-node allocation; see
+`vuc/docs/2026-10-14-mlgamestringtable-add-byte-exact.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

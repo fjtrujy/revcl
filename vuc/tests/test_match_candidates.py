@@ -14,17 +14,26 @@ spec.loader.exec_module(suite)
 
 
 class CandidateSuiteTests(unittest.TestCase):
+    def test_string_table_add_has_exact_original_source_and_relocations(self):
+        path = "vuc/config/string_table_add_oct14_probe.json"
+        self.assertIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x08071880")
+        self.assertEqual(config["size"], 263)
+        self.assertEqual(config["source"], "vuc/src/MLGameStringTableAdd.cpp")
+        self.assertEqual(len(config["relocations"]), 8)
+
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 210)
+        self.assertEqual(len(records), 211)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 195)
+        self.assertEqual(len(exact_configs), 196)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]

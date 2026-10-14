@@ -1,0 +1,20 @@
+{
+  "function": "_ZN17MLGameStringTable3AddEPKcb",
+  "address": "0x08071880",
+  "size": 263,
+  "source": "vuc/src/MLGameStringTableAdd.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ],
+  "relocations": {
+    "_ZN11MLHashTableIPKcP16MLGameStringData9MLHashFunIS1_ELi513EE8FindCopyERKS1_": "0x08071e20",
+    "_ZN9MLHashFunIPKcE4HashERKS1_": "0x08071ee0",
+    "_Znwj": "0x080499ec",
+    "strlen": "0x0804982c",
+    "_Znaj": "0x080499ac",
+    "strcpy": "0x08049a0c",
+    "_ZdlPv": "0x0804973c",
+    "_Unwind_Resume": "0x0804998c"
+  }
+}

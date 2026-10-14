@@ -275,7 +275,7 @@ address	size	status	manifest	candidate_source	symbol
 0x080717c0	49	EXACT	vuc/config/ml_string_temp_c1_probe.json	vuc/src/MLGameString.cpp	_ZN12MLGameStringC1ERK12MLTempString
 0x08071800	13	EXACT	vuc/config/ml_game_string_cstr_probe.json	vuc/src/MLGameString.cpp	_ZNK12MLGameString5c_strEv
 0x08071810	106	EXACT	vuc/config/ml_string_table_get_probe.json	vuc/src/MLGameStringTableUnit.cpp	_ZN17MLGameStringTable3GetEv
-0x08071880	263	UNRESOLVED	-	-	_ZN17MLGameStringTable3AddEPKcb
+0x08071880	263	EXACT	vuc/config/string_table_add_oct14_probe.json	vuc/src/MLGameStringTableAdd.cpp	_ZN17MLGameStringTable3AddEPKcb
 0x08071990	20	EXACT	vuc/config/ml_hash_string_probe.json	vuc/src/MLHashTable.cpp	_ZN9MLHashFunI12MLGameStringE4HashERKS0_
 0x080719b0	24	EXACT	vuc/config/ml_hash_string_equal_exact_probe.json	vuc/src/MLHashTable.cpp	_ZN9MLHashFunI12MLGameStringE7IsEqualERKS0_S3_
 0x080719d0	77	EXACT	vuc/config/ml_temp_data_get_probe.json	vuc/src/MLTempStringData.cpp	_ZN16MLTempStringData3GetEv
