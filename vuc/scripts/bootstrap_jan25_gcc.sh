@@ -77,7 +77,7 @@ fi
 (
     cd "$work/build/gcc"
     BISON_PKGDATADIR="$work/old-bison/usr/share/bison" \
-        make -j"$jobs" xgcc cc1plus BISON="$work/old-bison/usr/bin/bison" \
+        make -j"$jobs" xgcc cc1 cc1plus BISON="$work/old-bison/usr/bin/bison" \
         BOOT_CFLAGS='-O0 -fgnu89-inline' CFLAGS='-O0 -fgnu89-inline'
 ) > "$work/build.log" 2>&1 || {
     tail -n 30 "$work/build.log" >&2

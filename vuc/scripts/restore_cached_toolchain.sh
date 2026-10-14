@@ -16,6 +16,14 @@ if [ ! -x "$cache/gcc333-jan25/build/gcc/xgcc" ]; then
     printf '%s\n' "missing recovered GCC 3.3.3 frontend" >&2
     exit 1
 fi
+if [ ! -x "$cache/gcc333-jan25/build/gcc/cc1" ]; then
+    printf '%s\n' "missing recovered historical C frontend (cc1)" >&2
+    exit 1
+fi
+if [ ! -x "$cache/gcc333-jan25/build/gcc/cc1plus" ]; then
+    printf '%s\n' "missing recovered historical C++ frontend (cc1plus)" >&2
+    exit 1
+fi
 
 # Refuse to replace a real scratch directory; only restore absent symlinks
 # or aliases already owned by this cache.
