@@ -32,6 +32,51 @@ static inline instStream *checkedProStream(loopDebris *ld, int i)
     return r->unk_14;
 }
 
+static inline epiRec *proRecord(loopDebris *ld, int i, int count)
+{
+    if (i < 0 || i >= count)
+        return 0;
+    return &ld->m_pro[i];
+}
+
+bool epiRec::init(int size, const char *name)
+{
+    reset();
+    unk_14 = new instStream;
+    if (!unk_14) {
+        func_0804ad38("setup: failed to get iStream\n");
+        func_0804adf0(-1);
+    }
+    mNode *n = unk_14->unk_110.func_0804b2d4(name);
+    if (!n) {
+        func_0804ad38("failed to add a name to iStream\n");
+        func_0804adf0(-1);
+    }
+    workTable *wt = &unk_14->unk_148;
+    if (!wt->init(3, size)) {
+        func_0804ad38("failed to init it_pro for size %d\n", size);
+        func_0804adf0(-1);
+    }
+    instStream *s = unk_14;
+    int serial = g_streamSerial;
+    unk_18 = wt;
+    s->unk_2c2 = serial;
+    wt->unk_10 = unk_14;
+    unk_14->unk_218 = &unk_14->unk_148;
+    return true;
+}
+
+void epiRec::func_08067df0()
+{
+}
+
+const char *epiRec::getName()
+{
+    if (!unk_14)
+        return "!UNNAMED!";
+    return unk_14->func_0806d674();
+}
+
 int func_08067e18(Program *p, instStream *s)
 {
     workTable *wt = s->getTable();
@@ -85,8 +130,9 @@ int func_08067e18(Program *p, instStream *s)
 
     instStream *prev = enter;
     epiRec *r;
-    for (i = 0; ld.getNumPro() != i; i++) {
-        epiRec *pr = ld.getProRec(i);
+    loopDebris *d;
+    for (i = 0; i != (d = &ld)->getNumPro(); i++) {
+        epiRec *pr = proRecord(d, i, ld.getNumPro());
         if (!pr) {
             func_0804ad38("failed to get prologue\n");
             return -1;
