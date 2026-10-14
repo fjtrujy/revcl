@@ -515,6 +515,11 @@ matches **162/193** bytes; it is deliberately kept in `vuc/probes/` rather
 than accepted source because original authoring is not authenticated.
 See `vuc/docs/2026-10-14-assemble-binop-unresolved-partial.md` for the
 complete compiler matrix and an independent statement-list negative sweep.
+The subsequent unresolved-only batch identified the original AST expression
+list's 0x3c00 translation argument and fragment canonicalization's 513-bucket
+hash-node constructor/exception lifetime. Two original-length diagnostic
+matches, **90/256** and **78/224**, remain in `vuc/probes/`, not the exact
+candidate set. See `vuc/docs/2026-10-14-exprlist-canonize-fragment-partials.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
