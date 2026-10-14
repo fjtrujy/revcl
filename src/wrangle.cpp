@@ -460,7 +460,7 @@ bool buildCandidateList(workTable *wt)
             }
         }
         unsigned char count = in->unk_138b;
-        for (int i = 0; i != count; i++, count = in->unk_138b) {
+        for (int i = 0; __builtin_expect(i != count, 1); i++, count = in->unk_138b) {
             Operand *op = &in->unk_38[i];
             RegPoolEntry *r = op->unk_18;
             if (!r)
