@@ -203,6 +203,10 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(and_config["flags"], [
             "-O2", "-frename-registers", "-ffast-math",
             "-falign-jumps=16", "-falign-labels=1", "-falign-loops=1"])
+        and_source = suite.within_repo(and_config["source"]).read_text()
+        self.assertIn("case 4: result.bits=!(", and_source)
+        self.assertIn("(result.values[1] == 0.0f) ||", and_source)
+        self.assertIn("(temporary.values[3] == 0.0f)", and_source)
         or_source = suite.within_repo(or_config["source"]).read_text()
         self.assertIn(")) && ((result.values[1]", or_source)
 

@@ -710,6 +710,17 @@ register/source-owner trials, and the best printer object's altered build
 scope regresses two already exact neighbors. Reproduction and acceptance
 details: `vuc/docs/2026-10-14-add-ownership-and-printer-register-batch.md`.
 
+The independent logical-AND De Morgan/float-lane batch tested **1,796**
+ordinary C++03 source/compiler configurations. It improves the selected
+**`Value::operator&&` experimental source from 190/325 to 192/325**
+original-offset matching bytes, with authentic original length and its
+`TypeConvert` relocation, independently verified under both historical
+GCC snapshots. No new exact function was accepted. The separately
+committed `be393e2` hash-table copy partial is preserved without changes;
+the current 298-symbol inventory is **200 EXACT / 24 EXPERIMENTAL /
+74 UNRESOLVED**. Evidence and reproduction:
+`vuc/docs/2026-10-14-value-and-demorgan-192-byte-partial.md`.
+
 The next `vuc` batch examined **515** further historical GCC 3.3.3
 source/flag recipes across logical AND, Value division, and the hash-table
 copy constructor. A larger authentic jump-alignment control improves the
