@@ -547,6 +547,14 @@ branch orientation and the following unconditional displacement;
 this is **not byte-exact** and is excluded from the exact manifest.
 All 197 already exact VUC functions remain accepted. See
 `vuc/docs/2026-10-14-vcl-setlocks-accumulator-74-byte-partial.md`.
+The next historical-compiler batch recovered the independent
+GCC 3.3.3 2003-12-06 prerelease again and rechecked the five most
+promising nonexact functions under genuine inline-predicate,
+constructor-prefix and weak-binding controls. **No new exact match**:
+the 74/77 accumulator prefix, 45/46 arena cleanup, 96/98 AST printer,
+95/101 temporary-string C2 and 111/117 temporary-string Set remain
+unaltered. The reproducible negative evidence is retained in
+`vuc/docs/2026-10-14-historical-snapshots-accumulator-compiler-controls.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
