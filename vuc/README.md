@@ -646,6 +646,18 @@ selected 72/306 experimental match. The ledger is now **199 EXACT /
 accepted instruction bytes. See
 `vuc/docs/2026-10-14-scope-uninitialized-copy-byte-exact.md`.
 
+A follow-up source/RTL-boundary study checked **404** historical GCC
+configurations without altering the accepted manifest. The unresolved
+149-byte STL normal-iterator scope copy retains six authenticated call
+relocations in a 136-byte natural instantiation; the original adds **9-byte
+and 4-byte compiler-generated alignment gaps** before its return and
+exception-handling regions. Neither a 256-build historical alignment matrix
+nor 112 `_Construct`/`_Destroy` source-lifetime recipes emits the original
+149-byte body. A separate 36-build test shows that annotating the
+`MLGameString` copy constructor as non-throwing removes original exception
+cleanup relocations in the 166-byte hash-table copy constructor. See
+`vuc/docs/2026-10-14-iterator-eh-alignment-and-hashcopy-negative-batch.md`.
+
 VUC's historical user guide restricts redistribution of modified compiler
 versions. Treat reconstructed source distribution as unresolved until reviewed;
 the root repository's MIT license does not automatically settle those rights.
