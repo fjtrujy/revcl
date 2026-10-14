@@ -658,6 +658,18 @@ nor 112 `_Construct`/`_Destroy` source-lifetime recipes emits the original
 cleanup relocations in the 166-byte hash-table copy constructor. See
 `vuc/docs/2026-10-14-iterator-eh-alignment-and-hashcopy-negative-batch.md`.
 
+After incorporating `origin/main` updates `1eff5c3` and `42dca3b`, the
+VUC string-fragment list at `0x0806e5b0` gained a stronger authenticated
+original-length **75/306** experimental reconstruction (previously 72/306),
+with **6/6 relocations** and its initial contiguous exact prefix improving
+from **2 to 10 bytes**. Its ordinary C++03 local list index now advances
+after fragment construction and immediately before appending; it is still
+excluded from the exact manifest. Another 72 growth/copy-hint recipes and
+70 historical hash-constructor index-alias controls did not improve their
+respective valid original-sized candidates. The accepted inventory remains
+**199 EXACT / 22 EXPERIMENTAL / 77 UNRESOLVED** and **14,621** exact code
+bytes. See `vuc/docs/2026-10-14-string-fraglist-late-index-75-byte-partial.md`.
+
 VUC's historical user guide restricts redistribution of modified compiler
 versions. Treat reconstructed source distribution as unresolved until reviewed;
 the root repository's MIT license does not automatically settle those rights.

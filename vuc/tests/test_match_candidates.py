@@ -147,6 +147,16 @@ class CandidateSuiteTests(unittest.TestCase):
                          ["-O2", "-frename-registers", "-falign-jumps=8"])
         self.assertEqual(len(manifest["relocations"]), 6)
 
+    def test_string_fragment_list_recovered_index_lifetime_is_experimental(self):
+        path = "vuc/config/translate_frag_list_string_oct14_probe.json"
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        content = suite.within_repo(
+            "vuc/probes/translate_frag_list_string_partial_oct14.cpp").read_text()
+        self.assertIn(
+            "IR::Fragment_Data *fragment = new IR::Fragment_Data(name);\n"
+            "        ++i;\n"
+            "        output.Add(fragment);", content)
+
     def test_scope_copy_throw_declaration_is_accepted_exact(self):
         path = "vuc/config/scope_copy_exact_oct14_probe.json"
         self.assertIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
