@@ -743,3 +743,17 @@ A separate 671-source/compiler-recipe investigation retained the selected
 literal/call relocations. Accepted totals remain 200 exact functions, 24
 experimental, and 74 unresolved. Reproduction and negative evidence:
 `vuc/docs/2026-10-15-mltemp-c2-original-owner-37-byte-prefix.md`.
+
+The October 15 historical-GCC vector arithmetic batch improves the selected
+**`Value::operator+` experimental original-length partial from 172/219 to
+203/219 identical original instruction bytes**, with **169 contiguous exact
+entry bytes** and the authentic `TypeConvert` relocation independently
+validated with both historical GCC 3.3.3 prerelease snapshots. The genuine
+C++03 source updates four independent vector lanes in lexical order 3,1,2,0.
+The accepted exact `Value` arithmetic sources remain untouched. Broad
+source-level investigations of forced type conversion and the hash copy
+constructor did not beat their existing selected partials. The exact
+manifest remains 200 functions / 14,930 bytes; the original 298-symbol
+ledger stays 200 EXACT / 24 EXPERIMENTAL / 74 UNRESOLVED. Complete evidence,
+negative controls and reproduction steps:
+`vuc/docs/2026-10-15-value-addition-203-byte-partial.md`.

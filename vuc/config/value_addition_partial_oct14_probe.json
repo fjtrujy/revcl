@@ -1,9 +1,9 @@
 {
-  "source": "vuc/probes/value_addition_partial_oct14.cpp",
+  "source": "vuc/probes/ValueAdditionLaneOrderOct15.cpp",
   "flags": [
     "-O2",
     "-frename-registers",
-    "-falign-jumps=4"
+    "-falign-jumps=1"
   ],
   "relocations": {
     "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"

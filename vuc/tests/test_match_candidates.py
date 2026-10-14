@@ -210,6 +210,28 @@ class CandidateSuiteTests(unittest.TestCase):
         or_source = suite.within_repo(or_config["source"]).read_text()
         self.assertIn(")) && ((result.values[1]", or_source)
 
+    def test_value_addition_reordered_lanes_remain_experimental(self):
+        """Authentic 219-byte Value+ source has four independent vector lanes."""
+        path = "vuc/config/value_addition_partial_oct14_probe.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x0806e9b0")
+        self.assertEqual(config["size"], 219)
+        self.assertEqual(config["source"],
+                         "vuc/probes/ValueAdditionLaneOrderOct15.cpp")
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=1"])
+        self.assertEqual(config["relocations"], {
+            "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"})
+        source = suite.within_repo(config["source"]).read_text()
+        body = source[source.index("Value Value::operator+(const Value &other) const"):
+                      source.index("Value Value::operator-(const Value &other) const")]
+        vector_body = body[body.index("case 4:"):]
+        offsets = [vector_body.index(f"result.values[{lane}] += temporary.values[{lane}];")
+                   for lane in (3, 1, 2, 0)]
+        self.assertEqual(offsets, sorted(offsets))
+
     def test_mltemp_default_c2_selects_original_constructor_source_order(self):
         """The genuine formatted predecessor yields a longer exact C2 prefix."""
         path = "vuc/config/ml_temp_default_C2_probe.json"
