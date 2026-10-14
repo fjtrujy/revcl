@@ -1,0 +1,14 @@
+{
+  "source": "vuc/probes/value_addition_partial_oct14.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=4"
+  ],
+  "relocations": {
+    "_ZN5Value11TypeConvertERKS_S1_RS_S2_": "0x0806f7d0"
+  },
+  "function": "_ZNK5ValueplERKS_",
+  "address": "0x0806e9b0",
+  "size": 219
+}

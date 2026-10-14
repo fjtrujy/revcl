@@ -563,6 +563,16 @@ The same batch corrected `Canonize_Reduce(IR::Fragment_Data*)`'s
 provisional statement-field offset from +0x14 to the original +0x18;
 its independently verified partial remains 78/224. See
 `vuc/docs/2026-10-14-stmtlist-partial-and-fragment-abi.md`.
+The subsequent partial-first batch authenticated four already studied,
+original-sized sources against the original ELF and formally tracks their
+nonexact results: `Value::operator+()` **172/219**, `AssembleBinOp`
+**162/193**, AST expression-list `Translate` **90/256**, and fragment
+`Canonize_Reduce` **78/224**; all 18 associated relocation sites are
+authenticated. The ledger is **197 EXACT / 19 EXPERIMENTAL /
+82 UNRESOLVED**. No new exact function was accepted. A separate
+`VFormatString` literal audit verified five original source strings
+and rejected candidates with unmapped literal alignment gaps. See
+`vuc/docs/2026-10-14-four-tracked-partials-and-vformat-literal-gate.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees

@@ -210,5 +210,9 @@
   "vuc/config/ir_accumulatorable_probe.json",
   "vuc/config/align_string_exact_oct13.json",
   "vuc/config/string_table_add_oct14_probe.json",
-  "vuc/config/translate_stmt_list_partial_oct14_probe.json"
+  "vuc/config/translate_stmt_list_partial_oct14_probe.json",
+  "vuc/config/assemble_binop_dispatch_oct14_probe.json",
+  "vuc/config/translate_expr_list_oct14_probe.json",
+  "vuc/config/canonize_fragment_oct14_probe.json",
+  "vuc/config/value_addition_partial_oct14_probe.json"
 ]

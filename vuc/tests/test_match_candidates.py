@@ -26,7 +26,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 212)
+        self.assertEqual(len(records), 216)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -53,6 +53,25 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(manifest["size"], 119)
         self.assertEqual(manifest["flags"], ["-O2"])
         self.assertEqual(len(manifest["relocations"]), 3)
+
+    def test_four_source_verified_unresolved_partials_are_experimental_only(self):
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        selected = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        partials = {
+            "assemble_binop_dispatch_oct14_probe.json": ("0x0805a3f0", 193, 4),
+            "translate_expr_list_oct14_probe.json": ("0x0806ae20", 256, 2),
+            "canonize_fragment_oct14_probe.json": ("0x08050460", 224, 8),
+            "value_addition_partial_oct14_probe.json": ("0x0806e9b0", 219, 1),
+        }
+        for filename, (address, length, targets) in partials.items():
+            path = "vuc/config/" + filename
+            with self.subTest(partial=path):
+                self.assertIn(path, selected)
+                self.assertNotIn(path, accepted)
+                config = json.loads(suite.within_repo(path).read_text())
+                self.assertEqual(config["address"], address)
+                self.assertEqual(config["size"], length)
+                self.assertEqual(len(config["relocations"]), targets)
 
     def test_manifest_sources_and_configs_are_committed(self):
         """A passing local VM is insufficient if clean clones lack its inputs."""
