@@ -134,6 +134,19 @@ class CandidateSuiteTests(unittest.TestCase):
                 self.assertIn("int old_size=length;", source)
                 self.assertIn("int index=i; ++i;", source)
 
+    def test_scope_copy_short_prefix_is_diagnostic_only(self):
+        path = "vuc/config/scope_copy_prefix_diagnostic_oct14_probe.json"
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        manifest = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(manifest["source"],
+                         "vuc/probes/scope_copy_119byte_partial_oct14.cpp")
+        self.assertEqual(manifest["address"], "0x0804f220")
+        self.assertEqual(manifest["size"], 120)
+        self.assertEqual(manifest["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=8"])
+        self.assertEqual(len(manifest["relocations"]), 6)
+
     def test_manifest_sources_and_configs_are_committed(self):
         """A passing local VM is insufficient if clean clones lack its inputs."""
         if not (ROOT / ".git").exists():

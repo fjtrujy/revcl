@@ -604,6 +604,17 @@ per function. The 138-byte total improvement is experimental,
 scalar copy rather than the original `rep movsl`. The ledger remains
 **198 EXACT / 21 EXPERIMENTAL / 79 UNRESOLVED**. See
 `vuc/docs/2026-10-14-fragment-list-110-byte-partials.md`.
+The subsequent historical C++ STL-copy batch authenticated a **75-byte
+consecutive exact prefix** (and 84 matching original-offset bytes) of
+the unresolved 120-byte `__uninitialized_copy_aux<Scope*, Scope*>`
+at `0x0804f220`, with **6/6 original relocations**. Its emitted
+function is still **119 bytes**, so it remains diagnostic-only,
+excluded from exact and selected manifests. Another 1,120 genuine
+compiler recipes across scope-copy cleanup, iterator-copy, hash
+constructor and fragment-list copy guards produced no original-length
+improvement. Ledger remains **198 EXACT / 21 EXPERIMENTAL /
+79 UNRESOLVED**. See
+`vuc/docs/2026-10-14-scope-copy-75-byte-exact-prefix.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
