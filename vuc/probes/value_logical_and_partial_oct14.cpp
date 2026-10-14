@@ -1,4 +1,4 @@
-// EXPERIMENTAL VUC Value::operator&&, 188/325 original instruction bytes.
+// EXPERIMENTAL VUC Value::operator&&, 190/325 original instruction bytes.
 // Original 325-byte size and TypeConvert relocation verified with both GCC
 // 3.3.3 prereleases. Not accepted as exact source; original compiler layout
 // and vector basic-block ordering still differ from this reconstruction.

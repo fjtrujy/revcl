@@ -697,3 +697,14 @@ lifetimes do not recover the required 306-byte form. The near-exact
 register/source-owner trials, and the best printer object's altered build
 scope regresses two already exact neighbors. Reproduction and acceptance
 details: `vuc/docs/2026-10-14-add-ownership-and-printer-register-batch.md`.
+
+The next `vuc` batch examined **515** further historical GCC 3.3.3
+source/flag recipes across logical AND, Value division, and the hash-table
+copy constructor. A larger authentic jump-alignment control improves the
+original-length **`Value::operator&&` experimental partial from 188/325 to
+190/325 matching original instruction bytes**, preserving its 115-byte exact
+prefix and `TypeConvert` relocation under both historical GCC snapshots.
+No additional whole byte-exact function was found; the accepted ledger stays
+**200 EXACT / 23 EXPERIMENTAL / 75 UNRESOLVED**, with 14,930 exact function
+bytes. Wrong-length variants and regressions were not promoted. Evidence:
+`vuc/docs/2026-10-14-value-and-190-byte-partial-and-negative-controls.md`.

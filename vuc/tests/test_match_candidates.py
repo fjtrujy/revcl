@@ -200,6 +200,9 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(and_config["size"], 325)
         self.assertEqual(and_config["source"],
                          "vuc/probes/value_logical_and_partial_oct14.cpp")
+        self.assertEqual(and_config["flags"], [
+            "-O2", "-frename-registers", "-ffast-math",
+            "-falign-jumps=16", "-falign-labels=1", "-falign-loops=1"])
         or_source = suite.within_repo(or_config["source"]).read_text()
         self.assertIn(")) && ((result.values[1]", or_source)
 

@@ -7,8 +7,8 @@
     "-O2",
     "-frename-registers",
     "-ffast-math",
-    "-falign-jumps=1",
-    "-falign-labels=8",
+    "-falign-jumps=16",
+    "-falign-labels=1",
     "-falign-loops=1"
   ],
   "relocations": {
