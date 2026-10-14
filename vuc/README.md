@@ -632,6 +632,20 @@ Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
 or unrelated local files. Never change historical archives.
 
+The latest VCL `main` rebase at `b95fc41` motivated a historically supported
+exception-specification test in VUC's 513-bucket scope-copy template. A
+genuine C++03 `MLHashTable::clear() throw()` declaration recovers the previously
+119-byte, 75-byte-prefix `std::__uninitialized_copy_aux<Scope*, Scope*>`
+as **120/120 byte-exact**, with all **6/6** original exception and constructor
+relocations independently verified under both historical GCC 3.3.3 snapshots.
+The declaration is isolated in `vuc/src/ScopeCopyTable.h` to preserve existing
+exact headers; original common-header ownership is not established.
+An additional bounded 192-build string-fragment loop sweep did not improve its
+selected 72/306 experimental match. The ledger is now **199 EXACT /
+22 EXPERIMENTAL / 77 UNRESOLVED** of 298 named symbols and **14,621**
+accepted instruction bytes. See
+`vuc/docs/2026-10-14-scope-uninitialized-copy-byte-exact.md`.
+
 VUC's historical user guide restricts redistribution of modified compiler
 versions. Treat reconstructed source distribution as unresolved until reviewed;
 the root repository's MIT license does not automatically settle those rights.

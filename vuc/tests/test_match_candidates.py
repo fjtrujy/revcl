@@ -26,14 +26,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 220)
+        self.assertEqual(len(records), 221)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 198)
+        self.assertEqual(len(exact_configs), 199)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -146,6 +146,18 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(manifest["flags"],
                          ["-O2", "-frename-registers", "-falign-jumps=8"])
         self.assertEqual(len(manifest["relocations"]), 6)
+
+    def test_scope_copy_throw_declaration_is_accepted_exact(self):
+        path = "vuc/config/scope_copy_exact_oct14_probe.json"
+        self.assertIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        manifest = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(manifest["address"], "0x0804f220")
+        self.assertEqual(manifest["size"], 120)
+        self.assertEqual(manifest["source"], "vuc/src/ScopeUninitializedCopy.cpp")
+        self.assertEqual(len(manifest["relocations"]), 6)
+        self.assertIn("void clear() throw();",
+                      suite.within_repo("vuc/src/ScopeCopyTable.h").read_text())
 
     def test_string_fragment_list_partial_is_never_accepted_as_exact(self):
         path = "vuc/config/translate_frag_list_string_oct14_probe.json"
