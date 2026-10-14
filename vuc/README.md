@@ -526,6 +526,12 @@ all ten original relocation sites. The decisive genuine C++03 source
 is a named `const char* const&` alias of the string-data pointer before
 hash-node allocation; see
 `vuc/docs/2026-10-14-mlgamestringtable-add-byte-exact.md`.
+The subsequent small-function control batch tests the 30-byte output
+prologue, MLTempString default C2, operator accumulator classification,
+and 513-bucket copy construction with historical GCC 3.3.3. No new exact
+function was recovered; reproducible source/branch/stack-lifetime
+negative evidence is preserved in
+`vuc/docs/2026-10-14-small-function-lifetime-negative-batch.md`.
 
 Do not modify the root VCL `src/`, `config/`, `scripts/`, or progress history
 for VUC-only experiments. Do not stage the untracked extracted upstream trees
