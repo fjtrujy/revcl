@@ -225,19 +225,6 @@ const char *instStream::startTypeName()
     return s;
 }
 
-bool instStream::canLoop()
-{
-    if (unk_2ce == 1 || unk_2ce == 5) {
-        instStream *s = unk_134.getStream(1);
-        if (!s) {
-            func_0804ad38("canLoop - bad return from outIST getFirst\n");
-            func_0804adf0(-1);
-        }
-        return this == s;
-    }
-    return false;
-}
-
 static inline void dumpEmitStream(instStream *s)
 {
     s->dump(false);
@@ -386,15 +373,6 @@ RegPoolEntry *instStream::getBranchTargetRegister()
     else
         func_0804ac7c("getBranchTargetImmediate:: failed to get branch\n");
     return r;
-}
-
-unsigned char instStream::func_0806d908()
-{
-    workTable *wt = unk_218;
-    if (wt)
-        return wt->unk_09;
-    func_0804ad38("getCodeMode - work table not set\n");
-    return 0;
 }
 
 const char *instStream::getCodeModeName()
