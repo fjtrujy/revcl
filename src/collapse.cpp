@@ -64,7 +64,7 @@ bool func_0806a74c(Program *p)
     for (s = p->unk_a0; s; s = s->unk_108) {
         workTable *t = s->getTable();
         for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-            if (in->func_08055ac4() != 0x6d)
+            if (__builtin_expect(in->func_08055ac4() != 0x6d, 1))
                 continue;
             mValue *v = &in->unk_38[2].unk_1c;
             if (v->type != mValue::STRING) {
