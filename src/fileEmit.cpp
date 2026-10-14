@@ -61,6 +61,11 @@ static inline unsigned char streamEndType(instStream *s)
     return s->unk_2cd;
 }
 
+static inline void dumpFailedRow(wtRow *r)
+{
+    r->func_0807222c(-1);
+}
+
 char *workTable::emit(char *buf, int mode, int *p1, int *p2)
 {
     *p2 = 0;
@@ -119,7 +124,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             buf = blank.emit(buf, f, false, false);
             if (!buf) {
                 func_0804ad38("failed to emit null ie for synth instruction!\n");
-                goto fail;
+                return 0;
             }
         }
     } else {
@@ -175,8 +180,8 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 buf = r->emit(buf, f, false, true);
                 if (!buf) {
                     func_0804ad38("failed to emit instruction!\n");
-                    r->func_0807222c(-1);
-                    goto fail;
+                    dumpFailedRow(r);
+                    return 0;
                 }
                 break;
             case 1:
@@ -184,15 +189,15 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 buf = r->emit(buf, f, true, true);
                 if (!buf) {
                     func_0804ad38("failed to emit instruction!\n");
-                    r->func_0807222c(-1);
-                    goto fail;
+                    dumpFailedRow(r);
+                    return 0;
                 }
                 *buf++ = ' ';
                 buf = r->emit(buf, f, false, true);
                 if (!buf) {
                     func_0804ad38("failed to emit instruction!\n");
-                    r->func_0807222c(-1);
-                    goto fail;
+                    dumpFailedRow(r);
+                    return 0;
                 }
                 *buf++ = '\n';
                 break;
