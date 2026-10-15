@@ -1,20 +1,22 @@
-// Byte-exact VUC SymbolTable::EndScope() provisional source fragment.
-// The remaining SymbolTable methods and original class header are unresolved.
+// Byte-exact VUC SymbolTable::EndScope() using the actual scope vector.
+// The ordinary std::vector::pop_back spelling has been verified alongside
+// original-order Enter, Find and BeginScope methods under GCC 3.3.3.
 #include "MLGameString.h"
 #include "MLHashTable.h"
+#include "MLHashFunGameString.h"
+#include <vector>
 
 struct SymbolTableEntry;
+typedef MLHashTable<MLGameString, SymbolTableEntry *,
+                    MLHashFun<MLGameString>, 513> SymbolScope;
 class SymbolTable {
 public:
     void EndScope();
 private:
-    unsigned reserved_;
-    MLHashTable<MLGameString, SymbolTableEntry *,
-                MLHashFun<MLGameString>, 513> *scope_;
+    std::vector<SymbolScope> scopes_;
 };
 
 void SymbolTable::EndScope()
 {
-    --scope_;
-    scope_->clear();
+    scopes_.pop_back();
 }

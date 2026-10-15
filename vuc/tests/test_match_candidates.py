@@ -614,8 +614,20 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(info["relocations"][".text._Z41__static_initialization_and_destruction_0ii"],
                          "0x0806a2e0")
         self.assertNotIn("vuc/config/symboltable_enter_oct13_probe.json", accepted)
-        for neighbor in ("symboltable_find_probe.json", "symbol_begin_scope_probe.json"):
+        for neighbor in ("symboltable_find_probe.json", "symbol_begin_scope_probe.json",
+                         "symboltable_end_exact_probe.json"):
             self.assertIn("vuc/config/" + neighbor, accepted)
+        unit = suite.within_repo("vuc/src/SymbolTableUnit.cpp").read_text()
+        self.assertLess(unit.index("void SymbolTable::Enter("),
+                        unit.index("SymbolTableEntry *SymbolTable::Find("))
+        self.assertLess(unit.index("SymbolTableEntry *SymbolTable::Find("),
+                        unit.index("void SymbolTable::BeginScope()"))
+        self.assertLess(unit.index("void SymbolTable::BeginScope()"),
+                        unit.index("void SymbolTable::EndScope()"))
+        for source_path in ("vuc/src/SymbolTableUnit.cpp", "vuc/src/SymbolTable.cpp"):
+            source = suite.within_repo(source_path).read_text()
+            self.assertIn("scopes_.pop_back();", source)
+            self.assertNotIn("--scope_;", source)
 
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

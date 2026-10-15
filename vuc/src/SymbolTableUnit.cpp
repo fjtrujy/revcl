@@ -56,3 +56,8 @@ void SymbolTable::BeginScope()
     SymbolScope scope;
     scopes_.push_back(scope);
 }
+
+void SymbolTable::EndScope()
+{
+    scopes_.pop_back();
+}
