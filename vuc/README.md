@@ -260,8 +260,8 @@ locally scoped text-function records. Regenerate these with
 `python3 vuc/scripts/source_units.py --write`. Global functions are not
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
-`python3 vuc/scripts/coverage.py --write` (currently 195 EXACT,
-15 EXPERIMENTAL and 88 UNRESOLVED). The complete original
+`python3 vuc/scripts/coverage.py --write` (currently 204 EXACT,
+25 EXPERIMENTAL and 69 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -290,6 +290,11 @@ remains explicitly experimental at 29/31. See
 The original `InstructionList::GenTmp()` and both historical
 `AsmVariable` STL uninitialized-copy helpers now match exactly using
 ordinary C++ source; see `vuc/docs/2026-10-10-asmvariable-gentmp-batch.md`.
+Reconstructing real translation-unit template instantiations also recovers
+`std::vector<Instruction*>::_M_insert_aux` (265/265 bytes) and
+`std::vector<AsmVariable>::_M_insert_aux` (444/444), with the related
+scope vector insertion at a strict 733/746 original-length partial.
+See `vuc/docs/2026-10-15-true-translation-unit-stl-vector-recovery.md`.
 The matching suite also includes byte-exact `GenLabel()` and
 `yyFlexLexer::yy_delete_buffer()`; their original relocations and
 named data objects are checked in the same strict manifest.

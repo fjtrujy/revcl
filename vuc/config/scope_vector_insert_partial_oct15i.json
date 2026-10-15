@@ -1,0 +1,22 @@
+{
+  "function": "_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS6_S8_EERKS6_",
+  "address": "0x0806a550",
+  "size": 746,
+  "source": "vuc/probes/ScopeVectorInsertionOriginalUnitOct15i.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EEC1ERKS5_": "0x0804f420",
+    "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EE5clearEv": "0x0804f020",
+    "_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIP11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS3_ELi513EESt6vectorIS8_SaIS8_EEEESD_ET0_T_SF_SE_12__false_type": "0x0806a840",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE10deallocateEPvj": "0x0804997c",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE8allocateEj": "0x0804968c",
+    "_Unwind_Resume": "0x0804998c",
+    "__cxa_begin_catch": "0x0804995c",
+    "__cxa_rethrow": "0x0804979c",
+    "__cxa_end_catch": "0x0804983c"
+  }
+}

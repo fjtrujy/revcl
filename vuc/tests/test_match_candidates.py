@@ -14,6 +14,46 @@ spec.loader.exec_module(suite)
 
 
 class CandidateSuiteTests(unittest.TestCase):
+    def test_asm_variable_vector_insert_is_generated_by_real_inline_asm_unit(self):
+        """Historical vector code is emitted from a real AST binding method."""
+        path = "vuc/config/asm_variable_vector_insert_exact_oct15i.json"
+        self.assertIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x08051290")
+        self.assertEqual(config["size"], 444)
+        self.assertEqual(config["source"], "vuc/src/InlineAsmUnit.cpp")
+        self.assertEqual(config["flags"], ["-O2", "-frename-registers"])
+        self.assertEqual(len(config["relocations"]), 7)
+        self.assertIn("variables.push_back(variable)",
+                      suite.within_repo(config["source"]).read_text())
+
+    def test_scope_vector_insert_partial_remains_experimental(self):
+        """A 733/746 candidate is original-length, not exact acceptance."""
+        path = "vuc/config/scope_vector_insert_partial_oct15i.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x0806a550")
+        self.assertEqual(config["size"], 746)
+        self.assertEqual(config["source"],
+                         "vuc/probes/ScopeVectorInsertionOriginalUnitOct15i.cpp")
+        self.assertEqual(len(config["relocations"]), 9)
+
+    def test_instruction_vector_insert_is_recovered_from_real_instruction_unit(self):
+        """The STL helper is instantiated by authentic InstructionList methods."""
+        path = "vuc/config/instruction_vector_insert_exact_oct15i.json"
+        self.assertIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x080519d0")
+        self.assertEqual(config["size"], 265)
+        self.assertEqual(config["flags"], ["-O2", "-frename-registers", "-falign-jumps=1"])
+        self.assertEqual(config["source"], "vuc/src/InstructionListLineCommentUnit.cpp")
+        self.assertEqual(config["relocations"]["memmove"], "0x0804978c")
+        self.assertEqual(len(config["relocations"]), 3)
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("instructions_.push_back(instruction)", source)
+        self.assertIn("std::vector<Instruction *>", source)
+
     def test_string_table_add_has_exact_original_source_and_relocations(self):
         path = "vuc/config/string_table_add_oct14_probe.json"
         self.assertIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
@@ -26,14 +66,14 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 226)
+        self.assertEqual(len(records), 229)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 202)
+        self.assertEqual(len(exact_configs), 204)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]

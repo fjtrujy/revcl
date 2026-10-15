@@ -82,6 +82,8 @@
   "vuc/config/hash_game_string_clear_probe.json",
   "vuc/config/ir_commutative_exact_probe.json",
   "vuc/config/instruction_list_add_exact_probe.json",
+  "vuc/config/instruction_vector_insert_exact_oct15i.json",
+  "vuc/config/asm_variable_vector_insert_exact_oct15i.json",
   "vuc/config/print_list_expr_exact_probe.json",
   "vuc/config/print_list_stmt_exact_probe.json",
   "vuc/config/print_list_var_exact_probe.json",

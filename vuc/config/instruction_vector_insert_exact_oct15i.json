@@ -1,0 +1,16 @@
+{
+  "function": "_ZNSt6vectorIP11InstructionSaIS1_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS1_S3_EERKS1_",
+  "address": "0x080519d0",
+  "size": 265,
+  "source": "vuc/src/InstructionListLineCommentUnit.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=1"
+  ],
+  "relocations": {
+    "memmove": "0x0804978c",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE10deallocateEPvj": "0x0804997c",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE8allocateEj": "0x0804968c"
+  }
+}
