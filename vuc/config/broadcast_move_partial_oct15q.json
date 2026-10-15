@@ -1,0 +1,25 @@
+{
+  "function": "_Z13BroadcastMoveRKN2IR8RegisterES2_R15InstructionList",
+  "address": "0x08051b30",
+  "size": 416,
+  "source": "vuc/probes/BroadcastMoveCommonAddOct15q.cpp",
+  "flags": ["-O2", "-frename-registers", "-falign-jumps=4"],
+  "relocations": {
+    "_ZN12MLGameStringC1ERKS_": "0x08071770",
+    "_ZNK12MLGameString5c_strEv": "0x08071800",
+    "_ZN15InstructionList3AddEPKcz": "0x08051570",
+    "_ZN12MLTempStringC1EPKcz": "0x08071bb0",
+    "_ZN12MLTempStringpLERKS_": "0x08071d80"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {"offset": 0, "size": 19, "address": "0x0807267f"},
+      {"offset": 19, "size": 1, "address": "0x08072286"},
+      {"offset": 20, "size": 19, "address": "0x08072692"},
+      {"offset": 39, "size": 2, "address": "0x080766fb"},
+      {"offset": 41, "size": 2, "address": "0x080721d8"},
+      {"offset": 43, "size": 2, "address": "0x080722e8"},
+      {"offset": 45, "size": 2, "address": "0x08072c3a"}
+    ]
+  }
+}

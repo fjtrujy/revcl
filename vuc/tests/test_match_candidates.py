@@ -66,7 +66,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 236)
+        self.assertEqual(len(records), 237)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -734,6 +734,20 @@ class CandidateSuiteTests(unittest.TestCase):
         source=suite.within_repo("vuc/probes/CanonizeTryReduceNewOct15p.cpp").read_text()
         self.assertIn("localEnv.FindPtr(name)",source)
         self.assertIn("globalEnv.FindPtr(name)",source)
+
+    def test_broadcast_move_original_length_and_real_source_literals(self):
+        path="vuc/config/broadcast_move_partial_oct15q.json"
+        self.assertIn(path,json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path,json.loads(suite.EXACT_MANIFEST.read_text()))
+        config=json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"],"0x08051b30")
+        self.assertEqual(config["size"],416)
+        self.assertEqual(config["source"],"vuc/probes/BroadcastMoveCommonAddOct15q.cpp")
+        self.assertEqual(len(config["relocations"]),5)
+        self.assertEqual(sum(x["size"] for x in config["relocation_literals"][".rodata"]),47)
+        source=suite.within_repo(config["source"]).read_text()
+        self.assertIn("mask != 15 && mask != 0",source)
+        self.assertIn("MLTempString fourth(\"\")",source)
 
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
