@@ -419,39 +419,8 @@ int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos)
     return checkLocks(in, &pos->unk_00, minPos);
 }
 
-bool DoInsert(workTable *const wt, Instr *in, cls08058718 *pos)
-{
-    if (in->unk_142c && !in->unk_142e) {
-        func_0804ad38("undo insert currmuid not set\n");
-        return false;
-    }
-    short r = pos->unk_04;
-    wtRow *row = &wt->unk_2c[r];
-    cls08058718 *s = &in->unk_13e8;
-    s->unk_04 = r;
-    char a = pos->unk_03;
-    short b = pos->unk_00;
-    s->unk_03 = a;
-    char p = pos->unk_02;
-    s->unk_00 = b;
-    s->unk_02 = p;
-    row->unk_00[p].unk_00 = in;
-    if (!setLocks(in)) {
-        func_0804ad38("DoInsert: failed to set locks in instruction insert\n");
-        return false;
-    }
-    in->unk_1396 = wt->unk_40;
-    wt->unk_40++;
-    if (!UnlinkFromToDo((Block *)wt, in)) {
-        func_0804ad38("failed to unlink from to do list\n");
-        func_0804aeb0();
-    }
-    if (!AddDone_Tail((Block *)wt, in)) {
-        func_0804ad38("failed to add to done\n");
-        func_0804aeb0();
-    }
-    return true;
-}
+extern const char doInsertLocksError[] = "DoInsert: failed to set locks in instruction insert\n";
+extern const char doInsertUnlinkError[] = "failed to unlink from to do list\n";
 
 bool UndoInsert(workTable *wt, Instr *in)
 {
