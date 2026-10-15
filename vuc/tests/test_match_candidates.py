@@ -828,6 +828,32 @@ class CandidateSuiteTests(unittest.TestCase):
             self.assertFalse(any(json.loads(suite.within_repo(item).read_text()).get("source")==source
                                  for item in chosen | accepted))
 
+    def test_fresh_parse_arguments_source_stays_unselected(self):
+        # The original 777-byte function has now been behaviorally mapped,
+        # but the two historical GCC snapshots still emit only 681/697 bytes.
+        path="vuc/probes/ParseArgumentsFreshOct15t.cpp"
+        source=suite.within_repo(path).read_text()
+        self.assertIn("int ParseArguments(int argc,char **argv)",source)
+        self.assertIn('std::strcmp(arg+1,"comments")',source)
+        self.assertIn('std::strcmp(arg+1,"reduce")',source)
+        self.assertIn('std::strcmp(arg+1,"nowarnings")',source)
+        self.assertIn('std::strcmp(arg+1,"nw")',source)
+        for global_name in ("inputFileName","outputFileName","inputPath",
+                            "addSourceComments","reduceConstantExpressions","noWarnings"):
+            self.assertIn(global_name,source)
+        chosen=set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        accepted=set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertFalse(any(json.loads(suite.within_repo(item).read_text()).get("source")==path
+                             for item in chosen | accepted))
+
+    def test_real_bind_list_predecessor_not_promoted_as_fake_literal_owner(self):
+        # Both orderings leave 16 bytes of generated rodata padding unowned;
+        # no original TU provenance means no selected or exact candidate.
+        self.assertTrue(suite.within_repo("vuc/probes/evaluate_bind_ast_fun_call_real_owners_oct15t.py").is_file())
+        blocked="vuc/config/bind_ast_fun_call_partial_oct15r.json"
+        self.assertNotIn(blocked,json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(blocked,json.loads(suite.EXACT_MANIFEST.read_text()))
+
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
         wrapper = "vuc/config/iostream_listfile_real_oct13_probe.json"
