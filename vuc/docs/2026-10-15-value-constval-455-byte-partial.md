@@ -98,7 +98,7 @@ byte comparison.
 
 ## Source/optimizer evidence (not promoted unless valid)
 
-Eight new reproducible drivers capture 2,760 configurations:
+Nine new reproducible drivers capture 3,112 configurations:
 
 | Driver in `vuc/probes/` | Compiler/source configurations | Strict outcome |
 | --- | ---: | --- |
@@ -110,6 +110,7 @@ Eight new reproducible drivers capture 2,760 configurations:
 | `evaluate_value_set_453_alignment_oct15b.py` | 180 | Best compiler candidates **454 bytes**, not acceptable |
 | `evaluate_value_set_454_compiler_controls_oct15b.py` | 82 | **First 455-byte authenticated source**, 67/455 and 13 relocations |
 | `evaluate_value_set_case_order_oct15b.py` | 240 | All 24 case lexical permutations; no improvement beyond **67/455** |
+| `evaluate_value_set_lifetimes_oct15b.py` | 352 | Eight Boolean-string pointer lifetime forms × eleven vector parsing scope/loop choices × four compiler controls; 56 original-sized candidates retain **67/455** and 13 relocations, no improvement |
 
 The ordinary source-level improvement came from expressing
 **two independently retrieved string pointers**, preserving the
