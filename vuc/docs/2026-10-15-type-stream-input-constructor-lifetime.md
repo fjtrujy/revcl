@@ -80,4 +80,23 @@ from independent class layout and accepted source-unit evidence,
 or restore its genuine translation unit, rather than attempting more
 compiler-flag permutations.
 
+## Independent Type flag-declaration check
+
+As the original `Type::IsAssignable` implementation suggests C++03 `bool`
+fields, `vuc/probes/evaluate_type_input_flag_declarations_oct15n.py`
+also tests nine historically plausible *declarations* for the trailing
+four Type bytes: four `unsigned char`, four `char`, four `bool`, mixed
+bool/char fields, and four eight-bit unsigned bitfields. These are not
+arbitrary compiler switches: each type keeps the original 16-byte
+object layout and uses the same authentic string parser.
+
+All **nine** forms produce exactly **369** function bytes and the same
+**264/369** original-offset matching result, with all **10** original
+relocation sites and **48** authenticated source-literal bytes. Thus the
+remaining assembly discrepancy is insensitive to ordinary flag type
+signedness and bool-vs-char declarations under historical Jan25 GCC.
+Do not repeat bitfield/boolean type guesses without new DWARF or semantic
+evidence. Original-output and C++03 sources are preserved outside Git
+under `/tmp/vuc-binutils215/type-input-declared-flags-oct15n/`.
+
 Original linked whole-ELF byte identity remains unestablished.
