@@ -68,6 +68,42 @@ void func_080737b8(Instr *in);
 
 extern int g_080b33ec;
 
+static inline void countCreatedMove(Block *blk, Instr *mv)
+{
+    adjustMoveCount(blk, mv, 1);
+}
+
+static inline __attribute__((always_inline))
+int scoreMoveParent(RegPoolEntry *reg, cls0805bcc4 *parent, cls0805bcc4 *lk,
+                    int now, int score)
+{
+    if (lk->getPriority() == 2 && score < 10000)
+        score = 10000;
+    if (lk->getPriority() == 1 && score < 20000)
+        score = 20000;
+    if (parent->unk_2d != 2) {
+        int row = parent->unk_32;
+        if (row < 0) {
+            func_0804ad38("parent not inserted during move\n");
+            func_0804aeb0();
+        }
+        int lo = row + 1;
+        int hi = row + parent->unk_18;
+        if (lo < reg->unk_00)
+            reg->unk_00 = lo;
+        if (hi > reg->unk_02)
+            reg->unk_02 = hi;
+        int d = now - lo;
+        if (d < 0) {
+            func_0804ad38("dff was <0\n");
+            func_0804aeb0();
+        }
+        if (d > score)
+            return d;
+    }
+    return score;
+}
+
 int getMove(Block *blk, Instr *in, int now)
 {
     Operand *bestOp = 0;
@@ -96,31 +132,7 @@ int getMove(Block *blk, Instr *in, int now)
             for (int p = 0; p != reg->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     lk = &op->unk_2c[p];
-                    cls0805bcc4 *parent = lk->getParent();
-                    if (lk->getPriority() == 2 && score < 10000)
-                        score = 10000;
-                    if (lk->getPriority() == 1 && score < 20000)
-                        score = 20000;
-                    if (parent->unk_2d != 2) {
-                        int row = parent->unk_32;
-                        if (row < 0) {
-                            func_0804ad38("parent not inserted during move\n");
-                            func_0804aeb0();
-                        }
-                        int lo = row + 1;
-                        int hi = row + parent->unk_18;
-                        if (lo < reg->unk_00)
-                            reg->unk_00 = lo;
-                        if (hi > reg->unk_02)
-                            reg->unk_02 = hi;
-                        int d = now - lo;
-                        if (d < 0) {
-                            func_0804ad38("dff was <0\n");
-                            func_0804aeb0();
-                        }
-                        if (d > score)
-                            score = d;
-                    }
+                    score = scoreMoveParent(reg, lk->getParent(), lk, now, score);
                 }
             }
             if (score > bestScore) {
@@ -261,11 +273,12 @@ int getMove(Block *blk, Instr *in, int now)
                 Operand *op = &it->unk_38[n];
                 RegPoolEntry *reg = registerOperand(op, 2);
                 if (reg == bestReg) {
+                    RegPoolEntry *const scanReg = reg;
                     if (op->unk_2b == 1) {
                         newBits |= op->unk_07;
-                        for (int p = 0; p != reg->unk_28; p++) {
+                        for (int p = 0; p != scanReg->unk_28; p++) {
                             if ((op->unk_07 >> p) & 1) {
-                                cls0805c244 *oldL = (cls0805c244 *)bestReg->func_0805a908(p);
+                                cls0805c244 *oldL = (cls0805c244 *)reg->func_0805a908(p);
                                 cls0805c244 *newL = (cls0805c244 *)newReg->func_0805a908(p);
                                 if (!oldL->removeOutput(&op->unk_2c[p])) {
                                     func_0804ad38("retargetOutputOperands: failed to deregister output\n");
@@ -297,7 +310,7 @@ int getMove(Block *blk, Instr *in, int now)
                 return -1;
             }
             logInstr(blk, mv);
-            adjustMoveCount(blk, mv, 1);
+            countCreatedMove(blk, mv);
             return 0;
         }
     }
