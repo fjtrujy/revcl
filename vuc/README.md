@@ -794,3 +794,21 @@ ledger advances to **201 EXACT / 24 EXPERIMENTAL / 73 UNRESOLVED**, and strict
 accepted code coverage is **15,007/15,007** bytes. The previously accepted
 source and all initialized-data / BSS exact matches are unchanged. See
 `vuc/docs/2026-10-15-accumulator-77-byte-exact-negative-goto.md`.
+
+The October 15 follow-up established the first strict original-length
+**`GetNextWord(char const*)` experimental source** at `0x080511e0`, moving
+that symbol from UNRESOLVED to EXPERIMENTAL. The genuine C++03 byte-sized
+whitespace/word-delimiter reconstruction compiles to the original **135
+bytes**, matches **23/135** original-offset instruction bytes, and resolves
+**5 actual relocation sites** targeting the original scanner globals
+`currentPosition`, `wordPosition`, and `word`. Both recovered historical
+GCC 3.3.3 snapshots reproduce the result. It is **not byte-exact** and
+must remain under `vuc/probes/`, outside the exact manifest. The ledger
+advances to **201 EXACT / 25 EXPERIMENTAL / 72 UNRESOLVED** out of 298,
+while **15,007** fully exact function instruction bytes remain unchanged.
+The same batch verified the original ELF's `__tcf_1` cleanup epilogue,
+`Value::operator+` ascending x87 lanes and actual scalar branch alignment,
+and STL iterator copy hidden return ABI, without forcing compiler registers
+or fabricating padding. Nine genuine source/flag probes tested **2,784**
+configurations; their negative and positive evidence is reproducible in
+`vuc/docs/2026-10-15-getnextword-23-byte-partial-and-cfg-audit.md`.

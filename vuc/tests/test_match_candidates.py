@@ -26,7 +26,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 225)
+        self.assertEqual(len(records), 226)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -843,6 +843,28 @@ class CandidateSuiteTests(unittest.TestCase):
                          ["-O2", "-frename-registers", "-falign-jumps=8"])
         source = suite.within_repo(config["source"]).read_text()
         self.assertIn("if (op->operand->kind != 3) goto next_case11;", source)
+
+    def test_get_next_word_original_length_experimental_byte_guard_source(self):
+        """Only original-sized, relocation-backed scanner source is selected."""
+        path = "vuc/config/get_next_word_partial_oct15e_probe.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x080511e0")
+        self.assertEqual(config["size"], 135)
+        self.assertEqual(config["source"],
+                         "vuc/probes/GetNextWordByteBoundsPartialOct15e.cpp")
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=16"])
+        self.assertEqual(config["relocations"], {
+            "currentPosition": "0x0808bc68",
+            "wordPosition": "0x0808bc70",
+            "word": "0x08077440",
+        })
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("if (c <= 10)", source)
+        self.assertIn("if(c==0||c==9||c==32||c==44||c==46||c==91)",
+                      source)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

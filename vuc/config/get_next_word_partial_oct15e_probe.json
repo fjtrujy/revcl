@@ -1,0 +1,16 @@
+{
+  "function": "_Z11GetNextWordPKc",
+  "address": "0x080511e0",
+  "size": 135,
+  "source": "vuc/probes/GetNextWordByteBoundsPartialOct15e.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=16"
+  ],
+  "relocations": {
+    "currentPosition": "0x0808bc68",
+    "wordPosition": "0x0808bc70",
+    "word": "0x08077440"
+  }
+}
