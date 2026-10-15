@@ -764,6 +764,22 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("struct Float4_Data : Type_Data",source)
         self.assertIn("switch (kind)",source)
 
+    def test_bind_ast_fun_call_near_exact_diagnostic_not_promoted(self):
+        # Its 304-byte object resolves 23 relocations and three original
+        # strings, but 16 compiler-inserted literal-padding bytes still lack
+        # genuine original TU ownership. Keep both manifests strict.
+        path="vuc/config/bind_ast_fun_call_partial_oct15r.json"
+        self.assertNotIn(path,json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path,json.loads(suite.EXACT_MANIFEST.read_text()))
+        cfg=json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(cfg["address"],"0x0804aad0")
+        self.assertEqual(cfg["size"],304)
+        self.assertEqual(cfg["source"],"vuc/probes/BindASTFunCallFreshOct15r.cpp")
+        self.assertEqual(sum(x["size"] for x in cfg["relocation_literals"][".rodata"]),65)
+        src=suite.within_repo(cfg["source"]).read_text()
+        self.assertIn("std::cout << currFileName;",src)
+        self.assertIn("matchStack.entries[matchStack.length-1]->line",src)
+
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
         wrapper = "vuc/config/iostream_listfile_real_oct13_probe.json"

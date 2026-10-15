@@ -1,0 +1,30 @@
+{
+  "function": "_Z4BindP10ASTFunCallR11SymbolTable",
+  "address": "0x0804aad0",
+  "size": 304,
+  "source": "vuc/probes/BindASTFunCallFreshOct15r.cpp",
+  "flags": ["-O2", "-frename-registers"],
+  "relocations": {
+    "_Z4BindP11ASTLValExprR11SymbolTable": "0x0804bbf0",
+    "_Z4BindIP7ASTExprEvR11ASTNodeListIT_ER11SymbolTable": "0x0804ed50",
+    "enclosingFunID": "0x0808ac00",
+    "_ZN11SymbolTable4FindERK12MLGameStringb": "0x0806a3f0",
+    "_ZNK12MLGameString5c_strEv": "0x08071800",
+    "error": "0x0808bccc",
+    "currFileName": "0x08077b80",
+    "_ZSt4cout": "0x0808a7a0",
+    "_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc": "0x080497bc",
+    "matchStack": "0x0808abe4",
+    "_ZNSolsEm": "0x0804990c",
+    "_ZNSolsEl": "0x0804967c",
+    "_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_": "0x0804993c",
+    "_ZNSolsEPFRSoS_E": "0x0804969c"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {"offset": 0, "size": 2, "address": "0x08075c5d"},
+      {"offset": 2, "size": 14, "address": "0x08072278"},
+      {"offset": 32, "size": 49, "address": "0x08072340"}
+    ]
+  }
+}
