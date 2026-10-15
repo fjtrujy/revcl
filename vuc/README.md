@@ -772,3 +772,14 @@ original 298-function ledger becomes **200 EXACT / 25 EXPERIMENTAL /
 2,760-variant compiler/source investigation also delimits additional
 negative Value+ and Value/ strategies. See
 `vuc/docs/2026-10-15-value-constval-455-byte-partial.md`.
+
+The subsequent constant-parser reference audit verifies **13 distinct calls
+plus two Boolean literal-address references in the original ELF**. The
+selected original-length experimental reconstruction resolves 13 candidate
+references because the compiler merges away two Boolean-fallback calls.
+A separate *wrong-length* 459-byte diagnostic reconstructs all 15 original
+reference sites and overlaps 213 original instruction offsets, with a
+55-byte exact entry prefix; it is **not selected** as a strict partial.
+The independent original-reference tests and follow-up evidence are in
+`vuc/tests/test_value_constval_reference_sites.py` and
+`vuc/docs/2026-10-15-vuc-set-15-reference-callgraph-audit.md`.

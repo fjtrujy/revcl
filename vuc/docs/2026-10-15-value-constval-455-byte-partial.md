@@ -89,12 +89,25 @@ memcpy                   0x080498ac
 "false\0"               0x0807668a    6 bytes
 ```
 
-The strict comparator resolves **all 13 actual relocations** and checks
+The strict comparator resolves **all 13 candidate-emitted relocations** and checks
 all **11 original literal bytes**. No external call or literal
 address is fabricated. The method's exact type layout, Boolean
 shortcuts and vector string behavior remain provisional: no
 runtime behavioral-equivalence claim is made merely from the
 byte comparison.
+
+**Later same-day reference-count clarification:** these 13 resolved
+relocations are the selected candidate's own emitted references, **not**
+the complete original function's reference-site inventory. Directly reading
+the archived ELF proves that the original has **13 relative CALL sites**
+and **two separate Boolean literal-address sites** (15 references total).
+The selected 455-byte C++03 candidate shares its Boolean fallback with the
+integer case, eliminating one `c_str()` call and one `__strtol_internal()`
+call. It therefore has only 11 CALL sites plus two literal references.
+The separately verified 459-byte diagnostic source retains all 15 original
+references but fails the original-size acceptance requirement. See
+`vuc/docs/2026-10-15-vuc-set-15-reference-callgraph-audit.md` and the
+independent original-ELF regression tests.
 
 ## Source/optimizer evidence (not promoted unless valid)
 
