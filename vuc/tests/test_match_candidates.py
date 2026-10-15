@@ -66,7 +66,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 231)
+        self.assertEqual(len(records), 234)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -687,6 +687,34 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(sum(r["size"] for r in config["relocation_literals"][".rodata"]), 48)
         self.assertEqual(config["relocation_objects"][".data"]["_ZZrsRSiR4TypeE2tn"],
                          "0x0807700c")
+
+    def test_new_reduce_binop_specializations_remain_strict_partials(self):
+        accepted=set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        chosen=set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        for kind,address,code in (("unsigned","0x08050540","Ij"),
+                                  ("signed","0x08050680","Ii")):
+            path=f"vuc/config/reduce_binop_{kind}_partial_oct15o.json"
+            self.assertIn(path,chosen)
+            self.assertNotIn(path,accepted)
+            cfg=json.loads(suite.within_repo(path).read_text())
+            self.assertEqual(cfg["address"],address)
+            self.assertEqual(cfg["size"],315)
+            self.assertIn(f"ReduceBinOp{code}",cfg["function"])
+            self.assertEqual(cfg["source"],"vuc/probes/ReduceBinOpNewOct15o.cpp")
+            self.assertEqual(cfg["relocations"],{})
+        src=suite.within_repo("vuc/probes/ReduceBinOpNewOct15o.cpp").read_text()
+        self.assertIn("else return true;",src)
+
+    def test_new_concatenate_binop_is_literal_authenticated_experimental(self):
+        path="vuc/config/concatenate_binop_partial_oct15o.json"
+        self.assertIn(path,json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path,json.loads(suite.EXACT_MANIFEST.read_text()))
+        cfg=json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(cfg["address"],"0x080507c0")
+        self.assertEqual(cfg["size"],346)
+        self.assertEqual(cfg["source"],"vuc/probes/ConcatenateBinOpNewOct15o.cpp")
+        self.assertEqual(len(cfg["relocations"]),3)
+        self.assertEqual(sum(x["size"] for x in cfg["relocation_literals"][".rodata"]),44)
 
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

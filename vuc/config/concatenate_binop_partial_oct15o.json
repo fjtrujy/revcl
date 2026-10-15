@@ -1,0 +1,32 @@
+{
+  "function": "_Z16ConcatenateBinOpPN2IR13Operator_DataERK12MLGameStringS4_",
+  "address": "0x080507c0",
+  "size": 346,
+  "source": "vuc/probes/ConcatenateBinOpNewOct15o.cpp",
+  "flags": ["-O2", "-frename-registers", "-falign-jumps=4", "-falign-labels=2", "-falign-loops=1"],
+  "relocations": {
+    "_ZNK12MLGameString5c_strEv": "0x08071800",
+    "_ZN12MLTempStringC1EPKcz": "0x08071bb0",
+    "_ZN12MLGameStringC1ERK12MLTempString": "0x080717c0"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {"offset": 0, "size": 1, "address": "0x08072286"},
+      {"offset": 1, "size": 3, "address": "0x0807248e"},
+      {"offset": 4, "size": 9, "address": "0x08072491"},
+      {"offset": 13, "size": 2, "address": "0x0807248f"},
+      {"offset": 15, "size": 2, "address": "0x0807249b"},
+      {"offset": 17, "size": 3, "address": "0x0807249a"},
+      {"offset": 20, "size": 3, "address": "0x0807249d"},
+      {"offset": 23, "size": 3, "address": "0x080724a0"},
+      {"offset": 26, "size": 2, "address": "0x080724a3"},
+      {"offset": 28, "size": 2, "address": "0x080724a5"},
+      {"offset": 30, "size": 3, "address": "0x080724a7"},
+      {"offset": 33, "size": 3, "address": "0x080724aa"},
+      {"offset": 36, "size": 2, "address": "0x080724ad"},
+      {"offset": 38, "size": 2, "address": "0x080724af"},
+      {"offset": 40, "size": 2, "address": "0x080724b1"},
+      {"offset": 42, "size": 2, "address": "0x080724b3"}
+    ]
+  }
+}
