@@ -812,3 +812,18 @@ and STL iterator copy hidden return ABI, without forcing compiler registers
 or fabricating padding. Nine genuine source/flag probes tested **2,784**
 configurations; their negative and positive evidence is reproducible in
 `vuc/docs/2026-10-15-getnextword-23-byte-partial-and-cfg-audit.md`.
+
+The next October 15 source-level batch improved the selected experimental
+`GetNextWord(char const*)` again from **23/135** to **50/135** original-offset
+matching instruction bytes while preserving the original **135-byte** size,
+all **5** authentic scanner-global relocation sites and period GCC 3.3.3
+Jan25/Dec06 reproducibility. This uses natural signed-byte nested delimiter
+comparisons and historical loop/label alignment, not patched instructions,
+manual registers or alignment filler. The remaining register assignment
+and code-layout differences prevent byte-exact acceptance; the candidate
+stays in `vuc/probes/GetNextWordNestedRangePartialOct15f.cpp` and the
+experimental manifest. The exact manifest is unchanged:
+**201 EXACT / 25 EXPERIMENTAL / 72 UNRESOLVED** original functions,
+**15,007 exact machine-code instruction bytes**. See
+`vuc/docs/2026-10-15-getnextword-50-byte-partial-range-tree.md`
+for source experiments, evidence and historical reproduction.

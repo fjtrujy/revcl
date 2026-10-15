@@ -853,9 +853,10 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(config["address"], "0x080511e0")
         self.assertEqual(config["size"], 135)
         self.assertEqual(config["source"],
-                         "vuc/probes/GetNextWordByteBoundsPartialOct15e.cpp")
+                         "vuc/probes/GetNextWordNestedRangePartialOct15f.cpp")
         self.assertEqual(config["flags"],
-                         ["-O2", "-frename-registers", "-falign-jumps=16"])
+                         ["-O2", "-frename-registers", "-falign-jumps=16",
+                          "-falign-labels=1", "-falign-loops=2"])
         self.assertEqual(config["relocations"], {
             "currentPosition": "0x0808bc68",
             "wordPosition": "0x0808bc70",
@@ -863,8 +864,23 @@ class CandidateSuiteTests(unittest.TestCase):
         })
         source = suite.within_repo(config["source"]).read_text()
         self.assertIn("if (c <= 10)", source)
-        self.assertIn("if(c==0||c==9||c==32||c==44||c==46||c==91)",
-                      source)
+        self.assertIn("if(c==44)goto endword;", source)
+        self.assertIn("if(c<=44)", source)
+        self.assertIn("if(c>9){if(c==32)goto endword;}", source)
+
+    def test_get_next_word_exact_length_probe_retains_prior_source_evidence(self):
+        """Keep the unselected 36-byte CFG owner for reproducible sweeps."""
+        baseline = suite.within_repo(
+            "vuc/probes/GetNextWordRange36BaselineOct15f.cpp").read_text()
+        selected = suite.within_repo(
+            "vuc/probes/GetNextWordNestedRangePartialOct15f.cpp").read_text()
+        self.assertIn("if(c>44)", baseline)
+        self.assertIn("if(c<=44)", selected)
+        self.assertNotEqual(selected, baseline)
+        for source in (selected, baseline):
+            self.assertIn("if(c==44)goto endword;", source)
+            self.assertIn("currentPosition=position;", source)
+            self.assertIn("wordPosition=position;", source)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

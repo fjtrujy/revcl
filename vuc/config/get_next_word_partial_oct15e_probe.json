@@ -2,11 +2,13 @@
   "function": "_Z11GetNextWordPKc",
   "address": "0x080511e0",
   "size": 135,
-  "source": "vuc/probes/GetNextWordByteBoundsPartialOct15e.cpp",
+  "source": "vuc/probes/GetNextWordNestedRangePartialOct15f.cpp",
   "flags": [
     "-O2",
     "-frename-registers",
-    "-falign-jumps=16"
+    "-falign-jumps=16",
+    "-falign-labels=1",
+    "-falign-loops=2"
   ],
   "relocations": {
     "currentPosition": "0x0808bc68",
