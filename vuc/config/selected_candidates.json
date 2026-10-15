@@ -216,6 +216,8 @@
   "vuc/config/reduce_binop_unsigned_partial_oct15o.json",
   "vuc/config/reduce_binop_signed_partial_oct15o.json",
   "vuc/config/concatenate_binop_partial_oct15o.json",
+  "vuc/config/canonize_try_reduce_unsigned_partial_oct15p.json",
+  "vuc/config/canonize_try_reduce_signed_partial_oct15p.json",
   "vuc/config/ir_accumulatorable_probe.json",
   "vuc/config/align_string_exact_oct13.json",
   "vuc/config/string_table_add_oct14_probe.json",

@@ -1,0 +1,18 @@
+{
+  "function": "_Z22Canonize_TryReduceExprIiEbPN2IR9Expr_DataERT_",
+  "address": "0x08050120",
+  "size": 359,
+  "source": "vuc/probes/CanonizeTryReduceNewOct15p.cpp",
+  "flags": ["-O2", "-frename-registers", "-falign-jumps=4", "-falign-labels=2", "-falign-loops=1"],
+  "relocations": {
+    "_Z22Canonize_TryReduceExprIiEbPN2IR9Expr_DataERT_": "0x08050120",
+    "_ZN12MLGameStringC1ERKS_": "0x08071770",
+    "_ZN11MLHashTableI12MLGameStringS0_9MLHashFunIS0_ELi513EE7FindPtrERKS0_": "0x08050ba0",
+    "_ZNK12MLGameString5c_strEv": "0x08071800",
+    "isdigit": "0x080498ec",
+    "__strtol_internal": "0x0804984c",
+    "_Z11ReduceBinOpIiEbPN2IR13Operator_DataERKT_S5_RS3_": "0x08050680",
+    "localEnv": "0x0808b460",
+    "globalEnv": "0x0808ac40"
+  }
+}

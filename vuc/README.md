@@ -261,7 +261,7 @@ locally scoped text-function records. Regenerate these with
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
 `python3 vuc/scripts/coverage.py --write` (currently 204 EXACT,
-27 EXPERIMENTAL and 67 UNRESOLVED). The complete original
+32 EXPERIMENTAL and 62 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.

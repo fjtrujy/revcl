@@ -66,7 +66,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 234)
+        self.assertEqual(len(records), 236)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -715,6 +715,25 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(cfg["source"],"vuc/probes/ConcatenateBinOpNewOct15o.cpp")
         self.assertEqual(len(cfg["relocations"]),3)
         self.assertEqual(sum(x["size"] for x in cfg["relocation_literals"][".rodata"]),44)
+
+    def test_new_canonize_try_reduce_template_partials(self):
+        accepted=set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        chosen=set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        for kind,address,code in (("unsigned","0x0804ffb0","Ij"),
+                                  ("signed","0x08050120","Ii")):
+            path=f"vuc/config/canonize_try_reduce_{kind}_partial_oct15p.json"
+            self.assertIn(path,chosen)
+            self.assertNotIn(path,accepted)
+            cfg=json.loads(suite.within_repo(path).read_text())
+            self.assertEqual(cfg["address"],address)
+            self.assertEqual(cfg["size"],359)
+            self.assertIn(f"Canonize_TryReduceExpr{code}",cfg["function"])
+            self.assertEqual(cfg["source"],"vuc/probes/CanonizeTryReduceNewOct15p.cpp")
+            self.assertEqual(cfg["relocation_literals"] if "relocation_literals" in cfg else {},{})
+            self.assertEqual(len(cfg["relocations"]),9)
+        source=suite.within_repo("vuc/probes/CanonizeTryReduceNewOct15p.cpp").read_text()
+        self.assertIn("localEnv.FindPtr(name)",source)
+        self.assertIn("globalEnv.FindPtr(name)",source)
 
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
