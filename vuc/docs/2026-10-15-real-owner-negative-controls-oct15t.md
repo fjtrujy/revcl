@@ -102,3 +102,33 @@ Guest ledger:
 The linked whole ELF is not byte-exact. These independent controls
 are retained so future source-unit reconstruction can skip
 unsuccessful spellings and move to other untouched functions.
+
+## Narrow after-source-unit EH alignment controls
+
+Following reconstruction of the actual original SymbolTable and
+Scope template owner order, a further fixed, small compiler-alignment
+control checked only jumps, catch-pad labels and loop labels implicated
+by the original disassembly. Reproducer:
+vuc/probes/evaluate_scope_iterator_eh_label_controls_oct15t.py.
+The results remain incompatible with reproducing **both** the
+original 149-byte Scope iterator-copy and the existing original-length
+746-byte Scope insertion in one normal historical TU. For example,
+the genuine insertion remains 746 with `jumps=1`, but the iterator is
+145; `jumps=4` yields 749/147; and `jumps=8` yields 756/151.
+Changing loop or label alignment can shorten the iterator further
+but also invalidates the original insertion. This is negative
+compiler evidence, not authorization to pad source functions.
+All source and ELF32 score rows are in
+/tmp/vuc-binutils215/scope-iterator-eh-label-controls-oct15t/.
+
+A similarly bounded check on the genuine
+std::vector<std::string> insertion + accepted string iterator-copy
+TU appears in
+vuc/probes/evaluate_string_vector_original_owner_controls_oct15t.py.
+Neither historical GCC snapshot produced the **668-byte** original
+vector insertion among the tested historical branch/loop/label
+alignments. The closest candidate is **672 bytes**, but it also
+breaks the original **161-byte** adjacent string iterator-copy,
+expanding it to 163 bytes. The 676-byte candidate with exact
+161/161 neighboring copy remains four times more distant in length.
+Full results: /tmp/vuc-binutils215/string-vector-original-owner-controls-oct15t/.
