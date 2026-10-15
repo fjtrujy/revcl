@@ -504,9 +504,11 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     bool bad2;
     bool *pbad = &bad2;
     int mask;
+    int *pmask = &mask;
     bool bad;
     int m;
     int field;
+    int count;
     char *p;
     char *q;
     char *s;
@@ -529,20 +531,20 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         char *td = out->unk_1800;
         t++;
         int chars = 0;
-        int colons = 1;
+        count = 1;
         while (*t) {
             if (*t == ':') {
                 chars = 0;
-                colons++;
+                count++;
             } else {
-                colons = 0;
+                count = 0;
                 chars++;
             }
-            if (colons <= 1 || chars)
+            if (count <= 1 || chars)
                 *td++ = *t;
             t++;
         }
-        if (colons)
+        if (count)
             td--;
         if (td == out->unk_1800) {
             func_0804ac7c("ignoring empty tag\n");
@@ -556,7 +558,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     char *e = tok;
     while (*e)
         e++;
-    int len = e - tok;
+    count = e - tok;
     out->name[0] = 0;
     out->unk_1000[0] = 0;
     out->unk_800[0] = 0;
@@ -590,7 +592,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     case 3:
         if (newSyntax) {
-            if (!func_08051f78(tok, &mask) || func_0804bf50(mask) != 1) {
+            if (!func_08051f78(tok, pmask) || func_0804bf50(mask) != 1) {
                 func_0804ad38("oDecodeToken: [x/y/z/w] token for new syntax\n");
                 return false;
             }
@@ -616,7 +618,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         func_0804c0c8(out->name);
         return true;
     case 4:
-        if (len != 1 || (*tok != 'i' && *tok != 'I')) {
+        if (count != 1 || (*tok != 'i' && *tok != 'I')) {
             func_0804ad38("oDecode:: arg I\n");
             return false;
         }
@@ -625,14 +627,14 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->name[1] = 0;
         return true;
     case 5:
-        if (len != 1 || (*tok != 'p' && *tok != 'P'))
+        if (count != 1 || (*tok != 'p' && *tok != 'P'))
             func_0804ad38("oDecode:: arg P\n");
         out->unk_2000 = 1;
         out->name[0] = 'P';
         out->name[1] = 0;
         return true;
     case 7:
-        if (len != 1 || (*tok != 'q' && *tok != 'Q')) {
+        if (count != 1 || (*tok != 'q' && *tok != 'Q')) {
             func_0804ad38("oDecode:: arg Q\n");
             return false;
         }
@@ -641,7 +643,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->name[1] = 0;
         return true;
     case 8:
-        if (len != 1 || (*tok != 'r' && *tok != 'R')) {
+        if (count != 1 || (*tok != 'r' && *tok != 'R')) {
             func_0804ad38("oDecode:: arg R\n");
             return false;
         }
@@ -731,7 +733,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     case 28:
         out->unk_2000 = 1;
-        if (len <= 2)
+        if (count <= 2)
             return false;
         if (e[-1] != ')' || *tok != '(')
             return false;
@@ -740,7 +742,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         goto copyName;
     case 30:
         out->unk_2000 = 1;
-        if (len <= 3)
+        if (count <= 3)
             return false;
         if (*tok != '(')
             return false;
@@ -762,7 +764,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         goto copyName;
     case 31:
         out->unk_2000 = 1;
-        if (len <= 4)
+        if (count <= 4)
             return false;
         p = e - 1;
         while (p != tok && *p != ')') {
@@ -800,7 +802,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     case 32:
         out->unk_2000 = 1;
-        if (len <= 4)
+        if (count <= 4)
             return false;
         if (e[-1] != ')' || e[-2] != '+' || e[-3] != '+' || *tok != '(')
             return false;
@@ -809,7 +811,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         goto copyName;
     case 33:
         out->unk_2000 = 1;
-        if (len <= 4)
+        if (count <= 4)
             return false;
         if (e[-1] != ')' || tok[0] != '(' || tok[1] != '-' || tok[2] != '-')
             return false;
@@ -883,7 +885,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->unk_2000 = 1;
         return true;
     case 38:
-        if (func_08051f78(tok, &mask)) {
+        if (func_08051f78(tok, pmask)) {
             out->unk_2008 = 1;
             if (func_0804bf50(mask) != 1) {
                 func_0804ad84("bad [x,y,z,w] token for scalar\n");
@@ -975,7 +977,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     case 29:
     case 46:
-        if (len <= 2)
+        if (count <= 2)
             return false;
         out->unk_2000 = 1;
         end = e - 1;
