@@ -10,14 +10,6 @@ char *dupString(const char *s);
 xun *g_080bcda4;
 int g_080bcda8;
 
-xpOp *func_0804f6c0(int type)
-{
-    for (int i = 0; i != 20; i++)
-        if (opTable_080b30a0[i].type == type)
-            return &opTable_080b30a0[i];
-    return 0;
-}
-
 bool func_0804f75c(const char *s)
 {
     if (!s) {

@@ -2,7 +2,9 @@
 #ifndef XUN_H
 #define XUN_H
 
+#ifndef XUN_NO_INTERFACE
 #pragma interface
+#endif
 
 class xun {
 public:
