@@ -439,9 +439,8 @@ bool func_0806f6a4(Program *p)
     return true;
 }
 
-static inline void printLink(const char *fmt, linkNode *l)
+static inline void printNamedLink(const char *fmt, linkNode *l, const char *name)
 {
-    const char *name = l->unk_0c->func_0806d674();
     int other = l->unk_0c->unk_2c0;
     const char *type = linkTypeName(l->unk_14);
     func_0804acb0(fmt, type, other, name);
@@ -466,12 +465,14 @@ void dumpFlow(Program *p)
         linkNode *l;
         for (l = s->unk_128.unk_00; l; l = l->unk_08) {
             if (l->unk_14) {
-                printLink("       <--[(%s) [%5d]%s]\n", l);
+                const char *name = l->unk_0c->func_0806d674();
+                printNamedLink("       <--[(%s) [%5d]%s]\n", l, name);
             }
         }
         for (l = s->unk_134.unk_00; l; l = l->unk_08) {
             if (l->unk_14) {
-                printLink("     --> %s [%5d]%s\n", l);
+                const char *name = l->unk_0c->func_0806d674();
+                printNamedLink("     --> %s [%5d]%s\n", l, name);
             } else
                 fallThrough = true;
         }
