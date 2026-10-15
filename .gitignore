@@ -63,3 +63,5 @@ __pycache__/
 
 tmp/
 tools/rh9/
+
+.DS_Store
