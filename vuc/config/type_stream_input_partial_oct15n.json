@@ -1,0 +1,30 @@
+{
+  "function": "_ZrsRSiR4Type",
+  "address": "0x0804f2a0",
+  "size": 369,
+  "source": "vuc/probes/TypeStreamInputOriginalUnitOct15n.cpp",
+  "flags": ["-O2", "-frename-registers"],
+  "relocations": {
+    "_ZStrsIcSt11char_traitsIcEERSt13basic_istreamIT_T0_ES6_PS3_": "0x080498fc",
+    "strstr": "0x0804981c",
+    "strchr": "0x0804962c",
+    "__strtol_internal": "0x0804984c"
+  },
+  "relocation_objects": {
+    ".data": {
+      "_ZZrsRSiR4TypeE2tn": "0x0807700c"
+    }
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {"offset": 0, "size": 6, "address": "0x0807308a"},
+      {"offset": 6, "size": 4, "address": "0x08072316"},
+      {"offset": 10, "size": 5, "address": "0x0807231a"},
+      {"offset": 15, "size": 6, "address": "0x0807231f"},
+      {"offset": 21, "size": 7, "address": "0x08072325"},
+      {"offset": 28, "size": 9, "address": "0x0807225e"},
+      {"offset": 37, "size": 5, "address": "0x0807232c"},
+      {"offset": 42, "size": 6, "address": "0x08072331"}
+    ]
+  }
+}

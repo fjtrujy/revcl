@@ -261,7 +261,7 @@ locally scoped text-function records. Regenerate these with
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
 `python3 vuc/scripts/coverage.py --write` (currently 204 EXACT,
-26 EXPERIMENTAL and 68 UNRESOLVED). The complete original
+27 EXPERIMENTAL and 67 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -302,6 +302,10 @@ experimental; see `vuc/docs/2026-10-15-real-hash-node-enter-eh-and-object-invent
 The authentic `Printer.cpp` also authenticates all nine real emitted literal
 bytes for the selected `Print(ASTFunCall*)` experimental **96/98** candidate;
 the only remaining differences are two instruction register-selection bytes.
+The original 369-byte `Type` input-stream operator also has a strict
+**264/369** experimental source candidate, including all 10 relocations,
+48 authenticated literal bytes, and the original seven-name table pointer.
+See `vuc/docs/2026-10-15-type-stream-input-constructor-lifetime.md`.
 The matching suite also includes byte-exact `GenLabel()` and
 `yyFlexLexer::yy_delete_buffer()`; their original relocations and
 named data objects are checked in the same strict manifest.

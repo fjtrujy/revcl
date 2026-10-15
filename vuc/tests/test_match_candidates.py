@@ -66,7 +66,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 230)
+        self.assertEqual(len(records), 231)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -663,6 +663,24 @@ class CandidateSuiteTests(unittest.TestCase):
                       suite.within_repo(config["source"]).read_text())
         self.assertEqual(sum(x["size"] for x in config["relocation_literals"][".rodata"]),9)
         self.assertEqual(len(config["relocations"]),3)
+
+    def test_type_stream_input_is_original_length_but_not_exact(self):
+        """Preserve authenticated old-style Type parser without overclaiming."""
+        path = "vuc/config/type_stream_input_partial_oct15n.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x0804f2a0")
+        self.assertEqual(config["size"], 369)
+        self.assertEqual(config["source"],
+                         "vuc/probes/TypeStreamInputOriginalUnitOct15n.cpp")
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("static const char *tn[]", source)
+        self.assertIn("Type temporary;", source)
+        self.assertEqual(len(config["relocations"]), 4)
+        self.assertEqual(sum(r["size"] for r in config["relocation_literals"][".rodata"]), 48)
+        self.assertEqual(config["relocation_objects"][".data"]["_ZZrsRSiR4TypeE2tn"],
+                         "0x0807700c")
 
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
