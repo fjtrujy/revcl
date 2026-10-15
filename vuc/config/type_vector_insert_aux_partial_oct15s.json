@@ -1,0 +1,16 @@
+{
+  "function": "_ZNSt6vectorI4TypeSaIS0_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS0_S2_EERKS0_",
+  "address": "0x0804ee10",
+  "size": 525,
+  "source": "vuc/probes/TypeVectorInsertAuxRealOrderOct15s.cpp",
+  "flags": ["-O2", "-frename-registers"],
+  "relocations": {
+    "_ZSt24__uninitialized_copy_auxIN9__gnu_cxx17__normal_iteratorIP4TypeSt6vectorIS2_SaIS2_EEEES7_ET0_T_S9_S8_12__false_type": "0x0804f1c0",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE10deallocateEPvj": "0x0804997c",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE8allocateEj": "0x0804968c",
+    "__cxa_begin_catch": "0x0804995c",
+    "__cxa_rethrow": "0x0804979c",
+    "__cxa_end_catch": "0x0804983c",
+    "_Unwind_Resume": "0x0804998c"
+  }
+}

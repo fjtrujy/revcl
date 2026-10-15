@@ -66,7 +66,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 239)
+        self.assertEqual(len(records), 240)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -799,6 +799,22 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("int kind;",accepted)
         self.assertIn('else if (std::strstr(text,".equ")) isConstant=true;',source)
         self.assertIn("hex[0]='H'",source)
+
+    def test_type_vector_insert_original_template_order_partial(self):
+        path="vuc/config/type_vector_insert_aux_partial_oct15s.json"
+        self.assertIn(path,json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path,json.loads(suite.EXACT_MANIFEST.read_text()))
+        cfg=json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(cfg["address"],"0x0804ee10")
+        self.assertEqual(cfg["size"],525)
+        self.assertEqual(cfg["source"],"vuc/probes/TypeVectorInsertAuxRealOrderOct15s.cpp")
+        self.assertEqual(len(cfg["relocations"]),7)
+        source=suite.within_repo(cfg["source"]).read_text()
+        insert=source.index("template void TypeVector::_M_insert_aux")
+        const=source.index("template Type *std::__uninitialized_copy_aux")
+        mutable=source.index("template TypeIterator std::__uninitialized_copy_aux")
+        self.assertLess(insert,const)
+        self.assertLess(const,mutable)
 
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

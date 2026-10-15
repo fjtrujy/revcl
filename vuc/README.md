@@ -261,7 +261,7 @@ locally scoped text-function records. Regenerate these with
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
 `python3 vuc/scripts/coverage.py --write` (currently 204 EXACT,
-35 EXPERIMENTAL and 59 UNRESOLVED). The complete original
+36 EXPERIMENTAL and 58 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -315,6 +315,11 @@ reproduces **334/382** original-offset bytes, all 25 relocations and all
 because compiler `.rodata` padding is not yet source-unit authenticated.
 See `vuc/docs/2026-10-15-asm-output-print-instruction-partial-oct15r.md`
 and `vuc/docs/2026-10-15-bind-ast-fun-call-source-context-oct15r.md`.
+The real original Type vector instantiation order yields a newly selected
+**481/525** original-length `_M_insert_aux` partial with all nine
+relocations, while preserving the existing exact **79/79** and **86/86**
+Type iterator-copy functions in the same genuine compiler object.
+See `vuc/docs/2026-10-15-type-vector-template-order-and-negative-controls.md`.
 The matching suite also includes byte-exact `GenLabel()` and
 `yyFlexLexer::yy_delete_buffer()`; their original relocations and
 named data objects are checked in the same strict manifest.
