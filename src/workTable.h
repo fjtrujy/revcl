@@ -204,7 +204,11 @@ public:
     void dumpSynthetics();
     bool takeOut(Instr *i);
     bool putIn(Instr *i);
+#ifdef VCL_POSTOPT_FLOAT_LENGTH
+    float func_08072eec();
+#else
     int func_08072eec();
+#endif
     int getLogicalLen();
     int getPhysicalLen();
     void dump();

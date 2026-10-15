@@ -1,3 +1,6 @@
+#define VCL_POSTOPT_FLOAT_LENGTH
+#include "workTable.h"
+#undef VCL_POSTOPT_FLOAT_LENGTH
 #include "wtQueue_shared.h"
 
 #include "os.h"
@@ -14,6 +17,25 @@ typedef bool (*wrangleFunc)(workTable *, int *);
 static inline void dumpOptInstruction(Instr *in)
 {
     in->func_08054008(false);
+}
+
+union RawLength { int value; float bits; };
+
+static inline int rawLengthBits(float value)
+{
+    RawLength result;
+    result.bits = value;
+    return result.value;
+}
+
+static inline void assignLength(float &dst, int value)
+{
+    for (;;) {
+        RawLength result;
+        result.value = value;
+        dst = result.bits;
+        break;
+    }
 }
 
 bool workTable::doPostOpt(int rawMode)
@@ -63,18 +85,21 @@ bool workTable::doPostOpt(int rawMode)
         }
         ::setRange(unk_30, unk_34, unk_38);
         int maxLid = 0;
-        int len;
+        float length;
         switch (rawMode) {
         default:
             func_0804ad38("bad raw mode into doPostOpt()\n");
             return false;
         case 1:
-        case 2:
-            len = unk_34 - unk_30;
+        case 2: {
+            int rangeStart = *(volatile int *)&unk_30;
+            int rangeEnd = unk_34;
+            *(int *)&length = rangeEnd - rangeStart;
             break;
+        }
         case 3:
         case 4:
-            len = pw->func_08072eec();
+            assignLength(length, rawLengthBits(pw->func_08072eec()));
             break;
         }
         if (!func_08073774(rawMode)) {
@@ -120,7 +145,7 @@ bool workTable::doPostOpt(int rawMode)
                             return false;
                         }
                         short t = c->unk_1394;
-                        if (t < 0 || t >= len) {
+                        if (t < 0 || t >= *(int *)&length) {
                             func_0804ad38("emutick bad for raw postopt\n");
                             return false;
                         }
@@ -228,7 +253,7 @@ bool workTable::doPostOpt(int rawMode)
             func_0804ad38("bad loop size for postOpt\n");
             return false;
         }
-        unk_0c = len;
+        unk_0c = *(int *)&length;
     }
     return true;
 }
