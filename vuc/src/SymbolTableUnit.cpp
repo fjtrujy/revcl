@@ -10,16 +10,6 @@ struct SymbolTableEntry;
 typedef MLHashTable<MLGameString, SymbolTableEntry *,
                     MLHashFun<MLGameString>, 513> SymbolScope;
 
-// A hash entry stores the original 16-byte key/hash/value/next layout.
-struct SymbolNode {
-    MLGameString key;
-    unsigned hash;
-    SymbolTableEntry *value;
-    SymbolNode *next;
-    SymbolNode(const MLGameString &k, unsigned h, SymbolTableEntry *v) :
-        key(k), hash(h), value(v), next(0) {}
-};
-
 class SymbolTable {
 public:
     void Enter(const MLGameString &name, SymbolTableEntry *entry);
@@ -35,10 +25,10 @@ void SymbolTable::Enter(const MLGameString &name, SymbolTableEntry *entry)
     if (scopes_.empty()) return;
     SymbolScope &scope = scopes_[scopes_.size() - 1];
     MLHashFun<MLGameString> hasher;
-    SymbolNode *node = new SymbolNode(name, hasher.Hash(name), entry);
+    SymbolScope::Node *node = new SymbolScope::Node(name, hasher.Hash(name), entry);
     unsigned bucket = node->hash % 513;
-    node->next = (SymbolNode *)scope.heads[bucket];
-    scope.heads[bucket] = (SymbolScope::Node *)node;
+    node->next = scope.heads[bucket];
+    scope.heads[bucket] = node;
 }
 
 SymbolTableEntry *SymbolTable::Find(const MLGameString &name, bool localOnly)

@@ -1,0 +1,38 @@
+{
+  "function": "_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE7reserveEj",
+  "address": "0x0804ec50",
+  "size": 241,
+  "source": "vuc/probes/ScopeVectorReserveOriginalUnitOct15m.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-fuse-cxa-atexit",
+    "-ffunction-sections",
+    "-falign-jumps=8"
+  ],
+  "relocations": {
+    "_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE20_M_allocate_and_copyIPS6_EESA_jT_SB_": "0x0804f130",
+    "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EE5clearEv": "0x0804f020",
+    "_ZNSt24__default_alloc_templateILb1ELi0EE10deallocateEPvj": "0x0804997c",
+    "_ZSt20__throw_length_errorPKc": "0x080498cc"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {
+        "offset": 0,
+        "size": 21,
+        "address": "0x08072252"
+      },
+      {
+        "offset": 21,
+        "size": 17,
+        "address": "0x08072267"
+      },
+      {
+        "offset": 38,
+        "size": 16,
+        "address": "0x08072306"
+      }
+    ]
+  }
+}

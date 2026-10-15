@@ -23,26 +23,29 @@ spec.loader.exec_module(m)
 header=(VUC/"src/MLHashTable.h").read_text()
 needle="""        Node *next;
     };"""
-assert needle in header
-header=header.replace(needle,"""        Node *next;
+if needle in header:
+    header=header.replace(needle,"""        Node *next;
         Node(const Key &k, unsigned h, Value v)
             : key(k), hash(h), value(v) {}
     };""")
+else:
+    assert "Node(const Key &k, unsigned h, Value v)" in header
 header_path=OUT/"MLHashTableNodeOriginalHypothesis.h"
 header_path.write_text(header)
 unit=(VUC/"src/SymbolTableUnit.cpp").read_text()
 for inc in ("MLGameString.h","MLHashFunGameString.h"):
     unit=unit.replace('#include "'+inc+'"','#include "'+str(VUC/"src"/inc)+'"')
 unit=unit.replace('#include "MLHashTable.h"','#include "'+str(header_path)+'"')
-start=unit.index("// A hash entry stores")
-end=unit.index("class SymbolTable {",start)
-unit=unit[:start]+unit[end:]
-unit=unit.replace("SymbolNode *node = new SymbolNode(name, hasher.Hash(name), entry);",
-                 "SymbolScope::Node *node = new SymbolScope::Node(name, hasher.Hash(name), entry);")
-unit=unit.replace("node->next = (SymbolNode *)scope.heads[bucket];",
-                  "node->next = scope.heads[bucket];")
-unit=unit.replace("scope.heads[bucket] = (SymbolScope::Node *)node;",
-                  "scope.heads[bucket] = node;")
+if "// A hash entry stores" in unit:
+    start=unit.index("// A hash entry stores")
+    end=unit.index("class SymbolTable {",start)
+    unit=unit[:start]+unit[end:]
+    unit=unit.replace("SymbolNode *node = new SymbolNode(name, hasher.Hash(name), entry);",
+                     "SymbolScope::Node *node = new SymbolScope::Node(name, hasher.Hash(name), entry);")
+    unit=unit.replace("node->next = (SymbolNode *)scope.heads[bucket];",
+                      "node->next = scope.heads[bucket];")
+    unit=unit.replace("scope.heads[bucket] = (SymbolScope::Node *)node;",
+                      "scope.heads[bucket] = node;")
 assert "SymbolNode" not in unit
 cpp=OUT/"SymbolTableWithNestedNode.cpp"
 cpp.write_text(unit)

@@ -66,7 +66,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 229)
+        self.assertEqual(len(records), 230)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -618,6 +618,13 @@ class CandidateSuiteTests(unittest.TestCase):
                          "symboltable_end_exact_probe.json"):
             self.assertIn("vuc/config/" + neighbor, accepted)
         unit = suite.within_repo("vuc/src/SymbolTableUnit.cpp").read_text()
+        header = suite.within_repo("vuc/src/MLHashTable.h").read_text()
+        self.assertIn("Node(const Key &k, unsigned h, Value v)", header)
+        self.assertIn("Node() {}", header)
+        self.assertIn("new SymbolScope::Node(name, hasher.Hash(name), entry)", unit)
+        self.assertIn("node->next = scope.heads[bucket];", unit)
+        self.assertIn("scope.heads[bucket] = node;", unit)
+        self.assertNotIn("struct SymbolNode", unit)
         self.assertLess(unit.index("void SymbolTable::Enter("),
                         unit.index("SymbolTableEntry *SymbolTable::Find("))
         self.assertLess(unit.index("SymbolTableEntry *SymbolTable::Find("),
@@ -628,6 +635,21 @@ class CandidateSuiteTests(unittest.TestCase):
             source = suite.within_repo(source_path).read_text()
             self.assertIn("scopes_.pop_back();", source)
             self.assertNotIn("--scope_;", source)
+
+    def test_scope_reserve_is_original_length_and_strictly_experimental(self):
+        """A true emitted STL template matches 183/241; never accept on size."""
+        path = "vuc/config/scope_vector_reserve_partial_oct15m.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x0804ec50")
+        self.assertEqual(config["size"], 241)
+        self.assertEqual(config["source"],
+                         "vuc/probes/ScopeVectorReserveOriginalUnitOct15m.cpp")
+        self.assertIn("../src/ScopeVectorLifecycle.cpp",
+                      suite.within_repo(config["source"]).read_text())
+        self.assertEqual(len(config["relocations"]), 4)
+        self.assertEqual(sum(x["size"] for x in config["relocation_literals"][".rodata"]), 54)
 
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

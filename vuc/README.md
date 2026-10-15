@@ -261,7 +261,7 @@ locally scoped text-function records. Regenerate these with
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
 `python3 vuc/scripts/coverage.py --write` (currently 204 EXACT,
-25 EXPERIMENTAL and 69 UNRESOLVED). The complete original
+26 EXPERIMENTAL and 68 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -295,6 +295,10 @@ Reconstructing real translation-unit template instantiations also recovers
 `std::vector<AsmVariable>::_M_insert_aux` (444/444), with the related
 scope vector insertion at a strict 733/746 original-length partial.
 See `vuc/docs/2026-10-15-true-translation-unit-stl-vector-recovery.md`.
+The genuine `ScopeVectorLifecycle.cpp` also generates an original-length
+`std::vector<Scope>::reserve` at **183/241** code bytes, with all five
+original relocation sites and 54 authenticated literal bytes. It remains
+experimental; see `vuc/docs/2026-10-15-real-hash-node-enter-eh-and-object-inventory.md`.
 The matching suite also includes byte-exact `GenLabel()` and
 `yyFlexLexer::yy_delete_buffer()`; their original relocations and
 named data objects are checked in the same strict manifest.

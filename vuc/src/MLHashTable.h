@@ -10,6 +10,9 @@ public:
         unsigned hash;
         Value value;
         Node *next;
+        Node() {}
+        Node(const Key &k, unsigned h, Value v)
+            : key(k), hash(h), value(v) {}
     };
     Node *heads[Buckets];
     MLHashTable() {
