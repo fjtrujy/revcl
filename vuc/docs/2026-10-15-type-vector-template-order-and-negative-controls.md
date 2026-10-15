@@ -162,6 +162,30 @@ GNU branch-likelihood source hypotheses with both compiler snapshots;
 none produces 290. Do not keep repeating semantically identical
 Boolean spellings.
 
+The new and previously untouched **668-byte**
+`std::vector<std::string>::_M_insert_aux` at `0x0805b040`
+was also reconstructed from the actual GNU libstdc++ 3.3 C++03
+`std::vector<std::string>` template, with the established original
+iterator-copy instantiation in the same translation unit.
+`vuc/probes/StringVectorInsertAuxRealOrderOct15s.cpp` has the
+original ELF function order, while
+`vuc/probes/StringVectorInsertAuxReversedOct15s.cpp`
+controls the reversed template-instantiation order. Both recover
+the original string construction and assignment library calls.
+Neither is an original-length candidate: Jan25 and Dec06 produce
+**700 bytes** at `-O2 -frename-registers`, **656** with
+`-falign-jumps=4`, **676** with jumps=8, and **672** with
+the targeted real-label alignment `jumps=4,labels=2`, versus
+the **668** original instruction bytes. Reversing the true
+template-instantiation order does not affect the resulting size.
+The 161-byte `std::string` iterator-copy remains independently
+**161/161 byte-exact with six original relocations** in *both*
+same-source-unit versions at normal `-O2 -frename-registers`;
+unrelated alignment changes increase its size to 163, so they
+cannot be promoted as a true shared compiler configuration.
+The string insertion helper remains UNRESOLVED; only genuine
+original-size output may be selected.
+
 Finally, the newly strict `AsmOutput_PrintInstruction` remains
 **334/382**, all 25 relocations and 154 authentic combined-unit
 literal bytes. The focused

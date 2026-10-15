@@ -816,6 +816,18 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertLess(insert,const)
         self.assertLess(const,mutable)
 
+    def test_new_scope_and_string_uninitialized_templates_are_not_promoted(self):
+        # Natural GCC 3.3 template instantiations recover authentic
+        # algorithms but not their 149/668 original lengths yet.
+        chosen=set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        accepted=set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        for source in ("vuc/probes/ScopeNormalIteratorUninitializedFreshOct15s.cpp",
+                       "vuc/probes/StringVectorInsertAuxRealOrderOct15s.cpp",
+                       "vuc/probes/StringVectorInsertAuxReversedOct15s.cpp"):
+            self.assertTrue(suite.within_repo(source).is_file())
+            self.assertFalse(any(json.loads(suite.within_repo(item).read_text()).get("source")==source
+                                 for item in chosen | accepted))
+
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
         wrapper = "vuc/config/iostream_listfile_real_oct13_probe.json"
