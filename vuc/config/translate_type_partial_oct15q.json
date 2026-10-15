@@ -1,0 +1,15 @@
+{
+  "function": "_Z9TranslateRK4Typeji",
+  "address": "0x0806a9b0",
+  "size": 352,
+  "source": "vuc/probes/TranslateTypeFullOct15q.cpp",
+  "flags": ["-O2", "-frename-registers"],
+  "relocations": {
+    "_Znwj": "0x080499ec",
+    "_ZTVN2IR9UInt_DataE": "0x08072518",
+    "_ZTVN2IR8Int_DataE": "0x08072508",
+    "_ZTVN2IR11Float4_DataE": "0x080729f8",
+    "_ZTVN2IR10Array_DataE": "0x08076178",
+    "_ZTVN2IR10Float_DataE": "0x080729e8"
+  }
+}

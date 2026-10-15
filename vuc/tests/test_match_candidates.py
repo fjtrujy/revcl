@@ -66,7 +66,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 237)
+        self.assertEqual(len(records), 238)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -748,6 +748,21 @@ class CandidateSuiteTests(unittest.TestCase):
         source=suite.within_repo(config["source"]).read_text()
         self.assertIn("mask != 15 && mask != 0",source)
         self.assertIn("MLTempString fourth(\"\")",source)
+
+    def test_translate_type_real_ir_vtable_partial(self):
+        path="vuc/config/translate_type_partial_oct15q.json"
+        self.assertIn(path,json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path,json.loads(suite.EXACT_MANIFEST.read_text()))
+        cfg=json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(cfg["address"],"0x0806a9b0")
+        self.assertEqual(cfg["size"],352)
+        self.assertEqual(cfg["source"],"vuc/probes/TranslateTypeFullOct15q.cpp")
+        self.assertEqual(len(cfg["relocations"]),6)
+        self.assertEqual(cfg["relocations"]["_ZTVN2IR10Array_DataE"],"0x08076178")
+        source=suite.within_repo(cfg["source"]).read_text()
+        self.assertIn("struct UInt_Data : Type_Data",source)
+        self.assertIn("struct Float4_Data : Type_Data",source)
+        self.assertIn("switch (kind)",source)
 
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
