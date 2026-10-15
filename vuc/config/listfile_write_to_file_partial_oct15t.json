@@ -1,0 +1,36 @@
+{
+  "function": "_ZN8ListFile11WriteToFileEPKc",
+  "address": "0x0805abc0",
+  "size": 1071,
+  "source": "vuc/probes/ListFileWriteToFileFreshOct15t.cpp",
+  "flags": ["-O2", "-frename-registers", "-falign-jumps=4"],
+  "relocations": {
+    "_ZTVSt9basic_iosIcSt11char_traitsIcEE": "0x0808a830",
+    "_ZNSt8ios_baseC2Ev": "0x0804975c",
+    "_ZTTSt14basic_ofstreamIcSt11char_traitsIcEE": "0x0808a868",
+    "_ZNSt9basic_iosIcSt11char_traitsIcEE4initEPSt15basic_streambufIcS1_E": "0x080499cc",
+    "_ZTVSt14basic_ofstreamIcSt11char_traitsIcEE": "0x0808aa18",
+    "_ZNSt13basic_filebufIcSt11char_traitsIcEEC1Ev": "0x0804965c",
+    "_ZNSt13basic_filebufIcSt11char_traitsIcEE4openEPKcSt13_Ios_Openmode": "0x080497cc",
+    "_ZNSs4_Rep11_S_terminalE": "0x0808aa6c",
+    "_ZNSolsEm": "0x0804990c",
+    "_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc": "0x080497bc",
+    "_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_": "0x0804993c",
+    "_ZNSolsEPFRSoS_E": "0x0804969c",
+    "_ZTVSt13basic_filebufIcSt11char_traitsIcEE": "0x0808aa70",
+    "_ZNSt13basic_filebufIcSt11char_traitsIcEE5closeEv": "0x0804980c",
+    "_ZNSt12__basic_fileIcED1Ev": "0x080497ac",
+    "_ZTVSt15basic_streambufIcSt11char_traitsIcEE": "0x0808a878",
+    "_ZNSt6localeD1Ev": "0x080497fc",
+    "_ZNSt8ios_baseD2Ev": "0x0804966c",
+    "_ZNSolsEl": "0x0804967c",
+    "_ZNSt9basic_iosIcSt11char_traitsIcEE5clearESt12_Ios_Iostate": "0x0804971c",
+    "_Unwind_Resume": "0x0804998c",
+    "_ZNSt15basic_streambufIcSt11char_traitsIcEED2Ev": "0x080497ec"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {"offset": 0, "size": 3, "address": "0x08072dd3"}
+    ]
+  }
+}

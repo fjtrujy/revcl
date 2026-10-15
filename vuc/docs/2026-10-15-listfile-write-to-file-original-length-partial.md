@@ -1,0 +1,9 @@
+# VUC ListFile::WriteToFile original-length partial
+
+Original ELF32 symbol `_ZN8ListFile11WriteToFileEPKc`, address `0x0805abc0`, original length **1071 bytes**.
+
+A new C++03 source hypothesis in `vuc/probes/ListFileWriteToFileFreshOct15t.cpp` uses the original 12-byte `std::vector<std::string>` layout, `std::ofstream` construction, `filebuf::open`, integer line numbering, `":\t"` prefix, `std::string::c_str()`, and `std::endl`, with natural exception cleanup. Historical GCC 3.3.3 Jan25 and Dec06 plus GNU as 2.15, `-O2 -frename-registers -falign-jumps=4`, both produce **1071 bytes**, **58/58 authentic ELF relocations** and the original **3/3 literal bytes**. Strict original-offset comparison scores **875/1071** when the final `std::endl` expression is separate. The initial expression variant scores 869/1071. The bounded experiment `vuc/probes/evaluate_listfile_write_stream_lifetimes_oct15t.py` evaluates other genuine C++03 expression and stream-lifetime variants. Neither score is byte-exact.
+
+The standalone probe manifest `vuc/config/listfile_write_to_file_partial_oct15t.json` is deliberately **not added to selected_candidates.json yet**, because another interrupted session has existing unstaged changes to that manifest and the inventory, selecting `TryOpenFile`. Preserve those changes; integrate the ListFile candidate after resolving that concurrent work. Do not promote either to `exact_candidates.json`.
+
+Reproduce with `limactl shell revcl-oracle -- /tmp/vuc-binutils215/g++-jan25-as215 -O2 -frename-registers -falign-jumps=4 -c /path/to/revcl/vuc/probes/ListFileWriteToFileFreshOct15t.cpp -o /tmp/vuc-binutils215/listfile-resume.o`, then `limactl shell revcl-oracle -- python3 /path/to/revcl/vuc/scripts/match_probe.py --object /tmp/vuc-binutils215/listfile-resume.o --config /path/to/revcl/vuc/config/listfile_write_to_file_partial_oct15t.json`.
