@@ -615,8 +615,12 @@ class CandidateSuiteTests(unittest.TestCase):
                          "0x0806a2e0")
         self.assertNotIn("vuc/config/symboltable_enter_oct13_probe.json", accepted)
         for neighbor in ("symboltable_find_probe.json", "symbol_begin_scope_probe.json",
-                         "symboltable_end_exact_probe.json"):
+                         "symboltable_end_exact_probe.json", "hash_symbol_findcopy_probe.json"):
             self.assertIn("vuc/config/" + neighbor, accepted)
+        findcopy = json.loads(suite.within_repo("vuc/config/hash_symbol_findcopy_probe.json").read_text())
+        self.assertEqual(findcopy["source"], "vuc/src/SymbolTableUnit.cpp")
+        self.assertEqual(findcopy["address"], "0x0806a8e0")
+        self.assertEqual(findcopy["size"], 114)
         unit = suite.within_repo("vuc/src/SymbolTableUnit.cpp").read_text()
         header = suite.within_repo("vuc/src/MLHashTable.h").read_text()
         self.assertIn("Node(const Key &k, unsigned h, Value v)", header)
@@ -631,6 +635,8 @@ class CandidateSuiteTests(unittest.TestCase):
                         unit.index("void SymbolTable::BeginScope()"))
         self.assertLess(unit.index("void SymbolTable::BeginScope()"),
                         unit.index("void SymbolTable::EndScope()"))
+        self.assertLess(unit.index("void SymbolTable::EndScope()"),
+                        unit.index("Value MLHashTable<Key, Value, Hasher, Buckets>::FindCopy"))
         for source_path in ("vuc/src/SymbolTableUnit.cpp", "vuc/src/SymbolTable.cpp"):
             source = suite.within_repo(source_path).read_text()
             self.assertIn("scopes_.pop_back();", source)

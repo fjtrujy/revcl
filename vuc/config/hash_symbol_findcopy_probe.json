@@ -2,7 +2,7 @@
   "function": "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EE8FindCopyERKS0_",
   "address": "0x0806a8e0",
   "size": 114,
-  "source": "vuc/src/MLHashTableFindCopy.cpp",
+  "source": "vuc/src/SymbolTableUnit.cpp",
   "flags": [
     "-O2",
     "-frename-registers",

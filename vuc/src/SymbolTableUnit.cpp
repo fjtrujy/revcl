@@ -51,3 +51,22 @@ void SymbolTable::EndScope()
 {
     scopes_.pop_back();
 }
+
+// The original SymbolTable.cpp weakly instantiates its referenced FindCopy
+// after the Scope vector helpers. Preserve this genuine template ownership.
+template <class Key, class Value, class Hasher, int Buckets>
+Value MLHashTable<Key, Value, Hasher, Buckets>::FindCopy(const Key &key)
+{
+    unsigned hash = Hasher().Hash(key);
+    Node *node = heads[hash % Buckets];
+    while (node) {
+        if (node->hash == hash && Hasher().IsEqual(node->key, key))
+            return node->value;
+        node = node->next;
+    }
+    return Value();
+}
+
+template SymbolTableEntry *
+MLHashTable<MLGameString, SymbolTableEntry *, MLHashFun<MLGameString>, 513>::
+    FindCopy(const MLGameString &key);
