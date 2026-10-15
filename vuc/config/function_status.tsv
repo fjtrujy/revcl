@@ -8,7 +8,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08049b60	30	EXACT	vuc/config/asm_output_epilogue_probe.json	vuc/src/AsmOutput.cpp	_Z23AsmOutput_WriteEpilogueRSt14basic_ofstreamIcSt11char_traitsIcEE
 0x08049b80	145	EXACT	vuc/config/align_string_exact_oct13.json	vuc/src/AlignString.cpp	_Z11AlignStringPKci
 0x08049c20	69	EXACT	vuc/config/align_constant_exact_probe.json	vuc/src/AsmOutputUnit.cpp	_Z13AlignConstantPKc
-0x08049c70	382	UNRESOLVED	-	-	_Z26AsmOutput_PrintInstructionP11InstructionRSt14basic_ofstreamIcSt11char_traitsIcEE
+0x08049c70	382	EXPERIMENTAL	vuc/config/asm_output_print_instruction_partial_oct15r.json	vuc/probes/AsmOutputPrintInstructionFreshOct15r.cpp	_Z26AsmOutput_PrintInstructionP11InstructionRSt14basic_ofstreamIcSt11char_traitsIcEE
 0x08049df0	127	EXACT	vuc/config/asm_output_tab_constants_probe.json	vuc/src/AsmOutputUnit.cpp	_Z22AsmOutput_TabConstantsR15InstructionList
 0x08049e70	2168	UNRESOLVED	-	-	_Z14AsmOutput_EmitR15InstructionList
 0x0804a6f0	16	EXACT	vuc/config/iostream_cleanup_0804a6f0_probe.json	vuc/src/IostreamInit.cpp	__tcf_0

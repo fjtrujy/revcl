@@ -261,7 +261,7 @@ locally scoped text-function records. Regenerate these with
 assigned to source units merely from symbol-table ordering.
 Regenerate the exhaustive **298-symbol** reconstruction queue using
 `python3 vuc/scripts/coverage.py --write` (currently 204 EXACT,
-34 EXPERIMENTAL and 60 UNRESOLVED). The complete original
+35 EXPERIMENTAL and 59 UNRESOLVED). The complete original
 `MLGameString` class member-function cluster is byte-exact (9/9 functions,
 273/273 instruction bytes). The next string-data/hash-table milestone is
 documented in `vuc/docs/string-data-hash-milestone.md`.
@@ -306,6 +306,14 @@ The original 369-byte `Type` input-stream operator also has a strict
 **264/369** experimental source candidate, including all 10 relocations,
 48 authenticated literal bytes, and the original seven-name table pointer.
 See `vuc/docs/2026-10-15-type-stream-input-constructor-lifetime.md`.
+The genuine original source-level `AsmOutput_PrintInstruction` candidate
+reproduces **276/382** original-offset bytes, all 25 relocations and all
+43 literal bytes; its natural C++03 `if/else if` source is necessary for
+original function length. `Bind(ASTFunCall*)` has a separate near-exact
+**300/304 diagnostic** with all 23 relocations, but it is NOT selected
+because compiler `.rodata` padding is not yet source-unit authenticated.
+See `vuc/docs/2026-10-15-asm-output-print-instruction-partial-oct15r.md`
+and `vuc/docs/2026-10-15-bind-ast-fun-call-source-context-oct15r.md`.
 The matching suite also includes byte-exact `GenLabel()` and
 `yyFlexLexer::yy_delete_buffer()`; their original relocations and
 named data objects are checked in the same strict manifest.
