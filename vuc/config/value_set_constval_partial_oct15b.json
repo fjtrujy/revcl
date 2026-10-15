@@ -1,0 +1,35 @@
+{
+  "function": "_ZN5Value3SetEPK15ASTConstValExpr",
+  "address": "0x0806e7d0",
+  "size": 455,
+  "source": "vuc/probes/ValueConstValSetPartialOct15b.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=4",
+    "-falign-labels=2",
+    "-falign-loops=1",
+    "-fno-reorder-blocks"
+  ],
+  "relocations": {
+    "_ZNK12MLGameString5c_strEv": "0x08071800",
+    "__strtol_internal": "0x0804984c",
+    "__strtod_internal": "0x080495fc",
+    "strrchr": "0x080498dc",
+    "memcpy": "0x080498ac"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {
+        "offset": 0,
+        "size": 5,
+        "address": "0x08075f78"
+      },
+      {
+        "offset": 5,
+        "size": 6,
+        "address": "0x0807668a"
+      }
+    ]
+  }
+}

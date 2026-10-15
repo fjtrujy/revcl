@@ -233,7 +233,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806e740	44	EXACT	vuc/config/value_default_c2_probe.json	vuc/src/Value.cpp	_ZN5ValueC2Ev
 0x0806e770	44	EXACT	vuc/config/value_default_c1_probe.json	vuc/src/Value.cpp	_ZN5ValueC1Ev
 0x0806e7a0	42	EXACT	vuc/config/value_dispatch_exact_probe.json	vuc/src/Value.cpp	_ZN5Value3SetEPK7ASTExpr
-0x0806e7d0	455	UNRESOLVED	-	-	_ZN5Value3SetEPK15ASTConstValExpr
+0x0806e7d0	455	EXPERIMENTAL	vuc/config/value_set_constval_partial_oct15b.json	vuc/probes/ValueConstValSetPartialOct15b.cpp	_ZN5Value3SetEPK15ASTConstValExpr
 0x0806e9a0	5	EXACT	vuc/config/noop_0806e9a0_probe.json	vuc/src/EmptyHooks.cpp	_ZN5Value3SetEPK11ASTLValExpr
 0x0806e9b0	219	EXPERIMENTAL	vuc/config/value_addition_partial_oct14_probe.json	vuc/probes/ValueAdditionLaneOrderOct15.cpp	_ZNK5ValueplERKS_
 0x0806ea90	221	EXACT	vuc/config/value_arithmetic_minus_probe.json	vuc/src/ValueMinus.cpp	_ZNK5ValuemiERKS_

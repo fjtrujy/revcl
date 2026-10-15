@@ -26,7 +26,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 224)
+        self.assertEqual(len(records), 225)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
 
@@ -231,6 +231,29 @@ class CandidateSuiteTests(unittest.TestCase):
         offsets = [vector_body.index(f"result.values[{lane}] += temporary.values[{lane}];")
                    for lane in (3, 1, 2, 0)]
         self.assertEqual(offsets, sorted(offsets))
+
+    def test_const_value_parser_is_original_length_experimental(self):
+        """The recovered AST layout is a partial, not an accepted function."""
+        path = "vuc/config/value_set_constval_partial_oct15b.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x0806e7d0")
+        self.assertEqual(config["size"], 455)
+        self.assertEqual(config["source"],
+                         "vuc/probes/ValueConstValSetPartialOct15b.cpp")
+        self.assertEqual(config["flags"], [
+            "-O2", "-frename-registers", "-falign-jumps=4",
+            "-falign-labels=2", "-falign-loops=1", "-fno-reorder-blocks"])
+        self.assertEqual(config["relocation_literals"][".rodata"], [
+            {"offset": 0, "size": 5, "address": "0x08075f78"},
+            {"offset": 5, "size": 6, "address": "0x0807668a"}])
+        self.assertEqual(len(config["relocations"]), 5)
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("unsigned char original_ast_header[12]", source)
+        self.assertIn("__strtol_internal", source)
+        self.assertIn("__strtod_internal", source)
+        self.assertIn("std::strrchr", source)
 
     def test_mltemp_default_c2_selects_original_constructor_source_order(self):
         """The genuine formatted predecessor yields a longer exact C2 prefix."""

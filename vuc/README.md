@@ -757,3 +757,18 @@ manifest remains 200 functions / 14,930 bytes; the original 298-symbol
 ledger stays 200 EXACT / 24 EXPERIMENTAL / 74 UNRESOLVED. Complete evidence,
 negative controls and reproduction steps:
 `vuc/docs/2026-10-15-value-addition-203-byte-partial.md`.
+
+The October 15 continuation reconstructed the previously unresolved original
+**`Value::Set(ASTConstValExpr const*)`** as a new genuine-length,
+relocation-authenticated **EXPERIMENTAL 67/455-byte partial** at `0x0806e7d0`.
+The original AST layout (fields at +12..+24, string at +28), glibc internal
+integer/float conversion calls, vector parsing and both Boolean literal
+addresses are now represented in reproducible C++03 source. Both recovered
+GCC 3.3.3 snapshots compile the saved candidate into **455 bytes**, with
+**13 verified relocations and 11 verified original literal bytes**. This
+does **not** establish behavioral equivalence or exact machine code. The
+original 298-function ledger becomes **200 EXACT / 25 EXPERIMENTAL /
+73 UNRESOLVED**, leaving the exact 14,930 byte total unchanged. The
+2,760-variant compiler/source investigation also delimits additional
+negative Value+ and Value/ strategies. See
+`vuc/docs/2026-10-15-value-constval-455-byte-partial.md`.
