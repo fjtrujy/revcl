@@ -651,6 +651,19 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(len(config["relocations"]), 4)
         self.assertEqual(sum(x["size"] for x in config["relocation_literals"][".rodata"]), 54)
 
+    def test_ast_fun_call_printer_has_real_source_unit_literal_ownership(self):
+        path = "vuc/config/print_ast_fun_context_oct14_probe.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["size"], 98)
+        self.assertEqual(config["source"],
+                         "vuc/probes/PrintASTFunCallRealUnitOct15m.cpp")
+        self.assertIn("../src/Printer.cpp",
+                      suite.within_repo(config["source"]).read_text())
+        self.assertEqual(sum(x["size"] for x in config["relocation_literals"][".rodata"]),9)
+        self.assertEqual(len(config["relocations"]),3)
+
     def test_listfile_global_wrapper_has_recovered_source_neighbors(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
         wrapper = "vuc/config/iostream_listfile_real_oct13_probe.json"

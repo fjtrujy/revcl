@@ -61,4 +61,14 @@ The Jan25 candidate instead emits the two-byte NOP at relative `+0x36` and start
 
 The source and object result ledger is kept at `/tmp/vuc-binutils215/scope-reserve-alignment-oct15m/results.json` in the existing Lima guest. The scan ledger is `/tmp/vuc-binutils215/real-hash-node-full-exact-oct15m/unresolved-original-length-in-exact-units.json`. A related real `InstructionArenaLifecycle` emitted `__tcf_1` at the original 46-byte length and **45/46** matching code bytes with three authentic relocations. This is unchanged; no second promotion is warranted.
 
+## Continue to Printer.cpp rather than stopping at reserve
+
+The exact-unit inventory also found the original-length 98-byte `Print(ASTFunCall*, std::ostream&)` at `0x0805b770` naturally emitted by `vuc/src/Printer.cpp`. This was already an experimental `96/98` instruction-byte candidate, with the only two differences at original offsets `+23` and `+29`. Its older isolated selected manifest authenticated seven original literal bytes.
+
+The genuine `Printer.cpp` emits nine bytes of `.rodata`: original literal `"("\0` at offset 0 mapping to `0x08075c5d`, original `", "\0` at offset 2 mapping to `0x080730a6`, `")"\0` at offset 5 mapping to `0x08072803`, and the module printer's `"\n"\0` at offset 7 mapping to `0x08073070`. These addresses and byte strings were previously authenticated in the tracked `vuc/config/print_ast_fun_context_oct14_probe.json`, including the real module printer literal.
+
+Both recovered historical GCC snapshots under the source unit's natural `-O2` produce **96/98** original-sized matching code bytes, all **7 relocation sites**, and **9/9** authenticated emitted literal bytes. The selected `vuc/config/selected_candidates.json` now uses that tracked real-unit manifest, whose source is the thin experimental wrapper `vuc/probes/PrintASTFunCallRealUnitOct15m.cpp`. The old isolated `print_ast_fun_call_probe.json` remains available as a negative/control reference, but is no longer the selected experimental representation. This is a strict original-translation-unit and literal-coverage improvement, **not** another byte-exact function.
+
+Both the newly promoted reserve and strengthened printer sources are guarded by host manifest/provenance tests. The function-status totals remain **204 EXACT / 26 EXPERIMENTAL / 68 UNRESOLVED** across all 298 original ELF function records. No whole linked ELF has matched.
+
 The linked whole original VUC executable is **not** byte-exact, and partial experimental functions must not enter `vuc/config/exact_candidates.json`.

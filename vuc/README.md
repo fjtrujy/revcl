@@ -299,6 +299,9 @@ The genuine `ScopeVectorLifecycle.cpp` also generates an original-length
 `std::vector<Scope>::reserve` at **183/241** code bytes, with all five
 original relocation sites and 54 authenticated literal bytes. It remains
 experimental; see `vuc/docs/2026-10-15-real-hash-node-enter-eh-and-object-inventory.md`.
+The authentic `Printer.cpp` also authenticates all nine real emitted literal
+bytes for the selected `Print(ASTFunCall*)` experimental **96/98** candidate;
+the only remaining differences are two instruction register-selection bytes.
 The matching suite also includes byte-exact `GenLabel()` and
 `yyFlexLexer::yy_delete_buffer()`; their original relocations and
 named data objects are checked in the same strict manifest.

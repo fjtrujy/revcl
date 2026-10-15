@@ -130,7 +130,7 @@
   "vuc/config/yy_destructor_D0_probe.json",
   "vuc/config/ml_temp_default_C1_probe.json",
   "vuc/config/ml_temp_default_C2_probe.json",
-  "vuc/config/print_ast_fun_call_probe.json",
+  "vuc/config/print_ast_fun_context_oct14_probe.json",
   "vuc/config/ast_arena_global_init_probe.json",
   "vuc/config/ast_arena_initializer_probe.json",
   "vuc/config/noop_08050c20_probe.json",
