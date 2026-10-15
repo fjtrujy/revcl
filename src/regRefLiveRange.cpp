@@ -180,48 +180,13 @@ bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b)
     return false;
 }
 
-bool assignLocalRegisters(Program *p, workTable *wt)
-{
-    int len = wt->getPhysicalLen();
-    if (len < 0) {
-        func_0804ad38("nAssignRegisters: istream had table, but was bad!\n");
-        func_0804adf0(-1);
-    }
-    if (wt->unk_94.unk_08) {
-        func_0804ad38("nAssign - still things to do .. %d\n", wt->unk_94.unk_08);
-        for (Instr *in = wt->unk_94.unk_00; in; in = in->unk_24.unk_00)
-            in->func_08054008(false);
-        func_0804adf0(-1);
-    }
-    if (wt->unk_08 != 2) {
-        func_0804ad38("AssignLocalRegisters - external assign hadn't happened!\n");
-        func_0804adf0(-1);
-    }
-    unsigned int mode = wt->unk_09;
-    if ((unsigned char)mode != 3) {
-        func_0804ad38("AssignLocalRegisters - can't do local assign on non-vsm table (%d)\n", mode);
-        func_0804adf0(-1);
-    }
-    if (!wt->unk_0b) {
-        func_0804ad38("locks aren't valid for local register assign\n");
-        func_0804adf0(-1);
-    }
-    if (len) {
-        setRange(wt->func_0807411c(), wt->func_080741c0(), wt->func_080741b4());
-        for (unsigned i = 0; i != 12; i++) {
-            RegPool *rp = GetRP(i);
-            if (rp && !rp->func_08088e54(wt))
-                return false;
-        }
-        if (!func_0806f6a4(p)) {
-            func_0804ad38("failed to clean up after local alloc\n");
-            func_0804aeb0();
-            return false;
-        }
-    }
-    wt->unk_08 = 3;
-    return true;
-}
+// Shared diagnostics retain their aligned pool across the allocator split.
+extern const char assignLocalExternalError[] = "AssignLocalRegisters - external assign hadn't happened!\n";
+extern const char assignLocalModeError[] = "AssignLocalRegisters - can't do local assign on non-vsm table (%d)\n";
+extern const char assignLocalCleanupError[] = "failed to clean up after local alloc\n";
+extern const char assignLocalLocksError[] = "locks aren't valid for local register assign\n";
+extern const char assignLocalPendingError[] = "nAssign - still things to do .. %d\n";
+extern const char assignLocalBadTableError[] = "nAssignRegisters: istream had table, but was bad!\n";
 
 void clearATab()
 {
