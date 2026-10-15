@@ -256,7 +256,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0806f9d0	31	EXACT	vuc/config/value_global_genuine_context_oct13.json	vuc/src/Value.cpp	_GLOBAL__I__ZN5ValueC2Ev
 0x0806f9f0	88	EXACT	vuc/config/iostream_static_curr_file_probe.json	vuc/src/CurrFileInitialization.cpp	_Z41__static_initialization_and_destruction_0ii
 0x0806fa50	39	EXACT	vuc/config/script_lex_probe.json	vuc/src/ScriptLexer.cpp	_Z10script_lexv
-0x0806fa80	161	EXPERIMENTAL	vuc/config/script_error_probe.json	vuc/probes/script_error.cpp	_Z12script_errorPKc
+0x0806fa80	161	EXPERIMENTAL	vuc/config/script_error_probe.json	vuc/probes/ScriptErrorRealUnitOct15k.cpp	_Z12script_errorPKc
 0x0806fb30	2059	UNRESOLVED	-	-	_Z9ParseFilev
 0x08070340	4583	UNRESOLVED	-	-	_Z13ExportSymbolsP9ASTModule
 0x08071530	63	EXACT	vuc/config/main_probe.json	vuc/src/Main.cpp	main

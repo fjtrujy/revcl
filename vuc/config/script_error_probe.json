@@ -2,7 +2,7 @@
   "function": "_Z12script_errorPKc",
   "address": "0x0806fa80",
   "size": 161,
-  "source": "vuc/probes/script_error.cpp",
+  "source": "vuc/probes/ScriptErrorRealUnitOct15k.cpp",
   "flags": [
     "-O2",
     "-frename-registers",
@@ -23,11 +23,16 @@
     ".rodata": [
       {
         "offset": 0,
+        "size": 1,
+        "address": "0x08072286"
+      },
+      {
+        "offset": 1,
         "size": 2,
         "address": "0x08075c5d"
       },
       {
-        "offset": 2,
+        "offset": 3,
         "size": 3,
         "address": "0x080766dc"
       }

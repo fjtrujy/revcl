@@ -881,6 +881,21 @@ class CandidateSuiteTests(unittest.TestCase):
                 self.assertEqual(config["address"], address)
                 self.assertTrue(config["source"].startswith("vuc/probes/"))
 
+    def test_script_error_real_unit_accounts_for_currfile_empty_literal(self):
+        """The real compiler unit contributes one authenticated extra NUL."""
+        config=json.loads(suite.within_repo("vuc/config/script_error_probe.json").read_text())
+        self.assertEqual(config["source"], "vuc/probes/ScriptErrorRealUnitOct15k.cpp")
+        owner=suite.within_repo(config["source"]).read_text()
+        self.assertIn('#include "../src/VucCompilerUnit.cpp"',owner)
+        literals=config["relocation_literals"][".rodata"]
+        self.assertEqual([(x["offset"],x["size"]) for x in literals],
+                         [(0,1),(1,2),(3,3)])
+        currfile=json.loads(suite.within_repo("vuc/config/data_currFileName.json").read_text())
+        empty=currfile["relocations"]["0x0"]
+        self.assertEqual(empty["literal_hex"],"00")
+        self.assertEqual(literals[0]["address"],empty["address"])
+        self.assertEqual(len(config["relocations"]),9)
+
     def test_flex_create_buffer_and_restart_share_exact_source_context(self):
         """The authentic preceding lexer method fixes GCC register lifetime."""
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
