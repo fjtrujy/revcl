@@ -220,7 +220,7 @@
   "vuc/config/canonize_try_reduce_signed_partial_oct15p.json",
   "vuc/config/broadcast_move_partial_oct15q.json",
   "vuc/config/translate_type_partial_oct15q.json",
-  "vuc/config/asm_output_print_instruction_partial_oct15r.json",
+  "vuc/config/asm_output_print_instruction_real_unit_oct15r.json",
   "vuc/config/ir_accumulatorable_probe.json",
   "vuc/config/align_string_exact_oct13.json",
   "vuc/config/string_table_add_oct14_probe.json",

@@ -306,10 +306,11 @@ The original 369-byte `Type` input-stream operator also has a strict
 **264/369** experimental source candidate, including all 10 relocations,
 48 authenticated literal bytes, and the original seven-name table pointer.
 See `vuc/docs/2026-10-15-type-stream-input-constructor-lifetime.md`.
-The genuine original source-level `AsmOutput_PrintInstruction` candidate
-reproduces **276/382** original-offset bytes, all 25 relocations and all
-43 literal bytes; its natural C++03 `if/else if` source is necessary for
-original function length. `Bind(ASTFunCall*)` has a separate near-exact
+The genuine original `AsmOutput.cpp` translation-unit candidate
+reproduces **334/382** original-offset bytes, all 25 relocations and all
+154 authentic combined-unit literal bytes; the natural C++03
+`if/else if` source and original function order are both required.
+`Bind(ASTFunCall*)` has a separate near-exact
 **300/304 diagnostic** with all 23 relocations, but it is NOT selected
 because compiler `.rodata` padding is not yet source-unit authenticated.
 See `vuc/docs/2026-10-15-asm-output-print-instruction-partial-oct15r.md`

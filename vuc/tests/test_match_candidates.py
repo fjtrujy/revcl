@@ -781,16 +781,22 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("matchStack.entries[matchStack.length-1]->line",src)
 
     def test_asm_output_print_instruction_true_literal_partial(self):
-        path="vuc/config/asm_output_print_instruction_partial_oct15r.json"
+        path="vuc/config/asm_output_print_instruction_real_unit_oct15r.json"
         self.assertIn(path,json.loads(suite.DEFAULT_MANIFEST.read_text()))
         self.assertNotIn(path,json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertNotIn("vuc/config/asm_output_print_instruction_partial_oct15r.json",
+                         json.loads(suite.DEFAULT_MANIFEST.read_text()))
         cfg=json.loads(suite.within_repo(path).read_text())
         self.assertEqual(cfg["address"],"0x08049c70")
         self.assertEqual(cfg["size"],382)
-        self.assertEqual(cfg["source"],"vuc/probes/AsmOutputPrintInstructionFreshOct15r.cpp")
+        self.assertEqual(cfg["source"],"vuc/probes/AsmOutputPrintInstructionOriginalUnitOct15r.cpp")
         self.assertEqual(len(cfg["relocations"]),5)
-        self.assertEqual(sum(r["size"] for r in cfg["relocation_literals"][".rodata"]),43)
+        self.assertEqual(sum(r["size"] for r in cfg["relocation_literals"][".rodata"]),154)
         source=suite.within_repo(cfg["source"]).read_text()
+        self.assertIn('../src/AsmOutputUnit.cpp',source)
+        accepted=suite.within_repo("vuc/src/AsmOutputUnit.cpp").read_text()
+        self.assertIn("MLGameString text;",accepted)
+        self.assertIn("int kind;",accepted)
         self.assertIn('else if (std::strstr(text,".equ")) isConstant=true;',source)
         self.assertIn("hex[0]='H'",source)
 

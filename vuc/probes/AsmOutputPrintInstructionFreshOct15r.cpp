@@ -32,6 +32,6 @@ void AsmOutput_PrintInstruction(Instruction *instruction,std::ofstream &output)
     } else if (isLabel || hasInclude || hasMacro || hasEndMacro) {
         output << text << "\n";
     } else {
-        output << AlignString(text,14) << "  " << "\n";
+        output << "  " << AlignString(text,14) << "\n";
     }
 }

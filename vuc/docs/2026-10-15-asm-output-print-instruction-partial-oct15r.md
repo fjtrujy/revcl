@@ -1,4 +1,4 @@
-# VUC AsmOutput_PrintInstruction: first strict 276/382 partial
+# VUC AsmOutput_PrintInstruction: real-TU strict 334/382 partial
 
 Date: 2026-10-15. Canonical VUC 2004.1 Linux ELF32/i386 original
 `AsmOutput_PrintInstruction(Instruction*, std::ofstream&)`, at
@@ -63,15 +63,21 @@ assign-if form emits 379; the int control-flow versions emit
 
 ## Strict acceptance evidence
 
-Manifest:
+The initial standalone manifest was
 `vuc/config/asm_output_print_instruction_partial_oct15r.json`.
 Both Jan25 and Dec06 GCC 3.3.3 with GNU assembler 2.15
 compile the C++03 source under `-O2 -frename-registers`
-to **382 original-length bytes**, with **276/382
+to **382 original-length bytes**, initially with **276/382
 original-offset instruction bytes** matching,
 **25/25 authentic relocation sites**, and **43/43 source
 literal bytes** independently verified against original ELF
 `.rodata`.
+
+Further original instruction analysis established that the normal
+path prints **two leading spaces before** the aligned string,
+not after it. Correcting the observable source behavior improved
+the *standalone* strict match to **282/382** without changing its
+382-byte length, 25 relocations, or 43 literal bytes.
 
 Original literal addresses are:
 
@@ -92,12 +98,9 @@ authenticated original named callees and the original
 `constantsTabStop` BSS symbol. No residual unowned
 literal-padding bytes remain in this standalone candidate.
 
-**276/382 is EXPERIMENTAL, not byte-exact.**
-The candidate is selected only in
-`vuc/config/selected_candidates.json`; it is not part of
-the exact manifest or accepted `vuc/src`. It advances
-inventory counts to **204 EXACT / 35 EXPERIMENTAL /
-59 UNRESOLVED** across 298 functions.
+**The standalone candidate remains a reproducible control**;
+it is not selected in the official manifest. The stronger
+real-translation-unit source below supersedes it.
 
 ## Genuine original AsmOutput.cpp translation-unit experiment
 
@@ -111,16 +114,45 @@ definitions and original class layout. It compares the
 original-order appended body with a front-of-TabConstants
 source-order control.
 
-Both GCC snapshots still produce **382-byte printer bodies,
-25 relocations and 276/382 diagnostic matching code bytes**,
-identical to the strict standalone result. This eliminates
-those genuine predecessor bodies as sufficient explanation
-for the remaining code differences. The combined source-unit
-version emits additional predecessor literals, so its
-original-offset comparison is diagnostic only; it is **not**
-promoted without authenticating the whole combined section.
-The selected standalone source is independently fully
-strictly verified.
+The original-order TU **does matter** once the leading-space
+source behavior is correct: both compiler snapshots emit
+**382-byte** code with **334/382** matching original-offset
+bytes. Placing the same reconstructed printer before
+`AsmOutput_TabConstants` produces only **290/382**,
+while the corrected standalone source produces **282/382**.
+This mirrors the earlier genuine FlexLexer predecessor effect.
+
+The accepted `vuc/src/AsmOutputUnit.cpp` now declares the
+already-proven eight-plus-byte `Instruction` layout with its
+`MLGameString text`, reserved line and `kind` at offset +8.
+Its exact predecessor functions remain unchanged: `AlignConstant`
+is **69/69** with four relocations and `AsmOutput_TabConstants`
+is **127/127** with seven relocations under both historical
+compiler snapshots.
+
+The new `vuc/probes/AsmOutputPrintInstructionOriginalUnitOct15r.cpp`
+includes that real accepted source file before the original-order
+printer body. The selected experimental-only manifest
+`vuc/config/asm_output_print_instruction_real_unit_oct15r.json`
+maps the **entire authentic 154-byte combined source-unit
+`.rodata` section** to original ELF bytes, not just referenced
+printer strings. Its ten disjoint original literal ranges include
+the exact, previously accepted 127-byte prologue/epilogue/
+constants section and 27 bytes of additional directive strings,
+newline and spacing. Both historical GCC snapshots independently
+pass the full strict `match_probe.py` gate:
+
+| Strict criterion | Verified result |
+| --- | ---: |
+| Original function length | **382/382** |
+| Matching original-offset code | **334/382** |
+| Authentic relocation sites | **25/25** |
+| Authenticated combined `.rodata` | **154/154 bytes** |
+
+This is a much stronger, **fully literal-authenticated EXPERIMENTAL**
+candidate, not an exact accepted function. The original 298-function
+inventory remains **204 EXACT / 35 EXPERIMENTAL /
+59 UNRESOLVED**.
 
 Generated compiler objects and full ledgers are preserved
 outside Git in the existing historical Lima guest at:
@@ -133,11 +165,11 @@ Reproduce the accepted experimental score:
 ```sh
 R=/path/to/revcl/vuc
 /tmp/vuc-binutils215/g++-jan25-as215 -O2 -frename-registers \
-  -c "$R/probes/AsmOutputPrintInstructionFreshOct15r.cpp" \
-  -o /tmp/vuc-binutils215/asm-print-check-oct15r.o
+  -c "$R/probes/AsmOutputPrintInstructionOriginalUnitOct15r.cpp" \
+  -o /tmp/vuc-binutils215/asm-print-original-unit-oct15r.o
 python3 "$R/scripts/match_probe.py" \
-  --object /tmp/vuc-binutils215/asm-print-check-oct15r.o \
-  --config "$R/config/asm_output_print_instruction_partial_oct15r.json"
+  --object /tmp/vuc-binutils215/asm-print-original-unit-oct15r.o \
+  --config "$R/config/asm_output_print_instruction_real_unit_oct15r.json"
 ```
 
 Next, reconstruct the original branch-block ordering of the
