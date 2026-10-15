@@ -33,7 +33,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 200)
+        self.assertEqual(len(exact_configs), 201)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -819,7 +819,6 @@ class CandidateSuiteTests(unittest.TestCase):
         cases = (
             ("script_error_probe.json", 161, "0x0806fa80"),
             ("yy_create_buffer_probe.json", 139, "0x080617b0"),
-            ("ir_accumulatorable_probe.json", 77, "0x0805a570"),
         )
         for name, size, address in cases:
             with self.subTest(config=name):
@@ -830,11 +829,20 @@ class CandidateSuiteTests(unittest.TestCase):
                 self.assertEqual(config["size"], size)
                 self.assertEqual(config["address"], address)
                 self.assertTrue(config["source"].startswith("vuc/probes/"))
-                if name == "ir_accumulatorable_probe.json":
-                    self.assertEqual(config["source"],
-                                     "vuc/probes/ir_accumulatorable_joint_oct14.cpp")
-                    self.assertEqual(config["flags"],
-                                     ["-O2", "-frename-registers", "-falign-jumps=8"])
+
+    def test_accumulatorable_exact_negative_guard_preserves_branch_orientation(self):
+        """The original 77-byte emitter is now accepted from true source."""
+        path = "vuc/config/ir_accumulatorable_probe.json"
+        self.assertIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x0805a570")
+        self.assertEqual(config["size"], 77)
+        self.assertEqual(config["source"], "vuc/src/IRAccumulatorableExact.cpp")
+        self.assertEqual(config["relocations"], {})
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=8"])
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertIn("if (op->operand->kind != 3) goto next_case11;", source)
 
     def test_export_module_lifecycle_is_exact_but_reserve_is_not(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

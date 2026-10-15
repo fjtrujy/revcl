@@ -783,3 +783,14 @@ reference sites and overlaps 213 original instruction offsets, with a
 The independent original-reference tests and follow-up evidence are in
 `vuc/tests/test_value_constval_reference_sites.py` and
 `vuc/docs/2026-10-15-vuc-set-15-reference-callgraph-audit.md`.
+
+The October 15 accumulator control-flow reconstruction promoted the historical
+77-byte `IsAccumulatorable(IR::Operator_Data*)` source from an experimental
+**74/77** partial to a genuine **77/77 byte-exact function** with zero
+relocations, independently reproduced by both recovered GCC 3.3.3 snapshots.
+The key is a real C++03 negative guard and next-case label that recovers the
+original final `jne`/`jmp` ordering, with no assembly or filler. The complete
+ledger advances to **201 EXACT / 24 EXPERIMENTAL / 73 UNRESOLVED**, and strict
+accepted code coverage is **15,007/15,007** bytes. The previously accepted
+source and all initialized-data / BSS exact matches are unchanged. See
+`vuc/docs/2026-10-15-accumulator-77-byte-exact-negative-goto.md`.
