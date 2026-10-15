@@ -66,9 +66,27 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_baseline_manifest_has_unique_original_symbol_addresses(self):
         configs = json.loads(suite.DEFAULT_MANIFEST.read_text())
         records = [json.loads(suite.within_repo(p).read_text()) for p in configs]
-        self.assertEqual(len(records), 240)
+        self.assertEqual(len(records), 242)
         # Local function spelling may repeat across original C++ units.
         self.assertEqual(len({(r["function"], r["address"]) for r in records}), len(records))
+
+    def test_try_open_file_and_listfile_remain_original_length_experiments(self):
+        """Genuine C++03 stream owners are partial, never exact acceptance."""
+        partials = (
+            ("vuc/config/try_open_file_partial_oct15t.json", "0x0804ca30", 754),
+            ("vuc/config/listfile_write_to_file_partial_oct15t.json", "0x0805abc0", 1071),
+        )
+        selected = json.loads(suite.DEFAULT_MANIFEST.read_text())
+        accepted = json.loads(suite.EXACT_MANIFEST.read_text())
+        for path, address, size in partials:
+            with self.subTest(config=path):
+                self.assertIn(path, selected)
+                self.assertNotIn(path, accepted)
+                manifest = json.loads(suite.within_repo(path).read_text())
+                self.assertEqual(manifest["address"], address)
+                self.assertEqual(manifest["size"], size)
+                self.assertTrue(manifest["source"].startswith("vuc/probes/"))
+                self.assertTrue(suite.within_repo(manifest["source"]).is_file())
 
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))

@@ -27,7 +27,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0804b830	959	UNRESOLVED	-	-	_Z4BindP7ASTExprR11SymbolTable
 0x0804bbf0	911	UNRESOLVED	-	-	_Z4BindP11ASTLValExprR11SymbolTable
 0x0804bf80	2726	UNRESOLVED	-	-	_Z4BindP7ASTDeclR11SymbolTable
-0x0804ca30	754	UNRESOLVED	-	-	_Z11TryOpenFilePKc
+0x0804ca30	754	EXPERIMENTAL	vuc/config/try_open_file_partial_oct15t.json	vuc/probes/TryOpenFileSuccessFirstOct15t.cpp	_Z11TryOpenFilePKc
 0x0804cd30	2691	UNRESOLVED	-	-	_Z4BindR12MLGameStringR11SymbolTable
 0x0804d7c0	4538	UNRESOLVED	-	-	_Z16AddFloat4MembersR11SymbolTable
 0x0804e980	552	UNRESOLVED	-	-	_Z11Binder_BindP9ASTModule
@@ -121,7 +121,7 @@ address	size	status	manifest	candidate_source	symbol
 0x0805a610	1206	UNRESOLVED	-	-	_ZN8ListFile8GenerateEPKc
 0x0805aad0	133	EXACT	vuc/config/listfile_printline_probe.json	vuc/src/ListFilePrintLine.cpp	_ZN8ListFile9PrintLineEiRSt14basic_ofstreamIcSt11char_traitsIcEE
 0x0805ab60	88	EXACT	vuc/config/listfile_print_probe.json	vuc/src/ListFile.cpp	_ZN8ListFile5PrintEiiRSt14basic_ofstreamIcSt11char_traitsIcEE
-0x0805abc0	1071	UNRESOLVED	-	-	_ZN8ListFile11WriteToFileEPKc
+0x0805abc0	1071	EXPERIMENTAL	vuc/config/listfile_write_to_file_partial_oct15t.json	vuc/probes/ListFileWriteToFileFreshOct15t.cpp	_ZN8ListFile11WriteToFileEPKc
 0x0805aff0	18	EXACT	vuc/config/list_file_lines_probe.json	vuc/src/ListFile.cpp	_ZN8ListFile11GetNumLinesEv
 0x0805b010	16	EXACT	vuc/config/iostream_cleanup_0805b010_probe.json	vuc/src/IostreamInit.cpp	__tcf_0
 0x0805b020	31	EXACT	vuc/config/iostream_listfile_real_oct13_probe.json	vuc/src/ListFileUnit.cpp	_GLOBAL__I__ZN8ListFile8GenerateEPKc

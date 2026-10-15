@@ -222,6 +222,8 @@
   "vuc/config/translate_type_partial_oct15q.json",
   "vuc/config/asm_output_print_instruction_real_unit_oct15r.json",
   "vuc/config/type_vector_insert_aux_partial_oct15s.json",
+  "vuc/config/try_open_file_partial_oct15t.json",
+  "vuc/config/listfile_write_to_file_partial_oct15t.json",
   "vuc/config/ir_accumulatorable_probe.json",
   "vuc/config/align_string_exact_oct13.json",
   "vuc/config/string_table_add_oct14_probe.json",

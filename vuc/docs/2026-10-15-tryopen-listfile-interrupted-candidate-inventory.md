@@ -1,0 +1,8 @@
+# Recover interrupted stream partials after main rebase
+
+Branch `vuc` rebased 173 VUC commits onto `origin/main` (tip `f939a3bb`) via `git -c rebase.autoStash=true rebase origin/main`, preserving the four unfinished tracked edits and the existing untracked research/archive files. This batch finished the coherent candidate inventory changes interrupted in the earlier session, without promoting any partial to the exact-function acceptance list.
+
+- `_Z11TryOpenFilePKc` at `0x0804ca30`, original **754 bytes**: genuine C++03 `std::ifstream` construction and success-first branch under recovered January GCC 3.3.3, `-O2 -frename-registers -falign-jumps=8`, matched **650/754** original bytes with strict authentic relocations. Source `vuc/probes/TryOpenFileSuccessFirstOct15t.cpp`, manifest `vuc/config/try_open_file_partial_oct15t.json`. The simpler constructor and lifetime evaluator are preserved as diagnostic probes.
+- `_ZN8ListFile11WriteToFileEPKc` at `0x0805abc0`, original **1071 bytes**: independently revalidated at **875/1071** using the historical GCC 3.3.3 compiler, all 58 original relocations, all three original string-literal bytes. The source and manifest were previously committed; now enrolled as `EXPERIMENTAL` in selected candidates, not in exact candidates. Neighbor-owner literal evidence is retained separately.
+
+Resulting exhaustive symbol inventory: **204 EXACT, 38 EXPERIMENTAL, 56 UNRESOLVED** across the same 298 original symbols. The exact-function acceptance manifest remains unchanged at 204 items. These scores are original-offset instruction matches, not an ELF-wide score or a claim that either stream helper is byte-exact.

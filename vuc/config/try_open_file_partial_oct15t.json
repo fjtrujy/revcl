@@ -1,0 +1,29 @@
+{
+  "function": "_Z11TryOpenFilePKc",
+  "address": "0x0804ca30",
+  "size": 754,
+  "source": "vuc/probes/TryOpenFileSuccessFirstOct15t.cpp",
+  "flags": [
+    "-O2",
+    "-frename-registers",
+    "-falign-jumps=8"
+  ],
+  "relocations": {
+    "_ZNSt8ios_baseC2Ev": "0x0804975c",
+    "_ZTTSt14basic_ifstreamIcSt11char_traitsIcEE": "0x0808a9d8",
+    "_ZTVSt9basic_iosIcSt11char_traitsIcEE": "0x0808a830",
+    "_ZTVSt14basic_ifstreamIcSt11char_traitsIcEE": "0x0808a840",
+    "_ZNSt9basic_iosIcSt11char_traitsIcEE4initEPSt15basic_streambufIcS1_E": "0x080499cc",
+    "_ZNSt13basic_filebufIcSt11char_traitsIcEEC1Ev": "0x0804965c",
+    "_ZNSt13basic_filebufIcSt11char_traitsIcEE4openEPKcSt13_Ios_Openmode": "0x080497cc",
+    "_ZTVSt13basic_filebufIcSt11char_traitsIcEE": "0x0808aa70",
+    "_ZNSt13basic_filebufIcSt11char_traitsIcEE5closeEv": "0x0804980c",
+    "_ZNSt12__basic_fileIcED1Ev": "0x080497ac",
+    "_ZTVSt15basic_streambufIcSt11char_traitsIcEE": "0x0808a878",
+    "_ZNSt6localeD1Ev": "0x080497fc",
+    "_ZNSt8ios_baseD2Ev": "0x0804966c",
+    "_ZNSt9basic_iosIcSt11char_traitsIcEE5clearESt12_Ios_Iostate": "0x0804971c",
+    "_Unwind_Resume": "0x0804998c",
+    "_ZNSt15basic_streambufIcSt11char_traitsIcEED2Ev": "0x080497ec"
+  }
+}
