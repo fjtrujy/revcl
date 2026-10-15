@@ -76,6 +76,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
     cls08058718 pos;
     for (;;) {
         Instr *pending;
+        Instr *head;
         wrangleCand c;
         int minPos;
         wrangleCand mor;
@@ -143,7 +144,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                     func_0804acb0("sidefx : loop@ %d critical at %d recoverable at %d minSafe=%d..so abort\n",
                                   maxBranchLid, minSfx2, minSfx1, (int)wt->unk_7a);
                     wt->unk_4c = 0;
-                    goto after_pending_test;
+                    goto zero_after_pending;
                 }
             }
             if (!wt->changeMode(3)) {
@@ -161,8 +162,8 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
         pending = 0;
         while (wt->unk_4c) {
             if (!f(wt, (int *)&c)) {
-                wt->unk_4c = 0;
-                goto after_insert_test;
+                head = wt->unk_4c = 0;
+                goto test_after_insert;
             }
             {
                 int lsz = wt->unk_38;
@@ -194,10 +195,11 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                 minPos = c.unk_04;
                 g_080de72c = 0;
                 if (wt->unk_38) {
-                    if (!c.unk_00->unk_13d1)
-                        drag(wt, c.unk_00, &pos, wt->unk_38 >> 1, 0);
+                    Instr *dragInst = c.unk_00;
+                    if (!dragInst->unk_13d1)
+                        drag(wt, dragInst, &pos, wt->unk_38 >> 1, 0);
                     else
-                        drag(wt, c.unk_00, &pos, wt->unk_38, 0);
+                        drag(wt, dragInst, &pos, wt->unk_38, 0);
                 } else {
                     func_0807de00(wt, c.unk_00, &pos);
                     func_0807e1f8(wt, c.unk_00, &pos);
@@ -214,7 +216,8 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                     }
                     if (n)
                         ret = checkInsert(wt, c.unk_00, &pos, &minPos);
-                    if ((ret & 0x100) && !pending) {
+                    Instr * volatile &pendingState = pending;
+                    if ((ret & 0x100) && !pendingState) {
                         pending = c.unk_00;
                         mor = c;
                         goto check_pending;
@@ -253,7 +256,9 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
         }
         goto check_pending;
     after_insert_test:
-        if (wt->unk_4c)
+        head = wt->unk_4c;
+    test_after_insert:
+        if (head)
             goto next;
     check_pending:
         if (pending) {
@@ -273,12 +278,15 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             if (r == 1) {
                 Instr *fi = g_080de72c;
                 wt->unk_4c = 0;
-                if (!fi)
-                    func_0804ac7c("finst not set for no slots\n");
+                if (fi)
+                    goto zero_after_pending;
+                func_0804ac7c("finst not set for no slots\n");
             }
         }
     after_pending_test:
-        if (wt->unk_4c)
+        head = wt->unk_4c;
+    test_after_pending:
+        if (head)
             goto next;
         goto undo;
     switch_pipe:
@@ -287,7 +295,9 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
         g_080de72c = wt->unk_a0.unk_00;
     faulted:
         wt->unk_4c = 0;
-        goto after_pending_test;
+    zero_after_pending:
+        head = 0;
+        goto test_after_pending;
     undo:
         {
             if (!g_080de72c) {
