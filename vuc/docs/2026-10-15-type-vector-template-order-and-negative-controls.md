@@ -76,6 +76,32 @@ new selected manifest
 the **genuine original-order owner** and remains outside
 `exact_candidates.json`. Reproduction:
 
+### Compiler-owner C++03 assignment idioms
+
+After committing the original-order partial, another bounded
+reproducible experiment,
+`vuc/probes/evaluate_type_vector_copy_assignment_source_oct15s.py`,
+tested historically plausible Type copy constructor bodies and explicit
+`Type::operator=` declarations. In both GCC snapshots, the
+implicit-assignment original-order source still yields **481/525**.
+Replacing the copy constructor initializer list with forward body
+assignments is equivalent (**481/525**), but a reverse-order body
+falls to **446/525** and breaks both accepted iterator-copy functions
+(58/79 and 65/86). Explicit forward, reverse, alternating and
+pairwise assignment operators retain the original **525-byte length**
+and nine relocations but reduce original-offset code matches to
+**445, 436, 448 and 442**, respectively. An ordinary 16-byte
+`__builtin_memcpy` assignment compiles identically to the selected
+**481/525** source.
+
+This confirms the baseline field-copy order and shows that recovering
+different named C++03 assignment semantics is not by itself the
+remaining register/branch solution. The same two accepted Type
+uninitialized-copy instantiations stay exact with all forward-explicit
+assignment controls. Objects, source variants and JSON score ledger
+remain outside Git under
+`/tmp/vuc-binutils215/type-vector-copyassign-oct15s/`.
+
 ```sh
 R=/path/to/revcl/vuc
 /tmp/vuc-binutils215/g++-jan25-as215 -O2 -frename-registers \
