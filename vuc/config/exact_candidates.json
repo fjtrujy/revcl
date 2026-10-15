@@ -97,6 +97,7 @@
   "vuc/config/yy_init_buffer_probe.json",
   "vuc/config/yy_flush_buffer_probe.json",
   "vuc/config/yy_restart_probe.json",
+  "vuc/config/yy_create_buffer_probe.json",
   "vuc/config/uninitialized_type_const_probe.json",
   "vuc/config/uninitialized_type_mut_probe.json",
   "vuc/config/symboltable_find_probe.json",

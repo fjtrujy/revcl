@@ -827,3 +827,17 @@ experimental manifest. The exact manifest is unchanged:
 **15,007 exact machine-code instruction bytes**. See
 `vuc/docs/2026-10-15-getnextword-50-byte-partial-range-tree.md`
 for source experiments, evidence and historical reproduction.
+
+The following October 15 source-unit investigation promoted
+`yyFlexLexer::yy_create_buffer(std::istream*, int)` at `0x080617b0`
+from a **131/139** original-length experimental partial to **139/139
+byte-exact** source. Inserting the genuine preceding `yyrestart()`
+implementation into the same historical GCC 3.3.3 compilation unit
+recovers all eight residual register-allocation bytes without manually
+selecting registers. The reconstructed unit also independently reproduces
+the original **93/93** `yyrestart()` body. Both historical snapshots
+reproduce all **5** original relocation sites and **44** verified literal
+bytes for `yy_create_buffer`. The exact ledger advances to **202 EXACT /
+24 EXPERIMENTAL / 72 UNRESOLVED** of 298 original named functions, with
+**15,146** exact instruction bytes. The whole linked ELF is still not
+byte-identical. See `vuc/docs/2026-10-15-flex-create-original-prefix-exact.md`.

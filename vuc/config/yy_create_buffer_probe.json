@@ -2,7 +2,7 @@
   "function": "_ZN11yyFlexLexer16yy_create_bufferEPSii",
   "address": "0x080617b0",
   "size": 139,
-  "source": "vuc/probes/yy_create_buffer.cpp",
+  "source": "vuc/src/FlexLexerCreateBufferUnit.cpp",
   "flags": [
     "-O2",
     "-frename-registers"

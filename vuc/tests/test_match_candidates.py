@@ -33,7 +33,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 201)
+        self.assertEqual(len(exact_configs), 202)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -818,7 +818,6 @@ class CandidateSuiteTests(unittest.TestCase):
         selected = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         cases = (
             ("script_error_probe.json", 161, "0x0806fa80"),
-            ("yy_create_buffer_probe.json", 139, "0x080617b0"),
         )
         for name, size, address in cases:
             with self.subTest(config=name):
@@ -829,6 +828,21 @@ class CandidateSuiteTests(unittest.TestCase):
                 self.assertEqual(config["size"], size)
                 self.assertEqual(config["address"], address)
                 self.assertTrue(config["source"].startswith("vuc/probes/"))
+
+    def test_flex_create_buffer_and_restart_share_exact_source_context(self):
+        """The authentic preceding lexer method fixes GCC register lifetime."""
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        path = "vuc/config/yy_create_buffer_probe.json"
+        self.assertIn(path, accepted)
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x080617b0")
+        self.assertEqual(config["size"], 139)
+        self.assertEqual(config["flags"], ["-O2", "-frename-registers"])
+        self.assertEqual(config["source"], "vuc/src/FlexLexerCreateBufferUnit.cpp")
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertLess(source.index("void yyFlexLexer::yyrestart("),
+                        source.index("yy_buffer_state *yyFlexLexer::yy_create_buffer("))
+        self.assertIn('LexerError("out of dynamic memory in yy_create_buffer()")', source)
 
     def test_accumulatorable_exact_negative_guard_preserves_branch_orientation(self):
         """The original 77-byte emitter is now accepted from true source."""

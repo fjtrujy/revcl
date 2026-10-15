@@ -167,7 +167,7 @@ address	size	status	manifest	candidate_source	symbol
 0x080616d0	93	EXACT	vuc/config/yy_restart_probe.json	vuc/src/FlexLexerRestart.cpp	_ZN11yyFlexLexer9yyrestartEPSi
 0x08061730	75	EXACT	vuc/config/yy_switch_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer19yy_switch_to_bufferEP15yy_buffer_state
 0x08061780	39	EXACT	vuc/config/yy_load_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer20yy_load_buffer_stateEv
-0x080617b0	139	EXPERIMENTAL	vuc/config/yy_create_buffer_probe.json	vuc/probes/yy_create_buffer.cpp	_ZN11yyFlexLexer16yy_create_bufferEPSii
+0x080617b0	139	EXACT	vuc/config/yy_create_buffer_probe.json	vuc/src/FlexLexerCreateBufferUnit.cpp	_ZN11yyFlexLexer16yy_create_bufferEPSii
 0x08061840	87	EXACT	vuc/config/yy_delete_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer16yy_delete_bufferEP15yy_buffer_state
 0x080618a0	53	EXACT	vuc/config/yy_init_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer14yy_init_bufferEP15yy_buffer_statePSi
 0x080618e0	80	EXACT	vuc/config/yy_flush_buffer_probe.json	vuc/src/FlexLexer.cpp	_ZN11yyFlexLexer15yy_flush_bufferEP15yy_buffer_state
