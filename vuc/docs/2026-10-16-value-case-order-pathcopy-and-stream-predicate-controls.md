@@ -33,10 +33,15 @@ Original `_Z14ParseArgumentsiPPc` at `0x0805b3e0`, **777 bytes**. The checked-in
 
 These are **length results only**, not original-offset scores. None has the original 777-byte length, so none is eligible for EXPERIMENTAL selection; no relocations or string ownership are falsely certified. The separate earlier `-minline-all-stringops` experiment produced 1081/1056 bytes and also remains ineligible. A future attempt should identify the specific original source-level construct or translation-unit setting that emitted the `rep movsl` sequence *without* globally inlining unrelated string calls.
 
+A follow-up historical-GCC diagnostic, `evaluate_parseargs_builtin_copy_oct16.py`, keeps ordinary libc string calls external using `-fno-builtin` while retaining an explicit `__builtin_memcpy` for the directory-prefix copy under `-minline-all-stringops`. This is a **compiler-mechanism control**, not an authenticated original Makefile flag. It produces 784 bytes with jump alignment 1 and default loop alignment. With explicit loop alignment 1, 2, 4 and 8, the candidate measures 771, 772, 772 and 776 bytes, respectively (jump alignment 1, label alignment 1). Further jump/loop configurations range from 776 to 794 bytes. None of these tested outputs equals the original 777-byte function.
+
+Crucially, the closest 776-byte object is **not structurally near exact** merely because its total length differs by one byte. Its path-copy block contains an extra source-copy loop and a subsequent `cld; rep movsl`, whereas the original at `0x0805b51f` enters a direct `cld; rep movsl` with conditional word/byte tails. The scratch object's extra loop begins near relative `+0x128`, with `rep movsl` only near `+0x18b`; the original copy begins at relative `+0x13f`. This is specific negative evidence against promoting the flags-only candidate, even if another alignment happens to produce 777 bytes. No original-length strict partial is claimed.
+
 Reproduce:
 
 ```sh
 python3 /path/to/revcl/vuc/probes/evaluate_parseargs_pathcopy_oct16.py
+python3 /path/to/revcl/vuc/probes/evaluate_parseargs_builtin_copy_oct16.py
 ```
 
 ## 3. TryOpenFile state-predicate contract
