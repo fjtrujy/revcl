@@ -240,5 +240,6 @@
   "vuc/config/value_logical_and_partial_oct14_probe.json",
   "vuc/config/hash_copy_node_args_partial_oct14_probe.json",
   "vuc/config/value_set_constval_partial_oct15b.json",
-  "vuc/config/get_next_word_partial_oct15e_probe.json"
+  "vuc/config/get_next_word_partial_oct15e_probe.json",
+  "vuc/config/canonize_fold_expr_partial_oct16.json"
 ]
