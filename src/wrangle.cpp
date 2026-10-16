@@ -483,8 +483,10 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                 g_080de72c->func_08054008(false);
             else
                 g_080de72c = done->last();
-            while ((Instr *)*(int *)&done->unk_04 != g_080de72c) {
-                Instr *in = done->last();
+            for (wtInstrList *tail = done;
+                 (Instr *)*(int *)&tail->unk_04 != g_080de72c;
+                 tail = &wt->unk_a0) {
+                Instr *in = tail->last();
                 in->func_08054214();
                 if (!UndoInsert(wt, in)) {
                     func_0804ad38("in finst track..undoinsert failed\n");
@@ -497,7 +499,7 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                 }
             }
             while (wt->unk_a0.unk_00) {
-                Instr *in = done->last();
+                Instr *in = wt->unk_a0.last();
                 if (!UndoInsert(wt, in)) {
                     func_0804ad38("undo insert: failed to remove done list tail\n");
                     func_0804aeb0();
