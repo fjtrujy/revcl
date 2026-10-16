@@ -251,7 +251,8 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
         else
             wt->unk_54.func_0805874c(0);
         if (!wt->unk_4c) {
-            if (__builtin_expect(!wt->unk_94.unk_00, 0)) {
+            Instr *todo = wt->unk_94.unk_00;
+            if (!todo) {
                 wt->unk_30 = 0;
                 if (!wt->unk_38) {
                     int sz = wt->getCurrentDoneSize();
@@ -331,8 +332,9 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                 goto faulted;
             int lsz = wt->unk_38;
             if (lsz && c.unk_00->unk_142c) {
+                Instr *move = c.unk_00;
                 int pipe = c.unk_06;
-                if (c.unk_00->unk_138c == 3) {
+                if (move->unk_138c == 3) {
                     if (wt->unk_b4 == lsz)
                         pipe = 1;
                     else if (wt->unk_b8 == lsz)
@@ -348,7 +350,7 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                     g_080de72c = wt->unk_a0.unk_00;
                     goto faulted;
                 }
-                if (!resolveMovePipe(wt, c.unk_00, pipe)) {
+                if (!resolveMovePipe(wt, move, pipe)) {
                     func_0804ad38("failed to set up a move to a pipe\n");
                     func_0804aeb0();
                 }
@@ -481,8 +483,7 @@ bool func_0807f560(workTable *wt, wrangleFunc f)
                 g_080de72c->func_08054008(false);
             else
                 g_080de72c = done->last();
-            int *tailSlot = (int *)&done->unk_04;
-            while ((Instr *)*tailSlot != g_080de72c) {
+            while ((Instr *)*(int *)&done->unk_04 != g_080de72c) {
                 Instr *in = done->last();
                 in->func_08054214();
                 if (!UndoInsert(wt, in)) {
