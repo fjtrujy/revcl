@@ -21,8 +21,9 @@ static inline short *thruputTimes(regUse *u, int part)
 
 static inline int thruputTail(instStream *s, regUse *u, int part)
 {
-    int last = u->unk_20[part].unk_3c[10];
-    return s->unk_22c - last;
+    short last = u->unk_20[part].unk_3c[10];
+    int length = s->unk_22c;
+    return length - last;
 }
 
 bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
@@ -80,7 +81,8 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
             int total = fst + (tend + dist);
             int last = thruputTimes(sr, part)[1];
             if (total < last) {
-                ol_s *setter = sr->unk_20[part].func_0805ba2c(0, true);
+                regUseSlot *slot = &sr->unk_20[part];
+                ol_s *setter = slot->func_0805ba2c(0, true);
                 last = thruputTimes(sr, part)[1];
                 if (!p->proc.unk_74.addStall(setter, tr->unk_20[part].unk_20.unk_00, 1,
                                         last - total)) {
