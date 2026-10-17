@@ -122,7 +122,7 @@ int getMove(Block *blk, Instr *in, int now)
         }
     }
     for (i = 0; ; i++) {
-        Operand *op = in->getOp(i);
+        op = in->getOp(i);
         if (!op)
             break;
         RegPoolEntry *reg = registerOperand(op, 1);
