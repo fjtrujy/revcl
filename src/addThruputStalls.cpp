@@ -78,7 +78,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
                               fst, tend, dist);
                 return false;
             }
-            int total = fst + (tend + dist);
+            int total = (dist + tend) + fst;
             int last = thruputTimes(sr, part)[1];
             if (total < last) {
                 regUseSlot *slot = &sr->unk_20[part];
