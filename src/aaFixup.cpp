@@ -96,8 +96,15 @@ bool aaFixup(instStream *s)
             aaUse *u = func_0806c7f8(vi);
             if (u && ol->unk_10 == u->unk_04 && vop->unk_07 == 1) {
                 mValue *v = &vi->unk_13d8;
-                if (!prepareAaBefore(vi, aa, u))
+                if (hasAaData(vi)) {
+                    func_0804ad38("instruction already has aa data loaded .. mode before\n");
+                    vi->func_08054008(false);
+                    immValid(&vi->unk_13d8);
                     return false;
+                }
+                vi->unk_13d4 = aa->unk_04;
+                vi->unk_13d6 = u->unk_04;
+                vi->unk_13d5 = 1;
                 if (aa->unk_07 >= 0) {
                     if (!v->set(&in->unk_38[aa->unk_07].unk_1c)) {
                         func_0804ad38("failed to set xaaImm for before\n");
