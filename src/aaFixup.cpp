@@ -101,8 +101,10 @@ bool aaFixup(instStream *s)
                     immValid(&vi->unk_13d8);
                     return false;
                 }
-                vi->unk_13d6 = u->unk_04;
-                vi->unk_13d4 = aa->unk_04;
+                unsigned char n = u->unk_04;
+                signed char type = aa->unk_04;
+                vi->unk_13d6 = n;
+                vi->unk_13d4 = type;
                 vi->unk_13d5 = 1;
                 mValue *v = &vi->unk_13d8;
                 if (aa->unk_07 >= 0) {
