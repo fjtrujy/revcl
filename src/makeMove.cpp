@@ -138,8 +138,8 @@ int getMove(Block *blk, Instr *in, int now)
             if (score > bestScore) {
                 bestOp = op;
                 bestScore = score;
-                bestReg = reg;
                 bestLk = lk;
+                bestReg = reg;
             }
         }
     }
