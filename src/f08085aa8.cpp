@@ -198,7 +198,8 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
         s->unk_2c0 = id;
         mList *labels = &b->unk_14;
         if (!labels->unk_08) {
-            char *name = new char[mstrlen(getUniqueName(p)) + 128];
+            int nameLength = mstrlen(getUniqueName(p));
+            char *name = new char[nameLength + 128];
             if (name) {
                 func_0804adbc(name, "__v_%s_%d", getUniqueName(p), id);
                 if (!s->unk_110.func_0804b444(name)) {
