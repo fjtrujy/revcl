@@ -191,10 +191,12 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
         }
         int n = end - i;
         instStream *s = new instStream;
-        if (!s) {
+        if (!s) goto allocationOfStreamFailed;
+        goto afterNHandler;
+        allocationOfStreamFailed:
             func_0804ad38("flowMon::build - new failed\n");
             return false;
-        }
+        afterNHandler:;
         s->unk_2c0 = id;
         mList *labels = &b->unk_14;
         if (!labels->unk_08) {
@@ -211,10 +213,19 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
                 goto labelError;
             }
         } else if (!s->unk_110.func_0804b4d0(labels)) {
-            func_0804ad38("failed to grab entries from in at top\n");
-            return false;
+            goto transferError;
         }
         s->unk_2d4 |= s->unk_110.func_0804b7b4();
+        goto afterTError;
+        transferError:
+            func_0804ad38("failed to grab entries from in at top\n");
+            return false;
+        afterTError:;
+        goto afterAError;
+        labelError:
+            func_0804ad38("failed to allocate new label\n");
+            return false;
+        afterAError:;
         switch (mode) {
         case 1:
             if (!buildUta(p, s, b, n)) {
@@ -250,6 +261,11 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
             goto streamError;
         s->unk_218 = &s->unk_148;
         i = end;
+        goto afterSHandler;
+        streamError:
+            func_0804ad38("flowBuild: failed to add istream\n");
+            return false;
+        afterSHandler:;
     }
     if (!expandRawTables(p)) {
         func_0804ad38("failed to expand raw tables\n");
@@ -272,10 +288,4 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
         return false;
     }
     return true;
-streamError:
-    func_0804ad38("flowBuild: failed to add istream\n");
-    return false;
-labelError:
-    func_0804ad38("failed to allocate new label\n");
-    return false;
 }
