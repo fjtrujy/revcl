@@ -422,12 +422,9 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     m->unk_0c = mlid;
     m->unk_00 = mlid + 1;
     m->unk_04 = mlid + 1;
-    instStream *mainStream = m->unk_14;
-    mainStream->unk_2ce = 5;
-    mainStream = m->unk_14;
-    mainStream->unk_144 = s->unk_144;
-    mainStream = m->unk_14;
-    mainStream->unk_140 = s->unk_140;
+    m->unk_14->unk_2ce = 5;
+    m->unk_14->unk_144 = s->unk_144;
+    m->unk_14->unk_140 = s->unk_140;
     m->unk_14->func_0806dc9c(s);
     m->unk_1c = m->unk_18->func_08073060();
     if (!m->unk_1c) {
@@ -435,7 +432,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         func_0804adf0(-1);
     }
 
-    int n = (mlid - clid) * lsz;
+    int n = lsz * (mlid - clid);
     if (n) {
         for (int j = ld->m_nPro - 1; j >= 0; j--) {
             epiRec *p = ld->getProRec(j);
