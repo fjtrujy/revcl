@@ -1,6 +1,6 @@
 #include "wrangle_shared.h"
 
-bool func_08080460(workTable *wt, Instr *in, int *row, int *pipe)
+bool findInsertPosition(workTable *wt, Instr *in, int *row, int *pipe)
 {
     bool both = false;
     if (in->unk_138c == 3)

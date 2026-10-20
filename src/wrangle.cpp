@@ -19,7 +19,7 @@ bool func_0807f560(workTable *wt, wrangleFunc f);
 bool dynCalcStats(workTable *wt);
 bool func_0806558c(Instr *i, int *row);
 bool func_0807f2c4(Block *blk, Instr *mv);
-bool func_08080460(workTable *wt, Instr *in, int *row, int *pipe);
+bool findInsertPosition(workTable *wt, Instr *in, int *row, int *pipe);
 bool wrangleMode0Worker(workTable *wt, wrangleFunc f);
 bool func_08081610(workTable *wt, Instr *in, int *row, int *pipe);
 bool buildCandidateList2(workTable *wt);
@@ -206,7 +206,7 @@ bool buildCandidateList(workTable *wt)
         }
         row = minRow;
         pipe = 0;
-        if (func_08080460(wt, in, &row, &pipe)) {
+        if (findInsertPosition(wt, in, &row, &pipe)) {
             in->unk_141e = row;
             if (!func_0807f2c4((Block *)wt, in)) {
                 func_0804ad38("failed to add candidate\n");
@@ -549,7 +549,7 @@ bool func_080803dc(workTable *wt, wrangleCand *c)
         pipe = c->unk_06 & 1;
     else
         pipe = in->unk_138c != 1;
-    if (func_08080460(wt, in, &row, &pipe)) {
+    if (findInsertPosition(wt, in, &row, &pipe)) {
         c->unk_04 = row;
         c->unk_06 = pipe;
         return true;
