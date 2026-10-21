@@ -37,6 +37,7 @@ docker build --platform linux/386 -t revcl-rh9 tools/rh9   # toolchain image
 python3 -m venv .venv && .venv/bin/pip install -r scripts/requirements.txt
 scripts/decomp status                  # totals + next targets
 scripts/decomp diff 0x08058dd8         # incremental build + diff vs original
+scripts/decomp lab 0x08080460          # local editable source + GCC ASM + original ASM workbench
 scripts/decomp score --readme --html   # refresh this block and tmp/progress.html
 .venv/bin/python scripts/iterate.py --rounds 5   # LLM agent loop
 ```
@@ -47,3 +48,19 @@ rebuilt bytes and the progress history (`progress/history.csv`); its
 (approach, toolchain, scoring), [`docs/workflow.md`](docs/workflow.md) (agent
 loop), [`docs/matching-notes.md`](docs/matching-notes.md) (compiler idioms),
 [`AGENTS.md`](AGENTS.md) (rules for agents).
+
+### Interactive source ↔ assembly experiments
+
+The **[Assembly Workbench](docs/ASM_LAB.md)** is a permanent local browser
+tool modeled on a three-pane decompilation editor: editable, syntax-highlighted
+C/C++ source, relocation-resolved generated i386 assembly, and original
+VCL assembly. Matching instructions are green; mismatches are red; missing
+or extra instructions are amber. It offers a source-file explorer, synchronized
+assembly scrolling, mismatch navigation, quick original-GCC compilation,
+compiler diagnostics, and a separate fixed-offset raw-byte score.
+
+Run `scripts/decomp lab 0x08081610` to start experimenting with
+`findInsertPositionMode0`, or pass any mapped original function address.
+**Changes are saved only under ignored `tmp/asm_lab/`**, never automatically
+into `src/`. The project comparison and full regression gates remain
+authoritative for accepting a source change.
