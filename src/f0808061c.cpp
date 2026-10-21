@@ -467,7 +467,7 @@ bool buildCandidateList2(workTable *wt)
         clearCand(in);
         row = minRow;
         pipe = 0;
-        if (func_08081610(wt, in, &row, &pipe)) {
+        if (findInsertPositionMode0(wt, in, &row, &pipe)) {
             in->unk_141e = row;
             if (!func_0807f2c4((Block *)wt, in)) {
                 func_0804ad38("failed to add candidate\n");
@@ -493,7 +493,7 @@ bool func_0808158c(workTable *wt, wrangleCand *c)
         pipe = c->unk_06 & 1;
     else
         pipe = in->unk_138c != 1;
-    if (func_08081610(wt, in, &row, &pipe)) {
+    if (findInsertPositionMode0(wt, in, &row, &pipe)) {
         c->unk_04 = row;
         c->unk_06 = pipe;
         return true;
@@ -501,7 +501,7 @@ bool func_0808158c(workTable *wt, wrangleCand *c)
     return false;
 }
 
-bool func_08081610(workTable *wt, Instr *in, int *row, int *pipe)
+bool findInsertPositionMode0(workTable *wt, Instr *in, int *row, int *pipe)
 {
     bool both = false;
     if (in->unk_138c == 3)
