@@ -56,7 +56,9 @@ tool modeled on a three-pane decompilation editor: editable, syntax-highlighted
 C/C++ source, relocation-resolved generated i386 assembly, and original
 VCL assembly. Matching instructions are green; mismatches are red; missing
 or extra instructions are amber. It offers a source-file explorer, synchronized
-assembly scrolling, mismatch navigation, quick original-GCC compilation,
+source/ASM scrolling, bidirectional source caret ↔ instruction highlighting
+using code-verified historical GCC DWARF source lines, mismatch navigation,
+quick original-GCC compilation,
 compiler diagnostics, and a separate fixed-offset raw-byte score.
 
 Run `scripts/decomp lab 0x08081610` to start experimenting with
