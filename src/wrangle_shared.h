@@ -16,7 +16,7 @@ extern volatile char g_080de75c;
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 
-bool func_0807f560(workTable *wt, wrangleFunc f);
+bool wrangleMode1Worker(workTable *wt, wrangleFunc f);
 bool dynCalcStats(workTable *wt);
 bool func_0806558c(Instr *i, int *row);
 bool func_0807f2c4(Block *blk, Instr *mv);

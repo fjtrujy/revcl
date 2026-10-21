@@ -15,7 +15,7 @@ volatile char g_080de754;
 int g_080de758;
 volatile char g_080de75c;
 
-bool func_0807f560(workTable *wt, wrangleFunc f);
+bool wrangleMode1Worker(workTable *wt, wrangleFunc f);
 bool dynCalcStats(workTable *wt);
 bool func_0806558c(Instr *i, int *row);
 bool func_0807f2c4(Block *blk, Instr *mv);
@@ -94,7 +94,7 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
         func_0804ad38("failed to set OS_setWatchdog\n");
         return false;
     }
-    bool r = func_0807f560(wt, f);
+    bool r = wrangleMode1Worker(wt, f);
     if (!clearWatchdog()) {
         func_0804ad38("failed to clear watchdog timer\n");
         return false;
@@ -227,7 +227,7 @@ static inline void savePendingCandidate(Instr *&pending, wrangleCand &saved,
     saved = candidate;
 }
 
-bool func_0807f560(workTable *wt, wrangleFunc f)
+bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
 {
     cls08058718 pos;
     for (;;) {
