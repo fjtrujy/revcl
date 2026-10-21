@@ -331,7 +331,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             if (!f(wt, (int *)&c))
                 goto faulted;
             int lsz = wt->unk_38;
-            if (lsz && c.unk_00->unk_142c) {
+            bool isMove = c.unk_00->unk_142c != 0;
+            if (lsz && isMove) {
                 Instr *move = c.unk_00;
                 int pipe = c.unk_06;
                 if (move->unk_138c == 3) {
@@ -362,9 +363,9 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             }
             if (!c.unk_00)
                 func_0804adf0(-1);
+            int minPos = c.unk_04;
             pos.func_0805874c(c.unk_04);
             pos.func_0805878c(c.unk_06);
-            int minPos = c.unk_04;
             g_080de72c = 0;
             if (!wt->lockLine(&pos)) {
                 func_0804ad38("failed to lock a line\n");
