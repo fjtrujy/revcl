@@ -78,14 +78,14 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
                               fst, tend, dist);
                 return false;
             }
-            int total = (dist + tend) + fst;
+            dist = (dist + tend) + fst;
             int last = thruputTimes(sr, part)[1];
-            if (total < last) {
+            if (dist < last) {
                 regUseSlot *slot = &sr->unk_20[part];
                 ol_s *setter = slot->func_0805ba2c(0, true);
                 last = thruputTimes(sr, part)[1];
                 if (!p->proc.unk_74.addStall(setter, tr->unk_20[part].unk_20.unk_00, 1,
-                                        last - total)) {
+                                        last - dist)) {
                     func_0804ad38("failed to add an interstream latency stall\n");
                     return false;
                 }
