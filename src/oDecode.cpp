@@ -471,7 +471,8 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                             *d++ = *s++;
                         *d = 0;
                     }
-                    n->unk_18 |= func_080521f0(buf);
+                    i = func_080521f0(buf);
+                    n->unk_18 |= i;
                     (*pos)++;
                 }
             }
