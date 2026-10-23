@@ -214,8 +214,9 @@ bool Program::retarget(instStream *from, instStream *to)
             break;
         }
         default:
+            const char *typeName = linkTypeName(out->unk_14);
             func_0804ad38("flowMon::Retarget - unexpected output type %d %s\n",
-                          out->unk_14, linkTypeName(out->unk_14));
+                          out->unk_14, typeName);
             func_0804ad38("error retargeting %s->%s\n",
                           from->func_0806d674(), to->func_0806d674());
             return false;
