@@ -262,8 +262,8 @@ int getMove(Block *blk, Instr *in, int now)
         Operand *mvIn = mv->getOp(1);
         RegPoolEntry *newReg = out->unk_18;
         mvIn->unk_14 = bestOp->unk_14;
-        out->unk_14 = newReg;
         mv->unk_1430 = now - out->unk_0a;
+        out->unk_14 = newReg;
         int moved = 0;
         int oldBits = 0;
         int newBits = 0;
@@ -386,8 +386,8 @@ int getMove(Block *blk, Instr *in, int now)
             g_080b33ec++;
         } else {
             mv->unk_138f = moved;
-            mvIn->unk_07 = moved;
             out->unk_07 = moved;
+            mvIn->unk_07 = moved;
             if (!AddToDo_Head(blk, mv)) {
                 func_0804ad38(getMoveTodoHeadError);
                 return -1;
