@@ -987,10 +987,10 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             p--;
         while (*p != '(');
         start = ++p;
-        end = e - 1;
         d = out->unk_1000;
         for (s = tok; s != start - 1; )
             *d++ = *s++;
+        end = e - 1;
         *d = 0;
         if (!out->unk_1000[0]) {
             out->unk_1000[0] = '0';
