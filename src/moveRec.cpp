@@ -192,6 +192,7 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
         if (in->unk_38[2].unk_18->unk_30 != 0)
             return false;
         *opc = 0xb4;
+    setOps:
         *srcOp = 1;
         *dstOp = 0;
         break;
@@ -200,9 +201,7 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
         if (in->unk_38[2].unk_18->unk_30 != 32)
             return false;
         *opc = 0xb2;
-        *srcOp = 1;
-        *dstOp = 0;
-        break;
+        goto setOps;
     case 0x6d:
     case 0x6e:
     case 0x70:
@@ -224,7 +223,7 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
         func_0804adf0(-1);
         return false;
     }
-    if (d->unk_24 != s->unk_24) {
+    if (s->unk_24 != d->unk_24) {
         func_0804ad38("move detect - bad types\n");
         func_0804adf0(-1);
         return false;
