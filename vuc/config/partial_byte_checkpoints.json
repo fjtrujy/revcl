@@ -1,0 +1,306 @@
+{
+  "vuc/config/asm_output_jan25_probe.json": {
+    "function": "_Z23AsmOutput_WritePrologueRSt14basic_ofstreamIcSt11char_traitsIcEE",
+    "address": "0x08049b40",
+    "original_size": 30,
+    "exact_bytes_floor": 22,
+    "relocations": 2,
+    "verified_literal_bytes": 92
+  },
+  "vuc/config/ml_temp_format_c2_probe.json": {
+    "function": "_ZN12MLTempStringC2EPKcz",
+    "address": "0x08071b40",
+    "original_size": 110,
+    "exact_bytes_floor": 98,
+    "relocations": 8,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/ml_temp_default_C2_probe.json": {
+    "function": "_ZN12MLTempStringC2Ev",
+    "address": "0x08071c20",
+    "original_size": 101,
+    "exact_bytes_floor": 95,
+    "relocations": 9,
+    "verified_literal_bytes": 1
+  },
+  "vuc/config/print_ast_fun_context_oct14_probe.json": {
+    "function": "_Z5PrintP10ASTFunCallRSo",
+    "address": "0x0805b770",
+    "original_size": 98,
+    "exact_bytes_floor": 96,
+    "relocations": 7,
+    "verified_literal_bytes": 9
+  },
+  "vuc/config/value_type_convert_force_oct13_probe.json": {
+    "function": "_ZN5Value16TypeConvertForceE6TypeIDRKS_S2_RS_S3_",
+    "address": "0x0806f8b0",
+    "original_size": 257,
+    "exact_bytes_floor": 193,
+    "relocations": 0,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/value_to_string_oct13_probe.json": {
+    "function": "_ZNK5Value8ToStringEv",
+    "address": "0x0806f6f0",
+    "original_size": 221,
+    "exact_bytes_floor": 159,
+    "relocations": 8,
+    "verified_literal_bytes": 82
+  },
+  "vuc/config/value_division_partial_oct13.json": {
+    "function": "_ZNK5ValuedvERKS_",
+    "address": "0x0806ec50",
+    "original_size": 235,
+    "exact_bytes_floor": 178,
+    "relocations": 1,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/instruction_arena_cleanup_unit_oct14_probe.json": {
+    "function": "__tcf_1",
+    "address": "0x08051980",
+    "original_size": 46,
+    "exact_bytes_floor": 45,
+    "relocations": 3,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/yy_get_next_buffer_oct13_probe.json": {
+    "function": "_ZN11yyFlexLexer18yy_get_next_bufferEv",
+    "address": "0x080611c0",
+    "original_size": 550,
+    "exact_bytes_floor": 430,
+    "relocations": 4,
+    "verified_literal_bytes": 152
+  },
+  "vuc/config/ml_temp_set_probe.json": {
+    "function": "_ZN12MLTempString3SetEPKcz",
+    "address": "0x08071d00",
+    "original_size": 117,
+    "exact_bytes_floor": 111,
+    "relocations": 8,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/script_error_probe.json": {
+    "function": "_Z12script_errorPKc",
+    "address": "0x0806fa80",
+    "original_size": 161,
+    "exact_bytes_floor": 155,
+    "relocations": 15,
+    "verified_literal_bytes": 6
+  },
+  "vuc/config/scope_vector_insert_partial_oct15i.json": {
+    "function": "_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS6_S8_EERKS6_",
+    "address": "0x0806a550",
+    "original_size": 746,
+    "exact_bytes_floor": 733,
+    "relocations": 15,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/scope_vector_reserve_partial_oct15m.json": {
+    "function": "_ZNSt6vectorI11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS1_ELi513EESaIS6_EE7reserveEj",
+    "address": "0x0804ec50",
+    "original_size": 241,
+    "exact_bytes_floor": 183,
+    "relocations": 5,
+    "verified_literal_bytes": 54
+  },
+  "vuc/config/type_stream_input_partial_oct15n.json": {
+    "function": "_ZrsRSiR4Type",
+    "address": "0x0804f2a0",
+    "original_size": 369,
+    "exact_bytes_floor": 264,
+    "relocations": 10,
+    "verified_literal_bytes": 48
+  },
+  "vuc/config/reduce_binop_unsigned_partial_oct15o.json": {
+    "function": "_Z11ReduceBinOpIjEbPN2IR13Operator_DataERKT_S5_RS3_",
+    "address": "0x08050540",
+    "original_size": 315,
+    "exact_bytes_floor": 300,
+    "relocations": 0,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/reduce_binop_signed_partial_oct15o.json": {
+    "function": "_Z11ReduceBinOpIiEbPN2IR13Operator_DataERKT_S5_RS3_",
+    "address": "0x08050680",
+    "original_size": 315,
+    "exact_bytes_floor": 300,
+    "relocations": 0,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/concatenate_binop_partial_oct15o.json": {
+    "function": "_Z16ConcatenateBinOpPN2IR13Operator_DataERK12MLGameStringS4_",
+    "address": "0x080507c0",
+    "original_size": 346,
+    "exact_bytes_floor": 223,
+    "relocations": 20,
+    "verified_literal_bytes": 44
+  },
+  "vuc/config/canonize_try_reduce_unsigned_partial_oct15p.json": {
+    "function": "_Z22Canonize_TryReduceExprIjEbPN2IR9Expr_DataERT_",
+    "address": "0x0804ffb0",
+    "original_size": 359,
+    "exact_bytes_floor": 116,
+    "relocations": 13,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/canonize_try_reduce_signed_partial_oct15p.json": {
+    "function": "_Z22Canonize_TryReduceExprIiEbPN2IR9Expr_DataERT_",
+    "address": "0x08050120",
+    "original_size": 359,
+    "exact_bytes_floor": 116,
+    "relocations": 13,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/broadcast_move_partial_oct15q.json": {
+    "function": "_Z13BroadcastMoveRKN2IR8RegisterES2_R15InstructionList",
+    "address": "0x08051b30",
+    "original_size": 416,
+    "exact_bytes_floor": 191,
+    "relocations": 27,
+    "verified_literal_bytes": 47
+  },
+  "vuc/config/translate_type_partial_oct15q.json": {
+    "function": "_Z9TranslateRK4Typeji",
+    "address": "0x0806a9b0",
+    "original_size": 352,
+    "exact_bytes_floor": 64,
+    "relocations": 12,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/asm_output_print_instruction_real_unit_oct15r.json": {
+    "function": "_Z26AsmOutput_PrintInstructionP11InstructionRSt14basic_ofstreamIcSt11char_traitsIcEE",
+    "address": "0x08049c70",
+    "original_size": 382,
+    "exact_bytes_floor": 334,
+    "relocations": 25,
+    "verified_literal_bytes": 154
+  },
+  "vuc/config/type_vector_insert_aux_partial_oct15s.json": {
+    "function": "_ZNSt6vectorI4TypeSaIS0_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS0_S2_EERKS0_",
+    "address": "0x0804ee10",
+    "original_size": 525,
+    "exact_bytes_floor": 481,
+    "relocations": 9,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/try_open_file_partial_oct15t.json": {
+    "function": "_Z11TryOpenFilePKc",
+    "address": "0x0804ca30",
+    "original_size": 754,
+    "exact_bytes_floor": 650,
+    "relocations": 44,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/listfile_write_to_file_partial_oct15t.json": {
+    "function": "_ZN8ListFile11WriteToFileEPKc",
+    "address": "0x0805abc0",
+    "original_size": 1071,
+    "exact_bytes_floor": 875,
+    "relocations": 58,
+    "verified_literal_bytes": 3
+  },
+  "vuc/config/translate_stmt_list_partial_oct14_probe.json": {
+    "function": "_Z9TranslateR11ASTNodeListIP7ASTStmtE",
+    "address": "0x0806ada0",
+    "original_size": 119,
+    "exact_bytes_floor": 60,
+    "relocations": 3,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/assemble_binop_dispatch_oct14_probe.json": {
+    "function": "_Z13AssembleBinOpRKN2IR8RegisterEPNS_9Expr_DataER15InstructionList",
+    "address": "0x0805a3f0",
+    "original_size": 193,
+    "exact_bytes_floor": 162,
+    "relocations": 4,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/translate_expr_list_oct14_probe.json": {
+    "function": "_Z9TranslateR11ASTNodeListIP7ASTExprE",
+    "address": "0x0806ae20",
+    "original_size": 256,
+    "exact_bytes_floor": 112,
+    "relocations": 2,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/canonize_fragment_oct14_probe.json": {
+    "function": "_Z15Canonize_ReducePN2IR13Fragment_DataE",
+    "address": "0x08050460",
+    "original_size": 224,
+    "exact_bytes_floor": 78,
+    "relocations": 11,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/value_addition_partial_oct14_probe.json": {
+    "function": "_ZNK5ValueplERKS_",
+    "address": "0x0806e9b0",
+    "original_size": 219,
+    "exact_bytes_floor": 203,
+    "relocations": 1,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/translate_frag_list_var_oct14_probe.json": {
+    "function": "_Z17TranslateFragListIP10ASTVarDeclE11ASTNodeListIPN2IR13Fragment_DataEERS2_IT_E",
+    "address": "0x0806e0a0",
+    "original_size": 240,
+    "exact_bytes_floor": 110,
+    "relocations": 2,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/translate_frag_list_decl_oct14_probe.json": {
+    "function": "_Z17TranslateFragListIP7ASTDeclE11ASTNodeListIPN2IR13Fragment_DataEERS2_IT_E",
+    "address": "0x0806e190",
+    "original_size": 240,
+    "exact_bytes_floor": 110,
+    "relocations": 2,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/translate_frag_list_string_oct14_probe.json": {
+    "function": "_Z17TranslateFragListI12MLGameStringE11ASTNodeListIPN2IR13Fragment_DataEERS1_IT_E",
+    "address": "0x0806e5b0",
+    "original_size": 306,
+    "exact_bytes_floor": 75,
+    "relocations": 6,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/value_logical_and_partial_oct14_probe.json": {
+    "function": "_ZNK5ValueaaERKS_",
+    "address": "0x0806f340",
+    "original_size": 325,
+    "exact_bytes_floor": 192,
+    "relocations": 1,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/hash_copy_node_args_partial_oct14_probe.json": {
+    "function": "_ZN11MLHashTableI12MLGameStringP16SymbolTableEntry9MLHashFunIS0_ELi513EEC1ERKS5_",
+    "address": "0x0804f420",
+    "original_size": 166,
+    "exact_bytes_floor": 80,
+    "relocations": 4,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/value_set_constval_partial_oct15b.json": {
+    "function": "_ZN5Value3SetEPK15ASTConstValExpr",
+    "address": "0x0806e7d0",
+    "original_size": 455,
+    "exact_bytes_floor": 67,
+    "relocations": 13,
+    "verified_literal_bytes": 11
+  },
+  "vuc/config/get_next_word_partial_oct15e_probe.json": {
+    "function": "_Z11GetNextWordPKc",
+    "address": "0x080511e0",
+    "original_size": 135,
+    "exact_bytes_floor": 50,
+    "relocations": 5,
+    "verified_literal_bytes": 0
+  },
+  "vuc/config/canonize_fold_expr_partial_oct16.json": {
+    "function": "_Z17Canonize_FoldExprPN2IR9Expr_DataE",
+    "address": "0x080502c0",
+    "original_size": 410,
+    "exact_bytes_floor": 72,
+    "relocations": 19,
+    "verified_literal_bytes": 31
+  }
+}

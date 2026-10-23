@@ -110,6 +110,33 @@ verification; final completion requires byte equality for the **entire VUC
 binary**, not just its selected functions. See
 `vuc/docs/exact-match-contract.md` for the acceptance contract.
 
+### Partial-byte checkpoints (October 2026)
+
+The exact-only manifest has subsequently grown to **205/205** verified
+functions (**16,093/16,093** code bytes). In addition, the 39
+selected-but-not-exact experiments can now be scored separately with
+`vuc/scripts/match_partial_checkpoints.py`. Its baseline
+`vuc/config/partial_byte_checkpoints.json` preserves **38 authenticated
+original-length partials**, with **7,783/11,764 original-offset bytes**
+inside those *experimental functions only*. The remaining
+`SymbolTable::Enter` experiment is wrong-sized and deliberately unscored.
+
+```sh
+limactl shell revcl-oracle -- python3 \
+  /path/to/revcl/vuc/scripts/match_partial_checkpoints.py \
+  --compiler /tmp/vuc-binutils215/g++-jan25-as215 \
+  --out /tmp/vuc-partials
+```
+
+The command rejects silent partial-byte regressions. After a genuine
+original-offset improvement, inspect the report and explicitly run it
+with `--refresh-baseline` to commit the new floor. A wrong-sized source
+is a **structural experiment**, not a byte-match claim: the best saved
+`ASTLValExpr` direction is `vuc/probes/PrintASTLValLiveChildrenOct23.cpp`
+(**755** compiled bytes versus **765** original). Partial scores never
+count as accepted exact functions or as a linked executable percentage.
+See `vuc/docs/2026-10-23-partial-byte-checkpoint-policy.md`.
+
 The most recent exact milestone reconstructs the genuine Printer.cpp
 source-unit context, producing both `Printer_UglyPrint()` at **40/40**
 and its generated iostream initialization wrapper at **31/31**.
