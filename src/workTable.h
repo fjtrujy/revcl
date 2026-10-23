@@ -2,6 +2,10 @@
 #ifndef WORKTABLE_H
 #define WORKTABLE_H
 
+#ifndef WORK_TABLE_CTOR_EMISSION
+#define WORK_TABLE_CTOR_EMISSION
+#endif
+
 #include "os.h"
 #include "Instr.h"
 #include "tPairList.h"
@@ -194,7 +198,7 @@ public:
             r = &unk_2c[i];
         return r;
     }
-    workTable();
+    workTable() WORK_TABLE_CTOR_EMISSION;
     ~workTable();
     Instr *getBranch();
     bool removeBranch();

@@ -1,6 +1,9 @@
+#define WORK_TABLE_CTOR_EMISSION __attribute__((weak,section(".gnu.linkonce.t._ZN9workTableC2Ev")))
 #include "os.h"
 #include "workTable.h"
 #include "Instr.h"
+
+#undef WORK_TABLE_CTOR_EMISSION
 
 class Block;
 bool setLocks(Instr *in);
@@ -46,5 +49,17 @@ bool DoInsert(workTable *const wt, Instr *in, cls08058718 *pos)
         func_0804aeb0();
     }
     return true;
+}
+
+
+workTable::workTable()
+{
+    unk_2c = 0;
+    unk_4c = 0;
+    unk_24 = 0;
+    unk_20 = 0;
+    unk_0b = 0;
+    unk_10 = 0;
+    dispose();
 }
 

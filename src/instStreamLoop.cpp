@@ -1,4 +1,7 @@
+#define WORK_TABLE_CTOR_EMISSION __attribute__((weak,section(".gnu.linkonce.t._ZN9workTableC2Ev")))
 #include "instStream.h"
+
+#undef WORK_TABLE_CTOR_EMISSION
 
 bool instStream::canLoop()
 {
