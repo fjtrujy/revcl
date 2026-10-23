@@ -285,8 +285,9 @@ Instr *workTable::getBranch()
             if (b->unk_1392)
                 return 0;
             else if (!o->unk_2ce) {
+                const char *ownerName = o->func_0806d674();
                 func_0804ad38("iTable::getBranch() for %s table has a branch at the end, but owning stream doesn't think it branches\n",
-                              o->func_0806d674());
+                              ownerName);
                 dump();
                 func_0804aeb0();
             }
