@@ -182,7 +182,7 @@ int scoreMoveParent(RegPoolEntry *reg, cls0805bcc4 *parent, cls0805bcc4 *lk,
             func_0804aeb0();
         }
         if (d > score)
-            return d;
+            score = d;
     }
     return score;
 }
