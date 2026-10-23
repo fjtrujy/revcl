@@ -190,7 +190,8 @@ int getToEnd(Instr *in)
     case 4:
         return 0;
     default:
-        func_0804ad38("bad code mode for getToEnd()..mode=%s\n", codeModeName(wt->unk_09));
+        const char *modeName = codeModeName(wt->unk_09);
+        func_0804ad38("bad code mode for getToEnd()..mode=%s\n", modeName);
         break;
     }
     return -1;
