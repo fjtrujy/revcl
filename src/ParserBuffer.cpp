@@ -10,7 +10,7 @@ bool func_0804c03c(const char *a, const char *b);
 bool func_0804bfcc(const char *a, const char *b);
 
 
-bool Parser::func_0804fb94(char *buf, const char *name, bool gasp, bool cpp)
+bool __attribute__((weak,section(".gnu.linkonce.t._ZN6Parser13func_0804fb94EPcPKcbb"))) Parser::func_0804fb94(char *buf, const char *name, bool gasp, bool cpp)
 {
     reset();
     if (!buf) {
