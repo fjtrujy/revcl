@@ -55,8 +55,9 @@ bool assignExtRegisters(Program *p)
         workTable *wt = s->getTable();
         unsigned int mode = (unsigned char)wt->unk_08;
         if ((char)mode != 1) {
+            const char *modeName = allocModeName(mode);
             func_0804ad38("AssignExtRegisters - alloc mode not NONE for %s mode %s!\n",
-                          s->func_0806d674(), allocModeName(mode));
+                          s->func_0806d674(), modeName);
             return false;
         }
         for (unsigned i = 0; i != 12; i++) {
