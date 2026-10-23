@@ -2,6 +2,10 @@
 #ifndef XPNODE_H
 #define XPNODE_H
 
+#ifndef XP_NODE_CTOR_EMISSION
+#define XP_NODE_CTOR_EMISSION
+#endif
+
 #pragma interface
 
 #include <stdio.h>
@@ -20,7 +24,7 @@ public:
     xpNode *child[2];
     mValue val;
 
-    xpNode();
+    xpNode() XP_NODE_CTOR_EMISSION;
     ~xpNode()
     {
         mValue *v = &val;

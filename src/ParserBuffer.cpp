@@ -1,7 +1,10 @@
+#define XP_NODE_CTOR_EMISSION __attribute__((weak,section(".gnu.linkonce.t._ZN6xpNodeC2Ev")))
+#pragma implementation "xpNode.h"
 // Parser initialization and processed-buffer construction.
 
 #include "Parser.h"
 #include "xpNode.h"
+#undef XP_NODE_CTOR_EMISSION
 #include "xun.h"
 #include "os.h"
 
@@ -215,3 +218,24 @@ extern const char parserGaspIncludeTagFailure[] = "failed to add loc tag for inc
 extern const char parserGaspMissingPreviousTag[] = "neither previous include or previous macro set\n";
 extern const char parserGaspDepthJump[] __attribute__((aligned(32))) = "jumped too far  in gasp depth\n";
 extern const char parserGaspDepthOverflow[] = "exceeded maximum depth for the loctag stack\n";
+
+inline void xpNode::init()
+{
+    unk_01 = 0;
+    unk_02 = 0;
+    unk_00 = 0;
+    unk_04 = 0;
+    unk_05 = 0;
+    unk_03 = 0;
+    val.clear();
+    parent = 0;
+    child[0] = 0;
+    child[1] = 0;
+    val.clear();
+}
+
+xpNode::xpNode()
+{
+    init();
+}
+

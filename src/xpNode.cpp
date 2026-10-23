@@ -1,6 +1,8 @@
+#define XP_NODE_CTOR_EMISSION __attribute__((weak,section(".gnu.linkonce.t._ZN6xpNodeC2Ev")))
 #include <stdio.h>
 #pragma implementation
 #include "xpNode.h"
+#undef XP_NODE_CTOR_EMISSION
 #include "os.h"
 
 xpOp opTable_080b30a0[20] = {
