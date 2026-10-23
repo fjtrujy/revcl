@@ -1,0 +1,37 @@
+{
+  "function": "_Z5PrintP11ASTLValExprRSo",
+  "address": "0x0805c4f0",
+  "size": 765,
+  "source": "vuc/probes/PrintASTLValRecursionOwnerOct23.cpp",
+  "flags": [
+    "-O2"
+  ],
+  "relocations": {
+    "matchStack": "0x0808abe4",
+    "_Znaj": "0x080499ac",
+    "_Z5PrintP11ASTLValExprRSo": "0x0805c4f0",
+    "_Z5PrintP7ASTExprRSo": "0x0805c0a0",
+    "_ZNK12MLGameString5c_strEv": "0x08071800",
+    "_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc": "0x080497bc",
+    "_Unwind_Resume": "0x0804998c"
+  },
+  "relocation_literals": {
+    ".rodata": [
+      {
+        "offset": 0,
+        "size": 2,
+        "address": "0x080766fb"
+      },
+      {
+        "offset": 2,
+        "size": 2,
+        "address": "0x08072712"
+      },
+      {
+        "offset": 4,
+        "size": 2,
+        "address": "0x080726c9"
+      }
+    ]
+  }
+}

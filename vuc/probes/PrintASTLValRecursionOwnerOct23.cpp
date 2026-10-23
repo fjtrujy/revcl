@@ -32,15 +32,17 @@ struct ASTLValArrayExpr : ASTLValExpr {
 struct MatchStack {
     int length;
     int capacity;
-    ASTLValExpr **entries;
-    void Add(ASTLValExpr *node) {
+    // Shared by Print(ASTStmt*), Print(ASTExpr*), Print(ASTDecl*) and this
+    // printer. Each entry must therefore own a common ASTNode*, not LVal*.
+    ASTNode **entries;
+    void Add(ASTNode *node) {
         int previous = length;
         if (previous >= capacity) {
             int expanded = capacity ? 2 * capacity : 16;
-            ASTLValExpr **oldEntries = entries;
-            entries = new ASTLValExpr *[expanded];
+            ASTNode **oldEntries = entries;
+            entries = new ASTNode *[expanded];
             if (oldEntries)
-                __builtin_memcpy(entries, oldEntries, previous * sizeof(ASTLValExpr *));
+                __builtin_memcpy(entries, oldEntries, previous * sizeof(ASTNode *));
             capacity = expanded;
         }
         entries[previous] = node;
