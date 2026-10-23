@@ -112,12 +112,12 @@ binary**, not just its selected functions. See
 
 ### Partial-byte checkpoints (October 2026)
 
-The exact-only manifest has subsequently grown to **205/205** verified
-functions (**16,093/16,093** code bytes). In addition, the 39
+The exact-only manifest has subsequently grown to **207/207** verified
+functions (**16,723/16,723** code bytes). In addition, the 37
 selected-but-not-exact experiments can now be scored separately with
 `vuc/scripts/match_partial_checkpoints.py`. Its baseline
-`vuc/config/partial_byte_checkpoints.json` preserves **38 authenticated
-original-length partials**, with **7,783/11,764 original-offset bytes**
+`vuc/config/partial_byte_checkpoints.json` preserves **36 authenticated
+original-length partials**, with **7,183/11,134 original-offset bytes**
 inside those *experimental functions only*. The remaining
 `SymbolTable::Enter` experiment is wrong-sized and deliberately unscored.
 
@@ -136,6 +136,12 @@ is a **structural experiment**, not a byte-match claim: the best saved
 (**755** compiled bytes versus **765** original). Partial scores never
 count as accepted exact functions or as a linked executable percentage.
 See `vuc/docs/2026-10-23-partial-byte-checkpoint-policy.md`.
+
+Two previously 300/315-byte experimental `ReduceBinOp<int/unsigned>`
+templates now match their entire original **315/315** bodies under
+both historical GCC snapshots, after recovering the original compiler
+block layout through an ordinary unlikely-division C++03 branch hint.
+See `vuc/docs/2026-10-23-reducebinop-original-branch-hint-exact.md`.
 
 The most recent exact milestone reconstructs the genuine Printer.cpp
 source-unit context, producing both `Printer_UglyPrint()` at **40/40**

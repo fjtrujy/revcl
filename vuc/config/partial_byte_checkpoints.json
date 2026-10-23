@@ -111,22 +111,6 @@
     "relocations": 10,
     "verified_literal_bytes": 48
   },
-  "vuc/config/reduce_binop_unsigned_partial_oct15o.json": {
-    "function": "_Z11ReduceBinOpIjEbPN2IR13Operator_DataERKT_S5_RS3_",
-    "address": "0x08050540",
-    "original_size": 315,
-    "exact_bytes_floor": 300,
-    "relocations": 0,
-    "verified_literal_bytes": 0
-  },
-  "vuc/config/reduce_binop_signed_partial_oct15o.json": {
-    "function": "_Z11ReduceBinOpIiEbPN2IR13Operator_DataERKT_S5_RS3_",
-    "address": "0x08050680",
-    "original_size": 315,
-    "exact_bytes_floor": 300,
-    "relocations": 0,
-    "verified_literal_bytes": 0
-  },
   "vuc/config/concatenate_binop_partial_oct15o.json": {
     "function": "_Z16ConcatenateBinOpPN2IR13Operator_DataERK12MLGameStringS4_",
     "address": "0x080507c0",

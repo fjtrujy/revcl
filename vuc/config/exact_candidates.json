@@ -203,5 +203,7 @@
   "vuc/config/scope_copy_exact_oct14_probe.json",
   "vuc/config/value_logical_or_exact_oct14_probe.json",
   "vuc/config/ir_accumulatorable_probe.json",
-  "vuc/config/ml_temp_vformat_assert_exact_oct16.json"
+  "vuc/config/ml_temp_vformat_assert_exact_oct16.json",
+  "vuc/config/reduce_binop_unsigned_partial_oct15o.json",
+  "vuc/config/reduce_binop_signed_partial_oct15o.json"
 ]

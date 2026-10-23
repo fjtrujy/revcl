@@ -91,7 +91,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 205)
+        self.assertEqual(len(exact_configs), 207)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -706,21 +706,22 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertEqual(config["relocation_objects"][".data"]["_ZZrsRSiR4TypeE2tn"],
                          "0x0807700c")
 
-    def test_new_reduce_binop_specializations_remain_strict_partials(self):
+    def test_reduce_binop_specializations_are_original_length_exact(self):
         accepted=set(json.loads(suite.EXACT_MANIFEST.read_text()))
         chosen=set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         for kind,address,code in (("unsigned","0x08050540","Ij"),
                                   ("signed","0x08050680","Ii")):
             path=f"vuc/config/reduce_binop_{kind}_partial_oct15o.json"
             self.assertIn(path,chosen)
-            self.assertNotIn(path,accepted)
+            self.assertIn(path,accepted)
             cfg=json.loads(suite.within_repo(path).read_text())
             self.assertEqual(cfg["address"],address)
             self.assertEqual(cfg["size"],315)
             self.assertIn(f"ReduceBinOp{code}",cfg["function"])
-            self.assertEqual(cfg["source"],"vuc/probes/ReduceBinOpNewOct15o.cpp")
+            self.assertEqual(cfg["source"],"vuc/src/ReduceBinOp.cpp")
             self.assertEqual(cfg["relocations"],{})
-        src=suite.within_repo("vuc/probes/ReduceBinOpNewOct15o.cpp").read_text()
+        src=suite.within_repo("vuc/src/ReduceBinOp.cpp").read_text()
+        self.assertIn("__builtin_expect(operation == 10, 0)",src)
         self.assertIn("else return true;",src)
 
     def test_new_concatenate_binop_is_literal_authenticated_experimental(self):
