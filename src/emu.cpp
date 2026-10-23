@@ -79,8 +79,9 @@ fail:
         break;
     }
     default:
+        const char *modeName = codeModeName(wt->unk_09);
         func_0804ad38("emu - can't emu table from %s of type %s\n",
-                      wt->ownerName(), codeModeName(wt->unk_09));
+                      wt->ownerName(), modeName);
         break;
     }
     return true;
