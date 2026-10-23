@@ -531,20 +531,20 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         char *td = out->unk_1800;
         t++;
         int chars = 0;
-        count = 1;
+        int seps = 1;
         while (*t) {
-            if (*t == ':') {
-                chars = 0;
-                count++;
-            } else {
-                count = 0;
+            if (*t != ':') {
+                seps = 0;
                 chars++;
+            } else {
+                chars = 0;
+                seps++;
             }
-            if (count <= 1 || chars)
+            if (seps <= 1 || chars)
                 *td++ = *t;
             t++;
         }
-        if (count)
+        if (seps)
             td--;
         if (td == out->unk_1800) {
             func_0804ac7c("ignoring empty tag\n");
@@ -597,8 +597,8 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             out->unk_2000 = mask;
-            s = tok;
-            d = out->name;
+            char *s = tok;
+            char *d = out->name;
             while (*s)
                 *d++ = *s++;
             *d = 0;
@@ -681,8 +681,8 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                     func_0804ad84("instruction and operand have mismatching field select\n");
                     return false;
                 }
-                s = tok;
-                d = out->name;
+                char *s = tok;
+                char *d = out->name;
                 while (*s)
                     *d++ = *s++;
                 *d = 0;
@@ -892,8 +892,8 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             out->unk_2000 = mask;
-            s = tok;
-            d = out->name;
+            char *s = tok;
+            char *d = out->name;
             while (*s)
                 *d++ = *s++;
             *d = 0;
@@ -980,14 +980,14 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         if (count <= 2)
             return false;
         out->unk_2000 = 1;
-        end = e - 1;
-        if (*end != ')')
+        p = e - 1;
+        if (*p != ')')
             return false;
-        p = end;
         do
             p--;
         while (*p != '(');
-        start = p + 1;
+        start = ++p;
+        end = e - 1;
         d = out->unk_1000;
         for (s = tok; s != start - 1; )
             *d++ = *s++;
