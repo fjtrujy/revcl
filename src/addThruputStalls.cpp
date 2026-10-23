@@ -21,7 +21,7 @@ static inline short *thruputTimes(regUse *u, int part)
 
 static inline int thruputTail(instStream *s, regUse *u, int part)
 {
-    short last = u->unk_20[part].unk_3c[10];
+    int last = u->unk_20[part].unk_3c[10];
     int length = s->unk_22c;
     return length - last;
 }
@@ -71,6 +71,8 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
         }
         if (isPathRaw(p, key)) {
             int dist = s->unk_240;
+            int last = sr->unk_20[part].unk_3c[11];
+            short *lastAddress = thruputTimes(sr, part);
             int tend = thruputTail(s, sr, part);
             int fst = tr->unk_20[part].unk_3c[7];
             if (fst < 0 || tend < 0 || dist < 0) {
@@ -78,15 +80,14 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
                               fst, tend, dist);
                 return false;
             }
-            short *lastAddress = thruputTimes(sr, part);
             dist = (dist + tend) + fst;
-            int last = lastAddress[1];
+            last = lastAddress[1];
             if (dist < last) {
                 regUseSlot *slot = &sr->unk_20[part];
                 ol_s *setter = slot->func_0805ba2c(0, true);
-                last = lastAddress[1];
+                int again = lastAddress[1];
                 if (!p->proc.unk_74.addStall(setter, tr->unk_20[part].unk_20.unk_00, 1,
-                                        last - dist)) {
+                                        again - dist)) {
                     func_0804ad38("failed to add an interstream latency stall\n");
                     return false;
                 }
