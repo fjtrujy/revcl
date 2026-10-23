@@ -88,7 +88,8 @@ bool catOnTo(workTable *t1, workTable *t2)
         return 0;
     }
     int end = t1->func_080741c0();
-    if (!t1->grow(end + t2->getPhysicalLen() + 8)) {
+    int physicalLen = t2->getPhysicalLen();
+    if (!t1->grow(end + physicalLen + 8)) {
         func_0804ad38("failed to grow table1\n");
         return 0;
     }
