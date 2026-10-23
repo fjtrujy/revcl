@@ -1,3 +1,10 @@
+extern const char instrCloneAllocationError[];
+extern const char instrCloneResetError[];
+extern const char instrCloneTemporaryError[];
+extern const char instrCloneOperandError[];
+extern const char instrCloneIndexError[];
+extern const char instrCloneImmediateError[];
+extern const char instrGetOperandError[];
 #include "Instr.h"
 #include <string.h>
 #include "os.h"
@@ -681,4 +688,105 @@ bool OpSlot::func_080560c4()
 int OpSlot::func_080560e8()
 {
     return unk_54.clear();
+}
+
+bool Instr::func_08054d64(int n, int *out)
+{
+    Operand *op = getOp(n);
+    if (!op) {
+        func_0804ad38(instrGetOperandError, n);
+        return false;
+    }
+    return op->unk_1c.getInt(out);
+}
+
+
+Instr *Instr::clone()
+{
+    if (!this)
+        return 0;
+    iInfo *info = unk_34;
+    if (!info)
+        return 0;
+    Instr *c = new Instr(info);
+    if (!c) {
+        func_0804ad38(instrCloneAllocationError);
+        func_0804adf0(-1);
+    }
+    if (!c->func_08054b84()) {
+        func_0804ad38(instrCloneResetError);
+        func_0804adf0(-1);
+    }
+    c->unk_138f = unk_138f;
+    c->unk_138a = unk_138a;
+    c->unk_1428 = 0;
+    c->unk_1389 = unk_1389;
+    c->unk_142c = unk_142c;
+    c->unk_142e = unk_142e;
+    c->unk_13d7 = unk_13d7;
+    c->unk_13f0.func_0805e37c(&unk_13f0);
+    c->unk_13e4 = unk_13e4;
+    c->unk_13e0 = unk_13e0;
+    c->unk_141a = unk_141a;
+    c->unk_1420 = unk_1420;
+    c->unk_1392 = unk_1392;
+    c->unk_1391 = unk_1391;
+    c->unk_14 = unk_14;
+    c->unk_18 = unk_18;
+    c->unk_1a = unk_1a;
+    c->unk_13d4 = unk_13d4;
+    c->unk_13d5 = unk_13d5;
+    c->unk_13d6 = unk_13d6;
+    if (unk_13d8.isValid())
+        c->unk_13d8.set(&unk_13d8);
+    c->unk_13d2 = unk_13d2;
+    if (unk_08) {
+        func_0804ad38(instrCloneTemporaryError);
+        delete c;
+        return 0;
+    }
+    unk_08 = c;
+    c->unk_08 = this;
+    if (unk_139c)
+        c->unk_139c = dupString(unk_139c);
+    c->unk_138b = unk_138b;
+    Operand *s;
+    for (int i = 0; (s = getOp(i)) != 0; i++) {
+        Operand *d = c->getOp(i);
+        if (d == 0) {
+            func_0804ad38(instrCloneOperandError);
+            func_0804adf0(-1);
+        }
+        if (s->unk_26 != i) {
+            func_0804ad38(instrCloneIndexError);
+            func_0804adf0(-1);
+        }
+        d->unk_26 = s->unk_26;
+        d->unk_04 = s->unk_04;
+        d->unk_09 = s->unk_09;
+        d->unk_0a = s->unk_0a;
+        d->unk_05 = s->unk_05;
+        d->unk_0b = s->unk_0b;
+        d->unk_18 = s->unk_18;
+        d->unk_07 = s->unk_07;
+        d->unk_0c = s->unk_0c;
+        d->unk_0d = s->unk_0d;
+        d->unk_08 = s->unk_08;
+        d->unk_14 = s->unk_14;
+        d->unk_10 = s->unk_10;
+        if (s->unk_1c.isValid()) {
+            if (!d->unk_1c.set(&s->unk_1c)) {
+                func_0804ad38(instrCloneImmediateError);
+                func_0804adf0(-1);
+            }
+        }
+        d->unk_24 = s->unk_24;
+        d->unk_25 = s->unk_25;
+        d->unk_29 = s->unk_29;
+        d->unk_27 = s->unk_27;
+        d->unk_2b = 0;
+        d->unk_06 = s->unk_06;
+        d->unk_28 = s->unk_28;
+    }
+    return c;
 }
