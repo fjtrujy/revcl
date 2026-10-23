@@ -96,7 +96,8 @@ workTable *makeForceTable(Program *p, instStream *s)
     workTable *wt = s->getTable();
     int mode = wt->unk_09;
     if ((unsigned char)mode != 3) {
-        func_0804ad38("it_old is not raw mode - %s\n", codeModeName(mode));
+        const char *modeName = codeModeName(mode);
+        func_0804ad38("it_old is not raw mode - %s\n", modeName);
         return 0;
     }
     workTable *nt = prepUta(p, s, 0, 0);
@@ -106,7 +107,8 @@ workTable *makeForceTable(Program *p, instStream *s)
     }
     mode = nt->unk_09;
     if ((unsigned char)mode != 2) {
-        func_0804ad38("it_new is not raw mode .. %s\n", codeModeName(mode));
+        const char *modeName = codeModeName(mode);
+        func_0804ad38("it_new is not raw mode .. %s\n", modeName);
         return 0;
     }
     int start = wt->func_0807411c();
