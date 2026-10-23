@@ -1,3 +1,20 @@
+extern const char getMoveParentUninsertedError[];
+extern const char getMoveNegativeDistanceError[];
+extern const char getMoveNoRegisterError[];
+extern const char getMoveNoParentError[];
+extern const char getMoveOldStateError[];
+extern const char getMoveSpreadStateError[];
+extern const char getMoveInputOwnerError[];
+extern const char getMoveOutputOwnerError[];
+extern const char getMoveInputRegisterError[];
+extern const char getMoveOutputLockError[];
+extern const char getMoveInputDeregisterError[];
+extern const char getMoveOutputInputError[];
+extern const char getMoveCandidateError[];
+extern const char getMoveNewInputError[];
+extern const char getMoveRetargetDeregisterError[];
+extern const char getMoveRetargetReregisterError[];
+extern const char getMoveTodoHeadError[];
 // Compiler-state reconstruction: config/matching-evidence/undo-move-reconstruction.md.
 
 #include "iInfo_shared.h"
@@ -116,3 +133,281 @@ bool undoMove(Block *blk, Instr *mv)
     return true;
 }
 
+
+#include "iInfo_shared.h"
+
+#include "Instr.h"
+#include "Block.h"
+#include "os.h"
+
+
+Instr *makeMove(Block *, RegPoolEntry *);
+void adjustMoveCount(Block *blk, Instr *mv, int);
+bool addFreeMove(Instr *mv);
+bool setPipeBits(Instr *in);
+bool AddToDo_Head(Block *blk, Instr *n);
+bool logInstr(Block *blk, Instr *in);
+void func_080737b8(Instr *in);
+
+extern int g_080b33ec;
+
+static inline void countCreatedMove(Block *blk, Instr *mv)
+{
+    adjustMoveCount(blk, mv, 1);
+}
+
+static inline __attribute__((always_inline))
+int scoreMoveParent(RegPoolEntry *reg, cls0805bcc4 *parent, cls0805bcc4 *lk,
+                    int now, int score)
+{
+    if (lk->getPriority() == 2 && score < 10000)
+        score = 10000;
+    if (lk->getPriority() == 1 && score < 20000)
+        score = 20000;
+    if (parent->unk_2d != 2) {
+        int row = parent->unk_32;
+        if (row < 0) {
+            func_0804ad38(getMoveParentUninsertedError);
+            func_0804aeb0();
+        }
+        int lo = row + 1;
+        int hi = row + parent->unk_18;
+        if (lo < reg->unk_00)
+            reg->unk_00 = lo;
+        if (hi > reg->unk_02)
+            reg->unk_02 = hi;
+        int d = now - lo;
+        if (d < 0) {
+            func_0804ad38(getMoveNegativeDistanceError);
+            func_0804aeb0();
+        }
+        if (d > score)
+            return d;
+    }
+    return score;
+}
+
+int getMove(Block *blk, Instr *in, int now)
+{
+    Operand *bestOp = 0;
+    int bestScore = -1;
+    RegPoolEntry *bestReg = 0;
+    cls0805bcc4 *bestLk = 0;
+    if (in->unk_1428)
+        return 2;
+    Operand *op;
+    int i;
+    for (i = 0; (op = in->getOp(i)) != 0; i++) {
+        RegPoolEntry *r = registerOperand(op, 1);
+        if (r) {
+            r->unk_00 = 0x7fff;
+            r->unk_02 = -1;
+        }
+    }
+    for (i = 0; ; i++) {
+        op = in->getOp(i);
+        if (!op)
+            break;
+        RegPoolEntry *reg = registerOperand(op, 1);
+        if (reg && func_0806c6c4(reg) && op->unk_2b != 2) {
+            int score = -1;
+            cls0805bcc4 *lk = 0;
+            for (int p = 0; p != reg->unk_28; p++) {
+                if ((op->unk_07 >> p) & 1) {
+                    lk = &op->unk_2c[p];
+                    score = scoreMoveParent(reg, lk->getParent(), lk, now, score);
+                }
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestReg = reg;
+                bestLk = lk;
+                bestOp = op;
+            }
+        }
+    }
+    if (!bestReg) {
+        func_0804ac7c(getMoveNoRegisterError);
+        return 4;
+    }
+    cls0805bcc4 *parent = bestLk->getParent();
+    if (!parent) {
+        func_0804ad38(getMoveNoParentError);
+        return -1;
+    }
+    Instr *owner = parent->ownerInstr();
+    int mask = 0;
+    int p;
+    for (p = 0; p != bestReg->unk_28; p++) {
+        cls0805bcc4 *o = ((cls0805c244 *)bestReg->func_0805a908(p))->unk_1c;
+        if (o && o->unk_22)
+            mask |= 1 << p;
+    }
+    Instr *mv = makeMove(blk, bestReg);
+    if (mv) {
+        setPipeBits(mv);
+        if (owner) {
+            mv->unk_13e4 = owner->unk_13e4 + 1;
+            mv->unk_1432 = owner->unk_1432 + 1;
+            mv->unk_141a = owner->unk_141a;
+            mv->unk_13f0.func_0805e37c(&owner->unk_13f0);
+        } else {
+            mv->unk_13e4 = in->unk_13e4 - 1;
+            mv->unk_141a = in->unk_141a;
+            mv->unk_1432 = 1;
+            mv->unk_13f0.func_0805e37c(&in->unk_13f0);
+        }
+        mv->unk_141c = 0;
+        Operand *out = mv->getOp(0);
+        Operand *mvIn = mv->getOp(1);
+        RegPoolEntry *newReg = out->unk_18;
+        mvIn->unk_14 = bestOp->unk_14;
+        out->unk_14 = newReg;
+        mv->unk_1430 = now - out->unk_0a;
+        int moved = 0;
+        int oldBits = 0;
+        int newBits = 0;
+        for (Instr *it = blk->unk_94; it; it = (Instr *)it->unk_24.unk_00) {
+            int n;
+            for (n = 0; n != it->unk_138b; n++) {
+                Operand *op = &it->unk_38[n];
+                RegPoolEntry *reg = registerOperand(op, 1);
+                if (reg == bestReg) {
+                    bool stale = false;
+                    if (op->unk_2b != 1) {
+                        if (op->unk_07 & newBits) {
+                            func_0804ad38(getMoveOldStateError);
+                            func_0804aeb0();
+                        }
+                        stale = true;
+                    }
+                    if (op->unk_07 & oldBits) {
+                        if (op->unk_07 & newBits) {
+                            func_0804ad38(getMoveSpreadStateError);
+                            func_0804aeb0();
+                        }
+                        stale = true;
+                    }
+                    if (stale) {
+                        mv->unk_13d1 = 0;
+                        continue;
+                    }
+                    for (int p = 0; p != reg->unk_28; p++) {
+                        if ((op->unk_07 >> p) & 1) {
+                            cls0805bcc4 *lk = &op->unk_2c[p];
+                            cls0805bcc4 *par = lk->getParent();
+                            cls0805c244 *oldL = (cls0805c244 *)bestReg->func_0805a908(p);
+                            cls0805c244 *newL = (cls0805c244 *)newReg->func_0805a908(p);
+                            if (par->unk_2c) {
+                                cls0805bcc4 *oldOut = oldL->unk_1c;
+                                if (!((moved >> p) & 1)) {
+                                    cls0805bcc4 *moveInLock = &mvIn->unk_2c[p];
+                                    if (!moveInLock->setOwner(p, mv, 1)) {
+                                        func_0804ad38(getMoveInputOwnerError);
+                                        return -1;
+                                    }
+                                    cls0805bcc4 *moveOutLock = &out->unk_2c[p];
+                                    if (!moveOutLock->setOwner(p, mv, 0)) {
+                                        func_0804ad38(getMoveOutputOwnerError);
+                                        return -1;
+                                    }
+                                    if (!oldL->addInput(oldOut, moveInLock, mvIn->unk_29, mvIn->unk_0b)) {
+                                        func_0804ad38(getMoveInputRegisterError);
+                                        return -1;
+                                    }
+                                    moveInLock->unk_19 = mvIn->getStatus();
+                                    if (!newL->addOutput(moveOutLock, mv->unk_13cf, out->unk_0a, out->unk_0b)) {
+                                        func_0804ad38(getMoveOutputLockError);
+                                        return -1;
+                                    }
+                                    moveOutLock->unk_19 = out->getStatus();
+                                }
+                                moved |= 1 << p;
+                                if (!oldL->removeInput(lk)) {
+                                    func_0804ad38(getMoveInputDeregisterError);
+                                    return -1;
+                                }
+                                if (!newL->addInput(&out->unk_2c[p], lk, op->unk_29, op->unk_0b)) {
+                                    func_0804ad38(getMoveOutputInputError);
+                                    return -1;
+                                }
+                                op->unk_18 = newReg;
+                            } else {
+                                if (par->unk_04 != newL) {
+                                    func_0804ad38(getMoveCandidateError);
+                                    func_0804aeb0();
+                                } else {
+                                    if (!oldL->removeInput(lk)) {
+                                        func_0804ad38(getMoveInputDeregisterError);
+                                        return -1;
+                                    }
+                                    if (!newL->addInput(par, lk, op->unk_29, op->unk_0b)) {
+                                        func_0804ad38(getMoveNewInputError);
+                                        return -1;
+                                    }
+                                    op->unk_18 = newReg;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            for (n = 0; n != it->unk_138b; n++) {
+                Operand *op = &it->unk_38[n];
+                RegPoolEntry *reg = registerOperand(op, 2);
+                if (reg == bestReg) {
+                    RegPoolEntry *const scanReg = reg;
+                    if (op->unk_2b == 1) {
+                        newBits |= op->unk_07;
+                        for (int p = 0; p != scanReg->unk_28; p++) {
+                            if ((op->unk_07 >> p) & 1) {
+                                cls0805c244 *oldL = (cls0805c244 *)reg->func_0805a908(p);
+                                cls0805c244 *newL = (cls0805c244 *)newReg->func_0805a908(p);
+                                if (!oldL->removeOutput(&op->unk_2c[p])) {
+                                    func_0804ad38(getMoveRetargetDeregisterError);
+                                    return -1;
+                                }
+                                if (!newL->addOutput(&op->unk_2c[p], it->unk_13cf, op->unk_0a, op->unk_0b)) {
+                                    func_0804ad38(getMoveRetargetReregisterError);
+                                    return -1;
+                                }
+                                op->unk_18 = newReg;
+                            }
+                        }
+                    } else {
+                        mv->unk_13d1 = 0;
+                        oldBits |= op->unk_07;
+                    }
+                }
+            }
+        }
+        if (!moved) {
+            addFreeMove(mv);
+            g_080b33ec++;
+        } else {
+            mv->unk_138f = moved;
+            mvIn->unk_07 = moved;
+            out->unk_07 = moved;
+            if (!AddToDo_Head(blk, mv)) {
+                func_0804ad38(getMoveTodoHeadError);
+                return -1;
+            }
+            logInstr(blk, mv);
+            countCreatedMove(blk, mv);
+            return 0;
+        }
+    }
+    Instr *earliest = 0;
+    for (p = 0; p != bestReg->unk_28; p++) {
+        cls0805bcc4 *o = ((cls0805c244 *)bestReg->func_0805a908(p))->unk_1c;
+        if (((mask >> p) & 1) && o && o->unk_22) {
+            Instr *oi = o->ownerInstr();
+            if (oi && (!earliest || oi->unk_13e8.getRow() < earliest->unk_13e8.getRow()))
+                earliest = oi;
+        }
+    }
+    if (!earliest)
+        earliest = blk->unk_a0;
+    func_080737b8(earliest);
+    return 1;
+}
