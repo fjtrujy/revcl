@@ -21,3 +21,15 @@ unsigned char instStream::func_0806d908()
     func_0804ad38("getCodeMode - work table not set\n");
     return 0;
 }
+
+workTable::workTable()
+{
+    unk_2c = 0;
+    unk_4c = 0;
+    unk_24 = 0;
+    unk_20 = 0;
+    unk_0b = 0;
+    unk_10 = 0;
+    dispose();
+}
+
