@@ -5,7 +5,6 @@
 #include "Instr.h"
 #include "RegPool.h"
 
-bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp);
 bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
 
 

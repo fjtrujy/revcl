@@ -4,8 +4,8 @@
 #include "workTable.h"
 #include "Instr.h"
 #include "RegPool.h"
+#include "moveRec.h"
 
-bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp);
 bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
 
 static inline bool isRawTable(workTable *wt)
@@ -39,7 +39,7 @@ bool detectMoves(Program *p)
                 srcOp = -1;
                 dstOp = -1;
                 mask = 0;
-                if (!detectMove(in, &opc, &mask, &dstOp, &srcOp))
+                if (!detectMove(in, opc, mask, dstOp, srcOp))
                     continue;
                 RegPoolEntry *srcReg = in->unk_38[srcOp].unk_18;
                 RegPoolEntry *dstReg = in->unk_38[dstOp].unk_18;

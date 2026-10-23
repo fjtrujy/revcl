@@ -163,21 +163,21 @@ bool addFreeMove(Instr *in)
     return true;
 }
 
-bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp)
+bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp)
 {
-    *opc = -1;
-    *mask = 0;
+    opc = -1;
+    mask = 0;
     if (!in)
         return false;
     int id = func_0806c72c(in->unk_34);
-    *srcOp = -1;
-    *dstOp = -1;
+    srcOp = -1;
+    dstOp = -1;
     unsigned int v;
     switch (id) {
     case 0x99:
-        *opc = 0xb4;
-        *dstOp = 0;
-        *srcOp = 1;
+        opc = 0xb4;
+        dstOp = 0;
+        srcOp = 1;
         break;
     case 0x22:
     case 0x30:
@@ -191,16 +191,16 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
             return false;
         if (in->unk_38[2].unk_18->unk_30 != 0)
             return false;
-        *opc = 0xb4;
+        opc = 0xb4;
     setOps:
-        *srcOp = 1;
-        *dstOp = 0;
+        srcOp = 1;
+        dstOp = 0;
         break;
     case 0x6c:
     case 0x6f:
         if (in->unk_38[2].unk_18->unk_30 != 32)
             return false;
-        *opc = 0xb2;
+        opc = 0xb2;
         goto setOps;
     case 0x6d:
     case 0x6e:
@@ -209,15 +209,15 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
             return false;
         if (v)
             return false;
-        *dstOp = 0;
-        *srcOp = 1;
-        *opc = 0xb2;
+        dstOp = 0;
+        srcOp = 1;
+        opc = 0xb2;
         break;
     default:
         return false;
     }
-    RegPoolEntry *s = in->unk_38[*srcOp].unk_18;
-    RegPoolEntry *d = in->unk_38[*dstOp].unk_18;
+    RegPoolEntry *s = in->unk_38[srcOp].unk_18;
+    RegPoolEntry *d = in->unk_38[dstOp].unk_18;
     if (!s || !d) {
         func_0804ad38("move detect error - reg not set\n");
         func_0804adf0(-1);
@@ -228,17 +228,17 @@ bool detectMove(Instr *in, int *opc, unsigned char *mask, int *dstOp, int *srcOp
         func_0804adf0(-1);
         return false;
     }
-    if (*opc < 0) {
+    if (opc < 0) {
         func_0804ad38("bad uid for move detection\n");
         func_0804adf0(-1);
         return false;
     }
-    if (in->unk_38[*srcOp].unk_07 != in->unk_38[*dstOp].unk_07) {
+    if (in->unk_38[srcOp].unk_07 != in->unk_38[dstOp].unk_07) {
         func_0804ad38("bad mod bits for a move\n");
         func_0804adf0(-1);
     }
-    *mask = in->unk_38[*srcOp].unk_07;
-    if (!*mask) {
+    mask = in->unk_38[srcOp].unk_07;
+    if (!mask) {
         func_0804ac7c("modbits 0 for move..avoiding\n");
         return false;
     }

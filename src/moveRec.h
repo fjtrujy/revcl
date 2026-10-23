@@ -3,6 +3,8 @@
 
 #include "Instr.h"
 
+bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp);
+
 class moveRec {
 public:
     moveRec *unk_00;          // next free
