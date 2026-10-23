@@ -8,7 +8,7 @@
 #include "ubsList.h"
 #include "os.h"
 
-extern char *stallNames_080b3244[3];
+char *stallNames_080b3244[3] = { "LATENCY", "THRUPUT", "RFWRITE" };
 
 inline iHolder::iHolder()
 {

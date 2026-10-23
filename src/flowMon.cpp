@@ -6,7 +6,7 @@
 #include "subCache.h"
 #include "VisitCache.h"
 
-int buildDepCount_080b33a4;
+int buildDepCount_080b33a4 = 0;
 
 bool flowReset(Program *p);
 bool recalcFlowUIDs(Program *p);

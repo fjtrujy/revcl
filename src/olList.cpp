@@ -245,3 +245,5 @@ int func_080586c4()
         n++;
     return n;
 }
+
+ol_s *olFreeList = 0;

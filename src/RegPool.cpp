@@ -514,6 +514,8 @@ int RegPool::countUsed()
     return n;
 }
 
+const char *regNameChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[]_$";
+
 int RegPool::func_08059f70()
 {
     int n = 0;

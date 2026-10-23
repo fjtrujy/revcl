@@ -37,11 +37,13 @@ public:
 class infoNode {
 public:
     infoNode() { unk_04 = 0; }
-    virtual ~infoNode() {}
+    virtual ~infoNode() = 0;
     virtual void dump() = 0;
 
     infoNode *unk_04;  // next
 };
+
+inline infoNode::~infoNode() {}
 
 class stallNode : public infoNode {
 public:

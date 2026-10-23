@@ -634,3 +634,6 @@ const char *Processor::getUniqueName()
 {
     return unk_34 ? unk_34 : "FLOW";
 }
+
+int g_080b33a8 = 1;
+bool stagger_080b33ac = false;

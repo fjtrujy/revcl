@@ -222,7 +222,7 @@ epiRec *loopDebris::allocExit(int size)
 #include "epiRec.h"
 #include "Instr.h"
 
-extern short g_streamSerial;
+short g_streamSerial = 1;
 
 const char *getUniqueName(Program *p);
 char *dupString(const char *s);

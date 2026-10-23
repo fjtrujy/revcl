@@ -11,10 +11,10 @@
 
 #include "os.h"
 
-extern bool flag_080b3038;
+bool flag_080b3038 = false;
 extern bool quiet_080bbd98;
 extern int errorOccurred;
-extern char *outName_080b303c;
+char *outName_080b303c = 0;
 
 
 void func_0804ac44()

@@ -149,7 +149,7 @@ bool AddToDo_Head(Block *blk, Instr *n);
 bool logInstr(Block *blk, Instr *in);
 void func_080737b8(Instr *in);
 
-extern int g_080b33ec;
+int g_080b33ec = 0;
 
 static inline void countCreatedMove(Block *blk, Instr *mv)
 {

@@ -3,6 +3,10 @@
 #include "tPairList.h"
 #include "workTable.h"
 
+int g_080b336c = -1;
+int g_080b3370 = -2;
+int g_080b3374 = -3;
+
 void cls08058718::func_080586e0()
 {
     unk_00 = -1;
