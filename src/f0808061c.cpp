@@ -167,7 +167,8 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             }
             {
                 int lsz = wt->unk_38;
-                if (lsz && c.unk_00->unk_142c) {
+                short isMove = c.unk_00->unk_142c;
+                if (lsz && isMove) {
                     int pipe = c.unk_06;
                     if (c.unk_00->unk_138c == 3) {
                         if (wt->unk_b4 == lsz)
@@ -190,9 +191,9 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             if (func_0808158c(wt, &c)) {
                 if (!c.unk_00)
                     func_0804adf0(-1);
+                minPos = c.unk_04;
                 pos.func_0805874c(c.unk_04);
                 pos.func_0805878c(c.unk_06);
-                minPos = c.unk_04;
                 g_080de72c = 0;
                 if (wt->unk_38) {
                     Instr *dragInst = c.unk_00;
