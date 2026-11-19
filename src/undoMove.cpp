@@ -184,8 +184,8 @@ int getMove(Block *blk, Instr *in, int now)
             for (int p = 0; p != reg->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     lk = &op->unk_2c[p];
-                    cls0805bcc4 *parent = lk->getParent();
                     int nextScore = score;
+                    cls0805bcc4 *parent = lk->getParent();
                     if (lk->getPriority() == 2 && nextScore < 10000)
                         nextScore = 10000;
                     if (lk->getPriority() == 1 && nextScore < 20000)
@@ -196,8 +196,8 @@ int getMove(Block *blk, Instr *in, int now)
                             func_0804ad38(getMoveParentUninsertedError);
                             func_0804aeb0();
                         }
-                        int hi = row + parent->unk_18;
                         int lo = row + 1;
+                        int hi = row + parent->unk_18;
                         if (lo < reg->unk_00)
                             reg->unk_00 = lo;
                         if (hi > reg->unk_02)
