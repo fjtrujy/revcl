@@ -13,8 +13,10 @@ static inline void dumpRawInstruction(Instr *in)
 bool workTable::prepRawTable()
 {
     int mode = unk_09;
-    if ((unsigned char)mode != 3)
-        func_0804ad38("prepRawTable called - but mode is not raw %s\n", codeModeName(mode));
+    if ((unsigned char)mode != 3) {
+        const char *modeName = codeModeName(mode);
+        func_0804ad38("prepRawTable called - but mode is not raw %s\n", modeName);
+    }
     if (!unk_2c) {
         func_0804ad38("iTable::prepRawTable - table not ready\n");
         return 0;

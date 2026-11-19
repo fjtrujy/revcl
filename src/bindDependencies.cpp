@@ -121,7 +121,8 @@ bool bindDependencies(Program *p)
                     return false;
                 }
                 if (xin && !addXinFor(s, ext)) {
-                    func_0804ad38("failed to add external input to %s\n", s->func_0806d674());
+                    const char *ownerName = s->func_0806d674();
+                    func_0804ad38("failed to add external input to %s\n", ownerName);
                     return false;
                 }
                 if (xout && !addXoutFor(s, ext)) {
@@ -130,7 +131,8 @@ bool bindDependencies(Program *p)
                 }
                 for (RegPoolEntry *e = rp->unk_1c; e; e = e->next) {
                     if (xin && !addXinFor(s, e)) {
-                        func_0804ad38("failed to add external input to %s\n", s->func_0806d674());
+                        const char *ownerName = s->func_0806d674();
+                        func_0804ad38("failed to add external input to %s\n", ownerName);
                         return false;
                     }
                     // the original calls addXinFor here too

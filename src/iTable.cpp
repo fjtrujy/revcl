@@ -1098,7 +1098,8 @@ workTable *workTable::localClone()
     nt->unk_10 = unk_10;
     regUseList &regs = unk_14;
     for (regUse *r = regs.unk_04; r; r = r->unk_04) {
-        if (!nt->unk_14.append(r->Clone())) {
+        regUse *cloned = r->Clone();
+        if (!nt->unk_14.append(cloned)) {
             func_0804ad38("failed to add cloned regref to list\n");
             delete r;
             return 0;
