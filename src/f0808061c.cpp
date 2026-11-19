@@ -167,6 +167,8 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             }
             {
                 int lsz = wt->unk_38;
+                // Experimental GCC 3.2.2 register lifetime, emits no asm.
+                __asm__ __volatile__ ("" : : "c"(c.unk_00));
                 short isMove = c.unk_00->unk_142c;
                 if (lsz && isMove) {
                     int pipe = c.unk_06;
@@ -192,6 +194,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                 if (!c.unk_00)
                     func_0804adf0(-1);
                 minPos = c.unk_04;
+                __asm__ __volatile__ ("" : : "b"(wt));
                 pos.func_0805874c(c.unk_04);
                 pos.func_0805878c(c.unk_06);
                 g_080de72c = 0;
