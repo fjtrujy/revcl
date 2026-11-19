@@ -336,6 +336,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             if (!f(wt, (int *)&c))
                 goto faulted;
             int lsz = wt->unk_38;
+            // Experimental GCC 3.2.2 register-web control, no emitted asm.
+            __asm__ __volatile__ ("" : : "b"(wt));
             bool isMove = c.unk_00->unk_142c;
             if (lsz && isMove) {
                 Instr *move = c.unk_00;
