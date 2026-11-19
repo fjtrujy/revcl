@@ -103,11 +103,13 @@ bool bindDependencies(Program *p)
         bool xin = s->unk_2cc == 2;
         bool xout = s->unk_2cd == 3;
         if (xin) {
-            if (!addXinFor(s, func_0806c224(0x39))) {
+            RegPoolEntry *sticky39 = func_0806c224(0x39);
+            if (!addXinFor(s, sticky39)) {
                 func_0804ad38("failed to add the fpu sticky flags as xin\n");
                 return false;
             }
-            if (!addXinFor(s, func_0806c224(0x3a))) {
+            RegPoolEntry *sticky3a = func_0806c224(0x3a);
+            if (!addXinFor(s, sticky3a)) {
                 func_0804ad38("failed to add the div sticky flags as xin\n");
                 return false;
             }
@@ -121,8 +123,7 @@ bool bindDependencies(Program *p)
                     return false;
                 }
                 if (xin && !addXinFor(s, ext)) {
-                    const char *ownerName = s->func_0806d674();
-                    func_0804ad38("failed to add external input to %s\n", ownerName);
+                    func_0804ad38("failed to add external input to %s\n", s->func_0806d674());
                     return false;
                 }
                 if (xout && !addXoutFor(s, ext)) {
@@ -131,8 +132,7 @@ bool bindDependencies(Program *p)
                 }
                 for (RegPoolEntry *e = rp->unk_1c; e; e = e->next) {
                     if (xin && !addXinFor(s, e)) {
-                        const char *ownerName = s->func_0806d674();
-                        func_0804ad38("failed to add external input to %s\n", ownerName);
+                        func_0804ad38("failed to add external input to %s\n", s->func_0806d674());
                         return false;
                     }
                     // the original calls addXinFor here too
