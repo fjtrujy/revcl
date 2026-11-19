@@ -230,6 +230,8 @@ int getMove(Block *blk, Instr *in, int now)
         func_0804ac7c(getMoveNoRegisterError);
         return 4;
     }
+    // TEMPORARY GCC register-web diagnostic. Must be replaced with C++.
+    __asm__ __volatile__ ("" : : "c"(bestLk));
     cls0805bcc4 *parent = bestLk->getParent();
     if (!parent) {
         func_0804ad38(getMoveNoParentError);
@@ -243,6 +245,8 @@ int getMove(Block *blk, Instr *in, int now)
         if (o && o->unk_22)
             mask |= 1 << p;
     }
+    // TEMPORARY GCC register-web diagnostic. Not original Sony source.
+    __asm__ __volatile__ ("" : : "d"(in));
     Instr *mv = makeMove(blk, bestReg);
     if (mv) {
         setPipeBits(mv);
