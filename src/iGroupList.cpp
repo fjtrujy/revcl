@@ -167,9 +167,9 @@ int iGroupLog::logTable(workTable *wt)
             bool changed;
             do {
                 changed = false;
-                Instr **backHead = &wt->unk_88.unk_04;
+                wtInstrList *backList = &wt->unk_88;
                 for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-                    bool marked = in->unk_0e_1;
+                    int marked = in->unk_0e & 2;
                     if (marked) {
                         Operand *operands = in->unk_38;
                         for (int j = 0; j != in->unk_138b; j++) {
@@ -184,7 +184,7 @@ int iGroupLog::logTable(workTable *wt)
                         }
                     }
                 }
-                for (in = *backHead; in; in = in->unk_1c.unk_04)
+                for (in = backList->unk_04; in; in = in->unk_1c.unk_04)
                     if (in->unk_0e_0)
                         for (int j = 0; j != in->unk_138b; j++) {
                             Operand *op = &in->unk_38[j];
