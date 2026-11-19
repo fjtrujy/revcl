@@ -824,8 +824,8 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             return false;
         }
         mstrcpy(out->unk_800, tok);
-        mstrcpy(out->name, tok);
         out->unk_2000 = 1;
+        mstrcpy(out->name, tok);
         return true;
     case 35: {
         d = out->name;
@@ -952,8 +952,8 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->unk_2000 = 15;
         return true;
     case 43:
-        mstrcpy(out->name, tok);
         out->unk_2000 = 1;
+        mstrcpy(out->name, tok);
         return true;
     case 44:
         d = out->name;

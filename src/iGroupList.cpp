@@ -151,7 +151,8 @@ int iGroupLog::logTable(workTable *wt)
             Instr *in;
             for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
                 in->unk_0e = 0;
-            for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+            Instr *&scanHead1 = wt->unk_88.unk_00;
+            for (in = scanHead1; in; in = in->unk_1c.unk_00)
                 for (int j = 0; j != in->unk_138b; j++) {
                     Operand *op = &in->unk_38[j];
                     RegPoolEntry *r = op->unk_18;
@@ -166,8 +167,9 @@ int iGroupLog::logTable(workTable *wt)
             bool changed;
             do {
                 changed = false;
+                Instr **backHead = &wt->unk_88.unk_04;
                 for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
-                    if (in->unk_0e_1)
+                    if ((in->unk_0e >> 1) & 1)
                         for (int j = 0; j != in->unk_138b; j++) {
                             Operand *op = &in->unk_38[j];
                             RegPoolEntry *r = registerOperand(op, 2);
@@ -178,8 +180,7 @@ int iGroupLog::logTable(workTable *wt)
                                         changed = changed || t->func_08055a88();
                                     }
                         }
-                wtInstrList *list = &wt->unk_88;
-                for (in = list->unk_04; in; in = in->unk_1c.unk_04)
+                for (in = *backHead; in; in = in->unk_1c.unk_04)
                     if (in->unk_0e_0)
                         for (int j = 0; j != in->unk_138b; j++) {
                             Operand *op = &in->unk_38[j];
