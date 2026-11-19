@@ -154,6 +154,9 @@ bool buildCandidateList(workTable *wt)
             }
         }
         unsigned char count = in->unk_138b;
+        // Experimental GCC 3.2.2 register-interference control: this emits
+        // no instructions and is not asserted to be in the original source.
+        __asm__ __volatile__ ("" : : : "ecx");
         for (int i = 0; __builtin_expect(i != count, 1); i++, count = in->unk_138b) {
             Operand *op = &in->unk_38[i];
             RegPoolEntry *r = op->unk_18;
