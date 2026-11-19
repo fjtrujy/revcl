@@ -156,37 +156,6 @@ static inline void countCreatedMove(Block *blk, Instr *mv)
     adjustMoveCount(blk, mv, 1);
 }
 
-static inline __attribute__((always_inline))
-int scoreMoveParent(RegPoolEntry *reg, cls0805bcc4 *parent, cls0805bcc4 *lk,
-                    int now, int score)
-{
-    if (lk->getPriority() == 2 && score < 10000)
-        score = 10000;
-    if (lk->getPriority() == 1 && score < 20000)
-        score = 20000;
-    if (parent->unk_2d != 2) {
-        int row = parent->unk_32;
-        if (row < 0) {
-            func_0804ad38(getMoveParentUninsertedError);
-            func_0804aeb0();
-        }
-        int lo = row + 1;
-        int hi = row + parent->unk_18;
-        if (lo < reg->unk_00)
-            reg->unk_00 = lo;
-        if (hi > reg->unk_02)
-            reg->unk_02 = hi;
-        int d = now - lo;
-        if (d < 0) {
-            func_0804ad38(getMoveNegativeDistanceError);
-            func_0804aeb0();
-        }
-        if (d > score)
-            score = d;
-    }
-    return score;
-}
-
 int getMove(Block *blk, Instr *in, int now)
 {
     Operand *bestOp = 0;
@@ -215,7 +184,33 @@ int getMove(Block *blk, Instr *in, int now)
             for (int p = 0; p != reg->unk_28; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     lk = &op->unk_2c[p];
-                    score = scoreMoveParent(reg, lk->getParent(), lk, now, score);
+                    cls0805bcc4 *parent = lk->getParent();
+                    int nextScore = score;
+                    if (lk->getPriority() == 2 && nextScore < 10000)
+                        nextScore = 10000;
+                    if (lk->getPriority() == 1 && nextScore < 20000)
+                        nextScore = 20000;
+                    if (parent->unk_2d != 2) {
+                        int row = parent->unk_32;
+                        if (row < 0) {
+                            func_0804ad38(getMoveParentUninsertedError);
+                            func_0804aeb0();
+                        }
+                        int hi = row + parent->unk_18;
+                        int lo = row + 1;
+                        if (lo < reg->unk_00)
+                            reg->unk_00 = lo;
+                        if (hi > reg->unk_02)
+                            reg->unk_02 = hi;
+                        int d = now - lo;
+                        if (d < 0) {
+                            func_0804ad38(getMoveNegativeDistanceError);
+                            func_0804aeb0();
+                        }
+                        if (d > nextScore)
+                            nextScore = d;
+                    }
+                    score = nextScore;
                 }
             }
             if (score > bestScore) {
