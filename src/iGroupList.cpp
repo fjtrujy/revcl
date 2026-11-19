@@ -169,6 +169,8 @@ int iGroupLog::logTable(workTable *wt)
                 changed = false;
                 wtInstrList *backList = &wt->unk_88;
                 for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+                    // GCC 3.2.2 register-lifetime experiment, emits no instructions.
+                    __asm__ __volatile__ ("" : : "a"(in));
                     int marked = in->unk_0e & 2;
                     if (marked) {
                         Operand *operands = in->unk_38;
