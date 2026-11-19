@@ -65,8 +65,7 @@ bool buildSynth(Program *prog, instStream *s, flowBlock *blocks, int count)
         case 3:
             if (stype) {
                 const char *a = func_080554e4((unsigned char)in->unk_13cd);
-                const char *c = func_080554e4(stype);
-                func_0804ad38("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", a, c);
+                func_0804ad38("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", a, func_080554e4(stype));
                 in->leDump();
                 return false;
             }
