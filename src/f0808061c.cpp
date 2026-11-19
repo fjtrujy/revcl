@@ -192,9 +192,10 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             if (func_0808158c(wt, &c)) {
                 if (!c.unk_00)
                     func_0804adf0(-1);
-                minPos = c.unk_04;
+                int selectedRow = c.unk_04;
                 pos.func_0805874c(c.unk_04);
                 pos.func_0805878c(c.unk_06);
+                minPos = selectedRow;
                 g_080de72c = 0;
                 if (wt->unk_38) {
                     Instr *dragInst = c.unk_00;
