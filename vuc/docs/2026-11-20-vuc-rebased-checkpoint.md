@@ -56,3 +56,20 @@ Strong candidates, with honest status:
 Keep strict accepted C++ in `vuc/src/`, original-length partials in `vuc/probes/`, manifests in `vuc/config/` and authentic-source evidence in `vuc/docs/`. No inline ASM, binary blobs, artificial padding, fabricated addresses/relocations, or hand-tuned instruction bytes. Run both exact/partial and host tests before accepting a change; preserve 207 existing exact matches and all authenticated data/BSS evidence.
 
 Work only inside the isolated VUC clone while another agent uses the original `main` checkout; no worktrees/subagents, no push. Commit VUC-only improvements. If the original repo's `vuc` ref must follow a new isolated-clone commit, use an explicit guarded fetch + `update-ref` while the original checkout remains on `main`.
+
+## Follow-up compiler controls (same date)
+
+The isolated clone now contains two reproducible source/compiler control scripts
+and their results in `vuc/docs/2026-11-20-eh-alignment-and-prologue-return-controls.md`.
+The actual `SymbolTable.cpp` unit's 145-byte Scope iterator copy has a
+92-byte exact original-offset prefix and all six authentic relocations;
+the remaining four-byte length gap is an original EH landing alignment.
+Neither 26 i386 CPU-target compilations nor 16 authentic explicit-template
+instantiation placement compilations nor the already investigated
+alignment choices yielded the original 149-byte function. Twelve genuine
+`AsmOutput_WritePrologue` return-contract/receiver controls likewise did not
+improve its 22/30-byte partial. No source candidate was promoted. The
+207/207 strict exact gate, 36/37 partial checkpoint gate with zero regression
+failures, 244/244 initialized-data gate, 12/12 BSS declaration gate and
+205/205 host tests were rerun successfully; native whole-ELF byte coverage
+remains unavailable. No push was performed.
