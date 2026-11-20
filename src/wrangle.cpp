@@ -102,13 +102,6 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
     return r;
 }
 
-static inline void savePendingCandidate(Instr *&pending, wrangleCand &saved,
-                                        const wrangleCand &candidate)
-{
-    pending = candidate.unk_00;
-    saved = candidate;
-}
-
 bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
 {
     cls08058718 pos;
@@ -120,6 +113,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
         bool bFaulted = false;
         Instr *pending;
         int ret;
+        Instr *m;
+        int tmp;
         bool inserted = false;
         g_080de72c = 0;
         pending = 0;
@@ -212,22 +207,20 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             mor.unk_06 = 0;
             if (!f(wt, (int *)&c))
                 goto faulted;
-            int lsz = wt->unk_38;
-            // Experimental GCC 3.2.2 register-web control, no emitted asm.
-            __asm__ __volatile__ ("" : : "b"(wt));
-            bool isMove = c.unk_00->unk_142c;
-            if (lsz && isMove) {
-                Instr *move = c.unk_00;
+            tmp = wt->unk_38;
+            bool isLoop = tmp != 0;
+            int lsz = tmp;
+            if (isLoop && (m = c.unk_00)->unk_142c) {
                 int pipe = c.unk_06;
-                if (move->unk_138c == 3) {
-                    if (wt->unk_b4 == lsz)
+                if (m->unk_138c == 3) {
+                    if (wt->unk_b4 == tmp)
                         pipe = 1;
-                    else if (wt->unk_b8 == lsz)
+                    else if (wt->unk_b8 == tmp)
                         pipe = 0;
                     else if (wt->unk_ac)
                         pipe = 0;
                     else
-                        pipe = wt->unk_b4 > wt->unk_b8;
+                        pipe = (tmp = wt->unk_b4 > wt->unk_b8);
                 }
                 if (pipe == 1 && wt->unk_b8 == lsz && !wt->unk_ac) {
                     wt->unk_ac = 1;
@@ -235,7 +228,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     g_080de72c = wt->unk_a0.unk_00;
                     goto faulted;
                 }
-                if (!resolveMovePipe(wt, move, pipe)) {
+                if (!resolveMovePipe(wt, c.unk_00, pipe)) {
                     func_0804ad38("failed to set up a move to a pipe\n");
                     func_0804aeb0();
                 }
@@ -271,9 +264,18 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             }
             g_080de72c = 0;
             ret = checkInsert(wt, c.unk_00, &pos, &minPos);
-            if (g_080de72c)
+            Instr **ps = &pending;
+            Instr **pc = &c.unk_00;
+            int *pg = &g_080de74c;
+            if (g_080de72c) {
+                ps = &g_080de72c;
+                pc = &g_080de72c;
+                pg = &errorOccurred;
                 goto faulted;
+            }
             c.unk_00->func_08054008(false);
+            int z1 = 1;
+            int z2;
             if (ret & 0x100) {
                 if (!wt->lockLine(&pos)) {
                     func_0804ad38("failed to lock line again\n");
@@ -290,14 +292,25 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 }
                 if (n)
                     ret = checkInsert(wt, c.unk_00, &pos, &minPos);
-                Instr * volatile &pendingState = pending;
-                if ((ret & 0x100) && !pendingState) {
-                    savePendingCandidate(pending, mor, c);
+                if ((ret & 0x100) && !pending) {
+                    Instr *cand = c.unk_00;
+                    int v0 = g_080de74c;
+                    *pc = cand;
+                    *pg = v0;
+                    pending = cand;
+                    mor = c;
                     goto check_pending;
                 }
             }
-            if (ret)
-                goto faulted;
+            {
+                Instr *d0 = done->last();
+                if (ret)
+                    goto faulted;
+                *(Instr **)&done->unk_04 = d0;
+            }
+            tmp = 0;
+            z2 = z1 - 1;
+            if (z2) *ps = 0;
             if (c.unk_00->unk_142c && !wt->unk_38) {
                 if (!resolveMovePipe(wt, c.unk_00, c.unk_06)) {
                     func_0804ad38("failed to assign a move to a pipe\n");
