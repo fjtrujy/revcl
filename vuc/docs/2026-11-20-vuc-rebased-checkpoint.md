@@ -73,3 +73,21 @@ improve its 22/30-byte partial. No source candidate was promoted. The
 failures, 244/244 initialized-data gate, 12/12 BSS declaration gate and
 205/205 host tests were rerun successfully; native whole-ELF byte coverage
 remains unavailable. No push was performed.
+
+## VCL technique-transfer follow-up (same date)
+
+Additional historically grounded VUC-only probes of original VCL
+compiler-state lessons are recorded in
+`vuc/docs/2026-11-20-vcl-technique-transfer-followup.md`.
+Eleven campaigns produced 194 compiler builds, including true GCC3.3
+source-unit/template emission controls, branch-frequency experiments
+and strict sibling preservation checks. None newly matched a complete
+VUC function. The strongest new mechanism is that genuine
+`std::vector<Instruction*>` template placement rotates the
+`Instruction::__tcf_1` dead cleanup pop from EBX to EAX without
+affecting its other 45 matching bytes. The real exact **265/265**
+Instruction vector helper and **45/46** arena callback also coexist
+in one compiled source-unit candidate; the original ECX pop is still
+missing. Do not mistake an existing exact sibling for a newly accepted
+function. The original ZIP and canonical VCL checkout remain untouched;
+no push was made.
