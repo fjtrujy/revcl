@@ -101,19 +101,26 @@ static inline bool immValid(mValue *v)
     return v->isValid();
 }
 
-static inline bool prepareAaBefore(Instr *vi, aaDesc *aa, aaUse *u)
-{
-    if (hasAaData(vi)) {
-        func_0804ad38("instruction already has aa data loaded .. mode before\n");
-        vi->func_08054008(false);
-        immValid(&vi->unk_13d8);
-        return false;
-    }
-    vi->unk_13d5 = 1;
-    vi->unk_13d4 = aa->unk_04;
-    vi->unk_13d6 = u->unk_04;
-    return true;
-}
+static inline regUse *firstRegUse(workTable *wt) { return wt->unk_14.unk_04; }
+static inline RegPoolEntry *regUseReg(regUse *ru) { return ru->unk_08; }
+static inline Instr *regUseInstr(regUse *ru) { return ru->unk_1c; }
+static inline olList *regUseVisList0(regUse *ru) { return &ru->unk_20[0].unk_00; }
+static inline unsigned char regUseExtIn(regUse *ru) { return ru->unk_0c; }
+static inline unsigned char regUseExtOut(regUse *ru) { return ru->unk_0d; }
+static inline Operand *instrRawOp(Instr *in, unsigned char idx) { return &in->unk_38[idx]; }
+static inline Operand *instrRawOpS(Instr *in, signed char idx) { return &in->unk_38[idx]; }
+static inline RegPoolEntry *opRawReg(Operand *op) { return op->unk_18; }
+static inline unsigned char opSlotMask(Operand *op) { return op->unk_07; }
+static inline mValue *opImmVal(Operand *op) { return &op->unk_1c; }
+static inline olList *opSlotUses0(Operand *op) { return &op->unk_2c[0].unk_54; }
+static inline Instr *olInstr(ol_s *ol) { return ol->unk_04; }
+static inline char olOpIndex(ol_s *ol) { return ol->unk_10; }
+static inline mValue *instrAaImm(Instr *in) { return &in->unk_13d8; }
+static inline unsigned char aaOutOp(aaDesc *aa) { return aa->unk_06; }
+static inline unsigned char aaInOp(aaDesc *aa) { return aa->unk_05; }
+static inline signed char aaImmOp(aaDesc *aa) { return aa->unk_07; }
+static inline int aaImmLit(aaDesc *aa) { return aa->unk_08; }
+static inline unsigned char aaUseOp(aaUse *u) { return u->unk_04; }
 
 bool aaFixup(instStream *s)
 {
@@ -122,23 +129,23 @@ bool aaFixup(instStream *s)
         func_0804ad38("Init_immFixup - failed to get work table\n");
         return false;
     }
-    for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
-        RegPoolEntry *reg = ru->unk_08;
+    for (regUse *ru = firstRegUse(wt); ru; ru = ru->unk_04) {
+        RegPoolEntry *reg = regUseReg(ru);
         if (!reg) {
             func_0804ad38("aaFixup - regref had no register\n");
             func_0804adf0(-1);
         }
-        Instr *in = ru->unk_1c;
-        olList *vis = &ru->unk_20[0].unk_00;
+        Instr *in = regUseInstr(ru);
+        olList *vis = regUseVisList0(ru);
         aaDesc *aa = func_0806c768(in);
-        if (!aa || !bit0(ru->unk_0c) || !bit0(ru->unk_0d) || ru->unk_18 != 1)
+        if (!aa || !bit0(regUseExtIn(ru)) || !bit0(regUseExtOut(ru)) || ru->unk_18 != 1)
             continue;
         RegPoolEntry *outReg = in->unk_38[aa->unk_06].unk_18;
-        if (outReg != reg || in->unk_38[aa->unk_05].unk_18 != outReg)
+        if (outReg != reg || opRawReg(instrRawOp(in, aaInOp(aa))) != outReg)
             continue;
         ol_s *ol;
         for (ol = vis->func_08058370(); ol; ol = ol->func_080583ac()) {
-            Instr *vi = ol->unk_04;
+            Instr *vi = olInstr(ol);
             Operand *vop = func_0805802c(ol);
             if (!vi)
                 goto bad1;
@@ -147,24 +154,24 @@ bool aaFixup(instStream *s)
         cont:
             {
             aaUse *u = func_0806c7f8(vi);
-            if (u && ol->unk_10 == u->unk_04 && vop->unk_07 == 1) {
+            if (u && olOpIndex(ol) == aaUseOp(u) && opSlotMask(vop) == 1) {
                 if (hasAaData(vi)) {
                     func_0804ad38("instruction already has aa data loaded .. mode before\n");
                     vi->func_08054008(false);
-                    immValid(&vi->unk_13d8);
+                    immValid(instrAaImm(vi));
                     return false;
                 }
                 vi->unk_13d5 = 1;
                 vi->unk_13d4 = aa->unk_04;
                 vi->unk_13d6 = u->unk_04;
-                mValue *v = &vi->unk_13d8;
+                mValue *v = instrAaImm(vi);
                 if (aa->unk_07 >= 0) {
-                    if (!v->set(&in->unk_38[aa->unk_07].unk_1c)) {
+                    if (!v->set(opImmVal(instrRawOpS(in, aaImmOp(aa))))) {
                         func_0804ad38("failed to set xaaImm for before\n");
                         return false;
                     }
                 } else
-                    v->setInt(aa->unk_08);
+                    v->setInt(aaImmLit(aa));
             }
             continue;
             }
@@ -177,37 +184,37 @@ bool aaFixup(instStream *s)
             func_0804adf0(-1);
             goto cont;
         }
-        Operand *out = in->getOp(aa->unk_06);
-        if (!out || !out->isOutput() || bit0Clear(out->unk_07)) {
+        Operand *out = in->getOp(aaOutOp(aa));
+        if (!out || !out->isOutput() || bit0Clear(opSlotMask(out))) {
             func_0804ad38("failed to get output operand for aa\n");
             func_0804adf0(-1);
         }
-        for (ol = out->unk_2c[0].unk_54.func_08058370(); ol; ol = ol->func_080583ac()) {
-            Instr *vi = ol->unk_04;
+        for (ol = opSlotUses0(out)->func_08058370(); ol; ol = ol->func_080583ac()) {
+            Instr *vi = olInstr(ol);
             Operand *vop = func_0805802c(ol);
             if (!vi || !vop) {
                 func_0804ad38("failed to get instruction for visible input.. mode after\n");
                 func_0804adf0(-1);
             }
             aaUse *u = func_0806c7f8(vi);
-            if (u && ol->unk_10 == u->unk_04 && vop->unk_07 == 1) {
+            if (u && olOpIndex(ol) == aaUseOp(u) && opSlotMask(vop) == 1) {
                 if (hasAaData(vi)) {
                     func_0804ad38("instruction already has aa data loaded.. mode after\n");
                     vi->func_08054008(false);
-                    immValid(&vi->unk_13d8);
+                    immValid(instrAaImm(vi));
                     return false;
                 }
-                mValue *v = &vi->unk_13d8;
+                mValue *v = instrAaImm(vi);
                 vi->unk_13d5 = 2;
                 vi->unk_13d4 = aa->unk_04;
                 vi->unk_13d6 = u->unk_04;
                 if (aa->unk_07 >= 0) {
-                    if (!v->set(&in->unk_38[aa->unk_07].unk_1c)) {
+                    if (!v->set(opImmVal(instrRawOpS(in, aaImmOp(aa))))) {
                         func_0804ad38("failed to set xaaImm after\n");
                         return false;
                     }
                 } else
-                    v->setInt(aa->unk_08);
+                    v->setInt(aaImmLit(aa));
             }
         }
     }
