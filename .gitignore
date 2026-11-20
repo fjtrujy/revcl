@@ -62,6 +62,7 @@ analysis/oracle-results/
 __pycache__/
 
 tmp/
+ongoing_work.json
 tools/rh9/
 
 .DS_Store
