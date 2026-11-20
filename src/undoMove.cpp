@@ -251,9 +251,9 @@ int getMove(Block *blk, Instr *in, int now)
             mv->unk_141a = owner->unk_141a;
             mv->unk_13f0.func_0805e37c(&owner->unk_13f0);
         } else {
+            mv->unk_1432 = 1;
             mv->unk_13e4 = in->unk_13e4 - 1;
             mv->unk_141a = in->unk_141a;
-            mv->unk_1432 = 1;
             mv->unk_13f0.func_0805e37c(&in->unk_13f0);
         }
         mv->unk_141c = 0;
