@@ -261,8 +261,8 @@ int getMove(Block *blk, Instr *in, int now)
         Operand *mvIn = mv->getOp(1);
         RegPoolEntry *newReg = out->unk_18;
         mvIn->unk_14 = bestOp->unk_14;
-        int targetRow = out->unk_0a;
         out->unk_14 = newReg;
+        int targetRow = out->unk_0a;
         mv->unk_1430 = now - targetRow;
         int moved = 0;
         int oldBits = 0;
