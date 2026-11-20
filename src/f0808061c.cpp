@@ -76,6 +76,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
     cls08058718 pos;
     for (;;) {
         Instr *pending;
+        int tmp;
         Instr *head;
         wrangleCand c;
         int minPos;
@@ -154,8 +155,8 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             return true;
         }
         {
-            if (wt->unk_a0.unk_04)
-                wt->unk_54.func_0805874c(wt->unk_a0.unk_04->unk_13e8.getRow());
+            if (wt->unk_a0.last())
+                wt->unk_54.func_0805874c(wt->unk_a0.last()->unk_13e8.getRow());
             else
                 wt->unk_54.func_0805874c(0);
         }
@@ -166,24 +167,24 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                 goto test_after_insert;
             }
             {
-                int lsz = wt->unk_38;
-                short isMove = c.unk_00->unk_142c;
-                if (lsz && isMove) {
-                    Instr *moveInst = c.unk_00;
+                tmp = wt->unk_38;
+                bool isLoop = tmp != 0;
+                int lsz = tmp;
+                if (isLoop && c.unk_00->unk_142c) {
                     int pipe = c.unk_06;
                     if (c.unk_00->unk_138c == 3) {
-                        if (wt->unk_b4 == lsz)
+                        if (wt->unk_b4 == tmp)
                             pipe = 1;
-                        else if (wt->unk_b8 == lsz)
+                        else if (wt->unk_b8 == tmp)
                             pipe = 0;
                         else if (wt->unk_ac)
                             pipe = 0;
                         else
-                            pipe = wt->unk_b4 > wt->unk_b8;
+                            pipe = (tmp = wt->unk_b4 > wt->unk_b8);
                     }
                     if (pipe == 1 && wt->unk_b8 == lsz && !wt->unk_ac)
                         goto switch_pipe;
-                    if (!resolveMovePipe(wt, moveInst, pipe)) {
+                    if (!resolveMovePipe(wt, c.unk_00, (tmp = pipe))) {
                         func_0804ad38("failed to set up a move to a pipe\n");
                         return false;
                     }
@@ -192,10 +193,9 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             if (func_0808158c(wt, &c)) {
                 if (!c.unk_00)
                     func_0804adf0(-1);
-                int selectedRow = c.unk_04;
                 pos.func_0805874c(c.unk_04);
                 pos.func_0805878c(c.unk_06);
-                minPos = selectedRow;
+                minPos = c.unk_04;
                 g_080de72c = 0;
                 if (wt->unk_38) {
                     Instr *dragInst = c.unk_00;
@@ -217,11 +217,20 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                         func_0804ad38("failed to drag setters\n");
                         return false;
                     }
-                    if (n)
+                    int z1 = 1;
+                    Instr **ps;
+                    if (n) {
                         ret = checkInsert(wt, c.unk_00, &pos, &minPos);
-                    Instr * volatile &pendingState = pending;
-                    if ((ret & 0x100) && !pendingState) {
-                        pending = c.unk_00;
+                        ps = &pending;
+                    } else {
+                        ps = &pending;
+                    }
+                    int z2 = z1 - 1;
+                    if (z2)
+                        *ps = 0;
+                    if ((ret & 0x100) && !pending) {
+                        tmp = (int)c.unk_00;
+                        pending = (Instr *)tmp;
                         mor = c;
                         goto check_pending;
                     }
@@ -243,7 +252,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             {
                 Instr *prev = 0, *p;
                 for (p = wt->unk_4c; p; prev = p, p = p->unk_2c)
-                    if (p == c.unk_00)
+                    if (p == (Instr *)(tmp = (int)c.unk_00))
                         break;
                 if (p != c.unk_00) {
                     func_0804ad38("instruction wasn't on candidate list\n");
@@ -265,7 +274,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             goto next;
     check_pending:
         if (pending) {
-            __builtin_memcpy(&c, &mor, sizeof(c));
+            c = mor;
             int r = getMove((Block *)wt, c.unk_00, c.unk_04);
             if (r < 0) {
                 func_0804ad38("oh no genmove failed!\n");
@@ -303,26 +312,31 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
         goto test_after_pending;
     undo:
         {
-            if (!g_080de72c) {
-                wtInstrList *faultDone = &wt->unk_a0;
-                g_080de72c = faultDone->unk_04;
-            }
-            wtInstrList *done = &wt->unk_a0;
-            while (done->unk_04 != g_080de72c) {
-                Instr *in = done->unk_04;
+            Instr *fi;
+            if ((int)g_080de72c)
+                fi = g_080de72c;
+            else
+                fi = g_080de72c = wt->unk_a0.last();
+            while (wt->unk_a0.last() != fi) {
+                Instr *in = wt->unk_a0.last();
                 in->func_08054214();
                 if (!UndoInsert(wt, in)) {
                     func_0804ad38("in finst track..undoinsert failed\n");
                     func_0804adf0(-1);
                     return false;
                 }
-                if (in->unk_1428 && !undoMovesTo((Block *)wt, in)) {
-                    func_0804ad38("failed to undo move\n");
-                    func_0804adf0(-1);
+                if (in->unk_1428) {
+                    if (!undoMovesTo((Block *)wt, in)) {
+                        func_0804ad38("failed to undo move\n");
+                        func_0804adf0(-1);
+                    }
+                    fi = g_080de72c;
+                } else {
+                    fi = g_080de72c;
                 }
             }
-            while (wt->unk_a0.unk_00) {
-                Instr *in = done->unk_04;
+            while (wt->unk_a0.first()) {
+                Instr *in = wt->unk_a0.last();
                 if (!UndoInsert(wt, in)) {
                     func_0804ad38("undo insert: failed to remove done list tail\n");
                     func_0804adf0(-1);

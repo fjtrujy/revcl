@@ -118,6 +118,7 @@ struct wtInstrList {
 
     wtInstrList() { unk_04 = 0; unk_08 = 0; unk_00 = 0; }
     void reset() { unk_04 = 0; unk_08 = 0; unk_00 = 0; }
+    Instr *first() { return unk_00; }
     Instr *last() { return unk_04; }
     ~wtInstrList() { unk_04 = 0; unk_00 = 0; unk_08 = 0; }
 };
