@@ -151,10 +151,9 @@ int iGroupLog::logTable(workTable *wt)
             Instr *in;
             for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
                 in->unk_0e = 0;
-            Instr *&scanHead1 = wt->unk_88.unk_00;
-            for (in = scanHead1; in; in = in->unk_1c.unk_00)
-                for (int j = 0; j != in->unk_138b; j++) {
-                    Operand *op = &in->unk_38[j];
+            for (Instr *cur = (in = wt->unk_88.unk_00); in; cur = (in = in->unk_1c.unk_00))
+                for (int j = 0; j != cur->unk_138b; j++) {
+                    Operand *op = &cur->unk_38[j];
                     RegPoolEntry *r = op->unk_18;
                     if (r == reg && op->unk_27)
                         for (int k = 0; k != r->unk_28; k++) {
@@ -167,15 +166,10 @@ int iGroupLog::logTable(workTable *wt)
             bool changed;
             do {
                 changed = false;
-                wtInstrList *backList = &wt->unk_88;
-                for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-                    // GCC 3.2.2 register-lifetime experiment, emits no instructions.
-                    __asm__ __volatile__ ("" : : "a"(in));
-                    int marked = in->unk_0e & 2;
-                    if (marked) {
-                        Operand *operands = in->unk_38;
+                for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+                    if (in->unk_0e_1)
                         for (int j = 0; j != in->unk_138b; j++) {
-                            Operand *op = &operands[j];
+                            Operand *op = &in->unk_38[j];
                             RegPoolEntry *r = registerOperand(op, 2);
                             if (r)
                                 for (int k = 0; k != r->unk_28; k++)
@@ -184,9 +178,8 @@ int iGroupLog::logTable(workTable *wt)
                                         changed = changed || t->func_08055a88();
                                     }
                         }
-                    }
-                }
-                for (in = backList->unk_04; in; in = in->unk_1c.unk_04)
+                wtInstrList *list = &wt->unk_88;
+                for (in = list->unk_04; in; in = in->unk_1c.unk_04)
                     if (in->unk_0e_0)
                         for (int j = 0; j != in->unk_138b; j++) {
                             Operand *op = &in->unk_38[j];
