@@ -386,8 +386,8 @@ int getMove(Block *blk, Instr *in, int now)
             g_080b33ec++;
         } else {
             mv->unk_138f = moved;
-            out->unk_07 = moved;
             mvIn->unk_07 = moved;
+            out->unk_07 = moved;
             if (!AddToDo_Head(blk, mv)) {
                 func_0804ad38(getMoveTodoHeadError);
                 return -1;
