@@ -333,10 +333,7 @@ int getMove(Block *blk, Instr *in, int now)
                                 }
                                 op->unk_18 = newReg;
                             } else {
-                                if (par->unk_04 != newL) {
-                                    func_0804ad38(getMoveCandidateError);
-                                    func_0804aeb0();
-                                } else {
+                                if (par->unk_04 == newL) {
                                     if (!oldL->removeInput(lk)) {
                                         func_0804ad38(getMoveInputDeregisterError);
                                         return -1;
@@ -346,6 +343,9 @@ int getMove(Block *blk, Instr *in, int now)
                                         return -1;
                                     }
                                     op->unk_18 = newReg;
+                                } else {
+                                    func_0804ad38(getMoveCandidateError);
+                                    func_0804aeb0();
                                 }
                             }
                         }
@@ -357,7 +357,10 @@ int getMove(Block *blk, Instr *in, int now)
                 RegPoolEntry *reg = registerOperand(op, 2);
                 if (reg == bestReg) {
                     RegPoolEntry *const scanReg = reg;
-                    if (op->unk_2b == 1) {
+                    if (op->unk_2b != 1) {
+                        mv->unk_13d1 = 0;
+                        oldBits |= op->unk_07;
+                    } else {
                         newBits |= op->unk_07;
                         for (int p = 0; p != scanReg->unk_28; p++) {
                             if ((op->unk_07 >> p) & 1) {
@@ -374,9 +377,6 @@ int getMove(Block *blk, Instr *in, int now)
                                 op->unk_18 = newReg;
                             }
                         }
-                    } else {
-                        mv->unk_13d1 = 0;
-                        oldBits |= op->unk_07;
                     }
                 }
             }
