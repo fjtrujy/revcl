@@ -213,9 +213,44 @@ a later generic GCC bug fix alone produces the missing bytes.
 
 Guest ledger: `/tmp/vuc-compiler-version-control-20261120/`.
 
+## 6. Original Instruction::instrData global-owner position
+
+An additional genuine-ownership discriminator followed the exact-vector
+source-unit experiment. The original 31-byte startup function at
+`0x080519b0` is named
+`_GLOBAL__I__ZN11Instruction9instrDataE`. The initial combined owner
+instead named its generated constructor after
+`InstructionList::Add`; this is direct evidence that the reconstructed
+first strong definition is in the wrong position. Reproducer:
+`vuc/probes/evaluate_instruction_global_owner_20261120.py`.
+
+**Nine real C++03 positions/orderings x two GCC snapshots (18
+builds)** move the *unchanged, genuine*
+`char *Instruction::instrData;` definition before or after real
+methods and, in two controls, compose it with the authentic STL vector
+instantiation. When it is placed before the first InstructionList
+method, the **original constructor symbol name is recovered**, with
+**29/31** original-length startup bytes (differences at
+`+23,+24`); it still does *not* qualify as a new exact startup
+candidate, and the startup is already exact in the separate
+original-manifest source unit. Every run preserves the original
+`std::vector<Instruction*>` **265/265** and iostream `__tcf_0`
+**16/16**. The arena cleanup remains **45/46**, with its final
+dead scratch either EBX, or EAX when the genuine vector instantiation
+is explicitly emitted before Add. Neither composing the two causal
+changes nor changing their order yielded original ECX.
+
+This recovers a meaningful original *source-symbol ownership property*
+without treating a 29/31 new symbol as exact or sacrificing existing
+exact functions. Full per-case scores, compiled originals and candidate
+sources live in `/tmp/vuc-instruction-global-owner-20261120/`.
+Further investigation should change the *actual preceding* compiler
+state, not reorder the already disqualified
+`instrData` declaration variants again.
+
 ## Acceptance, preservation and next step
 
-These **eleven reproducible probe campaigns comprise 194 compiler
+These **twelve reproducible probe campaigns comprise 212 compiler
 builds** (including baselines and negative controls). They do
 **not** produce an admissible new exact function or an improved
 authenticated original-length partial. No prototype, probe header,

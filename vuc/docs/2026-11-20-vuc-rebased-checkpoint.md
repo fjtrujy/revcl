@@ -79,7 +79,7 @@ remains unavailable. No push was performed.
 Additional historically grounded VUC-only probes of original VCL
 compiler-state lessons are recorded in
 `vuc/docs/2026-11-20-vcl-technique-transfer-followup.md`.
-Eleven campaigns produced 194 compiler builds, including true GCC3.3
+Twelve campaigns produced 212 compiler builds, including true GCC3.3
 source-unit/template emission controls, branch-frequency experiments
 and strict sibling preservation checks. None newly matched a complete
 VUC function. The strongest new mechanism is that genuine
@@ -88,6 +88,8 @@ VUC function. The strongest new mechanism is that genuine
 affecting its other 45 matching bytes. The real exact **265/265**
 Instruction vector helper and **45/46** arena callback also coexist
 in one compiled source-unit candidate; the original ECX pop is still
-missing. Do not mistake an existing exact sibling for a newly accepted
+missing. Moving the genuine `Instruction::instrData` first strong
+definition recovers the original startup symbol name but only **29/31**
+startup bytes. Do not mistake an existing exact sibling for a newly accepted
 function. The original ZIP and canonical VCL checkout remain untouched;
 no push was made.
