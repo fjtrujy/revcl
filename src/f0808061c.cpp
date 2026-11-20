@@ -160,7 +160,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                 wt->unk_54.func_0805874c(0);
         }
         pending = 0;
-        while (wt->unk_4c) {
+        while (*(&wt->unk_4c)) {
             if (!f(wt, (int *)&c)) {
                 head = wt->unk_4c = 0;
                 goto test_after_insert;
