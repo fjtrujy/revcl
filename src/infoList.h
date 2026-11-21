@@ -1,49 +1,24 @@
 // iHolder (instruction/operand/field holder) and infoList base class, CIE group 3.
 #ifndef INFOLIST_H
 #define INFOLIST_H
-#pragma interface
 
 #include "Instr.h"
 #include "os.h"
 #include "ol_s.h"
-
-class infoNode;
+#include "infoNode_inline.h"
 
 class iHolder {
 public:
-    Instr *unk_00;  // instruction
-    int unk_04;     // operand index
-    int unk_08;     // field bit mask
+    Instr *unk_00;
+    int unk_04;
+    int unk_08;
 
     inline iHolder();
-    int func_08052380(ol_s *ol)
-    {
-        if (!ol || !unk_00)
-            return 0;
-        int r = 0;
-        Instr *i = ol->unk_04;
-        if (unk_00 == i) {
-            int idx = ol->unk_10;
-            if (unk_04 == idx)
-                r = 1;
-        }
-        return r;
-    }
+    int func_08052380(ol_s *ol);
     void func_080523b8();
     bool catInit(ol_s *ol);
     inline void dump();
 };
-
-class infoNode {
-public:
-    infoNode() { unk_04 = 0; }
-    virtual ~infoNode() = 0;
-    virtual void dump() = 0;
-
-    infoNode *unk_04;  // next
-};
-
-inline infoNode::~infoNode() {}
 
 class infoList {
 public:
@@ -57,25 +32,14 @@ public:
     int unk_08;        // count
 };
 
-class stallNode : public infoNode {
-public:
-    stallNode() { for (int i = 0; i != 3; i++) unk_24[i] = 0; }
-    virtual ~stallNode() {}
-    virtual void dump();
-    bool catStall(ol_s *a, ol_s *b, int x, int val);
-
-    bool unk_08;  // setter and user in same stream ("local")
-    iHolder unk_0c;
-    iHolder unk_18;
-    unsigned short unk_24[3];
-};
+#include "stallNode_inline.h"
 
 class RegPoolEntry;
 
 class ubsNode : public infoNode {
 public:
     ubsNode();
-    virtual ~ubsNode() {}
+    virtual ~ubsNode();
     virtual void dump();
     bool catInit(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits);
 

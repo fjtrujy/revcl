@@ -3,8 +3,7 @@
 
 #include "Instr.h"
 #include "os.h"
-#include "instStreamLen.h"
-#include "InstrDyn.h"
+#include "instStream.h"
 #include "workTable.h"
 #include "Block.h"
 #include "statCounts.h"

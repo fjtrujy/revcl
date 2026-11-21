@@ -266,7 +266,7 @@ epiRec *loopDebris::func_08067c70(int key)
 #include "epiRec.h"
 #include "Instr.h"
 
-short g_streamSerial = 1;
+extern short g_streamSerial;
 
 const char *getUniqueName(Program *p);
 char *dupString(const char *s);

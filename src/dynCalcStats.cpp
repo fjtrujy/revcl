@@ -1,6 +1,42 @@
 #include "lock_shared.h"
 
-bool func_0805f550(Block *);
+static inline void resetInstrDyn(Instr *in)
+{
+    in->unk_1408 = 30000;
+    in->unk_140a = -1;
+    in->unk_140c = 0;
+    in->unk_140e = 0;
+    for (int i = 0; i != in->unk_138b; i++) {
+        RegPoolEntry *r = in->unk_38[i].unk_18;
+        if (r)
+            r->func_0805a348();
+    }
+}
+
+void Instr::func_0805f4e0()
+{
+    unk_1408 = 30000;
+    unk_140a = -1;
+    unk_140c = 0;
+    unk_140e = 0;
+    for (int i = 0; i != unk_138b; i++) {
+        RegPoolEntry *r = unk_38[i].unk_18;
+        if (r)
+            r->func_0805a348();
+    }
+}
+
+bool func_0805f550(Block *b)
+{
+    b->unk_04 = -1;
+    b->unk_06 = -1;
+    for (Instr *in = b->unk_a0; in; in = in->unk_24.unk_00)
+        resetInstrDyn(in);
+    for (Instr *in = b->unk_94; in; in = in->unk_24.unk_00)
+        resetInstrDyn(in);
+    return true;
+}
+
 
 static inline bool isAAInputLock(cls0805bcc4 *in)
 {

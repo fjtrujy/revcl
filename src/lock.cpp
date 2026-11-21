@@ -1,9 +1,6 @@
-#pragma implementation "instStreamLen.h"
-#pragma implementation "InstrDyn.h"
 #include "Instr.h"
 #include "os.h"
-#include "instStreamLen.h"
-#include "InstrDyn.h"
+#include "instStream.h"
 #include "workTable.h"
 #include "Block.h"
 #include "statCounts.h"
@@ -11,6 +8,48 @@
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 bool g_080de284;
+
+bool cls0805bcc4::func_0805bcc4()
+{
+    unk_22 = 0;
+    unk_20 = 0;
+    unk_0c = 0;
+    unk_08 = 0;
+    unk_16 = 0;
+    unk_17 = 0;
+    unk_18 = 0;
+    unk_15 = 0;
+    unk_1c = 0;
+    unk_2c = 0;
+    unk_19 = 0;
+    unk_10 = 0;
+    unk_2e = 0;
+    unk_48 = 0;
+    unk_4a = 0;
+    unk_46 = 0;
+    unk_02 = 0;
+    unk_01 = 0;
+    unk_00 = 0;
+    unk_24 = 0;
+    unk_2d = 0;
+    unk_14 = 0;
+    unk_04 = 0;
+    unk_28 = -1;
+    unk_29 = -1;
+    unk_32 = -1;
+    unk_30 = -1;
+    unk_34 = -1;
+    unk_36 = -1;
+    unk_38 = -1;
+    unk_3a = -1;
+    unk_3c = -1;
+    unk_3e = -1;
+    unk_40 = -1;
+    unk_42 = -1;
+    unk_4e = -1;
+    unk_4c = -1;
+    return true;
+}
 
 bool cls0805bcc4::setOwner(int part, Instr *instr, int opnd)
 {

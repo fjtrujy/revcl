@@ -1,5 +1,5 @@
 // iHolder and infoList, CIE group 3.
-#pragma implementation
+#pragma implementation "stallNode_inline.h"
 #include "infoList.h"
 #include "Instr.h"
 #include "instStream.h"
@@ -15,6 +15,25 @@ inline iHolder::iHolder()
     unk_00 = 0;
     unk_04 = 0;
     unk_08 = 0;
+}
+
+static inline int iHolderMatches(iHolder *h, ol_s *ol)
+{
+    if (!ol || !h->unk_00)
+        return 0;
+    int r = 0;
+    Instr *i = ol->unk_04;
+    if (h->unk_00 == i) {
+        int idx = ol->unk_10;
+        if (h->unk_04 == idx)
+            r = 1;
+    }
+    return r;
+}
+
+int iHolder::func_08052380(ol_s *ol)
+{
+    return iHolderMatches(this, ol);
 }
 
 void iHolder::func_080523b8()
@@ -105,7 +124,7 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
         return false;
     }
     for (; p; p = (stallNode *)p->unk_04)
-        if ((char)p->unk_0c.func_08052380(a) && (char)p->unk_18.func_08052380(b))
+        if ((char)iHolderMatches(&p->unk_0c, a) && (char)iHolderMatches(&p->unk_18, b))
             break;
     if (!p) {
         p = new stallNode;
@@ -122,6 +141,10 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
         return false;
     }
     return true;
+}
+
+stallNode::~stallNode()
+{
 }
 
 void stallNode::dump()
@@ -194,6 +217,10 @@ ubsNode::ubsNode()
     unk_0c = 0;
     unk_10 = 0;
     unk_14 = 0;
+}
+
+ubsNode::~ubsNode()
+{
 }
 
 void ubsNode::dump()

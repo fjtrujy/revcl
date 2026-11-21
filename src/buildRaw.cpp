@@ -4,7 +4,6 @@
 #include "fileEmit.h"
 #include "Processor.h"
 
-extern const char buildInputTableError[];
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 void resetRange();
@@ -20,7 +19,7 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
 {
     workTable *t = &s->unk_148;
     if (!t) {
-        func_0804ad38(buildInputTableError);
+        func_0804ad38("build: failed to get input table from ist\n");
         return false;
     }
     if (!t->init(5, count)) {

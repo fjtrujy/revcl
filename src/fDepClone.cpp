@@ -1,4 +1,56 @@
-#include "fDep_shared.h"
+#include "os.h"
+#include "Instr.h"
+#include "ol_s.h"
+#include "mValue.h"
+#include "instStream.h"
+#include "workTable.h"
+
+Operand *getEA(Instr *i);
+bool sameEA(Instr *a, Instr *b);
+bool BuildfDepList(workTable *wt, bool force, bool);
+bool tagsMatch(Instr *a, Instr *b);
+bool func_08065fd4(Instr *in, Instr *other);
+bool copyCloneFdeps(Instr *in, ol_s *o, olList *dst);
+
+static inline bool fdep_LinkInline(Instr *pre, Instr *post)
+{
+    if (!pre && !post) {
+        func_0804ad38("fdep_Link -passed a null ptr\n");
+        return false;
+    }
+    if (!pre->unk_13a8.func_0805826c(post)) {
+        func_0804ad38("failed to add post to the post list\n");
+        return false;
+    }
+    if (!post->unk_13a0.func_0805826c(pre)) {
+        func_0804ad38("failed to add pre to the pre list\n");
+        return false;
+    }
+    return true;
+}
+
+
+bool func_0806558c(Instr *i, int *row)
+{
+    *row = 0;
+    for (ol_s *o = i->unk_13a0.unk_00; o; o = o->unk_00) {
+        Instr *in = o->unk_04;
+        if (!in) {
+            func_0804ad38("BuildCandidateList - in_f not set in ol\n");
+            return false;
+        }
+        int r = in->unk_13e8.unk_00;
+        if (r < 0) {
+            *row = -1;
+            return true;
+        }
+        if (r + 1 > *row)
+            *row = r + 1;
+    }
+    return true;
+}
+
+
 
 bool func_080655e8(Instr *i, int *row)
 {
@@ -109,7 +161,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                             dep = true;
                     }
                     if (dep) {
-                        if (!fdep_Link(o, in)) {
+                        if (!fdep_LinkInline(o, in)) {
                             func_0804ad38("failed to add ol for fdeps \n");
                             func_0804adf0(-1);
                         }
@@ -227,6 +279,23 @@ bool fixupCloneFdeps(workTable *wt)
             func_0804ad38("failed to fix the post fdeps\n");
             return false;
         }
+    }
+    return true;
+}
+
+bool fdep_Link(Instr *pre, Instr *post)
+{
+    if (!pre && !post) {
+        func_0804ad38("fdep_Link -passed a null ptr\n");
+        return false;
+    }
+    if (!pre->unk_13a8.func_0805826c(post)) {
+        func_0804ad38("failed to add post to the post list\n");
+        return false;
+    }
+    if (!post->unk_13a0.func_0805826c(pre)) {
+        func_0804ad38("failed to add pre to the pre list\n");
+        return false;
     }
     return true;
 }

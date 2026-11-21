@@ -1,11 +1,9 @@
-#pragma implementation "fDep.h"
 #include "os.h"
 #include "Instr.h"
 #include "ol_s.h"
 #include "mValue.h"
 #include "instStream.h"
 #include "workTable.h"
-#include "fDep.h"
 
 bool BuildfDepList(workTable *wt, bool force, bool);
 bool tagsMatch(Instr *a, Instr *b);

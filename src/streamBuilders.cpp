@@ -30,6 +30,3 @@ bool buildPassThru(Program *prog, instStream *s, flowBlock *blocks, int count)
     s->unk_2d7 = 1;
     return true;
 }
-
-
-extern const char buildInputTableError[] = "build: failed to get input table from ist\n";
