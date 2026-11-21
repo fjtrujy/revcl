@@ -1,3 +1,4 @@
+extern const char regUseNewFailedError[];
 #include "RegPool_shared.h"
 
 regUse::regUse(RegPoolEntry *reg)
@@ -82,7 +83,7 @@ regUse *regUseList::AddNewRegRef(RegPoolEntry *reg)
     }
     regUse *ru = new regUse(reg);
     if (!ru) {
-        func_0804ad38("AddNewRegRef() - new failed\n");
+        func_0804ad38(regUseNewFailedError);
         func_0804adf0(-1);
         return 0;
     }

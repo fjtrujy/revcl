@@ -1,3 +1,4 @@
+extern const char thruSumOobError[] = "thruSum was set - but - oBits wasn't set for a reg part..register %s, part %d\n";
 #define VCL_REGUSESLOT_IMPL
 #include "RegPool.h"
 #include "ol_s.h"
@@ -20,6 +21,8 @@ void regUseList::func_0805b44c()
         }
     }
 }
+
+extern const char regUseNewFailedError[] = "AddNewRegRef() - new failed\n";
 
 int regUseList::func_0805b494(int regClass)
 {
@@ -56,7 +59,7 @@ void regUse::func_0805b51c()
         while (j != reg->unk_28);
     for (i = 0; i != reg->unk_28; i++) {
         if (unk_20[i].unk_34[0] && !((unk_0f >> i) & 1)) {
-            func_0804ad38("thruSum was set - but - oBits wasn't set for a reg part..register %s, part %d\n",
+            func_0804ad38(thruSumOobError,
                           reg->func_0805a8e0(), i);
             func_0804adf0(-1);
         }

@@ -11,6 +11,35 @@
 typedef bool (*wrangleFunc)(workTable *, int *);
 
 
+const char *g_080de730;
+
+struct wrangleCand;
+bool func_080817d4(workTable *wt, wrangleCand *c);
+bool func_0808184c(workTable *wt, wrangleCand *c);
+bool optNormal1(workTable *wt, wrangleCand *c);
+bool optHDown(workTable *wt, wrangleCand *c);
+bool optVuta(workTable *wt, wrangleCand *c);
+bool optDUp(workTable *wt, wrangleCand *c);
+bool optNormal(workTable *wt, wrangleCand *c);
+bool optAnother(workTable *wt, wrangleCand *c);
+bool optVuta1(workTable *wt, wrangleCand *c);
+bool optNormal2(workTable *wt, wrangleCand *c);
+bool optDumb2(workTable *wt, wrangleCand *c);
+
+optimiser optTable[11] = {
+    {"dumb", 1, 3, (wrangleFunc)func_080817d4, 0},
+    {"ldumb", 1, 3, (wrangleFunc)func_0808184c, 0},
+    {"normal1", 1, 1, (wrangleFunc)optNormal1, 0},
+    {"hDown", 1, 1, (wrangleFunc)optHDown, 0},
+    {"vuta", 1, 3, (wrangleFunc)optVuta, 0},
+    {"dUp", 1, 1, (wrangleFunc)optDUp, 0},
+    {"normal", 1, 3, (wrangleFunc)optNormal, 0},
+    {"another", 1, 3, (wrangleFunc)optAnother, 0},
+    {"vuta1", 0, 3, (wrangleFunc)optVuta1, 0},
+    {"normal2", 0, 3, (wrangleFunc)optNormal2, 0},
+    {"dumb2", 0, 1, (wrangleFunc)optDumb2, 0},
+};
+
 int getNumOptimisers()
 {
     return 11;

@@ -7,6 +7,11 @@
 #include "mValue.h"
 #include "os.h"
 
+bool g_080b3088 = false;
+const char *g_080b308c =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_@.[]";
+const char *g_080b3090[3] = { "0123456789", "0123456789abcdef", "01" };
+
 bool func_0804bfcc(const char *a, const char *b);
 char *dupString(const char *s);
 int mstrlen(const char *s);
@@ -789,9 +794,6 @@ bool func_0804e0cc(mValue *dst, mValue *a, mValue *b)
     return true;
 }
 
-extern bool g_080b3088;
-extern const char *g_080b308c;
-
 bool func_0804e148(const char *s)
 {
     if (!s)
@@ -808,8 +810,6 @@ bool func_0804e148(const char *s)
     }
     return true;
 }
-
-extern const char *g_080b3090[3];
 
 bool mValue::parse(const char *s)
 {

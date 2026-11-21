@@ -17,7 +17,7 @@ struct optimiser {
 };
 
 extern optimiser optTable[11];
-const char *g_080de730;
+extern const char *g_080de730;
 
 instStream *selectUninsertedStream(Program *p);
 bool prepExtInfo(Program *p, instStream *s, bool b);
@@ -143,33 +143,6 @@ bool workTable::qRegRef(regUse *ru)
 bool setPipeBits(Instr *in);
 bool AddToDo_Tail(Block *blk, Instr *n);
 extern int g_080b33f0;
-
-struct wrangleCand;
-bool func_080817d4(workTable *wt, wrangleCand *c);
-bool func_0808184c(workTable *wt, wrangleCand *c);
-bool optNormal1(workTable *wt, wrangleCand *c);
-bool optHDown(workTable *wt, wrangleCand *c);
-bool optVuta(workTable *wt, wrangleCand *c);
-bool optDUp(workTable *wt, wrangleCand *c);
-bool optNormal(workTable *wt, wrangleCand *c);
-bool optAnother(workTable *wt, wrangleCand *c);
-bool optVuta1(workTable *wt, wrangleCand *c);
-bool optNormal2(workTable *wt, wrangleCand *c);
-bool optDumb2(workTable *wt, wrangleCand *c);
-
-optimiser optTable[11] = {
-    {"dumb", 1, 3, (wrangleFunc)func_080817d4, 0},
-    {"ldumb", 1, 3, (wrangleFunc)func_0808184c, 0},
-    {"normal1", 1, 1, (wrangleFunc)optNormal1, 0},
-    {"hDown", 1, 1, (wrangleFunc)optHDown, 0},
-    {"vuta", 1, 3, (wrangleFunc)optVuta, 0},
-    {"dUp", 1, 1, (wrangleFunc)optDUp, 0},
-    {"normal", 1, 3, (wrangleFunc)optNormal, 0},
-    {"another", 1, 3, (wrangleFunc)optAnother, 0},
-    {"vuta1", 0, 3, (wrangleFunc)optVuta1, 0},
-    {"normal2", 0, 3, (wrangleFunc)optNormal2, 0},
-    {"dumb2", 0, 1, (wrangleFunc)optDumb2, 0},
-};
 
 static inline bool isAAOperand(Operand *op)
 {
@@ -370,112 +343,3 @@ bool workTable::qInstruction(Instr *in)
     return true;
 }
 
-bool UnlinkFromToDo(Block *blk, Instr *n);
-bool AddDone_Tail(Block *blk, Instr *n);
-
-bool workTable::forceInsert(Instr *in, cls08058718 *pos)
-{
-    int i = 0;
-    if (!in) {
-        func_0804ad38("forceInsert - null in\n");
-        return false;
-    }
-    cls08058718 *p = &in->unk_13e8;
-    int row = pos->unk_04;
-    int pipe = pos->unk_02;
-    if (p->unk_04 >= 0) {
-        func_0804ad38("instruction already inserted\n");
-        return false;
-    }
-    if (row < unk_30) {
-        func_0804ad38("ForceInsert - before start\n");
-        return false;
-    }
-    if (row >= unk_34) {
-        func_0804ad38("ForceInsert - after end\n");
-        return false;
-    }
-    Instr **ie = ((cls_unk30 *)this)->getIE_ck(row);
-    if (!ie) {
-        func_0804ad38("couldn't get ie\n");
-        return false;
-    }
-    if (pipe < 0 || pipe > 1) {
-        func_0804ad38("out of bounds pipe\n");
-        return false;
-    }
-    Instr **slot = &ie[pipe];
-    if (*slot != (Instr *)in->unk_1398) {
-        func_0804ad38("instruction already inserted or bad key\n");
-        return false;
-    }
-    p->unk_00 = pos->unk_00;
-    p->unk_04 = pos->unk_04;
-    p->unk_03 = pos->unk_03;
-    p->unk_02 = pos->unk_02;
-    *slot = in;
-    in->unk_1396 = unk_40;
-    unk_40++;
-    for (i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
-        RegPoolEntry *reg = registerOperand(op, 1);
-        if (!reg)
-            continue;
-        for (int k = 0; k != reg->unk_28; k++) {
-            if ((bool)((op->unk_07 >> k) & 1)) {
-                cls0805bcc4 *lk = &op->unk_2c[k];
-                if (!lk) {
-                    func_0804ad38("failed to get lock \n");
-                    return false;
-                }
-                cls0805c244 *ll = lk->unk_04;
-                if (!ll) {
-                    func_0804ad38("lock had no lock list\n");
-                    return false;
-                }
-                lk->setFrom(pos);
-                if (!ll->addInputLock(lk)) {
-                    func_0804ad38("failed to add input lock\n");
-                    return false;
-                }
-            }
-        }
-    }
-    for (i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
-        RegPoolEntry *reg = registerOperand(op, 2);
-        if (!reg)
-            continue;
-        for (int k = 0; k != reg->unk_28; k++) {
-            if ((bool)((op->unk_07 >> k) & 1)) {
-                cls0805bcc4 *lk = &op->unk_2c[k];
-                if (!lk) {
-                    func_0804ad38("failed to get lock \n");
-                    return false;
-                }
-                cls0805c244 *ll = lk->unk_04;
-                if (!ll) {
-                    func_0804ad38("lock had no lock list\n");
-                    return false;
-                }
-                lk->setFrom(pos);
-                if (!ll->addOutputLock(lk)) {
-                    func_0804ad38("failed to add output lock\n");
-                    return false;
-                }
-            }
-        }
-    }
-    if (!UnlinkFromToDo((Block *)this, in)) {
-        func_0804ad38("failed to unlink from the todo list\n");
-        return false;
-    }
-    if (!AddDone_Tail((Block *)this, in)) {
-        func_0804ad38("failed to add instruction to the done list tail\n");
-        return false;
-    }
-    return true;
-}
-
-bool UnlinkFromDone(Block *blk, Instr *n);
-bool setRange(int s, int e, int lsz);

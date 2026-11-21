@@ -364,102 +364,10 @@ int func_0804bf50(unsigned int x)
     return n;
 }
 
-#include "xpNode.h"
-#include "Parser.h"
-#include "Program.h"
-bool func_0805116c(Program *, LocTag *);
-bool func_0805118c(Program *, LocTag *);
-bool func_080511ac(Program *, LocTag *);
-bool func_080511cc(Program *, LocTag *);
-bool func_080511ec(Program *, LocTag *);
-bool func_08051228(Program *, LocTag *);
-bool func_08051264(Program *, LocTag *);
-bool func_08051284(Program *, LocTag *);
-bool func_080512a4(Program *, LocTag *);
-bool func_08051308(Program *, LocTag *);
-bool func_0805131c(Program *, LocTag *);
-bool func_0805137c(Program *, LocTag *);
-bool func_080513cc(Program *, LocTag *);
-bool func_080514a0(Program *, LocTag *);
-bool func_080514e8(Program *, LocTag *);
-bool func_080515a0(Program *, LocTag *);
-bool func_080515f0(Program *, LocTag *);
-bool func_08051808(Program *, LocTag *);
-bool func_08051830(Program *, LocTag *);
-bool func_08051848(Program *, LocTag *);
-bool func_08051860(Program *, LocTag *);
-bool func_08051878(Program *, LocTag *);
-bool func_08051890(Program *, LocTag *);
-bool func_08051908(Program *, LocTag *);
-
 const char *tokenChars_080b3080 =
     "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?";
 const char *identChars_080b3084 =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_@";
-bool g_080b3088 = false;
-const char *g_080b308c =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_@.[]";
-const char *g_080b3090[3] = { "0123456789", "0123456789abcdef", "01" };
-
-xpOp opTable_080b30a0[20] = {
-    {"LIT", 0, 0, 1},
-    {"=", 1, 1, 0},
-    {"~", 7, 1, 30},
-    {"!", 17, 1, 30},
-    {"+", 14, 1, 30},
-    {"-", 15, 1, 30},
-    {"**", 20, 2, 26},
-    {"&&", 11, 2, 15},
-    {"||", 14, 2, 14},
-    {"*", 4, 2, 25},
-    {"/", 5, 2, 25},
-    {"%", 6, 2, 25},
-    {"#", 18, 1, 30},
-    {"+", 2, 2, 20},
-    {"-", 3, 2, 20},
-    {"<<", 9, 2, 19},
-    {">>", 8, 2, 19},
-    {"&", 10, 2, 18},
-    {"^", 16, 2, 17},
-    {"|", 12, 2, 16},
-};
-int g_080b3140 = 0;
-
-char *g_080b3144 = "0123456789.";    // gasp line-number chars
-char *g_080b3148 = "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?;";    // token (non-whitespace) char set
-char *g_080b314c = "----*";    // block-start keyword
-char *g_080b3150 = "*----";    // block-end keyword
-
-Directive directives_080b3160[28] = {
-    {".vu", func_08051308},
-    {".mpg", func_0805131c},
-    {".vsm", func_080513cc},
-    {".endvsm", func_080514a0},
-    {".vsmloop", func_080514e8},
-    {".endvsmloop", func_080515a0},
-    {".init_vf", func_0805116c},
-    {".init_vi", func_0805118c},
-    {".rem_vf", func_080511ac},
-    {".rem_vi", func_080511cc},
-    {".init_vf_all", func_080511ec},
-    {".init_vi_all", func_08051228},
-    {".vu_work_area", func_080515f0},
-    {".name", func_080512a4},
-    {".syntax", func_08051908},
-    {".align", func_08051808},
-    {".global", func_0805137c},
-    {".noaligns", func_08051264},
-    {".noebits", func_08051284},
-    {".raw", func_080513cc},
-    {".endraw", func_080514a0},
-    {".rawloop", func_080514e8},
-    {".endrawloop", func_080515a0},
-    {".unique", func_08051890},
-    {".show", func_08051848},
-    {".hide", func_08051830},
-    {".endshow", func_08051878},
-    {".endhide", func_08051860},
-};
 
 bool func_0804bf6c(char c)
 {

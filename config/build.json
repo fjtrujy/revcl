@@ -43,6 +43,13 @@
         "-fmerge-all-constants"
       ]
     },
+    "src/workTable.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
     "src/infoList.cpp": {
       "flags": [
         "-O2",
