@@ -32,7 +32,20 @@ public:
     int unk_08;        // count
 };
 
-#include "stallNode_inline.h"
+class stallNode : public infoNode {
+public:
+    enum InitTag { INIT };
+    stallNode();
+    stallNode(InitTag) { for (int i = 0; i != 3; i++) unk_24[i] = 0; }
+    virtual ~stallNode();
+    virtual void dump();
+    bool catStall(ol_s *a, ol_s *b, int x, int val);
+
+    bool unk_08;
+    iHolder unk_0c;
+    iHolder unk_18;
+    unsigned short unk_24[3];
+};
 
 class RegPoolEntry;
 

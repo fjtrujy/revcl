@@ -8,11 +8,9 @@ struct iGroupNode {
     void *unk_04;
     int unk_08;     // size
 
-    iGroupNode()
-    {
-        unk_04 = 0;
-        unk_08 = 0;
-    }
+    enum InitTag { INIT };
+    iGroupNode();
+    inline iGroupNode(InitTag);
     ~iGroupNode()
     {
     }

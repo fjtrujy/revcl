@@ -54,14 +54,3 @@ bool tPairList::addPair(void *a, void *b, int src, int dst)
     head = p;
     return true;
 }
-
-void tPair::reset()
-{
-    next = 0;
-    src = -1;
-    dst = -1;
-    a = 0;
-    b = 0;
-}
-
-void tPair::func_08058ab0() {}

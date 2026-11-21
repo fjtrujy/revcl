@@ -164,7 +164,7 @@ void xpTree::calcDepths()
     }
 }
 
-inline void xpTree::setDepth(xpNode *n, int depth)
+void xpTree::setDepth(xpNode *n, int depth)
 {
     if (n) {
         n->unk_01 = depth;
@@ -174,6 +174,22 @@ inline void xpTree::setDepth(xpNode *n, int depth)
             int childDepth = d + 1;
             do {
                 setDepth(n->child[i], childDepth);
+                i++;
+            } while (i != n->unk_05);
+        }
+    }
+}
+
+static inline void setDepthInl(xpTree *t, xpNode *n, int depth)
+{
+    if (n) {
+        n->unk_01 = depth;
+        const int &d = depth;
+        int i = 0;
+        if (n->unk_05) {
+            int childDepth = d + 1;
+            do {
+                t->setDepth(n->child[i], childDepth);
                 i++;
             } while (i != n->unk_05);
         }
@@ -194,7 +210,7 @@ void xpTree::func_0804ead0()
     if (n) {
         n->unk_01 = 0;
         for (int i = 0; i != n->unk_05; i++)
-            setDepth(n->child[i], 1);
+            setDepthInl(this, n->child[i], 1);
     }
     func_0804ea8c(root);
 }
@@ -221,7 +237,7 @@ void xpTree::dump()
     if (n) {
         n->unk_01 = 0;
         for (int i = 0; i != n->unk_05; i++)
-            setDepth(n->child[i], 1);
+            setDepthInl(this, n->child[i], 1);
     }
     dumpNode(root);
 }
@@ -579,6 +595,8 @@ void func_0804f6ec()
     g_080bcda8 = 0;
 }
 
+inline xun::xun(InitTag) { next = 0; name = 0; }
+
 bool func_0804f75c(const char *s)
 {
     if (!s) {
@@ -588,7 +606,7 @@ bool func_0804f75c(const char *s)
     for (xun *p = g_080bcda4; p; p = p->next)
         if (func_0804bfcc(p->name, s))
             return true;
-    xun *x = new xun;
+    xun *x = new xun(xun::INIT);
     if (!x) {
         func_0804ad38("failed to new xun\n");
         return false;
@@ -609,6 +627,12 @@ void func_0804f844()
 {
     for (xun *p = g_080bcda4; p; p = p->next)
         ;
+}
+
+xun::xun()
+{
+    next = 0;
+    name = 0;
 }
 
 int xpTree::func_0804f8f0()

@@ -30,15 +30,6 @@ static inline int branchLinkType(unsigned int f)
     return t;
 }
 
-linkNode *linkNode::func_0806dd48(int type)
-{
-    linkNode *n = this;
-    do
-        n = n->unk_08;
-    while (n && n->unk_14 != type);
-    return n;
-}
-
 linkList::linkList()
 {
     unk_00 = 0;

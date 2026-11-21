@@ -50,7 +50,7 @@ public:
     bool dispose(xpNode *n);
     bool reset();
     void calcDepths();
-    inline void setDepth(xpNode *n, int depth);
+    void setDepth(xpNode *n, int depth);
     void func_0804ea8c(xpNode *n);
     void func_0804ead0();
     void dumpNode(xpNode *n);

@@ -1,5 +1,4 @@
 // iHolder and infoList, CIE group 3.
-#pragma implementation "stallNode_inline.h"
 #include "infoList.h"
 #include "Instr.h"
 #include "instStream.h"
@@ -127,7 +126,7 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
         if ((char)iHolderMatches(&p->unk_0c, a) && (char)iHolderMatches(&p->unk_18, b))
             break;
     if (!p) {
-        p = new stallNode;
+        p = new stallNode(stallNode::INIT);
         if (!p) {
             func_0804ad38("infoList::addStall - failed to get new stall\n");
             return false;
@@ -141,6 +140,12 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
         return false;
     }
     return true;
+}
+
+stallNode::stallNode()
+{
+    for (int i = 0; i != 3; i++)
+        unk_24[i] = 0;
 }
 
 stallNode::~stallNode()

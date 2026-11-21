@@ -28,7 +28,14 @@ struct linkNode {
     {
     }
     // Next node (after this one) with the given link type.
-    linkNode *func_0806dd48(int type);
+    linkNode *func_0806dd48(int type)
+    {
+        linkNode *n = this;
+        do
+            n = n->unk_08;
+        while (n && n->unk_14 != type);
+        return n;
+    }
     int func_0806e514();
 };
 

@@ -9,7 +9,9 @@ public:
     xun *next;
     char *name;
 
-    xun() { next = 0; name = 0; }
+    enum InitTag { INIT };
+    xun();
+    inline xun(InitTag);
     ~xun()
     {
         delete[] name;

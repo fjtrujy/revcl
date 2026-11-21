@@ -1,8 +1,6 @@
 #ifndef MLIST_H
 #define MLIST_H
 
-#pragma interface
-
 class mNode;
 
 class mList {
@@ -33,7 +31,9 @@ public:
 
 class mNode {
 public:
-    mNode()
+    enum InitTag { INIT };
+    mNode();
+    mNode(InitTag)
     {
         unk_04 = 0;
         unk_08 = 0;

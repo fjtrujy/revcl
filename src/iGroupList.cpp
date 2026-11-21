@@ -42,11 +42,17 @@ void iGroupList::clear()
     head = 0;
 }
 
+inline iGroupNode::iGroupNode(InitTag)
+{
+    unk_04 = 0;
+    unk_08 = 0;
+}
+
 bool iGroupList::add(void *p, int sz)
 {
     if (sz <= 0)
         return 1;
-    iGroupNode *n = new iGroupNode;
+    iGroupNode *n = new iGroupNode(iGroupNode::INIT);
     if (!n) {
         func_0804ad38("failed to get a new iGroupNode\n");
         return 0;
@@ -68,6 +74,12 @@ void iGroupList::dump()
         func_0804acb0(" .. %d nodes\n", i);
 }
 
+
+iGroupNode::iGroupNode()
+{
+    unk_04 = 0;
+    unk_08 = 0;
+}
 
 #include <stdlib.h>
 #include "iGroupLog.h"
