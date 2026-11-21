@@ -57,3 +57,15 @@ workTable *makeForceTable(Program *p, instStream *s)
     nt->func_08073774(wt->func_08073754());
     return nt;
 }
+
+extern const char lpWorkSavedTableError[] = "there's already a saved work table\n";
+extern const char lpWorkHtNewError[] = "can't have htnew before minip\n";
+extern const char lpWorkCloneTableError[] = "failed to locally clone table\n";
+extern const char lpWorkNoTableError[] = "no work table set for make_lpWork \n";
+extern const char lpWorkDisposeNoTableError[] = "no work table set for dispose lp table\n";
+extern const char lpWorkDisposeNoSavedError[] = "there's no saved work table for dispose\n";
+extern const char lsqChainHopeError[] = "well, let's hope never wind up in this function!\n";
+extern const char lsqChainLinkError[] = "failed to link parts together\n";
+extern const char lsqChainNotInputError[] = "isn't an input, and this code is ..not taking any chances!\n";
+extern const char lsqChainAddError[] = "failed to add the new instruction\n";
+extern const char lsqChainNewInstrError[] = "failed to get new instruction\n";

@@ -13,30 +13,52 @@ int setRangeFrom(workTable *t);
 bool lockLiveRange(cls0805c244 *ll, cls0805bcc4 *lk, int *s, int *e);
 
 
+extern const char assignLocalExternalError[];
+extern const char assignLocalModeError[];
+extern const char assignLocalCleanupError[];
+extern const char assignLocalLocksError[];
+extern const char assignLocalPendingError[];
+extern const char assignLocalBadTableError[];
+extern const char buildTTabNoBitsError[];
+extern const char buildTTabOverlapError[];
+extern const char buildTTabLiveRangeError[];
+extern const char buildTTabLockListError[];
+extern const char buildTTabNullError[];
+extern const char initAllocMaxDevError[];
+extern const char initAllocTooBigError[];
+extern const char initAllocDoneTableError[];
+extern const char initAllocNonZeroBaseError[];
+extern const char setTInATabOverlapError[];
+extern const char setTInATabAccessError[];
+extern const char setInATabBuildError[];
+extern const char setInATabCheckError[];
+extern const char setInATabLocalIdError[];
+extern const char setInATabVirtualError[];
+
 bool assignLocalRegisters(Program *p, workTable *wt)
 {
     int len = wt->getPhysicalLen();
     if (len < 0) {
-        func_0804ad38("nAssignRegisters: istream had table, but was bad!\n");
+        func_0804ad38(assignLocalBadTableError);
         func_0804adf0(-1);
     }
     if (wt->unk_94.unk_08) {
-        func_0804ad38("nAssign - still things to do .. %d\n", wt->unk_94.unk_08);
+        func_0804ad38(assignLocalPendingError, wt->unk_94.unk_08);
         for (Instr *in = wt->unk_94.unk_00; in; in = in->unk_24.unk_00)
             in->func_08054008(false);
         func_0804adf0(-1);
     }
     if (wt->unk_08 != 2) {
-        func_0804ad38("AssignLocalRegisters - external assign hadn't happened!\n");
+        func_0804ad38(assignLocalExternalError);
         func_0804adf0(-1);
     }
     unsigned int mode = wt->unk_09;
     if ((unsigned char)mode != 3) {
-        func_0804ad38("AssignLocalRegisters - can't do local assign on non-vsm table (%d)\n", mode);
+        func_0804ad38(assignLocalModeError, mode);
         func_0804adf0(-1);
     }
     if (!wt->unk_0b) {
-        func_0804ad38("locks aren't valid for local register assign\n");
+        func_0804ad38(assignLocalLocksError);
         func_0804adf0(-1);
     }
     if (len) {
@@ -47,7 +69,7 @@ bool assignLocalRegisters(Program *p, workTable *wt)
                 return false;
         }
         if (!func_0806f6a4(p)) {
-            func_0804ad38("failed to clean up after local alloc\n");
+            func_0804ad38(assignLocalCleanupError);
             func_0804aeb0();
             return false;
         }
@@ -78,7 +100,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         return true;
     char set = 0;
     if (!reg) {
-        func_0804ad38("build_tTab - passed a null pointer\n");
+        func_0804ad38(buildTTabNullError);
         return false;
     }
     int lsz = g_080b336c;
@@ -88,7 +110,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
             continue;
         cls0805c244 *ll = (cls0805c244 *)reg->func_0805a908(i);
         if (!ll) {
-            func_0804ad38("failed to get a lock list for %s\n", reg->func_0805a8e0());
+            func_0804ad38(buildTTabLockListError, reg->func_0805a8e0());
             return false;
         }
         cls0805bcc4 *lk = ll->unk_1c;
@@ -101,7 +123,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         for (; lk; lk = lk->unk_08) {
             int s = 0, e = 0;
             if (!lockLiveRange(ll, lk, &s, &e)) {
-                func_0804ad38("failed to get live range for an rLock\n");
+                func_0804ad38(buildTTabLiveRangeError);
                 func_0804adf0(-1);
             }
             if (s < 0) {
@@ -138,7 +160,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                 unsigned char v = tTab_080dce40[idx];
                 if (((v >> i) & 1) && !shared) {
                     int overlap = ll->unk_2b != 0;
-                    func_0804ad38("build_tTab - already set.. so some overlap %d?\n", overlap);
+                    func_0804ad38(buildTTabOverlapError, overlap);
                     ll->checkCounts();
                     dumpTTab();
                     return false;
@@ -148,7 +170,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         }
     }
     if (!set) {
-        func_0804ad38("build_tTab - set no bits! for %s\n", reg->func_0805a8e0());
+        func_0804ad38(buildTTabNoBitsError, reg->func_0805a8e0());
         func_0804adf0(-1);
     }
     return true;
@@ -159,11 +181,11 @@ bool genRegPool::initAlloc(int start, int end)
     func_0804c220(aTab_080bce40, 0x20000);
     func_0804c220(unk_30, 0x20);
     if (start) {
-        func_0804ad38("for now - can't base an alloc table other than at zero\n");
+        func_0804ad38(initAllocNonZeroBaseError);
         return false;
     }
     if (end < start) {
-        func_0804ad38("regpool - assign registers -done table was bad\n");
+        func_0804ad38(initAllocDoneTableError);
         return false;
     }
     if (g_080b336c && end != g_080b336c)
@@ -171,7 +193,7 @@ bool genRegPool::initAlloc(int start, int end)
     tStart_080bce28 = start;
     tEnd_080bce2c = end;
     if (end > 0xfff) {
-        func_0804ad38("table too big. coder can't be bothered to realloc\n");
+        func_0804ad38(initAllocTooBigError);
         return false;
     }
     RegPoolEntry *e = unk_04;
@@ -180,7 +202,7 @@ bool genRegPool::initAlloc(int start, int end)
         return false;
     }
     if (unk_08 > 0x20) {
-        func_0804ad38("alloc - fatal - should catch earlier - m_nReg>=MAX_PER_DEV\n");
+        func_0804ad38(initAllocMaxDevError);
         return false;
     }
     nRegs_080bce24 = unk_08;
@@ -247,13 +269,13 @@ bool genRegPool::set_t_in_aTab(int reg)
         unsigned char c = tTab_080dce40[i];
         int t = c;
         if (((unsigned char)unk_30[reg] & t & 0x7f) != (c & 0x7f)) {
-            func_0804ad38("couldnt fit at user has no access..id=%d\n", reg);
+            func_0804ad38(setTInATabAccessError, reg);
             return false;
         }
         char *row = &aTab_080bce40[i * 32];
         unsigned char a = row[reg];
         if (a & t) {
-            func_0804ad38("set_t_in_aTab - overlap detected at line %d, register %d our mask is %x vs %x!\n",
+            func_0804ad38(setTInATabOverlapError,
                           i, reg, a, t);
             return false;
         }
@@ -301,13 +323,13 @@ bool genRegPool::set_in_aTab(regUse *ru)
     }
     if (func_08059e20(reg)) {
         if (reg->unk_14) {
-            func_0804ad38("RegPool::set_in_aTab,regref: alloc..had forced virtual register %s\n",
+            func_0804ad38(setInATabVirtualError,
                           reg->func_0805a8e0());
             func_0804adf0(-1);
         }
         int id = reg->regIndex();
         if (id < 0) {
-            func_0804ad38("failed to get local_id from a mapped register\n");
+            func_0804ad38(setInATabLocalIdError);
             func_0804adf0(-1);
         }
         if (reg->unk_16) {
@@ -332,12 +354,12 @@ bool genRegPool::set_in_aTab(regUse *ru)
             }
             if (set) {
                 if (!build_tTab(reg, set)) {
-                    func_0804ad38("failed to build ttab Forced build for mapped reg %s from %s\n",
+                    func_0804ad38(setInATabBuildError,
                                   reg->func_0805a8e0(), reg->func_0805a8e0());
                     return false;
                 }
                 if (!set_t_in_aTab(id)) {
-                    func_0804ad38("failed to check_set t_in_aTab for '%s' at local ID=%d map\n",
+                    func_0804ad38(setInATabCheckError,
                                   reg->func_0805a8e0(), id);
                     dumpTTab();
                     dumpATab();

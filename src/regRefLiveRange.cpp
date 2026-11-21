@@ -180,3 +180,25 @@ bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b)
     return false;
 }
 
+extern const char assignLocalExternalError[] = "AssignLocalRegisters - external assign hadn't happened!\n";
+extern const char assignLocalModeError[] = "AssignLocalRegisters - can't do local assign on non-vsm table (%d)\n";
+extern const char assignLocalCleanupError[] = "failed to clean up after local alloc\n";
+extern const char assignLocalLocksError[] = "locks aren't valid for local register assign\n";
+extern const char assignLocalPendingError[] = "nAssign - still things to do .. %d\n";
+extern const char assignLocalBadTableError[] = "nAssignRegisters: istream had table, but was bad!\n";
+extern const char buildTTabNoBitsError[] = "build_tTab - set no bits! for %s\n";
+extern const char buildTTabOverlapError[] = "build_tTab - already set.. so some overlap %d?\n";
+extern const char buildTTabLiveRangeError[] = "failed to get live range for an rLock\n";
+extern const char buildTTabLockListError[] = "failed to get a lock list for %s\n";
+extern const char buildTTabNullError[] = "build_tTab - passed a null pointer\n";
+extern const char initAllocMaxDevError[] = "alloc - fatal - should catch earlier - m_nReg>=MAX_PER_DEV\n";
+extern const char initAllocTooBigError[] = "table too big. coder can't be bothered to realloc\n";
+extern const char initAllocDoneTableError[] = "regpool - assign registers -done table was bad\n";
+extern const char initAllocNonZeroBaseError[] = "for now - can't base an alloc table other than at zero\n";
+extern const char setTInATabOverlapError[] = "set_t_in_aTab - overlap detected at line %d, register %d our mask is %x vs %x!\n";
+extern const char setTInATabAccessError[] = "couldnt fit at user has no access..id=%d\n";
+extern const char setInATabBuildError[] = "failed to build ttab Forced build for mapped reg %s from %s\n";
+extern const char setInATabCheckError[] = "failed to check_set t_in_aTab for '%s' at local ID=%d map\n";
+extern const char setInATabLocalIdError[] = "failed to get local_id from a mapped register\n";
+extern const char setInATabVirtualError[] = "RegPool::set_in_aTab,regref: alloc..had forced virtual register %s\n";
+

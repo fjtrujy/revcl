@@ -50,3 +50,8 @@ bool explodeRaw(Program *p)
     }
     return true;
 }
+
+extern const char propagateValidMaskError[] = "valid bit mask from new register doesn't contain externally used bits for move %s<-%s\n";
+extern const char propagateValidDetailError[] = "valid mask = %x ext bits on output operand = %x\n";
+extern const char propagateTwoWritesError[] = "seem to have two writes on same line!\n";
+extern const char propagateNormaliseError[] = "failed to normalise instruction\n";

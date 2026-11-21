@@ -30,3 +30,5 @@ bool buildPassThru(Program *prog, instStream *s, flowBlock *blocks, int count)
     s->unk_2d7 = 1;
     return true;
 }
+
+extern const char buildAttachLinearError[] = "failed to attach instruction to the linear list for synth\n";

@@ -8,16 +8,28 @@ bool optReset(Program *p);
 int setRangeFrom(workTable *t);
 bool fixupCloneFdeps(workTable *wt);
 
+extern const char lpWorkSavedTableError[];
+extern const char lpWorkHtNewError[];
+extern const char lpWorkCloneTableError[];
+extern const char lpWorkNoTableError[];
+extern const char lpWorkDisposeNoTableError[];
+extern const char lpWorkDisposeNoSavedError[];
+extern const char lsqChainHopeError[];
+extern const char lsqChainLinkError[];
+extern const char lsqChainNotInputError[];
+extern const char lsqChainAddError[];
+extern const char lsqChainNewInstrError[];
+
 
 bool makeLpWork(instStream *s, int maxSpread)
 {
     workTable *wt = s->unk_218;
     if (!wt) {
-        func_0804ad38("no work table set for make_lpWork \n");
+        func_0804ad38(lpWorkNoTableError);
         return false;
     }
     if (s->unk_220) {
-        func_0804ad38("there's already a saved work table\n");
+        func_0804ad38(lpWorkSavedTableError);
         return false;
     }
     s->unk_220 = wt;
@@ -25,7 +37,7 @@ bool makeLpWork(instStream *s, int maxSpread)
     workTable *nt = wt->localClone();
     s->unk_218 = nt;
     if (!nt) {
-        func_0804ad38("failed to locally clone table\n");
+        func_0804ad38(lpWorkCloneTableError);
         return false;
     }
     Instr *in;
@@ -76,7 +88,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         }
         if (earliest != 30000) {
             if (earliest < in->unk_0c) {
-                func_0804ad38("can't have htnew before minip\n");
+                func_0804ad38(lpWorkHtNewError);
                 return false;
             }
             in->unk_0c = earliest;
@@ -133,12 +145,12 @@ bool makeLpWork(instStream *s, int maxSpread)
 bool disposeLpWork(instStream *s)
 {
     if (s->unk_218 == 0) {
-        func_0804ad38("no work table set for dispose lp table\n");
+        func_0804ad38(lpWorkDisposeNoTableError);
         return false;
     }
     delete s->unk_218;
     if (s->unk_220 == 0) {
-        func_0804ad38("there's no saved work table for dispose\n");
+        func_0804ad38(lpWorkDisposeNoSavedError);
         return false;
     }
     s->unk_218 = s->unk_220;
@@ -156,7 +168,7 @@ bool modLsqq(Instr *in, int imm);
 
 bool lsqChain(workTable *wt)
 {
-    func_0804ad38("well, let's hope never wind up in this function!\n");
+    func_0804ad38(lsqChainHopeError);
     func_0804aeb0();
     for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
@@ -220,7 +232,7 @@ bool lsqChain(workTable *wt)
             ii = func_0806bf74(0x6e);
         Instr *ni = new Instr(ii);
         if (!ni) {
-            func_0804ad38("failed to get new instruction\n");
+            func_0804ad38(lsqChainNewInstrError);
             return false;
         }
         ni->unk_38[0].unk_18 = reg;
@@ -231,7 +243,7 @@ bool lsqChain(workTable *wt)
         ni->unk_38[1].unk_07 = 1;
         ni->unk_38[2].unk_1c.setInt(total);
         if (!wt->logAddLinear_After(list[n - 1], ni)) {
-            func_0804ad38("failed to add the new instruction\n");
+            func_0804ad38(lsqChainAddError);
             return false;
         }
         for (Instr *in = ni->unk_1c.unk_00; in; in = in->unk_1c.unk_00) {
@@ -240,12 +252,12 @@ bool lsqChain(workTable *wt)
                 if (op->unk_18 != reg)
                     continue;
                 if (!isRegisterOperand(op, 1)) {
-                    func_0804ad38("isn't an input, and this code is ..not taking any chances!\n");
+                    func_0804ad38(lsqChainNotInputError);
                     return false;
                 }
                 op->unk_2c[0].unk_54.clear();
                 if (!link_oParts(ni, 0, 0, in, k, 0)) {
-                    func_0804ad38("failed to link parts together\n");
+                    func_0804ad38(lsqChainLinkError);
                     return false;
                 }
             }

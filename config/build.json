@@ -49,6 +49,41 @@
         "-frename-registers",
         "-fno-weak"
       ]
+    },
+    "src/catStreams.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/explodeRaw.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/makeForceTable.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/regRefLiveRange.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/streamBuilders.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
     }
   }
 }

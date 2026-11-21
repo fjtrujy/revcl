@@ -6,6 +6,7 @@
 
 extern int errorOccurred;
 extern bool quiet_080bbd98;
+extern const char buildAttachLinearError[];
 void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
@@ -73,7 +74,7 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
             }
             b->unk_0c[j] = 0;
             if (!t->logAddLinear_Tail(in)) {
-                func_0804ad38("failed to attach instruction to the linear list for synth\n");
+                func_0804ad38(buildAttachLinearError);
                 return false;
             }
             short lid = in->unk_1420;

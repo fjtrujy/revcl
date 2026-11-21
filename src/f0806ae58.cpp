@@ -13,6 +13,11 @@ int func_0806aa54(Instr *in);
 int func_08067e18(Program *p, instStream *s);
 
 
+extern const char propagateValidMaskError[];
+extern const char propagateValidDetailError[];
+extern const char propagateTwoWritesError[];
+extern const char propagateNormaliseError[];
+
 bool func_0806ae58(Program *p)
 {
     return true;
@@ -24,7 +29,7 @@ int propagateMoves(workTable *t)
     int count = 0;
     for (Instr *in = list->unk_04; in; in = in->unk_1c.prev()) {
         if (in->func_080532d8() < 0) {
-            func_0804ad38("failed to normalise instruction\n");
+            func_0804ad38(propagateNormaliseError);
             return 0;
         }
         if (!in->unk_142c)
@@ -43,7 +48,7 @@ int propagateMoves(workTable *t)
             if (p && p->unk_13e8.unk_00 == row) {
                 bool a;
                 if (p->func_08054c24(dst, &a)) {
-                    func_0804ad38("seem to have two writes on same line!\n");
+                    func_0804ad38(propagateTwoWritesError);
                     return 0;
                 }
                 bool b;
@@ -52,7 +57,7 @@ int propagateMoves(workTable *t)
             if (n && n->unk_13e8.unk_00 == row) {
                 bool a;
                 if (n->func_08054c24(dst, &a)) {
-                    func_0804ad38("seem to have two writes on same line!\n");
+                    func_0804ad38(propagateTwoWritesError);
                     return 0;
                 }
                 bool b;
@@ -91,9 +96,9 @@ int propagateMoves(workTable *t)
             row = r;
         }
         if (~valid & in->unk_38[0].unk_27) {
-            func_0804ad38("valid bit mask from new register doesn't contain externally used bits for move %s<-%s\n",
+            func_0804ad38(propagateValidMaskError,
                           dst->func_0805a8e0(), src->func_0805a8e0());
-            func_0804ad38("valid mask = %x ext bits on output operand = %x\n",
+            func_0804ad38(propagateValidDetailError,
                           valid, in->unk_38[0].unk_27);
             return -1;
         }

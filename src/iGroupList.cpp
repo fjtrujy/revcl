@@ -50,13 +50,15 @@ inline iGroupNode::iGroupNode(InitTag)
     unk_08 = 0;
 }
 
+extern const char iGroupNewNodeError[];
+
 bool iGroupList::add(void *p, int sz)
 {
     if (sz <= 0)
         return 1;
     iGroupNode *n = new iGroupNode(iGroupNode::INIT);
     if (!n) {
-        func_0804ad38("failed to get a new iGroupNode\n");
+        func_0804ad38(iGroupNewNodeError);
         return 0;
     }
     n->unk_04 = p;
