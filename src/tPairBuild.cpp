@@ -77,16 +77,3 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
     return true;
 }
 
-const char *regTypeName(int type)
-{
-    const char *s = "UNKNOWN_TYPE";
-    switch (type) {
-    case 8:  s = "VPU_I"; break;
-    case 1:  s = "CPU_GPR"; break;
-    case 2:  s = "FPR"; break;
-    case 6:  s = "CPU_HW"; break;
-    case 9:  s = "VPU_VF"; break;
-    case 10: s = "VPU_HW"; break;
-    }
-    return s;
-}

@@ -23,7 +23,7 @@ public:
         }
         unk_00 = 0;
     }
-    bool func_08072218() { unk_00 = 0; return 1; }
+    bool func_08072218();
 };
 
 #endif

@@ -82,6 +82,38 @@ void xpNode::reset()
     init();
 }
 
+static inline bool xpNodeIsFull(xpNode *n) { return n->unk_05 >= n->unk_04; }
+static inline bool xpNodeDecode(xpNode *n)
+{
+    if (n->unk_02) {
+        printf("can't decode a non-literal\n");
+        return false;
+    }
+    if (!n->val.makeNumeric()) {
+        func_0804ad38("couldn't convert to arithmetic\n");
+        return false;
+    }
+    return true;
+}
+
+bool xpNode::isFull()
+{
+    return unk_05 >= unk_04;
+}
+
+bool xpNode::decode()
+{
+    if (unk_02) {
+        printf("can't decode a non-literal\n");
+        return false;
+    }
+    if (!val.makeNumeric()) {
+        func_0804ad38("couldn't convert to arithmetic\n");
+        return false;
+    }
+    return true;
+}
+
 const char *xpNode::getLiteral()
 {
     char *s = val.getString();
@@ -334,7 +366,7 @@ bool xpTree::evalExp(const char *s)
                 func_0804ad38("failed to get new xn .. bah\n");
                 goto fail;
             }
-            p = func_0804ec74(p, n, cur->isFull());
+            p = func_0804ec74(p, n, xpNodeIsFull(cur));
             if (!p) {
                 delete n;
                 goto fail;
@@ -497,7 +529,7 @@ bool xpTree::rec_Eval(xpNode *n)
         }
     }
     case 0: {
-        if (!n->decode())
+        if (!xpNodeDecode(n))
             return false;
         return v->isNumeric();
     }

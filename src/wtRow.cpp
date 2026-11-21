@@ -21,11 +21,19 @@ wtRow::~wtRow()
 {
 }
 
+static inline bool clearWtEntry(wtEntry *e) { e->unk_00 = 0; return 1; }
+
 bool wtRow::func_080721f8()
 {
     for (int i = 0; i != 2; i++)
-        if (!unk_00[i].func_08072218())
+        if (!clearWtEntry(&unk_00[i]))
             return 0;
+    return 1;
+}
+
+bool wtEntry::func_08072218()
+{
+    unk_00 = 0;
     return 1;
 }
 
