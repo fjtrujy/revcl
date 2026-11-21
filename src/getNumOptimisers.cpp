@@ -410,3 +410,8 @@ const char *getOptimiserName(int id)
     }
     return optTable[id].name;
 }
+
+extern const char sredEarliestAfterError[] = "int_Sred.. tline>iline..earlieset insert is after instruction.. mode is upwards %d>%d mfs=%d\n";
+extern const char sredMoveInstError[] = "failed to move inst to tline1\n";
+extern const char sredLatestBeforeError[] = "latest possible insert is before instruction..%d<%d!\n";
+extern const char sredBadlyPlacedError[] = "badly placed instruction detected\n";

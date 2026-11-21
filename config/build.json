@@ -84,6 +84,83 @@
         "-frename-registers",
         "-fmerge-all-constants"
       ]
+    },
+    "src/Parser.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/ProgramUnique.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/expandRaw.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/fileEmit.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/getNumOptimisers.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/immFixup.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/makeMove.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/prepExtInfo.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/tidy.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/hwRegPool.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
+    },
+    "src/prepReduce.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
+      ]
     }
   }
 }

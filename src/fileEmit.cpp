@@ -369,3 +369,7 @@ char *emitDestMask(char *p, int mdBits, unsigned char mods)
 done:
     return p;
 }
+
+extern const char bindExtForcedBaseError[] = "operand is forced to base, but not this one\n";
+extern const char bindExtVirtualRegError[] = "found a virtual register on an x operand\n";
+extern const char bindExtFindRegRefError[] = "failed to find regref in bind externals\n";

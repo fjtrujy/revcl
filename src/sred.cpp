@@ -43,6 +43,11 @@ static inline void dumpSredInstruction(Instr *in)
     in->func_08054008(false);
 }
 
+extern const char sredEarliestAfterError[];
+extern const char sredMoveInstError[];
+extern const char sredLatestBeforeError[];
+extern const char sredBadlyPlacedError[];
+
 bool sredInstr(workTable *wt, Instr *in, bool up)
 {
     cls08058718 pos;
@@ -56,7 +61,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
         tline = earliestInsert(wt, in, &found);
         if (tline > iline) {
             short mfs = in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2;
-            func_0804ad38("int_Sred.. tline>iline..earlieset insert is after instruction.. mode is upwards %d>%d mfs=%d\n",
+            func_0804ad38(sredEarliestAfterError,
                           tline, iline, mfs);
             in->func_08054008(false);
             func_0804ad38("iline=%d tline=%d\n", iline, tline);
@@ -67,7 +72,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
     } else {
         tline = latestInsert(wt, in, &found);
         if (tline < iline) {
-            func_0804ad38("latest possible insert is before instruction..%d<%d!\n", tline, iline);
+            func_0804ad38(sredLatestBeforeError, tline, iline);
             dumpSredInstruction(in);
             return false;
         }
@@ -93,7 +98,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
 
 move:
     if (!wt->takeOut(in) || !moveLocks(in, &pos) || !wt->putIn(in)) {
-        func_0804ad38("failed to move inst to tline1\n");
+        func_0804ad38(sredMoveInstError);
         return false;
     }
     return true;
@@ -120,7 +125,7 @@ bool sredTable(workTable *wt)
                 Instr *in = wt->func_080724f0(i)->onlyEntry();
                 if (in) {
                     if (in->unk_13e8.unk_04 != i) {
-                        func_0804ad38("badly placed instruction detected\n");
+                        func_0804ad38(sredBadlyPlacedError);
                         return false;
                     }
                     if (!sredInstr(wt, in, true)) {
@@ -137,7 +142,7 @@ bool sredTable(workTable *wt)
                 Instr *in = wt->func_080724f0(i)->onlyEntry();
                 if (in && !atEarliest(wt, in)) {
                     if (in->unk_13e8.unk_04 != i) {
-                        func_0804ad38("badly placed instruction detected\n");
+                        func_0804ad38(sredBadlyPlacedError);
                         return false;
                     }
                     if (!sredInstr(wt, in, false)) {

@@ -18,6 +18,14 @@ static inline bool noReduce(workTable *wt)
     return isRawMode(wt) && (wt->unk_0a == 2 || wt->unk_0a == 4);
 }
 
+extern const char fiddleBranchPosError[];
+extern const char fiddleFailedPrevError[];
+extern const char fiddleMoveBranchError[];
+extern const char fiddleGetPrevIeError[];
+extern const char fiddleGetBranchIeError[];
+extern const char fiddleGetLastIeError[];
+extern const char fiddleSmallerError[];
+
 bool fiddleBDL(workTable *wt)
 {
     setRange(wt->unk_30, wt->unk_34, wt->unk_38);
@@ -26,7 +34,7 @@ bool fiddleBDL(workTable *wt)
     } else {
         int len = wt->unk_34 - wt->unk_30;
         if (len < wt->unk_44) {
-            func_0804ad38("table already smaller than extminlength in fiddleBDL\n");
+            func_0804ad38(fiddleSmallerError);
             return false;
         }
         if (len == wt->unk_44)
@@ -44,19 +52,19 @@ bool fiddleBDL(workTable *wt)
             goto done;
         wtRow *last = wt->func_080724f0(wt->unk_34 - 1);
         if (!last) {
-            func_0804ad38("reduceExt: failed to get last ie\n");
+            func_0804ad38(fiddleGetLastIeError);
             return false;
         }
         if (last->func_08072304())
             goto done;
         wtRow *brow = wt->func_080724f0(wt->unk_34 - 2);
         if (!brow) {
-            func_0804ad38("reduceExt: failed to get branch ie\n");
+            func_0804ad38(fiddleGetBranchIeError);
             return false;
         }
         wtRow *prow = wt->func_080724f0(wt->unk_34 - 3);
         if (!prow) {
-            func_0804ad38("reduceExt: failed to get prev ie\n");
+            func_0804ad38(fiddleGetPrevIeError);
             return false;
         }
 
@@ -71,7 +79,7 @@ bool fiddleBDL(workTable *wt)
             posB.setRow(row);
             bool ok = true;
             if (br != brow->unk_00[1].unk_00) {
-                func_0804ad38("the branch wasn't where I thought it was\n");
+                func_0804ad38(fiddleBranchPosError);
                 return false;
             }
             Instr *prev = prow->unk_00[1].unk_00;
@@ -128,12 +136,12 @@ bool fiddleBDL(workTable *wt)
                 return false;
             }
             if (!moveLocks(br, &posP)) {
-                func_0804ad38("after all that - failed to move branch\n");
+                func_0804ad38(fiddleMoveBranchError);
                 return false;
             }
             if (prev) {
                 if (!moveLocks(prev, &posB)) {
-                    func_0804ad38("after all that - failed to prev\n");
+                    func_0804ad38(fiddleFailedPrevError);
                     return false;
                 }
                 if (!wt->putIn(prev)) {

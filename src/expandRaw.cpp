@@ -31,3 +31,5 @@ bool expandRawTables(Program *p)
     }
     return true;
 }
+
+extern const char emuNullTableWarn[] = "emu - passed a null table ptr!\n";

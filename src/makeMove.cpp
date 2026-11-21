@@ -66,6 +66,7 @@ bool AddToDo_Head(Block *blk, Instr *n);
 bool logInstr(Block *blk, Instr *in);
 void func_080737b8(Instr *in);
 
+short g_streamSerial = 1;
 int g_080b33ec = 0;
 
 static inline void countCreatedMove(Block *blk, Instr *mv)
@@ -495,3 +496,10 @@ bool undoMovesTo(Block *blk, Instr *stop)
     } while (!done);
     return true;
 }
+
+extern const char moveRecMismatchError[] = "getFreeMove - mr not same %x!=%x\n";
+extern const char moveRecNullRllError[] = "getFreeLocalMove() - null rll pointer in cached move record\n";
+extern const char moveRecSidefxError[] = "add code to handle sidefx for this move target\n";
+extern const char moveRecNewInstrError[] = "failed to get a new instruction for move\n";
+extern const char moveRecBaseMuidError[] = "baseMuid is not set for free move\n";
+extern const char moveDetectNoRegError[] = "move detect error - reg not set\n";

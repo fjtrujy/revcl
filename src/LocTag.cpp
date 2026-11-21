@@ -13,18 +13,28 @@ int func_0805085c(LocTag *t)
 }
 
 
+extern const char locTagInvalidCommentError[];
+extern const char locTagTooManyTokensError[];
+extern const char locTagNonNullTeError[];
+extern const char locTagNullTeError[];
+extern const char locTagNullInPError[];
+extern const char locTagNullLineDataError[];
+extern const char locTagGetTokenNullError[];
+extern const char locTagDumpNoPtrError[];
+extern const char locTagInvalidDumpError[];
+
 char *LocTag::func_0805086c(int *mode, char *in)
 {
     if (!unk_00) {
-        func_0804ad38("lineEntry::Tokenise() - m_l_LineData was null\n");
+        func_0804ad38(locTagNullLineDataError);
         return 0;
     }
     if (!in) {
-        func_0804ad38("lineEntry::Tokenise() - in_p was null\n");
+        func_0804ad38(locTagNullInPError);
         return 0;
     }
     if (*mode != 0 && *mode != 2) {
-        func_0804ad38("invalid comment mode at start of lineEntry::Tokenise\n");
+        func_0804ad38(locTagInvalidCommentError);
         return 0;
     }
     char *p = in;
@@ -84,7 +94,7 @@ char *LocTag::func_0805086c(int *mode, char *in)
                 te = 0;
             } else {
                 if (!te) {
-                    func_0804ad38("tokeniser had unexpected null TE\n");
+                    func_0804ad38(locTagNullTeError);
                     return 0;
                 }
                 *out++ = *p;
@@ -92,12 +102,12 @@ char *LocTag::func_0805086c(int *mode, char *in)
             break;
         case 1:
             if (te) {
-                func_0804ad38("tokeniser had unexpected non-null te\n");
+                func_0804ad38(locTagNonNullTeError);
                 return 0;
             }
             if (isTok) {
                 if (unk_8c >= 200) {
-                    func_0804ad38("lineEntry::Tokenise: too many tokens on line\n");
+                    func_0804ad38(locTagTooManyTokensError);
                     return 0;
                 }
                 te = &unk_090[unk_8c];
@@ -141,7 +151,7 @@ char *LocTag::func_08050be4(int i, char *type)
     if (i < 0 || i >= unk_8c)
         return 0;
     if (!unk_00) {
-        func_0804ad38("lineEntry: get token - but m_lineData was null\n");
+        func_0804ad38(locTagGetTokenNullError);
         return 0;
     }
     if (type)
@@ -152,7 +162,7 @@ char *LocTag::func_08050be4(int i, char *type)
 void LocTag::func_08050c40(int hl)
 {
     if (!isValid()) {
-        func_0804ad38("lineEntry() was invalid - couldn't dump\n");
+        func_0804ad38(locTagInvalidDumpError);
         return;
     }
     if (unk_0a > 0) {
@@ -160,7 +170,7 @@ void LocTag::func_08050c40(int hl)
             for (int k = 0; k != d; k++)
                 func_0804ac50("  ");
             if (!unk_0c[d].unk_00)
-                func_0804ad38("lineEntry::Dump() - had no locTag pointer set at depth %d/%d\n", d, unk_0a);
+                func_0804ad38(locTagDumpNoPtrError, d, unk_0a);
             func_0804ac50(" line %4d ", unk_0c[d].unk_04);
             unk_0c[d].unk_00->func_080510cc();
         }

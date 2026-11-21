@@ -313,3 +313,5 @@ branchBound:
             in->func_0805601c(2);
     goto success;
 }
+
+extern const char prepRawAddInstrError[] = "iTable - failed to add an instruction\n";

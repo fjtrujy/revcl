@@ -6,6 +6,10 @@
 #include "os.h"
 #include "flowBlock.h"
 
+extern const char bindExtForcedBaseError[];
+extern const char bindExtVirtualRegError[];
+extern const char bindExtFindRegRefError[];
+
 bool bindExternals(Program *p)
 {
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {
@@ -22,16 +26,16 @@ bool bindExternals(Program *p)
                     continue;
                 regUse *ru = wt->unk_14.func_0805b5dc(reg);
                 if (!ru) {
-                    func_0804ad38("failed to find regref in bind externals\n");
+                    func_0804ad38(bindExtFindRegRefError);
                     return false;
                 }
                 if (ru->isExternal() || wt->unk_08 == 3) {
                     if (reg->unk_14) {
-                        func_0804ad38("found a virtual register on an x operand\n");
+                        func_0804ad38(bindExtVirtualRegError);
                         return false;
                     }
                     if (op->unk_10 && op->unk_10 != reg) {
-                        func_0804ad38("operand is forced to base, but not this one\n");
+                        func_0804ad38(bindExtForcedBaseError);
                         return false;
                     }
                     op->unk_10 = reg;

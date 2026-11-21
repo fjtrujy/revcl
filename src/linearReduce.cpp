@@ -99,7 +99,8 @@ bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl)
 
     if (found) {
         if (!wt->takeOut(in)) {
-            func_0804ad38("failed to take out instruction\n");
+            extern const char linearReduceTakeOutError[];
+            func_0804ad38(linearReduceTakeOutError);
             return false;
         }
         if (!moveLocks(in, &pos)) {

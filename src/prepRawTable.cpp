@@ -124,7 +124,8 @@ bool workTable::prepRawTable()
             in->unk_30 = 0;
             in->setOwner((cls_unk30 *)this);
             if (!logAddLinear_Tail(in)) {
-                func_0804ad38("iTable - failed to add an instruction\n");
+                extern const char prepRawAddInstrError[];
+                func_0804ad38(prepRawAddInstrError);
                 in->leDump();
                 return 0;
             }

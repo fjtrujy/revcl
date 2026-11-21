@@ -102,3 +102,11 @@ bool extendForEnd(workTable *wt)
     } while (wt->unk_34 - wt->unk_30 < 2);
     return true;
 }
+
+extern const char fiddleBranchPosError[] = "the branch wasn't where I thought it was\n";
+extern const char fiddleFailedPrevError[] = "after all that - failed to prev\n";
+extern const char fiddleMoveBranchError[] = "after all that - failed to move branch\n";
+extern const char fiddleGetPrevIeError[] = "reduceExt: failed to get prev ie\n";
+extern const char fiddleGetBranchIeError[] = "reduceExt: failed to get branch ie\n";
+extern const char fiddleGetLastIeError[] = "reduceExt: failed to get last ie\n";
+extern const char fiddleSmallerError[] = "table already smaller than extminlength in fiddleBDL\n";

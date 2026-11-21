@@ -26,7 +26,8 @@ bool func_08088f20(RegPool *pool, const char *base, int size)
     RegPoolEntry *tab = new RegPoolEntry[size];
     pool->unk_04 = tab;
     if (!tab) {
-        func_0804ad38("RegPool::Init - couldn't allocate table\n");
+        extern const char memRegPoolAllocError[];
+        func_0804ad38(memRegPoolAllocError);
         return false;
     }
     RegPoolEntry *e = tab;

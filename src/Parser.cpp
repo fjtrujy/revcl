@@ -482,3 +482,13 @@ bool func_08050810(const char *s)
     return func_08050780(s, g_080b3150);
 }
 
+extern const char locTagInvalidCommentError[] = "invalid comment mode at start of lineEntry::Tokenise\n";
+extern const char locTagTooManyTokensError[] = "lineEntry::Tokenise: too many tokens on line\n";
+extern const char locTagNonNullTeError[] = "tokeniser had unexpected non-null te\n";
+extern const char locTagNullTeError[] = "tokeniser had unexpected null TE\n";
+extern const char locTagNullInPError[] = "lineEntry::Tokenise() - in_p was null\n";
+extern const char locTagNullLineDataError[] = "lineEntry::Tokenise() - m_l_LineData was null\n";
+extern const char locTagGetTokenNullError[] = "lineEntry: get token - but m_lineData was null\n";
+extern const char locTagDumpNoPtrError[] = "lineEntry::Dump() - had no locTag pointer set at depth %d/%d\n";
+extern const char locTagInvalidDumpError[] = "lineEntry() was invalid - couldn't dump\n";
+

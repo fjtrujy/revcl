@@ -516,3 +516,8 @@ void Instr::resetImmFixup()
     unk_13d6 = -1;
     unk_13d8.clear();
 }
+
+extern const char parseImmediateError[] = "failed to parse immediate '%s'\n";
+extern const char evalImmediateError[] = "failed to evaluate tree for '%s' to type %s\n";
+extern const char parseImmediateWarn[] = "encountered an error parsing '%s'\n";
+extern const char maddImmediateInputError[] = "madd immediate- input not valid\n";

@@ -1,7 +1,5 @@
 #include "instStream.h"
 
-short g_streamSerial = 1;
-
 bool isReferencedLabel(Program *p, char *name);
 bool func_0806f4e8(Program *p, char *name);
 

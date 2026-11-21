@@ -6,6 +6,13 @@
 
 RegPool *GetRP(unsigned t);
 
+extern const char moveRecMismatchError[];
+extern const char moveRecNullRllError[];
+extern const char moveRecSidefxError[];
+extern const char moveRecNewInstrError[];
+extern const char moveRecBaseMuidError[];
+extern const char moveDetectNoRegError[];
+
 Instr *getMove(int type, int)
 {
     if (type == 0) {
@@ -26,7 +33,7 @@ Instr *getMove(int type, int)
             func_0804adf0(-1);
         }
         if (in->unk_1428 != (int)mr) {
-            func_0804ad38("getFreeMove - mr not same %x!=%x\n", in->unk_1428, mr);
+            func_0804ad38(moveRecMismatchError, in->unk_1428, mr);
             func_0804adf0(-1);
         }
         if (!mr->unk_0c) {
@@ -38,7 +45,7 @@ Instr *getMove(int type, int)
         for (int i = 0; i != mr->unk_0c->unk_28; i++) {
             cls0805c244 *l = &mr->unk_10[i];
             if (!l) {
-                func_0804ad38("getFreeLocalMove() - null rll pointer in cached move record\n");
+                func_0804ad38(moveRecNullRllError);
                 func_0804aeb0();
             }
             l->unk_08 = 0;
@@ -81,7 +88,7 @@ Instr *getMove(int type, int)
     }
     Instr *in = new Instr(ii);
     if (!in) {
-        func_0804ad38("failed to get a new instruction for move\n");
+        func_0804ad38(moveRecNewInstrError);
         func_0804adf0(-1);
     }
     int serial = g_080b33a8++;
@@ -101,7 +108,7 @@ Instr *getMove(int type, int)
     }
     op->unk_18 = reg;
     if (in->unk_138b != 2) {
-        func_0804ad38("add code to handle sidefx for this move target\n");
+        func_0804ad38(moveRecSidefxError);
         func_0804adf0(-1);
     }
     for (int i = 0; i != reg->unk_28; i++) {
@@ -150,7 +157,7 @@ bool addFreeMove(Instr *in)
     in->unk_13e8.func_080586e0();
     in->func_08054b84();
     if (!in->unk_142c) {
-        func_0804ad38("baseMuid is not set for free move\n");
+        func_0804ad38(moveRecBaseMuidError);
         return false;
     }
     iInfo *ii = func_0806bf74(in->unk_142c);
@@ -219,7 +226,7 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     RegPoolEntry *s = in->unk_38[srcOp].unk_18;
     RegPoolEntry *d = in->unk_38[dstOp].unk_18;
     if (!s || !d) {
-        func_0804ad38("move detect error - reg not set\n");
+        func_0804ad38(moveDetectNoRegError);
         func_0804adf0(-1);
         return false;
     }

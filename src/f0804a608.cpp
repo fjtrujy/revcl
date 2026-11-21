@@ -8,6 +8,15 @@
 #include "os.h"
 
 int func_0804ad84(const char *fmt, ...);
+bool symbolic_080b300c = false;
+bool flag_080b300d = false;
+bool noLoops_080b300e = false;
+int timeout_080b3010 = 4;
+bool unk_080b3014 = false;
+bool sizeReduce_080b3015 = true;
+bool noAlign_080b3016 = false;
+bool noEbit_080b3017 = false;
+bool flag_080b3018 = true;
 Tool tools_080b301c[3] = {
     { "gcc", "gcc -P -E -C -x assembler-with-cpp" },
     { "gasp", "gasp -p -s -c ';' " },

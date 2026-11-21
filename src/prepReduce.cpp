@@ -49,3 +49,5 @@ bool func_0807e528(Program *p, instStream *s, workTable *wt)
     }
     return true;
 }
+
+extern const char linearReduceTakeOutError[] = "failed to take out instruction\n";

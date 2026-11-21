@@ -6,6 +6,11 @@
 const char *func_0804ca58(int type);
 extern bool g_080b3088;
 
+extern const char parseImmediateError[];
+extern const char evalImmediateError[];
+extern const char parseImmediateWarn[];
+extern const char maddImmediateInputError[];
+
 const char *func_0806a33c(unsigned char t)
 {
     return func_0804ca58(func_08070300(t));
@@ -22,11 +27,11 @@ bool parseImmediate(const char *s, unsigned char type, mValue *v)
     }
     xpTree tree;
     if (!tree.evalExp(s)) {
-        func_0804ad38("failed to parse immediate '%s'\n", s);
+        func_0804ad38(parseImmediateError, s);
     } else {
         int n = tree.func_0804f8f0();
         if (n < 0) {
-            func_0804ac7c("encountered an error parsing '%s'\n", s);
+            func_0804ac7c(parseImmediateWarn, s);
         } else {
             if (n != 0) {
                 if (!v->setString(s)) {
@@ -36,7 +41,7 @@ bool parseImmediate(const char *s, unsigned char type, mValue *v)
             } else {
                 v->dump();
                 if (!tree.evaluate(v, t)) {
-                    func_0804ad38("failed to evaluate tree for '%s' to type %s\n", s, func_0804ca58(t));
+                    func_0804ad38(evalImmediateError, s, func_0804ca58(t));
                     goto fail;
                 }
             }
@@ -56,7 +61,7 @@ int maddImmediate(Operand *const op, mValue *v, int n)
         return -1;
     }
     if (!v->isValid()) {
-        func_0804ad38("madd immediate- input not valid\n");
+        func_0804ad38(maddImmediateInputError);
         return 0;
     }
     int r = 0;

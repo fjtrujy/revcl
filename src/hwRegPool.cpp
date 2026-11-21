@@ -51,3 +51,5 @@ bool hwRegPool::func_08088e6c(instStream *, RegPoolEntry *)
 {
     return true;
 }
+
+extern const char memRegPoolAllocError[] = "RegPool::Init - couldn't allocate table\n";

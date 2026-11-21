@@ -67,15 +67,15 @@ extern bool stagger_080b33ac;
 struct CpuDef;
 extern CpuDef cpu_080bbb50;
 
-bool symbolic_080b300c = false;
-bool flag_080b300d = false;
-bool noLoops_080b300e = false;
-int timeout_080b3010 = 4;
-bool unk_080b3014 = false;
-bool sizeReduce_080b3015 = true;
-bool noAlign_080b3016 = false;
-bool noEbit_080b3017 = false;
-bool flag_080b3018 = true;
+extern bool symbolic_080b300c;
+extern bool flag_080b300d;
+extern bool noLoops_080b300e;
+extern int timeout_080b3010;
+extern bool unk_080b3014;
+extern bool sizeReduce_080b3015;
+extern bool noAlign_080b3016;
+extern bool noEbit_080b3017;
+extern bool flag_080b3018;
 
 void func_08048c30()
 {

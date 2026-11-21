@@ -17,7 +17,8 @@ static inline int clampByte(int v)
 bool emuTable(Program *p, workTable *wt)
 {
     if (!wt) {
-        func_0804ac7c("emu - passed a null table ptr!\n");
+        extern const char emuNullTableWarn[];
+        func_0804ac7c(emuNullTableWarn);
         return true;
     }
     if (wt->func_080741b4() || wt->unk_3c) {
