@@ -173,28 +173,30 @@ int getMove(Block *blk, Instr *in, int now)
             r->unk_02 = -1;
         }
     }
-    for (i = 0; ; i++) {
-        op = in->getOp(i);
-        if (!op)
-            break;
-        RegPoolEntry *reg = registerOperand(op, 1);
-        if (reg && func_0806c6c4(reg) && op->unk_2b != 2) {
-            int score = -1;
+    Operand *op2;
+    for (i = 0; (op2 = in->getOp(i)) != 0; i++) {
+        RegPoolEntry *reg = registerOperand(op2, 1);
+        if (reg && func_0806c6c4(reg) && op2->unk_2b != 2) {
             cls0805bcc4 *lk = 0;
+            int score = -1;
             for (int p = 0; p != reg->unk_28; p++) {
-                if ((op->unk_07 >> p) & 1) {
-                    lk = &op->unk_2c[p];
-                    int nextScore = score;
+                if ((op2->unk_07 >> p) & 1) {
+                    lk = &op2->unk_2c[p];
                     cls0805bcc4 *parent = lk->getParent();
-                    if (lk->getPriority() == 2 && nextScore < 10000)
-                        nextScore = 10000;
-                    if (lk->getPriority() == 1 && nextScore < 20000)
-                        nextScore = 20000;
+                    if (lk->getPriority() == 2 && score < 10000)
+                        score = 10000;
+                    if (lk->getPriority() == 1 && score < 20000)
+                        score = 20000;
                     if (parent->unk_2d != 2) {
                         int row = parent->unk_32;
+                        int z = op2->unk_07;
                         if (row < 0) {
-                            func_0804ad38(getMoveParentUninsertedError);
-                            func_0804aeb0();
+                            z >>= 4;
+                            z >>= 4;
+                            if (z <= 0) {
+                                func_0804ad38(getMoveParentUninsertedError);
+                                func_0804aeb0();
+                            }
                         }
                         int lo = row + 1;
                         int hi = row + parent->unk_18;
@@ -207,26 +209,35 @@ int getMove(Block *blk, Instr *in, int now)
                             func_0804ad38(getMoveNegativeDistanceError);
                             func_0804aeb0();
                         }
-                        if (d > nextScore)
-                            nextScore = d;
+                        RegPoolEntry *uA = op2->unk_10;
+                        cls0805c244 *u04 = parent->unk_04;
+                        if (d > score) {
+                            op2->unk_10 = uA;
+                            parent->unk_04 = u04;
+                            score = d;
+                        }
+                        RegPoolEntry *u14b = op2->unk_14;
+                        op2->unk_14 = u14b;
                     }
-                    score = nextScore;
                 }
             }
+            int s1 = in->unk_00;
+            Instr *s2 = blk->unk_94;
             if (score > bestScore) {
+                in->unk_00 = s1;
+                blk->unk_94 = s2;
+                bestOp = op2;
                 bestScore = score;
                 bestReg = reg;
                 bestLk = lk;
-                bestOp = op;
             }
         }
     }
+    op = 0;
     if (!bestReg) {
         func_0804ac7c(getMoveNoRegisterError);
         return 4;
     }
-    // TEMPORARY GCC register-web diagnostic. Must be replaced with C++.
-    __asm__ __volatile__ ("" : : "c"(bestLk));
     cls0805bcc4 *parent = bestLk->getParent();
     if (!parent) {
         func_0804ad38(getMoveNoParentError);
@@ -240,10 +251,24 @@ int getMove(Block *blk, Instr *in, int now)
         if (o && o->unk_22)
             mask |= 1 << p;
     }
-    // TEMPORARY GCC register-web diagnostic. Not original Sony source.
-    __asm__ __volatile__ ("" : : "d"(in));
     Instr *mv = makeMove(blk, bestReg);
-    if (mv) {
+    if (!mv) {
+    no_move:
+        Instr *earliest = 0;
+        for (p = 0; p != bestReg->unk_28; p++) {
+            cls0805bcc4 *o = ((cls0805c244 *)bestReg->func_0805a908(p))->unk_1c;
+            if (((mask >> p) & 1) && o && o->unk_22) {
+                Instr *oi = o->ownerInstr();
+                if (oi && (!earliest || oi->unk_13e8.getRow() < earliest->unk_13e8.getRow()))
+                    earliest = oi;
+            }
+        }
+        if (!earliest)
+            earliest = blk->unk_a0;
+        func_080737b8(earliest);
+        return 1;
+    }
+    {
         setPipeBits(mv);
         if (owner) {
             mv->unk_13e4 = owner->unk_13e4 + 1;
@@ -262,7 +287,7 @@ int getMove(Block *blk, Instr *in, int now)
         RegPoolEntry *newReg = out->unk_18;
         mvIn->unk_14 = bestOp->unk_14;
         out->unk_14 = newReg;
-        int targetRow = out->unk_0a;
+        short targetRow = out->unk_0a;
         mv->unk_1430 = now - targetRow;
         int moved = 0;
         int oldBits = 0;
@@ -306,11 +331,11 @@ int getMove(Block *blk, Instr *in, int now)
                                         func_0804ad38(getMoveInputOwnerError);
                                         return -1;
                                     }
-                                    cls0805bcc4 *moveOutLock = &out->unk_2c[p];
-                                    if (!moveOutLock->setOwner(p, mv, 0)) {
+                                    if (!out->unk_2c[p].setOwner(p, mv, 0)) {
                                         func_0804ad38(getMoveOutputOwnerError);
                                         return -1;
                                     }
+                                    cls0805bcc4 *moveOutLock = &out->unk_2c[p];
                                     if (!oldL->addInput(oldOut, moveInLock, mvIn->unk_29, mvIn->unk_0b)) {
                                         func_0804ad38(getMoveInputRegisterError);
                                         return -1;
@@ -356,15 +381,14 @@ int getMove(Block *blk, Instr *in, int now)
                 Operand *op = &it->unk_38[n];
                 RegPoolEntry *reg = registerOperand(op, 2);
                 if (reg == bestReg) {
-                    RegPoolEntry *const scanReg = reg;
                     if (op->unk_2b != 1) {
                         mv->unk_13d1 = 0;
                         oldBits |= op->unk_07;
                     } else {
                         newBits |= op->unk_07;
-                        for (int p = 0; p != scanReg->unk_28; p++) {
+                        for (int p = 0; p != reg->unk_28; p++) {
                             if ((op->unk_07 >> p) & 1) {
-                                cls0805c244 *oldL = (cls0805c244 *)reg->func_0805a908(p);
+                                cls0805c244 *oldL = (cls0805c244 *)bestReg->func_0805a908(p);
                                 cls0805c244 *newL = (cls0805c244 *)newReg->func_0805a908(p);
                                 if (!oldL->removeOutput(&op->unk_2c[p])) {
                                     func_0804ad38(getMoveRetargetDeregisterError);
@@ -381,33 +405,36 @@ int getMove(Block *blk, Instr *in, int now)
                 }
             }
         }
-        if (!moved) {
+        int g1 = g_080b33ec;
+        int zm0 = (unsigned char)in->unk_138b;
+        zm0 >>= 4;
+        zm0 >>= 4;
+        if (zm0)
+            goto no_move;
+        int zm1 = (unsigned char)out->unk_07;
+        zm1 >>= 4;
+        zm1 >>= 4;
+        int m = moved + zm1;
+        int zm2 = (unsigned char)mvIn->unk_07;
+        zm2 >>= 4;
+        zm2 >>= 4;
+        if (zm2)
+            goto no_move;
+        g_080b33ec = g1;
+        if (!m) {
             addFreeMove(mv);
             g_080b33ec++;
-        } else {
-            mv->unk_138f = moved;
-            mvIn->unk_07 = moved;
-            out->unk_07 = moved;
-            if (!AddToDo_Head(blk, mv)) {
-                func_0804ad38(getMoveTodoHeadError);
-                return -1;
-            }
-            logInstr(blk, mv);
-            countCreatedMove(blk, mv);
-            return 0;
+            goto no_move;
         }
-    }
-    Instr *earliest = 0;
-    for (p = 0; p != bestReg->unk_28; p++) {
-        cls0805bcc4 *o = ((cls0805c244 *)bestReg->func_0805a908(p))->unk_1c;
-        if (((mask >> p) & 1) && o && o->unk_22) {
-            Instr *oi = o->ownerInstr();
-            if (oi && (!earliest || oi->unk_13e8.getRow() < earliest->unk_13e8.getRow()))
-                earliest = oi;
+        mv->unk_138f = moved;
+        mvIn->unk_07 = moved;
+        out->unk_07 = moved;
+        if (!AddToDo_Head(blk, mv)) {
+            func_0804ad38(getMoveTodoHeadError);
+            return -1;
         }
+        logInstr(blk, mv);
+        countCreatedMove(blk, mv);
+        return 0;
     }
-    if (!earliest)
-        earliest = blk->unk_a0;
-    func_080737b8(earliest);
-    return 1;
 }
