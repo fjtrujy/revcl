@@ -314,36 +314,7 @@ bool func_08051908(Program *prog, LocTag *t)
     return 0;
 }
 
-Directive directives_080b3160[28] = {
-    {".vu", func_08051308},
-    {".mpg", func_0805131c},
-    {".vsm", func_080513cc},
-    {".endvsm", func_080514a0},
-    {".vsmloop", func_080514e8},
-    {".endvsmloop", func_080515a0},
-    {".init_vf", func_0805116c},
-    {".init_vi", func_0805118c},
-    {".rem_vf", func_080511ac},
-    {".rem_vi", func_080511cc},
-    {".init_vf_all", func_080511ec},
-    {".init_vi_all", func_08051228},
-    {".vu_work_area", func_080515f0},
-    {".name", func_080512a4},
-    {".syntax", func_08051908},
-    {".align", func_08051808},
-    {".global", func_0805137c},
-    {".noaligns", func_08051264},
-    {".noebits", func_08051284},
-    {".raw", func_080513cc},
-    {".endraw", func_080514a0},
-    {".rawloop", func_080514e8},
-    {".endrawloop", func_080515a0},
-    {".unique", func_08051890},
-    {".show", func_08051848},
-    {".hide", func_08051830},
-    {".endshow", func_08051878},
-    {".endhide", func_08051860},
-};
+extern Directive directives_080b3160[28];
 
 inline char *ExecRP_directive_name(LocTag *t)
 {

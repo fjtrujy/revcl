@@ -8,10 +8,10 @@ bool func_0804c03c(const char *a, const char *b);
 bool func_0804bfcc(const char *a, const char *b);
 bool func_08050780(const char *s, const char *kw);
 
-char *g_080b3144 = "0123456789.";    // gasp line-number chars
-char *g_080b3148 = "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?;";    // token (non-whitespace) char set
-char *g_080b314c = "----*";    // block-start keyword
-char *g_080b3150 = "*----";    // block-end keyword
+extern char *g_080b3144;
+extern char *g_080b3148;
+extern char *g_080b314c;
+extern char *g_080b3150;
 
 Parser::Parser()
 {
