@@ -36,7 +36,7 @@ class stallNode : public infoNode {
 public:
     enum InitTag { INIT };
     stallNode();
-    stallNode(InitTag) { for (int i = 0; i != 3; i++) unk_24[i] = 0; }
+    inline stallNode(InitTag);
     virtual ~stallNode();
     virtual void dump();
     bool catStall(ol_s *a, ol_s *b, int x, int val);

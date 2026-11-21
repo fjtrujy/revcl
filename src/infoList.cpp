@@ -111,6 +111,17 @@ void infoList::func_080525c8()
         p->dump();
 }
 
+inline infoNode::infoNode(InitTag)
+{
+    unk_04 = 0;
+}
+
+inline stallNode::stallNode(InitTag) : infoNode(infoNode::INIT)
+{
+    for (int i = 0; i != 3; i++)
+        unk_24[i] = 0;
+}
+
 bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
 {
     stallNode *p = (stallNode *)unk_04;
@@ -142,7 +153,12 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
     return true;
 }
 
-stallNode::stallNode()
+infoNode::infoNode()
+{
+    unk_04 = 0;
+}
+
+stallNode::stallNode() : infoNode(infoNode::INIT)
 {
     for (int i = 0; i != 3; i++)
         unk_24[i] = 0;
@@ -216,7 +232,7 @@ bool stallNode::catStall(ol_s *a, ol_s *b, int type, int val)
     return true;
 }
 
-ubsNode::ubsNode()
+ubsNode::ubsNode() : infoNode(infoNode::INIT)
 {
     unk_08 = 0;
     unk_0c = 0;

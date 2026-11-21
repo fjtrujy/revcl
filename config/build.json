@@ -43,13 +43,6 @@
         "-fmerge-all-constants"
       ]
     },
-    "src/instStream.cpp": {
-      "flags": [
-        "-O2",
-        "-frename-registers",
-        "-fno-weak"
-      ]
-    },
     "src/regUse.cpp": {
       "flags": [
         "-O2",

@@ -2,8 +2,6 @@
 #ifndef LINKLIST_H
 #define LINKLIST_H
 
-#pragma interface
-
 class instStream;
 
 struct linkNode {
@@ -16,7 +14,9 @@ struct linkNode {
     char unk_12[2];
     int unk_14;                 // link type
 
-    linkNode()
+    enum InitTag { INIT };
+    linkNode();
+    inline linkNode(InitTag)
     {
         unk_14 = -1;
         unk_04 = 0;
@@ -24,18 +24,9 @@ struct linkNode {
         unk_0c = 0;
         unk_11 = 1;
     }
-    ~linkNode()
-    {
-    }
+    ~linkNode();
     // Next node (after this one) with the given link type.
-    linkNode *func_0806dd48(int type)
-    {
-        linkNode *n = this;
-        do
-            n = n->unk_08;
-        while (n && n->unk_14 != type);
-        return n;
-    }
+    linkNode *func_0806dd48(int type);
     int func_0806e514();
 };
 

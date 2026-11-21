@@ -4,7 +4,9 @@
 
 class infoNode {
 public:
-    infoNode() { unk_04 = 0; }
+    enum InitTag { INIT };
+    infoNode();
+    inline infoNode(InitTag);
     virtual ~infoNode() = 0;
     virtual void dump() = 0;
 

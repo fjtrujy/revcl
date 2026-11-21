@@ -43,7 +43,8 @@ linkList::~linkList()
     while (n) {
         if (!unlink(unk_00))
             return;
-        delete n;
+        if (n)
+            ::operator delete(n);
         n = unk_00;
     }
 }
@@ -89,7 +90,8 @@ bool linkList::removeAll()
     while (n) {
         if (!unlink(unk_00))
             return false;
-        delete n;
+        if (n)
+            ::operator delete(n);
         n = unk_00;
     }
     return true;
@@ -153,7 +155,7 @@ bool linkList::addNewRef(instStream *s, int type)
         func_0804ad38("addNewRef - already present\n");
         return false;
     }
-    linkNode *n = new linkNode;
+    linkNode *n = new linkNode(linkNode::INIT);
     if (!n) {
         func_0804ad38("addNewRef - new failed\n");
         return false;
