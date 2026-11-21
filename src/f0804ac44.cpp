@@ -59,6 +59,17 @@ int func_0804acf4(const char *fmt, ...)
     return vfprintf(stderr, fmt, ap);
 }
 
+int func_0804ad38(const char *fmt, ...)
+{
+    if (flag_080b3038)
+        return 0;
+    va_list ap;
+    va_start(ap, fmt);
+    errorOccurred = 1;
+    fprintf(stderr, "ERROR: ");
+    return vfprintf(stderr, fmt, ap);
+}
+
 int func_0804ad84(const char *fmt, ...)
 {
     va_list ap;

@@ -1,3 +1,4 @@
+#pragma implementation "tStore.h"
 #include "backTrace_shared.h"
 
 static inline void dumpBackTrace(Program *p)

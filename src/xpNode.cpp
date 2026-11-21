@@ -1,8 +1,8 @@
-#define XP_NODE_CTOR_EMISSION __attribute__((weak,section(".gnu.linkonce.t._ZN6xpNodeC2Ev")))
 #include <stdio.h>
-#pragma implementation
+#pragma implementation "xpNode.h"
+#pragma implementation "xun.h"
 #include "xpNode.h"
-#undef XP_NODE_CTOR_EMISSION
+#include "xun.h"
 #include "os.h"
 
 xpOp opTable_080b30a0[20] = {
@@ -518,5 +518,99 @@ bool xpTree::rec_Eval(xpNode *n)
     default:
         printf("unknownn n-ary operation\n");
         return false;
+    }
+}
+
+bool func_0804bfcc(const char *a, const char *b);
+char *dupString(const char *s);
+
+xun *g_080bcda4;
+int g_080bcda8;
+int g_080b3140 = 0;
+
+xpOp *func_0804f6c0(int type)
+{
+    for (int i = 0; i != 20; i++)
+        if (opTable_080b30a0[i].type == type)
+            return &opTable_080b30a0[i];
+    return 0;
+}
+
+void func_0804f6ec()
+{
+    while (g_080bcda4) {
+        xun *p = g_080bcda4;
+        g_080bcda4 = p->next;
+        delete p;
+    }
+    g_080bcda4 = 0;
+    g_080bcda8 = 0;
+}
+
+bool func_0804f75c(const char *s)
+{
+    if (!s) {
+        func_0804ad38("passed a null string to add unknown\n");
+        return false;
+    }
+    for (xun *p = g_080bcda4; p; p = p->next)
+        if (func_0804bfcc(p->name, s))
+            return true;
+    xun *x = new xun;
+    if (!x) {
+        func_0804ad38("failed to new xun\n");
+        return false;
+    }
+    x->name = dupString(s);
+    if (!x->name) {
+        func_0804ad38("failed to dup string for xun\n");
+        delete x;
+        return false;
+    }
+    g_080bcda8++;
+    x->next = g_080bcda4;
+    g_080bcda4 = x;
+    return true;
+}
+
+void func_0804f844()
+{
+    for (xun *p = g_080bcda4; p; p = p->next)
+        ;
+}
+
+int xpTree::func_0804f8f0()
+{
+    g_080b3140 = 0;
+    xpNode *n = root;
+    if (n)
+        func_0804f920(n);
+    return g_080b3140;
+}
+
+void xpTree::func_0804f920(xpNode *n)
+{
+    if (g_080b3140 < 0)
+        return;
+    if (n->unk_04) {
+        for (int i = 0; i != n->unk_04; i++) {
+            if (n->child[i]) {
+                func_0804f920(n->child[i]);
+                if (g_080b3140 < 0)
+                    return;
+            }
+        }
+    } else {
+        if (n->val.makeNumeric())
+            return;
+        const char *s = n->val.getString();
+        if (!s)
+            s = "<no_literal>";
+        if (s && !func_0804f75c(s)) {
+            func_0804ad38("failed to add an unknown\n");
+            g_080b3140 = -1;
+            return;
+        }
+        g_080b3140++;
     }
 }
