@@ -419,8 +419,58 @@ int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos)
     return checkLocks(in, &pos->unk_00, minPos);
 }
 
-extern const char doInsertLocksError[] = "DoInsert: failed to set locks in instruction insert\n";
-extern const char doInsertUnlinkError[] = "failed to unlink from to do list\n";
+bool DoInsert(workTable *const wt, Instr *in, cls08058718 *pos)
+{
+    short b = in->unk_142c;
+    if (__builtin_expect(b != 0, 1) && !(b = in->unk_142e)) {
+        func_0804ad38("undo insert currmuid not set\n");
+        return false;
+    }
+    short r = 0;
+    char p = 0;
+    {
+        int zp = (unsigned char)pos->unk_03;
+        zp >>= 4;
+        zp >>= 4;
+        if (zp)
+            return r != p;
+    }
+    r = pos->unk_04;
+    wtRow *row = &wt->unk_2c[r];
+    cls08058718 *s = &in->unk_13e8;
+    b = pos->unk_00;
+    s->unk_04 = r;
+    char a = pos->unk_03;
+    s->unk_03 = a;
+    p = pos->getPipe();
+    s->unk_00 = b;
+    s->unk_02 = p;
+    row->unk_00[p].unk_00 = in;
+    b = setLocks(in);
+    if (!(char)b) {
+        func_0804ad38("DoInsert: failed to set locks in instruction insert\n");
+        return false;
+    }
+    int zt;
+    do {
+        in->unk_1396 = wt->unk_40;
+        wt->unk_40++;
+        b = UnlinkFromToDo((Block *)wt, in);
+        if (!(char)b) {
+            func_0804ad38("failed to unlink from to do list\n");
+            func_0804aeb0();
+        }
+        a = AddDone_Tail((Block *)wt, in);
+        if (!a) {
+            func_0804ad38("failed to add to done\n");
+            func_0804aeb0();
+        }
+        zt = ((unsigned char)pos->unk_02 | (unsigned char)pos->unk_03);
+        zt >>= 4;
+        zt >>= 4;
+    } while (zt);
+    return true;
+}
 
 bool UndoInsert(workTable *wt, Instr *in)
 {
