@@ -36,7 +36,7 @@
         "-mno-fp-ret-in-387"
       ]
     },
-    "src/Instr.cpp": {
+    "src/checkOpt.cpp": {
       "flags": [
         "-O2",
         "-frename-registers",
