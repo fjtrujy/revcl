@@ -31,4 +31,3 @@ bool buildPassThru(Program *prog, instStream *s, flowBlock *blocks, int count)
     return true;
 }
 
-extern const char buildAttachLinearError[] = "failed to attach instruction to the linear list for synth\n";

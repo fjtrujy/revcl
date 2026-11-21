@@ -164,4 +164,3 @@ bool appendStream(Program *p, instStream *a, instStream *b)
     return 1;
 }
 
-extern const char iGroupNewNodeError[] = "failed to get a new iGroupNode\n";

@@ -96,4 +96,3 @@ bool Program::func_0806e878(const char *name)
     return false;
 }
 
-extern const char addIStreamOwnerSetError[] = "addistream - owner already set\n";

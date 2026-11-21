@@ -64,13 +64,6 @@
         "-fmerge-all-constants"
       ]
     },
-    "src/catStreams.cpp": {
-      "flags": [
-        "-O2",
-        "-frename-registers",
-        "-fmerge-all-constants"
-      ]
-    },
     "src/explodeRaw.cpp": {
       "flags": [
         "-O2",
@@ -92,28 +85,7 @@
         "-fmerge-all-constants"
       ]
     },
-    "src/streamBuilders.cpp": {
-      "flags": [
-        "-O2",
-        "-frename-registers",
-        "-fmerge-all-constants"
-      ]
-    },
     "src/Parser.cpp": {
-      "flags": [
-        "-O2",
-        "-frename-registers",
-        "-fmerge-all-constants"
-      ]
-    },
-    "src/ProgramUnique.cpp": {
-      "flags": [
-        "-O2",
-        "-frename-registers",
-        "-fmerge-all-constants"
-      ]
-    },
-    "src/expandRaw.cpp": {
       "flags": [
         "-O2",
         "-frename-registers",

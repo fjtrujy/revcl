@@ -73,14 +73,13 @@ bool Program::dispose()
     return true;
 }
 
-extern const char addIStreamOwnerSetError[];
 
 bool Program::addStream(instStream *s)
 {
     if (!s)
         return false;
     if (s->unk_104) {
-        func_0804ad38(addIStreamOwnerSetError);
+        func_0804ad38("addistream - owner already set\n");
         return false;
     }
     if (unk_a0) {
@@ -104,7 +103,7 @@ bool Program::insertStreamAfter(instStream *after, instStream *s)
     if (!s)
         return false;
     if (s->unk_104) {
-        func_0804ad38(addIStreamOwnerSetError);
+        func_0804ad38("addistream - owner already set\n");
         return false;
     }
     s->unk_10c = after;
