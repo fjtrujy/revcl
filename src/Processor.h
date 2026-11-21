@@ -5,9 +5,6 @@
 #include "mList.h"
 #include "ubsList.h"
 
-class stallList : public infoList {
-};
-
 class iInfo;
 class RegPool;
 class Instr;
@@ -36,7 +33,7 @@ struct CpuDef {
 
 extern int g_080b33a8;
 extern iInfo *g_080de6c0;
-extern RegPool *g_080de6e0[12];
+extern RegPool *g_080de6e0[13];
 extern int g_080de714[3];
 extern void *g_080de720;    // device table
 extern void *g_080de724;    // srcSpecs

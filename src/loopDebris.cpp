@@ -1,10 +1,31 @@
-#pragma implementation
 #include "loopDebris.h"
 #include "os.h"
 #include "instStream.h"
 #include "workTable.h"
 
 char *dupString(const char *s);
+
+static inline epiRec *ld_getProRec_inl(loopDebris *ld, int i)
+{
+    if (i < 0 || i >= ld->m_nPro)
+        return 0;
+    return &ld->m_pro[i];
+}
+
+static inline epiRec *ld_getEpiRec_inl(loopDebris *ld, int i)
+{
+    if (i < 0 || i >= ld->m_nEpi)
+        return 0;
+    return &ld->m_epi[i];
+}
+
+static inline epiRec *ld_findEpi_inl(loopDebris *ld, int key)
+{
+    for (int i = 0; i != ld->m_nEpi; i++)
+        if (ld->m_epi[i].unk_08 == key)
+            return &ld->m_epi[i];
+    return 0;
+}
 
 loopDebris::loopDebris() throw()
 {
@@ -89,7 +110,7 @@ instStream *loopDebris::getMainStream()
 
 instStream *loopDebris::getProStream(int i)
 {
-    epiRec *r = getProRec(i);
+    epiRec *r = ld_getProRec_inl(this, i);
     if (!r) {
         func_0804ad38("failed to get pro epirec\n");
         return 0;
@@ -99,7 +120,7 @@ instStream *loopDebris::getProStream(int i)
 
 instStream *loopDebris::getEpiStream(int i)
 {
-    epiRec *r = getEpiRec(i);
+    epiRec *r = ld_getEpiRec_inl(this, i);
     if (!r) {
         func_0804ad38("failed to get pro epirec\n");
         return 0;
@@ -214,6 +235,29 @@ epiRec *loopDebris::allocExit(int size)
     return &m_exit;
 }
 
+
+epiRec *loopDebris::getProRec(int i)
+{
+    if (i < 0 || i >= m_nPro)
+        return 0;
+    return &m_pro[i];
+}
+
+epiRec *loopDebris::getEpiRec(int i)
+{
+    if (i < 0 || i >= m_nEpi)
+        return 0;
+    return &m_epi[i];
+}
+
+epiRec *loopDebris::func_08067c70(int key)
+{
+    for (int i = 0; i != m_nEpi; i++)
+        if (m_epi[i].unk_08 == key)
+            return &m_epi[i];
+    return 0;
+}
+
 #include "os.h"
 #include "Program.h"
 #include "instStream.h"
@@ -240,7 +284,7 @@ inline int loopDebris::getNumEpi()
 
 static inline instStream *checkedProStream(loopDebris *ld, int i)
 {
-    epiRec *r = ld->getProRec(i);
+    epiRec *r = ld_getProRec_inl(ld, i);
     if (!r) {
         func_0804ad38("failed to get pro epirec\n");
         return 0;
@@ -366,7 +410,7 @@ int func_08067e18(Program *p, instStream *s)
             prev = 0;
         }
         if (pr->unk_1c) {
-            epiRec *er = ld.func_08067c70(pr->unk_0c + 1);
+            epiRec *er = ld_findEpi_inl(&ld, pr->unk_0c + 1);
             if (!er) {
                 func_0804ad38("failed to find epilogue\n");
                 return -1;
@@ -416,7 +460,7 @@ int func_08067e18(Program *p, instStream *s)
 
     instStream *succ = exit;
     if (ld.getNumEpi()) {
-        epiRec *e0 = ld.getEpiRec(0);
+        epiRec *e0 = ld_getEpiRec_inl(&ld, 0);
         if (!e0) {
             func_0804ad38("failed to get epi0\n");
             return -1;
@@ -433,7 +477,7 @@ int func_08067e18(Program *p, instStream *s)
     }
 
     for (i = 0; i != ld.getNumEpi(); i++) {
-        r = ld.getEpiRec(i);
+        r = ld_getEpiRec_inl(&ld, i);
         if (!r) {
             func_0804ad38("failed to get epi \n");
             return -1;
@@ -473,7 +517,7 @@ int func_08067e18(Program *p, instStream *s)
 
     last = enter;
     for (i = 0; i != ld.getNumPro(); i++) {
-        r = ld.getProRec(i);
+        r = ld_getProRec_inl(&ld, i);
         if (!p->insertStreamAfter(last, r->unk_14)) {
             func_0804ad38("failed to add after\n");
             func_0804adf0(-1);
@@ -486,7 +530,7 @@ int func_08067e18(Program *p, instStream *s)
     }
     last = main;
     for (i = 0; i != ld.getNumEpi(); i++) {
-        r = ld.getEpiRec(i);
+        r = ld_getEpiRec_inl(&ld, i);
         if (!p->insertStreamAfter(last, r->unk_14)) {
             func_0804ad38("failed to add after\n");
             func_0804adf0(-1);
@@ -651,7 +695,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     int n = lsz * (mlid - clid);
     if (n) {
         for (int j = ld->m_nPro - 1; j >= 0; j--) {
-            epiRec *p = ld->getProRec(j);
+            epiRec *p = ld_getProRec_inl(ld, j);
             if (!p) {
                 func_0804ad38("failed to get pro %d\n", j);
                 func_0804adf0(-1);
@@ -671,8 +715,8 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
 
     ld->func_0806770c();
     for (int i = 0; i != ld->m_nPro; i++) {
-        epiRec *p = ld->getProRec(i);
-        epiRec *next = (i == ld->m_nPro - 1) ? &mainRec(ld) : ld->getProRec(i + 1);
+        epiRec *p = ld_getProRec_inl(ld, i);
+        epiRec *next = (i == ld->m_nPro - 1) ? &mainRec(ld) : ld_getProRec_inl(ld, i + 1);
         if (!next) {
             func_0804ad38("failed to get next\n");
             func_0804adf0(-1);
@@ -685,7 +729,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         }
         Instr *br = p->unk_1c;
         if (br) {
-            epiRec *e = ld->func_08067c70(p->unk_0c + 1);
+            epiRec *e = ld_findEpi_inl(ld, p->unk_0c + 1);
             if (!e) {
                 func_0804ad38("failed to find epilogue\n");
                 func_0804adf0(-1);
@@ -710,7 +754,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
 
     int nEpi = ld->m_nEpi;
     for (int i = 0; i != nEpi; i++) {
-        epiRec *e = ld->getEpiRec(i);
+        epiRec *e = ld_getEpiRec_inl(ld, i);
         if (!e) {
             func_0804ad38("failed to get epi\n");
             func_0804adf0(-1);

@@ -19,6 +19,12 @@ static inline RegPoolEntry *inReg(Operand *op)
     return 0;
 }
 
+class Program;
+bool func_0806b4f0(Program *p)
+{
+    return true;
+}
+
 int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp)
 {
     iInfo *info = in->unk_34;

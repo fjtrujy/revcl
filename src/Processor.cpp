@@ -637,3 +637,9 @@ const char *Processor::getUniqueName()
 
 int g_080b33a8 = 1;
 bool stagger_080b33ac = false;
+iInfo *g_080de6c0;
+RegPool *g_080de6e0[13];
+int g_080de714[3];
+void *g_080de720;
+void *g_080de724;
+void *g_080de728;

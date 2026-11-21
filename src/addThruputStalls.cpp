@@ -1,13 +1,4 @@
-
 #include "backTrace_shared.h"
-
-bool g_disposeBackTrace(instStream *s)
-{
-    if (s->unk_238)
-        delete[] s->unk_238;
-    s->unk_238 = 0;
-    return true;
-}
 
 static inline regUseSlot *registerPart(regUse *u, int part)
 {

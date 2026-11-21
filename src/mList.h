@@ -45,12 +45,7 @@ public:
     virtual ~mNode();
     virtual bool func_0804b75c();
 
-    bool detach()
-    {
-        if (unk_0c)
-            return unk_0c->func_0804b3e8(this);
-        return false;
-    }
+    bool detach();
     bool setName(const char *name);
 
     mNode *unk_04;  // next

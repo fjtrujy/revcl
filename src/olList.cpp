@@ -1,10 +1,8 @@
 // olList / ol_s operand-location lists, CIE group 5.
 #pragma implementation "ol_s.h"
-#pragma implementation "ol_s_copy.h"
 #include "Instr.h"
 #include "ol_s.h"
 #include "ol_s_inline.h"
-#include "ol_s_copy.h"
 #include "os.h"
 
 void olList::func_08057e9c()
@@ -71,6 +69,50 @@ Operand *func_0805802c(ol_s *ol)
     return 0;
 }
 
+static inline void ol_s_copy_inl(ol_s *dst, ol_s *src)
+{
+    dst->reset();
+    if (src) {
+        dst->unk_13 = src->unk_13;
+        dst->unk_04 = src->unk_04;
+        dst->unk_10 = src->unk_10;
+        dst->unk_11 = src->unk_11;
+        dst->unk_12 = src->unk_12;
+    }
+}
+
+void ol_s::func_08058054(ol_s *src)
+{
+    reset();
+    if (src) {
+        unk_13 = src->unk_13;
+        unk_04 = src->unk_04;
+        unk_10 = src->unk_10;
+        unk_11 = src->unk_11;
+        unk_12 = src->unk_12;
+    }
+}
+
+static inline void ol_s_init_inl(ol_s *o, Instr *inst, int op, int slot, bool ext)
+{
+    o->reset();
+    if (ext)
+        o->unk_13 = 1;
+    o->unk_04 = inst;
+    o->unk_10 = op;
+    o->unk_11 = slot;
+}
+
+void ol_s::init(Instr *inst, int op, int slot, bool ext)
+{
+    reset();
+    if (ext)
+        unk_13 = 1;
+    unk_04 = inst;
+    unk_10 = op;
+    unk_11 = slot;
+}
+
 static inline ol_s *allocOL()
 {
     ol_s *p = olFreeList;
@@ -100,7 +142,7 @@ ol_s *olList::func_080580fc(Instr *inst, int op, int slot, bool ext)
         prev = p;
     }
     p = allocOL();
-    p->init(inst, op, slot, ext);
+    ol_s_init_inl(p, inst, op, slot, ext);
     if (prev)
         prev->unk_00 = p;
     else
@@ -119,7 +161,7 @@ ol_s *olList::func_0805826c(Instr *inst)
         prev = p;
     }
     p = allocOL();
-    p->init(inst, 0, 0, false);
+    ol_s_init_inl(p, inst, 0, 0, false);
     if (prev)
         prev->unk_00 = p;
     else
@@ -190,7 +232,7 @@ ol_s *olList::func_08058484(ol_s *src)
         prev = p;
     }
     ol_s *n = allocOL();
-    n->func_08058054(src);
+    ol_s_copy_inl(n, src);
     n->unk_13 |= 1;
     n->unk_00 = p;
     if (prev)

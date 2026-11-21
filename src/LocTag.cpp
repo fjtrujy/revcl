@@ -7,6 +7,11 @@ bool func_0805082c(LocTag *t)
     return (t->unk_00 && t->unk_8c) || (!t->unk_00 && !t->unk_8c);
 }
 
+int func_0805085c(LocTag *t)
+{
+    return t->unk_8c;
+}
+
 
 char *LocTag::func_0805086c(int *mode, char *in)
 {

@@ -281,7 +281,7 @@ void cls0805e2e4::func_0805e3c0(cls0805e2e4 *o)
     if (o->unk_14 > unk_14) unk_14 = o->unk_14;
 }
 
-extern char g_080de2a0[];  // stall reason text buffer
+char g_080de2a0[1024];  // stall reason text buffer
 
 const char *stallReasonStr(short why)
 {

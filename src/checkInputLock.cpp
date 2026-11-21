@@ -1,5 +1,7 @@
 #include "lock_shared.h"
 
+bool g_080de288;
+
 static inline bool canWrapInputLock(cls0805bcc4 *in)
 {
     return in->unk_19 == 1;

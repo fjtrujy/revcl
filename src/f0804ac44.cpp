@@ -12,8 +12,10 @@
 #include "os.h"
 
 bool flag_080b3038 = false;
-extern bool quiet_080bbd98;
-extern int errorOccurred;
+int errorOccurred;
+bool quiet_080bbd98;
+bool g_080bbd99;
+bool g_080bbd9a;
 char *outName_080b303c = 0;
 
 

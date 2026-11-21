@@ -10,6 +10,7 @@
 
 extern int errorOccurred;
 extern bool quiet_080bbd98;
+bool g_080de284;
 
 bool cls0805bcc4::setOwner(int part, Instr *instr, int opnd)
 {

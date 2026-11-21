@@ -1,4 +1,3 @@
-#pragma implementation "regUseSlot.h"
 #include "RegPool.h"
 #include "ol_s_inline.h"
 #include "os.h"
@@ -432,6 +431,13 @@ fail:
     return false;
 }
 
+int maxParts_080bce20;
+int nRegs_080bce24;
+int tStart_080bce28;
+int tEnd_080bce2c;
+char aTab_080bce40[0x20000];
+char tTab_080dce40[0x1000];
+char regMask_080dde40[32];
 int moveRegCount;
 
 RegPoolEntry* RegPool::getMoveReg(Instr* move)

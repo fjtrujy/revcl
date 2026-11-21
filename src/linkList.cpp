@@ -30,6 +30,13 @@ static inline int branchLinkType(unsigned int f)
     return t;
 }
 
+linkList::linkList()
+{
+    unk_00 = 0;
+    unk_04 = 0;
+    unk_08 = 0;
+}
+
 linkList::~linkList()
 {
     linkNode *n = unk_00;

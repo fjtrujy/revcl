@@ -7,7 +7,6 @@
 #include "VisitCache.h"
 #include "workTable.h"
 #include "RegPool.h"
-#include "tStore.h"
 
 bool g_initBackTrace(instStream *s, int n);
 bool extendBackTrace(Program *p, instStream *n);

@@ -45,6 +45,18 @@ public:
 
 inline infoNode::~infoNode() {}
 
+class infoList {
+public:
+    infoList();
+    virtual ~infoList();
+    bool clear();
+    void func_080525c8();
+    bool addStall(ol_s *a, ol_s *b, int x, int val);
+
+    infoNode *unk_04;  // head
+    int unk_08;        // count
+};
+
 class stallNode : public infoNode {
 public:
     stallNode() { for (int i = 0; i != 3; i++) unk_24[i] = 0; }
@@ -71,18 +83,6 @@ public:
     unsigned char unk_0c;   // slot mask
     instStream *unk_10;     // entry point
     instStream *unk_14;     // use point
-};
-
-class infoList {
-public:
-    infoList();
-    virtual ~infoList();
-    bool clear();
-    void func_080525c8();
-    bool addStall(ol_s *a, ol_s *b, int x, int val);
-
-    infoNode *unk_04;  // head
-    int unk_08;        // count
 };
 
 #endif

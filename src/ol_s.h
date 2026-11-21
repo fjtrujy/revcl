@@ -36,7 +36,7 @@ struct ol_s {
     ol_s *func_080583ac();
     ol_s *func_08058414();
     void func_08058054(ol_s *src);
-    inline void init(Instr *inst, int op, int slot, bool ext);
+    void init(Instr *inst, int op, int slot, bool ext);
 };
 
 #endif

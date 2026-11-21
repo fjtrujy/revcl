@@ -1,3 +1,4 @@
+#pragma implementation "tPair.h"
 #include "Instr.h"
 #include "tPairList.h"
 #include "workTable.h"

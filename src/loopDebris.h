@@ -1,8 +1,6 @@
 #ifndef LOOPDEBRIS_H
 #define LOOPDEBRIS_H
 
-#pragma interface
-
 #include "epiRec.h"
 
 class instStream;
@@ -27,25 +25,9 @@ public:
     epiRec *allocEnter(int size);
     epiRec *allocExit(int size);
 
-    epiRec *getProRec(int i)
-    {
-        if (i < 0 || i >= m_nPro)
-            return 0;
-        return &m_pro[i];
-    }
-    epiRec *getEpiRec(int i)
-    {
-        if (i < 0 || i >= m_nEpi)
-            return 0;
-        return &m_epi[i];
-    }
-    epiRec *func_08067c70(int key)
-    {
-        for (int i = 0; i != m_nEpi; i++)
-            if (m_epi[i].unk_08 == key)
-                return &m_epi[i];
-        return 0;
-    }
+    epiRec *getProRec(int i);
+    epiRec *getEpiRec(int i);
+    epiRec *func_08067c70(int key);
 
     workTable *unk_00;
     char *m_entryName;

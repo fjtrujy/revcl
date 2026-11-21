@@ -6,9 +6,9 @@
 #include "Instr.h"
 #include "ol_s.h"
 
-extern RegPoolEntry *g_080de6ac;
-extern mValue *g_080de6b0;
-extern int g_080de6b4;
+RegPoolEntry *g_080de6ac;
+mValue *g_080de6b0;
+int g_080de6b4;
 int func_0806aa54(Instr *in);
 int func_08067e18(Program *p, instStream *s);
 

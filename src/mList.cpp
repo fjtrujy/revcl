@@ -1,6 +1,6 @@
 // Intrusive doubly linked list (CIE group 1, after os.cpp).
 
-#pragma implementation
+#pragma implementation "mList.h"
 #include "mList.h"
 #include "os.h"
 
@@ -8,6 +8,13 @@ bool func_0804bfcc(const char *a, const char *b);
 bool func_0804c03c(const char *a, const char *b);
 char *dupString(const char *s);
 int mstrlen(const char *s);
+
+static inline bool mNode_detach_inl(mNode *n)
+{
+    if (n->unk_0c)
+        return n->unk_0c->func_0804b3e8(n);
+    return false;
+}
 
 mList::mList()
 {
@@ -27,7 +34,7 @@ bool mList::func_0804b1b0()
     mNode *node = unk_0c;
     while (node) {
         mNode *next = node->unk_04;
-        if (!node->detach())
+        if (!mNode_detach_inl(node))
             return false;
         if (!node->func_0804b75c())
             return false;
@@ -56,15 +63,6 @@ mNode *mList::func_0804b234(const char *name)
         node = node->unk_04;
     }
     return node;
-}
-
-bool mNode::func_0804b75c()
-{
-    if (unk_14)
-        delete[] unk_14;
-    unk_14 = 0;
-    unk_0c = 0;
-    return true;
 }
 
 mNode *mList::func_0804b284(const char *name)
@@ -175,7 +173,7 @@ bool mList::func_0804b4d0(mList *other)
     mNode *node = other->unk_0c;
     while (node) {
         mNode *next = node->unk_04;
-        if (!node->detach())
+        if (!mNode_detach_inl(node))
             return false;
         if (!func_0804b38c(node))
             return false;
@@ -213,6 +211,14 @@ mNode::~mNode()
     unk_14 = 0;
 }
 
+
+bool mNode::detach()
+{
+    if (unk_0c)
+        return unk_0c->func_0804b3e8(this);
+    return false;
+}
+
 bool mNode::setName(const char *name)
 {
     if (unk_14) {
@@ -225,6 +231,15 @@ bool mNode::setName(const char *name)
             return false;
         mstrcpy(unk_14, name);
     }
+    return true;
+}
+
+bool mNode::func_0804b75c()
+{
+    if (unk_14)
+        delete[] unk_14;
+    unk_14 = 0;
+    unk_0c = 0;
     return true;
 }
 

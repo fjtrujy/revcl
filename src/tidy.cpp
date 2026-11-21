@@ -1,10 +1,22 @@
-#pragma implementation "endPatch.h"
 #include "Program.h"
 #include "instStream.h"
 #include "workTable.h"
 #include "Instr.h"
 #include "os.h"
-#include "endPatch.h"
+
+static inline bool extendForEnd_inl(workTable *wt)
+{
+    do {
+        int i = wt->unk_34++;
+        wtRow *r = wt->func_080724f0(i);
+        if (!r) {
+            func_0804ad38("failed to get ie for end patch\n");
+            return false;
+        }
+        r->func_080721f8();
+    } while (wt->unk_34 - wt->unk_30 < 2);
+    return true;
+}
 
 bool func_08062a88(Program *p)
 {
@@ -69,10 +81,24 @@ bool func_08062a88(Program *p)
             continue;
         if (wt->getPhysicalLen() > 1 && wt->func_08073854())
             continue;
-        if (!extendForEnd(wt)) {
+        if (!extendForEnd_inl(wt)) {
             func_0804ad38("failed to extend for e\n");
             return false;
         }
     }
+    return true;
+}
+
+bool extendForEnd(workTable *wt)
+{
+    do {
+        int i = wt->unk_34++;
+        wtRow *r = wt->func_080724f0(i);
+        if (!r) {
+            func_0804ad38("failed to get ie for end patch\n");
+            return false;
+        }
+        r->func_080721f8();
+    } while (wt->unk_34 - wt->unk_30 < 2);
     return true;
 }

@@ -86,3 +86,11 @@ bool g_initBackTrace(instStream *s, int n)
     return true;
 }
 
+bool g_disposeBackTrace(instStream *s)
+{
+    if (s->unk_238)
+        delete[] s->unk_238;
+    s->unk_238 = 0;
+    return true;
+}
+

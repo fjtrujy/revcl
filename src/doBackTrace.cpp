@@ -1,5 +1,46 @@
-#pragma implementation "tStore.h"
 #include "backTrace_shared.h"
+
+static inline bool zeroTstore_inl(Program *p, unsigned *t)
+{
+    if (!t) {
+        func_0804ad38("zeroTstore - it's null\n");
+        return false;
+    }
+    for (int i = 0; i != p->unk_b8; i++)
+        t[i] = 0;
+    return true;
+}
+
+static inline bool initTstore_inl(Program *p, unsigned *t, unsigned bit)
+{
+    if (!zeroTstore_inl(p, t)) {
+        func_0804ad38("failed to init tstore\n");
+        return false;
+    }
+    unsigned idx = bit >> 5;
+    unsigned mask = (1 << bit) & 0x1f;
+    if (idx >= (unsigned)p->unk_b8) {
+        func_0804ad38("out of bounds t store access\n");
+        return false;
+    }
+    t[idx] = mask;
+    return true;
+}
+
+static inline bool testTstore_inl(Program *p, unsigned *t, unsigned bit)
+{
+    if (!t) {
+        func_0804ad38("store not set for test tstore\n");
+        func_0804adf0(-1);
+    }
+    unsigned idx = bit >> 5;
+    unsigned mask = (1 << bit) & 0x1f;
+    if (idx >= (unsigned)p->unk_b8) {
+        func_0804ad38("out of bounds t store access\n");
+        return false;
+    }
+    return (t[idx] & mask) != 0;
+}
 
 static inline void dumpBackTrace(Program *p)
 {
@@ -39,7 +80,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
             func_0804ad38("failed to do a local init for the back trace\n");
             return false;
         }
-        if (p->unk_b5 && !initTstore(p, s->unk_238, s->unk_2c0)) {
+        if (p->unk_b5 && !initTstore_inl(p, s->unk_238, s->unk_2c0)) {
             func_0804ad38("failed to init tstore\n");
             return false;
         }
@@ -52,7 +93,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
         return false;
     }
     for (instStream *s = p->unk_e4; s; s = s->unk_25c) {
-        if (p->unk_b5 && !initTstore(p, s->unk_238, s->unk_2c0)) {
+        if (p->unk_b5 && !initTstore_inl(p, s->unk_238, s->unk_2c0)) {
             func_0804ad38("clear a tstore after first init\n");
             return false;
         }
@@ -138,7 +179,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
                     if (n->unk_229)
                         continue;
                     n->unk_229 = 1;
-                    if (testTstore(p, k->unk_238, n->unk_2c0)) {
+                    if (testTstore_inl(p, k->unk_238, n->unk_2c0)) {
                         regUse *u = n->unk_234;
                         if (!u) {
                             func_0804ad38("couldn't get regref for hazard broadcast op for reg %s.%d in %s hazard start=%s target=%s mode=%d\n",
@@ -196,4 +237,46 @@ int mergeTstores(Program *p, unsigned *dst, unsigned *src)
         dst[i] = d | src[i];
     }
     return changed != 0;
+}
+
+bool zeroTstore(Program *p, unsigned *t)
+{
+    if (!t) {
+        func_0804ad38("zeroTstore - it's null\n");
+        return false;
+    }
+    for (int i = 0; i != p->unk_b8; i++)
+        t[i] = 0;
+    return true;
+}
+
+bool initTstore(Program *p, unsigned *t, unsigned bit)
+{
+    if (!zeroTstore_inl(p, t)) {
+        func_0804ad38("failed to init tstore\n");
+        return false;
+    }
+    unsigned idx = bit >> 5;
+    unsigned mask = (1 << bit) & 0x1f;
+    if (idx >= (unsigned)p->unk_b8) {
+        func_0804ad38("out of bounds t store access\n");
+        return false;
+    }
+    t[idx] = mask;
+    return true;
+}
+
+bool testTstore(Program *p, unsigned *t, unsigned bit)
+{
+    if (!t) {
+        func_0804ad38("store not set for test tstore\n");
+        func_0804adf0(-1);
+    }
+    unsigned idx = bit >> 5;
+    unsigned mask = (1 << bit) & 0x1f;
+    if (idx >= (unsigned)p->unk_b8) {
+        func_0804ad38("out of bounds t store access\n");
+        return false;
+    }
+    return (t[idx] & mask) != 0;
 }

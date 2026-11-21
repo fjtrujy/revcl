@@ -1,9 +1,5 @@
-// Growable table of bit rows used by back tracing ("VisitCache"). Deferred members
-// are emitted by VisitCache.cpp; only that owner includes VisitCache_inline.h.
 #ifndef VISITCACHE_H
 #define VISITCACHE_H
-
-#pragma interface
 
 #include <stdlib.h>
 #include "os.h"
@@ -26,19 +22,7 @@ public:
     bool setBit(int bit);
     int endRecord();
     bool testBit(int rec, int bit);
-    void Dump()
-    {
-        func_0804acb0("VisitCache::Dump()\n");
-        unsigned *row = unk_00;
-        for (int i = 0; i != unk_10; i++) {
-            func_0804ac50(" [%3d] ", i);
-            for (int j = 0; j != unk_04; j++)
-                func_0804ac50(" %08x", row[j]);
-            func_0804ac50("\n");
-            row += unk_04;
-        }
-        func_0804acb0("VisitCache:: %d records\n", unk_10);
-    }
+    void Dump();
 };
 
 #endif
