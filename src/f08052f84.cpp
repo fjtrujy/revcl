@@ -1,5 +1,4 @@
 // iHolder and infoList, CIE group 3.
-#pragma implementation "infoNode_inline.h"
 #include "infoList_shared.h"
 
 bool Instr::func_08052f84()

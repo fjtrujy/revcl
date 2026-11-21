@@ -685,11 +685,6 @@ bool OpSlot::func_080560c4()
     return true;
 }
 
-int OpSlot::func_080560e8()
-{
-    return unk_54.clear();
-}
-
 bool Instr::func_08054d64(int n, int *out)
 {
     Operand *op = getOp(n);
@@ -789,4 +784,9 @@ Instr *Instr::clone()
         d->unk_28 = s->unk_28;
     }
     return c;
+}
+
+int OpSlot::func_080560e8()
+{
+    return unk_54.clear();
 }

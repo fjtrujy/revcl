@@ -158,6 +158,10 @@ infoNode::infoNode()
     unk_04 = 0;
 }
 
+infoNode::~infoNode()
+{
+}
+
 stallNode::stallNode() : infoNode(infoNode::INIT)
 {
     for (int i = 0; i != 3; i++)

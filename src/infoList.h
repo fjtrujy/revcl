@@ -5,7 +5,17 @@
 #include "Instr.h"
 #include "os.h"
 #include "ol_s.h"
-#include "infoNode_inline.h"
+
+class infoNode {
+public:
+    enum InitTag { INIT };
+    infoNode();
+    inline infoNode(InitTag);
+    virtual ~infoNode() = 0;
+    virtual void dump() = 0;
+
+    infoNode *unk_04;
+};
 
 class iHolder {
 public:

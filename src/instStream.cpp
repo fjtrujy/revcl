@@ -573,25 +573,3 @@ void instStream::func_0806dc9c(instStream *src)
     for (int i = 0; i != unk_00; i++)
         unk_04[i] = src->unk_04[i];
 }
-
-linkNode::linkNode()
-{
-    unk_14 = -1;
-    unk_04 = 0;
-    unk_08 = 0;
-    unk_0c = 0;
-    unk_11 = 1;
-}
-
-linkNode::~linkNode()
-{
-}
-
-linkNode *linkNode::func_0806dd48(int type)
-{
-    linkNode *n = this;
-    do
-        n = n->unk_08;
-    while (n && n->unk_14 != type);
-    return n;
-}

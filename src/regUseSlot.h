@@ -2,8 +2,6 @@
 #ifndef REGUSESLOT_H
 #define REGUSESLOT_H
 
-#pragma interface
-
 #include "Instr.h"
 #include "tPairList.h"
 
@@ -22,7 +20,11 @@ struct regUseSlot {
     cls0805bcc4 unk_5c;
 
     regUseSlot();
+#ifdef VCL_REGUSESLOT_IMPL
+    ~regUseSlot();
+#else
     ~regUseSlot() {}
+#endif
     bool optReset();
     bool addOutput(ol_s *ol);
     void func_0805b814();

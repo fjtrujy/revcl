@@ -1,9 +1,14 @@
+#define VCL_REGUSESLOT_IMPL
 #include "RegPool.h"
 #include "ol_s.h"
 #include "os.h"
 #include "workTable.h"
 
 RegPool *GetRP(unsigned t);
+
+regUseSlot::~regUseSlot()
+{
+}
 
 void regUseList::func_0805b44c()
 {

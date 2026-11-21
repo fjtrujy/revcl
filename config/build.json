@@ -43,11 +43,18 @@
         "-fmerge-all-constants"
       ]
     },
-    "src/regUse.cpp": {
+    "src/infoList.cpp": {
       "flags": [
         "-O2",
         "-frename-registers",
-        "-fno-weak"
+        "-finline-functions"
+      ]
+    },
+    "src/loadStalls.cpp": {
+      "flags": [
+        "-O2",
+        "-frename-registers",
+        "-fmerge-all-constants"
       ]
     },
     "src/catStreams.cpp": {

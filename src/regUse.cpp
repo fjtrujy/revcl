@@ -1,4 +1,3 @@
-#pragma implementation "regUseSlot.h"
 #include "RegPool_shared.h"
 
 regUse::regUse(RegPoolEntry *reg)
