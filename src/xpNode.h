@@ -2,8 +2,6 @@
 #ifndef XPNODE_H
 #define XPNODE_H
 
-#pragma interface
-
 #include <stdio.h>
 #include "mValue.h"
 #include "os.h"
@@ -21,11 +19,7 @@ public:
     mValue val;
 
     xpNode();
-    ~xpNode()
-    {
-        mValue *v = &val;
-        v->clear();
-    }
+    ~xpNode();
     bool func_0804e778();
     void func_0804e794();
     void reset();

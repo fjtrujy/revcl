@@ -1,8 +1,6 @@
 #ifndef IGROUPLIST_H
 #define IGROUPLIST_H
 
-#pragma interface
-
 struct iGroupNode {
     iGroupNode *next;
     void *unk_04;
@@ -11,9 +9,7 @@ struct iGroupNode {
     enum InitTag { INIT };
     iGroupNode();
     inline iGroupNode(InitTag);
-    ~iGroupNode()
-    {
-    }
+    ~iGroupNode();
 };
 
 // "igrouplist::init - first set!"

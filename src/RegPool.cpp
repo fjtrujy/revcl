@@ -8,6 +8,8 @@ struct iInfo;
 iInfo* func_0806bf8c(const char* name, bool);
 bool func_0804bfcc(const char* a, const char* b);
 
+const char *regNameChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[]_$";
+
 const char *regTypeName(int type)
 {
     const char *s = "UNKNOWN_TYPE";
@@ -533,8 +535,6 @@ int RegPool::countUsed()
     }
     return n;
 }
-
-const char *regNameChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[]_$";
 
 int RegPool::func_08059f70()
 {

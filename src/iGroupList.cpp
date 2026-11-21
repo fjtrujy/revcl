@@ -1,4 +1,3 @@
-#pragma implementation "iGroupList.h"
 #include "Instr.h"
 #include "os.h"
 
@@ -12,7 +11,8 @@ iGroupList::~iGroupList()
     iGroupNode *n = head;
     while (n) {
         iGroupNode *next = n->next;
-        delete n;
+        if (n)
+            ::operator delete(n);
         n = next;
     }
     head = 0;
@@ -25,7 +25,8 @@ void iGroupList::init()
     iGroupNode *n = head;
     while (n) {
         iGroupNode *next = n->next;
-        delete n;
+        if (n)
+            ::operator delete(n);
         n = next;
     }
     head = 0;
@@ -36,7 +37,8 @@ void iGroupList::clear()
     iGroupNode *n = head;
     while (n) {
         iGroupNode *next = n->next;
-        delete n;
+        if (n)
+            ::operator delete(n);
         n = next;
     }
     head = 0;
@@ -79,6 +81,10 @@ iGroupNode::iGroupNode()
 {
     unk_04 = 0;
     unk_08 = 0;
+}
+
+iGroupNode::~iGroupNode()
+{
 }
 
 #include <stdlib.h>

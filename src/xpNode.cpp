@@ -1,9 +1,19 @@
 #include <stdio.h>
-#pragma implementation "xpNode.h"
-#pragma implementation "xun.h"
 #include "xpNode.h"
 #include "xun.h"
 #include "os.h"
+
+struct xpNodeDel {
+    char pad[0x14];
+    mValue val;
+    ~xpNodeDel() { mValue *v = &val; v->clear(); }
+};
+
+struct xunDel {
+    xun *next;
+    char *name;
+    ~xunDel() { delete[] name; name = 0; next = 0; }
+};
 
 xpOp opTable_080b30a0[20] = {
     {"LIT", 0, 0, 1},
@@ -64,6 +74,12 @@ inline bool xpTree::clear()
 xpNode::xpNode()
 {
     init();
+}
+
+xpNode::~xpNode()
+{
+    mValue *v = &val;
+    v->clear();
 }
 
 bool xpNode::func_0804e778()
@@ -136,7 +152,7 @@ bool xpTree::dispose(xpNode *n)
     for (int i = 0; i != n->unk_05; i++)
         if (!dispose(n->child[i]))
             return false;
-    delete n;
+    delete (xpNodeDel *)n;
     return true;
 }
 
@@ -384,25 +400,25 @@ bool xpTree::evalExp(const char *s)
             }
             p = func_0804ec74(p, n, xpNodeIsFull(cur));
             if (!p) {
-                delete n;
+                delete (xpNodeDel *)n;
                 goto fail;
             }
             if (cur->unk_05 >= cur->unk_04) {
                 if (n->unk_04 <= 1) {
                     func_0804ad38("evalExp: syntax error at : nArgs=%d\n", n->unk_04);
                     n->val.dump();
-                    delete n;
+                    delete (xpNodeDel *)n;
                     goto fail;
                 }
                 while (cur && n->unk_03 <= cur->unk_03 && cur->unk_00 == 0)
                     cur = cur->parent;
                 if (!cur || cur->unk_05 == 0) {
-                    delete n;
+                    delete (xpNodeDel *)n;
                     goto fail;
                 }
                 xpNode *last = cur->child[cur->unk_05 - 1];
                 if (last->parent != cur) {
-                    delete n;
+                    delete (xpNodeDel *)n;
                     goto fail;
                 }
                 n->parent = cur;
@@ -413,7 +429,7 @@ bool xpTree::evalExp(const char *s)
                 cur = n;
             } else {
                 if (n->unk_04 > 1) {
-                    delete n;
+                    delete (xpNodeDel *)n;
                     goto fail;
                 }
                 cur->child[cur->unk_05] = n;
@@ -589,7 +605,7 @@ void func_0804f6ec()
     while (g_080bcda4) {
         xun *p = g_080bcda4;
         g_080bcda4 = p->next;
-        delete p;
+        delete (xunDel *)p;
     }
     g_080bcda4 = 0;
     g_080bcda8 = 0;
@@ -614,7 +630,7 @@ bool func_0804f75c(const char *s)
     x->name = dupString(s);
     if (!x->name) {
         func_0804ad38("failed to dup string for xun\n");
-        delete x;
+        delete (xunDel *)x;
         return false;
     }
     g_080bcda8++;
@@ -633,6 +649,13 @@ xun::xun()
 {
     next = 0;
     name = 0;
+}
+
+xun::~xun()
+{
+    delete[] name;
+    name = 0;
+    next = 0;
 }
 
 int xpTree::func_0804f8f0()

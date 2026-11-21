@@ -82,7 +82,7 @@ public:
 };
 
 struct wtRow {
-    wtEntry unk_00[2];
+    wtEntryInl unk_00[2];
     char unk_08;            // m_bSkip
     unsigned char unk_09;   // max stall length
     unsigned char unk_0a;   // stall type mask

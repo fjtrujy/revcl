@@ -8,6 +8,11 @@ bool func_0804c03c(const char *a, const char *b);
 bool func_0804bfcc(const char *a, const char *b);
 bool func_08050780(const char *s, const char *kw);
 
+char *g_080b3144 = "0123456789.";    // gasp line-number chars
+char *g_080b3148 = "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?;";    // token (non-whitespace) char set
+char *g_080b314c = "----*";    // block-start keyword
+char *g_080b3150 = "*----";    // block-end keyword
+
 Parser::Parser()
 {
     unk_10090 = 0;
@@ -78,13 +83,6 @@ void Parser::reset()
         lines[unk_10000].func_0805109c();
     }
 }
-
-char *g_080b3144 = "0123456789.";    // gasp line-number chars
-char *g_080b3148 = "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?;";    // token (non-whitespace) char set
-char *g_080b314c = "----*";    // block-start keyword
-char *g_080b3150 = "*----";    // block-end keyword
-
-bool func_08050780(const char *s, const char *kw);
 
 static inline bool isEol(char c)
 {

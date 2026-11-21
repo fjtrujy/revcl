@@ -56,20 +56,6 @@
         "-frename-registers",
         "-fno-weak"
       ]
-    },
-    "src/tPairList.cpp": {
-      "flags": [
-        "-O2",
-        "-frename-registers",
-        "-fno-weak"
-      ]
-    },
-    "src/wtRowCtor.cpp": {
-      "flags": [
-        "-O2",
-        "-frename-registers",
-        "-fno-weak"
-      ]
     }
   }
 }

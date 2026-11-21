@@ -6,11 +6,6 @@
 #include "os.h"
 #include "flowBlock.h"
 
-const char *pipeNames[16] = {
-    "VPU_FMAC", "VPU_IALU", "VPU_MOVE", "VPU_LS", "VPU_EFU",
-    "VPU_DIV", "VPU_RAND", "VPU_EXT", "VPU_BRANCH", "0",
-};
-
 bool bindExternals(Program *p)
 {
     for (instStream *s = p->unk_a0; s; s = s->unk_108) {

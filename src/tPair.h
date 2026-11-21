@@ -1,7 +1,6 @@
 // (src key, dst key) pair node, CIE group 5.
 #ifndef TPAIR_H
 #define TPAIR_H
-#pragma interface
 
 class tPair {
 public:
@@ -11,7 +10,9 @@ public:
     void *b;
     tPair *next;
 
-    tPair()
+    enum InitTag { INIT };
+    tPair();
+    inline tPair(InitTag)
     {
         next = 0;
         src = -1;
@@ -19,17 +20,9 @@ public:
         a = 0;
         b = 0;
     }
-    ~tPair() {}
-
-    void reset()
-    {
-        next = 0;
-        src = -1;
-        dst = -1;
-        a = 0;
-        b = 0;
-    }
-    void func_08058ab0() {}
+    ~tPair();
+    void reset();
+    void func_08058ab0();
 };
 
 #endif

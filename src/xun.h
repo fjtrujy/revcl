@@ -2,8 +2,6 @@
 #ifndef XUN_H
 #define XUN_H
 
-#pragma interface
-
 class xun {
 public:
     xun *next;
@@ -12,12 +10,7 @@ public:
     enum InitTag { INIT };
     xun();
     inline xun(InitTag);
-    ~xun()
-    {
-        delete[] name;
-        name = 0;
-        next = 0;
-    }
+    ~xun();
 };
 
 extern xun *g_080bcda4;

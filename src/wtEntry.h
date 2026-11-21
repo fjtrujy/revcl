@@ -2,7 +2,6 @@
 // Inline members are emitted out of line via #pragma implementation in loadStalls.cpp.
 #ifndef WTENTRY_H
 #define WTENTRY_H
-#pragma interface
 
 #include "Instr.h"
 
@@ -12,8 +11,16 @@ class wtEntry {
 public:
     Instr *unk_00;
 
-    wtEntry() { unk_00 = 0; }
-    ~wtEntry()
+    wtEntry();
+    ~wtEntry();
+    bool func_08072218();
+};
+
+struct wtEntryInl {
+    Instr *unk_00;
+
+    wtEntryInl() { unk_00 = 0; }
+    ~wtEntryInl()
     {
         if (unk_00 && !((int)unk_00 & 1)) {
             if (unk_00->unk_1428)
@@ -23,7 +30,8 @@ public:
         }
         unk_00 = 0;
     }
-    bool func_08072218();
+    bool func_08072218() { return ((wtEntry *)this)->func_08072218(); }
+    operator wtEntry *() { return (wtEntry *)this; }
 };
 
 #endif
