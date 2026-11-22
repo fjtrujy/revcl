@@ -21,7 +21,7 @@ void abortAfterError()
 
 char *readFileIntoBuffer(const char *path, int *len, bool nulTerm)
 {
-    bool ok = false;
+    bool readSucceeded = false;
     char *buf = 0;
     int size = -1;
     int fileDescriptor = open(path, O_RDONLY);
@@ -37,7 +37,7 @@ char *readFileIntoBuffer(const char *path, int *len, bool nulTerm)
         buf = (char *)malloc(allocSize);
         if (buf) {
             if (read(fileDescriptor, buf, size) == size)
-                ok = true;
+                readSucceeded = true;
             else
                 printf("cgReadFile: failed to read all of file %s\n", path);
         }
@@ -46,7 +46,7 @@ char *readFileIntoBuffer(const char *path, int *len, bool nulTerm)
     }
     if (fileDescriptor != -1)
         close(fileDescriptor);
-    if (!ok) {
+    if (!readSucceeded) {
         size = -1;
         if (buf)
             free(buf);

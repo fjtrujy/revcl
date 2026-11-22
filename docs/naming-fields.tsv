@@ -18,13 +18,11 @@ opaque_field	unk_e8	Program
 opaque_field	unk_17	RegPoolEntry
 opaque_field	unk_1d	RegPoolEntry
 opaque_field	unk_2d	RegPoolEntry
-opaque_field	unk_36	RegPoolEntry
 opaque_field	unk_15	RegWeb
 opaque_field	unk_06	cls08058718
 opaque_field	unk_1b	cls0805bcc4
 opaque_field	unk_2a	cls0805bcc4
 opaque_field	unk_44	cls0805bcc4
-opaque_field	unk_2b	cls0805c244
 opaque_field	unk_00	cls_unk30
 opaque_field	unk_0a	cls_unk30
 opaque_field	unk_10	epiRec
@@ -54,7 +52,6 @@ opaque_field	unk_40	rPart
 opaque_field	unk_46	rPart
 opaque_field	unk_11	regUse
 opaque_field	unk_16	regUse
-opaque_field	unk_18	regUse
 opaque_field	unk_06	workTable
 opaque_field	unk_48	workTable
 opaque_field	unk_7e	workTable

@@ -34,7 +34,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
     loopid = 0;
     copyCount = 0;
     bool forcedMods = false;
-    bool ok = false;
+    bool parsedSuccessfully = false;
     int opBits = -1;
     Instr *decodedInstruction = 0;
     bool bad = false;
@@ -58,12 +58,12 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         goto fail;
     }
     {
-        char *s = locationTag->tokenTextAt(cur);
-        char *d = buf;
-        p = d;
-        for (; *s && copyCount < 0x800; copyCount++)
-            *d++ = *s++;
-        *d = 0;
+        char *tokenSource = locationTag->tokenTextAt(cur);
+        char *bufferDestination = buf;
+        p = bufferDestination;
+        for (; *tokenSource && copyCount < 0x800; copyCount++)
+            *bufferDestination++ = *tokenSource++;
+        *bufferDestination = 0;
     }
     mods = removeInstructionModifierGroups(p);
     q = p;
@@ -400,12 +400,12 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         reportError("failed to normalise instruction\n");
         goto fail;
     }
-    ok = true;
+    parsedSuccessfully = true;
     decodedInstruction->sourceTag = locationTag;
     decodedInstruction->sourceTokenStartIndex = *pos;
     decodedInstruction->sourceTokenEndIndex = cur;
 fail:
-    if (!ok) {
+    if (!parsedSuccessfully) {
         if (decodedInstruction) {
             reportUserMessage("couldn't decode instruction .. problem is at:\n");
             locationTag->dumpSourceLine(cur);
@@ -426,7 +426,7 @@ bool Processor::decodeLE(LocTag *locationTag, int *pos, mList *labels, Instr **o
 {
     char buf[0x810];
     char *sourceCursor, *destinationCursor;
-    int i;
+    int copyIndex;
 
     if (!locationTag) {
         reportError("decodeLE: passed a null pointer\n");
@@ -441,10 +441,10 @@ bool Processor::decodeLE(LocTag *locationTag, int *pos, mList *labels, Instr **o
                 return false;
             }
             {
-                i = 0;
+                copyIndex = 0;
                 sourceCursor = tok;
                 destinationCursor = buf;
-                for (; *sourceCursor && i < 0x800; i++)
+                for (; *sourceCursor && copyIndex < 0x800; copyIndex++)
                     *destinationCursor++ = *sourceCursor++;
                 *destinationCursor = 0;
             }
@@ -466,13 +466,13 @@ bool Processor::decodeLE(LocTag *locationTag, int *pos, mList *labels, Instr **o
                     {
                         sourceCursor = tok2;
                         destinationCursor = buf + 1;
-                        i = 0;
-                        for (; *sourceCursor && i < 0x800; i++)
+                        copyIndex = 0;
+                        for (; *sourceCursor && copyIndex < 0x800; copyIndex++)
                             *destinationCursor++ = *sourceCursor++;
                         *destinationCursor = 0;
                     }
-                    i = removeInstructionModifierGroups(buf);
-                    macroNode->flags |= i;
+                    copyIndex = removeInstructionModifierGroups(buf);
+                    macroNode->flags |= copyIndex;
                     (*pos)++;
                 }
             }
@@ -522,8 +522,8 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
     Instr *ins[2];
     int pos = 0;
     *count = 0;
-    bool ok = false;
-    int n = 0;
+    bool decodedSuccessfully = false;
+    int decodedLineCount = 0;
     int lineIdx = 0;
     int state = 0;
     int exits = 0;
@@ -566,7 +566,7 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
             goto done;
         }
         if (locationTag->isRawMacroBlock) {
-            DecodedLine *decodedLine = &blocks[n];
+            DecodedLine *decodedLine = &blocks[decodedLineCount];
             decodedLine->decodeMode = 6;
             char *copiedLineText = dupString(locationTag->lineText);
             if (!copiedLineText) {
@@ -574,18 +574,18 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
                 goto done;
             }
             decodedLine->passThroughText = copiedLineText;
-            n++;
+            decodedLineCount++;
             lineIdx++;
             continue;
         }
         if (locationTag->startsWithDirective()) {
-            Directive *d = findRegisteredDirective(locationTag);
-            if (!d) {
+            Directive *currentDirective = findRegisteredDirective(locationTag);
+            if (!currentDirective) {
                 reportUserMessage("failed to find a directive from line : \n");
                 locationTag->dumpSourceLine(-1);
                 goto done;
             }
-            if (!d->fn(program, locationTag)) {
+            if (!currentDirective->fn(program, locationTag)) {
                 reportUserMessage("a directive parser failed at line:\n");
                 locationTag->dumpSourceLine(-1);
                 goto done;
@@ -615,28 +615,28 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
         } while (parser->isAssignmentLine(lineIdx));
         if (!nOut)
             continue;
-        if (n < 0) {
+        if (decodedLineCount < 0) {
             reportError("out of bounds rLine getting decoded instructions\n");
             goto done;
         }
-        if (n >= maxLines) {
+        if (decodedLineCount >= maxLines) {
             reportError("out of bounds rLine getting decoded instructions\n");
             goto done;
         }
-        DecodedLine *decodedBlock = &blocks[n];
+        DecodedLine *decodedBlock = &blocks[decodedLineCount];
         decodedBlock->initialize();
         if (!decodedBlock->labels.transferNodesFrom(&labels)) {
             reportError("failed to grab labels from current list\n");
             goto done;
         }
         bool synth = false;
-        for (int i = 0; i != nOut; i++) {
-            if (!ins[i]) {
+        for (int decodedInstructionIndex = 0; decodedInstructionIndex != nOut; decodedInstructionIndex++) {
+            if (!ins[decodedInstructionIndex]) {
                 reportError("instruction decoder appears to have failed?\n");
                 locationTag->dumpSourceLine(-1);
                 goto done;
             }
-            if (ins[i]->syntheticKind) {
+            if (ins[decodedInstructionIndex]->syntheticKind) {
                 if (nOut != 1) {
                     reportUserMessage("only one synthetic allowed per line\n");
                     locationTag->dumpSourceLine(-1);
@@ -644,10 +644,10 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
                 }
                 synth = true;
             }
-            if (!areInstructionModifiersAllowed(ins[i]->instructionModifierBits, program->proc.decodeMode, false)) {
+            if (!areInstructionModifiersAllowed(ins[decodedInstructionIndex]->instructionModifierBits, program->proc.decodeMode, false)) {
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(program->proc.decodeMode));
-                ins[i]->leDump();
+                ins[decodedInstructionIndex]->leDump();
                 goto done;
             }
         }
@@ -767,29 +767,29 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
         if (decodedBlock->decodeMode == 1) {
             Instr *branchInstruction = decodedBlock->instructions[0];
             if (branchInstruction && ((branchInstruction->branchFlags >> 2) & 1)) {
-                int r = branchInstruction->simplifyBranch();
-                if (r < 0) {
+                int branchSimplificationResult = branchInstruction->simplifyBranch();
+                if (branchSimplificationResult < 0) {
                     reportError("failed to fixup a branch\n");
                     goto done;
                 }
-                if (r == 0) {
+                if (branchSimplificationResult == 0) {
                     branchInstruction->leDump();
                     decodedBlock->instructions[0] = 0;
                     delete branchInstruction;
                     branchInstruction = 0;
                 }
-                if (r == 2)
+                if (branchSimplificationResult == 2)
                     branchInstruction->leDump();
             }
         }
-        n++;
+        decodedLineCount++;
     }
     if (labels.nodeCount) {
-        if (n < 0) {
+        if (decodedLineCount < 0) {
             reportError("out of bounds rLine extending table\n");
             goto done;
         }
-        if (n >= maxLines) {
+        if (decodedLineCount >= maxLines) {
             reportError("out of bounds rLine extending table\n");
             goto done;
         }
@@ -818,12 +818,12 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
         reportError("iStream: no exit directives\n");
         goto done;
     }
-    for (int i = 0; i != n - 1; i++) {
-        mList *macroList = &blocks[i].labels;
+    for (int lineIndex = 0; lineIndex != decodedLineCount - 1; lineIndex++) {
+        mList *macroList = &blocks[lineIndex].labels;
         if (!macroList->head)
             continue;
-        for (int j = i + 1; j != n; j++) {
-            mList *labelList = &blocks[j].labels;
+        for (int compareLineIndex = lineIndex + 1; compareLineIndex != decodedLineCount; compareLineIndex++) {
+            mList *labelList = &blocks[compareLineIndex].labels;
             if (labelList->head) {
                 for (mNode *labelNode = macroList->head; labelNode; labelNode = labelNode->next) {
                     if (labelList->findByNameIgnoreCase(labelNode->name)) {
@@ -834,10 +834,10 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
             }
         }
     }
-    *count = n;
-    ok = true;
+    *count = decodedLineCount;
+    decodedSuccessfully = true;
 done:
-    if (!ok) {
+    if (!decodedSuccessfully) {
         delete[] blocks;
         blocks = 0;
         *count = 0;
@@ -850,7 +850,7 @@ done:
 int gatherTokens(LocTag *locationTag, int firstTokenIndex, bool stopAtOpcode)
 {
     char *outputCursor = gatheredToken;
-    int n = 0;
+    int tokenCount = 0;
     char sep;
 
     for (; firstTokenIndex < getLineTokenCount(locationTag); firstTokenIndex++) {
@@ -864,18 +864,18 @@ int gatherTokens(LocTag *locationTag, int firstTokenIndex, bool stopAtOpcode)
                 *outputCursor = 0;
                 return firstTokenIndex;
             }
-            if (n && stopAtOpcode) {
+            if (tokenCount && stopAtOpcode) {
                 for (char *tokenCursor = tok; *tokenCursor; tokenCursor++)
                     if (tokenCursor[0] == '.' && tokenCursor[1] == '.') {
                         *outputCursor = 0;
                         return firstTokenIndex;
                     }
             }
-            if (n && stopAtOpcode && findOpcodeInfoByMnemonic(tok, false)) {
+            if (tokenCount && stopAtOpcode && findOpcodeInfoByMnemonic(tok, false)) {
                 *outputCursor = 0;
                 return firstTokenIndex;
             }
-            n++;
+            tokenCount++;
             while (*tok) {
                 if ((unsigned)(outputCursor - gatheredToken) > 0x3fe) {
                     reportUserMessage("gatherTokens: the gathered token became too long!\n");

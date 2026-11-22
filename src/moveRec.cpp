@@ -42,8 +42,8 @@ Instr *getMove(int type, int)
         }
         ownedInstruction->operands[0].assignedRegister = moveRecord->moveRegister;
         moveRecord->moveRegister->moveReset();
-        for (int i = 0; i != moveRecord->moveRegister->partCount; i++) {
-            RegisterPartLockList *registerPartLocks = &moveRecord->partLocks[i];
+        for (int movePartIndex = 0; movePartIndex != moveRecord->moveRegister->partCount; movePartIndex++) {
+            RegisterPartLockList *registerPartLocks = &moveRecord->partLocks[movePartIndex];
             if (!registerPartLocks) {
                 reportError(moveRecNullRllError);
                 abortAfterError();
@@ -51,7 +51,7 @@ Instr *getMove(int type, int)
             registerPartLocks->nextLockList = 0;
             registerPartLocks->reset();
             registerPartLocks->calculateLoopStats = 0;
-            moveRecord->moveRegister->setPartPayload(i, (VclPtrWord)registerPartLocks);
+            moveRecord->moveRegister->setPartPayload(movePartIndex, (VclPtrWord)registerPartLocks);
         }
         ownedInstruction->nextMoveInstruction = 0;
         ownedInstruction->pendingLink.previousInstruction = 0;
@@ -123,13 +123,13 @@ Instr *getMove(int type, int)
     return newInstruction;
 }
 
-bool addFreeMove(Instr *in)
+bool addFreeMove(Instr *freeMoveInstruction)
 {
-    if (!in) {
+    if (!freeMoveInstruction) {
         reportError("addFReeMove - null input\n");
         exitAfterCleanup(-1);
     }
-    moveRec *moveRecord = (moveRec *)in->moveRecordWord;
+    moveRec *moveRecord = (moveRec *)freeMoveInstruction->moveRecordWord;
     if (!moveRecord) {
         reportError("not a move to free\n");
         exitAfterCleanup(-1);
@@ -145,26 +145,26 @@ bool addFreeMove(Instr *in)
         registerPartLocks->nextLockList = 0;
         registerPartLocks->reset();
     }
-    if (in != moveRecord->instruction) {
+    if (freeMoveInstruction != moveRecord->instruction) {
         reportError("no instruction set in mr\n");
         exitAfterCleanup(-1);
     }
-    in->pendingLink.previousInstruction = 0;
-    in->pendingLink.nextInstruction = 0;
-    in->linearLink.previousInstruction = 0;
-    in->linearLink.nextInstruction = 0;
-    in->ownerTable = 0;
-    in->position.clearInstructionPosition();
-    in->resetOptimizationState();
-    if (!in->abstractMoveOpcode) {
+    freeMoveInstruction->pendingLink.previousInstruction = 0;
+    freeMoveInstruction->pendingLink.nextInstruction = 0;
+    freeMoveInstruction->linearLink.previousInstruction = 0;
+    freeMoveInstruction->linearLink.nextInstruction = 0;
+    freeMoveInstruction->ownerTable = 0;
+    freeMoveInstruction->position.clearInstructionPosition();
+    freeMoveInstruction->resetOptimizationState();
+    if (!freeMoveInstruction->abstractMoveOpcode) {
         reportError(moveRecBaseMuidError);
         return false;
     }
-    iInfo *instructionInfo = getOpcodeInfoById(in->abstractMoveOpcode);
-    in->concreteMoveOpcode = 0;
-    in->opcodeInfo = instructionInfo;
-    in->permittedPipelineMask = instructionInfo->pipelineMask;
-    in->opcodeResourceMask = instructionInfo->resourceMask;
+    iInfo *instructionInfo = getOpcodeInfoById(freeMoveInstruction->abstractMoveOpcode);
+    freeMoveInstruction->concreteMoveOpcode = 0;
+    freeMoveInstruction->opcodeInfo = instructionInfo;
+    freeMoveInstruction->permittedPipelineMask = instructionInfo->pipelineMask;
+    freeMoveInstruction->opcodeResourceMask = instructionInfo->resourceMask;
     moveRecord->nextFree = (moveRec *)freeMoveRecordsByType[moveRecord->moveType];
     freeMoveRecordsByType[moveRecord->moveType] = (VclPtrWord)moveRecord;
     return true;
@@ -176,11 +176,11 @@ bool detectMove(Instr *instruction, int &opc, unsigned char &mask, int &dstOp, i
     mask = 0;
     if (!instruction)
         return false;
-    int id = getOpcodeId(instruction->opcodeInfo);
+    int opcodeId = getOpcodeId(instruction->opcodeInfo);
     srcOp = -1;
     dstOp = -1;
-    unsigned int v;
-    switch (id) {
+    unsigned int operandMask;
+    switch (opcodeId) {
     case 0x99:
         opc = 0xb4;
         dstOp = 0;
@@ -212,9 +212,9 @@ bool detectMove(Instr *instruction, int &opc, unsigned char &mask, int &dstOp, i
     case 0x6d:
     case 0x6e:
     case 0x70:
-        if (!instruction->operands[2].immediateValue.getUInt(&v))
+        if (!instruction->operands[2].immediateValue.getUInt(&operandMask))
             return false;
-        if (v)
+        if (operandMask)
             return false;
         dstOp = 0;
         srcOp = 1;

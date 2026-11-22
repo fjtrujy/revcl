@@ -96,7 +96,7 @@ bool VisitCache::startRecord()
     }
     unsigned *row = recordData + recordCount * wordsPerRecord;
     recordStarted = true;
-    for (int i = 0; i != wordsPerRecord; i++)
+    for (int wordIndex = 0; wordIndex != wordsPerRecord; wordIndex++)
         *row++ = 0;
     return true;
 }
@@ -113,18 +113,18 @@ int VisitCache::endRecord()
     int recordIndex = recordCount;
     unsigned *cur = recordData + recordIndex * wordsPerRecord;
     unsigned *row = recordData;
-    int i;
-    for (i = 0; i != recordIndex; i++) {
-        int j;
-        for (j = 0; j != wordsPerRecord; j++)
-            if (row[j] != cur[j])
+    int comparisonIndex;
+    for (comparisonIndex = 0; comparisonIndex != recordIndex; comparisonIndex++) {
+        int wordIndex;
+        for (wordIndex = 0; wordIndex != wordsPerRecord; wordIndex++)
+            if (row[wordIndex] != cur[wordIndex])
                 break;
-        if (j == wordsPerRecord)
-            return i;
+        if (wordIndex == wordsPerRecord)
+            return comparisonIndex;
         row += wordsPerRecord;
     }
     recordCount = recordIndex + 1;
-    return i;
+    return comparisonIndex;
 }
 
 bool VisitCache::testBit(int rec, int bit)
@@ -137,10 +137,10 @@ void VisitCache::Dump()
 {
     reportInfo("VisitCache::Dump()\n");
     unsigned *row = recordData;
-    for (int i = 0; i != recordCount; i++) {
-        reportMessage(" [%3d] ", i);
-        for (int j = 0; j != wordsPerRecord; j++)
-            reportMessage(" %08x", row[j]);
+    for (int recordIndex = 0; recordIndex != recordCount; recordIndex++) {
+        reportMessage(" [%3d] ", recordIndex);
+        for (int wordIndex = 0; wordIndex != wordsPerRecord; wordIndex++)
+            reportMessage(" %08x", row[wordIndex]);
         reportMessage("\n");
         row += wordsPerRecord;
     }

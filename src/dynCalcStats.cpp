@@ -90,9 +90,9 @@ bool dynCalcStats(workTable *table)
             operand = &instruction->operands[operandIndex];
             RegPoolEntry *reg = registerOperand(operand, 2);
             if (reg) {
-                for (int p = 0; p != reg->partCount; p++) {
-                    rPart *registerPart = reg->getRP(p);
-                    if (instruction->inputMaskForRegister(reg, 1 << p) && registerPart->latestPendingReadCycle != -1) {
+                for (int registerPartIndex = 0; registerPartIndex != reg->partCount; registerPartIndex++) {
+                    rPart *registerPart = reg->getRP(registerPartIndex);
+                    if (instruction->inputMaskForRegister(reg, 1 << registerPartIndex) && registerPart->latestPendingReadCycle != -1) {
                         int pendingReadCycle = registerPart->latestPendingReadCycle;
                         if (operand->externalBlockModeFlag)
                             pendingReadCycle = pendingReadCycle - 1;
@@ -111,11 +111,11 @@ bool dynCalcStats(workTable *table)
             operand = &instruction->operands[operandIndex];
             RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
-                for (int p = 0; p != reg->partCount; p++) {
-                    bool bit = (operand->componentMask >> p) & 1;
+                for (int registerPartIndex = 0; registerPartIndex != reg->partCount; registerPartIndex++) {
+                    bool bit = (operand->componentMask >> registerPartIndex) & 1;
                     if (bit) {
-                        OpSlot *slot = &operand->parts[p];
-                        rPart *registerPart = reg->getRP(p);
+                        OpSlot *slot = &operand->parts[registerPartIndex];
+                        rPart *registerPart = reg->getRP(registerPartIndex);
                         if (!isAAInputLock(slot)) {
                             if (registerPart->earliestPendingReadCycle == -1) {
                                 registerPart->earliestPendingReadCycle = instruction->dynamicEarliestStart;
@@ -135,10 +135,10 @@ bool dynCalcStats(workTable *table)
             operand = &instruction->operands[operandIndex];
             RegPoolEntry *reg = registerOperand(operand, 2);
             if (reg) {
-                for (int p = 0; p != reg->partCount; p++) {
-                    bool bit = (operand->componentMask >> p) & 1;
+                for (int registerPartIndex = 0; registerPartIndex != reg->partCount; registerPartIndex++) {
+                    bool bit = (operand->componentMask >> registerPartIndex) & 1;
                     if (bit) {
-                        rPart *registerPart = reg->getRP(p);
+                        rPart *registerPart = reg->getRP(registerPartIndex);
                         registerPart->earliestPendingReadCycle = -1;
                         registerPart->latestPendingReadCycle = -1;
                     }
@@ -155,9 +155,9 @@ bool dynCalcStats(workTable *table)
             Operand *operand = &instruction->operands[operandIndex];
             RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
-                for (int p = 0; p != reg->partCount; p++) {
-                    OpSlot *slot = &operand->parts[p];
-                    bool bit = (operand->componentMask >> p) & 1;
+                for (int registerPartIndex = 0; registerPartIndex != reg->partCount; registerPartIndex++) {
+                    OpSlot *slot = &operand->parts[registerPartIndex];
+                    bool bit = (operand->componentMask >> registerPartIndex) & 1;
                     if (bit && !isAAInputLock(slot)) {
                         OperandLock *par = slot->getParent();
                         if (!isRegLock(par)) {
@@ -185,24 +185,24 @@ bool dynCalcStats(workTable *table)
             Operand *operand = &instruction->operands[operandIndex];
             RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
-                for (int p = 0; p != reg->partCount; p++) {
-                    OpSlot *slot = &operand->parts[p];
-                    bool bit = (operand->componentMask >> p) & 1;
+                for (int registerPartIndex = 0; registerPartIndex != reg->partCount; registerPartIndex++) {
+                    OpSlot *slot = &operand->parts[registerPartIndex];
+                    bool bit = (operand->componentMask >> registerPartIndex) & 1;
                     if (bit && !isAAInputLock(slot)) {
                         OperandLock *par = slot->getParent();
                         if (!isRegLock(par)) {
-                            Instr *pi = par->ownerInstr();
+                            Instr *lockOwnerInstruction = par->ownerInstr();
                             int lat;
                             if (slot->latencyModeFlag)
                                 lat = 1;
                             else
                                 lat = par->issueLatency;
-                            int reverseStartCandidate = pi->dynamicReverseStart + lat;
+                            int reverseStartCandidate = lockOwnerInstruction->dynamicReverseStart + lat;
                             if (reverseStartCandidate < instruction->dynamicUpperBound)
                                 instruction->dynamicUpperBound = reverseStartCandidate;
                             reverseStartCandidate = instruction->dynamicEarliestStart - lat;
-                            if (reverseStartCandidate > pi->dynamicReverseEnd)
-                                pi->dynamicReverseEnd = reverseStartCandidate;
+                            if (reverseStartCandidate > lockOwnerInstruction->dynamicReverseEnd)
+                                lockOwnerInstruction->dynamicReverseEnd = reverseStartCandidate;
                         }
                     }
                 }

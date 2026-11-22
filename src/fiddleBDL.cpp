@@ -47,8 +47,8 @@ bool fiddleBDL(workTable *scheduleTable)
         int extlen = scheduleTable->rangeEnd - scheduleTable->rangeStart;
         if (extlen <= 2 || !branchInstruction)
             goto done;
-        short m = branchInstruction->externalInputConstraint < branchInstruction->externalInputPairedConstraint ? branchInstruction->externalInputPairedConstraint : branchInstruction->externalInputConstraint;
-        if (m > extlen - 3)
+        short inputConstraint = branchInstruction->externalInputConstraint < branchInstruction->externalInputPairedConstraint ? branchInstruction->externalInputPairedConstraint : branchInstruction->externalInputConstraint;
+        if (inputConstraint > extlen - 3)
             goto done;
         wtRow *last = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 1);
         if (!last) {
@@ -77,7 +77,7 @@ bool fiddleBDL(workTable *scheduleTable)
             row = scheduleTable->rangeEnd;
             row -= 2;
             posB.setRow(row);
-            bool ok = true;
+            bool branchLayoutValid = true;
             if (branchInstruction != brow->entries[1].instruction) {
                 reportError(fiddleBranchPosError);
                 return false;
@@ -91,7 +91,7 @@ bool fiddleBDL(workTable *scheduleTable)
                 return false;
             }
             if (checkInstructionPlacementConstraints(scheduleTable, branchInstruction, &posP))
-                ok = false;
+                branchLayoutValid = false;
             if (prev) {
                 if (!moveLocks(prev, &posP)) {
                     reportError("failed to undo takeout\n");
@@ -102,7 +102,7 @@ bool fiddleBDL(workTable *scheduleTable)
                     return false;
                 }
             }
-            if (!ok)
+            if (!branchLayoutValid)
                 goto success;
 
             if (prev) {
@@ -111,10 +111,10 @@ bool fiddleBDL(workTable *scheduleTable)
                     return false;
                 }
                 if (checkInstructionPlacementConstraints(scheduleTable, prev, &posB))
-                    ok = false;
+                    branchLayoutValid = false;
                 int m2 = prev->externalOutputConstraint < prev->externalOutputPairedConstraint ? prev->externalOutputPairedConstraint : prev->externalOutputConstraint;
                 if ((short)m2)
-                    ok = false;
+                    branchLayoutValid = false;
                 if (!moveLocks(branchInstruction, &posB)) {
                     reportError("failed to undo branch\n");
                     return false;
@@ -124,7 +124,7 @@ bool fiddleBDL(workTable *scheduleTable)
                     return false;
                 }
             }
-            if (!ok)
+            if (!branchLayoutValid)
                 goto success;
 
             if (!scheduleTable->takeOut(branchInstruction)) {

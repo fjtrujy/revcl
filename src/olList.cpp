@@ -93,23 +93,23 @@ void ol_s::copyLocationFrom(ol_s *src)
     }
 }
 
-static inline void ol_s_init_inl(ol_s *location, Instr *inst, int op, int slot, bool ext)
+static inline void ol_s_init_inl(ol_s *location, Instr *inst, int operandIndex, int slot, bool ext)
 {
     location->reset();
     if (ext)
         location->stateFlags = 1;
     location->instruction = inst;
-    location->operandIndex = op;
+    location->operandIndex = operandIndex;
     location->componentIndex = slot;
 }
 
-void ol_s::init(Instr *inst, int op, int slot, bool ext)
+void ol_s::init(Instr *inst, int operandPosition, int slot, bool ext)
 {
     reset();
     if (ext)
         stateFlags = 1;
     instruction = inst;
-    operandIndex = op;
+    operandIndex = operandPosition;
     componentIndex = slot;
 }
 
@@ -125,12 +125,12 @@ static inline ol_s *allocOL()
     return location;
 }
 
-ol_s *olList::addOperandLocation(Instr *inst, int op, int slot, bool ext)
+ol_s *olList::addOperandLocation(Instr *inst, int operandIndex, int slot, bool ext)
 {
     ol_s *prev = 0;
     ol_s *location;
     for (location = head; location; location = location->next) {
-        if (inst == location->instruction && op == location->operandIndex && slot == location->componentIndex) {
+        if (inst == location->instruction && operandIndex == location->operandIndex && slot == location->componentIndex) {
             if (ext != location->isExt()) {
                 reportError("addOL: inst external state mismatch bExt=%d\n", ext);
                 location->dumpInstructionContext();
@@ -142,7 +142,7 @@ ol_s *olList::addOperandLocation(Instr *inst, int op, int slot, bool ext)
         prev = location;
     }
     location = allocOL();
-    ol_s_init_inl(location, inst, op, slot, ext);
+    ol_s_init_inl(location, inst, operandIndex, slot, ext);
     if (prev)
         prev->next = location;
     else

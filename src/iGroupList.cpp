@@ -70,11 +70,11 @@ bool iGroupList::add(void *data, int byteCount)
 void iGroupList::dump()
 {
     iGroupNode *groupNode;
-    int i = 0;
-    for (groupNode = head; groupNode; groupNode = groupNode->next, i++)
-        reportInfo(" [%4d ] [%d sz=%d]\n", i, groupNode->itemPointer, groupNode->itemSize);
-    if (i)
-        reportInfo(" .. %d nodes\n", i);
+    int groupIndex = 0;
+    for (groupNode = head; groupNode; groupNode = groupNode->next, groupIndex++)
+        reportInfo(" [%4d ] [%d sz=%d]\n", groupIndex, groupNode->itemPointer, groupNode->itemSize);
+    if (groupIndex)
+        reportInfo(" .. %d nodes\n", groupIndex);
 }
 
 
@@ -176,10 +176,10 @@ int iGroupLog::logTable(workTable *sourceTable)
                     Operand *operand = &cur->operands[operandIndex];
                     RegPoolEntry *registerEntry = operand->assignedRegister;
                     if (registerEntry == reg && operand->externalPartMask)
-                        for (int k = 0; k != registerEntry->partCount; k++) {
-                            if (isRegisterOperand(operand, 2) && ((operand->externalPartMask >> k) & 1))
+                        for (int dependencyPartIndex = 0; dependencyPartIndex != registerEntry->partCount; dependencyPartIndex++) {
+                            if (isRegisterOperand(operand, 2) && ((operand->externalPartMask >> dependencyPartIndex) & 1))
                                 instruction->markDependencyOutputReachable();
-                            if (isRegisterOperand(operand, 1) && ((operand->externalPartMask >> k) & 1))
+                            if (isRegisterOperand(operand, 1) && ((operand->externalPartMask >> dependencyPartIndex) & 1))
                                 instruction->markDependencyInputReachable();
                         }
                 }
@@ -188,25 +188,25 @@ int iGroupLog::logTable(workTable *sourceTable)
                 changed = false;
                 for (instruction = sourceTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
                     if (instruction->inputDependencyReachable)
-                        for (int j = 0; j != instruction->operandCount; j++) {
-                            Operand *operand = &instruction->operands[j];
+                        for (int dependencyOperandIndex = 0; dependencyOperandIndex != instruction->operandCount; dependencyOperandIndex++) {
+                            Operand *operand = &instruction->operands[dependencyOperandIndex];
                             RegPoolEntry *registerEntry = registerOperand(operand, 2);
                             if (registerEntry)
-                                for (int k = 0; k != registerEntry->partCount; k++)
-                                    for (ol_s *operandLocation = operand->parts[k].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation()) {
-                                        Instr *t = operandLocation->instruction;
-                                        changed = changed || t->markDependencyInputReachable();
+                                for (int dependencyPartIndex = 0; dependencyPartIndex != registerEntry->partCount; dependencyPartIndex++)
+                                    for (ol_s *operandLocation = operand->parts[dependencyPartIndex].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation()) {
+                                        Instr *linkedInstruction = operandLocation->instruction;
+                                        changed = changed || linkedInstruction->markDependencyInputReachable();
                                     }
                         }
                 wtInstrList *list = &sourceTable->linearInstructions;
                 for (instruction = list->tail; instruction; instruction = instruction->linearLink.previousInstruction)
                     if (instruction->outputDependencyReachable)
-                        for (int j = 0; j != instruction->operandCount; j++) {
-                            Operand *operand = &instruction->operands[j];
+                        for (int dependencyOperandIndex = 0; dependencyOperandIndex != instruction->operandCount; dependencyOperandIndex++) {
+                            Operand *operand = &instruction->operands[dependencyOperandIndex];
                             RegPoolEntry *registerEntry = registerOperand(operand, 1);
                             if (registerEntry)
-                                for (int k = 0; k != registerEntry->partCount; k++)
-                                    for (ol_s *operandLocation = operand->parts[k].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation())
+                                for (int dependencyPartIndex = 0; dependencyPartIndex != registerEntry->partCount; dependencyPartIndex++)
+                                    for (ol_s *operandLocation = operand->parts[dependencyPartIndex].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation())
                                         operandLocation->instruction->outputDependencyReachable = 1;
                         }
             } while (changed);

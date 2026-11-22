@@ -281,10 +281,10 @@ cls0805c244::cls0805c244()
 {
     registerEntry = 0;
     nextLockList = 0;
-    for (int i = 0; i != 4; i++)
-        externalOutputLocks[i] = 0;
+    for (int externalOutputIndex = 0; externalOutputIndex != 4; externalOutputIndex++)
+        externalOutputLocks[externalOutputIndex] = 0;
     externalOutputCount = 0;
-    unk_2b = 0;
+    sharedExternalOutputFlag = 0;
     outputLocks = 0;
     outputLockCount = 0;
     remainingLockCount = 0;
@@ -298,10 +298,10 @@ cls0805c244::cls0805c244(cls0805c244 *next)
 {
     nextLockList = next;
     registerEntry = 0;
-    for (int i = 0; i != 4; i++)
-        externalOutputLocks[i] = 0;
+    for (int externalOutputIndex = 0; externalOutputIndex != 4; externalOutputIndex++)
+        externalOutputLocks[externalOutputIndex] = 0;
     externalOutputCount = 0;
-    unk_2b = 0;
+    sharedExternalOutputFlag = 0;
     outputLocks = 0;
     outputLockCount = 0;
     remainingLockCount = 0;
@@ -330,10 +330,10 @@ void cls0805c244::checkCounts()
 
 bool cls0805c244::reset()
 {
-    for (int i = 0; i != 4; i++)
-        externalOutputLocks[i] = 0;
+    for (int externalOutputIndex = 0; externalOutputIndex != 4; externalOutputIndex++)
+        externalOutputLocks[externalOutputIndex] = 0;
     externalOutputCount = 0;
-    unk_2b = 0;
+    sharedExternalOutputFlag = 0;
     outputLocks = 0;
     outputLockCount = 0;
     remainingLockCount = 0;
@@ -344,12 +344,12 @@ bool cls0805c244::reset()
     return true;
 }
 
-bool cls0805c244::addInput(cls0805bcc4 *out, cls0805bcc4 *inputLock, char a, unsigned char b)
+bool cls0805c244::addInput(cls0805bcc4 *out, cls0805bcc4 *inputLock, char issueLatency, unsigned char latencyModeFlag)
 {
     inputLock->lockDirection = 1;
     inputLock->ownerLockList = this;
-    out->latencyModeFlag = b;
-    inputLock->issueLatency = a;
+    out->latencyModeFlag = latencyModeFlag;
+    inputLock->issueLatency = issueLatency;
     out->eitherPipeConsumerCount += inputLock->eitherPipeInputDemand;
     out->upperPipeConsumerCount += inputLock->upperPipeInputDemand;
     out->referenceCount++;
@@ -364,15 +364,15 @@ static inline bool isRegLock(cls0805bcc4 *lock)
     return lock->ownerType == 2;
 }
 
-bool cls0805c244::addOutput(cls0805bcc4 *lock, int a, int b, unsigned char c)
+bool cls0805c244::addOutput(cls0805bcc4 *lock, int throughputSpacing, int issueLatency, unsigned char latencyModeFlag)
 {
     if (isRegLock(lock))
         containsRegisterOutput = 1;
     lock->lockDirection = 2;
-    lock->throughputSpacing = a;
-    lock->issueLatency = b;
+    lock->throughputSpacing = throughputSpacing;
+    lock->issueLatency = issueLatency;
     lock->ownerLockList = this;
-    lock->latencyModeFlag = c;
+    lock->latencyModeFlag = latencyModeFlag;
     remainingLockCount++;
     outputLockCount++;
     return true;
@@ -576,32 +576,32 @@ static inline bool isInserted(cls0805bcc4 *lock)
 bool cls0805bcc4::isOk(int type, bool inserted)
 {
     int loopSize = activeLoopSize;
-    bool ok = true;
+    bool lockIsValid = true;
     regUse *registerUse = ownerType == 2 ? (regUse *)ownerPointer : 0;
     Operand *operand = lockOperand(this);
 
     if (registerUse) {
         if (operand) {
             reportError("rLock::isOk() - both reg ref and op ok\n");
-            ok = false;
+            lockIsValid = false;
         }
     } else if (!operand) {
         reportError("rLock::isOk() - neither op nor regref set\n");
-        ok = false;
+        lockIsValid = false;
     }
     if (type >= 0 && lockDirection != type) {
         reportError("isOk - unexpected type for is ok\n");
-        ok = false;
+        lockIsValid = false;
     }
     if (isInserted(this) != inserted) {
         reportError("isOK - insert state was unexpected!\n");
-        ok = false;
+        lockIsValid = false;
     }
     switch (lockDirection) {
     case 1:
         if (!getParent()) {
             reportError("input lock has no parent\n");
-            ok = false;
+            lockIsValid = false;
         }
         break;
     case 2: {
@@ -613,36 +613,36 @@ bool cls0805bcc4::isOk(int type, bool inserted)
         if (orf && loopSize) {
             if (issueLatency > 1) {
                 reportError("external input had latency for loop\n");
-                ok = false;
+                lockIsValid = false;
             }
             if (throughputSpacing > 1) {
                 reportError("external input had thruput for loop\n");
-                ok = false;
+                lockIsValid = false;
             }
         }
         if (loopSize) {
             if (issueLatency > loopSize && latencyModeFlag && referenceCount) {
                 reportError("latency bigger than loop!\n");
-                ok = false;
+                lockIsValid = false;
             }
             if (throughputSpacing > loopSize) {
                 reportError("thruput bigger than loop!\n");
-                ok = false;
+                lockIsValid = false;
             }
         }
         break;
     }
     default:
         reportError("rLock::isOk() - bad lock type\n");
-        ok = false;
+        lockIsValid = false;
         break;
     }
-    if (!ok) {
+    if (!lockIsValid) {
         reportError("rLock::isOk - failed\n");
         print();
         exitAfterCleanup(-1);
     }
-    return ok;
+    return lockIsValid;
 }
 
 static inline bool ownsLock(cls0805c244 *list, cls0805bcc4 *lock)
@@ -658,7 +658,7 @@ bool cls0805c244::isOk(cls0805bcc4 *candidateLock, int type, bool inserted)
         reportError("rLockList::isOk  -passed a null lock\n");
         exitAfterCleanup(-1);
     }
-    bool ok = candidateLock->isOk(type, inserted);
+    bool lockIsValid = candidateLock->isOk(type, inserted);
     if (candidateLock->lockDirection == 0) {
         cls0805bcc4 *parent = candidateLock->getParent();
         cls0805bcc4 *outputLock;
@@ -667,7 +667,7 @@ bool cls0805c244::isOk(cls0805bcc4 *candidateLock, int type, bool inserted)
                 break;
         if (!outputLock) {
             reportError("rLockList::isOk - parent is not on insert list\n");
-            ok = false;
+            lockIsValid = false;
         }
     }
     if (!ownsLock(this, candidateLock)) {
@@ -678,17 +678,17 @@ bool cls0805c244::isOk(cls0805bcc4 *candidateLock, int type, bool inserted)
     if (candidateLock->lockDirection == 2) {
         if (outputLockCount <= 0) {
             reportError("isOk - output, but no outputs! - <=0 output locks!\n");
-            ok = false;
+            lockIsValid = false;
         }
         int lim = (inserted == false) - 1;
         if (remainingLockCount <= lim) {
             reportError("isOk - output, but no outputs! - <=0 output locks to go!\n");
-            ok = false;
+            lockIsValid = false;
         }
     }
-    if (!ok)
+    if (!lockIsValid)
         exitAfterCleanup(-1);
-    return ok;
+    return lockIsValid;
 }
 
 short cls0805bcc4::maximumLockConstraint()
@@ -954,7 +954,7 @@ bool cls0805c244::addExtOutput(cls0805bcc4 *lock, bool flag)
         checkCounts();
         return false;
     }
-    unk_2b = flag;
+    sharedExternalOutputFlag = flag;
     externalOutputLocks[externalOutputCount] = lock;
     lock->externalOutputSlotPlusOne = ++externalOutputCount;
     return true;

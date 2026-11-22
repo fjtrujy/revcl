@@ -94,9 +94,9 @@ bool removeNops(Program *program, instStream *stream)
                 return false;
             }
             int rangeEnd = table->getRangeEnd();
-            int k;
-            for (k = 0; k != inflightCount; k++) {
-                ol_s *operandLocation = inflight[k];
+            int inflightIndex;
+            for (inflightIndex = 0; inflightIndex != inflightCount; inflightIndex++) {
+                ol_s *operandLocation = inflight[inflightIndex];
                 Instr *instruction = operandLocation->instruction;
                 Operand *operand = operandAtLocation(operandLocation);
                 RegPoolEntry *reg = operand->assignedRegister;
@@ -150,8 +150,8 @@ bool removeNops(Program *program, instStream *stream)
             bool ok = true;
             if (rowIndex == table->getRangeEnd() - 1 && !lastOk)
                 ok = false;
-            for (k = 0; k != inflightCount && ok; k++) {
-                ol_s *operandLocation = inflight[k];
+            for (inflightIndex = 0; inflightIndex != inflightCount && ok; inflightIndex++) {
+                ol_s *operandLocation = inflight[inflightIndex];
                 Operand *operand = operandAtLocation(operandLocation);
                 int part = operandLocation->componentIndex;
                 int lat = operandLocation->cycleOffset;
@@ -159,9 +159,9 @@ bool removeNops(Program *program, instStream *stream)
                 if (userLocation) {
                     Instr *userInstruction = userLocation->instruction;
                     Operand *userOperand = operandAtLocation(userLocation);
-                    int ul = userInstruction->position.linearRow;
-                    int tu = table->ctime(ul) - 1;
-                    if (!operand->externalBlockModeFlag && !userOperand->externalBlockModeFlag && ul < rangeEnd && tNow + lat > tu)
+                    int consumerRow = userInstruction->position.linearRow;
+                    int consumerCycle = table->ctime(consumerRow) - 1;
+                    if (!operand->externalBlockModeFlag && !userOperand->externalBlockModeFlag && consumerRow < rangeEnd && tNow + lat > consumerCycle)
                         ok = false;
                 }
             }
@@ -170,7 +170,7 @@ bool removeNops(Program *program, instStream *stream)
             if (rangeEnd < table->getRangeEnd()) {
                 int boundaryCycle = table->ctime(rangeEnd);
                 wtRow *scannedRow = row + 1;
-                for (int l = rowIndex + 1; l < rangeEnd && ok; l++, scannedRow++) {
+                for (int scanIndex = rowIndex + 1; scanIndex < rangeEnd && ok; scanIndex++, scannedRow++) {
                     int base = scannedRow->cycleTime - 1;
                     for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
                         Instr *instruction = scannedRow->getEntry(pipeIndex);
@@ -205,40 +205,40 @@ bool removeNops(Program *program, instStream *stream)
             if (ok) {
                 if (rowIndex + 1 < rangeEnd) {
                     wtRow *candidateRow = row + 1;
-                    int l = rowIndex + 1;
+                    int candidateRowIndex = rowIndex + 1;
                     do {
                         int base = candidateRow->cycleTime - 1;
-                        for (int pp = 0; pp != 2; pp++) {
-                            Instr *instruction = GetI((Instr **)candidateRow, pp);
+                        for (int candidatePipeIndex = 0; candidatePipeIndex != 2; candidatePipeIndex++) {
+                            Instr *instruction = GetI((Instr **)candidateRow, candidatePipeIndex);
                             if (instruction) {
-                                short e = instruction->externalInputConstraint;
-                                if (e < instruction->externalInputPairedConstraint)
-                                    e = instruction->externalInputPairedConstraint;
-                                if (e > base) {
+                                short inputConstraint = instruction->externalInputConstraint;
+                                if (inputConstraint < instruction->externalInputPairedConstraint)
+                                    inputConstraint = instruction->externalInputPairedConstraint;
+                                if (inputConstraint > base) {
                                     ok = false;
                                     break;
                                 }
                             }
                         }
-                        l++;
+                        candidateRowIndex++;
                         candidateRow++;
-                    } while (l < rangeEnd && ok);
+                    } while (candidateRowIndex < rangeEnd && ok);
                 }
                 if (ok) {
                     if (rangeEnd >= table->getRangeEnd()) {
                         int last = table->getRawOrSyntheticLogicalLength() - 1;
-                        for (int l = table->getRangeStart(); l < rangeEnd && ok; l++) {
-                            wtRow *sampledRow = (wtRow *)((cls_unk30 *)table)->getIE_ck(l);
+                        for (int sampledRowIndex = table->getRangeStart(); sampledRowIndex < rangeEnd && ok; sampledRowIndex++) {
+                            wtRow *sampledRow = (wtRow *)((cls_unk30 *)table)->getIE_ck(sampledRowIndex);
                             int dist = last - row->cycleTime;
                             if (dist < 0)
                                 exitWithError("distance to end appears to be less than zero\n");
-                            for (int pp = 0; pp != 2; pp++) {
-                                Instr *instruction = GetI((Instr **)sampledRow, pp);
+                            for (int sampledPipeIndex = 0; sampledPipeIndex != 2; sampledPipeIndex++) {
+                                Instr *instruction = GetI((Instr **)sampledRow, sampledPipeIndex);
                                 if (instruction) {
-                                    short e = instruction->externalOutputConstraint;
-                                    if (e < instruction->externalOutputPairedConstraint)
-                                        e = instruction->externalOutputPairedConstraint;
-                                    if (e < dist) {
+                                    short outputConstraint = instruction->externalOutputConstraint;
+                                    if (outputConstraint < instruction->externalOutputPairedConstraint)
+                                        outputConstraint = instruction->externalOutputPairedConstraint;
+                                    if (outputConstraint < dist) {
                                         ok = false;
                                         break;
                                     }
@@ -302,16 +302,16 @@ void initializeScheduledCycleTimes(workTable *table)
     }
 }
 
-void splitCtime(workTable *table, int rowIndex, int m)
+void splitCtime(workTable *table, int rowIndex, int cycleTime)
 {
     if (rowIndex < table->rangeStart || rowIndex >= table->rangeEnd)
         exitWithError("nop line is bad\n");
-    if (m <= rowIndex)
+    if (cycleTime <= rowIndex)
         exitWithError("m<l for splitCtime()\n");
-    if (m > table->rangeEnd)
-        m = table->rangeEnd;
+    if (cycleTime > table->rangeEnd)
+        cycleTime = table->rangeEnd;
     wtRow *row = &table->rows[rowIndex];
-    for (; rowIndex < m; rowIndex++, row++)
+    for (; rowIndex < cycleTime; rowIndex++, row++)
         row->cycleTime--;
 }
 

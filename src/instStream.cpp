@@ -234,10 +234,10 @@ bool instStream::canLoop()
             exitAfterCleanup(-1);
         } else {
             int optimizationCount = stream->optimizationRecordCount;
-            unsigned char z = stream->branchType;
-            z >>= 4;
-            z >>= 4;
-            if (z)
+            unsigned char branchFlagHighBits = stream->branchType;
+            branchFlagHighBits >>= 4;
+            branchFlagHighBits >>= 4;
+            if (branchFlagHighBits)
                 return false;
             stream->optimizationRecordCount = optimizationCount;
         }
@@ -374,14 +374,14 @@ bool instStream::removeBranch()
 
 char *instStream::getBranchTargetImmediate()
 {
-    char *r = 0;
+    char *branchLabelText = 0;
     requireTable("getBranch  - no work table!\n");
     Instr *branchInstruction = workTablePtr->getBranch();
     if (branchInstruction)
-        r = branchInstruction->getBranchTargetImmediate();
+        branchLabelText = branchInstruction->getBranchTargetImmediate();
     else
         reportWarning("getBranchTargetImmediate:: failed to get branch\n");
-    return r;
+    return branchLabelText;
 }
 
 RegPoolEntry *instStream::getBranchTargetRegister()
@@ -571,6 +571,6 @@ bool instStream::disposeInputTable()
 void instStream::copySourceRecordsFrom(instStream *src)
 {
     optimizationRecordCount = src->optimizationRecordCount;
-    for (int i = 0; i != optimizationRecordCount; i++)
-        optimizationRecords[i] = src->optimizationRecords[i];
+    for (int optimizationIndex = 0; optimizationIndex != optimizationRecordCount; optimizationIndex++)
+        optimizationRecords[optimizationIndex] = src->optimizationRecords[optimizationIndex];
 }

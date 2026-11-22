@@ -113,9 +113,9 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
     if (codeModeValue == 4) {
         wtRow blank;
         blank.clearEntries();
-        for (int i = 0; i != nulls; i++) {
+        for (int nopIndex = 0; nopIndex != nulls; nopIndex++) {
             int emissionFlags = 0;
-            if (isEnd && i == 0) {
+            if (isEnd && nopIndex == 0) {
                 emissionFlags = (unsigned char)(owner->trailingLabelFlags | 2);
                 done = 1;
             }
@@ -137,10 +137,10 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 buf += formatIntoBuffer(buf, "_LNOPT_");
             buf += formatIntoBuffer(buf, "w=[ ");
             if (stream->appliedOptimizationMask) {
-                for (int i = 0; i != getNumOptimisers(); i++) {
-                    int bit = 1 << i;
+                for (int optimizerIndex = 0; optimizerIndex != getNumOptimisers(); optimizerIndex++) {
+                    int bit = 1 << optimizerIndex;
                     if (stream->appliedOptimizationMask & bit)
-                        buf += formatIntoBuffer(buf, "%s ", getOptimiserName(i));
+                        buf += formatIntoBuffer(buf, "%s ", getOptimiserName(optimizerIndex));
                 }
             }
             buf += formatIntoBuffer(buf, "] %d [%d %d] %d   [%s]\n",
@@ -158,26 +158,26 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             end++;
         wtRow blank;
         blank.clearEntries();
-        for (int i = rangeStart; i != end; i++) {
+        for (int emissionRowIndex = rangeStart; emissionRowIndex != end; emissionRowIndex++) {
             wtRow *emissionRow = &blank;
-            if (i < rangeEnd)
-                emissionRow = &rows[i];
-            int f = 0;
+            if (emissionRowIndex < rangeEnd)
+                emissionRow = &rows[emissionRowIndex];
+            int rowEmissionFlags = 0;
             if (!emissionRow->skip)
                 (*p1)++;
             (*p2)++;
             if (isEnd) {
-                if (i == end - 2) {
-                    f = (unsigned char)(stream->trailingLabelFlags | 2);
+                if (emissionRowIndex == end - 2) {
+                    rowEmissionFlags = (unsigned char)(stream->trailingLabelFlags | 2);
                     done = 1;
                 }
-            } else if (i == rangeEnd - 1)
-                f = (unsigned char)stream->trailingLabelFlags;
-            f |= top;
+            } else if (emissionRowIndex == rangeEnd - 1)
+                rowEmissionFlags = (unsigned char)stream->trailingLabelFlags;
+            rowEmissionFlags |= top;
             top = 0;
             switch (mode) {
             case 0:
-                buf = emissionRow->emit(buf, f, false, true);
+                buf = emissionRow->emit(buf, rowEmissionFlags, false, true);
                 if (!buf) {
                     reportError("failed to emit instruction!\n");
                     dumpFailedRow(emissionRow);
@@ -186,14 +186,14 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 break;
             case 1:
                 *buf++ = ';';
-                buf = emissionRow->emit(buf, f, true, true);
+                buf = emissionRow->emit(buf, rowEmissionFlags, true, true);
                 if (!buf) {
                     reportError("failed to emit instruction!\n");
                     dumpFailedRow(emissionRow);
                     return 0;
                 }
                 *buf++ = ' ';
-                buf = emissionRow->emit(buf, f, false, true);
+                buf = emissionRow->emit(buf, rowEmissionFlags, false, true);
                 if (!buf) {
                     reportError("failed to emit instruction!\n");
                     dumpFailedRow(emissionRow);
@@ -202,7 +202,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 *buf++ = '\n';
                 break;
             case 2:
-                buf = emissionRow->emit(buf, f, true, true);
+                buf = emissionRow->emit(buf, rowEmissionFlags, true, true);
                 if (!buf) {
                     reportError("failed to emit instruction!\n");
                     emissionRow->refreshInstructionOperands(-1);
@@ -262,10 +262,10 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
     if (maxStallLength) {
         buf += formatIntoBuffer(buf, "       ;\tSTALL");
         bool any = false;
-        for (int k = 0; k != 3; k++) {
-            int bit = (stallTypeMask >> k) & 1;
+        for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++) {
+            int bit = (stallTypeMask >> stallTypeIndex) & 1;
             if (bit) {
-                buf += formatIntoBuffer(buf, "_%s", stallTypeNames[k]);
+                buf += formatIntoBuffer(buf, "_%s", stallTypeNames[stallTypeIndex]);
                 any = true;
             }
         }
@@ -297,7 +297,7 @@ char *emitNop(char *buf, int flags, int *len)
     return buf;
 }
 
-char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
+char *emitInstr(Instr *emittedInstruction, char *buf, bool upper, int flags, bool symbolic)
 {
     char line[320];
     char mods[16];
@@ -307,17 +307,17 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
     while (*modifierSource)
         *modifierDestination++ = *modifierSource++;
     *modifierDestination = 0;
-    if (in->tildePrefix || !in->opcodeInfo)
+    if (emittedInstruction->tildePrefix || !emittedInstruction->opcodeInfo)
         lineCursor += formatIntoBuffer(lineCursor, "nop%s", mods);
     else {
-        if (in->opcodeInfo->emitHook) {
-            lineCursor = in->opcodeInfo->emitHook(line, in, upper, mods, b, 0);
+        if (emittedInstruction->opcodeInfo->emitHook) {
+            lineCursor = emittedInstruction->opcodeInfo->emitHook(line, emittedInstruction, upper, mods, symbolic, 0);
             if (!lineCursor) {
                 reportError("emit hook failed for an instruction\n");
                 return 0;
             }
         } else {
-            lineCursor = emitGenericInstructionText(line, in, upper, mods, b, 0);
+            lineCursor = emitGenericInstructionText(line, emittedInstruction, upper, mods, symbolic, 0);
             if (!lineCursor) {
                 reportError("generic emit hook failed for an instruction\n");
                 return 0;

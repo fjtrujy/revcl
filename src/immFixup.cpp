@@ -138,7 +138,7 @@ bool aaFixup(instStream *stream)
         Instr *instruction = regUseInstr(registerUse);
         olList *vis = regUseVisList0(registerUse);
         aaDesc *aliasDescriptor = findAddressAliasDescriptor(instruction);
-        if (!aliasDescriptor || !bit0(regUseExtIn(registerUse)) || !bit0(regUseExtOut(registerUse)) || registerUse->unk_18 != 1)
+        if (!aliasDescriptor || !bit0(regUseExtIn(registerUse)) || !bit0(regUseExtOut(registerUse)) || registerUse->recordedOutputWriteCount != 1)
             continue;
         RegPoolEntry *outReg = instruction->operands[aliasDescriptor->outputOperandIndex].assignedRegister;
         if (outReg != reg || opRawReg(instrRawOp(instruction, aaInOp(aliasDescriptor))) != outReg)
@@ -320,14 +320,14 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
             reportError("nLocal is 2, but we are a prologue!\n");
             return false;
         }
-        for (int i = 0; i != 2; i++) {
+        for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
             switch (epType) {
             case 3:
-                switch (src[i].type) {
+                switch (src[pipeIndex].type) {
                 case 2:
                     break;
                 case 5:
-                    src[i].lid--;
+                    src[pipeIndex].lid--;
                     break;
                 default:
                     reportError("epSrc: we are EPI, but not MAIN/PRO setter for n=2\n");
@@ -335,11 +335,11 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
                 }
                 break;
             case 5:
-                switch (src[i].type) {
+                switch (src[pipeIndex].type) {
                 case 2:
                     break;
                 case 5:
-                    src[i].lid--;
+                    src[pipeIndex].lid--;
                     break;
                 default:
                     reportError("epSrc: we are MAIN, but not MAIN/PRO setter\n");

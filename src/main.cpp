@@ -83,7 +83,7 @@ void noopMainStartupHook()
 
 int main(int argc, char **argv)
 {
-    int i = 1;
+    int argumentIndex = 1;
     char *inFile = 0;
     char *outFile = 0;
     char *labelFile = 0;
@@ -99,16 +99,16 @@ int main(int argc, char **argv)
     int mValue = -1;
     int len;
 
-    for (; i < argc && argv[i][0] == '-'; i++) {
-        if (matchesToolOption(0xff, argv[i][1]))
+    for (; argumentIndex < argc && argv[argumentIndex][0] == '-'; argumentIndex++) {
+        if (matchesToolOption(0xff, argv[argumentIndex][1]))
             continue;
-        switch (argv[i][1]) {
+        switch (argv[argumentIndex][1]) {
         case 'H':
         case 'h':
             usage();
             exitAfterCleanup(0);
         case 'o':
-            outFile = argv[i] + 2;
+            outFile = argv[argumentIndex] + 2;
             currentOutputFileName = outFile;
             break;
         case 'C':
@@ -169,21 +169,21 @@ int main(int argc, char **argv)
             reportInfo("-a option is now on always\n");
             break;
         case 'g':
-            if (argv[i][2] == '+')
+            if (argv[argumentIndex][2] == '+')
                 enableAlternateGaspPreprocessing(&gaspFlags);
             else {
-                if (argv[i][2]) {
-                    reportUserMessage("bad command line option '%s' .. only -g+ or -g allowed\n", argv[i]);
+                if (argv[argumentIndex][2]) {
+                    reportUserMessage("bad command line option '%s' .. only -g+ or -g allowed\n", argv[argumentIndex]);
                     exitAfterCleanup(-1);
                 }
                 enableGaspPreprocessing(&gaspFlags);
             }
             break;
         case 'j':
-            labelFile = argv[i] + 2;
+            labelFile = argv[argumentIndex] + 2;
             break;
         case 'm':
-            mValue = parseInteger(argv[i] + 2);
+            mValue = parseInteger(argv[argumentIndex] + 2);
             break;
         case 'n':
             newSyntax = true;
@@ -198,15 +198,15 @@ int main(int argc, char **argv)
             symbolicOutputRequested = true;
             break;
         case 't':
-            optimizationTimeoutSeconds = atoi(argv[i] + 2);
+            optimizationTimeoutSeconds = atoi(argv[argumentIndex] + 2);
             if (optimizationTimeoutSeconds <= 0)
                 optimizationTimeoutSeconds = 1;
             break;
         case 'u':
-            uniqueName = argv[i] + 2;
+            uniqueName = argv[argumentIndex] + 2;
             break;
         default:
-            reportError("bad args '%s', try -h for help\n", argv[i]);
+            reportError("bad args '%s', try -h for help\n", argv[argumentIndex]);
             exitAfterCleanup(-1);
             break;
         case 'W':
@@ -221,12 +221,12 @@ int main(int argc, char **argv)
         exitAfterCleanup(-1);
     }
 
-    switch (argc - i) {
+    switch (argc - argumentIndex) {
     case 0:
         reportMessage("will try to read stdin\n");
         break;
     case 1:
-        inFile = argv[i];
+        inFile = argv[argumentIndex];
         break;
     default:
         reportMessage("bad args (-o now specifies output file..)\n");
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
         exitAfterCleanup(-1);
     }
     if (!noPreprocess) {
-        buf = runSelectedPreprocessors(gaspFlags, buf, &len, 1, i, argv, keepTemps);
+        buf = runSelectedPreprocessors(gaspFlags, buf, &len, 1, argumentIndex, argv, keepTemps);
         if (!buf) {
             reportError("One of the preprocessing stages failed\n");
             exitAfterCleanup(-1);
@@ -507,8 +507,8 @@ int main(int argc, char **argv)
             reportError("failed to create outfile for labels\n");
             exitAfterCleanup(-1);
         }
-        int n = strlen(ojbuf);
-        if (write(ofd, ojbuf, n) != n) {
+        int labelOutputLength = strlen(ojbuf);
+        if (write(ofd, ojbuf, labelOutputLength) != labelOutputLength) {
             reportError("failed to write all of out buffer\n");
             close(ofd);
             exitAfterCleanup(-1);
@@ -576,20 +576,20 @@ static inline void reportWarnings(Program *program)
     reportStalls(program);
 }
 
-bool validateFlowDependenciesAndHazards(Program *program, bool forceDependencyChecks, bool b, bool c)
+bool validateFlowDependenciesAndHazards(Program *program, bool forceDependencyChecks, bool reportStalls, bool allowFinalPassUBS)
 {
     if (!rebuildFlowDependencies(program, forceDependencyChecks)) {
         reportError("vcl found a bug in itself while chasing dependencies\n");
         return false;
     }
     if (program->proc.usedBeforeSet.count) {
-        if (!c) {
+        if (!allowFinalPassUBS) {
             reportErrors(program);
             return false;
         }
         reportInfo("on the final pass, was detected, but , it should be ok\n");
     }
-    if (b && program->proc.stalls.count)
+    if (reportStalls && program->proc.stalls.count)
         reportWarnings(program);
     return true;
 }

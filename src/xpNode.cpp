@@ -149,8 +149,8 @@ bool xpTree::dispose(xpNode *node)
 {
     if (!node)
         return true;
-    for (int i = 0; i != node->childCount; i++)
-        if (!dispose(node->child[i]))
+    for (int childIndex = 0; childIndex != node->childCount; childIndex++)
+        if (!dispose(node->child[childIndex]))
             return false;
     delete (xpNodeDel *)node;
     return true;
@@ -175,8 +175,8 @@ void xpTree::calcDepths()
     xpNode *node = root;
     if (node) {
         node->depth = 0;
-        for (int i = 0; i != node->childCount; i++)
-            setDepth(node->child[i], 1);
+        for (int childIndex = 0; childIndex != node->childCount; childIndex++)
+            setDepth(node->child[childIndex], 1);
     }
 }
 
@@ -184,14 +184,14 @@ void xpTree::setDepth(xpNode *node, int depth)
 {
     if (node) {
         node->depth = depth;
-        const int &d = depth;
-        int i = 0;
+        const int &currentDepth = depth;
+        int childIndex = 0;
         if (node->childCount) {
-            int childDepth = d + 1;
+            int childDepth = currentDepth + 1;
             do {
-                setDepth(node->child[i], childDepth);
-                i++;
-            } while (i != node->childCount);
+                setDepth(node->child[childIndex], childDepth);
+                childIndex++;
+            } while (childIndex != node->childCount);
         }
     }
 }
@@ -200,14 +200,14 @@ static inline void setDepthInl(xpTree *expressionTree, xpNode *node, int depth)
 {
     if (node) {
         node->depth = depth;
-        const int &d = depth;
-        int i = 0;
+        const int &currentDepth = depth;
+        int childIndex = 0;
         if (node->childCount) {
-            int childDepth = d + 1;
+            int childDepth = currentDepth + 1;
             do {
-                expressionTree->setDepth(node->child[i], childDepth);
-                i++;
-            } while (i != node->childCount);
+                expressionTree->setDepth(node->child[childIndex], childDepth);
+                childIndex++;
+            } while (childIndex != node->childCount);
         }
     }
 }
@@ -215,8 +215,8 @@ static inline void setDepthInl(xpTree *expressionTree, xpNode *node, int depth)
 void xpTree::visitExpressionDescendants(xpNode *node)
 {
     if (node && node->operandArity)
-        for (int i = 0; i != node->operandArity; i++)
-            visitExpressionDescendants(node->child[i]);
+        for (int childIndex = 0; childIndex != node->operandArity; childIndex++)
+            visitExpressionDescendants(node->child[childIndex]);
 }
 
 void xpTree::resetExpressionDepths()
@@ -225,8 +225,8 @@ void xpTree::resetExpressionDepths()
     xpNode *node = root;
     if (node) {
         node->depth = 0;
-        for (int i = 0; i != node->childCount; i++)
-            setDepthInl(this, node->child[i], 1);
+        for (int childIndex = 0; childIndex != node->childCount; childIndex++)
+            setDepthInl(this, node->child[childIndex], 1);
     }
     visitExpressionDescendants(root);
 }
@@ -235,12 +235,12 @@ void xpTree::dumpNode(xpNode *node)
 {
     if (!node)
         return;
-    for (int i = 0; i != node->depth; i++)
+    for (int operandIndex = 0; operandIndex != node->depth; operandIndex++)
         ;
     node->val.dump();
-    for (int i = 0; i != node->operandArity; i++) {
-        if (node->child[i])
-            dumpNode(node->child[i]);
+    for (int childIndex = 0; childIndex != node->operandArity; childIndex++) {
+        if (node->child[childIndex])
+            dumpNode(node->child[childIndex]);
         else
             reportError("null arg\n");
     }
@@ -252,8 +252,8 @@ void xpTree::dump()
     xpNode *node = root;
     if (node) {
         node->depth = 0;
-        for (int i = 0; i != node->childCount; i++)
-            setDepthInl(this, node->child[i], 1);
+        for (int childIndex = 0; childIndex != node->childCount; childIndex++)
+            setDepthInl(this, node->child[childIndex], 1);
     }
     dumpNode(root);
 }
@@ -297,8 +297,8 @@ const char *parseExpressionTokenIntoNode(const char *expressionText, xpNode *nod
         default:
             state = 0;
         }
-        for (int i = 2; i != 20; i++) {
-            xpOp *operatorInfo = &expressionOperatorTable[i];
+        for (int operatorIndex = 2; operatorIndex != 20; operatorIndex++) {
+            xpOp *operatorInfo = &expressionOperatorTable[operatorIndex];
             if ((len || (binary ? operatorInfo->arity > 1 : operatorInfo->arity <= 1)) && state != 3) {
                 const char *operatorCursor = operatorInfo->name, *inputCursor = tokenCursor;
                 for (; *operatorCursor; operatorCursor++, inputCursor++)
@@ -334,15 +334,15 @@ const char *parseExpressionTokenIntoNode(const char *expressionText, xpNode *nod
 
 static inline xpOp *findOp(unsigned char type)
 {
-    for (int i = 0; i != 20; i++)
-        if (expressionOperatorTable[i].type == type)
-            return &expressionOperatorTable[i];
+    for (int operatorIndex = 0; operatorIndex != 20; operatorIndex++)
+        if (expressionOperatorTable[operatorIndex].type == type)
+            return &expressionOperatorTable[operatorIndex];
     return 0;
 }
 
 bool xpTree::evalExp(const char *expressionText)
 {
-    const char *p;
+    const char *expressionCursor;
 
     if (!expressionText) {
         puts("evalExp - null string");
@@ -370,16 +370,16 @@ bool xpTree::evalExp(const char *expressionText)
         return false;
     }
     cur = root;
-    p = expressionText;
-    while (*p) {
-        if (*p == '(') {
+    expressionCursor = expressionText;
+    while (*expressionCursor) {
+        if (*expressionCursor == '(') {
             if (cur->unmatchedOpeningParentheses == -1) {
                 reportError("too many open brackets!\n");
                 goto fail;
             }
             cur->unmatchedOpeningParentheses++;
-            p++;
-        } else if (*p == ')') {
+            expressionCursor++;
+        } else if (*expressionCursor == ')') {
             if (cur->childCount < cur->operandArity) {
                 reportError("unexpected close bracket\n");
                 return false;
@@ -391,15 +391,15 @@ bool xpTree::evalExp(const char *expressionText)
                 return false;
             }
             cur->unmatchedOpeningParentheses--;
-            p++;
+            expressionCursor++;
         } else {
             xpNode *node = new xpNode;
             if (!node) {
                 reportError("failed to get new xn .. bah\n");
                 goto fail;
             }
-            p = parseExpressionTokenIntoNode(p, node, xpNodeIsFull(cur));
-            if (!p) {
+            expressionCursor = parseExpressionTokenIntoNode(expressionCursor, node, xpNodeIsFull(cur));
+            if (!expressionCursor) {
                 delete (xpNodeDel *)node;
                 goto fail;
             }
@@ -452,38 +452,38 @@ fail:
 bool xpTree::evaluate(mValue *out, unsigned int type)
 {
     out->clear();
-    bool ok = false;
-    unsigned int u;
-    float f;
-    int i;
-    int r;
+    bool evaluationSucceeded = false;
+    unsigned int unsignedValue;
+    float floatingValue;
+    int signedValue;
+    int conversionSucceeded;
     switch (type) {
     case mValue::UINT: {
-        u = 0;
+        unsignedValue = 0;
         if (!rec_Eval(root))
-            r = false;
+            conversionSucceeded = false;
         else
-            r = root->val.getUInt(&u);
-        if ((char)r)
-            ok = out->setUInt(u);
+            conversionSucceeded = root->val.getUInt(&unsignedValue);
+        if ((char)conversionSucceeded)
+            evaluationSucceeded = out->setUInt(unsignedValue);
         break;
     }
     case mValue::FLOAT: {
         if (!rec_Eval(root))
-            r = false;
+            conversionSucceeded = false;
         else
-            r = root->val.getFloat(&f);
-        if ((char)r)
-            ok = out->setFloat(f);
+            conversionSucceeded = root->val.getFloat(&floatingValue);
+        if ((char)conversionSucceeded)
+            evaluationSucceeded = out->setFloat(floatingValue);
         break;
     }
     case mValue::INT: {
         if (!rec_Eval(root))
-            r = false;
+            conversionSucceeded = false;
         else
-            r = root->val.getInt(&i);
-        if ((char)r)
-            ok = out->setInt(i);
+            conversionSucceeded = root->val.getInt(&signedValue);
+        if ((char)conversionSucceeded)
+            evaluationSucceeded = out->setInt(signedValue);
         break;
     }
     case mValue::STRING:
@@ -491,7 +491,7 @@ bool xpTree::evaluate(mValue *out, unsigned int type)
         reportError("code this later\n");
         break;
     }
-    return ok;
+    return evaluationSucceeded;
 }
 
 bool xpTree::evalUInt(unsigned int *out)
@@ -524,16 +524,16 @@ bool xpTree::rec_Eval(xpNode *node)
         reportError("rec_Eval::invalid xpValue\n");
         return false;
     }
-    int i;
-    for (i = 0; i != node->operandArity; i++)
-        if (!rec_Eval(node->child[i]))
+    int childIndex;
+    for (childIndex = 0; childIndex != node->operandArity; childIndex++)
+        if (!rec_Eval(node->child[childIndex]))
             return false;
     if (node->childCount != node->operandArity) {
         printf("tree is incomplete\n");
         return false;
     }
-    for (i = 0; i != node->operandArity; i++) {
-        if (!node->child[i] || !node->child[i]->val.isNumeric()) {
+    for (childIndex = 0; childIndex != node->operandArity; childIndex++) {
+        if (!node->child[childIndex] || !node->child[childIndex]->val.isNumeric()) {
             printf("invalid arg\n");
             return false;
         }
@@ -594,9 +594,9 @@ int expressionUnknownSymbolCount = 0;
 
 xpOp *findExpressionOperatorByType(int type)
 {
-    for (int i = 0; i != 20; i++)
-        if (expressionOperatorTable[i].type == type)
-            return &expressionOperatorTable[i];
+    for (int operatorIndex = 0; operatorIndex != 20; operatorIndex++)
+        if (expressionOperatorTable[operatorIndex].type == type)
+            return &expressionOperatorTable[operatorIndex];
     return 0;
 }
 
@@ -622,20 +622,20 @@ bool recordUnknownSymbol(const char *symbolName)
     for (xun *unknownSymbol = unknownSymbolListHead; unknownSymbol; unknownSymbol = unknownSymbol->next)
         if (asciiCaseEqual(unknownSymbol->name, symbolName))
             return true;
-    xun *x = new xun(xun::INIT);
-    if (!x) {
+    xun *newUnknownSymbol = new xun(xun::INIT);
+    if (!newUnknownSymbol) {
         reportError("failed to new xun\n");
         return false;
     }
-    x->name = dupString(symbolName);
-    if (!x->name) {
+    newUnknownSymbol->name = dupString(symbolName);
+    if (!newUnknownSymbol->name) {
         reportError("failed to dup string for xun\n");
-        delete (xunDel *)x;
+        delete (xunDel *)newUnknownSymbol;
         return false;
     }
     unknownSymbolCount++;
-    x->next = unknownSymbolListHead;
-    unknownSymbolListHead = x;
+    newUnknownSymbol->next = unknownSymbolListHead;
+    unknownSymbolListHead = newUnknownSymbol;
     return true;
 }
 
@@ -672,9 +672,9 @@ void xpTree::countUnknownSymbolsInNode(xpNode *node)
     if (expressionUnknownSymbolCount < 0)
         return;
     if (node->operandArity) {
-        for (int i = 0; i != node->operandArity; i++) {
-            if (node->child[i]) {
-                countUnknownSymbolsInNode(node->child[i]);
+        for (int childIndex = 0; childIndex != node->operandArity; childIndex++) {
+            if (node->child[childIndex]) {
+                countUnknownSymbolsInNode(node->child[childIndex]);
                 if (expressionUnknownSymbolCount < 0)
                     return;
             }

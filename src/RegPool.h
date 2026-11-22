@@ -94,7 +94,7 @@ struct RegPoolEntry {
     int registerIndex;         // register index
     char seenInputComponentMask;
     unsigned char usedSlotMask;   // used slot mask
-    short unk_36;
+    short outputWriteCount;
     Instr *throughputWriter;          // previous thruput writer
     int assignmentCostTableSize;
     RegPoolEntry *nextPendingAssignment;

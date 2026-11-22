@@ -14,8 +14,8 @@ static inline void subCache_flush_inl(subCache *cache)
 {
     if (!cache->cachedValues)
         exitWithError("subcache flush - no table\n");
-    for (unsigned i = 0; i != cache->allocatedWords; i++)
-        cache->cachedValues[i] = 0;
+    for (unsigned wordIndex = 0; wordIndex != cache->allocatedWords; wordIndex++)
+        cache->cachedValues[wordIndex] = 0;
 }
 
 void subCache::init(int fuidMax)

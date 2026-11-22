@@ -207,8 +207,8 @@ void LocTag::dumpSourceLine(int highlightedToken)
 
 bool LocTag::startsWithDirective()
 {
-    char *s = tokenTextAt(0, 0);
-    if (s && *s == '.')
+    char *firstToken = tokenTextAt(0, 0);
+    if (firstToken && *firstToken == '.')
         return true;
     return false;
 }
@@ -222,8 +222,8 @@ bool LocTag::isCommentToken(int tokenIndex)
 
 bool LocTag::hasAssignmentMarker()
 {
-    char *s = tokenTextAt(0, 0);
-    if (s && s[0] == '=' && s[1] == 0)
+    char *firstToken = tokenTextAt(0, 0);
+    if (firstToken && firstToken[0] == '=' && firstToken[1] == 0)
         return true;
     return false;
 }

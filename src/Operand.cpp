@@ -367,19 +367,19 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             reportError("null rn - abort _BLAH_EA_IMM\n");
             return 0;
         }
-        char *s = immediateValue.asChars();
-        if (!s) {
+        char *immediateLiteralText = immediateValue.asChars();
+        if (!immediateLiteralText) {
             reportError("failed to get chars from ximm blah_ea_imm\n");
             return 0;
         }
-        buf += formatIntoBuffer(buf, "%s(%s)", s, registerNameText);
+        buf += formatIntoBuffer(buf, "%s(%s)", immediateLiteralText, registerNameText);
         break;
     }
     case 31: {
-        char *s = immediateValue.asChars();
-        if (!s)
+        char *immediateLiteralText = immediateValue.asChars();
+        if (!immediateLiteralText)
             reportError("failed to get chars from ximm for v_ea_imm\n");
-        buf += formatIntoBuffer(buf, "%s", s);
+        buf += formatIntoBuffer(buf, "%s", immediateLiteralText);
     }
     case 30:
         if (!registerNameText) {
@@ -518,8 +518,8 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
 
     if (!tok || !out || !*tok || *tok == '.')
         return false;
-    int uA;
-    int uB;
+    int savedTokenWord1;
+    int savedTokenWord2;
     char zG;
     if (mstrlen(tok) > 2047) {
         reportError("odecodeToken: token was too long\n");
@@ -527,10 +527,10 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     }
 
     char *tokenCursor = tok;
-    char c;
-    while ((c = *tokenCursor) && c != ':')
+    char tokenCharacter;
+    while ((tokenCharacter = *tokenCursor) && tokenCharacter != ':')
         tokenCursor++;
-    if (c == ':') {
+    if (tokenCharacter == ':') {
         *tokenCursor = 0;
         char *labelCursor = out->branchLabelText;
         tokenCursor++;
@@ -550,11 +550,11 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         }
         if (seps)
             labelCursor--;
-        uA = ((int *)tok)[1];
-        uB = ((int *)tok)[2];
+        savedTokenWord1 = ((int *)tok)[1];
+        savedTokenWord2 = ((int *)tok)[2];
         if (labelCursor == out->branchLabelText) {
-            ((int *)tok)[1] = uA;
-            ((int *)tok)[2] = uB;
+            ((int *)tok)[1] = savedTokenWord1;
+            ((int *)tok)[2] = savedTokenWord2;
             reportWarning("ignoring empty tag\n");
             out->branchLabelText[0] = 0;
         } else {
@@ -687,9 +687,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             out->componentMask = 15;
             mstrcpy(out->name, tok);
         } else {
-            uB = readTrailingComponentMask(tok);
-            out->componentMask = uB;
-            if (!uB)
+            savedTokenWord2 = readTrailingComponentMask(tok);
+            out->componentMask = savedTokenWord2;
+            if (!savedTokenWord2)
                 out->componentMask = 15;
             if (out->componentMask == -1) {
                 int *spk1 = &out->addressComponentMask;
@@ -728,15 +728,15 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             out->componentMask = mask;
-            char *s = tok;
-            char *d = out->name;
-            while (*s)
-                *d++ = *s++;
-            *d = 0;
+            char *nameSource = tok;
+            char *nameDestination = out->name;
+            while (*nameSource)
+                *nameDestination++ = *nameSource++;
+            *nameDestination = 0;
             do
-                d--;
-            while (*d != '[');
-            *d = 0;
+                nameDestination--;
+            while (*nameDestination != '[');
+            *nameDestination = 0;
             return true;
         }
         if (asciiCaseEqual(tok, "q")) {
@@ -771,15 +771,15 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             out->componentMask = mask;
-            char *s = tok;
-            char *d = out->name;
-            while (*s)
-                *d++ = *s++;
-            *d = 0;
+            char *nameSource = tok;
+            char *nameDestination = out->name;
+            while (*nameSource)
+                *nameDestination++ = *nameSource++;
+            *nameDestination = 0;
             do
-                d--;
-            while (*d != '[');
-            *d = 0;
+                nameDestination--;
+            while (*nameDestination != '[');
+            *nameDestination = 0;
         } else {
             mask = readTrailingComponentMask(tok);
             if (countSetBits(mask) != 1) {
@@ -892,15 +892,15 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                     reportUserMessage("instruction and operand have mismatching field select\n");
                     return false;
                 }
-                char *s = tok;
-                char *d = out->name;
-                while (*s)
-                    *d++ = *s++;
-                *d = 0;
+                char *nameSource = tok;
+                char *nameDestination = out->name;
+                while (*nameSource)
+                    *nameDestination++ = *nameSource++;
+                *nameDestination = 0;
                 do
-                    d--;
-                while (*d != '[');
-                *d = 0;
+                    nameDestination--;
+                while (*nameDestination != '[');
+                *nameDestination = 0;
                 out->componentMask = field;
                 return true;
             }
@@ -938,21 +938,21 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     case 28: {
         out->componentMask = 1;
-        uA = (unsigned char)tok[1];
+        savedTokenWord1 = (unsigned char)tok[1];
         if (count <= 2)
             return false;
-        zG = tok[uA];
+        zG = tok[savedTokenWord1];
         int z0 = (unsigned char)*tok;
         z0 >>= 4;
         z0 >>= 4;
         if (z0)
             return false;
-        tok[uA] = zG;
-        char *r = tokenEnd - 1;
-        if (*r != ')' || *tok != '(')
+        tok[savedTokenWord1] = zG;
+        char *closingDelimiter = tokenEnd - 1;
+        if (*closingDelimiter != ')' || *tok != '(')
             return false;
         start = tok + 1;
-        end = r;
+        end = closingDelimiter;
         goto copyName;
     }
     case 36:
@@ -1003,16 +1003,16 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     case 30: {
         out->componentMask = 1;
-        uB = (unsigned char)tok[2];
+        savedTokenWord2 = (unsigned char)tok[2];
         if (count <= 3)
             return false;
-        zG = tok[uB];
+        zG = tok[savedTokenWord2];
         int z1 = (unsigned char)*tok;
         z1 >>= 4;
         z1 >>= 4;
         if (z1)
             return false;
-        tok[uB] = zG;
+        tok[savedTokenWord2] = zG;
         if (*tok != '(')
             return false;
         p = tokenEnd - 1;
@@ -1076,22 +1076,22 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             return false;
         if (tokenEnd[-1] != ')' || tokenEnd[-2] != '+')
             return false;
-        char *r = tokenEnd - 3;
-        if (*r != '+' || *tok != '(')
+        char *closingDelimiter = tokenEnd - 3;
+        if (*closingDelimiter != '+' || *tok != '(')
             return false;
         start = tok + 1;
-        end = r;
+        end = closingDelimiter;
         goto copyName;
     }
     case 33: {
         out->componentMask = 1;
         if (count <= 4)
             return false;
-        char *r = tokenEnd - 1;
-        if (*r != ')' || tok[0] != '(' || tok[1] != '-' || tok[2] != '-')
+        char *closingDelimiter = tokenEnd - 1;
+        if (*closingDelimiter != ')' || tok[0] != '(' || tok[1] != '-' || tok[2] != '-')
             return false;
         start = tok + 3;
-        end = r;
+        end = closingDelimiter;
         goto copyName;
     }
     case 34:

@@ -7,8 +7,8 @@ static inline bool zeroTstore_inl(Program *program, unsigned *traceStore)
         reportError("zeroTstore - it's null\n");
         return false;
     }
-    for (int i = 0; i != program->traceStoreWordCount; i++)
-        traceStore[i] = 0;
+    for (int wordIndex = 0; wordIndex != program->traceStoreWordCount; wordIndex++)
+        traceStore[wordIndex] = 0;
     return true;
 }
 
@@ -232,10 +232,10 @@ int mergeTstores(Program *program, unsigned *dst, unsigned *src)
         return -1;
     }
     unsigned changed = 0;
-    for (int i = 0; i != program->traceStoreWordCount; i++) {
-        unsigned d = dst[i];
-        changed |= ~d & src[i];
-        dst[i] = d | src[i];
+    for (int wordIndex = 0; wordIndex != program->traceStoreWordCount; wordIndex++) {
+        unsigned destinationBits = dst[wordIndex];
+        changed |= ~destinationBits & src[wordIndex];
+        dst[wordIndex] = destinationBits | src[wordIndex];
     }
     return changed != 0;
 }
@@ -246,8 +246,8 @@ bool zeroTstore(Program *program, unsigned *traceStore)
         reportError("zeroTstore - it's null\n");
         return false;
     }
-    for (int i = 0; i != program->traceStoreWordCount; i++)
-        traceStore[i] = 0;
+    for (int wordIndex = 0; wordIndex != program->traceStoreWordCount; wordIndex++)
+        traceStore[wordIndex] = 0;
     return true;
 }
 

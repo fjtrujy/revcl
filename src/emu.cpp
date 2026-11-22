@@ -194,8 +194,8 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
                     reportError("failed to add an output to an rrp\n");
                     return false;
                 }
-                for (int j = 0; j != 4; j++) {
-                    ol_s *location = registerPart->getPendingLocation(j);
+                for (int pendingLocationIndex = 0; pendingLocationIndex != 4; pendingLocationIndex++) {
+                    ol_s *location = registerPart->getPendingLocation(pendingLocationIndex);
                     if (!location) {
                         reportError("failed to get a pool entry\n");
                         return false;

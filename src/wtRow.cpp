@@ -56,12 +56,12 @@ bool wtEntry::clearInstruction()
 void wtRow::refreshInstructionOperands(int)
 {
     for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
-        Instr *in = entries[entryIndex].instruction;
-        if (!in)
+        Instr *instruction = entries[entryIndex].instruction;
+        if (!instruction)
             continue;
-        if ((VclPtrWord)in & 1)
+        if ((VclPtrWord)instruction & 1)
             continue;
-        in->dumpOperandDiagnostics(false);
+        instruction->dumpOperandDiagnostics(false);
     }
 }
 
@@ -100,24 +100,24 @@ Instr *GetI(Instr **instructionSlot, int pipeIndex)
 
 int wtRow::countEntries()
 {
-    int n = 0;
+    int entryCount = 0;
     for (int entryIndex = 0; entryIndex != 2; entryIndex++)
         if (entries[entryIndex].instruction)
-            n++;
-    return n;
+            entryCount++;
+    return entryCount;
 }
 
 Instr *wtRow::onlyEntry()
 {
-    Instr *r = 0;
+    Instr *onlyInstruction = 0;
     for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
         if (entries[entryIndex].instruction) {
-            if (r)
+            if (onlyInstruction)
                 return 0;
-            r = entries[entryIndex].instruction;
+            onlyInstruction = entries[entryIndex].instruction;
         }
     }
-    return r;
+    return onlyInstruction;
 }
 
 bool wtRow::clearStalls()
@@ -153,42 +153,42 @@ bool wtRow::addStall(int type, int len)
 
 int wtRow::outputMaskFor(RegPoolEntry *reg, unsigned char mask)
 {
-    int r = 0;
+    int outputMask = 0;
     if (!skip) {
-        for (int i = 0; i != 2; i++) {
-            Instr *in = GetI(&entries[0].instruction, i);
-            if (in)
-                r |= in->outputMaskForRegister(reg, mask);
+        for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
+            Instr *instruction = GetI(&entries[0].instruction, pipeIndex);
+            if (instruction)
+                outputMask |= instruction->outputMaskForRegister(reg, mask);
         }
     }
-    return r;
+    return outputMask;
 }
 
 int wtRow::inputMaskFor(RegPoolEntry *reg, unsigned char mask)
 {
-    int r = 0;
+    int inputMask = 0;
     if (!skip) {
-        for (int i = 0; i != 2; i++) {
-            Instr *in = GetI(&entries[0].instruction, i);
-            if (in)
-                r |= in->inputMaskForRegister(reg, mask);
+        for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
+            Instr *instruction = GetI(&entries[0].instruction, pipeIndex);
+            if (instruction)
+                inputMask |= instruction->inputMaskForRegister(reg, mask);
         }
     }
-    return r;
+    return inputMask;
 }
 
 unsigned int wtRow::getMinimumExtraLatencyAge()
 {
-    Instr *in = GetI(&entries[0].instruction, 1);
-    unsigned int m = 0;
-    if (in) {
-        for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
-            if (in->operands[operandIndex].additionalLatency) {
-                unsigned int a = (unsigned short)in->operands[operandIndex].assignedRegister->parts[0].cycleAge;
-                if (!m || a < m)
-                    m = a;
+    Instr *instruction = GetI(&entries[0].instruction, 1);
+    unsigned int minimumCycleAge = 0;
+    if (instruction) {
+        for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+            if (instruction->operands[operandIndex].additionalLatency) {
+                unsigned int registerCycleAge = (unsigned short)instruction->operands[operandIndex].assignedRegister->parts[0].cycleAge;
+                if (!minimumCycleAge || registerCycleAge < minimumCycleAge)
+                    minimumCycleAge = registerCycleAge;
             }
         }
     }
-    return m;
+    return minimumCycleAge;
 }

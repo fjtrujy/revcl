@@ -14,10 +14,10 @@ regUseSlot::~regUseSlot()
 void regUseList::dumpRegisterUses()
 {
     if (hasConsistentCount()) {
-        for (int i = 0; i != 12; i++) {
-            RegPool *pool = GetRP(i);
+        for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
+            RegPool *pool = GetRP(poolIndex);
             if (pool)
-                dumpRegisterClassUses(i);
+                dumpRegisterClassUses(poolIndex);
         }
     }
 }
@@ -52,11 +52,11 @@ void regUse::validateAndDumpParts()
 {
     RegPoolEntry *reg = registerEntry;
     int partIndex;
-    int j = 0;
+    int validatedPartIndex = 0;
     if (reg->partCount != 0)
         do
-            j++;
-        while (j != reg->partCount);
+            validatedPartIndex++;
+        while (validatedPartIndex != reg->partCount);
     for (partIndex = 0; partIndex != reg->partCount; partIndex++) {
         if (slots[partIndex].throughputSums[0] && !((outputMask >> partIndex) & 1)) {
             reportError(thruSumOobError,
@@ -198,7 +198,7 @@ regUse *regUse::Clone()
         reportError("failed to get new regref in clone\n");
         return 0;
     }
-    registerUse->unk_18 = unk_18;
+    registerUse->recordedOutputWriteCount = recordedOutputWriteCount;
     registerUse->hazardMask = hazardMask;
     registerUse->definingInstruction = definingInstruction;
     registerUse->sourcePathHazardMask = sourcePathHazardMask;
@@ -276,11 +276,11 @@ int regUseList::countUncoveredRegisterClassUses(int regClass)
 void regUseList::dumpVirtualRegisterUses()
 {
     if (hasConsistentCount()) {
-        for (int i = 0; i != 12; i++) {
-            RegPool *pool = GetRP(i);
+        for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
+            RegPool *pool = GetRP(poolIndex);
             if (pool && pool->virtualPartCount) {
                 reportInfo("%s\n", pool->poolName);
-                dumpRegisterClassAllocations(i);
+                dumpRegisterClassAllocations(poolIndex);
             }
         }
     }

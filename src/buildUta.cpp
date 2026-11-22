@@ -17,22 +17,22 @@ static inline void dumpUtaInstruction(Instr *instruction)
 }
 
 
-bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
+bool buildUta(Program *prog, instStream *targetStream, DecodedLine *blocks, int count)
 {
-    workTable *scheduleTable = &s->sourceTable;
+    workTable *scheduleTable = &targetStream->sourceTable;
     if (!scheduleTable) {
         reportError("build: failed to get input table from ist\n");
         return false;
     }
     if (!scheduleTable->init(1, 0)) {
-        reportError("failed to init uta table for '%s'\n", s->streamName());
+        reportError("failed to init uta table for '%s'\n", targetStream->streamName());
         return false;
     }
-    scheduleTable->ownerStream = s;
+    scheduleTable->ownerStream = targetStream;
     int flags = 0;
     int branch = -1;
-    for (int i = 0; i != count; i++) {
-        DecodedLine *decodedLine = &blocks[i];
+    for (int decodedLineIndex = 0; decodedLineIndex != count; decodedLineIndex++) {
+        DecodedLine *decodedLine = &blocks[decodedLineIndex];
         if (decodedLine->labels.combinedFlags()) {
             reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
@@ -48,7 +48,7 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
         }
         decodedInstruction->parsedLoopId = -1;
         if (decodedInstruction->syntheticKind) {
-            if (!s->processCmdSynth(decodedInstruction)) {
+            if (!targetStream->processCmdSynth(decodedInstruction)) {
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
                 errorOccurred = !quietDiagnostics;
@@ -73,7 +73,7 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
     }
     if (branch < 0)
         branch = 0;
-    s->branchType = branch;
+    targetStream->branchType = branch;
     if (flags)
         reportInfo("d_viFlags - is set to %x on exit<-----------------------------\n", flags);
     return true;

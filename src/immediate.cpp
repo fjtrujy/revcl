@@ -54,7 +54,7 @@ fail:
     return false;
 }
 
-int maddImmediate(Operand *const operand, mValue *expressionValue, int n)
+int maddImmediate(Operand *const operand, mValue *expressionValue, int immediateOffset)
 {
     if (!operand->immediateValue.isValid()) {
         reportError("madd immediate- ximm invalid\n");
@@ -72,7 +72,7 @@ int maddImmediate(Operand *const operand, mValue *expressionValue, int n)
             reportError("failed to get integer values\n");
             return -1;
         }
-        operand->immediateValue.setInt(operandValue + sourceValue * n);
+        operand->immediateValue.setInt(operandValue + sourceValue * immediateOffset);
     } else {
         char *operandImmediateText = operand->immediateValue.asChars();
         char *sourceImmediateText = expressionValue->asChars();
@@ -81,7 +81,7 @@ int maddImmediate(Operand *const operand, mValue *expressionValue, int n)
             return -1;
         }
         char buf[1024];
-        formatIntoBuffer(buf, "(%s)+((%s)*%d)", operandImmediateText, sourceImmediateText, n);
+        formatIntoBuffer(buf, "(%s)+((%s)*%d)", operandImmediateText, sourceImmediateText, immediateOffset);
         operand->immediateValue.setString(buf);
         arithmeticResult = 2;
     }

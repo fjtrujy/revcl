@@ -7,8 +7,8 @@ bool rPart::flushPending()
         reportError("rPart::flushPending - issueLock was set (%d)\n", issueLock);
         return false;
     }
-    for (int i = 0; i != 4; i++)
-        pendingLocations[i].reset();
+    for (int locationIndex = 0; locationIndex != 4; locationIndex++)
+        pendingLocations[locationIndex].reset();
     pendingSource = 0;
     currentLocation.reset();
     return true;
@@ -16,10 +16,10 @@ bool rPart::flushPending()
 
 ol_s* rPart::acquireFreePendingLocation()
 {
-    for (int i = 0; i != 4; i++) {
-        if (!pendingLocations[i].cycleOffset) {
-            pendingLocations[i].reset();
-            return &pendingLocations[i];
+    for (int locationIndex = 0; locationIndex != 4; locationIndex++) {
+        if (!pendingLocations[locationIndex].cycleOffset) {
+            pendingLocations[locationIndex].reset();
+            return &pendingLocations[locationIndex];
         }
     }
     return 0;
@@ -33,8 +33,8 @@ bool rPart::cycle(bool flag)
             currentLocation.copyLocationFrom(pendingSource);
             pendingSource = &currentLocation;
         }
-        for (int i = 0; i != 4; i++)
-            pendingLocations[i].reset();
+        for (int locationIndex = 0; locationIndex != 4; locationIndex++)
+            pendingLocations[locationIndex].reset();
         ol_s* cur = &currentLocation;
         if (cur->cycleOffset)
             cur->cycleOffset = 0;
@@ -47,14 +47,14 @@ bool rPart::cycle(bool flag)
             cur->cycleOffset = nextCycleOffset > 255 ? 255 : nextCycleOffset;
             expiredLocationCount = 1;
         }
-        for (int i = 0; i != 4; i++) {
-            ol_s* location = &pendingLocations[i];
-            int c = location->cycleOffset;
-            if (!c)
+        for (int locationIndex = 0; locationIndex != 4; locationIndex++) {
+            ol_s* location = &pendingLocations[locationIndex];
+            int pendingCycleOffset = location->cycleOffset;
+            if (!pendingCycleOffset)
                 continue;
-            int v = c - 1;
-            location->cycleOffset = v > 255 ? 255 : v;
-            if (v == 0) {
+            int decrementedCycleOffset = pendingCycleOffset - 1;
+            location->cycleOffset = decrementedCycleOffset > 255 ? 255 : decrementedCycleOffset;
+            if (decrementedCycleOffset == 0) {
                 if (++expiredLocationCount > 1) {
                     reportError("WARNING !! CYCLE wrote thru more than once!\n");
                     return false;
@@ -75,7 +75,7 @@ void RegPoolEntry::resetRegisterFlowState()
 {
     usedSlotMask = 0;
     throughputWriter = 0;
-    unk_36 = 0;
+    outputWriteCount = 0;
     for (int partIndex = 0; partIndex != 4; partIndex++)
         parts[partIndex].resetPartFlowState();
 }
@@ -104,7 +104,7 @@ void rPart::resetPartTiming()
 void RegPoolEntry::resetRegisterThroughputState()
 {
     throughputWriter = 0;
-    unk_36 = 0;
+    outputWriteCount = 0;
     for (int partIndex = 0; partIndex != 4; partIndex++)
         parts[partIndex].resetPartFlowState();
 }
@@ -132,8 +132,8 @@ void rPart::resetPartFlowState()
     emulationTimingMetrics[11] = -1;
     emulationTimingMetrics[16] = -1;
     emulationTimingMetrics[15] = -1;
-    for (int i = 0; i != 4; i++)
-        pendingLocations[i].reset();
+    for (int locationIndex = 0; locationIndex != 4; locationIndex++)
+        pendingLocations[locationIndex].reset();
 }
 
 void RegPoolEntry::clearRegisterPartPayloads()

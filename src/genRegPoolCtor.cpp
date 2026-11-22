@@ -117,7 +117,7 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
     }
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
         Operand *operand;
-        for (int o = 0; (operand = instruction->getOp(o)) != 0; o++) {
+        for (int virtualOperandIndex = 0; (operand = instruction->getOp(virtualOperandIndex)) != 0; virtualOperandIndex++) {
             RegPoolEntry *reg = operand->assignedRegister;
             if (ownsRegisterClass(reg) && reg->isVirtual) {
                 if (!reg->assignedPhysicalRegister) {
@@ -153,8 +153,8 @@ bool genRegPool::assignExt(instStream *stream)
         }
         if (ownsRegisterClass(reg) && registerUse->isExternal() && !reg->assignedPhysicalRegister) {
             initRegMask(this);
-            for (instStream *p = owner->streamHead; p; p = p->nextStream) {
-                if (!discardDisjointExternalRegister(p, reg)) {
+            for (instStream *currentStream = owner->streamHead; currentStream; currentStream = currentStream->nextStream) {
+                if (!discardDisjointExternalRegister(currentStream, reg)) {
                     reportError("generic external allocator had internal error.. ret<0 for DiscardDisjoint\n");
                     return false;
                 }
@@ -216,49 +216,49 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
         reportError("xiBits is outside of iBits \n");
         return false;
     }
-    for (regUse *o = registerUseList->head; o; o = o->next) {
-        RegPoolEntry *registerEntry = o->registerEntry;
+    for (regUse *otherRegisterUse = registerUseList->head; otherRegisterUse; otherRegisterUse = otherRegisterUse->next) {
+        RegPoolEntry *registerEntry = otherRegisterUse->registerEntry;
         if (!registerEntry) {
             reportError("flowMon::discard disjoint forced regref with null reg\n");
             return false;
         }
         if (!ownsRegisterClass(registerEntry) || (!registerEntry->assignedPhysicalRegister && registerEntry->isVirtual))
             continue;
-        unsigned char m = 0;
+        unsigned char overlapMask = 0;
         switch (table->codeModeValue) {
         case 1:
         case 4: {
-            unsigned char a = registerUse->inputMask | registerUse->outputMask;
+            unsigned char firstUsageMask = registerUse->inputMask | registerUse->outputMask;
             if (registerUse->outputMask)
-                a |= 0x80;
-            unsigned char b = o->inputMask | o->outputMask;
-            if (o->outputMask)
-                b |= 0x80;
-            m = b & a;
-            m |= (a & o->throughputMask) | (b & registerUse->throughputMask);
+                firstUsageMask |= 0x80;
+            unsigned char secondUsageMask = otherRegisterUse->inputMask | otherRegisterUse->outputMask;
+            if (otherRegisterUse->outputMask)
+                secondUsageMask |= 0x80;
+            overlapMask = secondUsageMask & firstUsageMask;
+            overlapMask |= (firstUsageMask & otherRegisterUse->throughputMask) | (secondUsageMask & registerUse->throughputMask);
             break;
         }
         case 3:
             for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
                 int firstRangeStart = 0, firstRangeEnd = 0;
-                bool aa = false;
+                bool firstAlwaysLive = false;
                 int secondRangeStart = 0, secondRangeEnd = 0;
-                bool ba = false;
-                if (!regRefLiveRange(registerUse, partIndex, &firstRangeStart, &firstRangeEnd, &aa)) {
+                bool secondAlwaysLive = false;
+                if (!regRefLiveRange(registerUse, partIndex, &firstRangeStart, &firstRangeEnd, &firstAlwaysLive)) {
                     reportError("couldn't determine live range_a\n");
                     return false;
                 }
-                if (!regRefLiveRange(o, partIndex, &secondRangeStart, &secondRangeEnd, &ba)) {
+                if (!regRefLiveRange(otherRegisterUse, partIndex, &secondRangeStart, &secondRangeEnd, &secondAlwaysLive)) {
                     reportError("couldn't determine live range_b.%d\n", partIndex);
-                    o->validateAndDumpParts();
+                    otherRegisterUse->validateAndDumpParts();
                     table->dump();
                     return false;
                 }
-                if (!(aa && ba) && (secondRangeEnd >= 0 || firstRangeEnd >= 0) && firstRangeStart < secondRangeEnd && firstRangeEnd > secondRangeStart)
-                    m |= 1 << partIndex;
+                if (!(firstAlwaysLive && secondAlwaysLive) && (secondRangeEnd >= 0 || firstRangeEnd >= 0) && firstRangeStart < secondRangeEnd && firstRangeEnd > secondRangeStart)
+                    overlapMask |= 1 << partIndex;
             }
-            if (registerUse->outputMask && o->outputMask && hack_slo(table, reg, registerEntry))
-                m |= 0x80;
+            if (registerUse->outputMask && otherRegisterUse->outputMask && hack_slo(table, reg, registerEntry))
+                overlapMask |= 0x80;
             break;
         default:
             return false;
@@ -276,7 +276,7 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
             reportError("tmpr is virtual\n");
             return false;
         }
-        allocationRegisterMask[tmpr->regIndex()] |= m;
+        allocationRegisterMask[tmpr->regIndex()] |= overlapMask;
     }
     return true;
 }

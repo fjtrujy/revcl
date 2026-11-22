@@ -9,12 +9,12 @@ void dumpThru(Program *prog)
 {
     reportInfo("dump through registers ==============================================\n");
     for (instStream *stream = prog->streamHead; stream; stream = stream->nextStream) {
-        int i;
+        int poolIndex;
         RegPool *registerPool;
         workTable *scheduleTable = stream->getTable();
         reportInfo("%s:\n", stream->streamName());
-        for (i = 0; i != 12; i++) {
-            registerPool = GetRP(i);
+        for (poolIndex = 0; poolIndex != 12; poolIndex++) {
+            registerPool = GetRP(poolIndex);
             if (!registerPool || !registerPool->virtualPartCount)
                 continue;
             reportInfo("    %s\n", registerPool->poolName);

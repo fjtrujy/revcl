@@ -68,7 +68,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
     initializeScheduledCycleTimes(scheduleTable);
     for (int rowIndex = scheduleTable->getRangeStart(); rowIndex != scheduleTable->getRangeEnd(); rowIndex++) {
         wtRow *row = (wtRow *)((cls_unk30 *)scheduleTable)->getIE_ck(rowIndex);
-        int id = row->ctime();
+        int cycleTime = row->ctime();
         for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
             Instr *rowInstruction = GetI((Instr **)row, pipeIndex);
             if (!rowInstruction)
@@ -94,16 +94,16 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
                     need--;
                 int line = rowIndex + 1;
                 wtRow *workRow = row + 1;
-                int limit = need + id;
+                int limit = need + cycleTime;
                 int bestMask = 0, bestLine = -1, bestPipe = -1, bestCount = 0, count = 0;
                 while (line < scheduleTable->getRangeEnd() && capMask) {
                     if (workRow->cycleTime >= limit) {
-                        for (int q = 0; q != 2; q++) {
-                            if (((bits >> q) & 1) && !GetI((Instr **)workRow, q)) {
+                        for (int availablePipeIndex = 0; availablePipeIndex != 2; availablePipeIndex++) {
+                            if (((bits >> availablePipeIndex) & 1) && !GetI((Instr **)workRow, availablePipeIndex)) {
                                 if ((!workRow->countEntries() && bestLine < 0) || workRow->countEntries()) {
                                     bestLine = line;
                                     bestCount = count;
-                                    bestPipe = q;
+                                    bestPipe = availablePipeIndex;
                                     bestMask = capMask;
                                 }
                                 break;

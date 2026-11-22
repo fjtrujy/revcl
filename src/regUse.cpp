@@ -17,7 +17,7 @@ regUse::regUse(RegPoolEntry *reg)
     externalBlockMode = -1;
     previous = 0;
     next = 0;
-    unk_18 = reg->unk_36;
+    recordedOutputWriteCount = reg->outputWriteCount;
     definingInstruction = reg->throughputWriter;
 }
 
