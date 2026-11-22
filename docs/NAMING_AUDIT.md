@@ -317,6 +317,63 @@ No C++ source-level function-name macros, layout changes, or algorithmic
 changes were introduced. The historical GCC build and the original stripped
 ELF SHA-256 remain byte-for-byte matched.
 
+## Extended core-types naming pass: diagnostics, register pools and scheduling
+
+This deliberately larger review unit groups several related C++ source
+renames. **None** are implemented by preprocessor aliases. Changes were
+accepted only after a native build and a historical byte-exact rebuild; the
+original stripped ELF SHA-256 remains
+`83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
+
+### Instruction diagnostics and used-before-set information
+
+- `iHolder` fields now identify `instruction`, `operandIndex`, and
+  `componentMask`; its two numeric helpers are `matchesOperandLocation` and
+  `dumpOperandLocation`. These are grounded in the `ol_s` instruction, operand
+  and component references passed to `Instr::leDump`.
+- `infoList` now has `head` and `count`, with a `dumpEntries` traversal;
+  `infoNode::next` is its single linked-list pointer.
+- `stallNode` now exposes `isLocal` (comparing stream flow IDs), `setter`,
+  `user`, and `stallByType[3]` (latency, throughput and register-file-write
+  stalls). The raw/UBA stall loader reads the same typed array.
+- `ubsNode` identifies the `reg`, `slotMask`, `entryStream`, and `useStream`
+  recorded when an input is used before its register is set.
+
+### Register and work-table metadata
+
+- `regUseList` owns `count`, `head` and `tail`. Its proven operations include
+  `hasConsistentCount`, `hasEntries`, `findByRegister`, and per-class/all-pool
+  diagnostic dumps. `regUse::validateAndDumpParts` checks recorded throughput
+  information before reporting component-pair data.
+- `wtRow` owns the two `entries`, `skip`, `maxStallLength`, `stallTypeMask`
+  and `cycleTime`. The add/clear stall paths and the instruction emitter use
+  these exact members. Its input/output mask operations now also have direct
+  semantic names, as do their underlying `Instr` queries.
+- `wtInstrList` has `head`, `tail` and `count`, verified by the intrusive
+  add/remove operations in `lists.cpp`. These are shared by the linear,
+  pending and completed instruction queues; their field order is unchanged.
+- Twelve `RegPool` helpers now have names for index and name lookup,
+  physical/virtual register discovery, creation, cleanup and cycling,
+  register-class ownership, and marked-register counting. Ambiguous
+  reset/dump functions were not renamed merely for higher coverage.
+
+### Processor parsing state
+
+Sixteen high-confidence `Processor` fields are now named from the parser,
+directive and emitter paths: `newSyntax`, `exportedSymbols`, `globalName`,
+`cpuName`, `trailingLabels`, `decodeMode`, `decodeSubMode`, `insideRawLoop`,
+`rawLoopId`, `mpgTargetAddress`, `visibilityScopes`, `uniqueAll`,
+`savedDecodeSubMode`, `savedDecodeMode`, `usedBeforeSet` and `stalls`.
+The saved-mode fields are named for their **restore-site roles**, without
+claiming that the recovered implementation necessarily stores both modes at
+every entry point. Other unexplained processor bytes remain opaque.
+
+Together these batches resolve **35 further numeric function names and 41
+owner-qualified field names**. The generated progress inventory now records
+103 directly renamed functions out of the original 436 and 135 resolved
+offset-style fields out of 614. Function bodies, field types, struct layouts
+and historical translation-unit ordering have not been intentionally changed.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout

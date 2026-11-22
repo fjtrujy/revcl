@@ -445,7 +445,7 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
     p = pos->getPipe();
     s->unk_00 = b;
     s->unk_02 = p;
-    row->unk_00[p].unk_00 = in;
+    row->entries[p].unk_00 = in;
     b = setLocks(in);
     if (!(char)b) {
         reportError("DoInsert: failed to set locks in instruction insert\n");

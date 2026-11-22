@@ -78,7 +78,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
                 regUseSlot *slot = &sr->unk_20[part];
                 ol_s *setter = slot->func_0805ba2c(0, true);
                 int again = lastAddress[1];
-                if (!p->proc.unk_74.addStall(setter, tr->unk_20[part].unk_20.head, 1,
+                if (!p->proc.stalls.addStall(setter, tr->unk_20[part].unk_20.head, 1,
                                         again - dist)) {
                     reportError("failed to add an interstream latency stall\n");
                     return false;

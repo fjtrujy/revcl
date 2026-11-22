@@ -10,31 +10,31 @@ const char *getOptimiserName(int id);
 
 char *emitFileStart(Program *p, char *buf)
 {
-    if ((!p->proc.unk_00 || p->proc.unk_63) && p->proc.unk_44 < 0)
+    if ((!p->proc.newSyntax || p->proc.unk_63) && p->proc.mpgTargetAddress < 0)
         buf += formatIntoBuffer(buf, "\t\t.vu\n");
     if (!noAlign_080b3016)
         buf += formatIntoBuffer(buf, "\t\t.align 4\n");
-    if (p->proc.unk_18 && *p->proc.unk_18) {
-        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeStart\n", p->proc.unk_18);
-        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeEnd\n", p->proc.unk_18);
+    if (p->proc.globalName && *p->proc.globalName) {
+        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeStart\n", p->proc.globalName);
+        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeEnd\n", p->proc.globalName);
     }
-    if (p->proc.unk_44 >= 0) {
-        if (p->proc.unk_18 && *p->proc.unk_18) {
-            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaTag\n", p->proc.unk_18);
-            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaEnd\n", p->proc.unk_18);
+    if (p->proc.mpgTargetAddress >= 0) {
+        if (p->proc.globalName && *p->proc.globalName) {
+            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaTag\n", p->proc.globalName);
+            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaEnd\n", p->proc.globalName);
             buf += formatIntoBuffer(buf, "\n");
-            buf += formatIntoBuffer(buf, "%s_DmaTag:\n", p->proc.unk_18);
+            buf += formatIntoBuffer(buf, "%s_DmaTag:\n", p->proc.globalName);
         }
         buf += formatIntoBuffer(buf, "\t\tDMAret\t*\n");
         buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
         buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
         buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
-        buf += formatIntoBuffer(buf, "\t\tMPG\t%d,*\n", p->proc.unk_44);
+        buf += formatIntoBuffer(buf, "\t\tMPG\t%d,*\n", p->proc.mpgTargetAddress);
     }
-    for (mNode *n = p->proc.unk_04.head; n; n = n->next)
+    for (mNode *n = p->proc.exportedSymbols.head; n; n = n->next)
         buf += formatIntoBuffer(buf, "\t\t.global\t%s\n", n->name);
-    if (p->proc.unk_18 && *p->proc.unk_18)
-        buf += formatIntoBuffer(buf, "%s_CodeStart:\n", p->proc.unk_18);
+    if (p->proc.globalName && *p->proc.globalName)
+        buf += formatIntoBuffer(buf, "%s_CodeStart:\n", p->proc.globalName);
     return buf;
 }
 
@@ -42,17 +42,17 @@ char *emitFileEnd(Program *p, char *buf)
 {
     if (!noAlign_080b3016)
         buf += formatIntoBuffer(buf, "\t\t.align 4\n");
-    if (p->proc.unk_18 && *p->proc.unk_18)
-        buf += formatIntoBuffer(buf, "%s_CodeEnd:\n", p->proc.unk_18);
-    for (mNode *n = p->proc.unk_20.head; n; n = n->next)
+    if (p->proc.globalName && *p->proc.globalName)
+        buf += formatIntoBuffer(buf, "%s_CodeEnd:\n", p->proc.globalName);
+    for (mNode *n = p->proc.trailingLabels.head; n; n = n->next)
         if (n->name)
             buf += formatIntoBuffer(buf, "%s:\n", n->name);
-    if (p->proc.unk_44 >= 0) {
+    if (p->proc.mpgTargetAddress >= 0) {
         buf += formatIntoBuffer(buf, "\t.EndMPG\n");
         buf += formatIntoBuffer(buf, "\t.EndDmaData\n");
     }
-    if (p->proc.unk_18 && *p->proc.unk_18 && p->proc.unk_44 >= 0)
-        buf += formatIntoBuffer(buf, "%s_DmaEnd:\n", p->proc.unk_18);
+    if (p->proc.globalName && *p->proc.globalName && p->proc.mpgTargetAddress >= 0)
+        buf += formatIntoBuffer(buf, "%s_DmaEnd:\n", p->proc.globalName);
     return buf;
 }
 
@@ -63,7 +63,7 @@ static inline unsigned char streamEndType(instStream *s)
 
 static inline void dumpFailedRow(wtRow *r)
 {
-    r->func_0807222c(-1);
+    r->refreshInstructionOperands(-1);
 }
 
 char *workTable::emit(char *buf, int mode, int *p1, int *p2)
@@ -100,7 +100,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
     } else {
         for (int i = unk_30; i != unk_34; i++) {
             wtRow *r = &unk_2c[i];
-            if (!r->unk_08)
+            if (!r->skip)
                 (*p1)++;
             (*p2)++;
         }
@@ -112,7 +112,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
 
     if (unk_09 == 4) {
         wtRow blank;
-        blank.func_080721f8();
+        blank.clearEntries();
         for (int i = 0; i != nulls; i++) {
             int f = 0;
             if (isEnd && i == 0) {
@@ -157,13 +157,13 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         if (isEnd && !func_08073854())
             end++;
         wtRow blank;
-        blank.func_080721f8();
+        blank.clearEntries();
         for (int i = unk_30; i != end; i++) {
             wtRow *r = &blank;
             if (i < unk_34)
                 r = &unk_2c[i];
             int f = 0;
-            if (!r->unk_08)
+            if (!r->skip)
                 (*p1)++;
             (*p2)++;
             if (isEnd) {
@@ -205,7 +205,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 buf = r->emit(buf, f, true, true);
                 if (!buf) {
                     reportError("failed to emit instruction!\n");
-                    r->func_0807222c(-1);
+                    r->refreshInstructionOperands(-1);
                     goto fail;
                 }
                 break;
@@ -233,8 +233,8 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
         reportError("iEntry::emit - null pointer!\n");
         return 0;
     }
-    if (unk_08) {
-        if (func_08072304()) {
+    if (skip) {
+        if (countEntries()) {
             reportError("can't skip a non-empty ie\n");
             return 0;
         }
@@ -243,14 +243,14 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
     buf += formatIntoBuffer(buf, "         ");
     int i;
     for (i = 0; i != 2; i++)
-        if (unk_00[i].unk_00)
-            flags |= unk_00[i].unk_00->unk_1389;
+        if (entries[i].unk_00)
+            flags |= entries[i].unk_00->unk_1389;
     int len = 0;
     for (i = 0; i != 2; i++) {
-        if (!unk_00[i].unk_00)
+        if (!entries[i].unk_00)
             buf = emitNop(buf, flags, &len);
         else
-            buf = emitInstr(unk_00[i].unk_00, buf, false, flags, upper);
+            buf = emitInstr(entries[i].unk_00, buf, false, flags, upper);
         if (!buf) {
             reportError("failed to emit upper for pipe %d ie\n", i);
             return 0;
@@ -259,11 +259,11 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
         if (i != 1)
             buf += formatIntoBuffer(buf, "         ");
     }
-    if (unk_09) {
+    if (maxStallLength) {
         buf += formatIntoBuffer(buf, "       ;\tSTALL");
         bool any = false;
         for (int k = 0; k != 3; k++) {
-            int bit = (unk_0a >> k) & 1;
+            int bit = (stallTypeMask >> k) & 1;
             if (bit) {
                 buf += formatIntoBuffer(buf, "_%s", stallNames_080b3244[k]);
                 any = true;
@@ -271,7 +271,7 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
         }
         if (!any)
             reportWarning("reported a stall.. but dunno what type\n");
-        int stall = unk_09;
+        int stall = maxStallLength;
         buf += formatIntoBuffer(buf, " ?%d", stall);
     }
     return buf + formatIntoBuffer(buf, "\n");

@@ -25,7 +25,7 @@ bool func_0808061c(workTable *wt, wrangleFunc f)
     wt->unk_b0 = 0;
     wt->unk_b4 = 0;
     wt->unk_b8 = 0;
-    for (Instr *in = wt->unk_94.unk_00; in; in = in->unk_24.unk_00) {
+    for (Instr *in = wt->unk_94.head; in; in = in->unk_24.unk_00) {
         adjustMoveCount((Block *)wt, in, 1);
         if (!in->func_080558f4()) {
             reportError("failed to set loop sfx type\n");
@@ -54,9 +54,9 @@ bool func_0808061c(workTable *wt, wrangleFunc f)
     }
     g_080de72c = 0;
     if (wt->unk_38)
-        g_080de758 = wt->unk_94.unk_08 / 30 + 6;
+        g_080de758 = wt->unk_94.count / 30 + 6;
     else
-        g_080de758 = wt->unk_94.unk_08 / 5 + 4;
+        g_080de758 = wt->unk_94.count / 5 + 4;
     if (g_080de758 < timeout_080b3010)
         g_080de758 = timeout_080b3010;
     if (!setWatchdog((char *)&g_080de75c, g_080de758)) {
@@ -90,7 +90,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             reportError("Wrangle: failed to build candidate list!\n");
             return false;
         }
-        if (!wt->unk_4c && !wt->unk_94.unk_00) {
+        if (!wt->unk_4c && !wt->unk_94.head) {
             wt->unk_30 = 0;
             if (!wt->unk_38) {
                 int sz = wt->getCurrentDoneSize();
@@ -116,7 +116,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                     int lim2 = maxBranchLid * wt->unk_38;
                     int lim1 = (maxBranchLid - wt->unk_7a) * wt->unk_38;
                     g_080de72c = 0;
-                    for (Instr *in = wt->unk_a0.unk_00; in; in = in->unk_24.unk_00) {
+                    for (Instr *in = wt->unk_a0.head; in; in = in->unk_24.unk_00) {
                         switch ((unsigned char)in->unk_138e) {
                         case 0:
                             break;
@@ -304,7 +304,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
     switch_pipe:
         wt->unk_ac = 1;
         wt->unk_ad = 0;
-        g_080de72c = wt->unk_a0.unk_00;
+        g_080de72c = wt->unk_a0.head;
     faulted:
         wt->unk_4c = 0;
     zero_after_pending:
@@ -383,7 +383,7 @@ static inline void clearCand(Instr *in)
 bool buildCandidateList2(workTable *wt)
 {
     Instr *in;
-    in = wt->unk_94.unk_00;
+    in = wt->unk_94.head;
     wt->unk_4c = 0;
     wt->unk_50 = 0;
     InstructionPosition pos;
@@ -415,7 +415,7 @@ bool buildCandidateList2(workTable *wt)
                     exitAfterCleanup(-1);
                 }
             } else {
-                if (wt->unk_94.unk_08 > 1)
+                if (wt->unk_94.count > 1)
                     continue;
                 int d = wt->getCurrentDoneSize();
                 if (d < 0) {

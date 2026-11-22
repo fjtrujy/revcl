@@ -23,7 +23,7 @@ bool func_0807e528(Program *p, instStream *s, workTable *wt)
             return true;
         }
         regUseList *ul = &wt->unk_14;
-        for (regUse *r = ul->unk_04; r; r = r->unk_04)
+        for (regUse *r = ul->head; r; r = r->unk_04)
             if (r->unk_14)
                 ext = true;
         if (ext) {
@@ -31,14 +31,14 @@ bool func_0807e528(Program *p, instStream *s, workTable *wt)
             s->unk_262 = 0;
             s->unk_263 = 1;
         }
-        for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
                 RegPoolEntry *reg = op->unk_18;
                 op->unk_28 = 0;
                 if (!reg)
                     continue;
-                regUse *ru = ul->func_0805b5dc(reg);
+                regUse *ru = ul->findByRegister(reg);
                 if (isRegisterOperand(op, 1))
                     op->unk_28 = ru->unk_12 & op->unk_27;
                 if (isRegisterOperand(op, 2))

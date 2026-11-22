@@ -68,12 +68,12 @@ bool assignExtRegisters(Program *p)
                 return false;
             }
         }
-        for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
             for (int j = 0; j != in->operandCount; j++) {
                 Operand *op = &in->operands[j];
                 RegPoolEntry *reg = op->unk_18;
                 if (reg && reg->isVirtual) {
-                    regUse *ru = wt->unk_14.func_0805b5dc(reg);
+                    regUse *ru = wt->unk_14.findByRegister(reg);
                     if (!ru) {
                         reportError("failed to find reg ref associated with reg\n");
                         return false;

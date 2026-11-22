@@ -50,12 +50,12 @@ bool workTable::prepRawTable()
             reportError("iTable::prepTable - failed to get ientry\n");
             return 0;
         }
-        if (ie->unk_08) {
+        if (ie->skip) {
             reportError("bSkip set for preptabl\n");
             return 0;
         }
         for (int p = 0; p != 2; p++) {
-            Instr *in = ie->unk_00[p].unk_00;
+            Instr *in = ie->entries[p].unk_00;
             if (!in)
                 continue;
             if (in->unk_13cd) {

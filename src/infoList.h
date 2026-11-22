@@ -14,18 +14,18 @@ public:
     virtual ~infoNode() = 0;
     virtual void dump() = 0;
 
-    infoNode *unk_04;
+    infoNode *next;
 };
 
 class iHolder {
 public:
-    Instr *unk_00;
-    int unk_04;
-    int unk_08;
+    Instr *instruction;
+    int operandIndex;
+    int componentMask;
 
     inline iHolder();
-    int func_08052380(ol_s *ol);
-    void func_080523b8();
+    int matchesOperandLocation(ol_s *ol);
+    void dumpOperandLocation();
     bool catInit(ol_s *ol);
     inline void dump();
 };
@@ -35,11 +35,11 @@ public:
     infoList();
     virtual ~infoList();
     bool clear();
-    void func_080525c8();
+    void dumpEntries();
     bool addStall(ol_s *a, ol_s *b, int x, int val);
 
-    infoNode *unk_04;  // head
-    int unk_08;        // count
+    infoNode *head;
+    int count;
 };
 
 class stallNode : public infoNode {
@@ -51,10 +51,10 @@ public:
     virtual void dump();
     bool catStall(ol_s *a, ol_s *b, int x, int val);
 
-    bool unk_08;
-    iHolder unk_0c;
-    iHolder unk_18;
-    unsigned short unk_24[3];
+    bool isLocal;
+    iHolder setter;
+    iHolder user;
+    unsigned short stallByType[3];
 };
 
 class RegPoolEntry;
@@ -66,10 +66,10 @@ public:
     virtual void dump();
     bool catInit(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits);
 
-    RegPoolEntry *unk_08;   // register
-    unsigned char unk_0c;   // slot mask
-    instStream *unk_10;     // entry point
-    instStream *unk_14;     // use point
+    RegPoolEntry *reg;
+    unsigned char slotMask;
+    instStream *entryStream;
+    instStream *useStream;
 };
 
 #endif

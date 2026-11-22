@@ -31,9 +31,9 @@ bool emuTable(Program *p, workTable *wt)
         for (int line = wt->func_0807411c(); line != wt->func_080741c0(); line++) {
             wtRow *r = wt->func_080724f0(line);
             if (r) {
-                if (r->unk_08) {
+                if (r->skip) {
                     for (int k = 0; k != 2; k++)
-                        if (r->unk_00[k].unk_00) {
+                        if (r->entries[k].unk_00) {
                             reportError("m_bSkip set .. but line contains instructions\n");
                             return false;
                         }
@@ -42,7 +42,7 @@ bool emuTable(Program *p, workTable *wt)
                 }
                 if (emuInst(p, r, line, false, true) < 0) {
                     reportError("failed to Emu an inst\n");
-                    r->func_0807222c(-1);
+                    r->refreshInstructionOperands(-1);
                     goto fail;
                 }
             } else {
@@ -63,13 +63,13 @@ fail:
     return false;
     case 1:
     case 4: {
-        Instr *i = wt->unk_88.unk_00;
+        Instr *i = wt->unk_88.head;
         wtRow row;
         for (; i; i = i->unk_1c.unk_00) {
-            row.func_080721f8();
-            row.unk_00[0].unk_00 = i;
+            row.clearEntries();
+            row.entries[0].unk_00 = i;
             int r = emuInst(p, &row, -1, true, true);
-            row.unk_00[0].unk_00 = 0;
+            row.entries[0].unk_00 = 0;
             if (r < 0) {
                 reportError("failed to uta emu instruction\n");
                 i->func_08054008(false);
@@ -100,7 +100,7 @@ bool func_080642ec(Program *p, instStream *s)
 
     wt = s->getTable();
     int linear = wt->unk_c0[2];
-    int iCount = wt->unk_88.unk_08;
+    int iCount = wt->unk_88.count;
     if (linear != iCount) {
         reportError("linear count not same as iCount %d!=%d\n", linear, iCount);
         return false;
@@ -110,14 +110,14 @@ bool func_080642ec(Program *p, instStream *s)
         return false;
     }
     count = 0;
-    for (i = wt->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
+    for (i = wt->unk_88.head; i; i = i->unk_1c.unk_00) {
         count++;
         for (int op = 0; op != i->operandCount; op++) {
             Operand *o = &i->operands[op];
             RegPoolEntry *reg = o->unk_18;
             if (!reg)
                 continue;
-            regUse *ru = wt->unk_14.func_0805b5dc(reg);
+            regUse *ru = wt->unk_14.findByRegister(reg);
             if (!ru) {
                 ru = wt->unk_14.AddNewRegRef(reg);
                 if (!ru) {
@@ -162,7 +162,7 @@ bool func_080642ec(Program *p, instStream *s)
         reportError("icount mismatch (%d apparently in list, but %d in table?)\n", count, wt->unk_c0[2]);
         return false;
     }
-    for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
+    for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
         if (!reg) {
             reportError("a reg ref had no register!\n");

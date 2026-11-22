@@ -11,42 +11,42 @@ char *stallNames_080b3244[3] = { "LATENCY", "THRUPUT", "RFWRITE" };
 
 inline iHolder::iHolder()
 {
-    unk_00 = 0;
-    unk_04 = 0;
-    unk_08 = 0;
+    instruction = 0;
+    operandIndex = 0;
+    componentMask = 0;
 }
 
 static inline int iHolderMatches(iHolder *h, ol_s *ol)
 {
-    if (!ol || !h->unk_00)
+    if (!ol || !h->instruction)
         return 0;
     int r = 0;
     Instr *i = ol->unk_04;
-    if (h->unk_00 == i) {
+    if (h->instruction == i) {
         int idx = ol->unk_10;
-        if (h->unk_04 == idx)
+        if (h->operandIndex == idx)
             r = 1;
     }
     return r;
 }
 
-int iHolder::func_08052380(ol_s *ol)
+int iHolder::matchesOperandLocation(ol_s *ol)
 {
     return iHolderMatches(this, ol);
 }
 
-void iHolder::func_080523b8()
+void iHolder::dumpOperandLocation()
 {
-    if (unk_00)
-        unk_00->leDump(unk_04, unk_08);
+    if (instruction)
+        instruction->leDump(operandIndex, componentMask);
     else
         reportMessage(" UNSET_INST\n");
 }
 
 inline void iHolder::dump()
 {
-    if (unk_00)
-        unk_00->leDump(unk_04, unk_08);
+    if (instruction)
+        instruction->leDump(operandIndex, componentMask);
     else
         reportMessage(" UNSET_INST\n");
 }
@@ -57,74 +57,74 @@ bool iHolder::catInit(ol_s *ol)
         reportError("iHolder - passed a null ol\n");
         return false;
     }
-    if (!unk_00) {
+    if (!instruction) {
         Instr *in = ol->unk_04;
         if (!in) {
             reportError("iHolder:: init called, but ol_s not inst\n");
             return false;
         }
-        unk_00 = in;
-        unk_04 = ol->unk_10;
-        unk_08 = 0;
-    } else if (unk_00 != ol->unk_04 || unk_04 != ol->unk_10) {
+        instruction = in;
+        operandIndex = ol->unk_10;
+        componentMask = 0;
+    } else if (instruction != ol->unk_04 || operandIndex != ol->unk_10) {
         reportError("iHolder::catInit - mismatch adding to an existing object\n");
         return false;
     }
-    unk_08 |= 1 << ol->unk_11;
+    componentMask |= 1 << ol->unk_11;
     return true;
 }
 
 infoList::infoList()
 {
-    unk_04 = 0;
-    unk_08 = 0;
+    head = 0;
+    count = 0;
 }
 
 infoList::~infoList()
 {
-    infoNode *p = unk_04;
+    infoNode *p = head;
     while (p) {
-        infoNode *n = p->unk_04;
+        infoNode *n = p->next;
         delete p;
         p = n;
     }
-    unk_04 = 0;
-    unk_08 = 0;
+    head = 0;
+    count = 0;
 }
 
 bool infoList::clear()
 {
-    infoNode *p = unk_04;
+    infoNode *p = head;
     while (p) {
-        infoNode *n = p->unk_04;
+        infoNode *n = p->next;
         delete p;
         p = n;
     }
-    unk_04 = 0;
-    unk_08 = 0;
+    head = 0;
+    count = 0;
     return true;
 }
 
-void infoList::func_080525c8()
+void infoList::dumpEntries()
 {
-    for (infoNode *p = unk_04; p; p = p->unk_04)
+    for (infoNode *p = head; p; p = p->next)
         p->dump();
 }
 
 inline infoNode::infoNode(InitTag)
 {
-    unk_04 = 0;
+    next = 0;
 }
 
 inline stallNode::stallNode(InitTag) : infoNode(infoNode::INIT)
 {
     for (int i = 0; i != 3; i++)
-        unk_24[i] = 0;
+        stallByType[i] = 0;
 }
 
 bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
 {
-    stallNode *p = (stallNode *)unk_04;
+    stallNode *p = (stallNode *)head;
     if (!a || !b) {
         reportError("infoList:: addStall - null input ptr\n");
         return false;
@@ -133,8 +133,8 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
         reportError("infoList:: add stall - val <=0\n");
         return false;
     }
-    for (; p; p = (stallNode *)p->unk_04)
-        if ((char)iHolderMatches(&p->unk_0c, a) && (char)iHolderMatches(&p->unk_18, b))
+    for (; p; p = (stallNode *)p->next)
+        if ((char)iHolderMatches(&p->setter, a) && (char)iHolderMatches(&p->user, b))
             break;
     if (!p) {
         p = new stallNode(stallNode::INIT);
@@ -142,9 +142,9 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
             reportError("infoList::addStall - failed to get new stall\n");
             return false;
         }
-        p->unk_04 = unk_04;
-        unk_08++;
-        unk_04 = p;
+        p->next = head;
+        count++;
+        head = p;
     }
     if (!p->catStall(a, b, x, val)) {
         reportError("infoList::addStall - failed to cat a stall\n");
@@ -155,7 +155,7 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
 
 infoNode::infoNode()
 {
-    unk_04 = 0;
+    next = 0;
 }
 
 infoNode::~infoNode()
@@ -165,7 +165,7 @@ infoNode::~infoNode()
 stallNode::stallNode() : infoNode(infoNode::INIT)
 {
     for (int i = 0; i != 3; i++)
-        unk_24[i] = 0;
+        stallByType[i] = 0;
 }
 
 stallNode::~stallNode()
@@ -179,23 +179,23 @@ void stallNode::dump()
     p += formatIntoBuffer(p, "STALL");
     int max = 0;
     for (int i = 0; i != 3; i++) {
-        unsigned short v = unk_24[i];
+        unsigned short v = stallByType[i];
         if (v > max)
             max = v;
         if (v)
             p += formatIntoBuffer(p, "_%s(%d)", stallNames_080b3244[i], v);
     }
     p += formatIntoBuffer(p, " maxVal %d ", max);
-    if (unk_08)
+    if (isLocal)
         p += formatIntoBuffer(p, ": local");
     else
         p += formatIntoBuffer(p, " inter-stream");
     *p = 0;
     reportInfo("%s\n", buf);
     reportInfo("    setter is : ");
-    unk_0c.dump();
+    setter.dump();
     reportInfo("    user is   : ");
-    unk_18.dump();
+    user.dump();
 }
 
 bool stallNode::catStall(ol_s *a, ol_s *b, int type, int val)
@@ -204,7 +204,7 @@ bool stallNode::catStall(ol_s *a, ol_s *b, int type, int val)
         reportWarning("stallNode - init called with a null input\n");
         return false;
     }
-    if (!unk_0c.catInit(a)) {
+    if (!setter.catInit(a)) {
         reportError("stallInit - failed to add in a source loc\n");
         return false;
     }
@@ -222,8 +222,8 @@ bool stallNode::catStall(ol_s *a, ol_s *b, int type, int val)
         reportError("can't determine owner ist for one of inputs to stall\n");
         return false;
     }
-    unk_08 = sa->unk_2c0 == sb->unk_2c0;
-    if (!unk_18.catInit(b)) {
+    isLocal = sa->unk_2c0 == sb->unk_2c0;
+    if (!user.catInit(b)) {
         reportError("stallInit - failed to add in a user loc\n");
         return false;
     }
@@ -231,17 +231,17 @@ bool stallNode::catStall(ol_s *a, ol_s *b, int type, int val)
         reportError("bad stall type\n");
         return false;
     }
-    if (val > unk_24[type])
-        unk_24[type] = val;
+    if (val > stallByType[type])
+        stallByType[type] = val;
     return true;
 }
 
 ubsNode::ubsNode() : infoNode(infoNode::INIT)
 {
-    unk_08 = 0;
-    unk_0c = 0;
-    unk_10 = 0;
-    unk_14 = 0;
+    reg = 0;
+    slotMask = 0;
+    entryStream = 0;
+    useStream = 0;
 }
 
 ubsNode::~ubsNode()
@@ -258,7 +258,7 @@ void ubsNode::dump()
     int n;
     reportInfo("Used before set : ");
     n = 0;
-    instStream *use = unk_14;
+    instStream *use = useStream;
     workTable *wt = use->workTablePtr;
     bool haveTable = wt != 0;
     if (!haveTable) {
@@ -268,11 +268,11 @@ void ubsNode::dump()
     if (!haveTable)
         wt = use->workTablePtr;
     regUse *ru;
-    if (wt && (ru = wt->unk_14.func_0805b5dc(unk_08))) {
+    if (wt && (ru = wt->unk_14.findByRegister(reg))) {
         reportInfo("register %s is used before set at instruction(s) :\n",
-                      unk_08->registerName());
-        for (int i = 0; i != unk_08->partCount; i++) {
-            if ((unk_0c >> i) & 1) {
+                      reg->registerName());
+        for (int i = 0; i != reg->partCount; i++) {
+            if ((slotMask >> i) & 1) {
                 for (ol_s *p = ru->unk_20[i].unk_00.head; p; p = p->unk_00) {
                     Instr *inst = p->unk_04;
                     int bit = p->unk_11;
@@ -303,7 +303,7 @@ void ubsNode::dump()
         }
     } else {
         reportInfo("register %s is used before set at \n",
-                      unk_08->registerName(), unk_14->streamName());
+                      reg->registerName(), useStream->streamName());
     }
 }
 
@@ -325,22 +325,22 @@ bool ubsNode::catInit(instStream *entry, instStream *use, RegPoolEntry *reg, uns
         reportError("ubs::catInit - bits was null in cat init\n");
         return false;
     }
-    unk_10 = entry;
-    unk_14 = use;
-    unk_08 = reg;
-    unk_0c |= bits;
+    entryStream = entry;
+    useStream = use;
+    this->reg = reg;
+    slotMask |= bits;
     return true;
 }
 
 bool ubsList::addUBS(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits)
 {
-    ubsNode *p = (ubsNode *)unk_04;
+    ubsNode *p = (ubsNode *)head;
     if (!entry || !use || !reg || !bits) {
         reportError("ubsList: addUBS - passed bad args\n");
         return false;
     }
-    for (; p; p = (ubsNode *)p->unk_04)
-        if (reg == p->unk_08 && entry == p->unk_10 && use == p->unk_14)
+    for (; p; p = (ubsNode *)p->next)
+        if (reg == p->reg && entry == p->entryStream && use == p->useStream)
             break;
     if (!p) {
         p = new ubsNode;
@@ -348,9 +348,9 @@ bool ubsList::addUBS(instStream *entry, instStream *use, RegPoolEntry *reg, unsi
             reportError("infoList::addStall - failed to get new ubs\n");
             return false;
         }
-        unk_08++;
-        p->unk_04 = unk_04;
-        unk_04 = p;
+        count++;
+        p->next = head;
+        head = p;
     }
     if (!p->catInit(entry, use, reg, bits)) {
         reportError("failed to cat init a used-before-set operand\n");

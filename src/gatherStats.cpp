@@ -120,7 +120,7 @@ bool instStream::gatherStats()
     }
 
     Instr *in;
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
         cls0805e2e4 *is = &in->unk_13f0;
         is->unk_00 = is->unk_02 = 0;
         is->unk_04 = is->unk_06 = 0;
@@ -142,7 +142,7 @@ bool instStream::gatherStats()
         }
     }
 
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
@@ -171,7 +171,7 @@ bool instStream::gatherStats()
         }
     }
 
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r;
@@ -200,7 +200,7 @@ bool instStream::gatherStats()
         }
     }
 
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
@@ -223,7 +223,7 @@ bool instStream::gatherStats()
     }
 
     wtInstrList *lst = &wt->unk_88;
-    for (in = lst->unk_04; in; in = in->unk_1c.unk_04) {
+    for (in = lst->tail; in; in = in->unk_1c.unk_04) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r;
@@ -252,7 +252,7 @@ bool instStream::gatherStats()
         }
     }
 
-    for (in = lst->unk_04; in; ) {
+    for (in = lst->tail; in; ) {
         iLink *link = &in->unk_1c;
         Instr *m = link->unk_04;
         for (; m; m = m->unk_1c.unk_04) {
@@ -273,7 +273,7 @@ bool instStream::gatherStats()
     int thru = 0;
     int best = 0;
     int both = 0;
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
         if (in->unk_1388)
             unk_2b4 = in->unk_13f0.unk_04;
         char c = in->unk_138c;
@@ -287,7 +287,7 @@ bool instStream::gatherStats()
     }
 
     int maxIssue = 0;
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r = registerOperand(op, 2);
@@ -352,7 +352,7 @@ bool instStream::gatherStats()
     int depth = unk_278.unk_14;
     if (depth < 0)
         depth = 0;
-    for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
+    for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
         RegPoolEntry *r = ru->unk_08;
         if (!r) {
             reportError("regref had no reg\n");

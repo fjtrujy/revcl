@@ -44,18 +44,18 @@ bool genRegPool::func_08088e54(workTable *t)
         if (!set_in_aTab(ru)) {
             reportError("failed to set forced register in aTab\n");
             t->dump();
-            list->func_0805b44c();
+            list->dumpRegisterUses();
             exitAfterCleanup(-1);
             return false;
         }
     }
     RegPoolEntry *todo = 0;
     Instr *in;
-    for (in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             RegPoolEntry *reg = op->unk_18;
-            if (func_08059e20(reg) && reg->isVirtual && reg->unk_3c < 0) {
+            if (ownsRegisterClass(reg) && reg->isVirtual && reg->unk_3c < 0) {
                 if (!build_tTab(reg, (1 << reg->partCount) - 1)) {
                     reportError("failed to build ttab while building todolist\n");
                     t->dump();
@@ -93,18 +93,18 @@ bool genRegPool::func_08088e54(workTable *t)
         }
         int r = bestReg();
         if (r < 0) {
-            if (!func_08059f70()) {
+            if (!countMarkedPhysicalRegisters()) {
                 reportError("vcl failed to allocate a register of type %s, but there's no registers of this type available for it to use.. maybe adding a .init_.. directive would help\n", poolName);
                 func_0804ac44();
                 return false;
             } else
-                list->func_0805bab0();
+                list->dumpVirtualRegisterUses();
             return false;
         }
         best->assignedPhysicalRegister = &registerEntries[r];
         if (!set_t_in_aTab(r)) {
-            ru->func_0805b51c();
-            list->func_0805b44c();
+            ru->validateAndDumpParts();
+            list->dumpRegisterUses();
             reportError("failed to set t\n");
             exitAfterCleanup(-1);
         }
@@ -115,11 +115,11 @@ bool genRegPool::func_08088e54(workTable *t)
         else
             todo = best->unk_40;
     }
-    for (in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             RegPoolEntry *reg = op->unk_18;
-            if (func_08059e20(reg) && reg->isVirtual) {
+            if (ownsRegisterClass(reg) && reg->isVirtual) {
                 if (!reg->assignedPhysicalRegister) {
                     reportError("notmapped!, should have been mapped by now..%s!\n",
                                   reg->registerName());
@@ -151,7 +151,7 @@ bool genRegPool::assignExt(instStream *s)
             reportError("flowMon::AssignExt: register not set in rf\n");
             return false;
         }
-        if (func_08059e20(reg) && ru->isExternal() && !reg->assignedPhysicalRegister) {
+        if (ownsRegisterClass(reg) && ru->isExternal() && !reg->assignedPhysicalRegister) {
             initRegMask(this);
             for (instStream *p = owner->streamHead; p; p = p->nextStream) {
                 if (!func_08088e6c(p, reg)) {
@@ -161,14 +161,14 @@ bool genRegPool::assignExt(instStream *s)
             }
             int r = firstEmptyMask(this);
             if (r < 0) {
-                if (!func_08059f70()) {
+                if (!countMarkedPhysicalRegisters()) {
                     reportError("vcl failed to assign a register of type %s, but there's no registers of that type available for it to use, maybe adding a .init.. directive would help\n");
                     func_0804ac44();
                     return false;
                 }
                 reportInfo("currently at stream: %s trying to allocate external register %s\n",
                               s->streamName(), reg->registerName());
-                wt->unk_14.func_0805bab0();
+                wt->unk_14.dumpVirtualRegisterUses();
                 reportError("failed to assign an external %s\n", reg->registerName());
                 func_0804ac44();
                 return false;
@@ -181,7 +181,7 @@ bool genRegPool::assignExt(instStream *s)
 
 bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
 {
-    if (!reg || !func_08059e20(reg)) {
+    if (!reg || !ownsRegisterClass(reg)) {
         reportError("discard disjoint called, but this pool doesn't own this register!\n");
         return false;
     }
@@ -216,13 +216,13 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
         reportError("xiBits is outside of iBits \n");
         return false;
     }
-    for (regUse *o = l->unk_04; o; o = o->unk_04) {
+    for (regUse *o = l->head; o; o = o->unk_04) {
         RegPoolEntry *r = o->unk_08;
         if (!r) {
             reportError("flowMon::discard disjoint forced regref with null reg\n");
             return false;
         }
-        if (!func_08059e20(r) || (!r->assignedPhysicalRegister && r->isVirtual))
+        if (!ownsRegisterClass(r) || (!r->assignedPhysicalRegister && r->isVirtual))
             continue;
         unsigned char m = 0;
         switch (wt->unk_09) {
@@ -250,7 +250,7 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
                 }
                 if (!regRefLiveRange(o, i, &bs, &be, &ba)) {
                     reportError("couldn't determine live range_b.%d\n", i);
-                    o->func_0805b51c();
+                    o->validateAndDumpParts();
                     wt->dump();
                     return false;
                 }

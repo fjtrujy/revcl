@@ -275,7 +275,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
         reportError("failed to resolve branches after constructing streams\n");
         return false;
     }
-    if (p->proc.unk_60 && !p->doUnique()) {
+    if (p->proc.uniqueAll && !p->doUnique()) {
         reportError("failed to do unique processing\n");
         return false;
     }

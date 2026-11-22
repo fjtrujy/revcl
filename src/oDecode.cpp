@@ -86,7 +86,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         }
         p = q + 2;
     }
-    info = func_0806bf8c(p, unk_00);
+    info = func_0806bf8c(p, newSyntax);
     if (!info) {
         reportUserMessage("vcl can't find instruction '%s'\n", p);
         goto fail;
@@ -158,7 +158,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         Operand *opd = &in->operands[i];
         int next = cur;
         if (opd->unk_08) {
-            if (!buildImplicitOperand(opd->unk_04, &op, unk_00)) {
+            if (!buildImplicitOperand(opd->unk_04, &op, newSyntax)) {
                 reportError("getNextInstruction: failed to build implicit operand\n");
                 goto fail;
             }
@@ -191,7 +191,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 gatheredToken[1] = 0;
             }
             opd->unk_25 = next;
-            if (!oDecodeToken(opd->unk_04, gatheredToken, &op, unk_00)) {
+            if (!oDecodeToken(opd->unk_04, gatheredToken, &op, newSyntax)) {
                 reportUserMessage("failed to decode operand\n");
                 goto fail;
             }
@@ -279,7 +279,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                         opd->unk_04 = 1;
                     }
                     opd->unk_07 = in->unk_138f;
-                    if (!unk_00) {
+                    if (!newSyntax) {
                         reportError("new syntax off while parsing a tbd instruction\n");
                         goto fail;
                     }
@@ -295,8 +295,8 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 goto fail;
             }
             s = nameBuf;
-            if (pool->virtualPartCount && unk_4c.tail && !pool->func_08059418(op.name) && op.name[0] != '_') {
-                for (mNode *n = unk_4c.tail; n; n = n->previous) {
+            if (pool->virtualPartCount && visibilityScopes.tail && !pool->findPhysicalByName(op.name) && op.name[0] != '_') {
+                for (mNode *n = visibilityScopes.tail; n; n = n->previous) {
                     char *np = n->name;
                     if (!np) {
                         reportError("null name in parsep\n");
@@ -327,7 +327,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             }
             formatIntoBuffer(s, "%s", op.name);
             char *full = dupString(nameBuf);
-            RegPoolEntry *r = pool->func_08059944(full);
+            RegPoolEntry *r = pool->findOrCreateRegister(full);
             if (!r) {
                 reportUserMessage("oDecode: not find register '%s' from %s\n", full, pool->poolName);
                 goto fail;
@@ -335,7 +335,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             if (op.unk_200c) {
                 RegPoolEntry *base = 0;
                 if (op.unk_800[0]) {
-                    base = pool->func_08059418(op.unk_800);
+                    base = pool->findPhysicalByName(op.unk_800);
                     if (!base) {
                         reportUserMessage("request to bing non-base register\n");
                         goto fail;
@@ -361,7 +361,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 r->assignedPhysicalRegister = base;
                 opd->unk_10 = base;
             } else if (op.unk_800[0]) {
-                RegPoolEntry *base = pool->func_08059418(op.unk_800);
+                RegPoolEntry *base = pool->findPhysicalByName(op.unk_800);
                 if (!base) {
                     reportUserMessage("failed to find base map reg '%s'\n", op.unk_800);
                     goto fail;
@@ -372,7 +372,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 }
                 opd->unk_10 = base;
             } else if (unk_65) {
-                RegPoolEntry *e = pool->func_08059418(op.name);
+                RegPoolEntry *e = pool->findPhysicalByName(op.name);
                 if (e && e != e->ownerPool->zeroRegister)
                     opd->unk_10 = e;
             } else if (r->isVirtual != 1 && !r->unk_16)
@@ -409,7 +409,7 @@ fail:
         if (in) {
             reportUserMessage("couldn't decode instruction .. problem is at:\n");
             t->dumpSourceLine(cur);
-            if (in->func_080552a8(unk_00, fmtBuf, g_080b34dc))
+            if (in->func_080552a8(newSyntax, fmtBuf, g_080b34dc))
                 reportUserMessage("expected format is: %s\n", fmtBuf);
             delete in;
             in = 0;
@@ -476,8 +476,8 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                     (*pos)++;
                 }
             }
-            if (!func_080522c4(n->flags, unk_3d, true)) {
-                int mode = unk_3d;
+            if (!func_080522c4(n->flags, decodeMode, true)) {
+                int mode = decodeMode;
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(mode));
                 t->dumpSourceLine(-1);
@@ -530,25 +530,25 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
     int enters = 0;
     int maxLines = 0x1000;
     p->proc.unk_64 = type;
-    p->proc.unk_00 = newSyntax;
+    p->proc.newSyntax = newSyntax;
     DecodedLine *blocks = 0;
 
     switch (type) {
     case 1:
-        p->proc.unk_3d = 1;
+        p->proc.decodeMode = 1;
         p->proc.unk_65 = 0;
         break;
     case 2:
-        p->proc.unk_3d = 3;
+        p->proc.decodeMode = 3;
         p->proc.unk_65 = 1;
         break;
     default:
         reportError("Processor::Build:: bad build type request\n");
         goto done;
     }
-    p->proc.unk_62 = 0;
-    p->proc.unk_40 = 1;
-    p->proc.unk_3f = 0;
+    p->proc.savedDecodeMode = 0;
+    p->proc.rawLoopId = 1;
+    p->proc.insideRawLoop = 0;
     blocks = new DecodedLine[0x1000];
     if (!blocks) {
         reportError("Processor::Build() new failed for decLine table\n");
@@ -644,15 +644,15 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 }
                 synth = true;
             }
-            if (!func_080522c4(ins[i]->unk_1389, p->proc.unk_3d, false)) {
+            if (!func_080522c4(ins[i]->unk_1389, p->proc.decodeMode, false)) {
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
-                              codeModeName(p->proc.unk_3d));
+                              codeModeName(p->proc.decodeMode));
                 ins[i]->leDump();
                 goto done;
             }
         }
-        b->decodeMode = p->proc.unk_3d;
-        b->decodeSubMode = p->proc.unk_3e;
+        b->decodeMode = p->proc.decodeMode;
+        b->decodeSubMode = p->proc.decodeSubMode;
         if (synth) {
             Instr *in = ins[0];
             b->instructions[0] = in;
@@ -719,8 +719,8 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 }
                 /* fall through */
             case 8:
-                if (p->proc.unk_3f)
-                    b->rawLoopId = p->proc.unk_40;
+                if (p->proc.insideRawLoop)
+                    b->rawLoopId = p->proc.rawLoopId;
                 break;
             case 10:
                 break;
@@ -730,18 +730,18 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 in->func_08054008(false);
                 goto done;
             }
-        } else if (p->proc.unk_3d == 3) {
+        } else if (p->proc.decodeMode == 3) {
             if (nOut != p->proc.instructionsPerRawLine) {
                 reportUserMessage("in RAW decode mode, there weren't %d instructions on line : \n", p->proc.instructionsPerRawLine);
                 t->dumpSourceLine(-1);
                 goto done;
             }
-            if (p->proc.unk_3f)
-                b->rawLoopId = p->proc.unk_40;
+            if (p->proc.insideRawLoop)
+                b->rawLoopId = p->proc.rawLoopId;
             for (int j = 0; j != p->proc.instructionsPerRawLine; j++)
                 b->instructions[j] = ins[j];
         } else {
-            if (p->proc.unk_3f) {
+            if (p->proc.insideRawLoop) {
                 reportError("Build() - was in loop mode during uta\n");
                 goto done;
             }
@@ -794,11 +794,11 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
             goto done;
         }
         reportWarning("gathering labels at end of code into the final namelist\n");
-        if (!p->proc.unk_20.transferNodesFrom(&labels)) {
+        if (!p->proc.trailingLabels.transferNodesFrom(&labels)) {
             reportError("failed to grab ending labels\n");
             goto done;
         }
-        for (mNode *nd = p->proc.unk_20.head; nd; nd = nd->next) {
+        for (mNode *nd = p->proc.trailingLabels.head; nd; nd = nd->next) {
             if (nd->flags) {
                 reportUserMessage("can't attach [modifiers] to labels at the end of code\n");
                 reportUserMessage("Label '%s:' has '%s'\n", nd->name, func_08052314(nd->flags));
@@ -841,9 +841,9 @@ done:
         delete[] blocks;
         blocks = 0;
         *count = 0;
-    } else if (p->proc.unk_4c.nodeCount)
-        reportWarning("scope stack open (depth %d) at end of source\n", p->proc.unk_4c.nodeCount);
-    p->proc.unk_4c.clearNodes();
+    } else if (p->proc.visibilityScopes.nodeCount)
+        reportWarning("scope stack open (depth %d) at end of source\n", p->proc.visibilityScopes.nodeCount);
+    p->proc.visibilityScopes.clearNodes();
     return blocks;
 }
 

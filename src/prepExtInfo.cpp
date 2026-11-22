@@ -15,7 +15,7 @@ int guessKeyLen(Program *p, int key, int start, int end);
 bool prepExtInfo(Program *p, instStream *s, bool noExt)
 {
     workTable *wt = s->getTable();
-    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
         in->func_08055f4c();
     wt->unk_44 = 0;
     if (noExt)
@@ -24,7 +24,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
     int id = s->unk_2c0;
     regUse *ru;
     regUseList *ul = &wt->unk_14;
-    for (ru = ul->unk_04; ru; ru = ru->unk_04) {
+    for (ru = ul->head; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
         for (int k = 0; k != reg->partCount; k++) {
             regUseSlot *sl = &ru->unk_20[k];
@@ -231,7 +231,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         reportError("distance to dst is bad\n");
                         return 0;
                     }
-                    Instr *w = wa->unk_88.unk_04;
+                    Instr *w = wa->unk_88.tail;
                     Operand *wo = 0;
                     for (; w; w = w->unk_1c.unk_04)
                         if ((wo = w->func_080557a4(reg, 1 << k)) != 0)
@@ -240,7 +240,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         reportError("can't get last writer\n");
                         return 0;
                     }
-                    Instr *u = wb->unk_88.unk_00;
+                    Instr *u = wb->unk_88.head;
                     Operand *uo = 0;
                     for (; u; u = u->unk_1c.unk_00)
                         if ((uo = u->func_08055720(reg, 1 << k)) != 0)
@@ -264,12 +264,12 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
         }
     }
     if (changed) {
-        for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
                 RegPoolEntry *r = isRegisterOperand(op, 2) ? op->unk_18 : 0;
                 if (r && r->unk_2c) {
-                    regUse *u = ul->func_0805b5dc(r);
+                    regUse *u = ul->findByRegister(r);
                     if (!u) {
                         reportError("failed to find regref\n");
                         exitAfterCleanup(-1);
@@ -285,12 +285,12 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
             }
     }
     Instr *in;
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *reg = op->unk_18;
             if (reg) {
-                regUse *u = ul->func_0805b5dc(reg);
+                regUse *u = ul->findByRegister(reg);
                 if (isRegisterOperand(op, 1))
                     op->unk_28 = u->unk_12 & op->unk_27;
                 if (isRegisterOperand(op, 2))
@@ -308,7 +308,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
 success:
     return 1;
 branchBound:
-    for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
         if (in->func_08055ac4() == 0xa5)
             in->func_0805601c(2);
     goto success;

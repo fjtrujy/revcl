@@ -17,17 +17,17 @@ Processor::Processor()
 {
     uniqueName = 0;
     g_080b33a8 = 0;
-    unk_00 = 0;
+    newSyntax = 0;
     g_080de6c0 = 0;
-    unk_1c = "Nameless";
-    unk_18 = "";
+    cpuName = "Nameless";
+    globalName = "";
     unk_64 = 0;
     unk_65 = 0;
-    unk_44 = -1;
+    mpgTargetAddress = -1;
     instructionsPerRawLine = 0;
-    unk_60 = 0;
-    unk_3d = 0;
-    unk_3e = 0;
+    uniqueAll = 0;
+    decodeMode = 0;
+    decodeSubMode = 0;
     for (int i = 0; i != 12; i++)
         g_080de6e0[i] = 0;
     for (int i = 0; i != 3; i++)
@@ -60,7 +60,7 @@ bool Processor::Init(CpuDef *cpu)
         reportError("processor '%s' has too many instructions per raw line\n", cpu->name);
         return false;
     }
-    unk_1c = cpu->name;
+    cpuName = cpu->name;
     if (!pools) {
         reportError("processor: init - passed a null strap table\n");
         return false;
@@ -95,7 +95,7 @@ bool Processor::Init(CpuDef *cpu)
             return false;
         }
         if (poolDefinition->zeroReg) {
-            RegPoolEntry *e = pool->func_08059418(poolDefinition->zeroReg);
+            RegPoolEntry *e = pool->findPhysicalByName(poolDefinition->zeroReg);
             if (!e) {
                 reportError("failed to get zero reg for pool %s\n", poolDefinition->name);
                 delete pool;
@@ -104,7 +104,7 @@ bool Processor::Init(CpuDef *cpu)
             pool->zeroRegister = e;
         }
         if (poolDefinition->extReg) {
-            RegPoolEntry *e = pool->func_08059418(poolDefinition->extReg);
+            RegPoolEntry *e = pool->findPhysicalByName(poolDefinition->extReg);
             if (!e) {
                 reportError("failed to get ext reg for pool %s\n", poolDefinition->name);
                 delete pool;
@@ -132,15 +132,15 @@ bool Processor::Init(CpuDef *cpu)
     return true;
 }
 
-bool Processor::func_0806bc84()
+bool Processor::clearProcessorLists()
 {
-    unk_4c.clearNodes();
-    unk_20.clearNodes();
-    unk_04.clearNodes();
+    visibilityScopes.clearNodes();
+    trailingLabels.clearNodes();
+    exportedSymbols.clearNodes();
     return true;
 }
 
-void Processor::func_0806bcb8()
+void Processor::dumpRegisterPools()
 {
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i])
@@ -183,7 +183,7 @@ bool Processor::func_0806bd88()
     return true;
 }
 
-void Processor::func_0806bdd0()
+void Processor::validateOpcodeTableCount()
 {
     if (!g_080de6c0) {
         reportError("iInfos not set in processor\n");
@@ -203,7 +203,7 @@ void Processor::func_0806bdd0()
     errorOccurred = saved;
 }
 
-void func_0806be68(Program *p)
+void dumpProcessorRegisterPools(Program *p)
 {
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i])
@@ -213,15 +213,15 @@ void func_0806be68(Program *p)
 bool parseReset(Program *p)
 {
     p->proc.unk_63 = false;
-    p->proc.unk_04.clearNodes();
-    p->proc.unk_20.clearNodes();
-    p->proc.unk_4c.clearNodes();
-    p->proc.unk_3d = 0;
-    p->proc.unk_3e = 0;
-    p->proc.unk_62 = 0;
-    p->proc.unk_61 = 0;
+    p->proc.exportedSymbols.clearNodes();
+    p->proc.trailingLabels.clearNodes();
+    p->proc.visibilityScopes.clearNodes();
+    p->proc.decodeMode = 0;
+    p->proc.decodeSubMode = 0;
+    p->proc.savedDecodeMode = 0;
+    p->proc.savedDecodeSubMode = 0;
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->func_080595d4()) {
+        if (g_080de6e0[i] && !g_080de6e0[i]->clearVirtualRegistersForParse()) {
             reportError("Processor::parseReset() - failed to reset %s\n",
                           g_080de6e0[i]->poolName);
             return false;
@@ -295,7 +295,7 @@ bool Cycle(Program *p, bool flag)
 {
     p->unk_80++;
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->func_08059828(flag)) {
+        if (g_080de6e0[i] && !g_080de6e0[i]->cycleRegisters(flag)) {
             reportError("Processor::Cycle() - failed to cycle %s\n",
                           g_080de6e0[i]->poolName);
             return false;
@@ -330,7 +330,7 @@ RegPoolEntry *getReg(unsigned type, const char *name)
         reportError("getBaseReg from - not find pool %d\n", type);
         exitAfterCleanup(-1);
     }
-    return pool->func_08059418(name);
+    return pool->findPhysicalByName(name);
 }
 
 RegPoolEntry *getReg(unsigned type, int index)
@@ -340,7 +340,7 @@ RegPoolEntry *getReg(unsigned type, int index)
         reportError("getBaseReg from - not find pool %d\n", type);
         exitAfterCleanup(-1);
     }
-    return pool->func_080593e0(index);
+    return pool->findByRegisterIndex(index);
 }
 
 RegPoolEntry *func_0806c224(int idx)
@@ -348,7 +348,7 @@ RegPoolEntry *func_0806c224(int idx)
     for (int i = 0; i != 12; i++) {
         RegPool *rp = g_080de6e0[i];
         if (rp) {
-            RegPoolEntry *e = rp->func_080593e0(idx);
+            RegPoolEntry *e = rp->findByRegisterIndex(idx);
             if (e)
                 return e;
         }
@@ -387,8 +387,8 @@ RegPool *GetRP(unsigned t)
 
 bool flowReset(Program *p)
 {
-    p->proc.unk_68.clear();
-    p->proc.unk_74.clear();
+    p->proc.usedBeforeSet.clear();
+    p->proc.stalls.clear();
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_0805951c()) {
             reportError("Processor::flowReset() - failed to reset %s\n",
@@ -400,19 +400,19 @@ bool flowReset(Program *p)
 
 void reportUBS(Program *p)
 {
-    ubsList *ubs = &p->proc.unk_68;
-    if (ubs->unk_08) {
+    ubsList *ubs = &p->proc.usedBeforeSet;
+    if (ubs->count) {
         reportInfo("uh-oh, VCL thinks the following operands were used before set:\n");
-        ubs->func_080525c8();
+        ubs->dumpEntries();
     }
 }
 
 void reportStalls(Program *p)
 {
-    infoList *st = &p->proc.unk_74;
-    if (st->unk_08) {
+    infoList *st = &p->proc.stalls;
+    if (st->count) {
         reportInfo("VCL thinks the following instructions caused stalls:\n");
-        st->func_080525c8();
+        st->dumpEntries();
     }
 }
 

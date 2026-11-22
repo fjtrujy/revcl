@@ -774,8 +774,8 @@ public:
     bool changeBranchImmediate(const char *s);
     bool setOwner(cls_unk30 *s);
     char *func_080552a8(bool flag, char *buf, int n);
-    int func_080553b4(RegPoolEntry *reg, int mask);
-    int func_0805544c(RegPoolEntry *reg, int mask);
+    int outputMaskForRegister(RegPoolEntry *reg, int mask);
+    int inputMaskForRegister(RegPoolEntry *reg, int mask);
     bool func_08055548();
     char *getBranchTargetImmediate();
     RegPoolEntry *getBranchTargetRegister();

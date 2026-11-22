@@ -18,13 +18,13 @@ bool bindExternals(Program *p)
             reportError("no worktable!\n");
             exitAfterCleanup(-1);
         }
-        for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
                 RegPoolEntry *reg = op->unk_18;
                 if (!reg)
                     continue;
-                regUse *ru = wt->unk_14.func_0805b5dc(reg);
+                regUse *ru = wt->unk_14.findByRegister(reg);
                 if (!ru) {
                     reportError(bindExtFindRegRefError);
                     return false;

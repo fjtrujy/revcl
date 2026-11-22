@@ -36,7 +36,7 @@ int pullUp(workTable *wt)
     Instr *lbdli = 0;
     Instr *br = wt->getBranch();
     if (br) {
-        lbdli = wt->unk_2c[wt->unk_34 - 1].unk_00[1].unk_00;
+        lbdli = wt->unk_2c[wt->unk_34 - 1].entries[1].unk_00;
         if (lbdli)
             lbdli = func_0805449c(lbdli, br) ? lbdli : 0;
     }

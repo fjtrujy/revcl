@@ -63,7 +63,7 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
     nt->unk_40 = 0;
     nt->unk_44 = wt->unk_44;
     regUseList &regs = wt->unk_14;
-    for (regUse *ru = regs.unk_04; ru; ru = ru->unk_04) {
+    for (regUse *ru = regs.head; ru; ru = ru->unk_04) {
         if (!nt->qRegRef(ru)) {
             reportError("failed to add a cloned regref in %s\n", s->streamName());
             wt->dump();
@@ -71,7 +71,7 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
             return 0;
         }
     }
-    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
         if (in->func_08054168() != s) {
             reportError("owner not set or mismatch for prepUta .. istOwner = %x we are %x!\n",
                           in->func_08054168(), p);

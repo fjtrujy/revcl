@@ -29,7 +29,7 @@ bool detectMoves(Program *p)
         workTable *wt = s->getTable();
         if (wt->unk_09 == 1 || isPipeMode(wt)) {
             Instr *next;
-            for (Instr *in = wt->unk_88.unk_00; in; in = next) {
+            for (Instr *in = wt->unk_88.head; in; in = next) {
                 next = in->unk_1c.unk_00;
                 int opc;
                 unsigned char mask;

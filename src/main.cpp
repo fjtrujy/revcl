@@ -286,7 +286,7 @@ int main(int argc, char **argv)
         reportError("failed to set int name for flow\n");
         exitAfterCleanup(-1);
     }
-    flow.proc.unk_44 = mValue;
+    flow.proc.mpgTargetAddress = mValue;
     if (!flow.func_0806efc4(&parser, true, newSyntax)) {
         reportError("failed to build flow from parser!\n");
         exitAfterCleanup(-1);
@@ -582,14 +582,14 @@ bool func_0804a2b4(Program *p, bool a, bool b, bool c)
         reportError("vcl found a bug in itself while chasing dependencies\n");
         return false;
     }
-    if (p->proc.unk_68.unk_08) {
+    if (p->proc.usedBeforeSet.count) {
         if (!c) {
             reportErrors(p);
             return false;
         }
         reportInfo("on the final pass, was detected, but , it should be ok\n");
     }
-    if (b && p->proc.unk_74.unk_08)
+    if (b && p->proc.stalls.count)
         reportWarnings(p);
     return true;
 }

@@ -364,7 +364,7 @@ bool relaxOpt(Program *p)
                 return false;
             }
             wt->dump();
-            for (Instr *i = s->getTable()->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
+            for (Instr *i = s->getTable()->unk_88.head; i; i = i->unk_1c.unk_00) {
                 i->unk_00 = 0;
                 i->unk_08 = 0;
                 i->unk_04 = 0;

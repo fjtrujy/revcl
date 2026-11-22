@@ -33,7 +33,7 @@ struct regUse {
 
     regUse(RegPoolEntry *reg);
     ~regUse();
-    void func_0805b51c();
+    void validateAndDumpParts();
     regUse *nextReal();
     regUse *nextVirtual();
     bool optReset();
@@ -51,14 +51,14 @@ public:
     regUse *AddNewRegRef(RegPoolEntry *reg);
     bool append(regUse *ru);
     bool remove(regUse *ru);
-    bool func_0805b0cc();
-    bool func_0805b0f8();
-    void func_0805b44c();
-    int func_0805b494(int regClass);
+    bool hasConsistentCount();
+    bool hasEntries();
+    void dumpRegisterUses();
+    int dumpRegisterClassUses(int regClass);
     int func_0805ba64(int regClass);
-    void func_0805bab0();
-    void func_0805bb10(int regClass);
-    regUse *func_0805b5dc(RegPoolEntry *reg);
+    void dumpVirtualRegisterUses();
+    void dumpRegisterClassAllocations(int regClass);
+    regUse *findByRegister(RegPoolEntry *reg);
     regUse *firstReal();
     regUse *firstVirtual();
     bool optReset();
@@ -67,7 +67,7 @@ public:
     {
         if (!reg)
             return 0;
-        regUse *p = unk_04;
+        regUse *p = head;
         while (p) {
             if (reg == p->unk_08)
                 break;
@@ -76,47 +76,47 @@ public:
         return p;
     }
 
-    int unk_00;      // count
-    regUse *unk_04;  // head
-    regUse *unk_08;  // tail
+    int count;
+    regUse *head;
+    regUse *tail;
 };
 
 struct wtRow {
-    wtEntryInl unk_00[2];
-    char unk_08;            // m_bSkip
-    unsigned char unk_09;   // max stall length
-    unsigned char unk_0a;   // stall type mask
+    wtEntryInl entries[2];
+    char skip;
+    unsigned char maxStallLength;
+    unsigned char stallTypeMask;
     char unk_0b;
-    short unk_0c;
+    short cycleTime;
 
     wtRow();
     ~wtRow();
-    bool func_080721f8();  // clears unk_00
-    void func_0807222c(int);
+    bool clearEntries();
+    void refreshInstructionOperands(int);
     Instr *getEntry(int p);
-    int ctime() { return unk_0c; }
-    int func_08072304();   // count of used entries
+    int ctime() { return cycleTime; }
+    int countEntries();   // count of used entries
     Instr *onlyEntry();
     bool clearStalls();
-    void func_08072364();
+    void resetStallMetadata();
     bool addStall(int type, int len);
-    int func_080723ec(RegPoolEntry *reg, unsigned char mask);
-    int outputMask(RegPoolEntry *reg) { return func_080723ec(reg, 0xff); }
-    int func_08072440(RegPoolEntry *reg, unsigned char mask);
+    int outputMaskFor(RegPoolEntry *reg, unsigned char mask);
+    int outputMask(RegPoolEntry *reg) { return outputMaskFor(reg, 0xff); }
+    int inputMaskFor(RegPoolEntry *reg, unsigned char mask);
     unsigned int func_08072494();
     char *emit(char *buf, int flags, bool upper, bool unused);
 };
 
 struct wtInstrList {
-    Instr *unk_00;          // head
-    Instr *unk_04;          // tail
-    int unk_08;             // count
+    Instr *head;
+    Instr *tail;
+    int count;
 
-    wtInstrList() { unk_04 = 0; unk_08 = 0; unk_00 = 0; }
-    void reset() { unk_04 = 0; unk_08 = 0; unk_00 = 0; }
-    Instr *first() { return unk_00; }
-    Instr *last() { return unk_04; }
-    ~wtInstrList() { unk_04 = 0; unk_00 = 0; unk_08 = 0; }
+    wtInstrList() { tail = 0; count = 0; head = 0; }
+    void reset() { tail = 0; count = 0; head = 0; }
+    Instr *first() { return head; }
+    Instr *last() { return tail; }
+    ~wtInstrList() { tail = 0; head = 0; count = 0; }
 };
 
 inline const char *codeModeStr(int mode)
@@ -260,7 +260,7 @@ public:
     {
         if (l < unk_30 || l >= unk_34)
             exitWithError("nop line is bad\n");
-        return unk_2c[l].unk_0c;
+        return unk_2c[l].cycleTime;
     }
     void clearLinear()
     {
