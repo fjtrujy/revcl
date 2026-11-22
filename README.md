@@ -36,17 +36,38 @@ Progress (matched bytes / file size):
 **482,736 / 482,736 bytes (100.00%)** of `vcl_14beta7_x86` matched — code 268,717 / 268,717 (1192 / 1192 functions exact, 268,717 bytes), verified inter-function padding 1,975 bytes, data 151,250 bytes, unwind tables 48,741 bytes, linker/runtime 12,053 bytes
 <!-- progress:end -->
 
-Build and verify with the original GNU Make/GCC environment (on Linux with
-Docker, or on macOS with an Ubuntu container for RPM extraction):
+### Build with CMake
+
+The repository uses one CMake project with three presets: `historical`
+(GCC 3.2.2 in Docker), `gcc` (modern Linux i386), and `clang` (modern
+Linux i386). CMake 3.23+ is required. For the byte-exact historical build,
+first download the original, SHA-pinned Red Hat 9 compiler and libraries
+(Linux, or Ubuntu in a container for the extraction step on macOS):
 
 ```sh
-sudo apt-get install -y rpm2cpio cpio curl ca-certificates
+sudo apt-get install -y cmake rpm2cpio cpio curl ca-certificates
 bash scripts/ci/bootstrap_rh9.sh       # download + SHA-verify historical RPMs
 docker build --platform linux/386 -t revcl-rh9 tools/rh9
-docker run --rm --platform linux/386 \
-  --mount type=bind,src="$PWD",dst=/work -w /work \
-  revcl-rh9 make -j2
-make verify-sha                     # run on the host, not inside RH9
+cmake --preset historical
+cmake --build --preset historical
+ctest --preset historical              # exact SHA-256 verification
+```
+
+Modern builds and their unit/functional tests run on Linux with 32-bit
+multilib installed. On Ubuntu, install `cmake`, `g++-multilib`, `clang`,
+`python3-venv`, and `python3-pip`, then:
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/requirements.txt
+
+cmake --preset gcc -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --build --preset gcc
+ctest --preset gcc                     # Python unit tests + 11 VCL fixtures
+
+cmake --preset clang -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --build --preset clang
+ctest --preset clang
 ```
 
 ### Byte-exact CI
@@ -56,12 +77,12 @@ pushes to `main` or `ci/**`, pull requests and manual dispatches. A fresh Linux 
 downloads the original Red Hat Linux 9 GCC 3.2.2-5 toolchain and the
 **glibc 2.3.2-27.9.7 i686** update, verifies each RPM against the pinned
 SHA-256 manifest in `tools/rh9/rpms.sha256`, builds the historic Docker image,
-then uses **GNU Make 3.79.1** to compile and link the entire C++ source tree.
-The historical compiler flags are in `Makefile`, the recovered original
-object-file order is in `config/vcl-link-order.mk`, and the fixed GNU ld
-script is in `tools/rh9/vcl.ld`.
-The CI check runs `make verify-sha` on the host, requiring the
-**native linked and stripped ELF** (`tmp/native/vcl.stripped`) to match the
+then uses **CMake** to compile, link, and strip the full source tree using
+the original GCC inside Docker. The recovered original object order lives in
+`config/vcl-link-order.cmake`, compiler flags in `config/build.json`, and
+the original GNU ld script in `tools/rh9/vcl.ld`.
+The CI check runs the `exact-sha256` CTest, requiring the
+**native linked and stripped ELF** (`tmp/cmake/historical/vcl.stripped`) to match the
 archived ELF's **exact SHA-256**:
 `83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
 Neither `scripts/score.py` nor the archived original ELF is used as a build
@@ -81,8 +102,8 @@ The full reproducibility report and verification procedure are in
 The independent [modern compiler workflow](.github/workflows/vcl-modern.yml)
 builds all 131 C++ translation units with modern GCC and Clang, targets
 32-bit Linux (the original program's pointer layout), links runnable
-executables, runs the Python unit suite, and executes all 11 standalone
-oracle fixture cases (including both expected invalid inputs). It does
+executables, and uses CTest to run the Python unit suite and all 11 standalone
+oracle fixture cases independently (including both expected invalid inputs). It does
 **not** require the historical toolchain and intentionally does not require
 a SHA match from the modern compilers. Modern Linux binaries are available
 as GitHub Actions artifacts.
@@ -93,12 +114,11 @@ newlines inside quoted strings. They have been normalized to standard
 confirmed this does not change the original SHA-256.
 
 For optional reverse-engineering diagnostics, install the Python tooling
-separately; it is **not needed** for the native Makefile build:
+separately; it is **not needed** for the historical CMake build:
 
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r scripts/requirements.txt
-make test                              # 112 Python unit tests on the host
 scripts/decomp status                  # full score and coverage
 scripts/decomp diff 0x08058dd8         # compare a function with the original
 scripts/decomp lab 0x08080460          # editable source / original ASM workbench

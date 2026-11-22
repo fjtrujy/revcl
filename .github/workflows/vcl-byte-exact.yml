@@ -22,7 +22,7 @@ jobs:
       - name: Install historical RPM extraction tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends rpm2cpio cpio curl ca-certificates
+          sudo apt-get install -y --no-install-recommends cmake rpm2cpio cpio curl ca-certificates
 
       - name: Cache historical RPM downloads
         uses: actions/cache@v6
@@ -37,16 +37,19 @@ jobs:
         run: |
           docker build --platform linux/386 -t revcl-rh9 tools/rh9
           docker run --rm --platform linux/386 revcl-rh9 g++ --version
-          docker run --rm --platform linux/386 revcl-rh9 make --version
 
-      - name: Compile and link VCL with the historical GNU Make and GCC
+      - name: Configure historical VCL with CMake
+        run: cmake --preset historical
+
+      - name: Compile, link and strip with historical GCC through CMake
+        run: cmake --build --preset historical
+
+      - name: Verify original ELF SHA-256 with CTest
+        run: ctest --preset historical
+
+      - name: Confirm generated ELF matches the pinned SHA-256
         run: |
-          docker run --rm --platform linux/386 \
-            --mount type=bind,src="$PWD",dst=/work \
-            -w /work revcl-rh9 make -j2
-
-      - name: Verify native stripped ELF SHA-256 on the host
-        run: make verify-sha
+          sha256sum -c tools/rh9/vcl.sha256
 
       - name: Preserve native ELF artifacts on failure
         if: failure()
@@ -54,6 +57,6 @@ jobs:
         with:
           name: vcl-native-build-failure
           path: |
-            tmp/native/vcl
-            tmp/native/vcl.stripped
+            tmp/cmake/historical/vcl
+            tmp/cmake/historical/vcl.stripped
           if-no-files-found: ignore

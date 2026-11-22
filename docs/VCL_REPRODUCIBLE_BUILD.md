@@ -21,7 +21,7 @@ needed for the native linked executable.
 | Linker/runtime bytes | 12,053 matched bytes |
 | Total score | **482,736/482,736 bytes (100%)** |
 | Reconstructed output | `tmp/build/rebuilt.bin`: exact target SHA-256 |
-| Standard native Makefile output | `tmp/native/vcl.stripped`: exact target SHA-256 |
+| Standard historical CMake output | `tmp/cmake/historical/vcl.stripped`: exact target SHA-256 |
 | Decompilation diagnostic linked output | `tmp/build/link/vcl.stripped`: exact target SHA-256 |
 
 Expected SHA-256 for the archived original and every native/diagnostic
@@ -54,8 +54,8 @@ host's compiler or glibc:
 | Operating system | Red Hat Linux 9 i386 userland in a `linux/386` Docker container |
 | C/C++ compiler | GCC 3.2.2 20030222 (Red Hat Linux 3.2.2-5) |
 | Assembler/linker | GNU binutils 2.13.90.0.18-9 |
-| Compiler settings | `-O2 -frename-registers` plus 20 owner-specific flags (see `Makefile`) |
-| Build orchestrator | GNU Make 3.79.1 in the RH9 container |
+| Compiler settings | `-O2 -frename-registers` plus 20 owner-specific flags from `config/build.json` |
+| Build orchestrator | CMake 3.23+ on the modern host, with GCC 3.2.2 invoked in Docker |
 | Base libraries | Red Hat 9 packages, including glibc 2.3.2-11.9 |
 | Native-link glibc | **2.3.2-27.9.7.i686**, overlaid *last* |
 | RPM authenticity | Every RPM pinned by `tools/rh9/rpms.sha256` |
@@ -72,41 +72,48 @@ SHA-256 before extraction, then overlays the i686 glibc update last. The
 only the Dockerfile, RPM checksum manifest and bootstrap script are committed.
 The original reference executable is read-only and remains unmodified.
 
-### Reproduce on Ubuntu Linux
+### Reproduce with CMake
 
-The build requires Docker with `linux/386` execution support, `curl`,
-`sha256sum`, `rpm2cpio`, and `cpio`. No Python package is required to build
-the original SHA-identical VCL:
+The historical build requires Docker with `linux/386` execution support,
+CMake 3.23+, `curl`, `sha256sum`, `rpm2cpio`, and `cpio`. CMake drives
+the historical GCC using a Docker compiler wrapper; no Python is needed
+to produce the SHA-identical executable.
 
 ```sh
 sudo apt-get update
-sudo apt-get install -y --no-install-recommends rpm2cpio cpio curl ca-certificates
+sudo apt-get install -y --no-install-recommends cmake rpm2cpio cpio curl ca-certificates
 
 bash scripts/ci/bootstrap_rh9.sh
 docker build --platform linux/386 -t revcl-rh9 tools/rh9
 
-docker run --rm --platform linux/386 \
-  --mount type=bind,src="$PWD",dst=/work -w /work \
-  revcl-rh9 make -j2
-make verify-sha
+cmake --preset historical
+cmake --build --preset historical
+ctest --preset historical
 ```
 
-The Docker `make` command compiles 131 translation units, links `tmp/native/vcl`
-using the original GNU linker, and strips it to
-`tmp/native/vcl.stripped`. Verification runs **on the host** since the
-Red Hat 9 toolchain predates `sha256sum`. The Makefile supports GNU
-`sha256sum` on Linux or `shasum -a 256` on macOS.
+CMake compiles 131 translation units using the original GCC 3.2.2, links
+`tmp/cmake/historical/vcl` with GNU ld, then uses the RH9 `strip` to
+produce `tmp/cmake/historical/vcl.stripped`. CTest hashes that stripped
+native ELF through CMake's built-in `file(SHA256)`, so the historical
+container does not need a modern SHA utility. The CMake configure/build/test
+commands also work on macOS when Docker Desktop is running and the RPM
+bootstrap has been performed in a Linux environment.
 
 The build inputs are fixed and version-controlled:
 
-- `Makefile`: original C++ compile flags, including 20 recovered per-file
-  overrides, and ordinary compile/link/strip rules
-- `config/vcl-link-order.mk`: exactly 131 source files in original link order
+- `CMakeLists.txt`: native executable target, compile/link/strip rules,
+  CTest registrations, and historical vs modern build modes
+- `CMakePresets.json`: `historical`, `gcc`, and `clang` configurations
+- `config/build.json`: recovered flags, including 20 owner-specific overrides;
+  consumed directly by CMake for the historical build
+- `config/vcl-link-order.cmake`: exactly 131 source files in original link
+  order; CMake preserves that order when linking
 - `tools/rh9/vcl.ld`: original-address-aware linker script derived once
   from the historical GNU ld script
 - `tools/rh9/vcl.sha256`: expected SHA-256 of the native stripped ELF
-- `tools/rh9/rpms.sha256`: authenticated RPMs, including Red Hat 9 GNU
-  Make 3.79.1
+- `tools/rh9/rpms.sha256`: authenticated original toolchain/library RPMs
+- `cmake/toolchains/rh9.cmake` and `scripts/cmake/`: toolchain/compiler/strip
+  wrappers that execute the untouched 2003 tools inside the pinned Docker image
 
 No original binary is read or patched in this build, and no dynamically
 generated `PROVIDE()` symbols are necessary now that the implementation is
@@ -125,12 +132,13 @@ historical SHA-256 CI**.
 runs the full build on pushes to `main` and `ci/**`, on pull requests, and
 via manual dispatch. The job:
 
-1. Checks out the C++ source, Makefile, linker script and SHA checksum.
+1. Checks out the C++ source, CMake files, linker script and SHA checksum.
 2. Downloads and verifies the RH9 toolchain RPMs.
 3. Builds the period-correct Docker image.
-4. Runs `make -j2` inside the original GCC/GNU Make container.
-5. Runs `make verify-sha` on the modern Linux CI host to check the stripped
-   native executable against the original SHA-256.
+4. Runs `cmake --preset historical` and `cmake --build --preset historical`.
+   Each compiler/linker/strip invocation executes inside the original Docker
+   toolchain; CMake itself runs on the modern host.
+5. Runs `ctest --preset historical` to verify the native executable's SHA-256.
 
 On failure, the generated native ELF files are uploaded as artifacts.
 The RPM download cache is keyed to the SHA-256 manifest; cached RPMs are
@@ -139,8 +147,11 @@ The RPM download cache is keyed to the SHA-256 manifest; cached RPMs are
 The separate [modern compiler workflow](../.github/workflows/vcl-modern.yml)
 builds and links the full 131-source reconstruction using both GCC 13 and
 Clang 18 with a 32-bit Linux target and C++98 language mode, runs the Python
-unit tests (including native Makefile order/flag consistency), and tests the two resulting executables against the eleven
-self-contained VCL fixture cases. The 12th historical oracle case
+unit tests (including CMake link-order/flag consistency), and runs all eleven
+self-contained VCL fixture cases **as individually reported CTest tests**.
+Its Ubuntu Linux setup uses `cmake --preset gcc` or `cmake --preset clang`,
+followed by `cmake --build --preset ...` and `ctest --preset ...`.
+The 12th historical oracle case
 `archived_basic` additionally requires the external MASP preprocessor,
 so it remains in the dedicated [oracle instructions](../reverse/oracle/README.md).
 The browser-based Assembly Workbench integration tests also require their
@@ -155,8 +166,8 @@ The original source's multiline diagnostic string literals are normalized
 to `\n` escapes, a change independently verified to preserve the original
 ELF SHA-256.
 
-The local end-to-end proof compiled **131 source units**, matched all 1,192
-functions, and passed **109 unit tests**. Negative checks confirmed that
-changing one byte in either output, including a former `.dynsym` difference,
-causes the verifier to fail. An independent GitHub Actions run is the final
-check that a clean hosted runner reproduces the same result.
+The CMake historical build has independently reproduced the exact original
+SHA-256 from all 131 translation units. The modern CMake builds run the
+separate unit and functional test suites. The old scorer is retained for
+historical reverse-engineering diagnostics and is not invoked by either
+new CMake workflow.
