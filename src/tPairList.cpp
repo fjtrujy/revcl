@@ -95,12 +95,12 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
         reportError("int_buildTpairs - null arg\n");
         return false;
     }
-    p->unk_d4 = t;
-    p->unk_dc = 0;
-    p->unk_e0 = 0;
-    p->unk_e4 = 0;
-    p->unk_b5 = 0;
-    p->oddPipeMoveCount = 0;
+    p->traceTargetStream = t;
+    p->sourceStreams = 0;
+    p->resolvedStreams = 0;
+    p->activeStreams = 0;
+    p->traceStoreEnabled = 0;
+    p->trackMaximumPathLength = 0;
     for (instStream *i = p->streamHead; i; i = i->nextStream) {
         if (!func_08061c34(i)) {
             reportError("failed to do a local init for the back trace\n");
@@ -111,7 +111,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
         reportError("failed on the initial extend\n");
         return false;
     }
-    for (instStream *i = p->unk_e4; i; i = i->unk_25c) {
+    for (instStream *i = p->activeStreams; i; i = i->nextActiveStream) {
         i->shortestPathPredecessor = 0;
         i->longestPathPredecessor = 0;
         i->unk_240 = 0;
@@ -126,17 +126,17 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
         reportError("there's  no regref set in t target\n");
         return false;
     }
-    if (tr->unk_08 != reg) {
+    if (tr->registerEntry != reg) {
         reportError("there's a mismatch between reg and regref\n");
         return false;
     }
-    for (instStream *s = p->unk_dc; s; s = s->unk_250) {
+    for (instStream *s = p->sourceStreams; s; s = s->nextSourceStream) {
         regUse *sr = s->unk_234;
         if (!sr) {
             reportError("there's no regref in t src\n");
             return false;
         }
-        if (sr->unk_08 != reg) {
+        if (sr->registerEntry != reg) {
             reportError("mismatch between regref reg and rg\n");
             return false;
         }
@@ -150,7 +150,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
             reportError("src_key is bad in tpair\n");
             return false;
         }
-        if (!tr->unk_20[part].unk_10.addPair(s, b, src_key, dst_key)) {
+        if (!tr->slots[part].throughputPairs.addPair(s, b, src_key, dst_key)) {
             reportError("failed to add tpair for tcheck\n");
             return false;
         }

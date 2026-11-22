@@ -9,20 +9,20 @@ extern int errorOccurred;
 extern bool quiet_080bbd98;
 bool g_080de284;
 
-bool cls0805bcc4::func_0805bcc4()
+bool cls0805bcc4::resetLock()
 {
     unk_22 = 0;
-    unk_20 = 0;
-    unk_0c = 0;
-    unk_08 = 0;
+    referenceCount = 0;
+    parentOrChildren = 0;
+    nextSibling = 0;
     unk_16 = 0;
     unk_17 = 0;
-    unk_18 = 0;
+    issueLatency = 0;
     unk_15 = 0;
-    unk_1c = 0;
+    pairedLock = 0;
     unk_2c = 0;
     unk_19 = 0;
-    unk_10 = 0;
+    nextSortedOutput = 0;
     unk_2e = 0;
     unk_48 = 0;
     unk_4a = 0;
@@ -30,12 +30,12 @@ bool cls0805bcc4::func_0805bcc4()
     unk_02 = 0;
     unk_01 = 0;
     unk_00 = 0;
-    unk_24 = 0;
-    unk_2d = 0;
-    unk_14 = 0;
-    unk_04 = 0;
-    unk_28 = -1;
-    unk_29 = -1;
+    ownerPointer = 0;
+    ownerType = 0;
+    lockDirection = 0;
+    ownerLockList = 0;
+    ownerComponent = -1;
+    ownerOperandIndex = -1;
     unk_32 = -1;
     unk_30 = -1;
     unk_34 = -1;
@@ -58,24 +58,24 @@ bool cls0805bcc4::setOwner(int part, Instr *instr, int opnd)
         exitAfterCleanup(-1);
         return false;
     }
-    if (unk_24) {
+    if (ownerPointer) {
         reportError("owner already set for rlock set owner\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (unk_2d) {
+    if (ownerType) {
         reportError("owner: type wasn't null when try to set\n");
         return false;
     }
-    if (unk_04) {
+    if (ownerLockList) {
         reportError("setowner - lock was already on list\n");
         exitAfterCleanup(-1);
         return false;
     }
-    unk_2d = 1;
-    unk_28 = part;
-    unk_29 = opnd;
-    unk_24 = instr;
+    ownerType = 1;
+    ownerComponent = part;
+    ownerOperandIndex = opnd;
+    ownerPointer = instr;
     return true;
 }
 
@@ -86,26 +86,26 @@ bool cls0805bcc4::setOwner(int part, regUse *rf)
         exitAfterCleanup(-1);
         return false;
     }
-    if (unk_24) {
+    if (ownerPointer) {
         reportError("owner already set for rlock set owner\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (unk_2d) {
+    if (ownerType) {
         reportError("owner: type wasn't null when try to set\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (unk_04) {
+    if (ownerLockList) {
         reportError("setowner - lock was already on list\n");
         exitAfterCleanup(-1);
         return false;
     }
-    unk_29 = 0;
-    unk_28 = part;
+    ownerOperandIndex = 0;
+    ownerComponent = part;
     unk_2a = 0;
-    unk_2d = 2;
-    unk_24 = rf;
+    ownerType = 2;
+    ownerPointer = rf;
     unk_32 = -1;
     unk_30 = -1;
     return true;
@@ -113,34 +113,34 @@ bool cls0805bcc4::setOwner(int part, regUse *rf)
 
 bool cls0805bcc4::clearOwner()
 {
-    unk_24 = 0;
-    unk_2d = 0;
-    unk_14 = 0;
-    unk_04 = 0;
-    unk_28 = -1;
-    unk_29 = -1;
+    ownerPointer = 0;
+    ownerType = 0;
+    lockDirection = 0;
+    ownerLockList = 0;
+    ownerComponent = -1;
+    ownerOperandIndex = -1;
     return true;
 }
 
 Instr *cls0805bcc4::ownerInstr()
 {
-    if (unk_2d == 1)
-        return (Instr *)unk_24;
+    if (ownerType == 1)
+        return (Instr *)ownerPointer;
     return 0;
 }
 
 regUse *cls0805bcc4::ownerRegUse()
 {
-    if (unk_2d == 2)
-        return (regUse *)unk_24;
+    if (ownerType == 2)
+        return (regUse *)ownerPointer;
     return 0;
 }
 
 Operand *cls0805bcc4::ownerOperand()
 {
-    if (unk_2d == 1) {
-        int opnd = unk_29;
-        Instr *instr = (Instr *)unk_24;
+    if (ownerType == 1) {
+        int opnd = ownerOperandIndex;
+        Instr *instr = (Instr *)ownerPointer;
         return &instr->operands[opnd];
     }
     return 0;
@@ -148,15 +148,15 @@ Operand *cls0805bcc4::ownerOperand()
 
 int cls0805bcc4::ownerOpnd()
 {
-    if (unk_2d == 1)
-        return unk_29;
+    if (ownerType == 1)
+        return ownerOperandIndex;
     return -1;
 }
 
 int cls0805bcc4::getPart()
 {
-    if (unk_2d == 1 || unk_2d == 2)
-        return unk_28;
+    if (ownerType == 1 || ownerType == 2)
+        return ownerComponent;
     reportError("failed to get part - lock incorrect oType\n");
     exitAfterCleanup(-1);
     return -1;
@@ -164,20 +164,20 @@ int cls0805bcc4::getPart()
 
 void cls0805bcc4::printOwner()
 {
-    switch (unk_2d) {
+    switch (ownerType) {
     case 0:
         break;
     case 1: {
-        Instr *instr = unk_2d == 1 ? (Instr *)unk_24 : 0;
+        Instr *instr = ownerType == 1 ? (Instr *)ownerPointer : 0;
         if (!instr) {
             reportError("type inst..  can't get it though!\n");
             exitAfterCleanup(-1);
         }
-        instr->func_08054008(false);
+        instr->dumpOperandDiagnostics(false);
         break;
     }
     case 2: {
-        regUse *rf = unk_2d == 2 ? (regUse *)unk_24 : 0;
+        regUse *rf = ownerType == 2 ? (regUse *)ownerPointer : 0;
         if (!rf) {
             reportError("type regref..  can't get it though!\n");
             exitAfterCleanup(-1);
@@ -192,25 +192,25 @@ void cls0805bcc4::printOwner()
 
 cls0805bcc4 *cls0805bcc4::getParent()
 {
-    if (unk_14 != 1) {
+    if (lockDirection != 1) {
         reportError("getParent - called on non input lock\n");
         print();
         return 0;
     }
-    if (!unk_0c) {
+    if (!parentOrChildren) {
         reportWarning("getParent: not set!\n");
         print();
         return 0;
     }
-    if (unk_0c->unk_14 != 2) {
+    if (parentOrChildren->lockDirection != 2) {
         reportError("parent was not output!\n");
         reportError("we are:\n");
         print();
         reportError("parent is\n");
-        unk_0c->print();
+        parentOrChildren->print();
         exitAfterCleanup(-1);
     }
-    return unk_0c;
+    return parentOrChildren;
 }
 
 bool cls0805bcc4::setInOut(cls0805bcc4 *olk)
@@ -219,35 +219,35 @@ bool cls0805bcc4::setInOut(cls0805bcc4 *olk)
         reportError("setinout - passed null\n");
         exitAfterCleanup(-1);
     }
-    if (olk->unk_14 != 2) {
+    if (olk->lockDirection != 2) {
         reportError("setinout - olk wasn't output\n");
         exitAfterCleanup(-1);
     }
-    if (!unk_24) {
+    if (!ownerPointer) {
         reportError("owner not set for inout\n");
         exitAfterCleanup(-1);
     }
-    if (unk_24 != olk->unk_24) {
+    if (ownerPointer != olk->ownerPointer) {
         reportError("setinout -- inst bad\n");
         exitAfterCleanup(-1);
     }
-    if (unk_28 != olk->unk_28) {
+    if (ownerComponent != olk->ownerComponent) {
         reportError("set in out - part mismatched\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (unk_1c) {
+    if (pairedLock) {
         reportError("rlock - set inout - already set\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (unk_14 != 1) {
+    if (lockDirection != 1) {
         reportError("set inout on non input\n");
         print();
         exitAfterCleanup(-1);
         return false;
     }
-    unk_1c = olk;
+    pairedLock = olk;
     return true;
 }
 
@@ -265,12 +265,12 @@ bool cls0805bcc4::decRef()
 
 void cls0805bcc4::print()
 {
-    switch (unk_14) {
+    switch (lockDirection) {
     case 0:
     case 1:
         break;
     case 2:
-        for (cls0805bcc4 *c = unk_0c; c; c = c->unk_08)
+        for (cls0805bcc4 *c = parentOrChildren; c; c = c->nextSibling)
             c->print();
         break;
     }
@@ -279,35 +279,35 @@ void cls0805bcc4::print()
 
 cls0805c244::cls0805c244()
 {
-    unk_04 = 0;
-    unk_08 = 0;
+    registerEntry = 0;
+    nextLockList = 0;
     for (int i = 0; i != 4; i++)
-        unk_0c[i] = 0;
-    unk_2a = 0;
+        externalOutputLocks[i] = 0;
+    externalOutputCount = 0;
     unk_2b = 0;
-    unk_1c = 0;
-    unk_24 = 0;
-    unk_26 = 0;
+    outputLocks = 0;
+    outputLockCount = 0;
+    remainingLockCount = 0;
     unk_28 = 0;
     unk_29 = 1;
-    unk_20 = 0;
+    sortedOutputLocks = 0;
     unk_00 = 0;
 }
 
 cls0805c244::cls0805c244(cls0805c244 *next)
 {
-    unk_08 = next;
-    unk_04 = 0;
+    nextLockList = next;
+    registerEntry = 0;
     for (int i = 0; i != 4; i++)
-        unk_0c[i] = 0;
-    unk_2a = 0;
+        externalOutputLocks[i] = 0;
+    externalOutputCount = 0;
     unk_2b = 0;
-    unk_1c = 0;
-    unk_24 = 0;
-    unk_26 = 0;
+    outputLocks = 0;
+    outputLockCount = 0;
+    remainingLockCount = 0;
     unk_28 = 0;
     unk_29 = 1;
-    unk_20 = 0;
+    sortedOutputLocks = 0;
     unk_00 = 0;
 }
 
@@ -318,92 +318,92 @@ cls0805c244::~cls0805c244()
 void cls0805c244::checkCounts()
 {
     int n = 0;
-    for (cls0805bcc4 *o = unk_1c; o; o = o->unk_08) {
+    for (cls0805bcc4 *o = outputLocks; o; o = o->nextSibling) {
         o->printOwner();
-        for (cls0805bcc4 *c = o->unk_0c; c; c = c->unk_08)
+        for (cls0805bcc4 *c = o->parentOrChildren; c; c = c->nextSibling)
             c->printOwner();
         n++;
     }
-    if (unk_24 != unk_26 + n)
+    if (outputLockCount != remainingLockCount + n)
         reportError("ERROR - nOutLocks != nToGo + nDone\n");
 }
 
 bool cls0805c244::reset()
 {
     for (int i = 0; i != 4; i++)
-        unk_0c[i] = 0;
-    unk_2a = 0;
+        externalOutputLocks[i] = 0;
+    externalOutputCount = 0;
     unk_2b = 0;
-    unk_1c = 0;
-    unk_24 = 0;
-    unk_26 = 0;
+    outputLocks = 0;
+    outputLockCount = 0;
+    remainingLockCount = 0;
     unk_28 = 0;
     unk_29 = 1;
-    unk_20 = 0;
+    sortedOutputLocks = 0;
     unk_00 = 0;
     return true;
 }
 
 bool cls0805c244::addInput(cls0805bcc4 *out, cls0805bcc4 *in, char a, unsigned char b)
 {
-    in->unk_14 = 1;
-    in->unk_04 = this;
+    in->lockDirection = 1;
+    in->ownerLockList = this;
     out->unk_15 = b;
-    in->unk_18 = a;
+    in->issueLatency = a;
     out->unk_46 += in->unk_02;
     out->unk_48 += in->unk_01;
-    out->unk_20++;
+    out->referenceCount++;
     out->unk_22++;
-    in->unk_0c = out;
+    in->parentOrChildren = out;
     out->unk_4a += in->unk_00;
     return true;
 }
 
 static inline bool isRegLock(cls0805bcc4 *lk)
 {
-    return lk->unk_2d == 2;
+    return lk->ownerType == 2;
 }
 
 bool cls0805c244::addOutput(cls0805bcc4 *lk, int a, int b, unsigned char c)
 {
     if (isRegLock(lk))
         unk_28 = 1;
-    lk->unk_14 = 2;
+    lk->lockDirection = 2;
     lk->unk_17 = a;
-    lk->unk_18 = b;
-    lk->unk_04 = this;
+    lk->issueLatency = b;
+    lk->ownerLockList = this;
     lk->unk_15 = c;
-    unk_26++;
-    unk_24++;
+    remainingLockCount++;
+    outputLockCount++;
     return true;
 }
 
 bool cls0805c244::removeInput(cls0805bcc4 *in)
 {
-    cls0805bcc4 *out = in->unk_0c;
+    cls0805bcc4 *out = in->parentOrChildren;
     out->unk_46 -= in->unk_02;
     out->unk_48 -= in->unk_01;
-    out->unk_20--;
+    out->referenceCount--;
     out->unk_22--;
     out->unk_4a -= in->unk_00;
-    in->unk_04 = 0;
-    in->unk_14 = 0;
-    in->unk_0c = 0;
+    in->ownerLockList = 0;
+    in->lockDirection = 0;
+    in->parentOrChildren = 0;
     return true;
 }
 
 bool cls0805c244::removeOutput(cls0805bcc4 *lk)
 {
-    lk->unk_14 = 0;
-    lk->unk_04 = 0;
-    unk_26--;
-    unk_24--;
+    lk->lockDirection = 0;
+    lk->ownerLockList = 0;
+    remainingLockCount--;
+    outputLockCount--;
     return true;
 }
 
 static inline bool isOwnedBy(cls0805bcc4 *lk, cls0805c244 *ll)
 {
-    return lk->unk_04 == ll;
+    return lk->ownerLockList == ll;
 }
 
 bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
@@ -412,7 +412,7 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
         reportError("Addoutputlock - null pointer\n");
         return false;
     }
-    if (lk->unk_14 != 2) {
+    if (lk->lockDirection != 2) {
         reportError("Addoutputlock - bad type\n");
         return false;
     }
@@ -426,39 +426,39 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
         exitAfterCleanup(-1);
         return false;
     }
-    if (lk->unk_0c) {
+    if (lk->parentOrChildren) {
         reportError("AddOutputLock: m_Link already set!\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (lk->unk_22 != lk->unk_20) {
+    if (lk->unk_22 != lk->referenceCount) {
         reportError("Addoutputlock - mRefCount!=m_RefCount\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (lk->unk_08) {
+    if (lk->nextSibling) {
         reportError("AddOutputLock:: m_Next already set\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (unk_26 <= 0) {
+    if (remainingLockCount <= 0) {
         reportError("add output lock - count was already down to zero or less\n");
         checkCounts();
         exitAfterCleanup(-1);
         return false;
     }
-    unk_26--;
-    lk->unk_08 = unk_1c;
-    unk_1c = lk;
+    remainingLockCount--;
+    lk->nextSibling = outputLocks;
+    outputLocks = lk;
     if (!lk->calcStats(0)) {
         reportError("AddOutputLock failed to calcStats\n");
         checkCounts();
         exitAfterCleanup(-1);
     }
     lk->unk_2c = 1;
-    lk->unk_10 = 0;
+    lk->nextSortedOutput = 0;
     cls0805bcc4 *prev = 0;
-    for (cls0805bcc4 *cur = unk_20; cur; cur = cur->unk_10) {
+    for (cls0805bcc4 *cur = sortedOutputLocks; cur; cur = cur->nextSortedOutput) {
         int rl = lk->unk_30;
         int crl = cur->unk_30;
         if ((short)rl == (short)crl && (short)rl >= 0) {
@@ -473,21 +473,21 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
         prev = cur;
     }
     if (prev) {
-        lk->unk_10 = prev->unk_10;
-        prev->unk_10 = lk;
+        lk->nextSortedOutput = prev->nextSortedOutput;
+        prev->nextSortedOutput = lk;
     } else {
-        lk->unk_10 = unk_20;
-        unk_20 = lk;
+        lk->nextSortedOutput = sortedOutputLocks;
+        sortedOutputLocks = lk;
     }
     return true;
 }
 
 bool cls0805c244::addInputLock(cls0805bcc4 *in)
 {
-    cls0805bcc4 *out = in->unk_0c;
+    cls0805bcc4 *out = in->parentOrChildren;
     out->unk_22--;
-    in->unk_08 = out->unk_0c;
-    out->unk_0c = in;
+    in->nextSibling = out->parentOrChildren;
+    out->parentOrChildren = in;
     if (!out->calcStats(0)) {
         reportError("AddInputLock failed to calcStats\n");
         exitAfterCleanup(-1);
@@ -498,10 +498,10 @@ bool cls0805c244::addInputLock(cls0805bcc4 *in)
 
 bool cls0805c244::undoInputLock(cls0805bcc4 *in)
 {
-    cls0805bcc4 *out = in->unk_0c;
+    cls0805bcc4 *out = in->parentOrChildren;
     out->unk_22++;
-    out->unk_0c = in->unk_08;
-    in->unk_08 = 0;
+    out->parentOrChildren = in->nextSibling;
+    in->nextSibling = 0;
     if (!out->calcStats(0)) {
         reportError("UndoInputLock failed to calcStats\n");
         exitAfterCleanup(-1);
@@ -514,9 +514,9 @@ bool cls0805c244::undoInputLock(cls0805bcc4 *in)
 
 bool cls0805c244::undoOutputLock(cls0805bcc4 *lk)
 {
-    unk_26++;
-    unk_1c = lk->unk_08;
-    lk->unk_08 = 0;
+    remainingLockCount++;
+    outputLocks = lk->nextSibling;
+    lk->nextSibling = 0;
     if (!lk->calcStats(0)) {
         reportError("UndoOutputLock failed to calcStats\n");
         checkCounts();
@@ -525,28 +525,28 @@ bool cls0805c244::undoOutputLock(cls0805bcc4 *lk)
     }
     lk->unk_2c = 0;
     cls0805bcc4 *prev = 0;
-    cls0805bcc4 *cur = unk_20;
+    cls0805bcc4 *cur = sortedOutputLocks;
     while (cur && cur != lk) {
         prev = cur;
-        cur = cur->unk_10;
+        cur = cur->nextSortedOutput;
     }
     if (!cur) {
         reportError("couldn't find lock on the sorted list\n");
         exitAfterCleanup(-1);
     }
     if (prev)
-        prev->unk_10 = lk->unk_10;
+        prev->nextSortedOutput = lk->nextSortedOutput;
     else
-        unk_20 = lk->unk_10;
-    lk->unk_10 = 0;
+        sortedOutputLocks = lk->nextSortedOutput;
+    lk->nextSortedOutput = 0;
     lk->resetStats();
     return true;
 }
 
-int cls0805c244::func_0805c938(int n)
+int cls0805c244::maxConstraintOfFirstOutputs(int n)
 {
     int best = 0;
-    for (cls0805bcc4 *lk = unk_20; lk; lk = lk->unk_10) {
+    for (cls0805bcc4 *lk = sortedOutputLocks; lk; lk = lk->nextSortedOutput) {
         n--;
         if (lk->unk_42 > best)
             best = lk->unk_42;
@@ -560,9 +560,9 @@ int cls0805c244::func_0805c938(int n)
 
 static inline Operand *lockOperand(cls0805bcc4 *lk)
 {
-    if (lk->unk_2d == 1) {
-        int opnd = lk->unk_29;
-        Instr *instr = (Instr *)lk->unk_24;
+    if (lk->ownerType == 1) {
+        int opnd = lk->ownerOperandIndex;
+        Instr *instr = (Instr *)lk->ownerPointer;
         return &instr->operands[opnd];
     }
     return 0;
@@ -577,7 +577,7 @@ bool cls0805bcc4::isOk(int type, bool inserted)
 {
     int loopSize = g_080b336c;
     bool ok = true;
-    regUse *rf = unk_2d == 2 ? (regUse *)unk_24 : 0;
+    regUse *rf = ownerType == 2 ? (regUse *)ownerPointer : 0;
     Operand *op = lockOperand(this);
 
     if (rf) {
@@ -589,7 +589,7 @@ bool cls0805bcc4::isOk(int type, bool inserted)
         reportError("rLock::isOk() - neither op nor regref set\n");
         ok = false;
     }
-    if (type >= 0 && unk_14 != type) {
+    if (type >= 0 && lockDirection != type) {
         reportError("isOk - unexpected type for is ok\n");
         ok = false;
     }
@@ -597,7 +597,7 @@ bool cls0805bcc4::isOk(int type, bool inserted)
         reportError("isOK - insert state was unexpected!\n");
         ok = false;
     }
-    switch (unk_14) {
+    switch (lockDirection) {
     case 1:
         if (!getParent()) {
             reportError("input lock has no parent\n");
@@ -605,13 +605,13 @@ bool cls0805bcc4::isOk(int type, bool inserted)
         }
         break;
     case 2: {
-        if (!inserted && unk_20 != unk_22) {
+        if (!inserted && referenceCount != unk_22) {
             reportError("output lock - ref count mismatch\n");
             return false;
         }
-        regUse *orf = unk_2d == 2 ? (regUse *)unk_24 : 0;
+        regUse *orf = ownerType == 2 ? (regUse *)ownerPointer : 0;
         if (orf && loopSize) {
-            if (unk_18 > 1) {
+            if (issueLatency > 1) {
                 reportError("external input had latency for loop\n");
                 ok = false;
             }
@@ -621,7 +621,7 @@ bool cls0805bcc4::isOk(int type, bool inserted)
             }
         }
         if (loopSize) {
-            if (unk_18 > loopSize && unk_15 && unk_20) {
+            if (issueLatency > loopSize && unk_15 && referenceCount) {
                 reportError("latency bigger than loop!\n");
                 ok = false;
             }
@@ -647,7 +647,7 @@ bool cls0805bcc4::isOk(int type, bool inserted)
 
 static inline bool ownsLock(cls0805c244 *list, cls0805bcc4 *lk)
 {
-    if (lk->unk_04 == list)
+    if (lk->ownerLockList == list)
         return true;
     return false;
 }
@@ -659,10 +659,10 @@ bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
         exitAfterCleanup(-1);
     }
     bool ok = lk->isOk(type, inserted);
-    if (lk->unk_14 == 0) {
+    if (lk->lockDirection == 0) {
         cls0805bcc4 *parent = lk->getParent();
         cls0805bcc4 *p;
-        for (p = unk_1c; p; p = p->unk_08)
+        for (p = outputLocks; p; p = p->nextSibling)
             if (p == parent)
                 break;
         if (!p) {
@@ -675,13 +675,13 @@ bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
         exitAfterCleanup(-1);
         return false;
     }
-    if (lk->unk_14 == 2) {
-        if (unk_24 <= 0) {
+    if (lk->lockDirection == 2) {
+        if (outputLockCount <= 0) {
             reportError("isOk - output, but no outputs! - <=0 output locks!\n");
             ok = false;
         }
         int lim = (inserted == false) - 1;
-        if (unk_26 <= lim) {
+        if (remainingLockCount <= lim) {
             reportError("isOk - output, but no outputs! - <=0 output locks to go!\n");
             ok = false;
         }
@@ -703,20 +703,20 @@ short cls0805bcc4::func_0805ccd4()
 
 static inline bool hasPartFlag(cls0805bcc4 *lk)
 {
-    return lk->unk_16 && lk->unk_04->unk_28;
+    return lk->unk_16 && lk->ownerLockList->unk_28;
 }
 
 bool cls0805bcc4::calcStats(Instr *skip)
 {
     int lsz = g_080b336c;
-    cls0805c244 *ll = unk_04;
+    cls0805c244 *ll = ownerLockList;
     unk_2e = 0;
     int maxT = -30000;
     int minFree = 30000;
     int minUse = 30000;
-    for (cls0805bcc4 *c = unk_0c; c; c = c->unk_08) {
+    for (cls0805bcc4 *c = parentOrChildren; c; c = c->nextSibling) {
         if (skip) {
-            Instr *o = c->unk_2d == 1 ? (Instr *)c->unk_24 : 0;
+            Instr *o = c->ownerType == 1 ? (Instr *)c->ownerPointer : 0;
             if (o == skip)
                 continue;
         }
@@ -727,7 +727,7 @@ bool cls0805bcc4::calcStats(Instr *skip)
             maxT = t;
         if (t < minUse)
             minUse = t;
-        t -= c->unk_18;
+        t -= c->issueLatency;
         if (t < minFree)
             minFree = t;
         unk_2e++;
@@ -748,26 +748,26 @@ bool cls0805bcc4::calcStats(Instr *skip)
                 if (unk_15)
                     unk_36 = unk_32 + 1;
                 else
-                    unk_36 = unk_32 + unk_18;
-                unk_3a = unk_32 + unk_18;
+                    unk_36 = unk_32 + issueLatency;
+                unk_3a = unk_32 + issueLatency;
             }
         } else if (isRegLock(this)) {
-            if (unk_18 == 0) {
+            if (issueLatency == 0) {
                 unk_36 = 0;
                 unk_3a = 0;
             } else {
                 if (unk_15)
                     unk_36 = 0;
                 else
-                    unk_36 = unk_32 + unk_18;
-                unk_3a = unk_32 + unk_18;
+                    unk_36 = unk_32 + issueLatency;
+                unk_3a = unk_32 + issueLatency;
             }
         } else {
             if (unk_15)
                 unk_36 = unk_32 + 1;
             else
-                unk_36 = unk_32 + unk_18;
-            unk_3a = unk_32 + unk_18;
+                unk_36 = unk_32 + issueLatency;
+            unk_3a = unk_32 + issueLatency;
         }
         if (unk_3e < unk_3a) {
             if (g_080de284) {
@@ -780,22 +780,22 @@ bool cls0805bcc4::calcStats(Instr *skip)
         }
     } else {
         if (isRegLock(this)) {
-            if (unk_18 == 0) {
+            if (issueLatency == 0) {
                 unk_36 = 0;
                 unk_3a = 0;
             } else {
                 if (unk_15)
                     unk_36 = 0;
                 else
-                    unk_36 = unk_32 + unk_18;
-                unk_3a = unk_32 + unk_18;
+                    unk_36 = unk_32 + issueLatency;
+                unk_3a = unk_32 + issueLatency;
             }
         } else {
             if (unk_15)
                 unk_36 = unk_32 + 1;
             else
-                unk_36 = unk_32 + unk_18;
-            unk_3a = unk_32 + unk_18;
+                unk_36 = unk_32 + issueLatency;
+            unk_3a = unk_32 + issueLatency;
         }
         unk_3e = unk_36;
         unk_42 = unk_36;
@@ -805,9 +805,9 @@ bool cls0805bcc4::calcStats(Instr *skip)
     unk_38 = shift + unk_3a;
     unk_3c = shift + unk_3e;
     unk_40 = shift + unk_42;
-    if (unk_20 != 0 || hasPartFlag(this)) {
+    if (referenceCount != 0 || hasPartFlag(this)) {
         unk_4e = unk_42;
-        if (!lsz || unk_2d != 2) {
+        if (!lsz || ownerType != 2) {
             int hi, lo;
             int a = unk_48, b = unk_4a;
             int len = unk_46;
@@ -830,7 +830,7 @@ bool cls0805bcc4::calcStats(Instr *skip)
 }
 
 
-void cls0805bcc4::func_0805d020()
+void cls0805bcc4::resetCalculatedStats()
 {
     resetStats();
 }
@@ -854,7 +854,7 @@ void cls0805bcc4::setFrom(InstructionPosition *r)
     exitAfterCleanup(-1);
 }
 
-short cls0805bcc4::func_0805d0dc()
+short cls0805bcc4::getCurrentLoopIteration()
 {
     if (g_080b336c)
         return unk_32 / g_080b336c;
@@ -867,7 +867,7 @@ bool cls0805c244::moveOutputLock(cls0805bcc4 *lk)
         reportError("moveoutputlock - null pointer\n");
         return false;
     }
-    if (lk->unk_14 != 2) {
+    if (lk->lockDirection != 2) {
         reportError("moveoutputlock - bad type\n");
         return false;
     }
@@ -881,23 +881,23 @@ bool cls0805c244::moveOutputLock(cls0805bcc4 *lk)
         checkCounts();
         exitAfterCleanup(-1);
     }
-    cls0805bcc4 *cur = unk_20;
+    cls0805bcc4 *cur = sortedOutputLocks;
     cls0805bcc4 *prev = 0;
-    unk_20 = 0;
+    sortedOutputLocks = 0;
     while (cur) {
-        cls0805bcc4 *next = cur->unk_10;
-        cur->unk_10 = 0;
+        cls0805bcc4 *next = cur->nextSortedOutput;
+        cur->nextSortedOutput = 0;
         if (cur != lk) {
-            if (!unk_20)
-                unk_20 = cur;
+            if (!sortedOutputLocks)
+                sortedOutputLocks = cur;
             else
-                prev->unk_10 = cur;
+                prev->nextSortedOutput = cur;
             prev = cur;
         }
         cur = next;
     }
     prev = 0;
-    for (cur = unk_20; cur; cur = cur->unk_10) {
+    for (cur = sortedOutputLocks; cur; cur = cur->nextSortedOutput) {
         int rl = lk->unk_30;
         int crl = cur->unk_30;
         if ((short)rl == (short)crl) {
@@ -912,18 +912,18 @@ bool cls0805c244::moveOutputLock(cls0805bcc4 *lk)
         prev = cur;
     }
     if (prev) {
-        lk->unk_10 = prev->unk_10;
-        prev->unk_10 = lk;
+        lk->nextSortedOutput = prev->nextSortedOutput;
+        prev->nextSortedOutput = lk;
     } else {
-        lk->unk_10 = unk_20;
-        unk_20 = lk;
+        lk->nextSortedOutput = sortedOutputLocks;
+        sortedOutputLocks = lk;
     }
     return true;
 }
 
 bool cls0805c244::moveInputLock(cls0805bcc4 *in)
 {
-    if (!in->unk_0c->calcStats(0)) {
+    if (!in->parentOrChildren->calcStats(0)) {
         reportError("moveinputlock failed to calcStats\n");
         exitAfterCleanup(-1);
     }
@@ -943,26 +943,26 @@ bool cls0805c244::addExtOutput(cls0805bcc4 *lk, bool flag)
         reportError("lock is already external output\n");
         return false;
     }
-    if (unk_2a > 3) {
+    if (externalOutputCount > 3) {
         reportError("too many extern outputs\n");
         return false;
     }
-    if (unk_2a && singleExtOutputMode()) {
+    if (externalOutputCount && singleExtOutputMode()) {
         if (flag)
             return true;
-        reportError("more than one xo for rlock uta..count=%d\n", unk_2a);
+        reportError("more than one xo for rlock uta..count=%d\n", externalOutputCount);
         checkCounts();
         return false;
     }
     unk_2b = flag;
-    unk_0c[unk_2a] = lk;
-    lk->unk_16 = ++unk_2a;
+    externalOutputLocks[externalOutputCount] = lk;
+    lk->unk_16 = ++externalOutputCount;
     return true;
 }
 
 static inline bool hasRegUseOwner(cls0805bcc4 *lk)
 {
-    if (lk->unk_2d == 2)
+    if (lk->ownerType == 2)
         return true;
     return false;
 }
@@ -970,19 +970,19 @@ static inline bool hasRegUseOwner(cls0805bcc4 *lk)
 Instr *cls0805c244::earliestExt()
 {
     Instr *res = 0;
-    cls0805bcc4 *lk = unk_20;
+    cls0805bcc4 *lk = sortedOutputLocks;
     if (lk) {
         if (hasRegUseOwner(lk)) {
             int best = 30000;
-            for (cls0805bcc4 *ch = lk->unk_0c; ch; ch = ch->unk_08) {
+            for (cls0805bcc4 *ch = lk->parentOrChildren; ch; ch = ch->nextSibling) {
                 if (ch->unk_19 != 2) {
-                    Instr *in = ch->unk_2d == 1 ? (Instr *)ch->unk_24 : 0;
+                    Instr *in = ch->ownerType == 1 ? (Instr *)ch->ownerPointer : 0;
                     if (!in) {
                         reportError("not get in for earliest ext\n");
                         exitAfterCleanup(-1);
                     }
                     if (in->position.unk_00 < best) {
-                        best = in->unk_1396;
+                        best = in->insertionSerial;
                         res = in;
                     }
                 }
@@ -992,14 +992,14 @@ Instr *cls0805c244::earliestExt()
     return res;
 }
 
-int cls0805c244::func_0805d3c4()
+int cls0805c244::countFlaggedOutputLocks()
 {
-    cls0805bcc4 *lk = unk_1c;
+    cls0805bcc4 *lk = outputLocks;
     int n = 0;
     while (lk) {
         if (lk->unk_22)
             n++;
-        lk = lk->unk_08;
+        lk = lk->nextSibling;
     }
     return n;
 }
@@ -1007,7 +1007,7 @@ int cls0805c244::func_0805d3c4()
 bool freeLockLists(cls0805c244 *p)
 {
     while (p) {
-        cls0805c244 *next = p->unk_08;
+        cls0805c244 *next = p->nextLockList;
         if (p)
             ::operator delete(p);
         p = next;
@@ -1017,8 +1017,8 @@ bool freeLockLists(cls0805c244 *p)
 
 cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part)
 {
-    for (; p; p = p->unk_08) {
-        if (p->unk_04 == reg && p->unk_02 == part) {
+    for (; p; p = p->nextLockList) {
+        if (p->registerEntry == reg && p->componentIndex == part) {
             if (reg->getPartPayload(part) && reg->getPartPayload(part) != (VclPtrWord)p) {
                 reportError("rg points to rll, but rll list not it\n");
                 exitAfterCleanup(-1);
@@ -1045,10 +1045,10 @@ const char *rlmtName(unsigned char t)
 
 const char *cls0805bcc4::regName()
 {
-    cls0805c244 *ll = unk_04;
+    cls0805c244 *ll = ownerLockList;
     if (!ll)
         return "NOT_ON_A_LOCKLIST";
-    RegPoolEntry *rg = ll->unk_04;
+    RegPoolEntry *rg = ll->registerEntry;
     if (!rg)
         return "RLL_HAS_NO_REG";
     return rg->registerName();
@@ -1056,11 +1056,11 @@ const char *cls0805bcc4::regName()
 
 bool cls0805c244::setRepReg(RegPoolEntry *rg)
 {
-    if (unk_04 && rg != unk_04) {
+    if (registerEntry && rg != registerEntry) {
         reportError("can't set representative reg - it's already set\n");
         return false;
     }
-    unk_04 = rg;
+    registerEntry = rg;
     return true;
 }
 

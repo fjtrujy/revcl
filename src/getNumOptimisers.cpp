@@ -242,10 +242,10 @@ bool doLoop(Program *p, int smart)
                             reportWarning("failed to assign reg size would be %d!\n", nt->getLoopSize());
                         else {
                             s->unk_04[i].unk_04 = s->getRecordedLogicalLength();
-                            s->unk_04[i].unk_08 = nt->unk_3c;
+                            s->unk_04[i].unk_08 = nt->mainLoopId;
                             s->unk_04[i].unk_0c = nt->getCondLid();
                             s->unk_04[i].unk_00 = nt->getLoopSize();
-                            if (best && best->unk_3c < nt->unk_3c) {
+                            if (best && best->mainLoopId < nt->mainLoopId) {
                                 delete nt;
                                 nt = 0;
                             }
@@ -315,11 +315,11 @@ bool doRawAndSynth(Program *p, int smart)
                 reportError("optTable was bad size\n");
                 return false;
             }
-            switch ((unsigned char)wt->unk_08) {
+            switch ((unsigned char)wt->allocationMode) {
             case 2:
                 if (!assignLocalRegisters(p, wt)) {
                     reportError("failed to assign reg for vsm table!\n");
-                    func_0806ed78(p, 0);
+                    dumpProgramStreamsAndRegisters(p, 0);
                     reportError("here is %s\n", s->streamName());
                     return false;
                 }
@@ -342,7 +342,7 @@ bool doRawAndSynth(Program *p, int smart)
                               s->streamName(), s->getAllocMode());
                 return false;
             }
-            wt->unk_08 = 3;
+            wt->allocationMode = 3;
         }
     }
     return true;

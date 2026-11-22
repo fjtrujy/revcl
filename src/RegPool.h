@@ -10,16 +10,16 @@
 
 struct rPart {
     short unk_00[0x24 / 2];
-    ol_s unk_24;        // current part
-    ol_s* unk_38;       // pending source
-    short unk_3c;       // age counter
-    short unk_3e;       // issueLock
+    ol_s currentLocation;
+    ol_s* pendingSource;
+    short cycleAge;
+    short issueLock;
     short unk_40;
     short unk_42;
     short unk_44;
     short unk_46;
-    VclPtrWord unk_48;
-    ol_s unk_4c[4];     // pending parts
+    VclPtrWord payload;
+    ol_s pendingLocations[4];
 
     bool flushPending();
     ol_s* acquireFreePendingLocation();
@@ -40,8 +40,8 @@ class RegWeb;
 class instStream;
 class workTable;
 struct RegPoolEntry {
-    short unk_00;       // min row (getMove)
-    short unk_02;       // max row (getMove)
+    short minimumMoveRow;
+    short maximumMoveRow;
     RegPool *ownerPool;    // owning pool
     RegPoolEntry* next;
     const char* registerName();
@@ -74,19 +74,19 @@ struct RegPoolEntry {
                           registerName(), i, partCount);
             exitAfterCleanup(-1);
         }
-        return &unk_44[i];
+        return &parts[i];
     }
 
-    RegPoolEntry* unk_0c;   // prev
-    int unk_10;
+    RegPoolEntry* previous;
+    int uniqueNameSerial;
     bool isVirtual;        // virtual
     bool allocatable;        // allocable
     bool unk_16;
     char unk_17;
     RegPoolEntry* assignedPhysicalRegister;   // allocated physical register
-    char unk_1c;        // nonblockid
+    char nonBlockId;
     char unk_1d[3];
-    Instr* unk_20;      // move instruction
+    Instr* moveInstruction;
     int registerClass;         // register class
     int partCount;         // slot count (nparts)
     bool unk_2c;
@@ -96,9 +96,9 @@ struct RegPoolEntry {
     unsigned char usedSlotMask;   // used slot mask
     short unk_36;
     Instr *throughputWriter;          // previous thruput writer
-    int unk_3c;             // ttab size (nassign cost)
-    RegPoolEntry *unk_40;   // next in nassign todo list
-    rPart unk_44[4];
+    int assignmentCostTableSize;
+    RegPoolEntry *nextPendingAssignment;
+    rPart parts[4];
     RegWeb *registerWeb;    // register web
     mList nameAliases;
 

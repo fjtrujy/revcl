@@ -58,8 +58,8 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             reg = registerOperand(op, 1);
             if (reg) {
                 for (int part = 0; part != reg->partCount; part++)
-                    if ((op->unk_07 >> part) & 1) {
-                        rPart *rp = &reg->unk_44[part];
+                    if ((op->componentMask >> part) & 1) {
+                        rPart *rp = &reg->parts[part];
                         if (rp->unk_00[4] < 0) {
                             if (uta)
                                 rp->unk_00[6] = -1;
@@ -74,17 +74,17 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             }
             if (reg && op->unk_0b) {
                 for (int part = 0; part != reg->partCount; part++)
-                    if ((op->unk_07 >> part) & 1) {
-                        rPart *rp = &reg->unk_44[part];
+                    if ((op->componentMask >> part) & 1) {
+                        rPart *rp = &reg->parts[part];
                         int lat;
-                        if (rp->unk_38 && (lat = rp->unk_38->unk_12) != 0) {
+                        if (rp->pendingSource && (lat = rp->pendingSource->unk_12) != 0) {
                             ol_s tmp;
                             tmp.init(in, o, part, false);
-                            if (commit && !p->proc.stalls.addStall(rp->unk_38, &tmp, 0, lat)) {
+                            if (commit && !p->proc.stalls.addStall(rp->pendingSource, &tmp, 0, lat)) {
                                 reportError("failed to add an internal latency stall\n");
                                 return -1;
                             }
-                            if (op->unk_29) {
+                            if (op->additionalLatency) {
                                 reportError("vcl detected an ialu op too close to a dependent conditional branch. target behaviour isn't guaranteed\n");
                                 in->leDump();
                                 return -1;
@@ -96,7 +96,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             }
             reg = registerOperand(op, 2);
             if (reg) {
-                if (op->unk_07) {
+                if (op->componentMask) {
                     if (reg->unk_2c) {
                         if (commit) {
                             if (in->previousThroughputWriter) {
@@ -113,19 +113,19 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                     reg->unk_36++;
                 }
                 for (int part = 0; part != reg->partCount; part++) {
-                    if ((op->unk_07 >> part) & 1) {
-                        rPart *rp = &reg->unk_44[part];
-                        if (rp->unk_3e) {
+                    if ((op->componentMask >> part) & 1) {
+                        rPart *rp = &reg->parts[part];
+                        if (rp->issueLock) {
                             ol_s tmp;
                             tmp.init(in, o, part, false);
                             if (commit) {
-                                int issueLock = rp->unk_3e;
-                                if (!p->proc.stalls.addStall(rp->unk_38, &tmp, 1, issueLock)) {
+                                int issueLock = rp->issueLock;
+                                if (!p->proc.stalls.addStall(rp->pendingSource, &tmp, 1, issueLock)) {
                                     reportError("failed to add an internal thruput stall\n");
                                     return -1;
                                 }
                             }
-                            maxThru = rp->unk_3e;
+                            maxThru = rp->issueLock;
                         }
                     }
                 }
@@ -168,25 +168,25 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             reg = registerOperand(op, 1);
             if (reg) {
                 for (int part = 0; part != reg->partCount; part++) {
-                    if ((op->unk_07 >> part) & 1) {
-                        rPart *rp = &reg->unk_44[part];
-                        ol_s *setter = &rp->unk_24;
-                        Instr *src = setter->unk_04;
+                    if ((op->componentMask >> part) & 1) {
+                        rPart *rp = &reg->parts[part];
+                        ol_s *setter = &rp->currentLocation;
+                        Instr *src = setter->instruction;
                         if (!src) {
-                            op->unk_27 |= 1 << part;
+                            op->externalPartMask |= 1 << part;
                             continue;
                         }
-                        Operand *so = func_0805802c(setter);
+                        Operand *so = operandAtLocation(setter);
                         if (!so || !isRegisterOperand(so, 2)) {
                             reportError("emuUTA: operand that wasn't output set input\n");
                             return -1;
                         }
-                        if (!((so->unk_07 >> part) & 1)) {
+                        if (!((so->componentMask >> part) & 1)) {
                             reportError("we used something not really set by setter\n");
                             return -1;
                         }
                         if (commit) {
-                            int sourceOp = rp->unk_24.unk_10;
+                            int sourceOp = rp->currentLocation.operandIndex;
                             if (!link_oParts(src, sourceOp, part, in, o, part)) {
                                 reportError("failed to cross link operands\n");
                                 return -1;
@@ -205,9 +205,9 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             reg = registerOperand(op, 2);
             if (reg) {
                 for (int part = 0; part != reg->partCount; part++) {
-                    if ((op->unk_07 >> part) & 1) {
-                        rPart *rp = &reg->unk_44[part];
-                        if (rp->unk_3e) {
+                    if ((op->componentMask >> part) & 1) {
+                        rPart *rp = &reg->parts[part];
+                        if (rp->issueLock) {
                             reportError("inconsistency detected.. issuelock still non-zero\n");
                             return -1;
                         }
@@ -216,11 +216,11 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                                 reportError("failed to flush pending outputs before a blocking output\n");
                                 return -1;
                             }
-                            ol_s *ol = &rp->unk_24;
+                            ol_s *ol = &rp->currentLocation;
                             ol->init(in, o, part, false);
-                            ol->unk_12 = clampByte(op->unk_0a);
-                            rp->unk_38 = ol;
-                            rp->unk_3c = 0;
+                            ol->unk_12 = clampByte(op->outputLatency);
+                            rp->pendingSource = ol;
+                            rp->cycleAge = 0;
                         } else {
                             ol_s *ol = rp->acquireFreePendingLocation();
                             if (!ol) {
@@ -228,15 +228,15 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                                 return -1;
                             }
                             ol->init(in, o, part, false);
-                            ol->unk_12 = clampByte(op->unk_0a);
-                            rp->unk_38 = ol;
+                            ol->unk_12 = clampByte(op->outputLatency);
+                            rp->pendingSource = ol;
                         }
-                        rp->unk_00[1] += op->unk_0a;
-                        if (op->unk_0a > rp->unk_00[3])
-                            rp->unk_00[3] = op->unk_0a;
+                        rp->unk_00[1] += op->outputLatency;
+                        if (op->outputLatency > rp->unk_00[3])
+                            rp->unk_00[3] = op->outputLatency;
                         int tp = 1;
                         if (reg->unk_2c)
-                            tp = in->unk_13cf;
+                            tp = in->baseIssueSpacing;
                         if (tp > rp->unk_00[2])
                             rp->unk_00[2] = tp;
                         if (rp->unk_00[9] < 0) {
@@ -253,10 +253,10 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             rp->unk_00[14] = -1;
                         else
                             rp->unk_00[14] = p->unk_80;
-                        rp->unk_00[16] = op->unk_0a;
+                        rp->unk_00[16] = op->outputLatency;
                         rp->unk_00[15] = tp;
                         rp->unk_00[0] += tp;
-                        rp->unk_3e = tp;
+                        rp->issueLock = tp;
                     }
                 }
             }

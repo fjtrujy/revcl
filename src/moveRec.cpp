@@ -40,7 +40,7 @@ Instr *getMove(int type, int)
             reportError("getFreeMove: m_Reg not set\n");
             exitAfterCleanup(-1);
         }
-        in->operands[0].unk_18 = mr->moveRegister;
+        in->operands[0].assignedRegister = mr->moveRegister;
         mr->moveRegister->moveReset();
         for (int i = 0; i != mr->moveRegister->partCount; i++) {
             RegisterPartLockList *l = &mr->partLocks[i];
@@ -48,7 +48,7 @@ Instr *getMove(int type, int)
                 reportError(moveRecNullRllError);
                 abortAfterError();
             }
-            l->unk_08 = 0;
+            l->nextLockList = 0;
             l->reset();
             l->unk_29 = 0;
             mr->moveRegister->setPartPayload(i, (VclPtrWord)l);
@@ -92,9 +92,9 @@ Instr *getMove(int type, int)
         exitAfterCleanup(-1);
     }
     int serial = g_080b33a8++;
-    in->unk_13e0 = serial;
-    in->unk_142c = opc;
-    in->unk_142e = 0;
+    in->instructionSerial = serial;
+    in->abstractMoveOpcode = opc;
+    in->concreteMoveOpcode = 0;
     RegPoolEntry *reg = rp->getMoveReg(in);
     if (!reg) {
         reportError("failed to get move reg\n");
@@ -106,14 +106,14 @@ Instr *getMove(int type, int)
         reportError("failed to get move output!\n");
         exitAfterCleanup(1);
     }
-    op->unk_18 = reg;
+    op->assignedRegister = reg;
     if (in->operandCount != 2) {
         reportError(moveRecSidefxError);
         exitAfterCleanup(-1);
     }
     for (int i = 0; i != reg->partCount; i++) {
         RegisterPartLockList *l = &mr->partLocks[i];
-        l->unk_08 = 0;
+        l->nextLockList = 0;
         l->reset();
         l->unk_29 = 0;
         reg->setPartPayload(i, (VclPtrWord)l);
@@ -142,7 +142,7 @@ bool addFreeMove(Instr *in)
     reg->moveReset();
     for (int i = 0; i != reg->partCount; i++) {
         RegisterPartLockList *l = &mr->partLocks[i];
-        l->unk_08 = 0;
+        l->nextLockList = 0;
         l->reset();
     }
     if (in != mr->instruction) {
@@ -156,15 +156,15 @@ bool addFreeMove(Instr *in)
     in->unk_30 = 0;
     in->position.clearInstructionPosition();
     in->resetOptimizationState();
-    if (!in->unk_142c) {
+    if (!in->abstractMoveOpcode) {
         reportError(moveRecBaseMuidError);
         return false;
     }
-    iInfo *ii = getOpcodeInfoById(in->unk_142c);
-    in->unk_142e = 0;
+    iInfo *ii = getOpcodeInfoById(in->abstractMoveOpcode);
+    in->concreteMoveOpcode = 0;
     in->opcodeInfo = ii;
-    in->unk_138c = ii->unk_0e;
-    in->unk_138d = ii->unk_10;
+    in->permittedPipelineMask = ii->unk_0e;
+    in->opcodeResourceMask = ii->unk_10;
     mr->nextFree = (moveRec *)g_080de714[mr->moveType];
     g_080de714[mr->moveType] = (VclPtrWord)mr;
     return true;
@@ -196,7 +196,7 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     case 0x44:
         if (in->hasLinkedOutputFrom(1))
             return false;
-        if (in->operands[2].unk_18->registerIndex != 0)
+        if (in->operands[2].assignedRegister->registerIndex != 0)
             return false;
         opc = 0xb4;
     setOps:
@@ -205,14 +205,14 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
         break;
     case 0x6c:
     case 0x6f:
-        if (in->operands[2].unk_18->registerIndex != 32)
+        if (in->operands[2].assignedRegister->registerIndex != 32)
             return false;
         opc = 0xb2;
         goto setOps;
     case 0x6d:
     case 0x6e:
     case 0x70:
-        if (!in->operands[2].unk_1c.getUInt(&v))
+        if (!in->operands[2].immediateValue.getUInt(&v))
             return false;
         if (v)
             return false;
@@ -223,8 +223,8 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     default:
         return false;
     }
-    RegPoolEntry *s = in->operands[srcOp].unk_18;
-    RegPoolEntry *d = in->operands[dstOp].unk_18;
+    RegPoolEntry *s = in->operands[srcOp].assignedRegister;
+    RegPoolEntry *d = in->operands[dstOp].assignedRegister;
     if (!s || !d) {
         reportError(moveDetectNoRegError);
         exitAfterCleanup(-1);
@@ -240,11 +240,11 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
         exitAfterCleanup(-1);
         return false;
     }
-    if (in->operands[srcOp].unk_07 != in->operands[dstOp].unk_07) {
+    if (in->operands[srcOp].componentMask != in->operands[dstOp].componentMask) {
         reportError("bad mod bits for a move\n");
         exitAfterCleanup(-1);
     }
-    mask = in->operands[srcOp].unk_07;
+    mask = in->operands[srcOp].componentMask;
     if (!mask) {
         reportWarning("modbits 0 for move..avoiding\n");
         return false;
@@ -254,28 +254,28 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
 
 bool resolveMovePipe(workTable *wt, Instr *mv, int pipe)
 {
-    if (mv->unk_142c == 0xb2)
-        mv->unk_142e = 0xb3;
-    else if (mv->unk_142c == 0xb4)
-        mv->unk_142e = pipe ? 0xb5 : 0xb6;
+    if (mv->abstractMoveOpcode == 0xb2)
+        mv->concreteMoveOpcode = 0xb3;
+    else if (mv->abstractMoveOpcode == 0xb4)
+        mv->concreteMoveOpcode = pipe ? 0xb5 : 0xb6;
     else {
         reportError("resolve move: bad baseMuid\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (mv->unk_138c == 3)
+    if (mv->permittedPipelineMask == 3)
         wt->vectorMoveCount--;
-    else if (mv->unk_138c & 1)
+    else if (mv->permittedPipelineMask & 1)
         wt->oddPipeMoveCount--;
     else
         wt->evenPipeMoveCount--;
-    iInfo *ii = getOpcodeInfoById(mv->unk_142e);
+    iInfo *ii = getOpcodeInfoById(mv->concreteMoveOpcode);
     mv->opcodeInfo = ii;
-    mv->unk_138c = ii->unk_0e;
-    mv->unk_138d = ii->unk_10;
-    if (mv->unk_138c == 3)
+    mv->permittedPipelineMask = ii->unk_0e;
+    mv->opcodeResourceMask = ii->unk_10;
+    if (mv->permittedPipelineMask == 3)
         wt->vectorMoveCount++;
-    else if (mv->unk_138c & 1)
+    else if (mv->permittedPipelineMask & 1)
         wt->oddPipeMoveCount++;
     else
         wt->evenPipeMoveCount++;
@@ -284,20 +284,20 @@ bool resolveMovePipe(workTable *wt, Instr *mv, int pipe)
 
 int unresolveMove(Block *blk, Instr *mv)
 {
-    iInfo *ii = getOpcodeInfoById(mv->unk_142c);
-    if (mv->unk_138c == 3)
+    iInfo *ii = getOpcodeInfoById(mv->abstractMoveOpcode);
+    if (mv->permittedPipelineMask == 3)
         blk->vectorMoveCount--;
-    else if (mv->unk_138c & 1)
+    else if (mv->permittedPipelineMask & 1)
         blk->oddPipeMoveCount--;
     else
         blk->evenPipeMoveCount--;
-    mv->unk_142e = 0;
+    mv->concreteMoveOpcode = 0;
     mv->opcodeInfo = ii;
-    mv->unk_138c = ii->unk_0e;
-    mv->unk_138d = ii->unk_10;
-    if (mv->unk_138c == 3)
+    mv->permittedPipelineMask = ii->unk_0e;
+    mv->opcodeResourceMask = ii->unk_10;
+    if (mv->permittedPipelineMask == 3)
         blk->vectorMoveCount++;
-    else if (mv->unk_138c & 1)
+    else if (mv->permittedPipelineMask & 1)
         blk->oddPipeMoveCount++;
     else
         blk->evenPipeMoveCount++;
@@ -306,9 +306,9 @@ int unresolveMove(Block *blk, Instr *mv)
 
 void adjustMoveCount(Block *blk, Instr *mv, int n)
 {
-    if (mv->unk_138c == 3)
+    if (mv->permittedPipelineMask == 3)
         blk->vectorMoveCount += n;
-    else if (mv->unk_138c & 1)
+    else if (mv->permittedPipelineMask & 1)
         blk->oddPipeMoveCount += n;
     else
         blk->evenPipeMoveCount += n;

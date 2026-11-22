@@ -13,13 +13,13 @@ char *dupString(const char *s);
 
 static inline void dumpEmitInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 bool func_08087860(void *, Instr *in)
 {
     Operand *op = &in->operands[1];
-    op->unk_07 = (((op->unk_07 & 8) >> 3) | (op->unk_07 << 1)) & 0xf;
+    op->componentMask = (((op->componentMask & 8) >> 3) | (op->componentMask << 1)) & 0xf;
     return 1;
 }
 
@@ -29,10 +29,10 @@ bool efu_Hook(void *p, Instr *in)
     Operand *op = &in->operands[1];
     switch (info->efuMaskType) {
     case 1: break;
-    case 2: op->unk_07 = 3; break;
-    case 3: op->unk_07 = 5; break;
-    case 4: op->unk_07 = 7; break;
-    case 5: op->unk_07 = 15; break;
+    case 2: op->componentMask = 3; break;
+    case 3: op->componentMask = 5; break;
+    case 4: op->componentMask = 7; break;
+    case 5: op->componentMask = 15; break;
     default:
         reportError("unknown EFU mod bits type during efu_Hook at build\n");
         return 0;
@@ -59,8 +59,8 @@ bool wr2w_Hook(void *p, Instr *in)
         return 0;
     }
     in->opcodeInfo = n;
-    in->operands[1].unk_04 = 0x1f;
-    in->operands[1].unk_1c.setInt(0);
+    in->operands[1].operandKind = 0x1f;
+    in->operands[1].immediateValue.setInt(0);
     return 1;
 }
 
@@ -73,7 +73,7 @@ char *emitClip(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         *p++ = ' ';
     for (int i = 0; i != in->operandCount; i++) {
         Operand *op = &in->operands[i];
-        if (op->unk_08)
+        if (op->isImplicit)
             continue;
         if (comma)
             *p++ = ',';
@@ -95,16 +95,16 @@ char *vmove_Emit(char *buf, Instr *in, bool upper, char *mods, bool b, int)
     char *p;
     if (!in)
         return 0;
-    if (!in->unk_142c) {
+    if (!in->abstractMoveOpcode) {
         reportError("baseMuid not set in vmove_Emit\n");
         return 0;
     }
-    if (!in->unk_142e) {
+    if (!in->concreteMoveOpcode) {
         reportError("trying to emit an abstract move\n");
         return 0;
     }
     p = buf;
-    switch (in->unk_142e) {
+    switch (in->concreteMoveOpcode) {
     case 0xb3:
         p += formatIntoBuffer(buf, "iaddiu");
         for (int n = p - buf; n < 14; n++)
@@ -178,14 +178,14 @@ bool semSynth(void *p, Instr *in)
     const char *s = info->mnemonic;
     while (*s)
         *d++ = *s++;
-    if (in->operands[0].unk_04 == 9) {
+    if (in->operands[0].operandKind == 9) {
         if (d[-1] != 'a' && d[-1] != 'A') {
             *d++ = 'a';
-            in->operands[0].unk_0a = 1;
+            in->operands[0].outputLatency = 1;
         }
     } else
-        in->operands[0].unk_0a = 4;
-    char k = in->operands[2].unk_04;
+        in->operands[0].outputLatency = 4;
+    char k = in->operands[2].operandKind;
     if (k == 4) {
         in->operands[2].unk_0b = 1;
         *d++ = 'i';
@@ -195,7 +195,7 @@ bool semSynth(void *p, Instr *in)
         in->operands[2].unk_0b = 0;
     }
     if (k == 3) {
-        unsigned char m = in->operands[2].unk_07;
+        unsigned char m = in->operands[2].componentMask;
         int n = 0;
         if (m == 1) { *d++ = 'x'; n++; }
         if (m == 2) { *d++ = 'y'; n++; }

@@ -33,8 +33,8 @@ bool Prune(Program *p);
 bool globalPrune(Program *p);
 bool func_08069324(Program *p, bool init);
 bool explodeRaw(Program *p);
-void func_0806ed78(Program *p, int a);
-bool func_0806f0e8(Program *p);
+void dumpProgramStreamsAndRegisters(Program *p, int a);
+bool patchAllStreamLatencies(Program *p);
 char *emitProgram(Program *p, char *buf, int comments);
 char *emitLabels(Program *p, char *buf);
 bool loadStalls(Program *p);
@@ -287,7 +287,7 @@ int main(int argc, char **argv)
         exitAfterCleanup(-1);
     }
     flow.proc.mpgTargetAddress = mValue;
-    if (!flow.func_0806efc4(&parser, true, newSyntax)) {
+    if (!flow.decodeAndSplitStreams(&parser, true, newSyntax)) {
         reportError("failed to build flow from parser!\n");
         exitAfterCleanup(-1);
     }
@@ -303,7 +303,7 @@ int main(int argc, char **argv)
         reportError("generic dependency failed\n");
         exitAfterCleanup(-1);
     }
-    if (!func_0806f0e8(&flow)) {
+    if (!patchAllStreamLatencies(&flow)) {
         reportError("failed to patch some instruction latencies\n");
         exitAfterCleanup(-1);
     }
@@ -336,7 +336,7 @@ int main(int argc, char **argv)
     if (dumpRegs)
         dumpThru(&flow);
     if (!assignExtRegisters(&flow)) {
-        func_0806ed78(&flow, false);
+        dumpProgramStreamsAndRegisters(&flow, false);
         reportError("failed to assign externally visible stream registers\n");
         exitAfterCleanup(-1);
     }
@@ -427,7 +427,7 @@ int main(int argc, char **argv)
     }
     if (!func_08079fdc(&flow, smart, sizeReduce_080b3015)) {
         reportError("raw and Synth pass2 failed\n");
-        func_0806ed78(&flow, false);
+        dumpProgramStreamsAndRegisters(&flow, false);
         exitAfterCleanup(-1);
     }
     if (!func_08062a88(&flow)) {

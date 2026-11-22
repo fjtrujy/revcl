@@ -11,16 +11,16 @@ extern const char evalImmediateError[];
 extern const char parseImmediateWarn[];
 extern const char maddImmediateInputError[];
 
-const char *func_0806a33c(unsigned char t)
+const char *immediateTypeName(unsigned char t)
 {
-    return func_0804ca58(func_08070300(t));
+    return func_0804ca58(decodeImmediateCategory(t));
 }
 
 bool parseImmediate(const char *s, unsigned char type, mValue *v)
 {
     v->clear();
     g_080b3088 = (type == 0x40);
-    int t = func_08070300(type);
+    int t = decodeImmediateCategory(type);
     if (t == 4) {
         g_080b3088 = false;
         return v->setString(s);
@@ -56,7 +56,7 @@ fail:
 
 int maddImmediate(Operand *const op, mValue *v, int n)
 {
-    if (!op->unk_1c.isValid()) {
+    if (!op->immediateValue.isValid()) {
         reportError("madd immediate- ximm invalid\n");
         return -1;
     }
@@ -65,16 +65,16 @@ int maddImmediate(Operand *const op, mValue *v, int n)
         return 0;
     }
     int r = 0;
-    if (v->isInt() && op->unk_1c.isInt()) {
+    if (v->isInt() && op->immediateValue.isInt()) {
         int a = 0;
         int b = 0;
-        if (!op->unk_1c.getInt(&a) || !v->getInt(&b)) {
+        if (!op->immediateValue.getInt(&a) || !v->getInt(&b)) {
             reportError("failed to get integer values\n");
             return -1;
         }
-        op->unk_1c.setInt(a + b * n);
+        op->immediateValue.setInt(a + b * n);
     } else {
-        char *x = op->unk_1c.asChars();
+        char *x = op->immediateValue.asChars();
         char *y = v->asChars();
         if (!x || !y) {
             reportError("failed to get chars\n");
@@ -82,7 +82,7 @@ int maddImmediate(Operand *const op, mValue *v, int n)
         }
         char buf[1024];
         formatIntoBuffer(buf, "(%s)+((%s)*%d)", x, y, n);
-        op->unk_1c.setString(buf);
+        op->immediateValue.setString(buf);
         r = 2;
     }
     return r;

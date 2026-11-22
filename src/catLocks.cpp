@@ -34,13 +34,13 @@ static inline bool isAAInputLock(OperandLock *in)
 
 static inline bool sameLockOwner(OperandLock *a, OperandLock *b)
 {
-    return a->unk_24 == b->unk_24;
+    return a->ownerPointer == b->ownerPointer;
 }
 
 int cls0805c244::canMoveInputLock(OperandLock *in, short *pos, int slotBit)
 {
     int p = *pos;
-    OperandLock *lk = unk_1c;
+    OperandLock *lk = outputLocks;
     int lsz = g_080b336c;
     if (unk_29)
         return 0;
@@ -53,7 +53,7 @@ int cls0805c244::canMoveInputLock(OperandLock *in, short *pos, int slotBit)
         bool cat = false;
         int s, e, end;
         if (lsz && isRegLock(par)) {
-            OperandLock *x = unk_0c[0];
+            OperandLock *x = externalOutputLocks[0];
             if (x->unk_2c) {
                 if (sameLockOwner(in, x))
                     return 0;
@@ -68,21 +68,21 @@ int cls0805c244::canMoveInputLock(OperandLock *in, short *pos, int slotBit)
                 s = par->unk_36;
                 e = par->unk_3a;
                 end = par->unk_4e;
-                if (p - in->unk_18 < s)
-                    s = p - in->unk_18;
-                if (p - in->unk_18 < e)
-                    e = p - in->unk_18;
+                if (p - in->issueLatency < s)
+                    s = p - in->issueLatency;
+                if (p - in->issueLatency < e)
+                    e = p - in->issueLatency;
                 if (p > end)
                     end = p;
                 if (end - s >= lsz)
                     return 0x2000;
             } else {
-                s = p - in->unk_18;
+                s = p - in->issueLatency;
                 e = p;
                 end = p;
             }
         } else if (lsz && unk_28 && par->unk_16) {
-            if (!catLocks(unk_20, par, &s, &e, &end)) {
+            if (!catLocks(sortedOutputLocks, par, &s, &e, &end)) {
                 reportError("case B failed to cat xo\n");
                 checkCounts();
                 reportError("we are :\n");
@@ -96,7 +96,7 @@ int cls0805c244::canMoveInputLock(OperandLock *in, short *pos, int slotBit)
             end = par->unk_4e;
         }
 
-        if (p - in->unk_18 < e)
+        if (p - in->issueLatency < e)
             return 8;
         if (p <= end)
             return 0;
@@ -121,7 +121,7 @@ int cls0805c244::canMoveInputLock(OperandLock *in, short *pos, int slotBit)
                     return 0x10;
             } else if (lockRangesOverlap(ws, we, ls, le))
                 return 0x20;
-        } while ((lk = lk->unk_08) != 0);
+        } while ((lk = lk->nextSibling) != 0);
     }
     return 0;
 }
@@ -136,11 +136,11 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
     ret = checkOverlap(out, pos, &mp);
     if (ret)
         return ret;
-    int first = out->unk_15 ? p + 1 : out->unk_18 + p;
-    int last = out->unk_18 + p;
+    int first = out->unk_15 ? p + 1 : out->issueLatency + p;
+    int last = out->issueLatency + p;
 
     int lim;
-    if (out->unk_20) {
+    if (out->referenceCount) {
         int a = out->unk_48, b = out->unk_4a;
         int d = out->unk_46;
         int hi = a, lo = b;
@@ -167,14 +167,14 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
 
     bool ext = false;
     if (out->unk_16) {
-        for (OperandLock *lk = unk_1c; lk; lk = lk->unk_08) {
+        for (OperandLock *lk = outputLocks; lk; lk = lk->nextSibling) {
             if (lk == out)
                 continue;
             if (first <= lk->unk_4e)
                 return 0x1000;
         }
         if (lsz && unk_28) {
-            OperandLock *h = unk_20;
+            OperandLock *h = sortedOutputLocks;
             ext = true;
             if (h->unk_2e) {
                 int hs = h->unk_36 + lsz;
@@ -186,7 +186,7 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
             }
         }
     } else if (lsz && unk_28) {
-        OperandLock *h = unk_20;
+        OperandLock *h = sortedOutputLocks;
         if (h->unk_2e) {
             if (first < h->unk_4e)
                 return 0x4000;
@@ -199,10 +199,10 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
     int s = sz - p + first;
     int e = sz - p + lim;
     wrapRangeLocal(s, e);
-    for (OperandLock *lk = unk_1c; lk; lk = lk->unk_08) {
+    for (OperandLock *lk = outputLocks; lk; lk = lk->nextSibling) {
         if (lk == out)
             continue;
-        if (ext && lk->unk_2d == 2)
+        if (ext && lk->ownerType == 2)
             continue;
         int ls = lk->unk_34;
         int le = lk->unk_4c;
@@ -212,8 +212,8 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
     }
     if (ret)
         return ret;
-    if (unk_2a && !lsz && !out->unk_15) {
-        OperandLock *x = unk_0c[0];
+    if (externalOutputCount && !lsz && !out->unk_15) {
+        OperandLock *x = externalOutputLocks[0];
         if (!x) {
             reportError("external lock not set \n");
             abortAfterError();

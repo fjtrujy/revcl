@@ -47,7 +47,7 @@ bool wtRow::clearEntries()
     return 1;
 }
 
-bool wtEntry::func_08072218()
+bool wtEntry::clearInstruction()
 {
     unk_00 = 0;
     return 1;
@@ -61,7 +61,7 @@ void wtRow::refreshInstructionOperands(int)
             continue;
         if ((VclPtrWord)in & 1)
             continue;
-        in->func_08054008(false);
+        in->dumpOperandDiagnostics(false);
     }
 }
 
@@ -177,14 +177,14 @@ int wtRow::inputMaskFor(RegPoolEntry *reg, unsigned char mask)
     return r;
 }
 
-unsigned int wtRow::func_08072494()
+unsigned int wtRow::getMinimumExtraLatencyAge()
 {
     Instr *in = GetI(&entries[0].unk_00, 1);
     unsigned int m = 0;
     if (in) {
         for (int i = 0; i != in->operandCount; i++) {
-            if (in->operands[i].unk_29) {
-                unsigned int a = (unsigned short)in->operands[i].unk_18->unk_44[0].unk_3c;
+            if (in->operands[i].additionalLatency) {
+                unsigned int a = (unsigned short)in->operands[i].assignedRegister->parts[0].cycleAge;
                 if (!m || a < m)
                     m = a;
             }

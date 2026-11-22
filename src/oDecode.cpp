@@ -98,8 +98,8 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         goto fail;
     }
     in->parsedLoopId = loopid;
-    in->unk_1389 = mods;
-    in->unk_1392 = tilde;
+    in->instructionModifierBits = mods;
+    in->tildePrefix = tilde;
     mnemonicLen = mstrlen(info->mnemonic);
     {
         char *suffix = p + mnemonicLen;
@@ -157,30 +157,30 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     for (i = 0; i != in->operandCount; i++) {
         Operand *opd = &in->operands[i];
         int next = cur;
-        if (opd->unk_08) {
-            if (!buildImplicitOperand(opd->unk_04, &op, newSyntax)) {
+        if (opd->isImplicit) {
+            if (!buildImplicitOperand(opd->operandKind, &op, newSyntax)) {
                 reportError("getNextInstruction: failed to build implicit operand\n");
                 goto fail;
             }
-            if (opd->unk_0d) {
-                if (opd->unk_09 != 1) {
+            if (opd->pairedOperandIndexPlusOne) {
+                if (opd->direction != 1) {
                     reportError("implicit web patch set for non-output\n");
                     goto fail;
                 }
-                Operand *src = &in->operands[opd->unk_0d - 1];
-                if (src->unk_09 != 2) {
+                Operand *src = &in->operands[opd->pairedOperandIndexPlusOne - 1];
+                if (src->direction != 2) {
                     reportError("implicit web patched operand not input\n");
                     goto fail;
                 }
-                if (!src->unk_18) {
+                if (!src->assignedRegister) {
                     reportError("no register found for implicit patch\n");
                     goto fail;
                 }
-                formatIntoBuffer(op.name, "%s", src->unk_18->registerName());
+                formatIntoBuffer(op.name, "%s", src->assignedRegister->registerName());
             }
         } else {
             bool last = false;
-            if (i == in->operandCount - 1 || opd[1].unk_08)
+            if (i == in->operandCount - 1 || opd[1].isImplicit)
                 last = true;
             opd->unk_24 = cur;
             next = gatherTokens(t, cur, last);
@@ -191,39 +191,39 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 gatheredToken[1] = 0;
             }
             opd->unk_25 = next;
-            if (!oDecodeToken(opd->unk_04, gatheredToken, &op, newSyntax)) {
+            if (!oDecodeToken(opd->operandKind, gatheredToken, &op, newSyntax)) {
                 reportUserMessage("failed to decode operand\n");
                 goto fail;
             }
         }
         if (op.unk_1800[0]) {
-            if (in->unk_139c) {
+            if (in->branchLabelTags) {
                 reportUserMessage("more than one tagged operand associated with instruction at operand %d\n", i);
                 goto fail;
             }
-            in->unk_139c = dupString(op.unk_1800);
+            in->branchLabelTags = dupString(op.unk_1800);
         }
-        if (op.unk_1000[0] && !parseImmediate(op.unk_1000, opd->unk_05, &opd->unk_1c)) {
+        if (op.unk_1000[0] && !parseImmediate(op.unk_1000, opd->unk_05, &opd->immediateValue)) {
             reportError("failed to decode an immediate\n");
             goto fail;
         }
         opd->unk_0c = op.unk_2004;
-        opd->unk_07 = op.unk_2000;
-        if (opd->unk_04 == 35 || opd->unk_04 == 42 || opd->unk_04 == 1 || opd->unk_04 == 9) {
+        opd->componentMask = op.unk_2000;
+        if (opd->operandKind == 35 || opd->operandKind == 42 || opd->operandKind == 1 || opd->operandKind == 9) {
             if (forcedMods) {
-                if (opd->unk_07 != in->destinationMask && opd->unk_07 != 15)
+                if (opd->componentMask != in->destinationMask && opd->componentMask != 15)
                     reportWarning("getNextInstruction: forced mod bits!\n");
-                opd->unk_07 = in->destinationMask;
+                opd->componentMask = in->destinationMask;
             } else if (opBits < 0) {
-                opBits = opd->unk_07;
+                opBits = opd->componentMask;
                 in->destinationMask = opBits;
-            } else if (opd->unk_07 != opBits) {
+            } else if (opd->componentMask != opBits) {
                 reportError("oDecode: bad mod bits in instruction.. not match opBitsStore (%x vs %x) op=%d?\n",
-                              opd->unk_07, opBits, i);
+                              opd->componentMask, opBits, i);
                 goto fail;
             }
         }
-        if (opd->unk_04 == 30 || opd->unk_04 == 31) {
+        if (opd->operandKind == 30 || opd->operandKind == 31) {
             if (explicitMods) {
                 if (opd->unk_0c) {
                     if (opd->unk_0c != in->destinationMask) {
@@ -246,7 +246,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         }
         if (op.name[0]) {
             int cls = -1;
-            if (opd->unk_04 == 38) {
+            if (opd->operandKind == 38) {
                 if (op.unk_2008 == 1) {
                     if (i != 2) {
                         reportUserMessage("a scalar can only be the third operand in generic instruction\n");
@@ -254,21 +254,21 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     }
                     if (asciiCaseEqual(op.name, "i")) {
                         cls = 10;
-                        opd->unk_04 = 4;
+                        opd->operandKind = 4;
                     }
                     if (asciiCaseEqual(op.name, "q")) {
                         cls = 10;
-                        opd->unk_04 = 7;
+                        opd->operandKind = 7;
                     }
                     if (cls < 0) {
                         cls = 9;
-                        opd->unk_04 = 3;
+                        opd->operandKind = 3;
                     }
                 } else if (op.unk_2008 == 2) {
                     if (i == 0) {
                         if (asciiCaseEqual(op.name, "acc")) {
                             cls = 10;
-                            opd->unk_04 = 9;
+                            opd->operandKind = 9;
                         }
                     } else if (asciiCaseEqual(op.name, "acc")) {
                         reportUserMessage("ACC can only be first vector operand\n");
@@ -276,9 +276,9 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     }
                     if (cls < 0) {
                         cls = 9;
-                        opd->unk_04 = 1;
+                        opd->operandKind = 1;
                     }
-                    opd->unk_07 = in->destinationMask;
+                    opd->componentMask = in->destinationMask;
                     if (!newSyntax) {
                         reportError("new syntax off while parsing a tbd instruction\n");
                         goto fail;
@@ -288,7 +288,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     goto fail;
                 }
             } else
-                cls = func_08057a34(opd->unk_04);
+                cls = registerClassForOperandKind(opd->operandKind);
             RegPool *pool = GetRP(cls);
             if (!pool) {
                 reportError("oDecode: not find expected register ! regtype= '%d' operand = %d\n", cls, i);
@@ -359,7 +359,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     goto fail;
                 }
                 r->assignedPhysicalRegister = base;
-                opd->unk_10 = base;
+                opd->forcedBaseRegister = base;
             } else if (op.unk_800[0]) {
                 RegPoolEntry *base = pool->findPhysicalByName(op.unk_800);
                 if (!base) {
@@ -370,15 +370,15 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     reportUserMessage("base registers not the same\n");
                     goto fail;
                 }
-                opd->unk_10 = base;
+                opd->forcedBaseRegister = base;
             } else if (unk_65) {
                 RegPoolEntry *e = pool->findPhysicalByName(op.name);
                 if (e && e != e->ownerPool->zeroRegister)
-                    opd->unk_10 = e;
+                    opd->forcedBaseRegister = e;
             } else if (r->isVirtual != 1 && !r->unk_16)
-                opd->unk_10 = r;
-            opd->unk_18 = r;
-            opd->unk_14 = r;
+                opd->forcedBaseRegister = r;
+            opd->assignedRegister = r;
+            opd->originalRegister = r;
             if (full)
                 delete[] full;
         }
@@ -409,7 +409,7 @@ fail:
         if (in) {
             reportUserMessage("couldn't decode instruction .. problem is at:\n");
             t->dumpSourceLine(cur);
-            if (in->func_080552a8(newSyntax, fmtBuf, g_080b34dc))
+            if (in->emitExpectedSyntax(newSyntax, fmtBuf, g_080b34dc))
                 reportUserMessage("expected format is: %s\n", fmtBuf);
             delete in;
             in = 0;
@@ -644,7 +644,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 }
                 synth = true;
             }
-            if (!func_080522c4(ins[i]->unk_1389, p->proc.decodeMode, false)) {
+            if (!func_080522c4(ins[i]->instructionModifierBits, p->proc.decodeMode, false)) {
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(p->proc.decodeMode));
                 ins[i]->leDump();
@@ -727,7 +727,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
             default:
                 reportError("iStream::ValidateSynthetics() - unhandled/unexpected synthetic type (%d)\n",
                               (unsigned char)in->syntheticKind);
-                in->func_08054008(false);
+                in->dumpOperandDiagnostics(false);
                 goto done;
             }
         } else if (p->proc.decodeMode == 3) {

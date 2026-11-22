@@ -12,25 +12,25 @@ int mstrlen(const char *s);
 
 Operand::Operand()
 {
-    unk_26 = -1;
-    unk_18 = 0;
-    unk_08 = 0;
-    unk_04 = 0;
-    unk_07 = 0;
-    unk_29 = 0;
-    unk_10 = 0;
-    unk_00 = 0;
+    operandIndex = -1;
+    assignedRegister = 0;
+    isImplicit = 0;
+    operandKind = 0;
+    componentMask = 0;
+    additionalLatency = 0;
+    forcedBaseRegister = 0;
+    registerWeb = 0;
     unk_25 = -1;
     unk_24 = -1;
-    unk_0d = 0;
-    unk_14 = 0;
+    pairedOperandIndexPlusOne = 0;
+    originalRegister = 0;
     unk_28 = 0;
-    unk_06 = 0;
-    unk_27 = 0;
-    unk_2b = 0;
+    externalComponentMask = 0;
+    externalPartMask = 0;
+    operandStatus = 0;
     int i;
     for (i = 0; i != 4; i++) {
-        if (!unk_2c[i].unk_54.clear()) {
+        if (!parts[i].unk_54.clear()) {
             reportError("failed to flow reset part %d\n", i);
             break;
         }
@@ -43,99 +43,99 @@ Operand::~Operand()
 
 bool Operand::validateKindAndMask()
 {
-    switch (unk_04) {
+    switch (operandKind) {
     case 1:
     case 35:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_FL4 or V_FL4S/ MEM!\n");
             return false;
         }
-        if ((unk_07 & 0xf) == unk_07)
+        if ((componentMask & 0xf) == componentMask)
             return true;
         reportError("not all!\n");
         return false;
     case 3:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_FL1!\n");
             return false;
         }
-        if (unk_07 == 1 || unk_07 == 2 || unk_07 == 4 || unk_07 == 8)
+        if (componentMask == 1 || componentMask == 2 || componentMask == 4 || componentMask == 8)
             return true;
-        reportError("bad mod bits for FL1..%d\n", unk_07);
+        reportError("bad mod bits for FL1..%d\n", componentMask);
         return false;
     case 4:
     case 5:
     case 6:
     case 7:
     case 8:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_P/Q/R/I/nQ!\n");
             return false;
         }
-        if (unk_07 == 1)
+        if (componentMask == 1)
             return true;
         reportError("bad mod bits for V_P/Q/R/I\n");
         return false;
     case 9:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_ACC!\n");
             return false;
         }
-        if ((unk_07 & 0xf) == unk_07)
+        if ((componentMask & 0xf) == componentMask)
             return true;
         reportError("bad mod bits..hmm..out of range for acc\n");
         return false;
     case 10:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_ACCYZ!\n");
             return false;
         }
-        if (unk_07 == 7)
+        if (componentMask == 7)
             return true;
         reportError("xyz not set to ACCXYZ!\n");
         return false;
     case 11:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_FLXYZ!\n");
             return false;
         }
-        if (unk_07 == 7)
+        if (componentMask == 7)
             return true;
         reportError("xyz not set to XYZ!\n");
         return false;
     case 13:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_FLX!\n");
             return false;
         }
-        if (unk_07 == 1)
+        if (componentMask == 1)
             return true;
         reportError("bad mod bits for FLX\n");
         return false;
     case 14:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_FLY!\n");
             return false;
         }
-        if (unk_07 == 2)
+        if (componentMask == 2)
             return true;
         reportError("bad mod bits for FLY\n");
         return false;
     case 15:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_FLZ!\n");
             return false;
         }
-        if (unk_07 == 4)
+        if (componentMask == 4)
             return true;
         reportError("bad mod bits for FLZ\n");
         return false;
     case 16:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_FLW!\n");
             return false;
         }
-        if (unk_07 == 8)
+        if (componentMask == 8)
             return true;
         reportError("bad mod bits for FLW\n");
         return false;
@@ -154,9 +154,9 @@ bool Operand::validateKindAndMask()
     case 55:
         return true;
     case 27:
-        return unk_1c.isValid() != 0;
+        return immediateValue.isValid() != 0;
     case 28:
-        if (unk_07 != 1)
+        if (componentMask != 1)
             return false;
     case 29:
     case 30:
@@ -164,19 +164,19 @@ bool Operand::validateKindAndMask()
     case 32:
     case 33:
     case 46:
-        return unk_18 != 0;
+        return assignedRegister != 0;
     case 2:
     case 36:
-        if (!unk_18) {
+        if (!assignedRegister) {
             reportError("reg no reg set - V_INT/INTS!\n");
             return false;
         }
-        if (unk_07 == 1)
+        if (componentMask == 1)
             return true;
         reportError("bad mod bits for int/ints!\n");
         return false;
     case 37:
-        if (unk_18)
+        if (assignedRegister)
             return true;
         reportError("ramreg.. not ok.. no m_Reg\n");
         return false;
@@ -194,9 +194,9 @@ bool Operand::validateKindAndMask()
     case 52:
     case 53:
     case 54:
-        if (unk_18)
+        if (assignedRegister)
             return true;
-        reportError("not ok type %d.. no reg!\n", unk_04);
+        reportError("not ok type %d.. no reg!\n", operandKind);
         return false;
     }
     return false;
@@ -206,7 +206,7 @@ void Operand::diagnoseOperand(int)
 {
     if (validateKindAndMask()) {
         bool ok = true;
-        switch (unk_04) {
+        switch (operandKind) {
         case 0:
             break;
         case 28:
@@ -215,10 +215,10 @@ void Operand::diagnoseOperand(int)
         case 32:
         case 33:
         case 46:
-            ok = unk_1c.isValid();
+            ok = immediateValue.isValid();
             break;
         case 27:
-            unk_1c.dump();
+            immediateValue.dump();
             break;
         case 55:
             break;
@@ -233,8 +233,8 @@ void Operand::diagnoseOperand(int)
 static inline int operandZeroValue(Operand *op)
 {
     int z = 0;
-    if (op->unk_18) {
-        if (op->unk_18 == op->unk_18->ownerPool->zeroRegister)
+    if (op->assignedRegister) {
+        if (op->assignedRegister == op->assignedRegister->ownerPool->zeroRegister)
             z = 1;
     }
     return z;
@@ -243,49 +243,49 @@ static inline int operandZeroValue(Operand *op)
 char *Operand::Emit(char *buf, bool, bool symbolic)
 {
     const char *rn = 0;
-    if (unk_08)
+    if (isImplicit)
         return 0;
     if (!validateKindAndMask())
         return 0;
-    if (unk_18) {
-        int z = unk_18 == unk_18->ownerPool->zeroRegister;
+    if (assignedRegister) {
+        int z = assignedRegister == assignedRegister->ownerPool->zeroRegister;
         if ((char)z != (char)operandZeroValue(this)) {
-            reportError("Operand::Emit - zero mismatch..%s but %d\n", unk_18->registerName(), operandZeroValue(this));
+            reportError("Operand::Emit - zero mismatch..%s but %d\n", assignedRegister->registerName(), operandZeroValue(this));
             return 0;
         }
     }
     if (symbolic) {
-        if (unk_18) {
-            if (!unk_14) {
-                reportError("no original register set register is %s\n", unk_18->registerName());
+        if (assignedRegister) {
+            if (!originalRegister) {
+                reportError("no original register set register is %s\n", assignedRegister->registerName());
                 return 0;
             }
-            rn = unk_14->registerName();
+            rn = originalRegister->registerName();
         }
     } else {
-        RegPoolEntry *reg = unk_18;
+        RegPoolEntry *reg = assignedRegister;
         if (reg) {
             if (reg->isVirtual) {
                 reportError("non symbolic emit.. but found a virtual register in an operand!\n");
                 return 0;
             }
             rn = reg->registerName();
-            reg->usedSlotMask |= unk_07;
+            reg->usedSlotMask |= componentMask;
         }
     }
-    switch (unk_04) {
+    switch (operandKind) {
     case 13:
     emit_x:
         buf += formatIntoBuffer(buf, "%sx", rn);
         break;
     case 3:
-        if (unk_07 & 1)
+        if (componentMask & 1)
             goto emit_x;
-        if (unk_07 & 2)
+        if (componentMask & 2)
             goto emit_y;
-        if (unk_07 & 4)
+        if (componentMask & 4)
             goto emit_z;
-        if (unk_07 & 8)
+        if (componentMask & 8)
             goto emit_w;
         return 0;
     case 14:
@@ -345,7 +345,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         buf += formatIntoBuffer(buf, "%s", rn);
         break;
     case 27: {
-        mValue *imm = &unk_1c;
+        mValue *imm = &immediateValue;
         if (!imm->isNumeric()) {
             char *s = imm->asChars();
             if (!s) {
@@ -354,7 +354,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             }
             buf += formatIntoBuffer(buf, "%s", s);
         } else {
-            if (func_08070300(unk_05) == 2)
+            if (decodeImmediateCategory(unk_05) == 2)
                 buf += formatIntoBuffer(buf, "%d", imm->i);
             else
                 buf += formatIntoBuffer(buf, "0x%08x", imm->u);
@@ -367,7 +367,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             reportError("null rn - abort _BLAH_EA_IMM\n");
             return 0;
         }
-        char *s = unk_1c.asChars();
+        char *s = immediateValue.asChars();
         if (!s) {
             reportError("failed to get chars from ximm blah_ea_imm\n");
             return 0;
@@ -376,7 +376,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         break;
     }
     case 31: {
-        char *s = unk_1c.asChars();
+        char *s = immediateValue.asChars();
         if (!s)
             reportError("failed to get chars from ximm for v_ea_imm\n");
         buf += formatIntoBuffer(buf, "%s", s);
@@ -422,11 +422,11 @@ bool Operand::resetFlowState()
 {
     int i = 0;
     unk_28 = 0;
-    unk_06 = 0;
-    unk_27 = 0;
-    unk_2b = 0;
+    externalComponentMask = 0;
+    externalPartMask = 0;
+    operandStatus = 0;
     for (; i != 4; i++) {
-        if (!unk_2c[i].unk_54.clear()) {
+        if (!parts[i].unk_54.clear()) {
             reportError("failed to flow reset part %d\n", i);
             return false;
         }
@@ -436,13 +436,13 @@ bool Operand::resetFlowState()
 
 static inline bool resetOperandLock(OperandLock *lock)
 {
-    return lock->func_0805bcc4();
+    return lock->resetLock();
 }
 
 bool Operand::resetOptimizationSlots()
 {
     for (int i = 0; i != 4; i++) {
-        OpSlot *s = &unk_2c[i];
+        OpSlot *s = &parts[i];
         resetOperandLock(s);
         s->unk_50 = 0;
         s->unk_52[0] = 0;
@@ -1272,7 +1272,7 @@ const char *opKindName(int kind)
     return s;
 }
 
-int func_08057a34(int kind)
+int registerClassForOperandKind(int kind)
 {
     switch (kind) {
     case 1:
@@ -1332,10 +1332,10 @@ int func_08057a34(int kind)
 Instr *Operand::getOwner()
 {
     Instr *owner = 0;
-    if (unk_26 >= 0) {
-        VclPtrWord off = (VclPtrWord)&((Instr *)0)->operands[unk_26];
+    if (operandIndex >= 0) {
+        VclPtrWord off = (VclPtrWord)&((Instr *)0)->operands[operandIndex];
         Instr *p = (Instr *)((char *)this - off);
-        if (p->operandCount < unk_26) {
+        if (p->operandCount < operandIndex) {
             reportError("operand: getOwner - bad instruction?\n");
             exitAfterCleanup(-1);
         }
@@ -1350,17 +1350,17 @@ OpSlot *Operand::getPart(int part)
         reportError("failed to get operand part - out of range!!\n", part);
         exitAfterCleanup(-1);
     }
-    if (!unk_18) {
+    if (!assignedRegister) {
         reportError("operand had no register for get part\n");
         exitAfterCleanup(-1);
     }
-    if (part >= unk_18->partCount) {
+    if (part >= assignedRegister->partCount) {
         reportError("operand::getPart: out of range for register\n");
         exitAfterCleanup(-1);
     }
-    bool has = (unk_07 >> part) & 1;
+    bool has = (componentMask >> part) & 1;
     if (has)
-        return &unk_2c[part];
+        return &parts[part];
     return 0;
 }
 
@@ -1368,9 +1368,9 @@ char *Operand::emitExpectedOperandType(bool flag, char *buf)
 {
     if (!buf)
         return 0;
-    if (unk_08)
+    if (isImplicit)
         return buf;
-    switch (unk_04) {
+    switch (operandKind) {
     case 38: buf += formatIntoBuffer(buf, "vec_reg"); break;
     case 1:
         if (flag)
@@ -1391,7 +1391,7 @@ char *Operand::emitExpectedOperandType(bool flag, char *buf)
     case 14: buf += formatIntoBuffer(buf, "vf_regy"); break;
     case 15: buf += formatIntoBuffer(buf, "vf_regz"); break;
     case 16: buf += formatIntoBuffer(buf, "vf_regw"); break;
-    case 27: buf += formatIntoBuffer(buf, "IMMEDIATE(%s)", func_0806a33c(unk_05)); break;
+    case 27: buf += formatIntoBuffer(buf, "IMMEDIATE(%s)", immediateTypeName(unk_05)); break;
     case 28: buf += formatIntoBuffer(buf, "(vi_reg)"); break;
     case 29: buf += formatIntoBuffer(buf, "OFFSET(vi_reg)"); break;
     case 30: buf += formatIntoBuffer(buf, "(vi_reg)[x/y/z/w]"); break;
@@ -1425,20 +1425,20 @@ bool func_08057d9c(int kind)
 
 int Operand::getRegFrom(Operand *src)
 {
-    int a = func_08057a34(unk_04);
-    int b = func_08057a34(src->unk_04);
+    int a = registerClassForOperandKind(operandKind);
+    int b = registerClassForOperandKind(src->operandKind);
     if (b != a) {
         reportError("incompatible type request getting type for operand\n");
         return 0;
     }
-    unk_18 = src->unk_18;
-    unk_14 = src->unk_14;
-    unk_10 = src->unk_10;
-    if (!unk_18) {
+    assignedRegister = src->assignedRegister;
+    originalRegister = src->originalRegister;
+    forcedBaseRegister = src->forcedBaseRegister;
+    if (!assignedRegister) {
         reportError("no register set in get reg from\n");
         return 0;
     }
-    if (unk_18->registerClass != b) {
+    if (assignedRegister->registerClass != b) {
         reportError("register not of correct type\n");
         return 0;
     }
@@ -1447,7 +1447,7 @@ int Operand::getRegFrom(Operand *src)
 
 const char *Operand::getRegisterNameOrNone()
 {
-    if (!unk_18)
+    if (!assignedRegister)
         return "NO_REG";
-    return unk_18->registerName();
+    return assignedRegister->registerName();
 }

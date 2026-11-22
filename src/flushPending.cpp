@@ -3,23 +3,23 @@
 
 bool rPart::flushPending()
 {
-    if (unk_3e) {
-        reportError("rPart::flushPending - issueLock was set (%d)\n", unk_3e);
+    if (issueLock) {
+        reportError("rPart::flushPending - issueLock was set (%d)\n", issueLock);
         return false;
     }
     for (int i = 0; i != 4; i++)
-        unk_4c[i].reset();
-    unk_38 = 0;
-    unk_24.reset();
+        pendingLocations[i].reset();
+    pendingSource = 0;
+    currentLocation.reset();
     return true;
 }
 
 ol_s* rPart::acquireFreePendingLocation()
 {
     for (int i = 0; i != 4; i++) {
-        if (!unk_4c[i].unk_12) {
-            unk_4c[i].reset();
-            return &unk_4c[i];
+        if (!pendingLocations[i].unk_12) {
+            pendingLocations[i].reset();
+            return &pendingLocations[i];
         }
     }
     return 0;
@@ -28,19 +28,19 @@ ol_s* rPart::acquireFreePendingLocation()
 bool rPart::cycle(bool flag)
 {
     if (flag) {
-        unk_3e = 0;
-        if (unk_38 && unk_38 != &unk_24) {
-            unk_24.func_08058054(unk_38);
-            unk_38 = &unk_24;
+        issueLock = 0;
+        if (pendingSource && pendingSource != &currentLocation) {
+            currentLocation.copyLocationFrom(pendingSource);
+            pendingSource = &currentLocation;
         }
         for (int i = 0; i != 4; i++)
-            unk_4c[i].reset();
-        ol_s* cur = &unk_24;
+            pendingLocations[i].reset();
+        ol_s* cur = &currentLocation;
         if (cur->unk_12)
             cur->unk_12 = 0;
     } else {
         int n = 0;
-        ol_s* cur = &unk_24;
+        ol_s* cur = &currentLocation;
         int c = cur->unk_12;
         if (c) {
             int v = c - 1;
@@ -48,7 +48,7 @@ bool rPart::cycle(bool flag)
             n = 1;
         }
         for (int i = 0; i != 4; i++) {
-            ol_s* p = &unk_4c[i];
+            ol_s* p = &pendingLocations[i];
             int c = p->unk_12;
             if (!c)
                 continue;
@@ -59,15 +59,15 @@ bool rPart::cycle(bool flag)
                     reportError("WARNING !! CYCLE wrote thru more than once!\n");
                     return false;
                 }
-                cur->func_08058054(p);
-                unk_3c = 0;
+                cur->copyLocationFrom(p);
+                cycleAge = 0;
             }
         }
     }
-    if (++unk_3c == 0x7fff)
-        unk_3c = 0x7fff;
-    if (unk_3e)
-        unk_3e--;
+    if (++cycleAge == 0x7fff)
+        cycleAge = 0x7fff;
+    if (issueLock)
+        issueLock--;
     return true;
 }
 
@@ -77,7 +77,7 @@ void RegPoolEntry::resetRegisterFlowState()
     throughputWriter = 0;
     unk_36 = 0;
     for (int i = 0; i != 4; i++)
-        unk_44[i].resetPartFlowState();
+        parts[i].resetPartFlowState();
 }
 
 void RegPoolEntry::func_0805a340()
@@ -87,7 +87,7 @@ void RegPoolEntry::func_0805a340()
 void RegPoolEntry::resetRegisterPartTiming()
 {
     for (int i = 0; i != 4; i++) {
-        rPart* p = &unk_44[i];
+        rPart* p = &parts[i];
         p->unk_40 = -1;
         p->unk_42 = -1;
         p->unk_44 = -1;
@@ -106,7 +106,7 @@ void RegPoolEntry::resetRegisterThroughputState()
     throughputWriter = 0;
     unk_36 = 0;
     for (int i = 0; i != 4; i++)
-        unk_44[i].resetPartFlowState();
+        parts[i].resetPartFlowState();
 }
 
 void rPart::resetPartFlowState()
@@ -115,10 +115,10 @@ void rPart::resetPartFlowState()
     unk_00[2] = 0;
     unk_00[0] = 0;
     unk_00[1] = 0;
-    unk_3e = 0;
-    unk_24.reset();
-    unk_38 = 0;
-    unk_3c = 0;
+    issueLock = 0;
+    currentLocation.reset();
+    pendingSource = 0;
+    cycleAge = 0;
     unk_00[7] = -1;
     unk_00[4] = -1;
     unk_00[8] = -1;
@@ -133,49 +133,49 @@ void rPart::resetPartFlowState()
     unk_00[16] = -1;
     unk_00[15] = -1;
     for (int i = 0; i != 4; i++)
-        unk_4c[i].reset();
+        pendingLocations[i].reset();
 }
 
 void RegPoolEntry::clearRegisterPartPayloads()
 {
     for (int i = 0; i != 4; i++)
-        unk_44[i].unk_48 = 0;
+        parts[i].payload = 0;
 }
 
 void rPart::func_0805a4d4()
 {
-    unk_48 = 0;
+    payload = 0;
 }
 
 void rPart::func_0805a4e4()
 {
-    unk_48 = 0;
+    payload = 0;
 }
 
 bool RegPoolEntry::cycleRegisterParts(bool flag)
 {
     for (int i = 0; i != partCount; i++)
-        if (!unk_44[i].cycle(flag))
+        if (!parts[i].cycle(flag))
             return false;
     return true;
 }
 
 RegPoolEntry::RegPoolEntry()
 {
-    unk_0c = 0;
+    previous = 0;
     next = 0;
     registerClass = 0;
     partCount = 0;
     allocatable = false;
-    unk_20 = 0;
+    moveInstruction = 0;
     registerIndex = 0;
     isVirtual = false;
     ownerPool = 0;
     registerWeb = 0;
-    unk_10 = 0;
+    uniqueNameSerial = 0;
     unk_16 = false;
     usedSlotMask = 0;
-    unk_1c = 0;
+    nonBlockId = 0;
     unk_2c = false;
     assignedPhysicalRegister = 0;
 }
@@ -183,7 +183,7 @@ RegPoolEntry::RegPoolEntry()
 rPart::rPart()
 {
     resetPartFlowState();
-    unk_48 = 0;
+    payload = 0;
 }
 
 mNode* RegPoolEntry::addRegisterNameAlias(const char* name)
@@ -204,43 +204,43 @@ const char* RegPoolEntry::registerName()
 
 VclPtrWord RegPoolEntry::getPartPayload(int i)
 {
-    return unk_44[i].unk_48;
+    return parts[i].payload;
 }
 
 bool RegPoolEntry::setPartPayload(int i, VclPtrWord v)
 {
-    unk_44[i].unk_48 = v;
+    parts[i].payload = v;
     return true;
 }
 
 VclPtrWord rPart::getPayload()
 {
-    return unk_48;
+    return payload;
 }
 
 bool rPart::setPayload(VclPtrWord v)
 {
-    unk_48 = v;
+    payload = v;
     return true;
 }
 
 ol_s* rPart::getPendingLocation(int i)
 {
-    return &unk_4c[i];
+    return &pendingLocations[i];
 }
 
 void RegPoolEntry::moveReset()
 {
-    if (!unk_20) {
+    if (!moveInstruction) {
         reportError("rg..movereset called - but not move\n");
         exitAfterCleanup(-1);
     }
-    unk_3c = -1;
+    assignmentCostTableSize = -1;
     allocatable = false;
     registerWeb = 0;
-    unk_10 = 0;
+    uniqueNameSerial = 0;
     for (int i = 0; i != partCount; i++)
-        unk_44[i].unk_48 = 0;
+        parts[i].payload = 0;
 }
 
 bool RegPoolEntry::optReset()
@@ -252,8 +252,8 @@ bool RegPoolEntry::optReset()
 bool RegPoolEntry::clearPartPayloadMarkers()
 {
     for (int i = 0; i != partCount; i++) {
-        if (unk_44[i].unk_48)
-            ((char*)unk_44[i].unk_48)[3] = 0;
+        if (parts[i].payload)
+            ((char*)parts[i].payload)[3] = 0;
     }
     return true;
 }

@@ -22,7 +22,7 @@ void DecodedLine::refreshInstructionOperands(int index)
     for (int i = 0; i != 2; i++) {
         if (instructions[i]) {
             Instr *in = instructions[i];
-            in->func_08054008(false);
+            in->dumpOperandDiagnostics(false);
         }
     }
 }

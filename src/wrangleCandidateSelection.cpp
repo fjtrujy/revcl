@@ -14,7 +14,7 @@ bool func_080817d4(workTable *wt, wrangleCand *c)
 {
     Instr *best = 0;
     int min = 0x7fffffff;
-    for (Instr *in = wt->unk_4c; in; in = in->unk_2c) {
+    for (Instr *in = wt->moveListHead; in; in = in->unk_2c) {
         if (in->linearOrderIndex < min) {
             best = in;
             min = in->linearOrderIndex;
@@ -34,7 +34,7 @@ bool func_0808184c(workTable *wt, wrangleCand *c)
 {
     Instr *best = 0;
     int min = 0x7fffffff;
-    for (Instr *in = wt->unk_4c; in; in = in->unk_2c) {
+    for (Instr *in = wt->moveListHead; in; in = in->unk_2c) {
         if (in->linearOrderIndex < min) {
             best = in;
             min = in->linearOrderIndex;

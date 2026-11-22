@@ -106,7 +106,7 @@ bool globalPrune(Program *p)
                 }
                 int saved = errorOccurred;
                 errorOccurred = !quiet_080bbd98;
-                br->func_08054008(false);
+                br->dumpOperandDiagnostics(false);
                 errorOccurred = saved;
                 int type = branchLinkTypeForFlags(s->branchType);
                 if (!p->unlinkStreams(s, next, type)) {

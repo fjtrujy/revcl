@@ -10,24 +10,24 @@ bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
 
 static inline bool isRawTable(workTable *wt)
 {
-    return wt->unk_09 == 3;
+    return wt->codeModeValue == 3;
 }
 
 static inline bool isPipeMode(workTable *wt)
 {
-    return isRawTable(wt) && (wt->unk_0a == 1 || wt->unk_0a == 3);
+    return isRawTable(wt) && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
 }
 
 static inline void dumpMove(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 bool detectMoves(Program *p)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
-        if (wt->unk_09 == 1 || isPipeMode(wt)) {
+        if (wt->codeModeValue == 1 || isPipeMode(wt)) {
             Instr *next;
             for (Instr *in = wt->linearInstructions.head; in; in = next) {
                 next = in->unk_1c.unk_00;
@@ -41,16 +41,16 @@ bool detectMoves(Program *p)
                 mask = 0;
                 if (!detectMove(in, opc, mask, dstOp, srcOp))
                     continue;
-                RegPoolEntry *srcReg = in->operands[srcOp].unk_18;
-                RegPoolEntry *dstReg = in->operands[dstOp].unk_18;
+                RegPoolEntry *srcReg = in->operands[srcOp].assignedRegister;
+                RegPoolEntry *dstReg = in->operands[dstOp].assignedRegister;
                 iInfo *info = getOpcodeInfoById(opc);
                 Instr *mv = new Instr(info);
                 if (!mv) {
                     reportError("failed to make a move\n");
                     return false;
                 }
-                mv->unk_142c = opc;
-                mv->unk_142e = 0;
+                mv->abstractMoveOpcode = opc;
+                mv->concreteMoveOpcode = 0;
                 Operand *sr = &mv->operands[1];
                 Operand *d = &mv->operands[0];
                 if (dstReg == dstReg->ownerPool->zeroRegister) {
@@ -58,15 +58,15 @@ bool detectMoves(Program *p)
                     dumpMove(in);
                     return false;
                 }
-                sr->unk_18 = srcReg;
-                d->unk_18 = dstReg;
+                sr->assignedRegister = srcReg;
+                d->assignedRegister = dstReg;
                 mv->destinationMask = mask;
-                sr->unk_07 = mask;
-                d->unk_07 = mask;
-                sr->unk_14 = in->operands[srcOp].unk_14;
-                d->unk_14 = in->operands[dstOp].unk_14;
-                sr->unk_10 = in->operands[srcOp].unk_10;
-                d->unk_10 = in->operands[dstOp].unk_10;
+                sr->componentMask = mask;
+                d->componentMask = mask;
+                sr->originalRegister = in->operands[srcOp].originalRegister;
+                d->originalRegister = in->operands[dstOp].originalRegister;
+                sr->forcedBaseRegister = in->operands[srcOp].forcedBaseRegister;
+                d->forcedBaseRegister = in->operands[dstOp].forcedBaseRegister;
                 if (isRawTable(wt)) {
                     int pipe = in->position.unk_02;
                     if (!resolveMovePipe(wt, mv, pipe)) {

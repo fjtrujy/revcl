@@ -5,7 +5,7 @@
 
 int expandRaw(workTable *wt)
 {
-    if (wt->unk_09 != 5) {
+    if (wt->codeModeValue != 5) {
         reportError("expand raw - table not raw!\n");
         return 0;
     }

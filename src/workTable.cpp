@@ -29,8 +29,8 @@ int regUseList::dumpRegisterClassUses(int regClass)
     int n = 0;
     regUse *listHead = head;
     regUse *ru;
-    for (ru = listHead; ru; ru = ru->unk_04) {
-        RegPoolEntry *reg = ru->unk_08;
+    for (ru = listHead; ru; ru = ru->next) {
+        RegPoolEntry *reg = ru->registerEntry;
         if (!reg) {
             reportError("found reg ref with no reg!\n");
             exitAfterCleanup(-1);
@@ -41,8 +41,8 @@ int regUseList::dumpRegisterClassUses(int regClass)
     }
     if (n == 0)
         return 0;
-    for (ru = listHead; ru; ru = ru->unk_04) {
-        if (ru->unk_08->isClass(regClass))
+    for (ru = listHead; ru; ru = ru->next) {
+        if (ru->registerEntry->isClass(regClass))
             ru->validateAndDumpParts();
     }
     return n;
@@ -50,7 +50,7 @@ int regUseList::dumpRegisterClassUses(int regClass)
 
 void regUse::validateAndDumpParts()
 {
-    RegPoolEntry *reg = unk_08;
+    RegPoolEntry *reg = registerEntry;
     int i;
     int j = 0;
     if (reg->partCount != 0)
@@ -58,15 +58,15 @@ void regUse::validateAndDumpParts()
             j++;
         while (j != reg->partCount);
     for (i = 0; i != reg->partCount; i++) {
-        if (unk_20[i].unk_34[0] && !((unk_0f >> i) & 1)) {
+        if (slots[i].throughputSums[0] && !((outputMask >> i) & 1)) {
             reportError(thruSumOobError,
                           reg->registerName(), i);
             exitAfterCleanup(-1);
         }
     }
     for (i = 0; i != reg->partCount; i++) {
-        if (unk_20[i].unk_10.count)
-            unk_20[i].unk_10.dump();
+        if (slots[i].throughputPairs.count)
+            slots[i].throughputPairs.dump();
     }
 }
 
@@ -78,8 +78,8 @@ regUse *regUseList::findByRegister(RegPoolEntry *reg)
 regUse *regUseList::firstReal()
 {
     regUse *p;
-    for (p = head; p; p = p->unk_04) {
-        RegPoolEntry *reg = p->unk_08;
+    for (p = head; p; p = p->next) {
+        RegPoolEntry *reg = p->registerEntry;
         if (!reg) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -93,8 +93,8 @@ regUse *regUseList::firstReal()
 regUse *regUse::nextReal()
 {
     regUse *p;
-    for (p = unk_04; p; p = p->unk_04) {
-        RegPoolEntry *reg = p->unk_08;
+    for (p = next; p; p = p->next) {
+        RegPoolEntry *reg = p->registerEntry;
         if (!reg) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -108,8 +108,8 @@ regUse *regUse::nextReal()
 regUse *regUseList::firstVirtual()
 {
     regUse *p;
-    for (p = head; p; p = p->unk_04) {
-        RegPoolEntry *reg = p->unk_08;
+    for (p = head; p; p = p->next) {
+        RegPoolEntry *reg = p->registerEntry;
         if (!reg) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -123,8 +123,8 @@ regUse *regUseList::firstVirtual()
 regUse *regUse::nextVirtual()
 {
     regUse *p;
-    for (p = unk_04; p; p = p->unk_04) {
-        RegPoolEntry *reg = p->unk_08;
+    for (p = next; p; p = p->next) {
+        RegPoolEntry *reg = p->registerEntry;
         if (!reg) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -137,10 +137,10 @@ regUse *regUse::nextVirtual()
 
 bool regUseList::optReset()
 {
-    for (regUse *p = head; p; p = p->unk_04) {
+    for (regUse *p = head; p; p = p->next) {
         for (int i = 0; i != 4; i++) {
-            p->unk_20[i].unk_58 = 0;
-            p->unk_20[i].unk_5c.func_0805bcc4();
+            p->slots[i].assignmentPayload = 0;
+            p->slots[i].registerLock.resetLock();
         }
     }
     return true;
@@ -149,46 +149,46 @@ bool regUseList::optReset()
 bool regUse::optReset()
 {
     for (int i = 0; i != 4; i++) {
-        unk_20[i].unk_58 = 0;
-        unk_20[i].unk_5c.func_0805bcc4();
+        slots[i].assignmentPayload = 0;
+        slots[i].registerLock.resetLock();
     }
     return true;
 }
 
 bool regUseSlot::optReset()
 {
-    unk_58 = 0;
-    unk_5c.func_0805bcc4();
+    assignmentPayload = 0;
+    registerLock.resetLock();
     return true;
 }
 
 bool regUseSlot::addOutput(ol_s *ol)
 {
-    if (!unk_08.insertExternalLocation(ol)) {
+    if (!outputLocations.insertExternalLocation(ol)) {
         reportError("failed to add oploc to output list sort\n");
         return false;
     }
     return true;
 }
 
-void regUseSlot::func_0805b814()
+void regUseSlot::validateOutputLocations()
 {
-    unk_08.validateOperandLocations();
+    outputLocations.validateOperandLocations();
 }
 
-void regUseSlot::func_0805b824()
+void regUseSlot::validateInputLocations()
 {
-    unk_00.validateOperandLocations();
+    inputLocations.validateOperandLocations();
 }
 
-OperandLock *regUseSlot::func_0805b830()
+OperandLock *regUseSlot::getRegisterLock()
 {
-    return &unk_5c;
+    return &registerLock;
 }
 
 regUse *regUse::Clone()
 {
-    RegPoolEntry *reg = unk_08;
+    RegPoolEntry *reg = registerEntry;
     if (!reg) {
         reportError("regref::Clone - input had no register\n");
         return 0;
@@ -199,58 +199,58 @@ regUse *regUse::Clone()
         return 0;
     }
     n->unk_18 = unk_18;
-    n->unk_12 = unk_12;
-    n->unk_1c = unk_1c;
+    n->hazardMask = hazardMask;
+    n->definingInstruction = definingInstruction;
     n->unk_13 = unk_13;
-    n->unk_14 = unk_14;
-    n->unk_0c = unk_0c;
-    n->unk_08 = unk_08;
-    n->unk_0d = unk_0d;
-    n->unk_0e = unk_0e;
-    n->unk_0f = unk_0f;
-    n->unk_10 = unk_10;
+    n->hazardBroadcastMask = hazardBroadcastMask;
+    n->externalInputMask = externalInputMask;
+    n->registerEntry = registerEntry;
+    n->externalOutputMask = externalOutputMask;
+    n->inputMask = inputMask;
+    n->outputMask = outputMask;
+    n->throughputMask = throughputMask;
     n->unk_16 = unk_16;
     n->unk_11 = unk_11;
-    n->unk_15 = unk_15;
+    n->externalBlockMode = externalBlockMode;
     for (int i = 0; i != reg->partCount; i++) {
-        n->unk_20[i].unk_34[0] = unk_20[i].unk_34[0];
-        n->unk_20[i].unk_34[1] = unk_20[i].unk_34[1];
-        n->unk_20[i].unk_34[3] = unk_20[i].unk_34[3];
-        n->unk_20[i].unk_34[2] = unk_20[i].unk_34[2];
-        n->unk_20[i].unk_3c[0] = unk_20[i].unk_3c[0];
-        n->unk_20[i].unk_3c[1] = unk_20[i].unk_3c[1];
-        n->unk_20[i].unk_3c[2] = unk_20[i].unk_3c[2];
-        n->unk_20[i].unk_3c[3] = unk_20[i].unk_3c[3];
-        n->unk_20[i].unk_3c[4] = unk_20[i].unk_3c[4];
-        n->unk_20[i].unk_3c[5] = unk_20[i].unk_3c[5];
-        n->unk_20[i].unk_3c[6] = unk_20[i].unk_3c[6];
-        n->unk_20[i].unk_3c[7] = unk_20[i].unk_3c[7];
-        n->unk_20[i].unk_3c[8] = unk_20[i].unk_3c[8];
-        n->unk_20[i].unk_3c[9] = unk_20[i].unk_3c[9];
-        n->unk_20[i].unk_3c[10] = unk_20[i].unk_3c[10];
-        n->unk_20[i].unk_3c[11] = unk_20[i].unk_3c[11];
-        n->unk_20[i].unk_3c[12] = unk_20[i].unk_3c[12];
-        n->unk_20[i].unk_30 = unk_20[i].unk_30;
-        n->unk_20[i].unk_32 = unk_20[i].unk_32;
-        n->unk_20[i].unk_58 = 0;
-        n->unk_20[i].unk_5c.func_0805bcc4();
+        n->slots[i].throughputSums[0] = slots[i].throughputSums[0];
+        n->slots[i].throughputSums[1] = slots[i].throughputSums[1];
+        n->slots[i].throughputSums[3] = slots[i].throughputSums[3];
+        n->slots[i].throughputSums[2] = slots[i].throughputSums[2];
+        n->slots[i].timingValues[0] = slots[i].timingValues[0];
+        n->slots[i].timingValues[1] = slots[i].timingValues[1];
+        n->slots[i].timingValues[2] = slots[i].timingValues[2];
+        n->slots[i].timingValues[3] = slots[i].timingValues[3];
+        n->slots[i].timingValues[4] = slots[i].timingValues[4];
+        n->slots[i].timingValues[5] = slots[i].timingValues[5];
+        n->slots[i].timingValues[6] = slots[i].timingValues[6];
+        n->slots[i].timingValues[7] = slots[i].timingValues[7];
+        n->slots[i].timingValues[8] = slots[i].timingValues[8];
+        n->slots[i].timingValues[9] = slots[i].timingValues[9];
+        n->slots[i].timingValues[10] = slots[i].timingValues[10];
+        n->slots[i].timingValues[11] = slots[i].timingValues[11];
+        n->slots[i].timingValues[12] = slots[i].timingValues[12];
+        n->slots[i].earliestExternalCycle = slots[i].earliestExternalCycle;
+        n->slots[i].latestExternalCycle = slots[i].latestExternalCycle;
+        n->slots[i].assignmentPayload = 0;
+        n->slots[i].registerLock.resetLock();
     }
     return n;
 }
 
 const char *regUse::regName()
 {
-    if (!unk_08)
+    if (!registerEntry)
         return "REGREG_NOREG";
-    return unk_08->registerName();
+    return registerEntry->registerName();
 }
 
-ol_s *regUseSlot::func_0805ba2c(int pos, bool all)
+ol_s *regUseSlot::findPreviousOutputAtPosition(int pos, bool all)
 {
     if (all)
         pos = 0xff;
     ol_s *prev = 0;
-    for (ol_s *p = unk_08.head; p; p = p->unk_00) {
+    for (ol_s *p = outputLocations.head; p; p = p->next) {
         if (pos < p->unk_12)
             break;
         prev = p;
@@ -258,16 +258,16 @@ ol_s *regUseSlot::func_0805ba2c(int pos, bool all)
     return prev;
 }
 
-int regUseList::func_0805ba64(int regClass)
+int regUseList::countUncoveredRegisterClassUses(int regClass)
 {
     int n = 0;
-    for (regUse *p = head; p; p = p->unk_04) {
-        RegPoolEntry *reg = p->unk_08;
+    for (regUse *p = head; p; p = p->next) {
+        RegPoolEntry *reg = p->registerEntry;
         if (reg->registerClass != regClass || reg == reg->ownerPool->zeroRegister)
             continue;
-        if (~p->unk_0e & p->unk_10)
+        if (~p->inputMask & p->throughputMask)
             n++;
-        else if (!p->unk_0f)
+        else if (!p->outputMask)
             n++;
     }
     return n;
@@ -296,31 +296,31 @@ static inline bool isVirtualRegister(RegPoolEntry *reg)
 void regUseList::dumpRegisterClassAllocations(int regClass)
 {
     regUse *p;
-    for (p = head; p; p = p->unk_04) {
-        RegPoolEntry *reg = p->unk_08;
+    for (p = head; p; p = p->next) {
+        RegPoolEntry *reg = p->registerEntry;
         RegPoolEntry *phys = reg->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();
         if (!isVirtualRegister(reg))
             alloc = reg->registerName();
-        int mask = p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d | p->unk_10;
+        int mask = p->inputMask | p->outputMask | p->externalInputMask | p->externalOutputMask | p->throughputMask;
         if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && p->isExternal()) {
             const char *thr = "";
-            if (p->unk_10 & ~(p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d))
+            if (p->throughputMask & ~(p->inputMask | p->outputMask | p->externalInputMask | p->externalOutputMask))
                 thr = "-THR";
             reportInfo(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc, thr);
         }
     }
-    for (p = head; p; p = p->unk_04) {
-        RegPoolEntry *reg = p->unk_08;
+    for (p = head; p; p = p->next) {
+        RegPoolEntry *reg = p->registerEntry;
         RegPoolEntry *phys = reg->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();
         if (!isVirtualRegister(reg))
             alloc = reg->registerName();
-        int mask = p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d | p->unk_10;
+        int mask = p->inputMask | p->outputMask | p->externalInputMask | p->externalOutputMask | p->throughputMask;
         if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && !p->isExternal())
             reportInfo(" LOCAL : %20s - %s\n", reg->maskName(mask), alloc);
     }

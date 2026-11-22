@@ -7,14 +7,14 @@
 static inline bool extendForEnd_inl(workTable *wt)
 {
     do {
-        int i = wt->unk_34++;
+        int i = wt->rangeEnd++;
         wtRow *r = wt->getRowByIndex(i);
         if (!r) {
             reportError("failed to get ie for end patch\n");
             return false;
         }
         r->clearEntries();
-    } while (wt->unk_34 - wt->unk_30 < 2);
+    } while (wt->rangeEnd - wt->rangeStart < 2);
     return true;
 }
 
@@ -27,7 +27,7 @@ bool func_08062a88(Program *p)
             exitAfterCleanup(-1);
         }
         workTable *wt = s->workTablePtr;
-        switch (wt->unk_09) {
+        switch (wt->codeModeValue) {
         case 1:
             reportError("work table code mode is uta..%s\n", s->streamName());
             break;
@@ -67,7 +67,7 @@ bool func_08062a88(Program *p)
         }
         Instr *b = s->getBranch();
         if (b)
-            b->unk_1392 = 1;
+            b->tildePrefix = 1;
         s->branchType = 0;
         s->endType = 3;
         if (!s->workTablePtr) {
@@ -75,11 +75,11 @@ bool func_08062a88(Program *p)
             exitAfterCleanup(-1);
         }
         workTable *wt = s->workTablePtr;
-        if (wt->unk_09 == 4)
+        if (wt->codeModeValue == 4)
             continue;
         if (wt->getRangeStart() < 0)
             continue;
-        if (wt->getPhysicalLen() > 1 && wt->func_08073854())
+        if (wt->getPhysicalLen() > 1 && wt->hasSafeTrailingInstructions())
             continue;
         if (!extendForEnd_inl(wt)) {
             reportError("failed to extend for e\n");
@@ -92,14 +92,14 @@ bool func_08062a88(Program *p)
 bool extendForEnd(workTable *wt)
 {
     do {
-        int i = wt->unk_34++;
+        int i = wt->rangeEnd++;
         wtRow *r = wt->getRowByIndex(i);
         if (!r) {
             reportError("failed to get ie for end patch\n");
             return false;
         }
         r->clearEntries();
-    } while (wt->unk_34 - wt->unk_30 < 2);
+    } while (wt->rangeEnd - wt->rangeStart < 2);
     return true;
 }
 

@@ -156,7 +156,7 @@ none:
     return r;
 }
 
-int func_08070300(unsigned char x)
+int decodeImmediateCategory(unsigned char x)
 {
     int r = 0;
     if (x) {
@@ -171,7 +171,7 @@ int func_0807031c(unsigned char)
     return 0;
 }
 
-unsigned char func_08070324(unsigned char x)
+unsigned char immediateFlagBit7(unsigned char x)
 {
     return x >> 7;
 }

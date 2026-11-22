@@ -14,7 +14,7 @@ public:
 
     wtEntry();
     ~wtEntry();
-    bool func_08072218();
+    bool clearInstruction();
 };
 
 struct wtEntryInl {
@@ -31,7 +31,7 @@ struct wtEntryInl {
         }
         unk_00 = 0;
     }
-    bool func_08072218() { return ((wtEntry *)this)->func_08072218(); }
+    bool clearInstruction() { return ((wtEntry *)this)->clearInstruction(); }
     operator wtEntry *() { return (wtEntry *)this; }
 };
 

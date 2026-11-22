@@ -27,7 +27,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         reportError("failed to init raw table for '%s' with %d entries\n", s->streamName(), count);
         return false;
     }
-    t->unk_10 = s;
+    t->ownerStream = s;
     if (!t->setTableRawMode(loopMode)) {
         reportError("failed to set sub mode\n");
         return false;
@@ -51,7 +51,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
                 errorOccurred = !quiet_080bbd98;
-                in->func_08054008(false);
+                in->dumpOperandDiagnostics(false);
                 errorOccurred = saved;
             }
             continue;
@@ -184,7 +184,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         reportUserMessage("max lid not zero and not in a loop\n");
         return false;
     }
-    t->unk_3c = maxLid;
+    t->mainLoopId = maxLid;
     resetRange();
     return true;
 }

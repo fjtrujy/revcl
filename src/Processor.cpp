@@ -358,7 +358,7 @@ RegPoolEntry *findRegisterByGlobalIndex(int idx)
 
 RegPoolEntry *getOperandZeroReg(int kind)
 {
-    RegPool *pool = getRP(func_08057a34(kind));
+    RegPool *pool = getRP(registerClassForOperandKind(kind));
     if (!pool) {
         reportError("getRP failed for operand getZeroReg\n");
         exitAfterCleanup(-1);
@@ -426,7 +426,7 @@ int checkDispatchEntry(Instr **ie)
         Instr *in = GetI(ie, p);
         if (!in)
             continue;
-        if (!(((unsigned char)in->unk_138c >> p) & 1))
+        if (!(((unsigned char)in->permittedPipelineMask >> p) & 1))
             return -1;
         for (int i = 0; i != in->operandCount; i++) {
             RegPoolEntry *r = registerOperand(&in->operands[i], 2);
@@ -436,7 +436,7 @@ int checkDispatchEntry(Instr **ie)
                 Instr *o = GetI(ie, q);
                 if (!o)
                     continue;
-                if (!(((unsigned char)o->unk_138c >> q) & 1))
+                if (!(((unsigned char)o->permittedPipelineMask >> q) & 1))
                     return -1;
                 for (int j = 0; j != o->operandCount; j++) {
                     RegPoolEntry *r2 = registerOperand(&o->operands[j], 2);

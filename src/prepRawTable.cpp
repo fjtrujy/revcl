@@ -7,17 +7,17 @@ void resetRange();
 
 static inline void dumpRawInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 bool workTable::prepRawTable()
 {
-    int mode = unk_09;
+    int mode = codeModeValue;
     if ((unsigned char)mode != 3) {
         const char *modeName = codeModeName(mode);
         reportError("prepRawTable called - but mode is not raw %s\n", modeName);
     }
-    if (!unk_2c) {
+    if (!rows) {
         reportError("iTable::prepRawTable - table not ready\n");
         return 0;
     }
@@ -28,23 +28,23 @@ bool workTable::prepRawTable()
     linearInstructions.reset();
     completedInstructions.reset();
     pendingInstructions.reset();
-    unk_4c = 0;
+    moveListHead = 0;
     unk_50 = 0;
-    unk_3c = 0;
+    mainLoopId = 0;
     resetCounts();
-    if (unk_30) {
+    if (rangeStart) {
         reportError("initial start - table not based at zero\n");
         return 0;
     }
     int maxLid = 0;
-    int tlen = unk_34;
+    int tlen = rangeEnd;
     if (tlen < 0) {
         reportError("prepTable - tlen<0\n");
         return 0;
     }
     if (tlen == 0)
-        unk_0a = 1;
-    for (int rl = 0; rl < unk_34; rl++) {
+        rawSchedulingMode = 1;
+    for (int rl = 0; rl < rangeEnd; rl++) {
         wtRow *ie = (wtRow *)((cls_unk30 *)this)->getIE_ck(rl);
         if (!ie) {
             reportError("iTable::prepTable - failed to get ientry\n");
@@ -65,13 +65,13 @@ bool workTable::prepRawTable()
             }
             if (in->parsedLoopId != -1) {
                 reportError("parseLid isn't cleared in prepTab\n");
-                in->func_08054008(false);
+                in->dumpOperandDiagnostics(false);
                 exitAfterCleanup(-1);
             }
             int lid = 0;
             int il;
             InstructionPosition *loc;
-            if (unk_38) {
+            if (loopSize) {
                 if (!in->isNop())
                     lid = in->position.unk_03;
                 if (lid < 0) {
@@ -81,7 +81,7 @@ bool workTable::prepRawTable()
                 }
                 loc = &in->position;
                 loc->unk_03 = lid;
-                il = lid * unk_38 + rl;
+                il = lid * loopSize + rl;
             } else {
                 loc = &in->position;
                 lid = loc->unk_03;
@@ -105,7 +105,7 @@ bool workTable::prepRawTable()
             loc->unk_02 = pos.unk_02;
             if (nl != lid) {
                 reportError("iTable::initialSetup - lid was bad (%d!=%d) lsz=%d rl=%d il=%d\n",
-                              nl, lid, unk_38, il, rl);
+                              nl, lid, loopSize, il, rl);
                 return 0;
             }
             if (pos.unk_04 != rl) {
@@ -131,8 +131,8 @@ bool workTable::prepRawTable()
             }
         }
     }
-    if (unk_38)
-        unk_3c = maxLid;
+    if (loopSize)
+        mainLoopId = maxLid;
     else if (maxLid) {
         reportError("iTable::initialSetup - maxLid set - but not loopsize!\n");
         return 0;

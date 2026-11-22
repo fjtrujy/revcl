@@ -13,7 +13,7 @@ char *dupString(const char *s);
 
 static inline void dumpSynthInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 
@@ -28,7 +28,7 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
         reportError("failed to init synth table for '%s'\n", s->streamName());
         return false;
     }
-    t->unk_10 = s;
+    t->ownerStream = s;
     int inSynth;
     int stype;
     int flags = 0;
@@ -57,16 +57,16 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
                 reportUserMessage("istream already has end macro attached\n");
                 return false;
             }
-            if (!in->operands[0].unk_1c.getString()) {
+            if (!in->operands[0].immediateValue.getString()) {
                 reportError("EXITM has no macro string attached\n");
                 return false;
             }
-            s->endDirectiveText = dupString(in->operands[0].unk_1c.getString());
+            s->endDirectiveText = dupString(in->operands[0].immediateValue.getString());
         case 1:
         case 3:
             if (stype) {
-                const char *a = func_080554e4((unsigned char)in->syntheticKind);
-                reportError("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", a, func_080554e4(stype));
+                const char *a = syntheticTypeName((unsigned char)in->syntheticKind);
+                reportError("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", a, syntheticTypeName(stype));
                 in->leDump();
                 return false;
             }
@@ -126,7 +126,7 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
                 return false;
             }
         } else
-            flags |= in->unk_1389;
+            flags |= in->instructionModifierBits;
     }
     switch (stype) {
     case 11:

@@ -25,7 +25,7 @@ bool buildPassThru(Program *prog, instStream *s, DecodedLine *blocks, int count)
         reportError("failed to init uta\n");
         return false;
     }
-    uta->unk_10 = s;
+    uta->ownerStream = s;
     s->branchType = 0;
     s->unk_2d6 = 1;
     s->unk_2d7 = 1;

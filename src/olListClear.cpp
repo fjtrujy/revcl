@@ -17,8 +17,8 @@ bool olList::clear()
     if (p) {
         ol_s *f = olFreeList;
         do {
-            ol_s *n = p->unk_00;
-            p->unk_00 = f;
+            ol_s *n = p->next;
+            p->next = f;
             f = p;
             p = n;
         } while (p);

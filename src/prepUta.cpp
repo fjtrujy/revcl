@@ -23,7 +23,7 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
             reportError("prepLockTable: can't loop, but loop size requested\n");
             return 0;
         }
-        if (wt->unk_09 == 3) {
+        if (wt->codeModeValue == 3) {
             reportError("prepLockTable: loopSize requested, but mode is RAW\n");
             return 0;
         }
@@ -46,7 +46,7 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
         delete nt;
         return 0;
     }
-    nt->unk_10 = s;
+    nt->ownerStream = s;
     if (loopSize) {
         nt->unk_7a = s->safeMinimumLoopCount;
         nt->setRange(loopSize);
@@ -54,16 +54,16 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
         nt->setRange();
     setRangeFrom(nt);
     g_080de284 = smart;
-    nt->unk_5c.copyCountersFrom(&s->unk_278);
+    nt->statistics.copyCountersFrom(&s->unk_278);
     copyShort(nt->unk_74, wt->unk_74);
     copyShort(nt->unk_76, wt->unk_76);
     copyShort(nt->unk_78, wt->unk_78);
-    int mode = (unsigned char)wt->unk_08;
-    nt->unk_08 = mode;
+    int mode = (unsigned char)wt->allocationMode;
+    nt->allocationMode = mode;
     nt->unk_40 = 0;
-    nt->unk_44 = wt->unk_44;
-    regUseList &regs = wt->unk_14;
-    for (regUse *ru = regs.head; ru; ru = ru->unk_04) {
+    nt->externalMinimumLength = wt->externalMinimumLength;
+    regUseList &regs = wt->registerUses;
+    for (regUse *ru = regs.head; ru; ru = ru->next) {
         if (!nt->qRegRef(ru)) {
             reportError("failed to add a cloned regref in %s\n", s->streamName());
             wt->dump();

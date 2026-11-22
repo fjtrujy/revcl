@@ -4,28 +4,28 @@
 
 bool processActiveList(Program *p)
 {
-    p->unk_d8 = 0;
-    while (p->unk_e4) {
-        instStream *s = p->unk_e4;
-        p->unk_e4 = s->unk_25c;
+    p->matchedStreams = 0;
+    while (p->activeStreams) {
+        instStream *s = p->activeStreams;
+        p->activeStreams = s->nextActiveStream;
         if (s->visitState != 1) {
             reportError("an inconsistency in the active list?\n");
             return false;
         }
         if (s->unk_224 != 0) {
             s->visitState = 3;
-            if (s->unk_254) {
+            if (s->nextMatchedStream) {
                 reportError("new match is already set\n");
                 return false;
             }
-            s->unk_254 = p->unk_d8;
-            p->unk_d8 = s;
-            if (s->unk_250) {
+            s->nextMatchedStream = p->matchedStreams;
+            p->matchedStreams = s;
+            if (s->nextSourceStream) {
                 reportError("new match is already set\n");
                 return false;
             }
-            s->unk_250 = p->unk_dc;
-            p->unk_dc = s;
+            s->nextSourceStream = p->sourceStreams;
+            p->sourceStreams = s;
         } else {
             linkNode *head = s->inputLinks.head;
             if (head) {
@@ -81,7 +81,7 @@ bool extendBackTrace(Program *p, instStream *n)
                         reportError("failed to add a new active node for predecessor in bal case\n");
                         return false;
                     }
-                    if (p->unk_b5 && mergeTstores(p, prev->traceStore, n->traceStore) < 0) {
+                    if (p->traceStoreEnabled && mergeTstores(p, prev->traceStore, n->traceStore) < 0) {
                         reportError("failed to merge tstores\n");
                         return false;
                     }
@@ -101,7 +101,7 @@ bool extendBackTrace(Program *p, instStream *n)
                 reportError("can't get input stream for ir during trace\n");
                 return false;
             }
-            if (p->unk_b5 && mergeTstores(p, o->traceStore, n->traceStore) < 0) {
+            if (p->traceStoreEnabled && mergeTstores(p, o->traceStore, n->traceStore) < 0) {
                 reportError("failed to merge tstores\n");
                 return false;
             }
@@ -133,7 +133,7 @@ bool extendBackTrace(Program *p, instStream *n)
                         return false;
                     }
                 }
-                if (p->oddPipeMoveCount) {
+                if (p->trackMaximumPathLength) {
                     int dmax = o->unk_248;
                     if (dmax < 0) {
                         reportError("think I've already been here, but there's no maximal distance to target\n");
@@ -179,16 +179,16 @@ bool addNewActive(Program *p, instStream *n, instStream *from)
                       n->streamName(), from->streamName());
         return false;
     }
-    if (n->unk_25c) {
+    if (n->nextActiveStream) {
         reportError("can't add to active list\n");
         return false;
     }
-    n->unk_25c = p->unk_e4;
-    p->unk_e4 = n;
+    n->nextActiveStream = p->activeStreams;
+    p->activeStreams = n;
     n->visitState = 1;
     n->shortestPathPredecessor = from;
     n->unk_240 = from->unk_240 + from->backtraceDependencyLength;
-    if (p->oddPipeMoveCount) {
+    if (p->trackMaximumPathLength) {
         n->longestPathPredecessor = from;
         n->unk_248 = from->unk_248 + from->backtraceDependencyLength;
     }

@@ -24,45 +24,45 @@ bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always)
     *s = -4;
     *e = -3;
     *always = false;
-    regUseSlot *sl = &ru->unk_20[part];
-    if ((char)bitSet(ru->unk_0e, part)) {
-        if (sl->unk_3c[0] < 0 || !validPipe(sl->unk_3c[1]) ||
-            sl->unk_3c[3] < 0 || !validPipe(sl->unk_3c[4])) {
+    regUseSlot *sl = &ru->slots[part];
+    if ((char)bitSet(ru->inputMask, part)) {
+        if (sl->timingValues[0] < 0 || !validPipe(sl->timingValues[1]) ||
+            sl->timingValues[3] < 0 || !validPipe(sl->timingValues[4])) {
             reportError("firstInput<0.. but iBit set\n");
             exitAfterCleanup(-1);
         }
     }
-    if ((char)bitSet(ru->unk_0f, part)) {
-        if (sl->unk_3c[5] < 0 || !validPipe(sl->unk_3c[6]) ||
-            sl->unk_3c[8] < 0 || !validPipe(sl->unk_3c[9])) {
+    if ((char)bitSet(ru->outputMask, part)) {
+        if (sl->timingValues[5] < 0 || !validPipe(sl->timingValues[6]) ||
+            sl->timingValues[8] < 0 || !validPipe(sl->timingValues[9])) {
             reportError("firstInput<0.. but iBit set\n");
             exitAfterCleanup(-1);
         }
     }
-    if ((char)bitSet(ru->unk_10 & ~(ru->unk_0f | ru->unk_0e), part)) {
+    if ((char)bitSet(ru->throughputMask & ~(ru->outputMask | ru->inputMask), part)) {
         *s = -1;
         *e = 30000;
         *always = true;
         return true;
     }
-    if ((char)bitSet(ru->unk_0c, part)) {
+    if ((char)bitSet(ru->externalInputMask, part)) {
         *s = -1;
     } else {
-        if ((char)bitSet(ru->unk_0e, part) && sl->unk_3c[0] <= sl->unk_3c[5]) {
+        if ((char)bitSet(ru->inputMask, part) && sl->timingValues[0] <= sl->timingValues[5]) {
             reportError("first input before first output.. but not xi %d,%d!\n",
-                          sl->unk_3c[0], sl->unk_3c[5]);
+                          sl->timingValues[0], sl->timingValues[5]);
             exitAfterCleanup(-1);
         }
-        if ((char)bitSet(ru->unk_0f, part))
-            *s = sl->unk_3c[5];
+        if ((char)bitSet(ru->outputMask, part))
+            *s = sl->timingValues[5];
     }
-    if ((char)bitSet(ru->unk_10 | ru->unk_0d, part)) {
+    if ((char)bitSet(ru->throughputMask | ru->externalOutputMask, part)) {
         *e = 30000;
     } else {
-        if ((char)bitSet(ru->unk_0f, part))
-            *e = sl->unk_3c[8] + 1;
-        if ((char)bitSet(ru->unk_0e, part) && sl->unk_3c[3] > *e)
-            *e = sl->unk_3c[3];
+        if ((char)bitSet(ru->outputMask, part))
+            *e = sl->timingValues[8] + 1;
+        if ((char)bitSet(ru->inputMask, part) && sl->timingValues[3] > *e)
+            *e = sl->timingValues[3];
     }
     int row = *s;
     if (*e <= row) {
@@ -75,7 +75,7 @@ bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always)
 
 static inline bool isInternalLock(OperandLock *lk)
 {
-    return lk->unk_2d == 2;
+    return lk->ownerType == 2;
 }
 
 static inline bool isInternalIn(OperandLock *lk)
@@ -116,7 +116,7 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
     } else {
         *e = -1;
     }
-    for (OperandLock *c = out->unk_0c; c; c = c->unk_08) {
+    for (OperandLock *c = out->parentOrChildren; c; c = c->nextSibling) {
         if (isInternalIn(c))
             continue;
         Instr *ci = c->ownerInstr();
@@ -149,16 +149,16 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
 
 bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b)
 {
-    if (wt->unk_09 != 3) {
+    if (wt->codeModeValue != 3) {
         reportError("hack_slo - called - but table not raw\n");
         return false;
     }
-    if (!wt->unk_2c) {
+    if (!wt->rows) {
         reportError("hack_slo - called - but table ptr is null\n");
         return false;
     }
-    for (int r = wt->unk_30; r < wt->unk_34; r++) {
-        wtRow *row = &wt->unk_2c[r];
+    for (int r = wt->rangeStart; r < wt->rangeEnd; r++) {
+        wtRow *row = &wt->rows[r];
         bool hasA = false;
         bool hasB = false;
         for (int j = 0; j != 2; j++) {
@@ -168,9 +168,9 @@ bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b)
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
                 if (isRegisterOperand(op, 2)) {
-                    if (op->unk_18 == a)
+                    if (op->assignedRegister == a)
                         hasA = true;
-                    if (op->unk_18 == b)
+                    if (op->assignedRegister == b)
                         hasB = true;
                 }
             }

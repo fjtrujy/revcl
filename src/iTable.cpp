@@ -6,12 +6,12 @@
 
 workTable::workTable()
 {
-    unk_2c = 0;
-    unk_4c = 0;
-    unk_24 = 0;
+    rows = 0;
+    moveListHead = 0;
+    registerLockLists = 0;
     unk_20 = 0;
     unk_0b = 0;
-    unk_10 = 0;
+    ownerStream = 0;
     dispose();
 }
 
@@ -30,10 +30,10 @@ bool workTable::init(unsigned char mode, int size)
         size += 4;
         if (size < 4)
             size = 4;
-        unk_2c = new wtRow[size];
-        if (!unk_2c)
+        rows = new wtRow[size];
+        if (!rows)
             return false;
-        unk_28 = size;
+        rowCapacity = size;
         break;
     case 1:
     case 4:
@@ -46,15 +46,15 @@ bool workTable::init(unsigned char mode, int size)
         reportError("iTable::Init() -%s for Init\n", codeModeStr(mode));
         return false;
     }
-    unk_30 = 0;
-    unk_34 = 0;
-    unk_38 = 0;
+    rangeStart = 0;
+    rangeEnd = 0;
+    loopSize = 0;
     unk_ac = 0;
     unk_40 = 0;
     unk_ad = 0;
     unk_0c = 0;
     unk_7a = 0;
-    unk_09 = mode;
+    codeModeValue = mode;
     return true;
 }
 
@@ -68,24 +68,24 @@ bool workTable::dispose()
         p = next;
     }
     unk_0b = 0;
-    if (!freeLockLists(unk_24)) {
+    if (!freeLockLists(registerLockLists)) {
         reportError("failed to dispose rll list\n");
         abortAfterError();
     }
-    unk_24 = 0;
+    registerLockLists = 0;
     unk_20 = 0;
-    unk_14.clear();
-    delete[] unk_2c;
-    unk_2c = 0;
-    unk_28 = 0;
-    unk_38 = 0;
-    unk_30 = 0;
-    unk_34 = 0;
-    unk_3c = 0;
+    registerUses.clear();
+    delete[] rows;
+    rows = 0;
+    rowCapacity = 0;
+    loopSize = 0;
+    rangeStart = 0;
+    rangeEnd = 0;
+    mainLoopId = 0;
     unk_00 = -1;
-    unk_09 = 0;
-    unk_08 = 0;
-    unk_0a = 0;
+    codeModeValue = 0;
+    allocationMode = 0;
+    rawSchedulingMode = 0;
     instructionCountsByPipe[2] = 0;
     unk_bc = 0;
     vectorMoveCount = 0;
@@ -93,30 +93,30 @@ bool workTable::dispose()
     instructionCountsByPipe[0] = 0;
     evenPipeMoveCount = 0;
     instructionCountsByPipe[1] = 0;
-    unk_4c = 0;
+    moveListHead = 0;
     linearInstructions.reset();
     pendingInstructions.reset();
     completedInstructions.reset();
     unk_50 = 0;
     unk_40 = 0;
     unk_0c = -1;
-    unk_10 = 0;
+    ownerStream = 0;
     return true;
 }
 
 void workTable::dump()
 {
-    switch (unk_09) {
+    switch (codeModeValue) {
     case 0:
         break;
     case 1:
     case 4:
         for (Instr *p = linearInstructions.head; p; p = p->unk_1c.unk_00)
-            p->func_08054008(false);
+            p->dumpOperandDiagnostics(false);
         break;
     case 3:
     case 5:
-        for (int i = unk_30; i < unk_34; i++) {
+        for (int i = rangeStart; i < rangeEnd; i++) {
             wtRow *r = rowAt(i);
             if (!r)
                 abortAfterError();
@@ -124,39 +124,39 @@ void workTable::dump()
         }
         break;
     case 2: {
-        int lsz = unk_38;
-        if (!unk_2c) {
+        int lsz = loopSize;
+        if (!rows) {
             reportError("code mode mid - but no table!\n");
             abortAfterError();
         }
-        if (!lsz && unk_34 < 0) {
-            wtRow *r = unk_2c;
-            for (int n = unk_28 - 1; n >= 0; n--, r++)
+        if (!lsz && rangeEnd < 0) {
+            wtRow *r = rows;
+            for (int n = rowCapacity - 1; n >= 0; n--, r++)
                 if (r->entries[0].unk_00 || r->entries[1].unk_00)
                     break;
         }
-        for (int i = unk_30; i < unk_34; i++) {
+        for (int i = rangeStart; i < rangeEnd; i++) {
             wtRow *r = rowAt(i);
             if (!r)
                 abortAfterError();
             r->refreshInstructionOperands(i);
         }
         for (Instr *p = pendingInstructions.head; p; p = p->unk_24.unk_00)
-            p->func_08054008(false);
+            p->dumpOperandDiagnostics(false);
         break;
     }
     default:
         reportError("unknown code mode for Dump()\n");
         abortAfterError();
     }
-    unk_14.dumpRegisterUses();
+    registerUses.dumpRegisterUses();
 }
 
 const char *workTable::ownerName()
 {
-    if (!unk_10)
+    if (!ownerStream)
         return "UNOWNED_TABLE";
-    return unk_10->streamName();
+    return ownerStream->streamName();
 }
 
 bool workTable::reserveEntry(int key, int row, int slot)
@@ -183,7 +183,7 @@ bool workTable::reserveEntry(int key, int row, int slot)
 int workTable::func_08072eec()
 {
     int len = -1;
-    switch (unk_09) {
+    switch (codeModeValue) {
     case 3:
         len = unk_0c;
         break;
@@ -205,7 +205,7 @@ int workTable::func_08072eec()
 int workTable::getLogicalLen()
 {
     int len = 0;
-    switch (unk_09) {
+    switch (codeModeValue) {
     case 1:
     case 3:
         len = unk_78;
@@ -222,17 +222,17 @@ int workTable::getLogicalLen()
 int workTable::getPhysicalLen()
 {
     int len = -1;
-    switch (unk_09) {
+    switch (codeModeValue) {
     case 3:
-        if (!unk_2c) {
+        if (!rows) {
             reportError("no table!\n");
             abortAfterError();
         }
-        if (unk_34 < unk_30) {
+        if (rangeEnd < rangeStart) {
             reportError("end before start\n");
             abortAfterError();
         }
-        len = unk_34 - unk_30;
+        len = rangeEnd - rangeStart;
         break;
     case 1:
         reportError("called getphysical len on uta\n");
@@ -264,15 +264,15 @@ Instr *workTable::getConditionalBranch()
 Instr *workTable::getBranch()
 {
     Instr *b = 0;
-    switch (unk_09) {
+    switch (codeModeValue) {
     case 3:
-        if (!unk_2c) {
+        if (!rows) {
             reportWarning("called getBranch - but no table\n");
             return 0;
         }
-        if (unk_34 > unk_30) {
-            int r = unk_34 - 2;
-            if (r < unk_30)
+        if (rangeEnd > rangeStart) {
+            int r = rangeEnd - 2;
+            if (r < rangeStart)
                 return 0;
             b = rowAt(r)->getEntry(1);
         }
@@ -283,18 +283,18 @@ Instr *workTable::getBranch()
     case 4:
         break;
     default: {
-        const char *owner = unk_10 ? unk_10->streamName() : "UNOWNED_TABLE";
-        reportError("bad code mode for getBranch %s for %s\n", codeModeStr(unk_09), owner);
+        const char *owner = ownerStream ? ownerStream->streamName() : "UNOWNED_TABLE";
+        reportError("bad code mode for getBranch %s for %s\n", codeModeStr(codeModeValue), owner);
         abortAfterError();
     }
     }
-    instStream *o = unk_10;
+    instStream *o = ownerStream;
     if (!o) {
         reportWarning("no owner set for getBranch\n");
         abortAfterError();
     } else if (b) {
         if (b->branchFlags) {
-            if (b->unk_1392)
+            if (b->tildePrefix)
                 return 0;
             else if (!o->branchType) {
                 const char *ownerName = o->streamName();
@@ -357,7 +357,7 @@ int workTable::getCondLid()
     Instr *c = (b && ((b->branchFlags >> 2) & 1)) ? b : 0;
     if (c)
         lid = c->position.unk_03;
-    if (unk_38) {
+    if (loopSize) {
         if (lid < 0)
             reportError("getCondLid : no terminating conditional!\n");
     } else if (lid > 0) {
@@ -369,7 +369,7 @@ int workTable::getCondLid()
 bool workTable::takeOut(Instr *i)
 {
     InstructionPosition *p = &i->position;
-    wtRow *row = &unk_2c[p->unk_04];
+    wtRow *row = &rows[p->unk_04];
     row->entries[p->unk_02].unk_00 = (Instr *)i->unk_1398;
     i->clearSlot();
     return 1;
@@ -378,7 +378,7 @@ bool workTable::takeOut(Instr *i)
 bool workTable::putIn(Instr *i)
 {
     InstructionPosition *p = &i->position;
-    wtRow *row = &unk_2c[p->unk_04];
+    wtRow *row = &rows[p->unk_04];
     row->entries[p->unk_02].unk_00 = i;
     return 1;
 }
@@ -393,24 +393,24 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
         reportError("CloneAppend - null input pointer\n");
         return 0;
     }
-    if (!to->unk_2c) {
+    if (!to->rows) {
         reportError("clone append - source table has no attached table\n");
         return 0;
     }
-    if (!from->unk_2c) {
+    if (!from->rows) {
         reportError("clone append - destination table has no attached table\n");
         return 0;
     }
-    int n = from->unk_34 - from->unk_30;
-    int need = n + to->unk_34;
-    if (need > to->unk_28 && !to->grow(need + 0x20)) {
+    int n = from->rangeEnd - from->rangeStart;
+    int need = n + to->rangeEnd;
+    if (need > to->rowCapacity && !to->grow(need + 0x20)) {
         reportError("uh-oh, failed to grow a table\n");
         return 0;
     }
     int j, i;
-    for (j = to->unk_34, i = from->unk_30; i != from->unk_34; i++, j++) {
-        wtRow *sr = &from->unk_2c[i];
-        wtRow *dr = &to->unk_2c[j];
+    for (j = to->rangeEnd, i = from->rangeStart; i != from->rangeEnd; i++, j++) {
+        wtRow *sr = &from->rows[i];
+        wtRow *dr = &to->rows[j];
         for (int p = 0; p != 2; p++) {
             Instr *c;
             Instr *in = sr->getEntry(p);
@@ -437,7 +437,7 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                             c->unk_08 = 0;
                             in->unk_08 = 0;
                             if (a6)
-                                c->unk_13d2 = lidS - lid;
+                                c->expectedAliasLoopId = lidS - lid;
                         }
                     }
                 }
@@ -456,7 +456,7 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
             }
         }
     }
-    to->unk_34 += n;
+    to->rangeEnd += n;
     return 1;
 }
 
@@ -464,7 +464,7 @@ void workTable::dumpSynthetics()
 {
     for (Instr *i = linearInstructions.head; i; i = i->unk_1c.unk_00)
         if (i->syntheticKind)
-            i->func_08054008(false);
+            i->dumpOperandDiagnostics(false);
 }
 
 bool workTable::clearClones()
@@ -476,29 +476,29 @@ bool workTable::clearClones()
 
 int workTable::getTableRawMode()
 {
-    if (unk_09 == 3 || unk_09 == 5)
-        return unk_0a;
+    if (codeModeValue == 3 || codeModeValue == 5)
+        return rawSchedulingMode;
     return 0;
 }
 
 bool workTable::setTableRawMode(unsigned char mode)
 {
-    if (unk_09 != 3 && unk_09 != 5 && mode) {
-        int cm = unk_09;
+    if (codeModeValue != 3 && codeModeValue != 5 && mode) {
+        int cm = codeModeValue;
         reportError("failed to set vsm mode - because code mode isn't vsm..mode=%d cm=%d\n", mode, cm);
         abortAfterError();
         return 0;
     }
-    unk_0a = mode;
+    rawSchedulingMode = mode;
     return 1;
 }
 
 Instr *g_080de72c;
 
-void func_080737b8(Instr *in)
+void trackEarliestInsertion(Instr *in)
 {
     if (in) {
-        if (!g_080de72c || in->unk_1396 < g_080de72c->unk_1396)
+        if (!g_080de72c || in->insertionSerial < g_080de72c->insertionSerial)
             g_080de72c = in;
     }
 }
@@ -506,9 +506,9 @@ void func_080737b8(Instr *in)
 bool workTable::resetFlowStalls()
 {
     unk_0c = -1;
-    if (unk_2c && unk_30 >= 0) {
-        for (int i = unk_30; i < unk_34; i++)
-            if (!unk_2c[i].clearStalls()) {
+    if (rows && rangeStart >= 0) {
+        for (int i = rangeStart; i < rangeEnd; i++)
+            if (!rows[i].clearStalls()) {
                 reportError("failed to flow reset ientry\n");
                 return 0;
             }
@@ -516,13 +516,13 @@ bool workTable::resetFlowStalls()
     return 1;
 }
 
-bool workTable::func_08073854()
+bool workTable::hasSafeTrailingInstructions()
 {
-    if (unk_30 < 0)
+    if (rangeStart < 0)
         return 0;
-    if (unk_34 <= 0)
+    if (rangeEnd <= 0)
         return 1;
-    wtRow *r = rowAt(unk_34 - 1);
+    wtRow *r = rowAt(rangeEnd - 1);
     if (!r)
         return 0;
     Instr *in = r->entries[1].unk_00;
@@ -533,7 +533,7 @@ bool workTable::func_08073854()
         if (op >= 165 && op <= 167)
             return 0;
     }
-    r = rowAt(unk_34 - 2);
+    r = rowAt(rangeEnd - 2);
     if (!r)
         return 1;
     in = r->entries[1].unk_00;
@@ -545,7 +545,7 @@ bool workTable::func_08073854()
 Instr **cls_unk30::getIE_ck(int rl)
 {
     workTable *t = (workTable *)this;
-    if (!t->unk_2c) {
+    if (!t->rows) {
         reportError("checkie: table not set\n");
         return 0;
     }
@@ -553,19 +553,19 @@ Instr **cls_unk30::getIE_ck(int rl)
         reportError("checkie() - rl<0\n");
         return 0;
     }
-    if (t->unk_38) {
-        if (t->unk_30) {
+    if (t->loopSize) {
+        if (t->rangeStart) {
             reportError("getIE_ck - iStart not zero for loop table\n");
             abortAfterError();
         }
-        if (rl >= t->unk_38)
-            rl %= t->unk_38;
+        if (rl >= t->loopSize)
+            rl %= t->loopSize;
     }
-    if (rl >= t->unk_28) {
-        reportError("checkie() - rl>=m_MaxSize %d,%d\n", rl, t->unk_28);
+    if (rl >= t->rowCapacity) {
+        reportError("checkie() - rl>=m_MaxSize %d,%d\n", rl, t->rowCapacity);
         return 0;
     }
-    return (Instr **)&t->unk_2c[rl];
+    return (Instr **)&t->rows[rl];
 }
 
 Instr *workTable::getInstr(int rl, int p)
@@ -593,7 +593,7 @@ static inline Instr *getPipeInstr(Instr **ie, int p)
 
 Instr *workTable::getInstrInRange(int rl, int p)
 {
-    if (rl < unk_30 || rl >= unk_34)
+    if (rl < rangeStart || rl >= rangeEnd)
         return 0;
     Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
     return getPipeInstr(ie, p);
@@ -638,15 +638,15 @@ int workTable::getPipeCount(int p)
 
 bool logInstr(Block *blk, Instr *in)
 {
-    if (in->unk_138c == 3)
+    if (in->permittedPipelineMask == 3)
         blk->unk_bc++;
     else {
         int n = 0;
-        if (in->unk_138c & 1) {
+        if (in->permittedPipelineMask & 1) {
             blk->instructionCountsByPipe[0]++;
             n = 1;
         }
-        if (in->unk_138c & 2) {
+        if (in->permittedPipelineMask & 2) {
             n++;
             blk->instructionCountsByPipe[1]++;
         }
@@ -661,15 +661,15 @@ bool logInstr(Block *blk, Instr *in)
 
 bool func_08073bb0(Block *blk, Instr *in)
 {
-    if (in->unk_138c == 3)
+    if (in->permittedPipelineMask == 3)
         blk->unk_bc--;
     else {
         int n = 0;
-        if (in->unk_138c & 1) {
+        if (in->permittedPipelineMask & 1) {
             blk->instructionCountsByPipe[0]--;
             n = 1;
         }
-        if (in->unk_138c & 2) {
+        if (in->permittedPipelineMask & 2) {
             n++;
             blk->instructionCountsByPipe[1]--;
         }
@@ -698,8 +698,8 @@ void workTable::resetCounts()
 
 int workTable::getCurrentDoneSize()
 {
-    if (unk_38)
-        return unk_38;
+    if (loopSize)
+        return loopSize;
     int size = 0;
     for (Instr *i = completedInstructions.head; i; i = i->unk_24.unk_00) {
         int row = i->position.unk_00;
@@ -720,8 +720,8 @@ int workTable::getCurrentDoneSize()
         if (row + minToEnd + 1 > size)
             size = row + minToEnd + 1;
     }
-    if (size < unk_44)
-        size = unk_44;
+    if (size < externalMinimumLength)
+        size = externalMinimumLength;
     return size;
 }
 
@@ -736,7 +736,7 @@ bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1,
         int lid = i->position.unk_03;
         if (lid > *maxLid)
             *maxLid = lid;
-        switch ((unsigned char)i->unk_138e) {
+        switch ((unsigned char)i->schedulerCategory) {
         case 0:
             break;
         case 1:
@@ -763,67 +763,67 @@ bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1,
 
 bool workTable::grow(int n)
 {
-    if (!unk_2c) {
+    if (!rows) {
         reportError("can't grow.. there's nothing here\n");
         return 0;
     }
-    if (n <= unk_28)
+    if (n <= rowCapacity)
         return 1;
     wtRow *nt = new wtRow[n];
     if (!nt) {
         reportError("failed to get new tab\n");
         return 0;
     }
-    for (int i = unk_30; i < unk_34; i++) {
-        nt[i] = unk_2c[i];
-        unk_2c[i].clearEntries();
+    for (int i = rangeStart; i < rangeEnd; i++) {
+        nt[i] = rows[i];
+        rows[i].clearEntries();
     }
-    delete[] unk_2c;
-    unk_2c = nt;
-    unk_28 = n;
+    delete[] rows;
+    rows = nt;
+    rowCapacity = n;
     return 1;
 }
 
 bool workTable::hasEmptyRange()
 {
-    if (!unk_2c)
+    if (!rows)
         return 1;
-    return unk_34 <= unk_30;
+    return rangeEnd <= rangeStart;
 }
 
 bool workTable::setRange()
 {
-    if (!unk_2c) {
+    if (!rows) {
         reportError("setRange - no table!\n");
         return 0;
     }
-    unk_30 = 0;
-    unk_34 = -1;
-    unk_38 = 0;
+    rangeStart = 0;
+    rangeEnd = -1;
+    loopSize = 0;
     return 1;
 }
 
 bool workTable::setRange(int len)
 {
-    if (!unk_2c) {
+    if (!rows) {
         reportError("setRange - no table!\n");
         return 0;
     }
-    unk_30 = 0;
-    unk_34 = len;
-    unk_38 = len;
+    rangeStart = 0;
+    rangeEnd = len;
+    loopSize = len;
     return 1;
 }
 
 bool workTable::setRange(int s, int e)
 {
-    if (!unk_2c) {
+    if (!rows) {
         reportError("setRange - no table!\n");
         return 0;
     }
-    unk_30 = s;
-    unk_34 = e;
-    unk_38 = 0;
+    rangeStart = s;
+    rangeEnd = e;
+    loopSize = 0;
     if (s < 0) {
         reportError("s before 0\n");
         abortAfterError();
@@ -834,7 +834,7 @@ bool workTable::setRange(int s, int e)
         abortAfterError();
         return 0;
     }
-    if (e >= unk_28) {
+    if (e >= rowCapacity) {
         reportError("e after end\n");
         abortAfterError();
         return 0;
@@ -844,11 +844,11 @@ bool workTable::setRange(int s, int e)
 
 bool workTable::setSkip(int row, char skip)
 {
-    if (row < unk_30) {
+    if (row < rangeStart) {
         reportError("setskip - before start\n");
         return 0;
     }
-    if (row >= unk_34) {
+    if (row >= rangeEnd) {
         reportError("setskip >= end\n");
         return 0;
     }
@@ -863,34 +863,34 @@ bool workTable::setSkip(int row, char skip)
 
 int workTable::getRangeStart()
 {
-    if (!unk_2c) {
-        const char *m = codeModeStr(unk_09);
-        const char *o = unk_10 ? unk_10->streamName() : "UNOWNED_TABLE";
+    if (!rows) {
+        const char *m = codeModeStr(codeModeValue);
+        const char *o = ownerStream ? ownerStream->streamName() : "UNOWNED_TABLE";
         reportError("getStart called .. no table for %s mode %s\n", o, m);
         exitAfterCleanup(-1);
     }
-    return unk_30;
+    return rangeStart;
 }
 
 int workTable::getLoopSize()
 {
-    return unk_38;
+    return loopSize;
 }
 
 int workTable::getRangeEnd()
 {
-    if (!unk_2c) {
-        const char *o = unk_10 ? unk_10->streamName() : "UNOWNED_TABLE";
+    if (!rows) {
+        const char *o = ownerStream ? ownerStream->streamName() : "UNOWNED_TABLE";
         reportError("getEnd called .. no table for %s\n", o);
         reportError("getEnd called .. no table\n");
         exitAfterCleanup(-1);
     }
-    return unk_34;
+    return rangeEnd;
 }
 
 bool workTable::changeMode(unsigned char mode)
 {
-    int cur = unk_09;
+    int cur = codeModeValue;
     if (mode == (unsigned char)cur) {
         reportError("change mode to same!\n");
         abortAfterError();
@@ -932,7 +932,7 @@ bool workTable::changeMode(unsigned char mode)
         abortAfterError();
         break;
     }
-    unk_09 = mode;
+    codeModeValue = mode;
     return 1;
 }
 
@@ -1008,11 +1008,11 @@ bool workTable::logAddLinear_Tail(Instr *n)
 bool workTable::makeLinearList()
 {
     clearLinear();
-    if (unk_30 < 0 || !unk_2c) {
+    if (rangeStart < 0 || !rows) {
         reportError("iTable::makeLinearList - table not ready\n");
         return 0;
     }
-    for (int i = unk_30; i < unk_34; i++) {
+    for (int i = rangeStart; i < rangeEnd; i++) {
         Instr **ie = ((cls_unk30 *)this)->getIE_ck(i);
         if (!ie) {
             reportError("iTable::makeLinearList - failed to get ientry\n");
@@ -1050,12 +1050,12 @@ bool workTable::logUnlinkFromLinear(Instr *in)
 
 bool workTable::relinkRawIt()
 {
-    if (!unk_2c) {
+    if (!rows) {
         reportError("relinkRawIt() -no table set\n");
         return 0;
     }
     clearLinear();
-    for (int i = unk_30; i < unk_34; i++) {
+    for (int i = rangeStart; i < rangeEnd; i++) {
         wtRow *r = rowAt(i);
         if (!r) {
             reportError("iTable::makeLinearList - failed to get ientry\n");
@@ -1088,7 +1088,7 @@ bool workTable::unlockLine(InstructionPosition *line)
 
 workTable *workTable::localClone()
 {
-    if (unk_09 != 1) {
+    if (codeModeValue != 1) {
         reportError("table to be locally cloned isn't uta\n");
         return 0;
     }
@@ -1099,19 +1099,19 @@ workTable *workTable::localClone()
     }
     nt->init(1, 0);
     nt->unk_7a = unk_7a;
-    nt->unk_5c.copyCountersFrom(&unk_5c);
+    nt->statistics.copyCountersFrom(&statistics);
     nt->unk_74 = unk_74;
     nt->unk_76 = unk_76;
     nt->unk_78 = unk_78;
-    nt->unk_44 = unk_44;
-    unsigned int t = (unsigned char)unk_08;
-    nt->unk_08 = t;
+    nt->externalMinimumLength = externalMinimumLength;
+    unsigned int t = (unsigned char)allocationMode;
+    nt->allocationMode = t;
     nt->unk_40 = 0;
-    nt->unk_10 = unk_10;
-    regUseList &regs = unk_14;
-    for (regUse *r = regs.head; r; r = r->unk_04) {
+    nt->ownerStream = ownerStream;
+    regUseList &regs = registerUses;
+    for (regUse *r = regs.head; r; r = r->next) {
         regUse *cloned = r->Clone();
-        if (!nt->unk_14.append(cloned)) {
+        if (!nt->registerUses.append(cloned)) {
             reportError("failed to add cloned regref to list\n");
             delete r;
             return 0;
@@ -1123,22 +1123,22 @@ workTable *workTable::localClone()
             Operand *op = &in->operands[i];
             RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
-            int mask = op->unk_07 & ~op->unk_27;
+            int mask = op->componentMask & ~op->externalPartMask;
             for (int k = 0; k != reg->partCount; k++) {
                 int bit = 1 << k;
                 if (mask & bit) {
-                ol_s *o = op->unk_2c[k].unk_54.head;
-                if (!o || o->unk_00) {
+                ol_s *o = op->parts[k].unk_54.head;
+                if (!o || o->next) {
                     reportError("more or less than one oploc for non-extern input\n");
                     return 0;
                 }
-                Instr *setter = o->unk_04;
+                Instr *setter = o->instruction;
                 if (!setter) {
                     reportError("could not get setting op for setter\n");
                     return 0;
                 }
                 instStream *s = setter->getOwningStream();
-                if (s != unk_10) {
+                if (s != ownerStream) {
                     reportError("owner of setter not us %p vs %p\n", setter->unk_30, this, s);
                     return 0;
                 }
@@ -1147,8 +1147,8 @@ workTable *workTable::localClone()
                     return 0;
                 }
                 Instr *w = setter->unk_08;
-                int p1 = o->unk_11;
-                int p0 = o->unk_10;
+                int p1 = o->componentIndex;
+                int p0 = o->operandIndex;
                 if (!link_oParts(w, p0, p1, c, i, k)) {
                     reportError("failed to link local oparts\n");
                     return 0;
@@ -1184,7 +1184,7 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
         return 0;
     }
     nw->linearOrderIndex = old->linearOrderIndex;
-    nw->unk_13e0 = old->unk_13e0;
+    nw->instructionSerial = old->instructionSerial;
     if (isAbstract()) {
         if (nw->isConcreteMove()) {
             reportError("trying to place a resolved move into abstract table\n");
@@ -1218,7 +1218,7 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
             reportError("failed to take out old instruction\n");
             return 0;
         }
-        wtRow *row = &unk_2c[p->unk_04];
+        wtRow *row = &rows[p->unk_04];
         row->entries[p->unk_02].unk_00 = nw;
     }
     return 1;
@@ -1230,7 +1230,7 @@ bool workTable::destroyInstruction(Instr *&in)
         reportError("destroyInstruction -  failed to unlink\n");
         return 0;
     }
-    if (unk_2c) {
+    if (rows) {
         InstructionPosition *p = &in->position;
         int row = p->unk_04;
         int pipe = p->unk_02;

@@ -71,12 +71,12 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
     *p2 = 0;
     *p1 = 0;
     char done = 0;
-    int len = unk_34 - unk_30;
+    int len = rangeEnd - rangeStart;
     if (len < 0) {
         reportError("iTable::emit - not done!\n");
         return 0;
     }
-    instStream *owner = unk_10;
+    instStream *owner = ownerStream;
     if (!owner) {
         reportError("during emit - owner not set\n");
         return 0;
@@ -94,23 +94,23 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         nulls = 2;
     int top = (unsigned char)owner->unk_2d4;
 
-    if (unk_09 == 4) {
+    if (codeModeValue == 4) {
         *p1 = nulls;
         *p2 = nulls;
     } else {
-        for (int i = unk_30; i != unk_34; i++) {
-            wtRow *r = &unk_2c[i];
+        for (int i = rangeStart; i != rangeEnd; i++) {
+            wtRow *r = &rows[i];
             if (!r->skip)
                 (*p1)++;
             (*p2)++;
         }
-        if (isEnd && !func_08073854()) {
+        if (isEnd && !hasSafeTrailingInstructions()) {
             (*p2)++;
             (*p1)++;
         }
     }
 
-    if (unk_09 == 4) {
+    if (codeModeValue == 4) {
         wtRow blank;
         blank.clearEntries();
         for (int i = 0; i != nulls; i++) {
@@ -128,7 +128,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             }
         }
     } else {
-        instStream *s = unk_10;
+        instStream *s = ownerStream;
         if (s) {
             buf += formatIntoBuffer(buf, "; ");
             if (s->unk_140)
@@ -153,15 +153,15 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         }
         *p1 = 0;
         *p2 = 0;
-        int end = unk_34;
-        if (isEnd && !func_08073854())
+        int end = rangeEnd;
+        if (isEnd && !hasSafeTrailingInstructions())
             end++;
         wtRow blank;
         blank.clearEntries();
-        for (int i = unk_30; i != end; i++) {
+        for (int i = rangeStart; i != end; i++) {
             wtRow *r = &blank;
-            if (i < unk_34)
-                r = &unk_2c[i];
+            if (i < rangeEnd)
+                r = &rows[i];
             int f = 0;
             if (!r->skip)
                 (*p1)++;
@@ -171,7 +171,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                     f = (unsigned char)(s->unk_2d5 | 2);
                     done = 1;
                 }
-            } else if (i == unk_34 - 1)
+            } else if (i == rangeEnd - 1)
                 f = (unsigned char)s->unk_2d5;
             f |= top;
             top = 0;
@@ -244,7 +244,7 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
     int i;
     for (i = 0; i != 2; i++)
         if (entries[i].unk_00)
-            flags |= entries[i].unk_00->unk_1389;
+            flags |= entries[i].unk_00->instructionModifierBits;
     int len = 0;
     for (i = 0; i != 2; i++) {
         if (!entries[i].unk_00)
@@ -307,7 +307,7 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
     while (*s)
         *d++ = *s++;
     *d = 0;
-    if (in->unk_1392 || !in->opcodeInfo)
+    if (in->tildePrefix || !in->opcodeInfo)
         p += formatIntoBuffer(p, "nop%s", mods);
     else {
         if (in->opcodeInfo->emitHook) {

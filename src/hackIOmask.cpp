@@ -3,20 +3,20 @@
 
 bool func_08087860(void *, Instr *in);
 
-static inline bool isOutput(Operand *op) { return op->unk_09 == 2; }
-static inline bool isInput(Operand *op) { return op->unk_09 == 1; }
+static inline bool isOutput(Operand *op) { return op->direction == 2; }
+static inline bool isInput(Operand *op) { return op->direction == 1; }
 
 static inline RegPoolEntry *outReg(Operand *op)
 {
     if (isOutput(op))
-        return op->unk_18;
+        return op->assignedRegister;
     return 0;
 }
 
 static inline RegPoolEntry *inReg(Operand *op)
 {
     if (isInput(op))
-        return op->unk_18;
+        return op->assignedRegister;
     return 0;
 }
 
@@ -51,17 +51,17 @@ int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp)
         reportError("input op had no register!\n");
         return -1;
     }
-    int bits = mask & out->unk_07;
+    int bits = mask & out->componentMask;
     if (bits != mask) {
         reportError("out of range t_bits vs modbits for input\n");
         return -1;
     }
     if (!mask)
         return 0;
-    if ((ip->unk_04 == 1 || ip->unk_04 == 9) && (out->unk_04 == 1 || out->unk_04 == 9)) {
+    if ((ip->operandKind == 1 || ip->operandKind == 9) && (out->operandKind == 1 || out->operandKind == 9)) {
         if (info->decodeHook == func_08087860)
             return ((bits << 1) & 0xf) | ((mask & 8) >> 3);
         return bits;
     }
-    return ip->unk_07;
+    return ip->componentMask;
 }

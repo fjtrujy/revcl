@@ -96,7 +96,7 @@ public:
     ol_s *insertExternalLocation(ol_s *src);
 };
 
-// Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).
+// Base of OpSlot: fields 0x00..0x4f reset by resetLock (class name guessed).
 class cls0805c244;
 class cls08058718;
 class cls0805bcc4;
@@ -112,27 +112,27 @@ public:
     unsigned char unk_00;
     unsigned char unk_01;
     unsigned char unk_02;
-    cls0805c244 *unk_04;    // owning locklist
-    cls0805bcc4 *unk_08;    // next sibling in parent's child list
-    cls0805bcc4 *unk_0c;    // input: parent output lock; output: child list head
-    cls0805bcc4 *unk_10;    // next in locklist sorted output list
-    unsigned char unk_14;   // 1 = input lock, 2 = output lock
+    cls0805c244 *ownerLockList;
+    cls0805bcc4 *nextSibling;
+    cls0805bcc4 *parentOrChildren;
+    cls0805bcc4 *nextSortedOutput;
+    unsigned char lockDirection;
     char unk_15;
     char unk_16;
     char unk_17;
-    char unk_18;
+    char issueLatency;
     char unk_19;
-    char unk_1a;
+    char priority;
     char unk_1b;
-    cls0805bcc4 *unk_1c;    // in/out partner lock
-    short unk_20;
+    cls0805bcc4 *pairedLock;
+    short referenceCount;
     short unk_22;
-    void *unk_24;           // owner: Instr* (oType 1) or regUse* (oType 2)
-    unsigned char unk_28;   // part
-    unsigned char unk_29;   // operand index
+    void *ownerPointer;
+    unsigned char ownerComponent;
+    unsigned char ownerOperandIndex;
     short unk_2a;
     char unk_2c;
-    unsigned char unk_2d;   // owner type: 0 none, 1 Instr, 2 regUse
+    unsigned char ownerType;
     short unk_2e;
     short unk_30;
     short unk_32;
@@ -151,9 +151,9 @@ public:
     short unk_4c;
     short unk_4e;
 
-    cls0805bcc4() { func_0805bcc4(); }
+    cls0805bcc4() { resetLock(); }
     ~cls0805bcc4() {}
-    bool func_0805bcc4();
+    bool resetLock();
     bool setOwner(int part, Instr *instr, int opnd);
     bool setOwner(int part, regUse *rf);
     bool clearOwner();
@@ -167,16 +167,16 @@ public:
     bool setInOut(cls0805bcc4 *olk);
     bool incRef();
     bool decRef();
-    char getPriority() { return unk_1a; }
-    short getRefCount() { return unk_20; }
+    char getPriority() { return priority; }
+    short getRefCount() { return referenceCount; }
     void print();
     bool isOk(int type, bool inserted);
     short func_0805ccc8();
     short func_0805ccd4();
     bool calcStats(Instr *skip);
-    void func_0805d020();
+    void resetCalculatedStats();
     void setFrom(cls08058718 *r);
-    short func_0805d0dc();
+    short getCurrentLoopIteration();
     const char *regName();
     void resetStats()
     {
@@ -196,18 +196,18 @@ public:
 class cls0805c244 {
 public:
     short unk_00;
-    unsigned char unk_02;   // part
-    unsigned char unk_03;   // assigned flag
-    RegPoolEntry *unk_04;   // register
-    cls0805c244 *unk_08;    // next locklist
-    cls0805bcc4 *unk_0c[4]; // external output locks
-    cls0805bcc4 *unk_1c;    // output lock list (linked by lock->unk_08)
-    cls0805bcc4 *unk_20;    // sorted output list head (by unk_32, linked by unk_10)
-    short unk_24;           // nOutLocks
-    short unk_26;           // nToGo
+    unsigned char componentIndex;
+    unsigned char assigned;
+    RegPoolEntry *registerEntry;
+    cls0805c244 *nextLockList;
+    cls0805bcc4 *externalOutputLocks[4];
+    cls0805bcc4 *outputLocks;
+    cls0805bcc4 *sortedOutputLocks;
+    short outputLockCount;
+    short remainingLockCount;
     char unk_28;
     char unk_29;
-    unsigned char unk_2a;   // extern output count
+    unsigned char externalOutputCount;
     char unk_2b;
 
     cls0805c244();
@@ -223,13 +223,13 @@ public:
     bool addInputLock(cls0805bcc4 *in);
     bool undoInputLock(cls0805bcc4 *in);
     bool undoOutputLock(cls0805bcc4 *lk);
-    int func_0805c938(int n);
+    int maxConstraintOfFirstOutputs(int n);
     bool isOk(cls0805bcc4 *lk, int type, bool inserted);
     bool moveOutputLock(cls0805bcc4 *lk);
     bool moveInputLock(cls0805bcc4 *in);
     bool addExtOutput(cls0805bcc4 *lk, bool flag);
     Instr *earliestExt();
-    int func_0805d3c4();
+    int countFlaggedOutputLocks();
     bool setRepReg(RegPoolEntry *rg);
     int checkInputLock(cls0805bcc4 *in, short *pos, int *minPos);
     int checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos);
@@ -245,9 +245,9 @@ cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part);
 const char *rlmtName(unsigned char t);
 
 bool checkTable(iInfo *tab, int count);
-int func_08070300(unsigned char);
+int decodeImmediateCategory(unsigned char);
 int func_0807031c(unsigned char);
-unsigned char func_08070324(unsigned char);
+unsigned char immediateFlagBit7(unsigned char);
 
 struct OpSlot : public cls0805bcc4 {
     short unk_50;
@@ -262,35 +262,35 @@ struct OpSlot : public cls0805bcc4 {
 };
 
 struct Operand {
-    RegWeb *unk_00;         // register web
-    char unk_04;            // operand kind
+    RegWeb *registerWeb;
+    char operandKind;
     char unk_05;
-    char unk_06;
-    unsigned char unk_07;   // register slot mask
-    char unk_08;
-    char unk_09;            // 1 == register operand
-    char unk_0a;
+    char externalComponentMask;
+    unsigned char componentMask;
+    char isImplicit;
+    char direction;
+    char outputLatency;
     char unk_0b;
     char unk_0c;
-    char unk_0d;            // paired operand index + 1
+    char pairedOperandIndexPlusOne;
     char unk_0e[2];
-    RegPoolEntry *unk_10;   // forced base register
-    RegPoolEntry *unk_14;
-    RegPoolEntry *unk_18;   // register
-    mValue unk_1c;          // immediate value
+    RegPoolEntry *forcedBaseRegister;
+    RegPoolEntry *originalRegister;
+    RegPoolEntry *assignedRegister;
+    mValue immediateValue;
     char unk_24;
     char unk_25;
-    char unk_26;            // operand index
-    unsigned char unk_27;
+    char operandIndex;
+    unsigned char externalPartMask;
     char unk_28;
-    char unk_29;
-    unsigned char unk_2a;   // prune mask
-    char unk_2b;
-    OpSlot unk_2c[4];       // per register slot
+    char additionalLatency;
+    unsigned char pruneMask;
+    char operandStatus;
+    OpSlot parts[4];
 
     Operand();
     ~Operand();
-    unsigned char getStatus() { return unk_2b; }
+    unsigned char getStatus() { return operandStatus; }
     bool validateKindAndMask();
     void diagnoseOperand(int);
     char *Emit(char *buf, bool, bool symbolic);
@@ -304,13 +304,13 @@ struct Operand {
     RegWeb *GetWeb();
     bool isForwardable()
     {
-        return unk_18 && unk_18->ownerPool->virtualPartCount && unk_18 != unk_18->ownerPool->zeroRegister;
+        return assignedRegister && assignedRegister->ownerPool->virtualPartCount && assignedRegister != assignedRegister->ownerPool->zeroRegister;
     }
     bool isZero()
     {
         int z = 0;
-        if (unk_18) {
-            if (unk_18 == unk_18->ownerPool->zeroRegister)
+        if (assignedRegister) {
+            if (assignedRegister == assignedRegister->ownerPool->zeroRegister)
                 z = 1;
         }
         return z;
@@ -318,16 +318,16 @@ struct Operand {
     bool isReg()
     {
         bool r = false;
-        if (unk_09 == 1 && !isZero())
+        if (direction == 1 && !isZero())
             r = true;
         return r;
     }
-    RegPoolEntry *getReg() { return isReg() ? unk_18 : 0; }
+    RegPoolEntry *getReg() { return isReg() ? assignedRegister : 0; }
     bool isZeroReg()
     {
         bool z = false;
-        if (unk_18) {
-            if (unk_18 == unk_18->ownerPool->zeroRegister)
+        if (assignedRegister) {
+            if (assignedRegister == assignedRegister->ownerPool->zeroRegister)
                 z = true;
         }
         return z;
@@ -335,120 +335,120 @@ struct Operand {
     RegPoolEntry *inputReg()
     {
         int r = 0;
-        if (unk_09 == 1 && !isZeroReg())
+        if (direction == 1 && !isZeroReg())
             r = 1;
-        return r ? unk_18 : 0;
+        return r ? assignedRegister : 0;
     }
     RegPoolEntry *inputRegister()
     {
         int r = 0;
-        if (unk_09 == 1 && !isZeroReg2())
+        if (direction == 1 && !isZeroReg2())
             r = 1;
-        return (char)r ? unk_18 : 0;
+        return (char)r ? assignedRegister : 0;
     }
     RegPoolEntry *outputRegister()
     {
         int r = 0;
-        if (unk_09 == 2 && !isZero())
+        if (direction == 2 && !isZero())
             r = 1;
-        return (char)r ? unk_18 : 0;
+        return (char)r ? assignedRegister : 0;
     }
     RegPoolEntry *outputReg()
     {
         int r = 0;
-        if (unk_09 == 2 && !isZero())
+        if (direction == 2 && !isZero())
             r = 1;
-        return (bool)r ? unk_18 : 0;
+        return (bool)r ? assignedRegister : 0;
     }
     RegPoolEntry *inputRegB()
     {
         int r = 0;
-        if (unk_09 == 1 && !isZero())
+        if (direction == 1 && !isZero())
             r = 1;
-        return (bool)r ? unk_18 : 0;
+        return (bool)r ? assignedRegister : 0;
     }
     RegPoolEntry *outputRegZ()
     {
         int r = 0;
-        if (unk_09 == 2) {
+        if (direction == 2) {
             if (!isZero())
                 r = 1;
         }
-        return r ? unk_18 : 0;
+        return r ? assignedRegister : 0;
     }
     RegPoolEntry *outputRegZB()
     {
         int r = 0;
-        if (unk_09 == 2 && !isZeroReg())
+        if (direction == 2 && !isZeroReg())
             r = 1;
-        return r ? unk_18 : 0;
+        return r ? assignedRegister : 0;
     }
     bool isRegOp()
     {
         int r = 0;
-        if (unk_09 == 1 && !isZero())
+        if (direction == 1 && !isZero())
             r = 1;
         return r;
     }
-    RegPoolEntry *regOp() { return isRegOp() ? unk_18 : 0; }
-    bool isInReg() { return unk_09 == 1 && !isZero(); }
-    bool isOutReg() { return unk_09 == 2 && !isZero(); }
+    RegPoolEntry *regOp() { return isRegOp() ? assignedRegister : 0; }
+    bool isInReg() { return direction == 1 && !isZero(); }
+    bool isOutReg() { return direction == 2 && !isZero(); }
     bool isReg2()
     {
         bool r = false;
-        if (unk_09 == 2 && !isZero())
+        if (direction == 2 && !isZero())
             r = true;
         return r;
     }
     char isOutRegOp()
     {
         int r = 0;
-        if (unk_09 == 2 && !isZero())
+        if (direction == 2 && !isZero())
             r = 1;
         return r;
     }
     bool isInRegOp()
     {
         int r = 0;
-        if (unk_09 == 1 && !isZeroReg())
+        if (direction == 1 && !isZeroReg())
             r = 1;
         return r;
     }
-    bool isInRegOpB() { return unk_09 == 1 && !isZeroReg(); }
+    bool isInRegOpB() { return direction == 1 && !isZeroReg(); }
     bool isInRegB()
     {
         bool r = false;
-        if (unk_09 == 1 && !isZeroReg())
+        if (direction == 1 && !isZeroReg())
             r = true;
         return r;
     }
     RegPoolEntry *outRegZ()
     {
         bool r = false;
-        if (unk_09 == 2 && !isZeroReg2())
+        if (direction == 2 && !isZeroReg2())
             r = true;
         if (r)
-            return unk_18;
+            return assignedRegister;
         return 0;
     }
     RegPoolEntry *getReg2()
     {
         if (isReg2())
-            return unk_18;
+            return assignedRegister;
         return 0;
     }
     RegPoolEntry *inRegOp()
     {
         bool r = false;
-        if (unk_09 == 1 && !isZeroReg())
+        if (direction == 1 && !isZeroReg())
             r = true;
-        return r ? unk_18 : 0;
+        return r ? assignedRegister : 0;
     }
     bool isZeroReg2()
     {
         bool z = false;
-        if (unk_18) {
-            int delta = (char *)unk_18 - (char *)unk_18->ownerPool->zeroRegister;
+        if (assignedRegister) {
+            int delta = (char *)assignedRegister - (char *)assignedRegister->ownerPool->zeroRegister;
             if (!delta)
                 z = true;
         }
@@ -457,81 +457,81 @@ struct Operand {
     RegPoolEntry *inRegOp2()
     {
         bool r = false;
-        if (unk_09 == 1 && !isZeroReg2())
+        if (direction == 1 && !isZeroReg2())
             r = true;
-        return r ? unk_18 : 0;
+        return r ? assignedRegister : 0;
     }
     RegPoolEntry *outRegOp()
     {
         bool r = false;
-        if (unk_09 == 2 && !isZeroReg())
+        if (direction == 2 && !isZeroReg())
             r = true;
-        return r ? unk_18 : 0;
+        return r ? assignedRegister : 0;
     }
     bool isZeroB()
     {
         int z = 0;
-        if (unk_18 && unk_18 == unk_18->ownerPool->zeroRegister)
+        if (assignedRegister && assignedRegister == assignedRegister->ownerPool->zeroRegister)
             z = 1;
         return z;
     }
     RegPoolEntry *outputRegB()
     {
         int r = 0;
-        if (unk_09 == 2 && !isZeroB())
+        if (direction == 2 && !isZeroB())
             r = 1;
-        return (bool)r ? unk_18 : 0;
+        return (bool)r ? assignedRegister : 0;
     }
     RegPoolEntry *inputRegC()
     {
         int r = 0;
-        if (unk_09 == 1 && !isZeroB())
+        if (direction == 1 && !isZeroB())
             r = 1;
-        return (bool)r ? unk_18 : 0;
+        return (bool)r ? assignedRegister : 0;
     }
     RegPoolEntry *getRegD()
     {
         bool r = false;
-        if (unk_09 == 1 && isZeroC() == false)
+        if (direction == 1 && isZeroC() == false)
             r = true;
-        return r ? unk_18 : 0;
+        return r ? assignedRegister : 0;
     }
-    bool isZeroC() { return unk_18 && unk_18 == unk_18->ownerPool->zeroRegister; }
-    bool isInRegC() { return unk_09 == 1 && !isZeroC(); }
-    bool isOutRegC() { return unk_09 == 2 && !isZeroC(); }
+    bool isZeroC() { return assignedRegister && assignedRegister == assignedRegister->ownerPool->zeroRegister; }
+    bool isInRegC() { return direction == 1 && !isZeroC(); }
+    bool isOutRegC() { return direction == 2 && !isZeroC(); }
     bool isHardZero()
     {
-        if (unk_18 && unk_18 == unk_18->ownerPool->zeroRegister)
+        if (assignedRegister && assignedRegister == assignedRegister->ownerPool->zeroRegister)
             return true;
         return false;
     }
     bool isOutputReg()
     {
         int r = 0;
-        if (unk_09 == 2 && !isHardZero())
+        if (direction == 2 && !isHardZero())
             r = 1;
         return (bool)r;
     }
     bool isInputReg()
     {
         int r = 0;
-        if (unk_09 == 1 && !isHardZero())
+        if (direction == 1 && !isHardZero())
             r = 1;
         return (bool)r;
     }
-    bool hasRegister() { return unk_18 != 0; }
-    bool isInput() { return unk_09 == 1; }
-    bool isOutput() { return unk_09 == 2; }
+    bool hasRegister() { return assignedRegister != 0; }
+    bool isInput() { return direction == 1; }
+    bool isOutput() { return direction == 2; }
     RegPoolEntry *inReg()
     {
-        if (isInput() && unk_18)
-            return unk_18;
+        if (isInput() && assignedRegister)
+            return assignedRegister;
         return 0;
     }
     RegPoolEntry *outReg()
     {
-        if (unk_09 == 2)
-            return unk_18;
+        if (direction == 2)
+            return assignedRegister;
         return 0;
     }
 };
@@ -545,18 +545,18 @@ static inline bool isZeroRegister(RegPoolEntry *reg)
 
 static inline bool isZeroOperand(Operand *op)
 {
-    return op->unk_18 && isZeroRegister(op->unk_18);
+    return op->assignedRegister && isZeroRegister(op->assignedRegister);
 }
 
 static inline bool isRegisterOperand(Operand *op, char direction)
 {
-    return op->unk_09 == direction && !isZeroOperand(op);
+    return op->direction == direction && !isZeroOperand(op);
 }
 
 static inline RegPoolEntry *registerOperand(Operand *op, char direction)
 {
     if (isRegisterOperand(op, direction))
-        return op->unk_18;
+        return op->assignedRegister;
     return 0;
 }
 
@@ -661,20 +661,20 @@ public:
     iInfo *opcodeInfo;  // opcode descriptor
     Operand operands[12];
     unsigned char branchFlags;     // flags
-    char unk_1389;
+    char instructionModifierBits;
     bool rawOnly;
     unsigned char operandCount;     // operand count
-    char unk_138c;
-    unsigned char unk_138d;
-    char unk_138e;
+    char permittedPipelineMask;
+    unsigned char opcodeResourceMask;
+    char schedulerCategory;
     unsigned char destinationMask;
     char unk_1390;
-    char unk_1391;
-    char unk_1392;
+    char reverseBranchSense;
+    char tildePrefix;
     short scheduledCycle;
-    short unk_1396;
+    short insertionSerial;
     int unk_1398;
-    char *unk_139c;
+    char *branchLabelTags;
     olList predecessorDependencies;
     olList successorDependencies;
     short unk_13b0;
@@ -685,21 +685,21 @@ public:
     char unk_13cc;
     char syntheticKind;
     char ramAccessType;
-    unsigned char unk_13cf;
+    unsigned char baseIssueSpacing;
     unsigned char opcodeFlags;
     char unk_13d1;
-    short unk_13d2;
-    char unk_13d4;
-    char unk_13d5;
-    char unk_13d6;
+    short expectedAliasLoopId;
+    char addressAliasMode;
+    char addressAliasDirection;
+    char addressAliasOperandIndex;
     char unk_13d7;
     mValue addressImmediateValue;
-    int unk_13e0;
+    int instructionSerial;
     int linearOrderIndex;
     cls08058718 position;
     void clearSlot() { position.clearInstructionPosition(); }
     cls0805e2e4 unk_13f0;
-    short unk_1408, unk_140a, unk_140c, unk_140e;
+    short dynamicUpperBound, dynamicEarliestStart, dynamicReverseStart, dynamicReverseEnd;
     short hasExtraPredecessors;     // fdep "has extra pre deps" flag
     short specialRegisterReadMask;     // slot mask read of reg idx 48
     short specialRegisterWriteMask;     // slot mask written of reg idx 48
@@ -711,26 +711,26 @@ public:
     short parsedLoopId;
     char unk_1422[6];
     VclPtrWord unk_1428;
-    short unk_142c;
-    short unk_142e;
-    short unk_1430;
-    short unk_1432;
+    short abstractMoveOpcode;
+    short concreteMoveOpcode;
+    short moveRowOffset;
+    short moveChainDepth;
     Instr *previousThroughputWriter;        // prevThruput writer
 
     bool isConcreteMove()
     {
-        return unk_142c && unk_142e;
+        return abstractMoveOpcode && concreteMoveOpcode;
     }
     bool isAbstractMove()
     {
-        return unk_142c && !unk_142e;
+        return abstractMoveOpcode && !concreteMoveOpcode;
     }
     Instr(iInfo *info);
     ~Instr();
     void hasImmValue();
     bool hasImmFixup();
     void resetImmFixup();
-    void func_0805f4e0();
+    void resetDynamicSchedulingStats();
     bool isValid()
     {
         if (!opcodeInfo)
@@ -742,7 +742,7 @@ public:
     }
     bool clearDynamicData();
     bool validateOperands();
-    void func_08054008(int flags);
+    void dumpOperandDiagnostics(int flags);
     bool isNop();
     instStream *getOwningStream();  // owner instruction stream
     bool resetFlowDependencies();
@@ -755,7 +755,7 @@ public:
     bool patchBranchLatencies();
     int simplifyBranch();
     int normalizeZeroSources();
-    int func_08055ac4();
+    int opcodeId();
     Operand *getOp(int n)
     {
         if (n < 0) {
@@ -773,7 +773,7 @@ public:
     bool getImmediateOperand(int n, int *out);
     bool changeBranchImmediate(const char *s);
     bool setOwner(cls_unk30 *s);
-    char *func_080552a8(bool flag, char *buf, int n);
+    char *emitExpectedSyntax(bool flag, char *buf, int n);
     int outputMaskForRegister(RegPoolEntry *reg, int mask);
     int inputMaskForRegister(RegPoolEntry *reg, int mask);
     bool func_08055548();
@@ -783,7 +783,7 @@ public:
     Operand *findInputOperand(RegPoolEntry *reg, int mask);
     Operand *findOutputOperand(RegPoolEntry *reg, int mask);
     bool hasLinkedOutputFrom(unsigned int n);
-    bool func_080558f4();
+    bool classifySchedulingCategory();
     Instr **getIE();
     int getFirstOutputLatency();
     bool func_08055a88();
@@ -791,10 +791,10 @@ public:
     bool expandVirtualStatOperand();
     void clearExternalTimingConstraints();
     void copyExternalTimingConstraints(Instr *src);
-    void func_08055fbc(short v);
-    void func_08055fdc(short v);
-    void func_08055ffc(short v);
-    void func_0805601c(short v);
+    void raiseExternalInputPairedConstraint(short v);
+    void raiseExternalInputConstraint(short v);
+    void raiseExternalOutputPairedConstraint(short v);
+    void raiseExternalOutputConstraint(short v);
 };
 
 iInfo *getOpcodeInfoById(int id);
@@ -809,7 +809,7 @@ bool isVuRegister(RegPoolEntry *r);
 // Address-alias descriptor per opcode (12-byte entries, names guessed).
 struct aaDesc {
     int unk_00;             // opcode id
-    char unk_04;            // -> Instr::unk_13d4
+    char unk_04;            // -> Instr::addressAliasMode
     unsigned char unk_05;   // operand index
     unsigned char unk_06;   // output operand index
     signed char unk_07;     // immediate operand index, <0 => unk_08
@@ -825,21 +825,21 @@ struct aaUse {
 aaDesc *findAddressAliasDescriptor(Instr *in);
 aaUse *findAddressAliasUse(Instr *in);
 RegPoolEntry *getOperandZeroReg(int kind);
-bool func_080543bc(Instr *a, Instr *b);
-bool func_0805449c(Instr *a, Instr *b);
-Operand *func_0805802c(ol_s *ol);
-void func_0805859c(ol_s *ol);
+bool hasDirectOperandDependency(Instr *a, Instr *b);
+bool writesInputRegisterOf(Instr *a, Instr *b);
+Operand *operandAtLocation(ol_s *ol);
+void markLocationExternallyUsed(ol_s *ol);
 int func_080585a8(ol_s *ol);
-int func_080585c0(ol_s *ol);
-bool func_080585d4(ol_s *a, ol_s *b);
-instStream *func_08058618(ol_s *ol);
-int func_0805862c(ol_s *ol);
-ol_s *func_08058640();
-int func_080586c4();
+int instructionSerialAtLocation(ol_s *ol);
+bool sameOperandLocation(ol_s *a, ol_s *b);
+instStream *locationOwningStream(ol_s *ol);
+int locationRow(ol_s *ol);
+ol_s *allocateLocationNode();
+int countFreeLocationNodes();
 bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot);
 bool link_oParts(ol_s *o, ol_s *i, int x, int y);
-const char *func_08055254(int t);
-const char *func_080554e4(int t);
+const char *branchTypeNameByCode(int t);
+const char *syntheticTypeName(int t);
 
 // Implicit operand description (name guessed).
 struct ImplicitOp {
@@ -856,10 +856,10 @@ struct ImplicitOp {
 
 bool buildImplicitOperand(int kind, ImplicitOp *out, bool);
 const char *opKindName(int kind);
-int func_08057a34(int kind);
+int registerClassForOperandKind(int kind);
 bool func_08057d60(int kind);
 bool func_08057d9c(int kind);
-const char *func_0806a33c(unsigned char);
+const char *immediateTypeName(unsigned char);
 extern ol_s *olFreeList;
 
 struct opPair_s {

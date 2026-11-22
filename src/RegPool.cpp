@@ -109,8 +109,8 @@ bool RegPool::Init(VclPtrWord registerPrefix, const char* name, int cls, int vir
         entry->ownerPool = this;
         entry->partCount = descriptor->partCount;
         entry->unk_2c = descriptor->unk_14 != 0;
-        entry->unk_1c = descriptor->nonBlockId;
-        if (entry->unk_1c && entry->partCount != 1) {
+        entry->nonBlockId = descriptor->nonBlockId;
+        if (entry->nonBlockId && entry->partCount != 1) {
             reportError("nonblockid is set, but nparts!=1.. register is %s\n", entry->registerName());
             return false;
         }
@@ -365,12 +365,12 @@ RegPoolEntry* RegPool::createVirtualRegister(const char* name)
     }
     e->ownerPool = this;
     e->registerClass = registerClass;
-    e->unk_0c = 0;
+    e->previous = 0;
     e->next = 0;
     e->partCount = virtualPartCount;
     e->registerIndex = registerClass * 2000 + virtualCount;
     e->isVirtual = true;
-    e->unk_1c = 0;
+    e->nonBlockId = 0;
     if (!e->addRegisterNameAlias(name)) {
         reportError("failed to christen name to register %s \n", name);
         delete e;
@@ -378,7 +378,7 @@ RegPoolEntry* RegPool::createVirtualRegister(const char* name)
     }
     if (virtualHead) {
         virtualTail->next = e;
-        e->unk_0c = virtualTail;
+        e->previous = virtualTail;
         virtualTail = e;
     } else {
         virtualTail = e;
@@ -431,7 +431,7 @@ bool RegPool::resetPoolLocalAllocationState()
         if (!p->clearPartPayloadMarkers())
             goto fail;
         p->assignedPhysicalRegister = 0;
-        p->unk_3c = -1;
+        p->assignmentCostTableSize = -1;
     }
     {
         RegPoolEntry* e = registerEntries;
@@ -470,11 +470,11 @@ RegPoolEntry* RegPool::getMoveReg(Instr* move)
         reportError("failed to add a new virtual register!\n");
         exitAfterCleanup(-1);
     }
-    if (e->unk_20) {
+    if (e->moveInstruction) {
         reportError("move inst already set in getMoveReg\n");
         exitAfterCleanup(-1);
     }
-    e->unk_20 = move;
+    e->moveInstruction = move;
     return e;
 }
 
@@ -553,12 +553,12 @@ int RegPoolEntry::gatherInflight(ol_s** out)
     int i;
     for (i = 0; i != partCount; i++) {
         rPart* s = getRP(i);
-        ol_s* c = &s->unk_24;
+        ol_s* c = &s->currentLocation;
         if (c->unk_12)
             out[n++] = c;
         int j;
         ol_s* p;
-        for (j = 0, p = s->unk_4c; j != 4; j++, p++)
+        for (j = 0, p = s->pendingLocations; j != 4; j++, p++)
             if (p->unk_12)
                 out[n++] = p;
     }

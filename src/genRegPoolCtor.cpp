@@ -38,8 +38,8 @@ bool genRegPool::func_08088e54(workTable *t)
         reportError("failed to set table range\n");
         return false;
     }
-    regUse *ru = t->unk_14.firstReal();
-    regUseList *list = &t->unk_14;
+    regUse *ru = t->registerUses.firstReal();
+    regUseList *list = &t->registerUses;
     for (; ru; ru = ru->nextReal()) {
         if (!set_in_aTab(ru)) {
             reportError("failed to set forced register in aTab\n");
@@ -54,17 +54,17 @@ bool genRegPool::func_08088e54(workTable *t)
     for (in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
-            RegPoolEntry *reg = op->unk_18;
-            if (ownsRegisterClass(reg) && reg->isVirtual && reg->unk_3c < 0) {
+            RegPoolEntry *reg = op->assignedRegister;
+            if (ownsRegisterClass(reg) && reg->isVirtual && reg->assignmentCostTableSize < 0) {
                 if (!build_tTab(reg, (1 << reg->partCount) - 1)) {
                     reportError("failed to build ttab while building todolist\n");
                     t->dump();
                     exitAfterCleanup(-1);
                 }
-                reg->unk_3c = countTTab();
-                reg->unk_40 = todo;
+                reg->assignmentCostTableSize = countTTab();
+                reg->nextPendingAssignment = todo;
                 todo = reg;
-                if (reg->unk_3c < 0) {
+                if (reg->assignmentCostTableSize < 0) {
                     reportError("-ve ttabsize\n");
                     exitAfterCleanup(-1);
                 }
@@ -76,11 +76,11 @@ bool genRegPool::func_08088e54(workTable *t)
         RegPoolEntry *best = 0;
         RegPoolEntry *bestPrev = 0;
         RegPoolEntry *prev = 0;
-        for (RegPoolEntry *p = todo; p; prev = p, p = p->unk_40) {
-            if (p->unk_3c > max) {
+        for (RegPoolEntry *p = todo; p; prev = p, p = p->nextPendingAssignment) {
+            if (p->assignmentCostTableSize > max) {
                 best = p;
                 bestPrev = prev;
-                max = p->unk_3c;
+                max = p->assignmentCostTableSize;
             }
         }
         if (!best) {
@@ -111,21 +111,21 @@ bool genRegPool::func_08088e54(workTable *t)
         dumpATab();
         dumpTTab();
         if (bestPrev)
-            bestPrev->unk_40 = best->unk_40;
+            bestPrev->nextPendingAssignment = best->nextPendingAssignment;
         else
-            todo = best->unk_40;
+            todo = best->nextPendingAssignment;
     }
     for (in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
-            RegPoolEntry *reg = op->unk_18;
+            RegPoolEntry *reg = op->assignedRegister;
             if (ownsRegisterClass(reg) && reg->isVirtual) {
                 if (!reg->assignedPhysicalRegister) {
                     reportError("notmapped!, should have been mapped by now..%s!\n",
                                   reg->registerName());
                     exitAfterCleanup(-1);
                 }
-                op->unk_18 = reg->assignedPhysicalRegister;
+                op->assignedRegister = reg->assignedPhysicalRegister;
             }
         }
     }
@@ -145,8 +145,8 @@ bool genRegPool::assignExt(instStream *s)
         return false;
     }
     workTable *wt = s->getTable();
-    for (regUse *ru = wt->unk_14.firstVirtual(); ru; ru = ru->nextVirtual()) {
-        RegPoolEntry *reg = ru->unk_08;
+    for (regUse *ru = wt->registerUses.firstVirtual(); ru; ru = ru->nextVirtual()) {
+        RegPoolEntry *reg = ru->registerEntry;
         if (!reg) {
             reportError("flowMon::AssignExt: register not set in rf\n");
             return false;
@@ -168,7 +168,7 @@ bool genRegPool::assignExt(instStream *s)
                 }
                 reportInfo("currently at stream: %s trying to allocate external register %s\n",
                               s->streamName(), reg->registerName());
-                wt->unk_14.dumpVirtualRegisterUses();
+                wt->registerUses.dumpVirtualRegisterUses();
                 reportError("failed to assign an external %s\n", reg->registerName());
                 func_0804ac44();
                 return false;
@@ -191,10 +191,10 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
         return false;
     }
     workTable *wt = s->getTable();
-    regUseList *l = &wt->unk_14;
+    regUseList *l = &wt->registerUses;
     regUse *ru;
     for (ru = l->firstVirtual(); ru; ru = ru->nextVirtual()) {
-        if (ru->unk_08 == reg) {
+        if (ru->registerEntry == reg) {
             if (!ru->isExternal()) {
                 reportError("discard disjoint - found a match - but it's not external\n");
                 return false;
@@ -204,20 +204,20 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
     }
     if (!ru)
         return true;
-    if (!(ru->unk_0c | ru->unk_0d | ru->unk_10)) {
+    if (!(ru->externalInputMask | ru->externalOutputMask | ru->throughputMask)) {
         reportError("genRegPool: discard disjoint - an xnf register had was not xixot\n");
         return false;
     }
-    if (ru->unk_0c & ~ru->unk_0e) {
+    if (ru->externalInputMask & ~ru->inputMask) {
         reportError("xiBits is outside of iBits \n");
         return false;
     }
-    if (ru->unk_0d & ~ru->unk_0f) {
+    if (ru->externalOutputMask & ~ru->outputMask) {
         reportError("xiBits is outside of iBits \n");
         return false;
     }
-    for (regUse *o = l->head; o; o = o->unk_04) {
-        RegPoolEntry *r = o->unk_08;
+    for (regUse *o = l->head; o; o = o->next) {
+        RegPoolEntry *r = o->registerEntry;
         if (!r) {
             reportError("flowMon::discard disjoint forced regref with null reg\n");
             return false;
@@ -225,17 +225,17 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
         if (!ownsRegisterClass(r) || (!r->assignedPhysicalRegister && r->isVirtual))
             continue;
         unsigned char m = 0;
-        switch (wt->unk_09) {
+        switch (wt->codeModeValue) {
         case 1:
         case 4: {
-            unsigned char a = ru->unk_0e | ru->unk_0f;
-            if (ru->unk_0f)
+            unsigned char a = ru->inputMask | ru->outputMask;
+            if (ru->outputMask)
                 a |= 0x80;
-            unsigned char b = o->unk_0e | o->unk_0f;
-            if (o->unk_0f)
+            unsigned char b = o->inputMask | o->outputMask;
+            if (o->outputMask)
                 b |= 0x80;
             m = b & a;
-            m |= (a & o->unk_10) | (b & ru->unk_10);
+            m |= (a & o->throughputMask) | (b & ru->throughputMask);
             break;
         }
         case 3:
@@ -257,7 +257,7 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
                 if (!(aa && ba) && (be >= 0 || ae >= 0) && as < be && ae > bs)
                     m |= 1 << i;
             }
-            if (ru->unk_0f && o->unk_0f && hack_slo(wt, reg, r))
+            if (ru->outputMask && o->outputMask && hack_slo(wt, reg, r))
                 m |= 0x80;
             break;
         default:

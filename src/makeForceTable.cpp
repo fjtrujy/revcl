@@ -19,7 +19,7 @@ extern int g_080b33f0;
 workTable *makeForceTable(Program *p, instStream *s)
 {
     workTable *wt = s->getTable();
-    int mode = wt->unk_09;
+    int mode = wt->codeModeValue;
     if ((unsigned char)mode != 3) {
         const char *modeName = codeModeName(mode);
         reportError("it_old is not raw mode - %s\n", modeName);
@@ -30,7 +30,7 @@ workTable *makeForceTable(Program *p, instStream *s)
         reportError("failed to make a lock table for makeForceTable\n");
         return 0;
     }
-    mode = nt->unk_09;
+    mode = nt->codeModeValue;
     if ((unsigned char)mode != 2) {
         const char *modeName = codeModeName(mode);
         reportError("it_new is not raw mode .. %s\n", modeName);

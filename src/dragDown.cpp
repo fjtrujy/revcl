@@ -9,40 +9,40 @@ int unresolveMove(Block *blk, Instr *mv);
 
 static inline void refreshDragDownRange(workTable *wt, int lsz)
 {
-    setRange(wt->unk_30, wt->unk_34, lsz);
+    setRange(wt->rangeStart, wt->rangeEnd, lsz);
 }
 
 static inline void limitDragDownStart(workTable *wt, int &start)
 {
-    if (wt->unk_34 - start < wt->unk_44)
-        start = wt->unk_34 - wt->unk_44;
+    if (wt->rangeEnd - start < wt->externalMinimumLength)
+        start = wt->rangeEnd - wt->externalMinimumLength;
 }
 
 int dragDown(workTable *wt)
 {
-    if (wt->unk_34 == wt->unk_30)
+    if (wt->rangeEnd == wt->rangeStart)
         return 0;
     wt->getBranch();
-    if (wt->unk_38) {
+    if (wt->loopSize) {
         reportError("hit this debug assert - loopsize!=0\n");
         abortAfterError();
     }
-    setRange(wt->unk_30, wt->unk_34, wt->unk_38);
+    setRange(wt->rangeStart, wt->rangeEnd, wt->loopSize);
 
     int moved;
     int msl;
-    int oStart = wt->unk_30;
+    int oStart = wt->rangeStart;
     do {
         moved = 0;
-        msl = wt->unk_34;
-        for (int l = wt->unk_34 - 1; l >= wt->unk_30; l--) {
+        msl = wt->rangeEnd;
+        for (int l = wt->rangeEnd - 1; l >= wt->rangeStart; l--) {
             wtRow *row = wt->getRowByIndex(l);
             for (int p = 0; p != 2; p++) {
                 Instr *in = row->getEntry(p);
                 if (in && !in->branchFlags) {
                     int rl = in->position.getRow();
                     short mte = in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6;
-                    int mn = wt->unk_34 - mte - 1;
+                    int mn = wt->rangeEnd - mte - 1;
                     if (rl != l) {
                         reportError("rl not l!\n");
                         exitAfterCleanup(-1);
@@ -53,11 +53,11 @@ int dragDown(workTable *wt)
                         RegPoolEntry *reg = registerOperand(op, 2);
                         if (reg) {
                             for (int j = 0; j != reg->partCount; j++) {
-                                OpSlot *sl = &op->unk_2c[j];
-                                if ((op->unk_07 >> j) & 1) {
-                                    int e = wt->unk_34 - 1;
+                                OpSlot *sl = &op->parts[j];
+                                if ((op->componentMask >> j) & 1) {
+                                    int e = wt->rangeEnd - 1;
                                     if (sl->unk_2e)
-                                        e = sl->unk_3e - sl->unk_18;
+                                        e = sl->unk_3e - sl->issueLatency;
                                     if (e < mn)
                                         mn = e;
                                 }
@@ -85,7 +85,7 @@ int dragDown(workTable *wt)
                         reportWarning("%s %d-%d < mSline=%d [%d,%d]\n",
                                       in->opcodeInfo->mnemonic, in->position.getRow(),
                                       mfs,
-                                      msl, wt->unk_30, wt->unk_34);
+                                      msl, wt->rangeStart, wt->rangeEnd);
                         const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
                         reportWarning("%s: fixing mSline<oStart.. oStart=%d mSline=%d\n",
                                       name,
@@ -95,15 +95,15 @@ int dragDown(workTable *wt)
                 }
             }
         }
-        if (msl >= wt->unk_34)
+        if (msl >= wt->rangeEnd)
             return 0;
     } while (moved);
 
     limitDragDownStart(wt, msl);
     int newStart = msl;
     int ret = newStart - oStart;
-    wt->unk_30 = newStart;
-    newStart = wt->unk_38;
+    wt->rangeStart = newStart;
+    newStart = wt->loopSize;
     msl = newStart;
     refreshDragDownRange(wt, newStart);
     return ret;

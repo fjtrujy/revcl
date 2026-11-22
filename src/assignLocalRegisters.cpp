@@ -46,14 +46,14 @@ bool assignLocalRegisters(Program *p, workTable *wt)
     if (wt->pendingInstructions.count) {
         reportError(assignLocalPendingError, wt->pendingInstructions.count);
         for (Instr *in = wt->pendingInstructions.head; in; in = in->unk_24.unk_00)
-            in->func_08054008(false);
+            in->dumpOperandDiagnostics(false);
         exitAfterCleanup(-1);
     }
-    if (wt->unk_08 != 2) {
+    if (wt->allocationMode != 2) {
         reportError(assignLocalExternalError);
         exitAfterCleanup(-1);
     }
-    unsigned int mode = wt->unk_09;
+    unsigned int mode = wt->codeModeValue;
     if ((unsigned char)mode != 3) {
         reportError(assignLocalModeError, mode);
         exitAfterCleanup(-1);
@@ -75,7 +75,7 @@ bool assignLocalRegisters(Program *p, workTable *wt)
             return false;
         }
     }
-    wt->unk_08 = 3;
+    wt->allocationMode = 3;
     return true;
 }
 
@@ -114,21 +114,21 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
             reportError(buildTTabLockListError, reg->registerName());
             return false;
         }
-        OperandLock *lk = ll->unk_1c;
+        OperandLock *lk = ll->outputLocks;
         if (!lk)
             continue;
         bool shared = ll->unk_2b != 0;
         set |= 1 << i;
-        if (lsz && ll->unk_2a)
+        if (lsz && ll->externalOutputCount)
             shared = true;
-        for (; lk; lk = lk->unk_08) {
+        for (; lk; lk = lk->nextSibling) {
             int s = 0, e = 0;
             if (!lockLiveRange(ll, lk, &s, &e)) {
                 reportError(buildTTabLiveRangeError);
                 exitAfterCleanup(-1);
             }
             if (s < 0) {
-                if (lk->unk_2d != 2) {
+                if (lk->ownerType != 2) {
                     reportError("not extern in .. -ve s\n");
                     return false;
                 }
@@ -140,7 +140,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                 } else
                     s = 0;
             } else {
-                if (lk->unk_2d == 2) {
+                if (lk->ownerType == 2) {
                     reportError("extern in .. rl_s>0\n");
                     return false;
                 }
@@ -317,7 +317,7 @@ int genRegPool::bestReg()
 
 bool genRegPool::set_in_aTab(regUse *ru)
 {
-    RegPoolEntry *reg = ru->unk_08;
+    RegPoolEntry *reg = ru->registerEntry;
     if (!reg) {
         reportError("regref had no register\n");
         return false;
@@ -334,7 +334,7 @@ bool genRegPool::set_in_aTab(regUse *ru)
             exitAfterCleanup(-1);
         }
         if (reg->unk_16) {
-            unsigned char mask = ru->unk_0e | ru->unk_0f | ru->unk_10;
+            unsigned char mask = ru->inputMask | ru->outputMask | ru->throughputMask;
             if (!mask) {
                 reportError("error here\n");
                 exitAfterCleanup(-1);
@@ -348,9 +348,9 @@ bool genRegPool::set_in_aTab(regUse *ru)
                 }
                 RegisterPartLockList *ll = (RegisterPartLockList *)reg->getPartPayload(i);
                 if (ll) {
-                    if (!ll->unk_03)
+                    if (!ll->assigned)
                         set |= 1 << i;
-                    ll->unk_03 = 1;
+                    ll->assigned = 1;
                 }
             }
             if (set) {

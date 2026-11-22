@@ -470,6 +470,102 @@ ABI layouts, translation-unit ordering, and VUC were not intended. The
 historical stripped executable still matches SHA-256
 `83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
 
+## Extended graph, scheduling, register and lock naming milestone
+
+This review deliberately groups six related areas into one PR after the
+instruction/stream work in merged PR #6. It resolves **52 direct C++ function
+names and 142 owner-qualified offset-style fields** in the curated inventory;
+an additional `ol_s` union alias was renamed but was not a separate item in
+that inventory. No function-name `#define` aliases, structural reordering,
+field type changes, or new translation units were introduced.
+
+### Program and stream graph ownership
+
+- `Program::symbolicOutput`, `traceStoreEnabled`, `traceTargetStream`, and
+  the four stream worklists follow their parser, backtrace, and graph
+  traversal callers. Stream linkage now names `nextSourceStream`,
+  `nextMatchedStream`, `nextResolvedStream`, and `nextActiveStream`.
+- The previously accepted `Program::oddPipeMoveCount` and
+  `Program::evenPipeMoveCount` were misleading: these members are not the
+  counters on `workTable`. Their call sites prove
+  `trackMaximumPathLength` and `traceStoreWordCount`, respectively.
+- `Program::decodeAndSplitStreams`, `hasStreamLabel`, and the exported-symbol
+  query are named for the operations performed in their bodies.
+
+### Work-table scheduling, instruction records, and operands
+
+- `workTable` fields now expose `allocationMode`, `codeModeValue`,
+  `rawSchedulingMode`, `ownerStream`, `registerUses`, `registerLockLists`,
+  `rowCapacity`, `rows`, `rangeStart`, `rangeEnd`, `loopSize`,
+  `mainLoopId`, `externalMinimumLength`, `moveListHead`, and `statistics`.
+  All of these retain their original sizes and offsets. The `Block`
+  subclass and raw-table insertion, emission, and allocation paths provide
+  independent evidence of the fields' uses.
+- Additional `Instr` names distinguish `permittedPipelineMask`,
+  `schedulerCategory`, `branchLabelTags`, insertion/serial fields, the
+  address-alias mode and operand index, dynamic timing constraints, and
+  abstract/concrete move metadata. `Instr::classifySchedulingCategory`,
+  `emitExpectedSyntax`, and `opcodeId` follow the recovered implementations.
+- `Operand` now exposes the kind, register directions and masks, implicit
+  status, original/assigned/forced register references, immediate value,
+  paired operand index, and per-component `parts`. The three register
+  pointers are deliberately distinct: call sites retain the original
+  symbolic names separately from assigned and forced registers.
+- `ol_s` now identifies its next link, instruction, path key, operand index,
+  component index, combined operand/component key, and state flags. Its
+  ownership helper names include `nextInternalLocation`,
+  `nextExternalLocation`, `operandAtLocation`, `registerAtLocation`,
+  `sameOperandLocation`, and the matching stream/row/serial accessors.
+
+### Register webs, register uses, and scheduling locks
+
+- `RegWeb` fields now identify assigned, virtual and forced registers,
+  parent web, member count, web index, and component mask. `RegPoolEntry`
+  provides move-row bounds, its previous link, per-register serial, move
+  instruction, assignment-cost size, pending-assignment link, and four
+  `parts`.
+- Each `rPart` holds a current location, pending source, cycle age,
+  issue lock, per-part payload, and pending locations. These identities
+  follow the register lifecycle, emulation, and throughput scheduling paths.
+- `regUse` fields now express its linked-list neighbors, register entry,
+  external/input/output/throughput masks, hazard masks, block mode, defining
+  instruction, and four `slots`. Each `regUseSlot` has location lists for
+  inputs, outputs, sources and external references, throughput pairs and
+  summaries, external cycle bounds, timing values, assignment payload,
+  and a register lock.
+- The existing mangled class identities `cls0805bcc4` (`OperandLock`) and
+  `cls0805c244` (`RegisterPartLockList`) remain unchanged. The former now
+  identifies lock ownership, next sibling, parent/children, sorted output
+  link, direction, latency, priority, pair, reference count, owner pointer,
+  and owner operand/component/type. The latter exposes register identity,
+  component index, assignment state, next lock list, output lock chains,
+  counts, and outstanding locks. Its diagnostic helpers now name the
+  maximum output constraint and flagged-output count. Fields with
+  insufficiently proven timing semantics remain offset-named.
+
+### Byte-exact acceptance checks
+
+The historical RH9/GCC toolchain was rebuilt after the major field batches.
+Two source-level naming hazards were specifically caught by its SHA check:
+
+- In `workTable::doPostOpt`, local variables named `rangeStart` and
+  `rangeEnd` hid the renamed members. Explicit `this->rangeStart` and
+  `this->rangeEnd` restored the intended reads and original compiler output.
+- In `regUse::Clone`, assigning a register through the local `reg` alias
+  instead of directly from the source member changed GCC 3.2 code
+  generation, even though the two expressions are semantically equivalent.
+  The direct `n->registerEntry = registerEntry` dependency is required for
+  the original output. A temporary self-initialization introduced during
+  investigation was also corrected before acceptance.
+
+After correcting those two sites, the stripped historical ELF is again
+**byte-for-byte identical**, SHA-256
+`83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
+The native build, 13 CTest fixtures, and naming-inventory consistency check
+are the other acceptance gates. This snapshot leaves **192** address-based
+function names and **269** owner-qualified offset fields for subsequent
+review; neither count measures byte-matching completeness.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout

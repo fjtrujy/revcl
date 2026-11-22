@@ -45,14 +45,14 @@ bool bindDependencies(Program *p)
         workTable *wt = s->getTable();
         for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             int bits = in->getRamBits();
-            if (!in->unk_139c)
+            if (!in->branchLabelTags)
                 continue;
             if (!in->ramAccessType) {
                 reportUserMessage("tagString found for non memory instruction\n");
                 return false;
             }
             if (bits) {
-                char *tag = in->unk_139c;
+                char *tag = in->branchLabelTags;
                 RegPool *hw = GetRP(10);
                 if (!hw) {
                     reportError("failed to get a hw pool\n");
@@ -95,8 +95,8 @@ bool bindDependencies(Program *p)
                     tag = end;
                 }
             }
-            delete in->unk_139c;
-            in->unk_139c = 0;
+            delete in->branchLabelTags;
+            in->branchLabelTags = 0;
         }
     }
     for (s = p->streamHead; s; s = s->nextStream) {
@@ -165,15 +165,15 @@ Instr *addXinFor(instStream *s, RegPoolEntry *r)
         return 0;
     }
     int serial = g_080b33a8++;
-    in->unk_13e0 = serial;
+    in->instructionSerial = serial;
     Operand *op = &in->operands[0];
-    if (op->unk_04 != 0x37) {
+    if (op->operandKind != 0x37) {
         reportError("xin wasn't external\n");
         delete in;
         return 0;
     }
-    op->unk_18 = r;
-    op->unk_07 = (1 << r->partCount) - 1;
+    op->assignedRegister = r;
+    op->componentMask = (1 << r->partCount) - 1;
     workTable *wt = s->getTable();
     if (!wt) {
         reportError("can't get work table\n");
@@ -205,15 +205,15 @@ Instr *addXoutFor(instStream *s, RegPoolEntry *r)
         return 0;
     }
     int serial = g_080b33a8++;
-    in->unk_13e0 = serial;
+    in->instructionSerial = serial;
     Operand *op = &in->operands[0];
-    if (op->unk_04 != 0x37) {
+    if (op->operandKind != 0x37) {
         reportError("xout wasn't external\n");
         delete in;
         return 0;
     }
-    op->unk_18 = r;
-    op->unk_07 = (1 << r->partCount) - 1;
+    op->assignedRegister = r;
+    op->componentMask = (1 << r->partCount) - 1;
     workTable *wt = s->getTable();
     if (!wt) {
         reportError("can't get work table\n");
@@ -250,8 +250,8 @@ bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int 
     int i;
     for (i = 0; i < n; i++) {
         Operand *op = &in->operands[i];
-        if (op->unk_08 && op->unk_09 == dir && r == op->unk_18) {
-            op->unk_07 |= bits;
+        if (op->isImplicit && op->direction == dir && r == op->assignedRegister) {
+            op->componentMask |= bits;
             return true;
         }
     }
@@ -260,17 +260,17 @@ bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int 
         return false;
     }
     Operand *op = &in->operands[n];
-    op->unk_26 = n;
+    op->operandIndex = n;
     op->unk_0b = 1;
-    op->unk_09 = dir;
-    op->unk_08 = 1;
+    op->direction = dir;
+    op->isImplicit = 1;
     op->unk_05 = 0;
-    op->unk_0d = 0;
-    op->unk_0a = flag;
-    op->unk_29 = 0;
-    op->unk_18 = r;
-    op->unk_07 = bits;
-    op->unk_04 = kind;
+    op->pairedOperandIndexPlusOne = 0;
+    op->outputLatency = flag;
+    op->additionalLatency = 0;
+    op->assignedRegister = r;
+    op->componentMask = bits;
+    op->operandKind = kind;
     in->operandCount++;
     return in->validateOperands();
 }

@@ -6,19 +6,19 @@
 
 inline void ol_s::reset()
 {
-    unk_13 = 0;
-    unk_04 = 0;
-    unk_10 = -1;
+    stateFlags = 0;
+    instruction = 0;
+    operandIndex = -1;
     unk_12 = 0;
-    unk_00 = 0;
-    unk_11 = 0;
+    next = 0;
+    componentIndex = 0;
     unk_0c = 0;
-    unk_08 = 0;
+    pathKey = 0;
 }
 
 inline bool ol_s::isExt()
 {
-    return unk_13 & 1;
+    return stateFlags & 1;
 }
 
 inline bool ol_s::isExtUsed()

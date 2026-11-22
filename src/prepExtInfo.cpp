@@ -17,38 +17,38 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
     workTable *wt = s->getTable();
     for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
         in->clearExternalTimingConstraints();
-    wt->unk_44 = 0;
+    wt->externalMinimumLength = 0;
     if (noExt)
         return 1;
     bool changed = 0;
     int id = s->streamId;
     regUse *ru;
-    regUseList *ul = &wt->unk_14;
-    for (ru = ul->head; ru; ru = ru->unk_04) {
-        RegPoolEntry *reg = ru->unk_08;
+    regUseList *ul = &wt->registerUses;
+    for (ru = ul->head; ru; ru = ru->next) {
+        RegPoolEntry *reg = ru->registerEntry;
         for (int k = 0; k != reg->partCount; k++) {
-            regUseSlot *sl = &ru->unk_20[k];
+            regUseSlot *sl = &ru->slots[k];
             if (!sl) {
                 reportError("failed to get rrp\n");
                 return 0;
             }
-            sl->unk_30 = 0;
-            sl->unk_32 = 30000;
-            for (ol_s *ol = sl->unk_00.head; ol; ol = ol->unk_00) {
-                Instr *in = ol->unk_04;
-                Operand *op = &in->operands[ol->unk_10];
-                OpSlot *part = op->getPart(ol->unk_11);
+            sl->earliestExternalCycle = 0;
+            sl->latestExternalCycle = 30000;
+            for (ol_s *ol = sl->inputLocations.head; ol; ol = ol->next) {
+                Instr *in = ol->instruction;
+                Operand *op = &in->operands[ol->operandIndex];
+                OpSlot *part = op->getPart(ol->componentIndex);
                 short best = 0;
                 ol_s *e = part->unk_54.head;
                 if (e) {
-                    for (; e; e = e->unk_00) {
-                        int key = e->unk_08;
+                    for (; e; e = e->next) {
+                        int key = e->pathKey;
                         if (!key) {
                             reportError("can't have a null minkey for ext\n");
                             return 0;
                         }
-                        Instr *setter = e->unk_04;
-                        Operand *src = func_0805802c(e);
+                        Instr *setter = e->instruction;
+                        Operand *src = operandAtLocation(e);
                         instStream *ss = setter->getOwningStream();
                         if (!ss) {
                             reportError("failed to get the setters ist\n");
@@ -67,40 +67,40 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                             return 0;
                         }
                         int total = te + kl;
-                        int d = src->unk_0a + op->unk_29 - total - 1;
+                        int d = src->outputLatency + op->additionalLatency - total - 1;
                         if ((setter->func_08055548() || same) && d > best)
                             best = d;
                     }
                     if (op->unk_0b)
-                        in->func_08055fbc(best);
+                        in->raiseExternalInputPairedConstraint(best);
                     else
-                        in->func_08055fdc(best);
+                        in->raiseExternalInputConstraint(best);
                 } else {
                     reportError("no external setter for prepExtInfo.. register is %s.%d\n",
                                   reg->registerName(), k);
                     return 0;
                 }
             }
-            for (ol_s *ol = sl->unk_08.head; ol; ol = ol->unk_00) {
-                Instr *in = ol->unk_04;
+            for (ol_s *ol = sl->outputLocations.head; ol; ol = ol->next) {
+                Instr *in = ol->instruction;
                 if (!in) {
                     reportError("not get visible output\n");
                     return 0;
                 }
                 short best = 0;
-                Operand *op = &in->operands[ol->unk_10];
-                olList *xl = &op->getPart(ol->unk_11)->unk_54;
+                Operand *op = &in->operands[ol->operandIndex];
+                olList *xl = &op->getPart(ol->componentIndex)->unk_54;
                 ol_s *e = xl->firstExternalLocation();
                 if (!ol->isExtUsed() || e) {
                     if (!e || ol->isExtUsed()) {
-                        for (; e; e = e->func_08058414()) {
-                            int key = e->unk_08;
+                        for (; e; e = e->nextExternalLocation()) {
+                            int key = e->pathKey;
                             if (!key) {
                                 reportError("can't have a null minkey for ext\n");
                                 return 0;
                             }
-                            Instr *user = e->unk_04;
-                            Operand *dst = func_0805802c(e);
+                            Instr *user = e->instruction;
+                            Operand *dst = operandAtLocation(e);
                             if (!user || !dst) {
                                 reportError("no setting instruction/operand\n");
                                 return 0;
@@ -121,35 +121,35 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                                 return 0;
                             }
                             int total = fs + kl;
-                            int d = op->unk_0a + dst->unk_29 - total - 1;
+                            int d = op->outputLatency + dst->additionalLatency - total - 1;
                             if (user->func_08055548() && d > best)
                                 best = d;
                         }
                         if (op->unk_0b)
-                            in->func_08055ffc(best);
+                            in->raiseExternalOutputPairedConstraint(best);
                         else
-                            in->func_0805601c(best);
+                            in->raiseExternalOutputConstraint(best);
                     } else {
                         reportError("operand doesn't think there's any external users, but - there's an entry on it's ext list\n");
-                        ol->func_08057fec();
+                        ol->dumpOperandContext();
                         xl->validateOperandLocations();
                         return 0;
                     }
                 } else {
                     reportError("operand is tagged as being used externally - but.. there's no ext entry on it's oll?\n");
-                    ol->func_08057fec();
+                    ol->dumpOperandContext();
                     return 0;
                 }
             }
             if (reg->unk_2c && !noExt) {
                 ol_s *ol;
-                for (ol = sl->unk_18.head; ol; ol = ol->unk_00) {
-                    int key = ol->unk_08;
+                for (ol = sl->externalInputLocations.head; ol; ol = ol->next) {
+                    int key = ol->pathKey;
                     if (!key) {
                         reportError("can't have a null minkey for ext\n");
                         return 0;
                     }
-                    Instr *in = ol->unk_04;
+                    Instr *in = ol->instruction;
                     if (!in) {
                         reportError("not get visible input\n");
                         return 0;
@@ -171,19 +171,19 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         return 0;
                     }
                     int total = te + kl;
-                    int d = in->unk_13cf - total - 1;
-                    if (in->func_08055548() && d > sl->unk_30) {
+                    int d = in->baseIssueSpacing - total - 1;
+                    if (in->func_08055548() && d > sl->earliestExternalCycle) {
                         changed = 1;
-                        sl->unk_30 = d;
+                        sl->earliestExternalCycle = d;
                     }
                 }
-                for (ol = sl->unk_28.head; ol; ol = ol->unk_00) {
-                    int key = ol->unk_08;
+                for (ol = sl->externalSourceLocations.head; ol; ol = ol->next) {
+                    int key = ol->pathKey;
                     if (!key) {
                         reportError("can't have a null minkey for ext\n");
                         return 0;
                     }
-                    Instr *in = ol->unk_04;
+                    Instr *in = ol->instruction;
                     if (!in) {
                         reportError("not get visible input\n");
                         return 0;
@@ -204,13 +204,13 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         return 0;
                     }
                     int d = fs + kl + 1;
-                    if (in->func_08055548() && d < sl->unk_32) {
+                    if (in->func_08055548() && d < sl->latestExternalCycle) {
                         changed = 1;
-                        sl->unk_32 = d;
+                        sl->latestExternalCycle = d;
                     }
                 }
             }
-            for (tPair *tp = sl->unk_10.head; tp; tp = tp->next) {
+            for (tPair *tp = sl->throughputPairs.head; tp; tp = tp->next) {
                 instStream *a = (instStream *)tp->a;
                 instStream *b = (instStream *)tp->b;
                 if (!a || !b) {
@@ -219,7 +219,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 }
                 workTable *wa = a->getTable();
                 workTable *wb = b->getTable();
-                if (wa->unk_09 == 3 && wb->unk_09 == 3) {
+                if (wa->codeModeValue == 3 && wb->codeModeValue == 3) {
                     int sourceId = a->streamId;
                     int k1 = guessKeyLen(p, tp->src, sourceId, id);
                     if (k1 < 0) {
@@ -256,9 +256,9 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     }
                     int fs = getFromStart(u);
                     int total = te + k1 + k2 + fs;
-                    int d = wo->unk_0a + uo->unk_29 - total - 1;
-                    if (d > wt->unk_44)
-                        wt->unk_44 = d;
+                    int d = wo->outputLatency + uo->additionalLatency - total - 1;
+                    if (d > wt->externalMinimumLength)
+                        wt->externalMinimumLength = d;
                 }
             }
         }
@@ -267,7 +267,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
         for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
-                RegPoolEntry *r = isRegisterOperand(op, 2) ? op->unk_18 : 0;
+                RegPoolEntry *r = isRegisterOperand(op, 2) ? op->assignedRegister : 0;
                 if (r && r->unk_2c) {
                     regUse *u = ul->findByRegister(r);
                     if (!u) {
@@ -275,11 +275,11 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         exitAfterCleanup(-1);
                     }
                     for (int k = 0; k != r->partCount; k++)
-                        if ((op->unk_07 >> k) & 1) {
-                            regUseSlot *slot = &u->unk_20[k];
-                            in->func_08055fbc(slot->unk_30);
-                            int bound = in->unk_13cf - slot->unk_32;
-                            in->func_08055ffc(bound);
+                        if ((op->componentMask >> k) & 1) {
+                            regUseSlot *slot = &u->slots[k];
+                            in->raiseExternalInputPairedConstraint(slot->earliestExternalCycle);
+                            int bound = in->baseIssueSpacing - slot->latestExternalCycle;
+                            in->raiseExternalOutputPairedConstraint(bound);
                         }
                 }
             }
@@ -288,14 +288,14 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
     for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
-            RegPoolEntry *reg = op->unk_18;
+            RegPoolEntry *reg = op->assignedRegister;
             if (reg) {
                 regUse *u = ul->findByRegister(reg);
                 if (isRegisterOperand(op, 1))
-                    op->unk_28 = u->unk_12 & op->unk_27;
+                    op->unk_28 = u->hazardMask & op->externalPartMask;
                 if (isRegisterOperand(op, 2))
-                    op->unk_28 = u->unk_13 & op->unk_27;
-                op->unk_28 |= u->unk_14;
+                    op->unk_28 = u->unk_13 & op->externalPartMask;
+                op->unk_28 |= u->hazardBroadcastMask;
             }
         }
     int endType = s->getEndType();
@@ -309,8 +309,8 @@ success:
     return 1;
 branchBound:
     for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
-        if (in->func_08055ac4() == 0xa5)
-            in->func_0805601c(2);
+        if (in->opcodeId() == 0xa5)
+            in->raiseExternalOutputConstraint(2);
     goto success;
 }
 

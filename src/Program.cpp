@@ -17,7 +17,7 @@ const char *getOptimiserName(int id);
 
 Program::Program(bool symbolic)
 {
-    unk_9c = symbolic;
+    symbolicOutput = symbolic;
     streamTail = 0;
     streamHead = 0;
     streamCount = 0;
@@ -146,7 +146,7 @@ bool Program::removeStream(instStream *s)
     return true;
 }
 
-void func_0806ed78(Program *p, int b)
+void dumpProgramStreamsAndRegisters(Program *p, int b)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream)
         s->dump(b);
@@ -226,7 +226,7 @@ bool Program::retarget(instStream *from, instStream *to)
     return true;
 }
 
-bool Program::func_0806efc4(Parser *parser, int a, bool newSyntax)
+bool Program::decodeAndSplitStreams(Parser *parser, int a, bool newSyntax)
 {
     if (!parseReset(this)) {
         reportError("flow::failed to reset cpu\n");
@@ -253,7 +253,7 @@ bool Program::func_0806efc4(Parser *parser, int a, bool newSyntax)
     return ok;
 }
 
-bool func_0806f0e8(Program *p)
+bool patchAllStreamLatencies(Program *p)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (!s->patchLatencies())
@@ -378,7 +378,7 @@ bool func_0806f4a0(Program *p, instStream *s)
     return false;
 }
 
-bool func_0806f4e8(Program *p, char *name)
+bool isExportedSymbol(Program *p, char *name)
 {
     return p->proc.exportedSymbols.findByExactName(name) != 0;
 }
@@ -427,7 +427,7 @@ bool func_0806f610(Program *p)
             reportError("failed to get work table\n");
             return false;
         }
-        wt->unk_08 = 1;
+        wt->allocationMode = 1;
     }
     return true;
 }

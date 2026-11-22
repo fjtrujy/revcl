@@ -14,7 +14,7 @@ int vuta1RegCost(Instr *in);
 
 bool optHDown(workTable *wt, wrangleCand *c)
 {
-    Instr *in = wt->unk_4c;
+    Instr *in = wt->moveListHead;
     int bestA = 0x80000000;
     Instr *best = 0;
     int bestB = 0x80000000, bestC = 0x80000000, bestD = 0x7fffffff;
@@ -76,7 +76,7 @@ int hDownRegCost(Instr *in)
 
 bool optDUp(workTable *wt, wrangleCand *c)
 {
-    Instr *in = wt->unk_4c;
+    Instr *in = wt->moveListHead;
     Instr *best = 0;
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;

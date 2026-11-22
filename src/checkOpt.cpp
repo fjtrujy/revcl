@@ -58,7 +58,7 @@ bool checkOpt2(Program *p)
 bool checkOpt3(Program *p)
 {
     reportInfo("checkOpt2()\n");
-    reportInfo("OLL free count = %d\n", func_080586c4());
+    reportInfo("OLL free count = %d\n", countFreeLocationNodes());
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (!wt) {
@@ -67,7 +67,7 @@ bool checkOpt3(Program *p)
         }
 
         if (wt->isAbstract()) {
-            if (wt->unk_2c) {
+            if (wt->rows) {
                 reportError("table set for abstract list\n");
                 return false;
             }
@@ -86,7 +86,7 @@ bool checkOpt3(Program *p)
                 }
             }
         }
-        if (wt->unk_09 == 3) {
+        if (wt->codeModeValue == 3) {
             int start = wt->getRangeStart();
             int end = wt->getRangeEnd();
             if (start < 0 || end < start) {
@@ -114,7 +114,7 @@ bool checkOpt3(Program *p)
                         if (in->opcodeInfo)
                             name = in->opcodeInfo->mnemonic;
                         reportError("linear list isn't in order at guid=%d %s prev=%p\n",
-                                      in->unk_13e0, name, in->unk_1c.unk_04);
+                                      in->instructionSerial, name, in->unk_1c.unk_04);
                         wt->dump();
                         return false;
                     }
@@ -147,21 +147,21 @@ bool checkOpt3(Program *p)
             for (int k = 0; k != in->operandCount; k++) {
                 Operand *op = &in->operands[k];
                 RegPoolEntry *reg;
-                if (in->operands[k].unk_0d) {
-                    Operand *po = &in->operands[in->operands[k].unk_0d - 1];
-                    if (po->unk_0d - 1 != k) {
+                if (in->operands[k].pairedOperandIndexPlusOne) {
+                    Operand *po = &in->operands[in->operands[k].pairedOperandIndexPlusOne - 1];
+                    if (po->pairedOperandIndexPlusOne - 1 != k) {
                         reportError("badly linked web patch\n");
                         return false;
                     }
-                    reg = in->operands[k].unk_18;
-                    if (reg != po->unk_18) {
+                    reg = in->operands[k].assignedRegister;
+                    if (reg != po->assignedRegister) {
                         reportError("not same reg for iwp\n");
                         return false;
                     }
                 } else
-                    reg = in->operands[k].unk_18;
-                RegPoolEntry *mreg = (RegPoolEntry *)in->operands[k].unk_10;
-                if (reg && reg->isVirtual && !in->operands[k].unk_14) {
+                    reg = in->operands[k].assignedRegister;
+                RegPoolEntry *mreg = (RegPoolEntry *)in->operands[k].forcedBaseRegister;
+                if (reg && reg->isVirtual && !in->operands[k].originalRegister) {
                     reportError("original reg not set\n");
                     return false;
                 }
@@ -188,7 +188,7 @@ bool checkOpt3(Program *p)
                         ol_s *o = slot->unk_54.head;
                         bool seenExt = false;
                         int last = -1000;
-                        for (; o; o = o->unk_00) {
+                        for (; o; o = o->next) {
                             if (o->isExt()) {
                                 if (!seenExt)
                                     seenExt = true;
@@ -196,7 +196,7 @@ bool checkOpt3(Program *p)
                                 reportError("found an internal oploc after an external one\n");
                                 return false;
                             }
-                            Instr *oi = o->unk_04;
+                            Instr *oi = o->instruction;
                             if (!oi) {
                                 reportError("oploc not tied to instruction in checkopt3\n");
                                 return false;
@@ -210,7 +210,7 @@ bool checkOpt3(Program *p)
                                     reportError("internal oploc but instruction not from this stream\n");
                                     return false;
                                 }
-                                if (wt->unk_09 == 3) {
+                                if (wt->codeModeValue == 3) {
                                     if (__builtin_expect(oi->position.getRow() < last, 0)) {
                                         reportError("local oplocs  aren't in order\n");
                                         return false;

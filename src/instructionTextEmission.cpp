@@ -13,7 +13,7 @@ char *dupString(const char *s);
 
 static inline void dumpEmitInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 char *func_0808750c(char *buf, Instr *in, bool upper, char *mods, bool b, int)
@@ -33,7 +33,7 @@ char *func_0808750c(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         *p++ = ' ';
     for (int i = 0; i != in->operandCount; i++) {
         Operand *op = &in->operands[i];
-        if (op->unk_08)
+        if (op->isImplicit)
             continue;
         if (comma)
             *p++ = ',';
@@ -56,7 +56,7 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
     bool comma = false;
     if (!mods)
         mods = "";
-    if (in->unk_1391) {
+    if (in->reverseBranchSense) {
         if ((in->branchFlags >> 4) & 1) {
             reportError("can't reverse sense of a likely branch at the emit stage\n");
             return 0;
@@ -78,7 +78,7 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
         *p++ = ' ';
     for (int i = 0; i != in->operandCount; i++) {
         Operand *op = &in->operands[i];
-        if (op->unk_08)
+        if (op->isImplicit)
             continue;
         if (comma)
             *p++ = ',';
@@ -102,9 +102,9 @@ bool extHook(void *, Instr *in)
     int done = 0;
     for (int i = 0; i != in->operandCount; i++) {
         Operand *op = &in->operands[i];
-        if (op->unk_04 != 55)
+        if (op->operandKind != 55)
             continue;
-        if (op->unk_18) {
+        if (op->assignedRegister) {
             reportError("extHook - register already set\n");
             return 0;
         }
@@ -113,9 +113,9 @@ bool extHook(void *, Instr *in)
             reportError("couldn't get ext register for pool\n");
             return 0;
         }
-        op->unk_18 = r;
-        op->unk_07 = (1 << r->partCount) - 1;
-        if (!op->unk_07) {
+        op->assignedRegister = r;
+        op->componentMask = (1 << r->partCount) - 1;
+        if (!op->componentMask) {
             reportError("no mod bits set for ext\n");
             return 0;
         }

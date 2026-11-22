@@ -25,7 +25,7 @@ bool explodeRaw(Program *p)
         }
         if (!t->getLoopSize())
             continue;
-        if (t->unk_09 != 3) {
+        if (t->codeModeValue != 3) {
             reportError("explodeRaw: a non raw stream has a loop size set\n");
             return false;
         }
