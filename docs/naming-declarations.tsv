@@ -2313,7 +2313,7 @@ parameter_review	v	src/Instr.cpp	1131	raiseExternalOutputConstraint	short
 parameter_review	t	src/LocTag.cpp	5	func_0805082c	LocTag *
 parameter_review	t	src/LocTag.cpp	10	func_0805085c	LocTag *
 parameter_review	i	src/LocTag.cpp	216	func_08050f18	int
-parameter_review	i	src/LocTag.cpp	231	func_08050f7c	int
+parameter_review	i	src/LocTag.cpp	231	probeNonCommentTokenAndReturnFalse	int
 parameter_review	<unnamed>	src/Operand.cpp	205	diagnoseOperand	int
 parameter_review	op	src/Operand.cpp	233	operandZeroValue	Operand *
 parameter_review	<unnamed>	src/Operand.cpp	243	Emit	bool

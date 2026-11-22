@@ -733,6 +733,75 @@ inventory now has **4** address-named functions, **135** owner-qualified
 offset fields and **14** address-suffixed globals remaining. These metrics
 describe naming coverage, not how much of the executable has been matched.
 
+## Final address-name elimination and structural field audit
+
+The milestone following merged PR #9 eliminates all **four** remaining
+address-named C++ functions and all **14** remaining address-suffixed
+globals, and resolves **71** further owner-qualified offset fields. This
+accounts for **89 tracked naming improvements**. The four functions receive
+direct source-level names, not aliases:
+
+- `LocTag::probeNonCommentTokenAndReturnFalse` conditionally reads a token and
+  always returns false; the name describes the code rather than assuming a
+  now-lost parser intention.
+- `Instr::constantZeroInstructionHook` returns zero unconditionally.
+- `isScalarFloatingOperandKind` and
+  `isVectorOrAccumulatorOperandKind` follow the explicit sets of operand-kind
+  numbers in their implementations. These predicates remain separate even
+  though no additional callers currently explain their original roles.
+
+### Field ownership and observed semantics
+
+- The source-line decoder uses `ImplicitOp` to hold parsed register text,
+  immediate text, tagged branch labels, component masks, address component
+  masks, a generic-operand form and forced physical-register binding. The
+  `aaDesc`/`aaUse` tables identify opcode IDs, operand indexes, address-alias
+  modes and literal immediate values; their usages in `immFixup` determine
+  the names.
+- `Operand` and `Instr` now name source token bounds, immediate type and
+  external block mode. The optimizer's paired original/optimized instruction
+  image words retain their pointer-word types and exact layout, while
+  `Instr` dependency reachability flags, original pipeline mask, grouped
+  instructions and full-loop move-drag condition are named from callers.
+- `subCache` describes its allocated table, maximum flow ID, per-row stride
+  and total storage. `xpNode` tracks unmatched opening parentheses, `ol_s`
+  tracks the maximum path key, and `instStream` records branch forward
+  latency depth. The modern and historical builds check these renamed types
+  against the original data layout.
+- `workTable` now identifies insertion serials, loop bounds, dynamic start
+  rows, fallback scheduling controls, stream lengths, post-optimization state
+  and a potential loop boundary instruction. `regUse` identifies the path
+  hazard mask; `rPart` distinguishes emulation timing metrics and pending
+  read-cycle bounds.
+- The lock system now identifies per-pipeline input demand and aggregated
+  consumer demand, loop-wrap lower bounds, and output-lock conflict counts.
+  Register descriptors and entries expose their hot-output-path setting and
+  transient input component mask; the allocator records per-register-part
+  availability. Existing names with uncertain semantics are not forced.
+- The paired-operand and count override descriptors now expose operand
+  indexes and count fields without changing the positional initializers of
+  the opcode tables. `opPair_s::pairingMode` is a provisional semantic name
+  for the mode tag and should be revisited if a consumer is recovered.
+
+### Remaining opaque areas and verification
+
+The 14 renamed globals cover instruction serial allocation, pooled move
+records, cap insertion, loop locking, reserved instruction keys, scheduler
+pass counters, diagnostic options and immediate formatting. The 64 remaining
+owner-qualified `unk_*` fields are disproportionately ABI padding, reserved
+opcode metadata, unexplained array payloads and compiler-specific state.
+They are left unchanged rather than being assigned unsupported meanings.
+
+The new fixed-baseline inventory is **0** address-named functions (from 436),
+**0** address-suffixed globals (from 85), **0** address-named source files
+(from 16), and **64** owner-qualified offset fields (from 614). These are
+identification metrics, not a statement about reconstruction completeness.
+
+The historical RH9/i686 GCC 3.2 build and `exact-sha256` test preserve the
+stripped VCL executable exactly at SHA-256
+`83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
+Modern CTest and generated naming-inventory checks are also required.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
