@@ -5,7 +5,7 @@
 #include "instStream.h"
 #include "workTable.h"
 
-bool BuildfDepList(workTable *wt, bool force, bool);
+bool buildForwardDependencyList(workTable *wt, bool force, bool);
 bool tagsMatch(Instr *a, Instr *b);
 bool addAdditionalClonePredecessors(Instr *in, Instr *other);
 bool copyCloneFdeps(Instr *in, ol_s *o, olList *dst);
@@ -20,7 +20,7 @@ Operand *getEA(Instr *instruction)
     if ((instructionInfo->kindAndFlags & 7) == 4) {
         if (instructionInfo->branchTargetOperandSelector >= instruction->operandCount) {
             reportError("eaop is out of bounds for operands st=%d\n", instructionInfo->kindData);
-            instruction->leDump();
+            instruction->dumpInstructionContext();
             exitAfterCleanup(-1);
         }
         Operand *operand = &instruction->operands[instructionInfo->branchTargetOperandSelector];

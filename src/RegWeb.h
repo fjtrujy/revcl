@@ -21,23 +21,23 @@ public:
     RegWeb() {}
     ~RegWeb() {}
 
-    static bool AddiInstr(Instr *in);
-    static RegWeb *GetNewWeb(RegPoolEntry *old_vrg);
-    static bool merge(RegWeb *w_a, RegWeb *w_b);
-    static bool setfMap(RegWeb *w, RegPoolEntry *r);
-    static bool AddiTable(workTable *t);
-    static bool PatchOperand(Operand *op);
-    static bool PatchInstr(Instr *in);
-    static bool PatchITable(workTable *t);
-    static void Dump();
-    static bool ClearWebs(workTable *t);
+    static bool collectInstructionRegisterWebs(Instr *instruction);
+    static RegWeb *createRegisterWeb(RegPoolEntry *registerEntry);
+    static bool merge(RegWeb *firstWeb, RegWeb *secondWeb);
+    static bool setForcedRegisterMapping(RegWeb *registerWeb, RegPoolEntry *forcedRegister);
+    static bool collectTableRegisterWebs(workTable *scheduleTable);
+    static bool applyRegisterWebToOperand(Operand *operand);
+    static bool applyRegisterWebsToInstruction(Instr *instruction);
+    static bool applyRegisterWebsToTable(workTable *scheduleTable);
+    static void checkRegisterWebInvariants();
+    static bool clearTableRegisterWebs(workTable *scheduleTable);
 };
 
 extern RegWeb regWebs[0x4000];
 extern int regWebUsed;
 extern int regWebCount;
 
-bool resetRegWebs();
-bool GatherWeb();
+bool resetRegisterWebs();
+bool assignRegisterWebs();
 
 #endif

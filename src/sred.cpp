@@ -8,7 +8,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found);
 int latestInsert(workTable *wt, Instr *in, bool *found);
 int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 int countSetBits(unsigned int x);
-RegPoolEntry *getZeroReg(unsigned int type);
+RegPoolEntry *getPoolZeroRegister(unsigned int type);
 
 static inline bool isRawTable(workTable *scheduleTable)
 {

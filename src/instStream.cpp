@@ -251,11 +251,11 @@ static inline void dumpEmitStream(instStream *stream)
     stream->dump(false);
 }
 
-char *instStream::emit(char *buf, int commentMode, int *p1, int *p2)
+char *instStream::emit(char *outputBuffer, int commentMode, int *p1, int *p2)
 {
     *p1 = 0;
     *p2 = 0;
-    if (!buf)
+    if (!outputBuffer)
         return 0;
     if (!labels.nodeCount) {
         reportError("iStream::Emit: stream with no name\n");
@@ -268,35 +268,35 @@ char *instStream::emit(char *buf, int commentMode, int *p1, int *p2)
     }
     if (startType != 2 && !inputLinks.countMarkedLinks() && !passThroughText) {
         reportInfo("skip target emit. .coz it's no longer visible\n");
-        return buf;
+        return outputBuffer;
     }
     for (mNode *node = labels.head; node; node = node->next) {
         if (node->name && (isReferencedLabel(owningProgram, node->name)
                           || isExportedSymbol(owningProgram, node->name) || node->flags))
-            buf += formatIntoBuffer(buf, "%s:\n", node->name);
+            outputBuffer += formatIntoBuffer(outputBuffer, "%s:\n", node->name);
     }
     if (passThroughText) {
-        buf += formatIntoBuffer(buf, "\n%s\n", passThroughText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "\n%s\n", passThroughText);
     } else {
         if (!emissionTable) {
             reportError("can't emit .. no table!\n");
             return 0;
         }
-        buf = emissionTable->emit(buf, commentMode, p1, p2);
-        if (!buf) {
+        outputBuffer = emissionTable->emit(outputBuffer, commentMode, p1, p2);
+        if (!outputBuffer) {
             reportError("failed to build out table\n");
             return 0;
         }
         if (endType == 4) {
-            buf += formatIntoBuffer(buf, "\n");
+            outputBuffer += formatIntoBuffer(outputBuffer, "\n");
             if (!endDirectiveText) {
                 reportError("end string not set\n");
                 return 0;
             }
-            buf += formatIntoBuffer(buf, "         %s\n", endDirectiveText);
+            outputBuffer += formatIntoBuffer(outputBuffer, "         %s\n", endDirectiveText);
         }
     }
-    return buf;
+    return outputBuffer;
 }
 
 bool instStream::flowReset()
@@ -337,7 +337,7 @@ void instStream::dumpSynthetics()
     checkedTable("dump synthetics .. work table not set\n")->dumpSynthetics();
 }
 
-char *instStream::emitLabels(char *buf)
+char *instStream::emitLabels(char *outputBuffer)
 {
     if (emissionStartIndex >= 0) {
         for (mNode *node = labels.head; node; node = node->next) {
@@ -349,11 +349,11 @@ char *instStream::emitLabels(char *buf)
                     labelCursor++;
                 }
                 if (*prefixCursor)
-                    buf += formatIntoBuffer(buf, "%-40s = %d\n", node->name, emissionStartIndex);
+                    outputBuffer += formatIntoBuffer(outputBuffer, "%-40s = %d\n", node->name, emissionStartIndex);
             }
         }
     }
-    return buf;
+    return outputBuffer;
 }
 
 Instr *instStream::getBranch()
@@ -498,7 +498,7 @@ bool instStream::processCmdSynth(Instr *instruction)
     }
     if (instruction->parsedLoopId > 0) {
         reportUserMessage("parseLid set for processCmdSynth\n");
-        instruction->leDump();
+        instruction->dumpInstructionContext();
         return false;
     }
     switch ((unsigned char)instruction->syntheticKind) {
@@ -512,24 +512,24 @@ bool instStream::processCmdSynth(Instr *instruction)
     case 8:
         if (!instruction->getImmediateOperand(0, &knownMinimumLoopCount) || !instruction->getImmediateOperand(1, &safeMinimumLoopCount)) {
             reportUserMessage("failed to decode the --LoopCS directive, one of the 2 expected operands failed to parse\n");
-            instruction->leDump();
+            instruction->dumpInstructionContext();
             return false;
         }
         if (knownMinimumLoopCount <= 0) {
             reportUserMessage("for --LoopCS, the minimum known count (arg 1) must be must be >0\n");
-            instruction->leDump();
+            instruction->dumpInstructionContext();
             return false;
         }
         if (safeMinimumLoopCount < 0) {
             reportUserMessage("for --LoopCS, the minimum safe count (arg 2) must be must be >=0\n");
-            instruction->leDump();
+            instruction->dumpInstructionContext();
             return false;
         }
         break;
     case 9:
         if (!instruction->getImmediateOperand(0, &extraLoopCount) || extraLoopCount < 0) {
             reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopExtra. value must be >=0\n");
-            instruction->leDump();
+            instruction->dumpInstructionContext();
             return false;
         }
         break;
@@ -550,7 +550,7 @@ bool instStream::processCmdSynth(Instr *instruction)
     case 12:
         if (!instruction->getImmediateOperand(0, &absoluteLoopCount) || absoluteLoopCount <= 2) {
             reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopAbs. value must be >=2\n");
-            instruction->leDump();
+            instruction->dumpInstructionContext();
             return false;
         }
         break;
@@ -568,9 +568,9 @@ bool instStream::disposeInputTable()
     return table->dispose();
 }
 
-void instStream::copySourceRecordsFrom(instStream *src)
+void instStream::copySourceRecordsFrom(instStream *sourceStream)
 {
-    optimizationRecordCount = src->optimizationRecordCount;
+    optimizationRecordCount = sourceStream->optimizationRecordCount;
     for (int optimizationIndex = 0; optimizationIndex != optimizationRecordCount; optimizationIndex++)
-        optimizationRecords[optimizationIndex] = src->optimizationRecords[optimizationIndex];
+        optimizationRecords[optimizationIndex] = sourceStream->optimizationRecords[optimizationIndex];
 }

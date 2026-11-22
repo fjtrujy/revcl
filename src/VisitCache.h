@@ -17,12 +17,12 @@ public:
     ~VisitCache();
     bool init(int nbits);
     bool release();
-    bool Extend(int rows);
+    bool resizeRecordStorage(int rows);
     bool startRecord();
     bool setBit(int bit);
     int endRecord();
     bool testBit(int rec, int bit);
-    void Dump();
+    void dumpVisitRecords();
 };
 
 #endif

@@ -1,7 +1,7 @@
 #include "os.h"
 #include "backTrace_shared.h"
 
-static inline bool zeroTstore_inl(Program *program, unsigned *traceStore)
+static inline bool clearTraceStoreInline(Program *program, unsigned *traceStore)
 {
     if (!traceStore) {
         reportError("zeroTstore - it's null\n");
@@ -12,9 +12,9 @@ static inline bool zeroTstore_inl(Program *program, unsigned *traceStore)
     return true;
 }
 
-static inline bool initTstore_inl(Program *program, unsigned *traceStore, unsigned bit)
+static inline bool initializeTraceStoreInline(Program *program, unsigned *traceStore, unsigned bit)
 {
-    if (!zeroTstore_inl(program, traceStore)) {
+    if (!clearTraceStoreInline(program, traceStore)) {
         reportError("failed to init tstore\n");
         return false;
     }
@@ -28,7 +28,7 @@ static inline bool initTstore_inl(Program *program, unsigned *traceStore, unsign
     return true;
 }
 
-static inline bool testTstore_inl(Program *program, unsigned *traceStore, unsigned bit)
+static inline bool testTraceStoreInline(Program *program, unsigned *traceStore, unsigned bit)
 {
     if (!traceStore) {
         reportError("store not set for test tstore\n");
@@ -48,15 +48,15 @@ static inline void dumpBackTrace(Program *program)
     dumpProgramStreamsAndRegisters(program, 0);
 }
 
-bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *reg, int part, int earliestUse, int ioMode, bool thruput)
+bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *registerEntry, int part, int earliestUse, int ioMode, bool thruput)
 {
-    if (!targetStream || !reg) {
+    if (!targetStream || !registerEntry) {
         reportError("doBackTrace - null arg\n");
         return false;
     }
     if (ioMode && earliestUse < 0) {
         reportError("-ve earliestUse passed into doBackTrace %s.%d at %s iomode=%d\n",
-                      reg->registerName(), part, targetStream->streamName(), ioMode);
+                      registerEntry->registerName(), part, targetStream->streamName(), ioMode);
         return false;
     }
     bool blocking = false;
@@ -77,11 +77,11 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *reg, 
     program->traceStoreEnabled = latency && !blocking;
     program->traceTargetStream = targetStream;
     for (instStream *initialStream = program->streamHead; initialStream; initialStream = initialStream->nextStream) {
-        if (!initializeRegisterBacktraceLocation(initialStream, reg, part)) {
+        if (!initializeRegisterBacktraceLocation(initialStream, registerEntry, part)) {
             reportError("failed to do a local init for the back trace\n");
             return false;
         }
-        if (program->traceStoreEnabled && !initTstore_inl(program, initialStream->traceStore, initialStream->streamId)) {
+        if (program->traceStoreEnabled && !initializeTraceStoreInline(program, initialStream->traceStore, initialStream->streamId)) {
             reportError("failed to init tstore\n");
             return false;
         }
@@ -94,7 +94,7 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *reg, 
         return false;
     }
     for (instStream *activeStream = program->activeStreams; activeStream; activeStream = activeStream->nextActiveStream) {
-        if (program->traceStoreEnabled && !initTstore_inl(program, activeStream->traceStore, activeStream->streamId)) {
+        if (program->traceStoreEnabled && !initializeTraceStoreInline(program, activeStream->traceStore, activeStream->streamId)) {
             reportError("clear a tstore after first init\n");
             return false;
         }
@@ -107,12 +107,12 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *reg, 
         reportError("the initial trace failed\n");
         return false;
     }
-    if (thruput && !addThruputStalls(program, targetStream, reg, part)) {
+    if (thruput && !addThroughputStalls(program, targetStream, registerEntry, part)) {
         reportError("internal thruput check failed\n");
         return false;
     }
     if (latency) {
-        if (!linkMatchList(program, targetStream, reg, part, earliestUse, blocking)) {
+        if (!linkMatchList(program, targetStream, registerEntry, part, earliestUse, blocking)) {
             reportError("internal latency check failed\n");
             return false;
         }
@@ -127,7 +127,7 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *reg, 
                     reportError("failed to continue back trace\n");
                     return false;
                 }
-                if (!linkMatchList(program, targetStream, reg, part, earliestUse, blocking)) {
+                if (!linkMatchList(program, targetStream, registerEntry, part, earliestUse, blocking)) {
                     reportError("internal latency check failed\n");
                     return false;
                 }
@@ -138,8 +138,8 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *reg, 
         for (instStream *visitedStream = program->streamHead; visitedStream; visitedStream = visitedStream->nextStream) {
             unsigned char bit = 1 << part;
             if (visitedStream->visitState == 4) {
-                reportInfo("UBS: %s %s.%d\n", program->traceTargetStream->streamName(), reg->registerName(), part);
-                if (!program->proc.usedBeforeSet.addUBS(visitedStream, program->traceTargetStream, reg, bit)) {
+                reportInfo("UBS: %s %s.%d\n", program->traceTargetStream->streamName(), registerEntry->registerName(), part);
+                if (!program->proc.usedBeforeSet.addUBS(visitedStream, program->traceTargetStream, registerEntry, bit)) {
                     reportError("failed to add ubs\n");
                     return false;
                 }
@@ -155,7 +155,7 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *reg, 
                         reportError("no work table\n");
                         return false;
                     }
-                    linkedStream->backtraceRegisterUse = scheduleTable->registerUses.AddNewRegRef(reg);
+                    linkedStream->backtraceRegisterUse = scheduleTable->registerUses.addRegisterUse(registerEntry);
                     if (!linkedStream->backtraceRegisterUse) {
                         reportError("couldn't add regref to table\n");
                         return false;
@@ -180,17 +180,17 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *reg, 
                     if (hazardCandidateStream->hazardVisited)
                         continue;
                     hazardCandidateStream->hazardVisited = 1;
-                    if (testTstore_inl(program, hazardSourceStream->traceStore, hazardCandidateStream->streamId)) {
+                    if (testTraceStoreInline(program, hazardSourceStream->traceStore, hazardCandidateStream->streamId)) {
                         regUse *registerUse = hazardCandidateStream->backtraceRegisterUse;
                         if (!registerUse) {
                             reportError("couldn't get regref for hazard broadcast op for reg %s.%d in %s hazard start=%s target=%s mode=%d\n",
-                                          reg->registerName(), part, hazardCandidateStream->streamName(), hazardSourceStream->streamName(),
+                                          registerEntry->registerName(), part, hazardCandidateStream->streamName(), hazardSourceStream->streamName(),
                                           targetStream->streamName(), hazardCandidateStream->visitState);
                             dumpBackTrace(program);
                             return false;
                         }
                         registerUse->hazardBroadcastMask |= 1 << part;
-                        int mergedTraceState = mergeTstores(program, hazardSourceStream->traceStore, hazardCandidateStream->traceStore);
+                        int mergedTraceState = mergeBacktraceTraceStores(program, hazardSourceStream->traceStore, hazardCandidateStream->traceStore);
                         if (mergedTraceState < 0) {
                             reportError("failed to merge  stores\n");
                             return false;
@@ -216,16 +216,16 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *reg, 
             }
         }
         for (instStream *resolvedStream = program->resolvedStreams; resolvedStream; resolvedStream = resolvedStream->nextResolvedStream) {
-            if (!int_buildTpairs(program, reg, part, resolvedStream, targetStream))
+            if (!buildCrossStreamThroughputPairs(program, registerEntry, part, resolvedStream, targetStream))
                 reportError("failed to build tpairs for register %s with target %s at stream %s\n",
-                              reg->registerName(), targetStream->streamName(), resolvedStream->streamName());
+                              registerEntry->registerName(), targetStream->streamName(), resolvedStream->streamName());
         }
         }
     }
     return true;
 }
 
-int mergeTstores(Program *program, unsigned *dst, unsigned *src)
+int mergeBacktraceTraceStores(Program *program, unsigned *dst, unsigned *src)
 {
     if (!src || !dst) {
         reportError("mergetTstores - null input\n");
@@ -240,7 +240,7 @@ int mergeTstores(Program *program, unsigned *dst, unsigned *src)
     return changed != 0;
 }
 
-bool zeroTstore(Program *program, unsigned *traceStore)
+bool clearBacktraceTraceStore(Program *program, unsigned *traceStore)
 {
     if (!traceStore) {
         reportError("zeroTstore - it's null\n");
@@ -251,9 +251,9 @@ bool zeroTstore(Program *program, unsigned *traceStore)
     return true;
 }
 
-bool initTstore(Program *program, unsigned *traceStore, unsigned bit)
+bool initializeBacktraceTraceStore(Program *program, unsigned *traceStore, unsigned bit)
 {
-    if (!zeroTstore_inl(program, traceStore)) {
+    if (!clearTraceStoreInline(program, traceStore)) {
         reportError("failed to init tstore\n");
         return false;
     }
@@ -267,7 +267,7 @@ bool initTstore(Program *program, unsigned *traceStore, unsigned bit)
     return true;
 }
 
-bool testTstore(Program *program, unsigned *traceStore, unsigned bit)
+bool testBacktraceTraceStore(Program *program, unsigned *traceStore, unsigned bit)
 {
     if (!traceStore) {
         reportError("store not set for test tstore\n");

@@ -10,7 +10,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found);
 int latestInsert(workTable *wt, Instr *in, bool *found);
 int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 int countSetBits(unsigned int x);
-RegPoolEntry *getZeroReg(unsigned int type);
+RegPoolEntry *getPoolZeroRegister(unsigned int type);
 
 
 static inline bool isOut(Operand *operand) { return operand->direction == 2; }
@@ -35,15 +35,15 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
     selectedCapOpcodeInfo = 0;
     selectedCapOriginalInstruction = 0;
 
-    RegPoolEntry *reg = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
-    switch (reg->registerIndex) {
+    RegPoolEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
+    switch (registerEntry->registerIndex) {
     case 52:
         cap = 0x73;
         selectedCapRegister = findRegisterByGlobalIndex(51);
         selectedCapMask = 1;
         break;
     case 50:
-        selectedCapRegister = reg;
+        selectedCapRegister = registerEntry;
         selectedCapMask = 1;
         cap = 0x74;
         break;
@@ -68,15 +68,15 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
             }
             mask[0] = 0;
             for (regUse *registerUse = scheduleTable->registerUses.head; registerUse; registerUse = registerUse->next) {
-                RegPoolEntry *reg = registerUse->registerEntry;
-                if (reg->registerClass != 9)
+                RegPoolEntry *registerEntry = registerUse->registerEntry;
+                if (registerEntry->registerClass != 9)
                     continue;
-                if (reg->isVirtual == 1) {
+                if (registerEntry->isVirtual == 1) {
                     reportError("register isn't base!\n");
                     return -1;
                 }
                 unsigned char usedComponentMask = registerUse->inputMask | registerUse->outputMask | registerUse->throughputMask;
-                int idx = pool->regIndex(reg->registerIndex);
+                int idx = pool->regIndex(registerEntry->registerIndex);
                 if (idx < 0) {
                     reportError("failed to get local id\n");
                     return -1;
@@ -124,7 +124,7 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
     return selectedCapPipelineProperties;
 }
 
-bool doCap(int line, int pipe, int mask)
+bool insertRegisterCapInstruction(int line, int pipe, int mask)
 {
     if (!selectedCapOpcodeInfo) {
         reportError("cap_ii not set\n");
@@ -144,7 +144,7 @@ bool doCap(int line, int pipe, int mask)
         capInstruction->operands[operandIndex].componentMask = mask;
 
     if (selectedCapRegister->registerClass == 9) {
-        RegPoolEntry *registerEntry = getZeroReg(9);
+        RegPoolEntry *registerEntry = getPoolZeroRegister(9);
         capInstruction->operands[0].assignedRegister = registerEntry;
         capInstruction->operands[0].originalRegister = registerEntry;
         capInstruction->operands[0].forcedBaseRegister = 0;
@@ -156,7 +156,7 @@ bool doCap(int line, int pipe, int mask)
         selectedCapOriginalInstruction->operands[0].forcedBaseRegister = 0;
         regUse *registerUse = capInsertionWorkTable->registerUses.findByRegister(selectedCapRegister);
         if (!registerUse) {
-            registerUse = capInsertionWorkTable->registerUses.AddNewRegRef(selectedCapRegister);
+            registerUse = capInsertionWorkTable->registerUses.addRegisterUse(selectedCapRegister);
             if (!registerUse) {
                 reportError("failed to add new regref\n");
                 return true;

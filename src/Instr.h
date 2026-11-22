@@ -88,8 +88,8 @@ public:
     bool clear();
     void validateOperandLocations();
     void dumpOperandLocations();
-    ol_s *addOperandLocation(Instr *inst, int op, int slot, bool ext);
-    ol_s *addInstructionLocation(Instr *inst);
+    ol_s *addOperandLocation(Instr *instruction, int op, int slot, bool ext);
+    ol_s *addInstructionLocation(Instr *instruction);
     ol_s *copyOperandLocation(ol_s *ol, bool ext);
     ol_s *firstInternalLocation();
     ol_s *firstExternalLocation();
@@ -215,7 +215,7 @@ public:
     ~cls0805c244();
     void checkCounts();
     bool reset();
-    bool addInput(cls0805bcc4 *out, cls0805bcc4 *in, char a, unsigned char b);
+    bool addInput(cls0805bcc4 *outputLock, cls0805bcc4 *in, char a, unsigned char b);
     bool addOutput(cls0805bcc4 *lk, int a, int b, unsigned char c);
     bool removeInput(cls0805bcc4 *in);
     bool removeOutput(cls0805bcc4 *lk);
@@ -232,11 +232,11 @@ public:
     int countFlaggedOutputLocks();
     bool setRepReg(RegPoolEntry *selectedRegister);
     int checkInputLock(cls0805bcc4 *in, short *pos, int *minPos);
-    int checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos);
-    int checkOverlap(cls0805bcc4 *out, short *pos, int *minPos);
+    int checkOutputLock(cls0805bcc4 *outputLock, short *pos, int *minPos);
+    int checkOverlap(cls0805bcc4 *outputLock, short *pos, int *minPos);
     bool catLocks(cls0805bcc4 *a, cls0805bcc4 *b, int *s, int *e, int *end);
     int canMoveInputLock(cls0805bcc4 *in, short *pos, int slotBit);
-    int canMoveOutputLock(cls0805bcc4 *out, short *pos, int slotBit);
+    int canMoveOutputLock(cls0805bcc4 *outputLock, short *pos, int slotBit);
 };
 
 bool freeLockLists(cls0805c244 *p);
@@ -293,15 +293,15 @@ struct Operand {
     unsigned char getStatus() { return operandStatus; }
     bool validateKindAndMask();
     void diagnoseOperand(int);
-    char *Emit(char *buf, bool, bool symbolic);
+    char *emitOperandText(char *outputBuffer, bool, bool symbolic);
     bool resetFlowState();
     bool resetOptimizationSlots();
     Instr *getOwner();
     OpSlot *getPart(int part);
-    char *emitExpectedOperandType(bool flag, char *buf);
-    int getRegFrom(Operand *src);
+    char *emitExpectedOperandType(bool flag, char *outputBuffer);
+    int getRegFrom(Operand *sourceOperand);
     const char *getRegisterNameOrNone();
-    RegWeb *GetWeb();
+    RegWeb *getRootRegisterWeb();
     bool isForwardable()
     {
         return assignedRegister && assignedRegister->ownerPool->virtualPartCount && assignedRegister != assignedRegister->ownerPool->zeroRegister;
@@ -322,7 +322,7 @@ struct Operand {
             r = true;
         return r;
     }
-    RegPoolEntry *getReg() { return isReg() ? assignedRegister : 0; }
+    RegPoolEntry *findPhysicalRegister() { return isReg() ? assignedRegister : 0; }
     bool isZeroReg()
     {
         bool z = false;
@@ -749,9 +749,9 @@ public:
     unsigned char getBranchType() { return branchFlags; }
     bool isNonSynthetic();
     bool clearTransientFlags();
-    void leDump();
-    void leDump(int opnd);
-    void leDump(int opnd, int mask);
+    void dumpInstructionContext();
+    void dumpInstructionContext(int opnd);
+    void dumpInstructionContext(int opnd, int mask);
     bool patchBranchLatencies();
     int simplifyBranch();
     int normalizeZeroSources();
@@ -773,9 +773,9 @@ public:
     bool getImmediateOperand(int n, int *out);
     bool changeBranchImmediate(const char *s);
     bool setOwner(cls_unk30 *s);
-    char *emitExpectedSyntax(bool flag, char *buf, int n);
-    int outputMaskForRegister(RegPoolEntry *reg, int mask);
-    int inputMaskForRegister(RegPoolEntry *reg, int mask);
+    char *emitExpectedSyntax(bool flag, char *outputBuffer, int n);
+    int outputMaskForRegister(RegPoolEntry *registerEntry, int mask);
+    int inputMaskForRegister(RegPoolEntry *registerEntry, int mask);
     bool hasRawTableOrImmediateToken();
     char *getBranchTargetImmediate();
     RegPoolEntry *getBranchTargetRegister();
@@ -790,7 +790,7 @@ public:
     bool markDependencyOutputReachable();
     bool expandVirtualStatOperand();
     void clearExternalTimingConstraints();
-    void copyExternalTimingConstraints(Instr *src);
+    void copyExternalTimingConstraints(Instr *sourceInstruction);
     void raiseExternalInputPairedConstraint(short v);
     void raiseExternalInputConstraint(short v);
     void raiseExternalOutputPairedConstraint(short v);
@@ -801,7 +801,7 @@ iInfo *getOpcodeInfoById(int id);
 iInfo *findOpcodeInfoByMnemonic(const char *name, bool);
 RegPoolEntry *findRegisterByGlobalIndex(int idx);
 int getOpcodeId(iInfo *op);
-Instr *GetI(Instr **ie, int p);
+Instr *getInstructionInPipe(Instr **ie, int p);
 int checkDispatchEntry(Instr **ie);
 bool wouldPair(Instr **ie, Instr *in, unsigned p);
 bool isVuRegister(RegPoolEntry *r);
@@ -824,7 +824,7 @@ struct aaUse {
 
 aaDesc *findAddressAliasDescriptor(Instr *in);
 aaUse *findAddressAliasUse(Instr *in);
-RegPoolEntry *getOperandZeroReg(int kind);
+RegPoolEntry *getOperandZeroRegister(int kind);
 bool hasDirectOperandDependency(Instr *a, Instr *b);
 bool writesInputRegisterOf(Instr *a, Instr *b);
 Operand *operandAtLocation(ol_s *ol);
@@ -836,8 +836,8 @@ instStream *locationOwningStream(ol_s *ol);
 int locationRow(ol_s *ol);
 ol_s *allocateLocationNode();
 int countFreeLocationNodes();
-bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot);
-bool link_oParts(ol_s *o, ol_s *i, int x, int y);
+bool linkOperandParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot);
+bool linkOperandParts(ol_s *o, ol_s *i, int x, int y);
 const char *branchTypeNameByCode(int t);
 const char *syntheticTypeName(int t);
 

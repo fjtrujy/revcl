@@ -8,24 +8,24 @@
 #include "RegPool.h"
 #include "ol_s_inline.h"
 
-int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
-bool Cycle(Program *p, bool flag);
+int emulateInstructionRow(Program *p, wtRow *row, int line, bool uta, bool commit);
+bool advanceProcessorCycle(Program *p, bool flag);
 
 
-int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
+int emulateInstructionRow(Program *program, wtRow *row, int line, bool uta, bool commit)
 {
     int entryIndex;
     int stalls = 0;
     Instr *activeInstruction;
     Operand *activeOperand;
-    RegPoolEntry *reg;
+    RegPoolEntry *registerEntry;
     if (!row) {
         reportError("passed a null pointer to emuVSM\n");
         return -1;
     }
     if (row->skip)
         return 0;
-    if (uta && !Cycle(program, uta)) {
+    if (uta && !advanceProcessorCycle(program, uta)) {
         reportError("Processor::Emu - failed initial cycle for uta!\n");
         return -1;
     }
@@ -55,11 +55,11 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         if (!activeInstruction)
             continue;
         for (int operandIndex = 0; (activeOperand = activeInstruction->getOp(operandIndex)) != 0; operandIndex++) {
-            reg = registerOperand(activeOperand, 1);
-            if (reg) {
-                for (int part = 0; part != reg->partCount; part++)
+            registerEntry = registerOperand(activeOperand, 1);
+            if (registerEntry) {
+                for (int part = 0; part != registerEntry->partCount; part++)
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *registerPart = &reg->parts[part];
+                        rPart *registerPart = &registerEntry->parts[part];
                         if (registerPart->emulationTimingMetrics[4] < 0) {
                             if (uta)
                                 registerPart->emulationTimingMetrics[6] = -1;
@@ -72,10 +72,10 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
                         registerPart->emulationTimingMetrics[8] = entryIndex;
                     }
             }
-            if (reg && activeOperand->externalBlockModeFlag) {
-                for (int part = 0; part != reg->partCount; part++)
+            if (registerEntry && activeOperand->externalBlockModeFlag) {
+                for (int part = 0; part != registerEntry->partCount; part++)
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *inputRegisterPart = &reg->parts[part];
+                        rPart *inputRegisterPart = &registerEntry->parts[part];
                         int lat;
                         if (inputRegisterPart->pendingSource && (lat = inputRegisterPart->pendingSource->cycleOffset) != 0) {
                             ol_s temporaryLocation;
@@ -86,7 +86,7 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
                             }
                             if (activeOperand->additionalLatency) {
                                 reportError("vcl detected an ialu op too close to a dependent conditional branch. target behaviour isn't guaranteed\n");
-                                activeInstruction->leDump();
+                                activeInstruction->dumpInstructionContext();
                                 return -1;
                             }
                             if (lat > maxLat)
@@ -94,27 +94,27 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
                         }
                     }
             }
-            reg = registerOperand(activeOperand, 2);
-            if (reg) {
+            registerEntry = registerOperand(activeOperand, 2);
+            if (registerEntry) {
                 if (activeOperand->componentMask) {
-                    if (reg->tracksHotOutputPaths) {
+                    if (registerEntry->tracksHotOutputPaths) {
                         if (commit) {
                             if (activeInstruction->previousThroughputWriter) {
                                 reportError("multiple set for prevThruput\n");
                                 return -1;
                             }
-                            activeInstruction->previousThroughputWriter = reg->throughputWriter;
-                        } else if (reg->throughputWriter != activeInstruction->previousThroughputWriter) {
+                            activeInstruction->previousThroughputWriter = registerEntry->throughputWriter;
+                        } else if (registerEntry->throughputWriter != activeInstruction->previousThroughputWriter) {
                             reportError("unexpected value found in prev thru write\n");
                             return -1;
                         }
                     }
-                    reg->throughputWriter = activeInstruction;
-                    reg->outputWriteCount++;
+                    registerEntry->throughputWriter = activeInstruction;
+                    registerEntry->outputWriteCount++;
                 }
-                for (int part = 0; part != reg->partCount; part++) {
+                for (int part = 0; part != registerEntry->partCount; part++) {
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *inputRegisterPart = &reg->parts[part];
+                        rPart *inputRegisterPart = &registerEntry->parts[part];
                         if (inputRegisterPart->issueLock) {
                             ol_s inputPendingLocation;
                             inputPendingLocation.init(activeInstruction, operandIndex, part, false);
@@ -148,7 +148,7 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         if (stall) {
             stalls = stall;
             do {
-                if (!Cycle(program, uta)) {
+                if (!advanceProcessorCycle(program, uta)) {
                     reportError("failed to cycle cpu\n");
                     exitAfterCleanup(-1);
                 }
@@ -165,14 +165,14 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         if (!activeInstruction)
             continue;
         for (int operandIndex = 0; (activeOperand = activeInstruction->getOp(operandIndex)) != 0; operandIndex++) {
-            reg = registerOperand(activeOperand, 1);
-            if (reg) {
-                for (int part = 0; part != reg->partCount; part++) {
+            registerEntry = registerOperand(activeOperand, 1);
+            if (registerEntry) {
+                for (int part = 0; part != registerEntry->partCount; part++) {
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *setterRegisterPart = &reg->parts[part];
+                        rPart *setterRegisterPart = &registerEntry->parts[part];
                         ol_s *setter = &setterRegisterPart->currentLocation;
-                        Instr *src = setter->instruction;
-                        if (!src) {
+                        Instr *sourceInstruction = setter->instruction;
+                        if (!sourceInstruction) {
                             activeOperand->externalPartMask |= 1 << part;
                             continue;
                         }
@@ -187,7 +187,7 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
                         }
                         if (commit) {
                             int sourceOp = setterRegisterPart->currentLocation.operandIndex;
-                            if (!link_oParts(src, sourceOp, part, activeInstruction, operandIndex, part)) {
+                            if (!linkOperandParts(sourceInstruction, sourceOp, part, activeInstruction, operandIndex, part)) {
                                 reportError("failed to cross link operands\n");
                                 return -1;
                             }
@@ -202,11 +202,11 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         if (!currentInstruction)
             continue;
         for (int operandIndex = 0; (activeOperand = currentInstruction->getOp(operandIndex)) != 0; operandIndex++) {
-            reg = registerOperand(activeOperand, 2);
-            if (reg) {
-                for (int part = 0; part != reg->partCount; part++) {
+            registerEntry = registerOperand(activeOperand, 2);
+            if (registerEntry) {
+                for (int part = 0; part != registerEntry->partCount; part++) {
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *outputRegisterPart = &reg->parts[part];
+                        rPart *outputRegisterPart = &registerEntry->parts[part];
                         if (outputRegisterPart->issueLock) {
                             reportError("inconsistency detected.. issuelock still non-zero\n");
                             return -1;
@@ -235,7 +235,7 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
                         if (activeOperand->outputLatency > outputRegisterPart->emulationTimingMetrics[3])
                             outputRegisterPart->emulationTimingMetrics[3] = activeOperand->outputLatency;
                         int throughputInterval = 1;
-                        if (reg->tracksHotOutputPaths)
+                        if (registerEntry->tracksHotOutputPaths)
                             throughputInterval = currentInstruction->baseIssueSpacing;
                         if (throughputInterval > outputRegisterPart->emulationTimingMetrics[2])
                             outputRegisterPart->emulationTimingMetrics[2] = throughputInterval;
@@ -263,7 +263,7 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         }
     }
     stalls++;
-    if (!Cycle(program, uta)) {
+    if (!advanceProcessorCycle(program, uta)) {
         reportError("failed to cycle cpu!\n");
         return -1;
     }

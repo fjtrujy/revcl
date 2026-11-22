@@ -73,7 +73,7 @@ int pullUp(workTable *scheduleTable)
                     scheduleTable->dump();
                     int diagnosticMte = currentInstruction->externalOutputConstraint < currentInstruction->externalOutputPairedConstraint ? currentInstruction->externalOutputPairedConstraint : currentInstruction->externalOutputConstraint;
                     reportError("faulting instruction is (mte=%d):\n", diagnosticMte);
-                    currentInstruction->leDump();
+                    currentInstruction->dumpInstructionContext();
                     return -1;
                 }
             }

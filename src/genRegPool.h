@@ -14,15 +14,15 @@ public:
     virtual bool assignRegistersForWorkTable(workTable *t);                     // slot 4
 
     void clearRegisterAllocationMask();
-    bool build_tTab(RegPoolEntry *reg, unsigned char mask);
-    bool initAlloc(int start, int end);
-    void dumpTTab();
-    int countTTab();
-    int fitCost(int reg);
-    bool set_t_in_aTab(int reg);
-    void dumpATab();
-    int bestReg();
-    bool set_in_aTab(regUse *ru);
+    bool buildCandidateRegisterTimeline(RegPoolEntry *registerEntry, unsigned char mask);
+    bool initializeAllocationTimeline(int start, int end);
+    void dumpCandidateRegisterTimeline();
+    int countCandidateTimelineRows();
+    int calculateAllocationFitCost(int reg);
+    bool mergeCandidateIntoAllocationTimeline(int reg);
+    void dumpRegisterAllocationTimeline();
+    int chooseLowestCostRegister();
+    bool allocateRegisterUseInTimeline(regUse *ru);
 
     char registerPartAvailabilityMask[0x20];
 };

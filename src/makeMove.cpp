@@ -5,18 +5,18 @@
 #include "os.h"
 
 
-Instr *makeMove(Block *blk, RegPoolEntry *reg)
+Instr *makeMove(Block *block, RegPoolEntry *registerEntry)
 {
     int type = 0;
     Instr *instruction = 0;
-    if (blk->oddPipeMoveCount + blk->evenPipeMoveCount + blk->vectorMoveCount >= 2 * blk->loopSize)
+    if (block->oddPipeMoveCount + block->evenPipeMoveCount + block->vectorMoveCount >= 2 * block->loopSize)
         return 0;
     {
-        switch (reg->registerClass) {
+        switch (registerEntry->registerClass) {
         case 8:
             type = 1;
-            if (blk->evenPipeMoveCount >= blk->loopSize) {
-                blk->unk_ad = 1;
+            if (block->evenPipeMoveCount >= block->loopSize) {
+                block->movePipeCapacityExceeded = 1;
                 return instruction;
             }
             break;
@@ -24,7 +24,7 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
             type = 2;
             break;
         default:
-            reportError("can't make move for reg %s\n", reg->registerName());
+            reportError("can't make move for reg %s\n", registerEntry->registerName());
             abortAfterError();
         }
         instruction = getMove(type, 0);
@@ -47,8 +47,8 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
             reportError("failed to dup  a reg\n");
             abortAfterError();
         }
-        instruction->candidateAttemptLimit = blk->loopSize;
-        inputOperand->assignedRegister = reg;
+        instruction->candidateAttemptLimit = block->loopSize;
+        inputOperand->assignedRegister = registerEntry;
         inputOperand->operandStatus = 1;
         inputOperand->forcedBaseRegister = 0;
         out->operandStatus = 1;
@@ -62,19 +62,19 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
 void adjustMoveCount(Block *blk, Instr *mv, int);
 bool addFreeMove(Instr *mv);
 bool setPipeBits(Instr *in);
-bool AddToDo_Head(Block *blk, Instr *n);
+bool prependPendingInstruction(Block *blk, Instr *n);
 bool logInstr(Block *blk, Instr *in);
 void trackEarliestInsertion(Instr *in);
 
 short g_streamSerial = 1;
 int discardedEmptyMoveCount = 0;
 
-static inline void countCreatedMove(Block *blk, Instr *instruction)
+static inline void countCreatedMove(Block *block, Instr *instruction)
 {
-    adjustMoveCount(blk, instruction, 1);
+    adjustMoveCount(block, instruction, 1);
 }
 
-int getMove(Block *blk, Instr *instruction, int now)
+int getMove(Block *block, Instr *instruction, int now)
 {
     Operand *bestOp = 0;
     int bestScore = -1;
@@ -140,10 +140,10 @@ int getMove(Block *blk, Instr *instruction, int now)
                 }
             }
             int s1 = instruction->optimizedInstructionImageWord;
-            Instr *s2 = blk->pendingInstructions.head;
+            Instr *s2 = block->pendingInstructions.head;
             if (score > bestScore) {
                 instruction->optimizedInstructionImageWord = s1;
-                blk->pendingInstructions.head = s2;
+                block->pendingInstructions.head = s2;
                 bestOp = op2;
                 bestScore = score;
                 bestReg = reg;
@@ -169,7 +169,7 @@ int getMove(Block *blk, Instr *instruction, int now)
         if (outputLock && outputLock->activeReferenceCount)
             mask |= 1 << movePartIndex;
     }
-    Instr *moveInstruction = makeMove(blk, bestReg);
+    Instr *moveInstruction = makeMove(block, bestReg);
     if (!moveInstruction) {
     no_move:
         Instr *earliest = 0;
@@ -182,7 +182,7 @@ int getMove(Block *blk, Instr *instruction, int now)
             }
         }
         if (!earliest)
-            earliest = blk->completedInstructions.head;
+            earliest = block->completedInstructions.head;
         trackEarliestInsertion(earliest);
         return 1;
     }
@@ -210,7 +210,7 @@ int getMove(Block *blk, Instr *instruction, int now)
         int moved = 0;
         int oldBits = 0;
         int newBits = 0;
-        for (Instr *pendingInstruction = blk->pendingInstructions.head; pendingInstruction; pendingInstruction = (Instr *)pendingInstruction->pendingLink.nextInstruction) {
+        for (Instr *pendingInstruction = block->pendingInstructions.head; pendingInstruction; pendingInstruction = (Instr *)pendingInstruction->pendingLink.nextInstruction) {
             int operandIndex;
             for (operandIndex = 0; operandIndex != pendingInstruction->operandCount; operandIndex++) {
                 Operand *operand = &pendingInstruction->operands[operandIndex];
@@ -347,31 +347,31 @@ int getMove(Block *blk, Instr *instruction, int now)
         moveInstruction->destinationMask = moved;
         mvIn->componentMask = moved;
         out->componentMask = moved;
-        if (!AddToDo_Head(blk, moveInstruction)) {
+        if (!prependPendingInstruction(block, moveInstruction)) {
             reportError("getMove : failed to add move to the head of the to todo list\n");
             return -1;
         }
-        logInstr(blk, moveInstruction);
-        countCreatedMove(blk, moveInstruction);
+        logInstr(block, moveInstruction);
+        countCreatedMove(block, moveInstruction);
         return 0;
     }
 }
 
 int unresolveMove(Block *blk, Instr *mv);
-bool UnlinkFromToDo(Block *blk, Instr *n);
+bool unlinkFromPendingInstructions(Block *blk, Instr *n);
 void decrementInstructionPipelineCounts(Block *blk, Instr *mv);
 
-bool undoMove(Block *blk, Instr *moveInstruction)
+bool undoMove(Block *block, Instr *moveInstruction)
 {
     if (moveInstruction->concreteMoveOpcode)
-        unresolveMove(blk, moveInstruction);
+        unresolveMove(block, moveInstruction);
     Operand *out = moveInstruction->getOp(0);
     Operand *inputOperand = moveInstruction->getOp(1);
     RegPoolEntry *orig = inputOperand->assignedRegister;
     RegPoolEntry *dup = out->assignedRegister;
-    if (!UnlinkFromToDo(blk, moveInstruction))
+    if (!unlinkFromPendingInstructions(block, moveInstruction))
         reportError("failed to unlink from todolist!\n");
-    for (Instr *instruction = blk->pendingInstructions.head; instruction; instruction = (Instr *)instruction->pendingLink.nextInstruction) {
+    for (Instr *instruction = block->pendingInstructions.head; instruction; instruction = (Instr *)instruction->pendingLink.nextInstruction) {
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
             RegPoolEntry *registerEntry = operand->assignedRegister;
@@ -437,8 +437,8 @@ bool undoMove(Block *blk, Instr *moveInstruction)
         reportError("move with >2 operands\n");
         abortAfterError();
     }
-    decrementInstructionPipelineCounts(blk, moveInstruction);
-    adjustMoveCount(blk, moveInstruction, -1);
+    decrementInstructionPipelineCounts(block, moveInstruction);
+    adjustMoveCount(block, moveInstruction, -1);
     addFreeMove(moveInstruction);
     return true;
 }
@@ -453,15 +453,15 @@ bool undoMove(Block *blk, Instr *moveInstruction)
 
 Instr *makeMove(Block *, RegPoolEntry *);
 
-bool undoMovesTo(Block *blk, Instr *stop)
+bool undoMovesTo(Block *block, Instr *stop)
 {
     bool done;
-    Instr *instruction = blk->pendingInstructions.tail;
+    Instr *instruction = block->pendingInstructions.tail;
     do {
         Instr *prev = instruction->pendingLink.previousInstruction;
         done = (instruction == stop);
         if (instruction->moveRecordWord) {
-            if (!undoMove(blk, instruction)) {
+            if (!undoMove(block, instruction)) {
                 reportError("failed to undo move !\n");
                 abortAfterError();
             }

@@ -15,7 +15,7 @@ void abortAfterError()
         printf("ERROR: something went wrong, making '%s' vcl's outta here.\n", currentOutputFileName);
     else
         puts("ERROR: something went wrong, vcl's outta here.");
-    OS_End();
+    shutDownOperatingSystem();
     exit(-1);
 }
 

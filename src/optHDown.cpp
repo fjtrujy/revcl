@@ -4,8 +4,8 @@
 #include "RegPool.h"
 #include "wrangle.h"
 
-int normalRegCost(Instr *in);
-int hDownRegCost(Instr *in);
+int estimateNormalRegisterCost(Instr *in);
+int estimateHeightDownRegisterCost(Instr *in);
 int vutaRegCost(Instr *in);
 int anotherRegCost(Instr *in);
 int normal2RegCost(Instr *in);
@@ -19,7 +19,7 @@ bool optHDown(workTable *scheduleTable, wrangleCand *candidate)
     Instr *best = 0;
     int bestB = 0x80000000, bestC = 0x80000000, bestD = 0x7fffffff;
     for (; instruction; instruction = instruction->nextMoveInstruction) {
-        int cost = hDownRegCost(instruction);
+        int cost = estimateHeightDownRegisterCost(instruction);
         int distanceScore = instruction->schedulingStatistics.moveDistance - instruction->candidateAttemptCount + instruction->schedulingStatistics.reverseLatencyDepth + cost;
         if (distanceScore > bestA) {
             best = instruction;
@@ -57,7 +57,7 @@ bool optHDown(workTable *scheduleTable, wrangleCand *candidate)
     return true;
 }
 
-int hDownRegCost(Instr *instruction)
+int estimateHeightDownRegisterCost(Instr *instruction)
 {
     int cost = 0;
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {

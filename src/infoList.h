@@ -64,7 +64,7 @@ public:
     ubsNode();
     virtual ~ubsNode();
     virtual void dump();
-    bool catInit(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits);
+    bool catInit(instStream *entry, instStream *use, RegPoolEntry *registerEntry, unsigned char bits);
 
     RegPoolEntry *reg;
     unsigned char slotMask;

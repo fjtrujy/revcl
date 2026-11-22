@@ -15,9 +15,9 @@ int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
     int iline = instruction->position.loopRow;
     Operand *operand;
     for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-        RegPoolEntry *reg = registerOperand(operand, 1);
-        if (reg) {
-            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        if (registerEntry) {
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 if ((operand->componentMask >> partIndex) & 1) {
                     OpSlot *slot = &operand->parts[partIndex];
                     OperandLock *par = slot->getParent();
@@ -40,9 +40,9 @@ int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
                 }
             }
         }
-        reg = registerOperand(operand, 2);
-        if (reg && reg->tracksHotOutputPaths) {
-            for (int dependencyPartIndex = 0; dependencyPartIndex != reg->partCount; dependencyPartIndex++) {
+        registerEntry = registerOperand(operand, 2);
+        if (registerEntry && registerEntry->tracksHotOutputPaths) {
+            for (int dependencyPartIndex = 0; dependencyPartIndex != registerEntry->partCount; dependencyPartIndex++) {
                 if ((operand->componentMask >> dependencyPartIndex) & 1) {
                     OpSlot *slot = &operand->parts[dependencyPartIndex];
                     OperandLock *operandLock = slot->ownerLockList->sortedOutputLocks;
@@ -90,8 +90,8 @@ int latestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
     bool thru = false;
     Operand *operand;
     for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-        RegPoolEntry *reg = registerOperand(operand, 1);
-        if (reg && operand->reductionHazardMask) {
+        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        if (registerEntry && operand->reductionHazardMask) {
             thru = true;
             break;
         }

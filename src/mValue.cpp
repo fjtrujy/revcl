@@ -14,7 +14,7 @@ const char *immediateLiteralDigitsByBase[3] = { "0123456789", "0123456789abcdef"
 
 bool asciiCaseEqual(const char *a, const char *b);
 char *dupString(const char *s);
-int mstrlen(const char *s);
+int checkedStringLength(const char *s);
 
 mValue::mValue()
 {
@@ -519,7 +519,7 @@ fail:
     return false;
 }
 
-static inline bool isNumType(unsigned int valueType)
+static inline bool isNumericExpressionType(unsigned int valueType)
 {
     return valueType >= mValue::UINT && valueType <= mValue::FLOAT;
 }
@@ -542,7 +542,7 @@ bool moduloValues(mValue *dst, mValue *leftValue, mValue *rightValue)
         printf("xpVal::mod null arg passed\n");
         return false;
     }
-    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
+    if (!isNumericExpressionType(leftValue->type) || !isNumericExpressionType(rightValue->type)) {
         printf("xpVal::mod invalid arg\n");
         return false;
     }
@@ -582,7 +582,7 @@ bool shiftValuesLeft(mValue *dst, mValue *leftValue, mValue *rightValue)
         printf("xpVal::shfl null arg passed\n");
         return false;
     }
-    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
+    if (!isNumericExpressionType(leftValue->type) || !isNumericExpressionType(rightValue->type)) {
         printf("xpVal::shfl invalid arg\n");
         return false;
     }
@@ -620,7 +620,7 @@ bool shiftValuesRight(mValue *dst, mValue *leftValue, mValue *rightValue)
         printf("xpVal::shfr null arg passed\n");
         return false;
     }
-    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
+    if (!isNumericExpressionType(leftValue->type) || !isNumericExpressionType(rightValue->type)) {
         printf("xpVal::shfr invalid arg\n");
         return false;
     }
@@ -658,7 +658,7 @@ bool logicalOrValues(mValue *dst, mValue *leftValue, mValue *rightValue)
         printf("xpVal::logor null arg passed\n");
         return false;
     }
-    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
+    if (!isNumericExpressionType(leftValue->type) || !isNumericExpressionType(rightValue->type)) {
         printf("xpVal::logor invalid arg\n");
         return false;
     }
@@ -696,7 +696,7 @@ bool logicalAndValues(mValue *dst, mValue *leftValue, mValue *rightValue)
         printf("xpVal::logand null arg passed\n");
         return false;
     }
-    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
+    if (!isNumericExpressionType(leftValue->type) || !isNumericExpressionType(rightValue->type)) {
         printf("xpVal::logand invalid arg\n");
         return false;
     }
@@ -740,7 +740,7 @@ bool bitwiseAndValues(mValue *dst, mValue *leftValue, mValue *rightValue)
         printf("xpVal::bitand null arg passed\n");
         return false;
     }
-    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
+    if (!isNumericExpressionType(leftValue->type) || !isNumericExpressionType(rightValue->type)) {
         printf("xpVal::bitand invalid arg\n");
         return false;
     }
@@ -760,7 +760,7 @@ bool bitwiseOrValues(mValue *dst, mValue *leftValue, mValue *rightValue)
         printf("xpVal::bitor null arg passed\n");
         return false;
     }
-    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
+    if (!isNumericExpressionType(leftValue->type) || !isNumericExpressionType(rightValue->type)) {
         printf("xpVal::bitor invalid arg\n");
         return false;
     }
@@ -780,7 +780,7 @@ bool bitwiseXorValues(mValue *dst, mValue *leftValue, mValue *rightValue)
         printf("xpVal::bitxor null arg passed\n");
         return false;
     }
-    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
+    if (!isNumericExpressionType(leftValue->type) || !isNumericExpressionType(rightValue->type)) {
         printf("xpVal::bitxor invalid arg\n");
         return false;
     }
@@ -949,10 +949,10 @@ bool mValue::makeNumeric()
     if (type == STRING) {
         mValue parsedValue(NONE);
         parsedValue.parse(str);
-        if (isNumType(parsedValue.type))
+        if (isNumericExpressionType(parsedValue.type))
             set(&parsedValue);
     }
-    return isNumType(type);
+    return isNumericExpressionType(type);
 }
 
 char immediateFormattingBuffer[4096];
@@ -981,7 +981,7 @@ char *mValue::asChars()
         formatIntoBuffer(outputCursor, "%s", str);
         break;
     }
-    immediateValueStringOffset += mstrlen(outputCursor) + 1;
+    immediateValueStringOffset += checkedStringLength(outputCursor) + 1;
     return outputCursor;
 }
 
@@ -1001,9 +1001,9 @@ bool sameImmediateValue(mValue *leftValue, mValue *rightValue)
         return false;
     if (rightValue && rightValue->type == mValue::STRING)
         return false;
-    if (leftValue && isNumType(leftValue->type))
+    if (leftValue && isNumericExpressionType(leftValue->type))
         leftWordPointer = &leftValue->u;
-    if (rightValue && isNumType(rightValue->type))
+    if (rightValue && isNumericExpressionType(rightValue->type))
         rightWordPointer = &rightValue->u;
     return *leftWordPointer == *rightWordPointer;
 }

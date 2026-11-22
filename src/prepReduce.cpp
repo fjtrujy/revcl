@@ -34,11 +34,11 @@ bool prepareReductionCandidates(Program *program, instStream *stream, workTable 
         for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
-                RegPoolEntry *reg = operand->assignedRegister;
+                RegPoolEntry *registerEntry = operand->assignedRegister;
                 operand->reductionHazardMask = 0;
-                if (!reg)
+                if (!registerEntry)
                     continue;
-                regUse *currentRegisterUse = registerUseList->findByRegister(reg);
+                regUse *currentRegisterUse = registerUseList->findByRegister(registerEntry);
                 if (isRegisterOperand(operand, 1))
                     operand->reductionHazardMask = currentRegisterUse->hazardMask & operand->externalPartMask;
                 if (isRegisterOperand(operand, 2))

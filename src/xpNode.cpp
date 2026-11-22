@@ -460,7 +460,7 @@ bool xpTree::evaluate(mValue *out, unsigned int type)
     switch (type) {
     case mValue::UINT: {
         unsignedValue = 0;
-        if (!rec_Eval(root))
+        if (!evaluateExpressionNode(root))
             conversionSucceeded = false;
         else
             conversionSucceeded = root->val.getUInt(&unsignedValue);
@@ -469,7 +469,7 @@ bool xpTree::evaluate(mValue *out, unsigned int type)
         break;
     }
     case mValue::FLOAT: {
-        if (!rec_Eval(root))
+        if (!evaluateExpressionNode(root))
             conversionSucceeded = false;
         else
             conversionSucceeded = root->val.getFloat(&floatingValue);
@@ -478,7 +478,7 @@ bool xpTree::evaluate(mValue *out, unsigned int type)
         break;
     }
     case mValue::INT: {
-        if (!rec_Eval(root))
+        if (!evaluateExpressionNode(root))
             conversionSucceeded = false;
         else
             conversionSucceeded = root->val.getInt(&signedValue);
@@ -496,26 +496,26 @@ bool xpTree::evaluate(mValue *out, unsigned int type)
 
 bool xpTree::evalUInt(unsigned int *out)
 {
-    if (!rec_Eval(root))
+    if (!evaluateExpressionNode(root))
         return false;
     return root->val.getUInt(out);
 }
 
 bool xpTree::evalFloat(float *out)
 {
-    if (!rec_Eval(root))
+    if (!evaluateExpressionNode(root))
         return false;
     return root->val.getFloat(out);
 }
 
 bool xpTree::evalInt(int *out)
 {
-    if (!rec_Eval(root))
+    if (!evaluateExpressionNode(root))
         return false;
     return root->val.getInt(out);
 }
 
-bool xpTree::rec_Eval(xpNode *node)
+bool xpTree::evaluateExpressionNode(xpNode *node)
 {
     if (!node)
         return false;
@@ -526,7 +526,7 @@ bool xpTree::rec_Eval(xpNode *node)
     }
     int childIndex;
     for (childIndex = 0; childIndex != node->operandArity; childIndex++)
-        if (!rec_Eval(node->child[childIndex]))
+        if (!evaluateExpressionNode(node->child[childIndex]))
             return false;
     if (node->childCount != node->operandArity) {
         printf("tree is incomplete\n");

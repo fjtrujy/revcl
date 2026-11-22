@@ -159,10 +159,10 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
         reportError("balFix-no branch!\n");
         return false;
     }
-    RegPoolEntry *reg = instruction->getBranchTargetRegister();
-    if (!reg) {
+    RegPoolEntry *registerEntry = instruction->getBranchTargetRegister();
+    if (!registerEntry) {
         reportError("no target register input for btor\n");
-        instruction->leDump();
+        instruction->dumpInstructionContext();
         return false;
     }
     instruction->dumpOperandDiagnostics(false);
@@ -188,7 +188,7 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
                 currentStream->visitState = 2;
             }
             for (; previousInstruction; previousInstruction = previousInstruction->linearLink.previousInstruction) {
-                if (previousInstruction->outputMaskForRegister(reg, 0xff)) {
+                if (previousInstruction->outputMaskForRegister(registerEntry, 0xff)) {
                     previousInstruction->dumpOperandDiagnostics(false);
                     break;
                 }

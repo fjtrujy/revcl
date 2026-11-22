@@ -16,7 +16,7 @@ static inline void dumpRow(wtRow *row)
     row->refreshInstructionOperands(-1);
 }
 
-bool buildRaw(Program *prog, instStream *targetStream, DecodedLine *blocks, int count, int loopMode)
+bool buildRaw(Program *program, instStream *targetStream, DecodedLine *blocks, int count, int loopMode)
 {
     workTable *scheduleTable = &targetStream->sourceTable;
     if (!scheduleTable) {
@@ -85,18 +85,18 @@ bool buildRaw(Program *prog, instStream *targetStream, DecodedLine *blocks, int 
             if (lid) {
                 if (decodedInstruction->isNop()) {
                     reportUserMessage("loopid set on a nop\n");
-                    decodedInstruction->leDump();
+                    decodedInstruction->dumpInstructionContext();
                     return false;
                 }
                 if (!looped && valid) {
                     reportUserMessage("flow::build - hit a looped vsm instruction - but others before it weren't..%d valid \n", valid);
-                    decodedInstruction->leDump();
+                    decodedInstruction->dumpInstructionContext();
                     return false;
                 }
                 looped = true;
             } else if (looped && !decodedInstruction->isNop()) {
                 reportError("flow::build - parse id wasn't set for a supposedly looped instruction.type\n");
-                decodedInstruction->leDump();
+                decodedInstruction->dumpInstructionContext();
                 return false;
             }
             if (decodedInstruction->getBranchType()) {
@@ -131,7 +131,7 @@ bool buildRaw(Program *prog, instStream *targetStream, DecodedLine *blocks, int 
         if (branchDelayRows <= 0) {
             if (looped) {
                 reportError("in raw_loop mode, vcl expects you to set the branch delay slot!\n");
-                branch->leDump();
+                branch->dumpInstructionContext();
                 return false;
             }
             reportUserMessage("found a raw sequence without a bdl slot instruction.. this could be because mode\n");
@@ -141,7 +141,7 @@ bool buildRaw(Program *prog, instStream *targetStream, DecodedLine *blocks, int 
         }
         if (branchDelayRows > 1) {
             reportError("stray branch instruction found in sequence\n");
-            branch->leDump();
+            branch->dumpInstructionContext();
             return false;
         }
     }

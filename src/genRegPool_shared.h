@@ -6,7 +6,7 @@
 #include "genRegPool.h"
 
 void clearRawBytes(char *p, int n);
-RegPool *GetRP(unsigned t);
+RegPool *getRegisterPoolByIndex(unsigned t);
 bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
@@ -19,7 +19,7 @@ static inline int bitSet(int m, int i)
 bool initRegMask(RegPool *pool);
 int firstEmptyMask(RegPool *pool);
 bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always);
-bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b);
+bool haveSimultaneousRegisterOutputs(workTable *wt, RegPoolEntry *a, RegPoolEntry *b);
 extern int maximumAllocationParts;
 extern int allocationRegisterCount;
 extern int allocationTimelineStart;

@@ -55,7 +55,6 @@ opaque_field	unk_16	regUse
 opaque_field	unk_06	workTable
 opaque_field	unk_48	workTable
 opaque_field	unk_7e	workTable
-opaque_field	unk_ad	workTable
 opaque_field	unk_ae	workTable
 opaque_field	unk_0b	wtRow
 opaque_field	unk_08	xpTree

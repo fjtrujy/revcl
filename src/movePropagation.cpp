@@ -35,8 +35,8 @@ int propagateMoves(workTable *scheduleTable)
         if (!instruction->abstractMoveOpcode)
             continue;
         int mask = instruction->operands[0].componentMask;
-        RegPoolEntry *dst = instruction->operands[0].assignedRegister;
-        RegPoolEntry *src = instruction->operands[1].assignedRegister;
+        RegPoolEntry *destinationRegister = instruction->operands[0].assignedRegister;
+        RegPoolEntry *sourceRegister = instruction->operands[1].assignedRegister;
         int keep = 0;
         int srcWritten = 0;
         int valid = mask;
@@ -47,21 +47,21 @@ int propagateMoves(workTable *scheduleTable)
             Instr *previousInstruction = instruction->linearLink.prev();
             if (previousInstruction && previousInstruction->position.linearRow == row) {
                 bool previousDestinationPaired;
-                if (previousInstruction->collectOutputRegisterMask(dst, &previousDestinationPaired)) {
+                if (previousInstruction->collectOutputRegisterMask(destinationRegister, &previousDestinationPaired)) {
                     reportError(propagateTwoWritesError);
                     return 0;
                 }
                 bool previousSourcePaired;
-                srcWritten = previousInstruction->collectOutputRegisterMask(src, &previousSourcePaired);
+                srcWritten = previousInstruction->collectOutputRegisterMask(sourceRegister, &previousSourcePaired);
             }
             if (nextInstruction && nextInstruction->position.linearRow == row) {
                 bool nextDestinationPaired;
-                if (nextInstruction->collectOutputRegisterMask(dst, &nextDestinationPaired)) {
+                if (nextInstruction->collectOutputRegisterMask(destinationRegister, &nextDestinationPaired)) {
                     reportError(propagateTwoWritesError);
                     return 0;
                 }
                 bool nextSourcePaired;
-                srcWritten |= nextInstruction->collectOutputRegisterMask(src, &nextSourcePaired);
+                srcWritten |= nextInstruction->collectOutputRegisterMask(sourceRegister, &nextSourcePaired);
                 cur = nextInstruction->linearLink.next();
             }
         }
@@ -76,12 +76,12 @@ int propagateMoves(workTable *scheduleTable)
                 pendDst = 0;
             }
             bool paired = false;
-            int used = cur->collectInputRegisterMask(dst, &paired);
+            int used = cur->collectInputRegisterMask(destinationRegister, &paired);
             if (used) {
                 if (!(used & ~valid) && !(used & srcWritten) && !paired)
                     for (int operandIndex = 0; operandIndex != cur->operandCount; operandIndex++) {
                         Operand *operand = &cur->operands[operandIndex];
-                        if (registerOperand(operand, 1) == dst)
+                        if (registerOperand(operand, 1) == destinationRegister)
                             operand->getRegFrom(&instruction->operands[1]);
                         count++;
                     }
@@ -89,15 +89,15 @@ int propagateMoves(workTable *scheduleTable)
                     keep |= used & valid;
             }
             bool pendingSourcePaired;
-            pendSrc |= cur->collectOutputRegisterMask(src, &pendingSourcePaired);
+            pendSrc |= cur->collectOutputRegisterMask(sourceRegister, &pendingSourcePaired);
             bool pendingDestinationPaired;
-            pendDst |= cur->collectOutputRegisterMask(dst, &pendingDestinationPaired);
+            pendDst |= cur->collectOutputRegisterMask(destinationRegister, &pendingDestinationPaired);
             cur = cur->linearLink.nextInstruction;
             row = currentRow;
         }
         if (~valid & instruction->operands[0].externalPartMask) {
             reportError(propagateValidMaskError,
-                          dst->registerName(), src->registerName());
+                          destinationRegister->registerName(), sourceRegister->registerName());
             reportError(propagateValidDetailError,
                           valid, instruction->operands[0].externalPartMask);
             return -1;

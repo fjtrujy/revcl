@@ -7,7 +7,7 @@
 const char *linkTypeName(int type);
 bool isExportedSymbol(Program *p, char *name);
 const char *getUniqueName(Program *p);
-char *mprefix_del(const char *a, const char *b);
+char *joinNameWithPrefix(const char *a, const char *b);
 
 static inline linkNode *findRef(linkNode *link, instStream *stream, int type)
 {
@@ -218,17 +218,17 @@ bool Program::linkStreams(instStream *stream, instStream *destinationStream, int
     return true;
 }
 
-bool Program::areLinkedBy(instStream *src, instStream *dst, int type)
+bool Program::areLinkedBy(instStream *sourceStream, instStream *destinationStream, int type)
 {
-    bool hasSD = findRef(src->outputLinks.head, dst, type) != 0;
-    bool hasDS = findRef(dst->inputLinks.head, src, type) != 0;
+    bool hasSD = findRef(sourceStream->outputLinks.head, destinationStream, type) != 0;
+    bool hasDS = findRef(destinationStream->inputLinks.head, sourceStream, type) != 0;
     if (hasSD) {
         if (hasDS)
             return true;
     } else if (!hasDS)
         return false;
     reportError("areLinkedBy - hasSD=%d hasDS=%d src=%s dst=%s\n",
-                  hasSD, hasDS, src->streamName(), dst->streamName());
+                  hasSD, hasDS, sourceStream->streamName(), destinationStream->streamName());
     exitAfterCleanup(-1);
     return false;
 }

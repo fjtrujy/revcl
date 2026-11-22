@@ -38,7 +38,7 @@ int iHolder::matchesOperandLocation(ol_s *location)
 void iHolder::dumpOperandLocation()
 {
     if (instruction)
-        instruction->leDump(operandIndex, componentMask);
+        instruction->dumpInstructionContext(operandIndex, componentMask);
     else
         reportMessage(" UNSET_INST\n");
 }
@@ -46,7 +46,7 @@ void iHolder::dumpOperandLocation()
 inline void iHolder::dump()
 {
     if (instruction)
-        instruction->leDump(operandIndex, componentMask);
+        instruction->dumpInstructionContext(operandIndex, componentMask);
     else
         reportMessage(" UNSET_INST\n");
 }
@@ -299,7 +299,7 @@ void ubsNode::dump()
         }
         for (int remainingUseIndex = 0; remainingUseIndex != usedBeforeSetCount; remainingUseIndex++) {
             reportInfo("   ");
-            list[remainingUseIndex].inst->leDump(list[remainingUseIndex].opnd, list[remainingUseIndex].mask);
+            list[remainingUseIndex].inst->dumpInstructionContext(list[remainingUseIndex].opnd, list[remainingUseIndex].mask);
         }
     } else {
         reportInfo("register %s is used before set at \n",
@@ -307,7 +307,7 @@ void ubsNode::dump()
     }
 }
 
-bool ubsNode::catInit(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits)
+bool ubsNode::catInit(instStream *entry, instStream *use, RegPoolEntry *registerEntry, unsigned char bits)
 {
     if (!entry) {
         reportError("catInit - entry point not set\n");
@@ -317,7 +317,7 @@ bool ubsNode::catInit(instStream *entry, instStream *use, RegPoolEntry *reg, uns
         reportError("catInit - use point not set\n");
         return false;
     }
-    if (!reg) {
+    if (!registerEntry) {
         reportError("ubs::catInit - register not set\n");
         return false;
     }
@@ -327,20 +327,20 @@ bool ubsNode::catInit(instStream *entry, instStream *use, RegPoolEntry *reg, uns
     }
     entryStream = entry;
     useStream = use;
-    this->reg = reg;
+    this->reg = registerEntry;
     slotMask |= bits;
     return true;
 }
 
-bool ubsList::addUBS(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits)
+bool ubsList::addUBS(instStream *entry, instStream *use, RegPoolEntry *registerEntry, unsigned char bits)
 {
     ubsNode *usedBeforeSetNode = (ubsNode *)head;
-    if (!entry || !use || !reg || !bits) {
+    if (!entry || !use || !registerEntry || !bits) {
         reportError("ubsList: addUBS - passed bad args\n");
         return false;
     }
     for (; usedBeforeSetNode; usedBeforeSetNode = (ubsNode *)usedBeforeSetNode->next)
-        if (reg == usedBeforeSetNode->reg && entry == usedBeforeSetNode->entryStream && use == usedBeforeSetNode->useStream)
+        if (registerEntry == usedBeforeSetNode->reg && entry == usedBeforeSetNode->entryStream && use == usedBeforeSetNode->useStream)
             break;
     if (!usedBeforeSetNode) {
         usedBeforeSetNode = new ubsNode;
@@ -352,7 +352,7 @@ bool ubsList::addUBS(instStream *entry, instStream *use, RegPoolEntry *reg, unsi
         usedBeforeSetNode->next = head;
         head = usedBeforeSetNode;
     }
-    if (!usedBeforeSetNode->catInit(entry, use, reg, bits)) {
+    if (!usedBeforeSetNode->catInit(entry, use, registerEntry, bits)) {
         reportError("failed to cat init a used-before-set operand\n");
         return false;
     }

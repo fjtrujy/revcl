@@ -4,8 +4,8 @@
 #include "RegPool.h"
 #include "wrangle.h"
 
-int normalRegCost(Instr *in);
-int hDownRegCost(Instr *in);
+int estimateNormalRegisterCost(Instr *in);
+int estimateHeightDownRegisterCost(Instr *in);
 int vutaRegCost(Instr *in);
 int anotherRegCost(Instr *in);
 int normal2RegCost(Instr *in);

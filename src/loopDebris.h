@@ -17,8 +17,8 @@ public:
     instStream *getMainStream();
     instStream *getProStream(int i);
     instStream *getEpiStream(int i);
-    int getNumPro();
-    int getNumEpi();
+    int getPrologueRegionCount();
+    int getEpilogueRegionCount();
     epiRec *allocPro(int size);
     epiRec *allocEpi(int size);
     epiRec *allocMain(int size);

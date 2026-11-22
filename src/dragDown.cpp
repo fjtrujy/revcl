@@ -50,9 +50,9 @@ int dragDown(workTable *scheduleTable)
                     int operandIndex;
                     Operand *operand;
                     for (operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-                        RegPoolEntry *reg = registerOperand(operand, 2);
-                        if (reg) {
-                            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                        RegPoolEntry *registerEntry = registerOperand(operand, 2);
+                        if (registerEntry) {
+                            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                                 OpSlot *operandSlot = &operand->parts[partIndex];
                                 if ((operand->componentMask >> partIndex) & 1) {
                                     int latestAllowedRow = scheduleTable->rangeEnd - 1;

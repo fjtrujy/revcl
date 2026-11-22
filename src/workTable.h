@@ -48,7 +48,7 @@ public:
     regUseList();
     ~regUseList();
     bool clear();
-    regUse *AddNewRegRef(RegPoolEntry *reg);
+    regUse *addRegisterUse(RegPoolEntry *reg);
     bool append(regUse *ru);
     bool remove(regUse *ru);
     bool hasConsistentCount();
@@ -100,11 +100,11 @@ struct wtRow {
     bool clearStalls();
     void resetStallMetadata();
     bool addStall(int type, int len);
-    int outputMaskFor(RegPoolEntry *reg, unsigned char mask);
+    int outputMaskFor(RegPoolEntry *registerEntry, unsigned char mask);
     int outputMask(RegPoolEntry *reg) { return outputMaskFor(reg, 0xff); }
-    int inputMaskFor(RegPoolEntry *reg, unsigned char mask);
+    int inputMaskFor(RegPoolEntry *registerEntry, unsigned char mask);
     unsigned int getMinimumExtraLatencyAge();
-    char *emit(char *buf, int flags, bool upper, bool unused);
+    char *emit(char *outputBuffer, int flags, bool upper, bool unused);
 };
 
 struct wtInstrList {
@@ -175,7 +175,7 @@ public:
     wtInstrList pendingInstructions;
     wtInstrList completedInstructions;
     char fallbackSchedulingActive;
-    char unk_ad;
+    char movePipeCapacityExceeded;
     char unk_ae[2];
     int vectorMoveCount;             // move count, class 3
     int oddPipeMoveCount;             // move count, odd class
@@ -201,7 +201,7 @@ public:
     bool removeBranch();
     bool unlinkAndUnlog(Instr *in);
     bool logUnlinkFromLinear(Instr *in);
-    int getCondLid();
+    int getTerminatingConditionalLoopId();
     void dumpSynthetics();
     bool takeOut(Instr *i);
     bool putIn(Instr *i);
@@ -219,7 +219,7 @@ public:
     bool hasSafeTrailingInstructions();
     bool dispose();
     bool resetFlowStalls();
-    char *emit(char *buf, int a, int *p1, int *p2);
+    char *emit(char *outputBuffer, int a, int *p1, int *p2);
     int getTableRawMode();
     int getRangeStart();    // range start
     int getLoopSize();    // lsz
@@ -250,10 +250,10 @@ public:
     bool relinkRawIt();
     bool lockLine(cls08058718 *line);
     bool unlockLine(cls08058718 *line);
-    bool qRegRef(regUse *ru);
+    bool queueRegisterUse(regUse *ru);
     cls0805c244 *getLockList(RegPoolEntry *reg, int part);
-    bool qInstruction(Instr *in);
-    bool forceInsert(Instr *in, cls08058718 *pos);
+    bool queueInstruction(Instr *in);
+    bool forceInsert(Instr *in, cls08058718 *position);
     bool doPostOpt(int rawMode);
     workTable *localClone();
     int ctime(int l)

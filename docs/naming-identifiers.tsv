@@ -6,7 +6,6 @@ needs-review	countUnknownExpressionSymbols	3	3	src/immediate.cpp:32
 needs-review	recordUnknownSymbol	3	2	src/xpNode.cpp:616
 needs-review	clearUnknownSymbols	2	2	src/xpNode.cpp:603
 needs-review	visitUnknownSymbols	2	2	src/xpNode.cpp:642
-offset-field	unk_ad	10	5	src/iTable.cpp:54
 offset-field	unk_0c	6	2	src/xpNode.cpp:68
 offset-field	unk_11	5	4	src/Instr.h:45
 offset-field	unk_08	4	3	src/Instr.h:34

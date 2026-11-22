@@ -35,7 +35,7 @@ void olList::dumpOperandLocations()
         for (; location; location = location->next) {
             if (location->instruction) {
                 location->instruction->getOwningStream();
-                location->instruction->leDump(location->operandIndex, 1 << location->componentIndex);
+                location->instruction->dumpInstructionContext(location->operandIndex, 1 << location->componentIndex);
             }
             visitedCount++;
         }
@@ -58,7 +58,7 @@ void ol_s::dumpOperandContext()
 {
     if (instruction) {
         instruction->getOwningStream();
-        instruction->leDump(operandIndex, 1 << componentIndex);
+        instruction->dumpInstructionContext(operandIndex, 1 << componentIndex);
     }
 }
 
@@ -93,12 +93,12 @@ void ol_s::copyLocationFrom(ol_s *src)
     }
 }
 
-static inline void ol_s_init_inl(ol_s *location, Instr *inst, int operandIndex, int slot, bool ext)
+static inline void ol_s_init_inl(ol_s *location, Instr *instruction, int operandIndex, int slot, bool ext)
 {
     location->reset();
     if (ext)
         location->stateFlags = 1;
-    location->instruction = inst;
+    location->instruction = instruction;
     location->operandIndex = operandIndex;
     location->componentIndex = slot;
 }
@@ -125,12 +125,12 @@ static inline ol_s *allocOL()
     return location;
 }
 
-ol_s *olList::addOperandLocation(Instr *inst, int operandIndex, int slot, bool ext)
+ol_s *olList::addOperandLocation(Instr *instruction, int operandIndex, int slot, bool ext)
 {
     ol_s *prev = 0;
     ol_s *location;
     for (location = head; location; location = location->next) {
-        if (inst == location->instruction && operandIndex == location->operandIndex && slot == location->componentIndex) {
+        if (instruction == location->instruction && operandIndex == location->operandIndex && slot == location->componentIndex) {
             if (ext != location->isExt()) {
                 reportError("addOL: inst external state mismatch bExt=%d\n", ext);
                 location->dumpInstructionContext();
@@ -142,7 +142,7 @@ ol_s *olList::addOperandLocation(Instr *inst, int operandIndex, int slot, bool e
         prev = location;
     }
     location = allocOL();
-    ol_s_init_inl(location, inst, operandIndex, slot, ext);
+    ol_s_init_inl(location, instruction, operandIndex, slot, ext);
     if (prev)
         prev->next = location;
     else
@@ -151,17 +151,17 @@ ol_s *olList::addOperandLocation(Instr *inst, int operandIndex, int slot, bool e
     return location;
 }
 
-ol_s *olList::addInstructionLocation(Instr *inst)
+ol_s *olList::addInstructionLocation(Instr *instruction)
 {
     ol_s *prev = 0;
     ol_s *location;
     for (location = head; location; location = location->next) {
-        if (inst == location->instruction)
+        if (instruction == location->instruction)
             return location;
         prev = location;
     }
     location = allocOL();
-    ol_s_init_inl(location, inst, 0, 0, false);
+    ol_s_init_inl(location, instruction, 0, 0, false);
     if (prev)
         prev->next = location;
     else

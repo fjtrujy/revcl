@@ -80,7 +80,7 @@ Instr *wtRow::getEntry(int entryIndex)
     return entries[entryIndex].instruction;
 }
 
-Instr *GetI(Instr **instructionSlot, int pipeIndex)
+Instr *getInstructionInPipe(Instr **instructionSlot, int pipeIndex)
 {
     if (pipeIndex < 0) {
         reportError("iEntry::GetI() - p<0\n");
@@ -151,27 +151,27 @@ bool wtRow::addStall(int type, int len)
     return 1;
 }
 
-int wtRow::outputMaskFor(RegPoolEntry *reg, unsigned char mask)
+int wtRow::outputMaskFor(RegPoolEntry *registerEntry, unsigned char mask)
 {
     int outputMask = 0;
     if (!skip) {
         for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
-            Instr *instruction = GetI(&entries[0].instruction, pipeIndex);
+            Instr *instruction = getInstructionInPipe(&entries[0].instruction, pipeIndex);
             if (instruction)
-                outputMask |= instruction->outputMaskForRegister(reg, mask);
+                outputMask |= instruction->outputMaskForRegister(registerEntry, mask);
         }
     }
     return outputMask;
 }
 
-int wtRow::inputMaskFor(RegPoolEntry *reg, unsigned char mask)
+int wtRow::inputMaskFor(RegPoolEntry *registerEntry, unsigned char mask)
 {
     int inputMask = 0;
     if (!skip) {
         for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
-            Instr *instruction = GetI(&entries[0].instruction, pipeIndex);
+            Instr *instruction = getInstructionInPipe(&entries[0].instruction, pipeIndex);
             if (instruction)
-                inputMask |= instruction->inputMaskForRegister(reg, mask);
+                inputMask |= instruction->inputMaskForRegister(registerEntry, mask);
         }
     }
     return inputMask;
@@ -179,7 +179,7 @@ int wtRow::inputMaskFor(RegPoolEntry *reg, unsigned char mask)
 
 unsigned int wtRow::getMinimumExtraLatencyAge()
 {
-    Instr *instruction = GetI(&entries[0].instruction, 1);
+    Instr *instruction = getInstructionInPipe(&entries[0].instruction, 1);
     unsigned int minimumCycleAge = 0;
     if (instruction) {
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {

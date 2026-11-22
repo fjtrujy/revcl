@@ -54,7 +54,7 @@ public:
     bool evalUInt(unsigned int *out);
     bool evalFloat(float *out);
     bool evalInt(int *out);
-    bool rec_Eval(xpNode *n);
+    bool evaluateExpressionNode(xpNode *n);
     int countUnknownExpressionSymbols();
     void countUnknownSymbolsInNode(xpNode *n);
 

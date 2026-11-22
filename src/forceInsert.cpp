@@ -4,10 +4,10 @@
 #include "RegPool.h"
 #include "Block.h"
 
-bool UnlinkFromToDo(Block *blk, Instr *n);
-bool AddDone_Tail(Block *blk, Instr *n);
+bool unlinkFromPendingInstructions(Block *blk, Instr *n);
+bool appendCompletedInstruction(Block *blk, Instr *n);
 
-bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *pos)
+bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *position)
 {
     int operandIndex = 0;
     if (!candidateInstruction) {
@@ -15,8 +15,8 @@ bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *po
         return false;
     }
     InstructionPosition *instructionPosition = &candidateInstruction->position;
-    int row = pos->loopRow;
-    int pipe = pos->pipelineIndex;
+    int row = position->loopRow;
+    int pipe = position->pipelineIndex;
     if (instructionPosition->loopRow >= 0) {
         reportError("instruction already inserted\n");
         return false;
@@ -43,19 +43,19 @@ bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *po
         reportError("instruction already inserted or bad key\n");
         return false;
     }
-    instructionPosition->linearRow = pos->linearRow;
-    instructionPosition->loopRow = pos->loopRow;
-    instructionPosition->loopIteration = pos->loopIteration;
-    instructionPosition->pipelineIndex = pos->pipelineIndex;
+    instructionPosition->linearRow = position->linearRow;
+    instructionPosition->loopRow = position->loopRow;
+    instructionPosition->loopIteration = position->loopIteration;
+    instructionPosition->pipelineIndex = position->pipelineIndex;
     *slot = candidateInstruction;
     candidateInstruction->insertionSerial = nextInsertionSerial;
     nextInsertionSerial++;
     for (operandIndex = 0; operandIndex != candidateInstruction->operandCount; operandIndex++) {
         Operand *operand = &candidateInstruction->operands[operandIndex];
-        RegPoolEntry *reg = registerOperand(operand, 1);
-        if (!reg)
+        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        if (!registerEntry)
             continue;
-        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+        for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
             if ((bool)((operand->componentMask >> partIndex) & 1)) {
                 OperandLock *operandLock = &operand->parts[partIndex];
                 if (!operandLock) {
@@ -67,7 +67,7 @@ bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *po
                     reportError("lock had no lock list\n");
                     return false;
                 }
-                operandLock->setFrom(pos);
+                operandLock->setFrom(position);
                 if (!registerPartLocks->addInputLock(operandLock)) {
                     reportError("failed to add input lock\n");
                     return false;
@@ -77,10 +77,10 @@ bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *po
     }
     for (operandIndex = 0; operandIndex != candidateInstruction->operandCount; operandIndex++) {
         Operand *outputOperand = &candidateInstruction->operands[operandIndex];
-        RegPoolEntry *reg = registerOperand(outputOperand, 2);
-        if (!reg)
+        RegPoolEntry *registerEntry = registerOperand(outputOperand, 2);
+        if (!registerEntry)
             continue;
-        for (int outputPartIndex = 0; outputPartIndex != reg->partCount; outputPartIndex++) {
+        for (int outputPartIndex = 0; outputPartIndex != registerEntry->partCount; outputPartIndex++) {
             if ((bool)((outputOperand->componentMask >> outputPartIndex) & 1)) {
                 OperandLock *outputLock = &outputOperand->parts[outputPartIndex];
                 if (!outputLock) {
@@ -92,7 +92,7 @@ bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *po
                     reportError("lock had no lock list\n");
                     return false;
                 }
-                outputLock->setFrom(pos);
+                outputLock->setFrom(position);
                 if (!outputLockList->addOutputLock(outputLock)) {
                     reportError("failed to add output lock\n");
                     return false;
@@ -100,16 +100,16 @@ bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *po
             }
         }
     }
-    if (!UnlinkFromToDo((Block *)this, candidateInstruction)) {
+    if (!unlinkFromPendingInstructions((Block *)this, candidateInstruction)) {
         reportError("failed to unlink from the todo list\n");
         return false;
     }
-    if (!AddDone_Tail((Block *)this, candidateInstruction)) {
+    if (!appendCompletedInstruction((Block *)this, candidateInstruction)) {
         reportError("failed to add instruction to the done list tail\n");
         return false;
     }
     return true;
 }
 
-bool UnlinkFromDone(Block *blk, Instr *n);
+bool unlinkFromCompletedInstructions(Block *blk, Instr *n);
 bool setRange(int s, int e, int lsz);

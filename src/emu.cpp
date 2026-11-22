@@ -6,8 +6,8 @@
 #include "RegPool.h"
 #include "ol_s_inline.h"
 
-int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
-bool Cycle(Program *p, bool flag);
+int emulateInstructionRow(Program *p, wtRow *row, int line, bool uta, bool commit);
+bool advanceProcessorCycle(Program *p, bool flag);
 
 static inline int clampByte(int value)
 {
@@ -40,7 +40,7 @@ bool emuTable(Program *program, workTable *scheduleTable)
                     skipped++;
                     continue;
                 }
-                if (emuInst(program, workRow, line, false, true) < 0) {
+                if (emulateInstructionRow(program, workRow, line, false, true) < 0) {
                     reportError("failed to Emu an inst\n");
                     workRow->refreshInstructionOperands(-1);
                     goto fail;
@@ -68,7 +68,7 @@ fail:
         for (; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction) {
             row.clearEntries();
             row.entries[0].instruction = currentInstruction;
-            int emulationResult = emuInst(program, &row, -1, true, true);
+            int emulationResult = emulateInstructionRow(program, &row, -1, true, true);
             row.entries[0].instruction = 0;
             if (emulationResult < 0) {
                 reportError("failed to uta emu instruction\n");
@@ -114,12 +114,12 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
         count++;
         for (int operandIndex = 0; operandIndex != currentInstruction->operandCount; operandIndex++) {
             Operand *currentOperand = &currentInstruction->operands[operandIndex];
-            RegPoolEntry *reg = currentOperand->assignedRegister;
-            if (!reg)
+            RegPoolEntry *registerEntry = currentOperand->assignedRegister;
+            if (!registerEntry)
                 continue;
-            regUse *registerUse = scheduleTable->registerUses.findByRegister(reg);
+            regUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
             if (!registerUse) {
-                registerUse = scheduleTable->registerUses.AddNewRegRef(reg);
+                registerUse = scheduleTable->registerUses.addRegisterUse(registerEntry);
                 if (!registerUse) {
                     reportRegRefFailure();
                     return false;
@@ -136,22 +136,22 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
                 }
             }
             registerUse->externalInputMask |= currentOperand->externalPartMask;
-            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 if ((currentOperand->externalPartMask >> partIndex) & 1) {
                     if (registerUse->externalBlockMode == -1)
                         registerUse->externalBlockMode = currentOperand->externalBlockModeFlag;
                     else if (registerUse->externalBlockMode != (unsigned char)currentOperand->externalBlockModeFlag)
                         reportWarning("differing block modes for external input for %s..taking first encountered\n",
-                                      reg->registerName());
+                                      registerEntry->registerName());
                     if (!registerUse->slots[partIndex].inputLocations.addOperandLocation(currentInstruction, operandIndex, partIndex, false)) {
                         reportError("failed to add oploc user!\n");
                         return false;
                     }
                 }
-                if (((currentOperand->componentMask >> partIndex) & 1) && reg->tracksHotOutputPaths && isRegisterOperand(currentOperand, 2)) {
+                if (((currentOperand->componentMask >> partIndex) & 1) && registerEntry->tracksHotOutputPaths && isRegisterOperand(currentOperand, 2)) {
                     if (!registerUse->slots[partIndex].sourceLocations.addOperandLocation(currentInstruction, operandIndex, partIndex, false)) {
                         reportError("failed to add a local setter for a thruput check\n");
-                        reportError("register is %s\n", reg->registerName());
+                        reportError("register is %s\n", registerEntry->registerName());
                         return false;
                     }
                 }
@@ -163,14 +163,14 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
         return false;
     }
     for (regUse *currentRegisterUse = scheduleTable->registerUses.head; currentRegisterUse; currentRegisterUse = currentRegisterUse->next) {
-        RegPoolEntry *reg = currentRegisterUse->registerEntry;
-        if (!reg) {
+        RegPoolEntry *registerEntry = currentRegisterUse->registerEntry;
+        if (!registerEntry) {
             reportError("a reg ref had no register!\n");
             return false;
         }
-        for (int part = 0; part != reg->partCount; part++) {
+        for (int part = 0; part != registerEntry->partCount; part++) {
             regUseSlot *slot = &currentRegisterUse->slots[part];
-            rPart *registerPart = &reg->parts[part];
+            rPart *registerPart = &registerEntry->parts[part];
             slot->timingValues[0] = registerPart->emulationTimingMetrics[4];
             slot->timingValues[1] = registerPart->emulationTimingMetrics[5];
             slot->timingValues[2] = registerPart->emulationTimingMetrics[6];

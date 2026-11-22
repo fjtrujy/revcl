@@ -11,7 +11,7 @@ Instr *addXoutFor(instStream *s, RegPoolEntry *r);
 bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int flag);
 RegPoolEntry *getTagRegister(RegPool *pool, char *name);
 int getPoolsByClassID(int cls, RegPool **tab, int max);
-RegPool *GetRP(unsigned t);
+RegPool *getRegisterPoolByIndex(unsigned t);
 
 static inline bool addNewInputInl(Instr *instruction, RegPoolEntry *registerEntry, int bits)
 {
@@ -53,7 +53,7 @@ bool bindDependencies(Program *program)
             }
             if (bits) {
                 char *tag = streamInstruction->branchLabelTags;
-                RegPool *registerPool = GetRP(10);
+                RegPool *registerPool = getRegisterPoolByIndex(10);
                 if (!registerPool) {
                     reportError("failed to get a hw pool\n");
                     return false;
@@ -149,12 +149,12 @@ bool bindDependencies(Program *program)
 
 Instr *addXinFor(instStream *stream, RegPoolEntry *registerEntry)
 {
-    iInfo *info = getOpcodeInfoById(0xbe);
-    if (!info) {
+    iInfo *opcodeInfo = getOpcodeInfoById(0xbe);
+    if (!opcodeInfo) {
         reportError("addXinFor - cant get xin_hw\n");
         return 0;
     }
-    Instr *newInputInstruction = new Instr(info);
+    Instr *newInputInstruction = new Instr(opcodeInfo);
     if (!newInputInstruction) {
         reportError("failed to make xin instruction\n");
         return 0;
@@ -189,12 +189,12 @@ Instr *addXinFor(instStream *stream, RegPoolEntry *registerEntry)
 
 Instr *addXoutFor(instStream *stream, RegPoolEntry *registerEntry)
 {
-    iInfo *info = getOpcodeInfoById(0xbf);
-    if (!info) {
+    iInfo *opcodeInfo = getOpcodeInfoById(0xbf);
+    if (!opcodeInfo) {
         reportError("addxoutFor - can't get xout_hw\n");
         return 0;
     }
-    Instr *newOutputInstruction = new Instr(info);
+    Instr *newOutputInstruction = new Instr(opcodeInfo);
     if (!newOutputInstruction) {
         reportError("failed to make xout instruction\n");
         return 0;
@@ -241,8 +241,8 @@ bool addNewOperand(Instr *targetInstruction, RegPoolEntry *registerEntry, int bi
         reportError("add new output - out of bounds mod bits requested\n");
         return false;
     }
-    iInfo *info = targetInstruction->opcodeInfo;
-    if (!info) {
+    iInfo *opcodeInfo = targetInstruction->opcodeInfo;
+    if (!opcodeInfo) {
         reportError("instruction has no m_Inst\n");
         return false;
     }
@@ -295,7 +295,7 @@ bool addNewOutput(Instr *instruction, RegPoolEntry *registerEntry, int bits, int
 
 RegPoolEntry *getTagRegister(RegPool *pool, char *name)
 {
-    if (RegPool::isResvd(name, pool->registerClass)) {
+    if (RegPool::isReservedNameForClass(name, pool->registerClass)) {
         reportUserMessage("can't use %s as a name for one of the %s\n", name, pool->poolName);
         return 0;
     }

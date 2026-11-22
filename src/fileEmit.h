@@ -4,7 +4,7 @@
 
 class Instr;
 
-char *emitGenericInstructionText(char *buf, Instr *in, bool upper, char *mods, bool b, int zero);
+char *emitGenericInstructionText(char *outputBuffer, Instr *in, bool upper, char *mods, bool b, int zero);
 char *emitDestMask(char *p, int mdBits, unsigned char mods);
 
 #endif

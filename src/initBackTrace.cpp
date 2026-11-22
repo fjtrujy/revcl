@@ -20,7 +20,7 @@ bool initBackTrace(Program *program)
     }
     int streamCount = maximumStreamId + 1;
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
-        if (!g_initBackTrace(currentStream, streamCount)) {
+        if (!initializeStreamBacktrace(currentStream, streamCount)) {
             reportError("[Depend] failed to g_initBackTrace a stream\n");
             return false;
         }
@@ -53,7 +53,7 @@ bool disposeBackTrace(Program *program)
     return true;
 }
 
-bool g_initBackTrace(instStream *initialStream, int streamCount)
+bool initializeStreamBacktrace(instStream *initialStream, int streamCount)
 {
     initialStream->backtraceDependencyLength = initialStream->getOrGuessDepLength();
     if (initialStream->backtraceDependencyLength < 0) {

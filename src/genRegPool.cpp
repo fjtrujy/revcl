@@ -4,7 +4,7 @@
 #include "genRegPool.h"
 
 void clearRawBytes(char *p, int n);
-RegPool *GetRP(unsigned t);
+RegPool *getRegisterPoolByIndex(unsigned t);
 bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
@@ -62,7 +62,7 @@ bool assignExtRegisters(Program *program)
             return false;
         }
         for (unsigned poolIndex = 0; poolIndex != 12; poolIndex++) {
-            RegPool *registerPool = GetRP(poolIndex);
+            RegPool *registerPool = getRegisterPoolByIndex(poolIndex);
             if (registerPool && !registerPool->assignExt(stream)) {
                 reportError("flowMon::AssignExt registers failed for pool %s\n", registerPool->poolName);
                 return false;
@@ -71,15 +71,15 @@ bool assignExtRegisters(Program *program)
         for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
-                RegPoolEntry *reg = operand->assignedRegister;
-                if (reg && reg->isVirtual) {
-                    regUse *registerUse = scheduleTable->registerUses.findByRegister(reg);
+                RegPoolEntry *registerEntry = operand->assignedRegister;
+                if (registerEntry && registerEntry->isVirtual) {
+                    regUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
                     if (!registerUse) {
                         reportError("failed to find reg ref associated with reg\n");
                         return false;
                     }
                     if (registerUse->isExternal()) {
-                        RegPoolEntry *ext = reg->assignedPhysicalRegister;
+                        RegPoolEntry *ext = registerEntry->assignedPhysicalRegister;
                         if (!ext) {
                             reportError("no ext mapping on register\n");
                             return false;

@@ -49,7 +49,7 @@ static inline bool doPrune_p(Program *program)
     return true;
 }
 
-bool Prune(Program *program)
+bool pruneProgramOperands(Program *program)
 {
     if (!initPrune_p(program)) {
         reportError("failed to init prune!\n");
@@ -187,13 +187,13 @@ int tryPrune(Instr *instruction, bool raw)
         for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
             if ((out->componentMask >> partIndex) & 1)
             for (ol_s *location = out->parts[partIndex].operandLocations.head; location; location = location->next) {
-                Operand *src = operandAtLocation(location);
-                if (!src) {
+                Operand *sourceOperand = operandAtLocation(location);
+                if (!sourceOperand) {
                     reportError("failed to get an operand from an oploc\n");
                     return -1;
                 }
                 int componentIndex = location->componentIndex;
-                if (src->assignedRegister != reg) {
+                if (sourceOperand->assignedRegister != reg) {
                     reportError("there was a reg mismatch\n");
                     return -1;
                 }
@@ -201,11 +201,11 @@ int tryPrune(Instr *instruction, bool raw)
                     reportError("swizzle detected\n");
                     return -1;
                 }
-                if (!((src->componentMask >> partIndex) & 1)) {
+                if (!((sourceOperand->componentMask >> partIndex) & 1)) {
                     reportError("there was a mop bit mismatch\n");
                     return -1;
                 }
-                if (((src->pruneMask >> partIndex) & 1) && ((~out->pruneMask >> partIndex) & 1)) {
+                if (((sourceOperand->pruneMask >> partIndex) & 1) && ((~out->pruneMask >> partIndex) & 1)) {
                     cnt++;
                     pruneCount++;
                     out->pruneMask |= 1 << partIndex;
@@ -279,7 +279,7 @@ bool doPrune(instStream *stream)
                 reportVerboseInfo("REMOVE INST: ");
                 int saved = errorOccurred;
                 errorOccurred = quietDiagnostics;
-                currentInstruction->leDump();
+                currentInstruction->dumpInstructionContext();
                 errorOccurred = saved;
             }
             if (!scheduleTable->destroyInstruction(currentInstruction)) {
@@ -308,14 +308,14 @@ int doPrune(Instr *prunedInstruction)
     }
     if (!any)
         return 0;
-    iInfo *info = prunedInstruction->opcodeInfo;
-    if (!info) {
+    iInfo *opcodeInfo = prunedInstruction->opcodeInfo;
+    if (!opcodeInfo) {
         reportError("Instruction::doPrune() - had no iInfo\n");
         return -1;
     }
     if (prunedInstruction->abstractMoveOpcode && prunedInstruction->operands[0].assignedRegister == prunedInstruction->operands[1].assignedRegister)
         return 0;
-    if (info->destinationMaskMode == 1) {
+    if (opcodeInfo->destinationMaskMode == 1) {
         int m, nIn = 0, inOR = 0, outOR = 0, nOut = 0;
         for (operandIndex = 0; (currentOperand = prunedInstruction->getOp(operandIndex)) != 0; operandIndex++) {
             if (currentOperand->operandKind != 1 && currentOperand->operandKind != 9)
@@ -338,20 +338,20 @@ int doPrune(Instr *prunedInstruction)
             }
         }
         if (!nOut && !nIn) {
-            reportError("MD_ANY set - but couldn't find any fl4 or acc operands for %s\n", info->mnemonic);
+            reportError("MD_ANY set - but couldn't find any fl4 or acc operands for %s\n", opcodeInfo->mnemonic);
             return -1;
         }
         if (nOut > 1) {
             reportError("nOut >2! for fl4/acc\n ");
-            prunedInstruction->leDump();
+            prunedInstruction->dumpInstructionContext();
             return -1;
         }
-        if (info->decodeHook == rotateInputComponentMask)
+        if (opcodeInfo->decodeHook == rotateInputComponentMask)
             inOR = (inOR >> 1) | ((inOR & 1) << 3);
         if (nIn) {
             if (outOR & ~inOR) {
                 reportError("doPrune:: output had larger extent than input.. out=%x vs in=%x\n", outOR, inOR);
-                prunedInstruction->leDump();
+                prunedInstruction->dumpInstructionContext();
                 return -1;
             }
             m = inOR;
@@ -368,7 +368,7 @@ int doPrune(Instr *prunedInstruction)
             reportVerboseInfo("PRUNE FIELD: [%s->%s]  ", formatComponentMaskLetters(prunedInstruction->destinationMask), formatComponentMaskLetters(m));
             int saved = errorOccurred;
             errorOccurred = quietDiagnostics;
-            prunedInstruction->leDump();
+            prunedInstruction->dumpInstructionContext();
             errorOccurred = saved;
         }
         prunedInstruction->destinationMask = m;
@@ -376,7 +376,7 @@ int doPrune(Instr *prunedInstruction)
             if (currentOperand->operandKind == 1 || currentOperand->operandKind == 9)
                 currentOperand->componentMask = m;
         }
-        if (info->decodeHook == rotateInputComponentMask)
+        if (opcodeInfo->decodeHook == rotateInputComponentMask)
             prunedInstruction->operands[1].componentMask = (((m & 8) >> 3) | (m << 1)) & 0xf;
     }
     for (operandIndex = 0; (currentOperand = prunedInstruction->getOp(operandIndex)) != 0; operandIndex++) {
@@ -392,7 +392,7 @@ int doPrune(Instr *prunedInstruction)
             reportVerboseInfo("ZERO FIX   : ");
             int saved = errorOccurred;
             errorOccurred = quietDiagnostics;
-            prunedInstruction->leDump(operandIndex);
+            prunedInstruction->dumpInstructionContext(operandIndex);
             errorOccurred = saved;
             currentOperand->assignedRegister = pool->zeroRegister;
         }

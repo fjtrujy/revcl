@@ -186,10 +186,10 @@ bool instStream::gatherStats()
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = operand->parts[statsPartIndex].operandLocations.head->instruction;
+                        Instr *sourceInstruction = operand->parts[statsPartIndex].operandLocations.head->instruction;
                         Operand *sourceOperand = operandAtLocation(operand->parts[statsPartIndex].operandLocations.head);
-                        int forwardLatencyDepth = src->schedulingStatistics.forwardLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
-                        int forwardDependencyHeight = src->schedulingStatistics.forwardDependencyHeight + 1;
+                        int forwardLatencyDepth = sourceInstruction->schedulingStatistics.forwardLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
+                        int forwardDependencyHeight = sourceInstruction->schedulingStatistics.forwardDependencyHeight + 1;
                         if (forwardLatencyDepth > instruction->schedulingStatistics.forwardLatencyDepth)
                             instruction->schedulingStatistics.forwardLatencyDepth = forwardLatencyDepth;
                         if (forwardDependencyHeight > instruction->schedulingStatistics.forwardDependencyHeight)
@@ -211,9 +211,9 @@ bool instStream::gatherStats()
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = operand->parts[statsPartIndex].operandLocations.head->instruction;
+                        Instr *sourceInstruction = operand->parts[statsPartIndex].operandLocations.head->instruction;
                         Operand *sourceOperand = operandAtLocation(operand->parts[statsPartIndex].operandLocations.head);
-                        int independentLatencyDepth = src->schedulingStatistics.independentLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
+                        int independentLatencyDepth = sourceInstruction->schedulingStatistics.independentLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
                         if (independentLatencyDepth > instruction->schedulingStatistics.independentLatencyDepth)
                             instruction->schedulingStatistics.independentLatencyDepth = independentLatencyDepth;
                     }
@@ -238,14 +238,14 @@ bool instStream::gatherStats()
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = operand->parts[statsPartIndex].operandLocations.head->instruction;
+                        Instr *sourceInstruction = operand->parts[statsPartIndex].operandLocations.head->instruction;
                         Operand *sourceOperand = operandAtLocation(operand->parts[statsPartIndex].operandLocations.head);
                         int reverseLatencyDepth = instruction->schedulingStatistics.reverseLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
                         int reverseDependencyHeight = instruction->schedulingStatistics.reverseDependencyHeight + 1;
-                        if (reverseLatencyDepth > src->schedulingStatistics.reverseLatencyDepth)
-                            src->schedulingStatistics.reverseLatencyDepth = reverseLatencyDepth;
-                        if (reverseDependencyHeight > src->schedulingStatistics.reverseDependencyHeight)
-                            src->schedulingStatistics.reverseDependencyHeight = reverseDependencyHeight;
+                        if (reverseLatencyDepth > sourceInstruction->schedulingStatistics.reverseLatencyDepth)
+                            sourceInstruction->schedulingStatistics.reverseLatencyDepth = reverseLatencyDepth;
+                        if (reverseDependencyHeight > sourceInstruction->schedulingStatistics.reverseDependencyHeight)
+                            sourceInstruction->schedulingStatistics.reverseDependencyHeight = reverseDependencyHeight;
                     }
                 }
             }

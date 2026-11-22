@@ -29,7 +29,7 @@ char *runSelectedPreprocessors(unsigned char flags, char *buf, int *len, int arg
 bool gatherAllStreamStatistics(Program *p);
 bool tidyProgramStreams(Program *p);
 bool concatenateCompatibleStreams(Program *p);
-bool Prune(Program *p);
+bool pruneProgramOperands(Program *p);
 bool globalPrune(Program *p);
 bool resolveProgramImmediateFixups(Program *p, bool init);
 bool explodeRaw(Program *p);
@@ -38,17 +38,17 @@ bool patchAllStreamLatencies(Program *p);
 char *emitProgram(Program *p, char *buf, int comments);
 char *emitLabels(Program *p, char *buf);
 bool loadStalls(Program *p);
-bool doLinear(Program *p, int smart);
-bool doLoop(Program *p, int smart);
-bool doRawAndSynth(Program *p, int smart);
+bool scheduleLinearStreams(Program *p, int smart);
+bool scheduleLoopStreams(Program *p, int smart);
+bool prepareRawAndSyntheticStreams(Program *p, int smart);
 bool relaxOpt(Program *p);
 bool optimizeProgramScheduling(Program *p, int smart, bool sizeReduce);
 int insertAllRegisterCaps(Program *p);
 bool prepareExternalSchedulingForProgram(Program *p);
 bool bindExternals(Program *p);
 bool noopFlowBuildHook(Program *p);
-bool buildRegWebs(Program *p);
-void dumpThru(Program *p);
+bool buildRegisterWebs(Program *p);
+void dumpThroughputRegisters(Program *p);
 bool assignExtRegisters(Program *p);
 
 bool rebuildFlowDependencies(Program *p, bool a);
@@ -216,7 +216,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if (!OS_Init()) {
+    if (!initializeOperatingSystem()) {
         reportError("vcl failed to init OS related things\n");
         exitAfterCleanup(-1);
     }
@@ -282,7 +282,7 @@ int main(int argc, char **argv)
     }
 
     Program flow(symbolicOutputRequested);
-    if (!flow.Init(&vuProcessorDefinition, uniqueName, uniqueAll)) {
+    if (!flow.initializeProgram(&vuProcessorDefinition, uniqueName, uniqueAll)) {
         reportError("failed to set int name for flow\n");
         exitAfterCleanup(-1);
     }
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
     }
     if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
         exitAfterCleanup(-1);
-    if (!Prune(&flow)) {
+    if (!pruneProgramOperands(&flow)) {
         reportError("Failed to prune..\n");
         exitAfterCleanup(-1);
     }
@@ -321,7 +321,7 @@ int main(int argc, char **argv)
         reportError("generic dependency code decided to die\n");
         exitAfterCleanup(-1);
     }
-    if (!buildRegWebs(&flow)) {
+    if (!buildRegisterWebs(&flow)) {
         reportError("failed to gather flow\n");
         exitAfterCleanup(-1);
     }
@@ -334,7 +334,7 @@ int main(int argc, char **argv)
         return 0;
     }
     if (dumpRegs)
-        dumpThru(&flow);
+        dumpThroughputRegisters(&flow);
     if (!assignExtRegisters(&flow)) {
         dumpProgramStreamsAndRegisters(&flow, false);
         reportError("failed to assign externally visible stream registers\n");
@@ -354,7 +354,7 @@ int main(int argc, char **argv)
             reportError("failed to restat\n");
             exitAfterCleanup(-1);
         }
-        if (!doLoop(&flow, smart)) {
+        if (!scheduleLoopStreams(&flow, smart)) {
             reportError("failed to uta loop->raw_loop\n");
             exitAfterCleanup(-1);
         }
@@ -370,7 +370,7 @@ int main(int argc, char **argv)
             reportError("imm fixup failed to patch something\n");
             exitAfterCleanup(-1);
         }
-        if (!Prune(&flow)) {
+        if (!pruneProgramOperands(&flow)) {
             reportError("Failed to prune..\n");
             exitAfterCleanup(-1);
         }
@@ -380,7 +380,7 @@ int main(int argc, char **argv)
             reportError("failed to bind externals\n");
             exitAfterCleanup(-1);
         }
-        if (!buildRegWebs(&flow)) {
+        if (!buildRegisterWebs(&flow)) {
             reportError("failed to gather flow\n");
             exitAfterCleanup(-1);
         }
@@ -393,11 +393,11 @@ int main(int argc, char **argv)
         reportError("failed to initialise immediate fixups\n");
         exitAfterCleanup(-1);
     }
-    if (!doRawAndSynth(&flow, smart)) {
+    if (!prepareRawAndSyntheticStreams(&flow, smart)) {
         reportError("failed to process raw tables\n");
         exitAfterCleanup(-1);
     }
-    if (!doLinear(&flow, smart)) {
+    if (!scheduleLinearStreams(&flow, smart)) {
         reportError("failed to convert all uta linear->raw\n");
         exitAfterCleanup(-1);
     }
@@ -515,7 +515,7 @@ int main(int argc, char **argv)
         }
         close(ofd);
     }
-    OS_End();
+    shutDownOperatingSystem();
     return 0;
 }
 

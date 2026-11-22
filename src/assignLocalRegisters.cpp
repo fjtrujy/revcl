@@ -5,7 +5,7 @@
 #include "genRegPool.h"
 
 void clearRawBytes(char *p, int n);
-RegPool *GetRP(unsigned t);
+RegPool *getRegisterPoolByIndex(unsigned t);
 bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
@@ -65,7 +65,7 @@ bool assignLocalRegisters(Program *program, workTable *table)
     if (len) {
         setRange(table->getRangeStart(), table->getRangeEnd(), table->getLoopSize());
         for (unsigned poolIndex = 0; poolIndex != 12; poolIndex++) {
-            RegPool *pool = GetRP(poolIndex);
+            RegPool *pool = getRegisterPoolByIndex(poolIndex);
             if (pool && !pool->assignRegistersForWorkTable(table))
                 return false;
         }
@@ -79,12 +79,12 @@ bool assignLocalRegisters(Program *program, workTable *table)
     return true;
 }
 
-void clearATab()
+void clearRegisterAllocationTimeline()
 {
     clearRawBytes(allocationRegisterTimeline, 0x20000);
 }
 
-void clearTTab()
+void clearCandidateRegisterTimeline()
 {
     clearRawBytes(candidateRegisterTimeline, 0x1000);
 }
@@ -94,24 +94,24 @@ void genRegPool::clearRegisterAllocationMask()
     clearRawBytes(registerPartAvailabilityMask, 0x20);
 }
 
-bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
+bool genRegPool::buildCandidateRegisterTimeline(RegPoolEntry *registerEntry, unsigned char mask)
 {
     clearRawBytes(candidateRegisterTimeline, 0x1000);
     if (!mask)
         return true;
     char set = 0;
-    if (!reg) {
+    if (!registerEntry) {
         reportError(buildTTabNullError);
         return false;
     }
     int lsz = activeLoopSize;
-    for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+    for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
         bool partEnabled = (mask >> partIndex) & 1;
         if (!partEnabled)
             continue;
-        RegisterPartLockList *lockList = (RegisterPartLockList *)reg->getPartPayload(partIndex);
+        RegisterPartLockList *lockList = (RegisterPartLockList *)registerEntry->getPartPayload(partIndex);
         if (!lockList) {
-            reportError(buildTTabLockListError, reg->registerName());
+            reportError(buildTTabLockListError, registerEntry->registerName());
             return false;
         }
         OperandLock *lock = lockList->outputLocks;
@@ -163,7 +163,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                     int overlap = lockList->sharedExternalOutputFlag != 0;
                     reportError(buildTTabOverlapError, overlap);
                     lockList->checkCounts();
-                    dumpTTab();
+                    dumpCandidateRegisterTimeline();
                     return false;
                 }
                 candidateRegisterTimeline[idx] = timelinePartMask | (1 << partIndex);
@@ -171,13 +171,13 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         }
     }
     if (!set) {
-        reportError(buildTTabNoBitsError, reg->registerName());
+        reportError(buildTTabNoBitsError, registerEntry->registerName());
         exitAfterCleanup(-1);
     }
     return true;
 }
 
-bool genRegPool::initAlloc(int start, int end)
+bool genRegPool::initializeAllocationTimeline(int start, int end)
 {
     clearRawBytes(allocationRegisterTimeline, 0x20000);
     clearRawBytes(registerPartAvailabilityMask, 0x20);
@@ -221,7 +221,7 @@ bool genRegPool::initAlloc(int start, int end)
     return true;
 }
 
-void genRegPool::dumpTTab()
+void genRegPool::dumpCandidateRegisterTimeline()
 {
     for (int timelineIndex = allocationTimelineStart; timelineIndex < allocationTimelineEnd; timelineIndex++) {
         char c = candidateRegisterTimeline[timelineIndex];
@@ -230,7 +230,7 @@ void genRegPool::dumpTTab()
     }
 }
 
-int genRegPool::countTTab()
+int genRegPool::countCandidateTimelineRows()
 {
     int activeTimelineRows = 0;
     for (int timelineIndex = allocationTimelineStart; timelineIndex < allocationTimelineEnd; timelineIndex++)
@@ -239,7 +239,7 @@ int genRegPool::countTTab()
     return activeTimelineRows;
 }
 
-int genRegPool::fitCost(int reg)
+int genRegPool::calculateAllocationFitCost(int reg)
 {
     int total = 0;
     for (int timelineIndex = allocationTimelineStart; timelineIndex < allocationTimelineEnd; timelineIndex++) {
@@ -263,7 +263,7 @@ int genRegPool::fitCost(int reg)
     return total;
 }
 
-bool genRegPool::set_t_in_aTab(int reg)
+bool genRegPool::mergeCandidateIntoAllocationTimeline(int reg)
 {
     int end = allocationTimelineEnd;
     for (int timelineIndex = allocationTimelineStart; timelineIndex < end; timelineIndex++) {
@@ -285,7 +285,7 @@ bool genRegPool::set_t_in_aTab(int reg)
     return true;
 }
 
-void genRegPool::dumpATab()
+void genRegPool::dumpRegisterAllocationTimeline()
 {
     for (int timelineIndex = allocationTimelineStart; timelineIndex != allocationTimelineEnd; timelineIndex++)
         for (int registerIndex = 0; registerIndex != allocationRegisterCount; registerIndex++) {
@@ -297,12 +297,12 @@ void genRegPool::dumpATab()
         }
 }
 
-int genRegPool::bestReg()
+int genRegPool::chooseLowestCostRegister()
 {
     int best = 100000000;
     int which = -1;
     for (int registerIndex = 0; registerIndex != allocationRegisterCount; registerIndex++) {
-        int placementCost = fitCost(registerIndex);
+        int placementCost = calculateAllocationFitCost(registerIndex);
         if (placementCost < 0)
             continue;
         if (placementCost == 0)
@@ -315,38 +315,38 @@ int genRegPool::bestReg()
     return which;
 }
 
-bool genRegPool::set_in_aTab(regUse *registerUse)
+bool genRegPool::allocateRegisterUseInTimeline(regUse *registerUse)
 {
-    RegPoolEntry *reg = registerUse->registerEntry;
-    if (!reg) {
+    RegPoolEntry *registerEntry = registerUse->registerEntry;
+    if (!registerEntry) {
         reportError("regref had no register\n");
         return false;
     }
-    if (ownsRegisterClass(reg)) {
-        if (reg->isVirtual) {
+    if (ownsRegisterClass(registerEntry)) {
+        if (registerEntry->isVirtual) {
             reportError(setInATabVirtualError,
-                          reg->registerName());
+                          registerEntry->registerName());
             exitAfterCleanup(-1);
         }
-        int localRegisterIndex = reg->regIndex();
+        int localRegisterIndex = registerEntry->regIndex();
         if (localRegisterIndex < 0) {
             reportError(setInATabLocalIdError);
             exitAfterCleanup(-1);
         }
-        if (reg->enabledPhysicalRegister) {
+        if (registerEntry->enabledPhysicalRegister) {
             unsigned char mask = registerUse->inputMask | registerUse->outputMask | registerUse->throughputMask;
             if (!mask) {
                 reportError("error here\n");
                 exitAfterCleanup(-1);
             }
             int set = 0;
-            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 bool partEnabled = (mask >> partIndex) & 1;
-                if (partEnabled && !reg->getPartPayload(partIndex)) {
+                if (partEnabled && !registerEntry->getPartPayload(partIndex)) {
                     reportError("failed to get rll\n");
                     return false;
                 }
-                RegisterPartLockList *lockList = (RegisterPartLockList *)reg->getPartPayload(partIndex);
+                RegisterPartLockList *lockList = (RegisterPartLockList *)registerEntry->getPartPayload(partIndex);
                 if (lockList) {
                     if (!lockList->assigned)
                         set |= 1 << partIndex;
@@ -354,16 +354,16 @@ bool genRegPool::set_in_aTab(regUse *registerUse)
                 }
             }
             if (set) {
-                if (!build_tTab(reg, set)) {
+                if (!buildCandidateRegisterTimeline(registerEntry, set)) {
                     reportError(setInATabBuildError,
-                                  reg->registerName(), reg->registerName());
+                                  registerEntry->registerName(), registerEntry->registerName());
                     return false;
                 }
-                if (!set_t_in_aTab(localRegisterIndex)) {
+                if (!mergeCandidateIntoAllocationTimeline(localRegisterIndex)) {
                     reportError(setInATabCheckError,
-                                  reg->registerName(), localRegisterIndex);
-                    dumpTTab();
-                    dumpATab();
+                                  registerEntry->registerName(), localRegisterIndex);
+                    dumpCandidateRegisterTimeline();
+                    dumpRegisterAllocationTimeline();
                     return false;
                 }
             }

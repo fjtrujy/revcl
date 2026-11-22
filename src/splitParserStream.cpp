@@ -32,7 +32,7 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
                 DecodedLine *targetLine = findDecodedLineByLabel(blocks, count, target);
                 if (!targetLine) {
                     reportUserMessage("vcl couldn't find the label '%s' refered to in instruction :\n", target);
-                    ((Instr *)instructionWord)->leDump(-1);
+                    ((Instr *)instructionWord)->dumpInstructionContext(-1);
                     return false;
                 }
                 targetLine->isBranchTarget = 1;
@@ -53,7 +53,7 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
                     DecodedLine *matchedTagLine = findDecodedLineByLabel(blocks, count, buf);
                     if (!matchedTagLine) {
                         reportError("failed to find a tagged label '%s' attached to branch:\n", buf);
-                        ((Instr *)instructionWord)->leDump(-1);
+                        ((Instr *)instructionWord)->dumpInstructionContext(-1);
                         return false;
                     }
                     if (!program->uniqueNamePrefixes.findByExactName(buf) && !program->uniqueNamePrefixes.findOrAppendByExactName(buf)) {
@@ -148,7 +148,7 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
             if (blockInstruction->branchFlags) {
                 if (delay) {
                     reportUserMessage("found a branch in a branch delay slot\n");
-                    blockInstruction->leDump();
+                    blockInstruction->dumpInstructionContext();
                     return false;
                 }
                 delay = (mode == 3) + 1;
@@ -200,7 +200,7 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
         stream->streamId = blockFlowId;
         mList *labels = &blockStartLine->labels;
         if (!labels->nodeCount) {
-            int nameLength = mstrlen(getUniqueName(program));
+            int nameLength = checkedStringLength(getUniqueName(program));
             char *name = new char[nameLength + 128];
             if (name) {
                 formatIntoBuffer(name, "__v_%s_%d", getUniqueName(program), blockFlowId);

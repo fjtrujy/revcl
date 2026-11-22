@@ -60,7 +60,7 @@ bool workTable::prepRawTable()
                 continue;
             if (rowInstruction->syntheticKind) {
                 reportError("synth instruction in preptab\n");
-                rowInstruction->leDump();
+                rowInstruction->dumpInstructionContext();
                 abortAfterError();
             }
             if (rowInstruction->parsedLoopId != -1) {
@@ -76,7 +76,7 @@ bool workTable::prepRawTable()
                     lid = rowInstruction->position.loopIteration;
                 if (lid < 0) {
                     reportError("lid was <0 during table setup\n");
-                    rowInstruction->leDump();
+                    rowInstruction->dumpInstructionContext();
                     return 0;
                 }
                 loc = &rowInstruction->position;
@@ -126,7 +126,7 @@ bool workTable::prepRawTable()
             if (!logAddLinear_Tail(rowInstruction)) {
                 extern const char prepRawAddInstrError[];
                 reportError(prepRawAddInstrError);
-                rowInstruction->leDump();
+                rowInstruction->dumpInstructionContext();
                 return 0;
             }
         }

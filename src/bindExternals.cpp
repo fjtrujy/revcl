@@ -21,24 +21,24 @@ bool bindExternals(Program *program)
         for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
-                RegPoolEntry *reg = operand->assignedRegister;
-                if (!reg)
+                RegPoolEntry *registerEntry = operand->assignedRegister;
+                if (!registerEntry)
                     continue;
-                regUse *registerUse = scheduleTable->registerUses.findByRegister(reg);
+                regUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
                 if (!registerUse) {
                     reportError(bindExtFindRegRefError);
                     return false;
                 }
                 if (registerUse->isExternal() || scheduleTable->allocationMode == 3) {
-                    if (reg->isVirtual) {
+                    if (registerEntry->isVirtual) {
                         reportError(bindExtVirtualRegError);
                         return false;
                     }
-                    if (operand->forcedBaseRegister && operand->forcedBaseRegister != reg) {
+                    if (operand->forcedBaseRegister && operand->forcedBaseRegister != registerEntry) {
                         reportError(bindExtForcedBaseError);
                         return false;
                     }
-                    operand->forcedBaseRegister = reg;
+                    operand->forcedBaseRegister = registerEntry;
                 }
             }
         }

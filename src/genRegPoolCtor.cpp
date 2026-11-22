@@ -6,7 +6,7 @@
 #include "genRegPool.h"
 
 void clearRawBytes(char *p, int n);
-RegPool *GetRP(unsigned t);
+RegPool *getRegisterPoolByIndex(unsigned t);
 bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
@@ -34,14 +34,14 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
         return false;
     }
     setRangeFrom(table);
-    if (!initAlloc(table->getRangeStart(), table->getRangeEnd())) {
+    if (!initializeAllocationTimeline(table->getRangeStart(), table->getRangeEnd())) {
         reportError("failed to set table range\n");
         return false;
     }
     regUse *registerUse = table->registerUses.firstReal();
     regUseList *list = &table->registerUses;
     for (; registerUse; registerUse = registerUse->nextReal()) {
-        if (!set_in_aTab(registerUse)) {
+        if (!allocateRegisterUseInTimeline(registerUse)) {
             reportError("failed to set forced register in aTab\n");
             table->dump();
             list->dumpRegisterUses();
@@ -56,12 +56,12 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
         for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
             RegPoolEntry *reg = operand->assignedRegister;
             if (ownsRegisterClass(reg) && reg->isVirtual && reg->assignmentCostTableSize < 0) {
-                if (!build_tTab(reg, (1 << reg->partCount) - 1)) {
+                if (!buildCandidateRegisterTimeline(reg, (1 << reg->partCount) - 1)) {
                     reportError("failed to build ttab while building todolist\n");
                     table->dump();
                     exitAfterCleanup(-1);
                 }
-                reg->assignmentCostTableSize = countTTab();
+                reg->assignmentCostTableSize = countCandidateTimelineRows();
                 reg->nextPendingAssignment = todo;
                 todo = reg;
                 if (reg->assignmentCostTableSize < 0) {
@@ -87,11 +87,11 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
             reportError("failed to find lowest register!\n");
             exitAfterCleanup(-1);
         }
-        if (!build_tTab(best, (1 << best->partCount) - 1)) {
+        if (!buildCandidateRegisterTimeline(best, (1 << best->partCount) - 1)) {
             reportError("failed to build tta externalb\n");
             exitAfterCleanup(-1);
         }
-        int registerIndex = bestReg();
+        int registerIndex = chooseLowestCostRegister();
         if (registerIndex < 0) {
             if (!countMarkedPhysicalRegisters()) {
                 reportError("vcl failed to allocate a register of type %s, but there's no registers of this type available for it to use.. maybe adding a .init_.. directive would help\n", poolName);
@@ -102,14 +102,14 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
             return false;
         }
         best->assignedPhysicalRegister = &registerEntries[registerIndex];
-        if (!set_t_in_aTab(registerIndex)) {
+        if (!mergeCandidateIntoAllocationTimeline(registerIndex)) {
             registerUse->validateAndDumpParts();
             list->dumpRegisterUses();
             reportError("failed to set t\n");
             exitAfterCleanup(-1);
         }
-        dumpATab();
-        dumpTTab();
+        dumpRegisterAllocationTimeline();
+        dumpCandidateRegisterTimeline();
         if (bestPrev)
             bestPrev->nextPendingAssignment = best->nextPendingAssignment;
         else
@@ -129,7 +129,7 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
             }
         }
     }
-    dumpATab();
+    dumpRegisterAllocationTimeline();
     return true;
 }
 
@@ -146,15 +146,15 @@ bool genRegPool::assignExt(instStream *stream)
     }
     workTable *table = stream->getTable();
     for (regUse *registerUse = table->registerUses.firstVirtual(); registerUse; registerUse = registerUse->nextVirtual()) {
-        RegPoolEntry *reg = registerUse->registerEntry;
-        if (!reg) {
+        RegPoolEntry *registerEntry = registerUse->registerEntry;
+        if (!registerEntry) {
             reportError("flowMon::AssignExt: register not set in rf\n");
             return false;
         }
-        if (ownsRegisterClass(reg) && registerUse->isExternal() && !reg->assignedPhysicalRegister) {
+        if (ownsRegisterClass(registerEntry) && registerUse->isExternal() && !registerEntry->assignedPhysicalRegister) {
             initRegMask(this);
             for (instStream *currentStream = owner->streamHead; currentStream; currentStream = currentStream->nextStream) {
-                if (!discardDisjointExternalRegister(currentStream, reg)) {
+                if (!discardDisjointExternalRegister(currentStream, registerEntry)) {
                     reportError("generic external allocator had internal error.. ret<0 for DiscardDisjoint\n");
                     return false;
                 }
@@ -167,13 +167,13 @@ bool genRegPool::assignExt(instStream *stream)
                     return false;
                 }
                 reportInfo("currently at stream: %s trying to allocate external register %s\n",
-                              stream->streamName(), reg->registerName());
+                              stream->streamName(), registerEntry->registerName());
                 table->registerUses.dumpVirtualRegisterUses();
-                reportError("failed to assign an external %s\n", reg->registerName());
+                reportError("failed to assign an external %s\n", registerEntry->registerName());
                 suppressFurtherErrors();
                 return false;
             }
-            reg->assignedPhysicalRegister = &registerEntries[registerIndex];
+            registerEntry->assignedPhysicalRegister = &registerEntries[registerIndex];
         }
     }
     return true;
@@ -257,7 +257,7 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
                 if (!(firstAlwaysLive && secondAlwaysLive) && (secondRangeEnd >= 0 || firstRangeEnd >= 0) && firstRangeStart < secondRangeEnd && firstRangeEnd > secondRangeStart)
                     overlapMask |= 1 << partIndex;
             }
-            if (registerUse->outputMask && otherRegisterUse->outputMask && hack_slo(table, reg, registerEntry))
+            if (registerUse->outputMask && otherRegisterUse->outputMask && haveSimultaneousRegisterOutputs(table, reg, registerEntry))
                 overlapMask |= 0x80;
             break;
         default:

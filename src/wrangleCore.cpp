@@ -15,7 +15,7 @@ extern int optimizationTimeoutSeconds;
 bool scheduleMidTableMode0(workTable *table, wrangleFunc candidateSelector)
 {
     allowInputLockLoopWrapping = 1;
-    table->unk_ad = 0;
+    table->movePipeCapacityExceeded = 0;
     table->fallbackSchedulingActive = 0;
     fatalReadBeforeReady = 1;
     table->loopBoundaryInstruction = 0;
@@ -128,7 +128,7 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
                             if (instruction->position.linearRow < lim2) {
                                 int saved = errorOccurred;
                                 errorOccurred = !quietDiagnostics;
-                                instruction->leDump();
+                                instruction->dumpInstructionContext();
                                 errorOccurred = saved;
                                 trackEarliestInsertion(instruction);
                             }
@@ -242,7 +242,7 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
                             exitAfterCleanup(-1);
                         }
                     }
-                    if (DoInsert(table, selectedCandidate.candidateInstruction, &pos))
+                    if (insertInstructionWithLocks(table, selectedCandidate.candidateInstruction, &pos))
                         goto after_insert_test;
                     reportError("was ok to insert..but failed!\n");
                     table->dump();
@@ -285,7 +285,7 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
                 goto rebuild;
             if (moveResult == 4)
                 reportWarning("move wasn't needed - so try to code this\n");
-            if (table->unk_ad && !table->fallbackSchedulingActive)
+            if (table->movePipeCapacityExceeded && !table->fallbackSchedulingActive)
                 goto switch_pipe;
             if (moveResult == 1) {
                 Instr *firstInstruction = earliestInsertionInstruction;
@@ -303,7 +303,7 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
         goto undo;
     switch_pipe:
         table->fallbackSchedulingActive = 1;
-        table->unk_ad = 0;
+        table->movePipeCapacityExceeded = 0;
         earliestInsertionInstruction = table->completedInstructions.head;
     faulted:
         table->moveListHead = 0;
@@ -320,7 +320,7 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
             while (table->completedInstructions.last() != firstInstruction) {
                 Instr *instruction = table->completedInstructions.last();
                 instruction->clearTransientFlags();
-                if (!UndoInsert(table, instruction)) {
+                if (!undoInstructionWithLocks(table, instruction)) {
                     reportError("in finst track..undoinsert failed\n");
                     exitAfterCleanup(-1);
                     return false;
@@ -337,7 +337,7 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
             }
             while (table->completedInstructions.first()) {
                 Instr *instruction = table->completedInstructions.last();
-                if (!UndoInsert(table, instruction)) {
+                if (!undoInstructionWithLocks(table, instruction)) {
                     reportError("undo insert: failed to remove done list tail\n");
                     exitAfterCleanup(-1);
                     return false;

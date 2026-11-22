@@ -5,8 +5,8 @@
 #include "Instr.h"
 #include "RegPool.h"
 
-int getToEnd(Instr *in);
-int getFromStart(Instr *in);
+int getInstructionDistanceToStreamEnd(Instr *in);
+int getInstructionDistanceFromStreamStart(Instr *in);
 
 instStream *selectUninsertedStream(Program *program)
 {
@@ -16,8 +16,8 @@ instStream *selectUninsertedStream(Program *program)
     int maxOut = -1000000;
     for (; stream; stream = stream->nextStream) {
         if (stream->getCodeMode() == 1) {
-            int missingInputs = stream->getUninsertedxInputs();
-            int out = stream->getUninsertedxOutputs();
+            int missingInputs = stream->countUnresolvedExternalInputs();
+            int out = stream->countUnresolvedExternalOutputs();
             if (missingInputs < 0) {
                 reportError("failed to get uninserted inputs\n");
                 return 0;
@@ -39,7 +39,7 @@ instStream *selectUninsertedStream(Program *program)
     return best;
 }
 
-int instStream::getUninsertedxInputs()
+int instStream::countUnresolvedExternalInputs()
 {
     int count = 0;
     if (!workTablePtr) {
@@ -47,7 +47,7 @@ int instStream::getUninsertedxInputs()
         return -1;
     }
     for (Instr *instruction = workTablePtr->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-        int base = getFromStart(instruction);
+        int base = getInstructionDistanceFromStreamStart(instruction);
         if (base < 0) {
             reportError("iStream::: getUninsertedxInputs - failed\n");
             return -1;
@@ -55,10 +55,10 @@ int instStream::getUninsertedxInputs()
         base += schedulingStatistics.reverseLatencyDepth - instruction->schedulingStatistics.reverseLatencyDepth;
         Operand *operand;
         for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-            RegPoolEntry *reg = registerOperand(operand, 1);
-            if (!reg || !operand->externalPartMask)
+            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            if (!registerEntry || !operand->externalPartMask)
                 continue;
-            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 if ((operand->externalPartMask >> partIndex) & 1) {
                 ol_s *operandLocation = operand->parts[partIndex].operandLocations.head;
                 if (!operandLocation) {
@@ -69,14 +69,14 @@ int instStream::getUninsertedxInputs()
                     Instr *setter = operandLocation->instruction;
                     if (setter->getOwningStream() == this || setter->optimizedInstructionImageWord)
                         continue;
-                    int distanceToEnd = getToEnd(setter);
+                    int distanceToEnd = getInstructionDistanceToStreamEnd(setter);
                     if (distanceToEnd < 0) {
                         reportError("getUninsertedxInputs - failed to get to end for a setter\n");
                         return -1;
                     }
-                    Operand *src = operandAtLocation(operandLocation);
-                    if (distanceToEnd + base + operandLocation->cycleOffset + 1 < src->outputLatency + operand->additionalLatency) {
-                        if (reg->partCount == 1)
+                    Operand *sourceOperand = operandAtLocation(operandLocation);
+                    if (distanceToEnd + base + operandLocation->cycleOffset + 1 < sourceOperand->outputLatency + operand->additionalLatency) {
+                        if (registerEntry->partCount == 1)
                             count += 4;
                         else
                             count++;
@@ -89,7 +89,7 @@ int instStream::getUninsertedxInputs()
     return count;
 }
 
-int instStream::getUninsertedxOutputs()
+int instStream::countUnresolvedExternalOutputs()
 {
     int count = 0;
     if (!workTablePtr) {
@@ -97,7 +97,7 @@ int instStream::getUninsertedxOutputs()
         return -1;
     }
     for (Instr *instruction = workTablePtr->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-        int base = getToEnd(instruction);
+        int base = getInstructionDistanceToStreamEnd(instruction);
         if (base < 0) {
             reportError("iStream::: getUninsertedxOutputs - failed\n");
             return -1;
@@ -105,23 +105,23 @@ int instStream::getUninsertedxOutputs()
         base += schedulingStatistics.forwardLatencyDepth - instruction->schedulingStatistics.forwardLatencyDepth;
         Operand *operand;
         for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-            RegPoolEntry *reg = registerOperand(operand, 2);
-            if (!reg || !operand->externalPartMask)
+            RegPoolEntry *registerEntry = registerOperand(operand, 2);
+            if (!registerEntry || !operand->externalPartMask)
                 continue;
-            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 if ((operand->externalPartMask >> partIndex) & 1) {
                     for (ol_s *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                         Instr *user = operandLocation->instruction;
                         if (user->getOwningStream() == this || user->optimizedInstructionImageWord)
                             continue;
-                        int distanceFromStart = getFromStart(user);
+                        int distanceFromStart = getInstructionDistanceFromStreamStart(user);
                         if (distanceFromStart < 0) {
                             reportError("getUninsertedxOutputs - failed to get to end for a setter\n");
                             return -1;
                         }
-                        Operand *src = operandAtLocation(operandLocation);
-                        if (base + distanceFromStart + operandLocation->cycleOffset + 1 < operand->outputLatency + src->additionalLatency) {
-                            if (reg->partCount == 1)
+                        Operand *sourceOperand = operandAtLocation(operandLocation);
+                        if (base + distanceFromStart + operandLocation->cycleOffset + 1 < operand->outputLatency + sourceOperand->additionalLatency) {
+                            if (registerEntry->partCount == 1)
                                 count += 4;
                             else
                                 count++;
@@ -134,7 +134,7 @@ int instStream::getUninsertedxOutputs()
     return count;
 }
 
-int getToEnd(Instr *instruction)
+int getInstructionDistanceToStreamEnd(Instr *instruction)
 {
     workTable *table = (workTable *)instruction->ownerTable;
     if (!table) {
@@ -197,7 +197,7 @@ int getToEnd(Instr *instruction)
     return -1;
 }
 
-int getFromStart(Instr *instruction)
+int getInstructionDistanceFromStreamStart(Instr *instruction)
 {
     workTable *table = (workTable *)instruction->ownerTable;
     if (!table) {
@@ -273,22 +273,22 @@ bool loadLocks(Program *program, workTable *table)
     }
     setRange(table->getRangeStart(), table->getRangeEnd(), table->getLoopSize());
     for (regUse *registerUse = table->registerUses.head; registerUse; registerUse = registerUse->next) {
-        RegPoolEntry *reg = registerUse->registerEntry;
-        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+        RegPoolEntry *registerEntry = registerUse->registerEntry;
+        for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
             regUseSlot *registerUseSlot = &registerUse->slots[partIndex];
             if (!registerUseSlot) {
                 reportError("failed to get rrp\n");
                 exitAfterCleanup(-1);
             }
-            RegisterPartLockList *rll = (RegisterPartLockList *)registerUseSlot->assignmentPayload;
-            if (!rll) {
+            RegisterPartLockList *registerPartLocks = (RegisterPartLockList *)registerUseSlot->assignmentPayload;
+            if (!registerPartLocks) {
                 reportError("no rll set in regref\n");
                 exitAfterCleanup(-1);
             }
-            RegisterPartLockList *cur = (RegisterPartLockList *)reg->getPartPayload(partIndex);
+            RegisterPartLockList *cur = (RegisterPartLockList *)registerEntry->getPartPayload(partIndex);
             if (!cur)
-                reg->setPartPayload(partIndex, (VclPtrWord)rll);
-            else if (rll != cur) {
+                registerEntry->setPartPayload(partIndex, (VclPtrWord)registerPartLocks);
+            else if (registerPartLocks != cur) {
                 reportError("rll mismatch\n");
                 exitAfterCleanup(-1);
             }

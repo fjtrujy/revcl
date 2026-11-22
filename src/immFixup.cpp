@@ -5,11 +5,11 @@
 #include "ol_s.h"
 #include "os.h"
 
-bool aaFixup(instStream *s);
+bool fixAddressAliases(instStream *s);
 bool resolveInstructionImmediateFixup(Instr *in);
 int maddImmediate(Operand *op, mValue *v, int n);
 
-static inline void initImm(Instr *instruction)
+static inline void resetInstructionAliasMetadata(Instr *instruction)
 {
     instruction->addressAliasMode = 0;
     instruction->addressAliasDirection = 0;
@@ -18,7 +18,7 @@ static inline void initImm(Instr *instruction)
     instruction->expectedAliasLoopId = -1;
 }
 
-static inline bool initStreamImm(instStream *stream)
+static inline bool resetStreamAliasMetadata(instStream *stream)
 {
     workTable *table = stream->getTable();
     if (!table) {
@@ -27,11 +27,11 @@ static inline bool initStreamImm(instStream *stream)
     }
     stream->streamSerial = 0;
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
-        initImm(instruction);
+        resetInstructionAliasMetadata(instruction);
     return true;
 }
 
-static inline void fixInst(Instr *instruction)
+static inline void resolveInstructionFixupOrAbort(Instr *instruction)
 {
     if (!resolveInstructionImmediateFixup(instruction)) {
         reportError("do_immFixup - failed for an inst\n");
@@ -39,13 +39,13 @@ static inline void fixInst(Instr *instruction)
     }
 }
 
-static inline bool do_immFixup(instStream *stream)
+static inline bool resolveStreamImmediateFixups(instStream *stream)
 {
     workTable *table = stream->getTable();
     if (!table)
         return true;
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
-        fixInst(instruction);
+        resolveInstructionFixupOrAbort(instruction);
     return true;
 }
 
@@ -60,17 +60,17 @@ bool resolveProgramImmediateFixups(Program *program, bool init)
     instStream *stream;
     if (init) {
         for (stream = program->streamHead; stream; stream = stream->nextStream)
-            if (!initStreamImm(stream))
+            if (!resetStreamAliasMetadata(stream))
                 return false;
         for (stream = program->streamHead; stream; stream = stream->nextStream)
-            if (!aaFixup(stream))
+            if (!fixAddressAliases(stream))
                 return dumpFailed(stream);
     } else {
         for (stream = program->streamHead; stream; stream = stream->nextStream)
-            if (!do_immFixup(stream))
+            if (!resolveStreamImmediateFixups(stream))
                 return false;
         for (stream = program->streamHead; stream; stream = stream->nextStream)
-            if (!initStreamImm(stream))
+            if (!resetStreamAliasMetadata(stream))
                 return false;
     }
     return true;
@@ -122,7 +122,7 @@ static inline signed char aaImmOp(aaDesc *aliasDescriptor) { return aliasDescrip
 static inline int aaImmLit(aaDesc *aliasDescriptor) { return aliasDescriptor->literalImmediate; }
 static inline unsigned char aaUseOp(aaUse *aliasUse) { return aliasUse->operandIndex; }
 
-bool aaFixup(instStream *stream)
+bool fixAddressAliases(instStream *stream)
 {
     workTable *table = stream->getTable();
     if (!table) {
@@ -130,8 +130,8 @@ bool aaFixup(instStream *stream)
         return false;
     }
     for (regUse *registerUse = firstRegUse(table); registerUse; registerUse = registerUse->next) {
-        RegPoolEntry *reg = regUseReg(registerUse);
-        if (!reg) {
+        RegPoolEntry *registerEntry = regUseReg(registerUse);
+        if (!registerEntry) {
             reportError("aaFixup - regref had no register\n");
             exitAfterCleanup(-1);
         }
@@ -141,7 +141,7 @@ bool aaFixup(instStream *stream)
         if (!aliasDescriptor || !bit0(regUseExtIn(registerUse)) || !bit0(regUseExtOut(registerUse)) || registerUse->recordedOutputWriteCount != 1)
             continue;
         RegPoolEntry *outReg = instruction->operands[aliasDescriptor->outputOperandIndex].assignedRegister;
-        if (outReg != reg || opRawReg(instrRawOp(instruction, aaInOp(aliasDescriptor))) != outReg)
+        if (outReg != registerEntry || opRawReg(instrRawOp(instruction, aaInOp(aliasDescriptor))) != outReg)
             continue;
         ol_s *operandLocation;
         for (operandLocation = vis->firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation()) {
@@ -227,14 +227,14 @@ bool tidyStream(instStream *stream)
     if (!table)
         return true;
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
-        fixInst(instruction);
+        resolveInstructionFixupOrAbort(instruction);
     return true;
 }
 
 bool tidyTable(workTable *table)
 {
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
-        fixInst(instruction);
+        resolveInstructionFixupOrAbort(instruction);
     return true;
 }
 
@@ -253,7 +253,7 @@ struct epSrc {
     short type;
 };
 
-bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
+bool resolveSourceEpilogueLoopId(olList *oll, int luid, int epType, int *lid)
 {
     if (luid < 0) {
         reportError("entered getSrcEpLid with -ve luid\n");
@@ -433,9 +433,9 @@ bool resolveInstructionImmediateFixup(Instr *instruction)
     int lid;
     if (stream->streamSerial) {
         olList *oll = &operand->parts[0].operandLocations;
-        if (!getSrcEpLid(oll, stream->streamSerial, stream->loopRegionRole, &lid)) {
+        if (!resolveSourceEpilogueLoopId(oll, stream->streamSerial, stream->loopRegionRole, &lid)) {
             reportError("failed to determine actual loopid of setter.. we are:\n");
-            instruction->leDump();
+            instruction->dumpInstructionContext();
             if (instruction->getOwningStream())
                 reportError("parent stream is : %s\n", instruction->getOwningStream()->streamName());
             reportError("expected was %d\n", instruction->expectedAliasLoopId);
@@ -473,7 +473,7 @@ bool resolveInstructionImmediateFixup(Instr *instruction)
     int fixupResult = maddImmediate(&instruction->operands[instruction->addressAliasOperandIndex], &instruction->addressImmediateValue, diff);
     if (fixupResult < 0) {
         reportError("failed to madd immediates\n");
-        instruction->leDump(instruction->addressAliasOperandIndex);
+        instruction->dumpInstructionContext(instruction->addressAliasOperandIndex);
         exitAfterCleanup(-1);
     }
     if (fixupResult == 1) {
@@ -484,7 +484,7 @@ bool resolveInstructionImmediateFixup(Instr *instruction)
     return true;
 }
 
-bool Init_immFixup(instStream *stream)
+bool initializeImmediateFixups(instStream *stream)
 {
     workTable *table = stream->getTable();
     if (!table) {
@@ -493,7 +493,7 @@ bool Init_immFixup(instStream *stream)
     }
     stream->streamSerial = 0;
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
-        initImm(instruction);
+        resetInstructionAliasMetadata(instruction);
     return true;
 }
 

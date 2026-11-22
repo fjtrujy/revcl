@@ -140,21 +140,21 @@ static inline void nextLoopPosition(int requestedRow, int row, int loopPeriod, i
     }
 }
 
-int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
+int cls0805c244::checkOutputLock(OperandLock *outputLock, short *pos, int *minPos)
 {
     int lsz = activeLoopSize;
-    int ret = checkOverlap(out, pos, minPos);
-    if (isRegLock(out))
+    int ret = checkOverlap(outputLock, pos, minPos);
+    if (isRegLock(outputLock))
         return 0;
     int targetLinearRow = ((InstructionPosition *)pos)->linearRow;
     int first;
-    if (out->latencyModeFlag)
+    if (outputLock->latencyModeFlag)
         first = targetLinearRow + 1;
     else
-        first = out->issueLatency + targetLinearRow;
-    int last = out->issueLatency + targetLinearRow;
+        first = outputLock->issueLatency + targetLinearRow;
+    int last = outputLock->issueLatency + targetLinearRow;
 
-    if (out->externalOutputSlotPlusOne) {
+    if (outputLock->externalOutputSlotPlusOne) {
         if (remainingLockCount > 1) {
             *minPos = 30000;
             return ret | 0x800;
@@ -174,11 +174,11 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
     bool ext = false;
     int lim;
     int nextLatestReadyCycle;
-    if (!out->referenceCount)
+    if (!outputLock->referenceCount)
         lim = first;
     else {
-        int upperConsumerCount = out->upperPipeConsumerCount, lowerConsumerCount = out->lowerPipeConsumerCount;
-        int eitherConsumerCount = out->eitherPipeConsumerCount;
+        int upperConsumerCount = outputLock->upperPipeConsumerCount, lowerConsumerCount = outputLock->lowerPipeConsumerCount;
+        int eitherConsumerCount = outputLock->eitherPipeConsumerCount;
         int maxConsumerCount = upperConsumerCount, minConsumerCount = lowerConsumerCount;
         if (upperConsumerCount < lowerConsumerCount) {
             maxConsumerCount = lowerConsumerCount;
@@ -212,7 +212,7 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
                 *minPos = 30000;
                 return 0x20000;
             }
-            if (out->externalOutputSlotPlusOne) {
+            if (outputLock->externalOutputSlotPlusOne) {
                 if (nextLatestReadyCycle - first >= lsz) {
                     *minPos = 30000;
                     return 0x2000;
@@ -257,16 +257,16 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
     return ret;
 }
 
-int cls0805c244::checkOverlap(OperandLock *out, short *pos, int *minPos)
+int cls0805c244::checkOverlap(OperandLock *outputLock, short *pos, int *minPos)
 {
     int ret = 0;
-    if (out->throughputSpacing <= 1)
+    if (outputLock->throughputSpacing <= 1)
         return 0;
 
     int overlapStart = pos[2];
-    int overlapEnd = overlapStart + out->throughputSpacing - 1;
+    int overlapEnd = overlapStart + outputLock->throughputSpacing - 1;
     for (OperandLock *lock = outputLocks; lock; lock = lock->nextSibling) {
-        if (lock == out)
+        if (lock == outputLock)
             continue;
         int otherLockStart = lock->loopRow;
         int otherLockEnd = otherLockStart + lock->throughputSpacing;

@@ -146,27 +146,27 @@ bool checkOpt3(Program *program)
         for (Instr *linkedInstruction = scheduleTable->linearInstructions.head; linkedInstruction; linkedInstruction = linkedInstruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != linkedInstruction->operandCount; operandIndex++) {
                 Operand *operand = &linkedInstruction->operands[operandIndex];
-                RegPoolEntry *reg;
+                RegPoolEntry *registerEntry;
                 if (linkedInstruction->operands[operandIndex].pairedOperandIndexPlusOne) {
                     Operand *pairedOperand = &linkedInstruction->operands[linkedInstruction->operands[operandIndex].pairedOperandIndexPlusOne - 1];
                     if (pairedOperand->pairedOperandIndexPlusOne - 1 != operandIndex) {
                         reportError("badly linked web patch\n");
                         return false;
                     }
-                    reg = linkedInstruction->operands[operandIndex].assignedRegister;
-                    if (reg != pairedOperand->assignedRegister) {
+                    registerEntry = linkedInstruction->operands[operandIndex].assignedRegister;
+                    if (registerEntry != pairedOperand->assignedRegister) {
                         reportError("not same reg for iwp\n");
                         return false;
                     }
                 } else
-                    reg = linkedInstruction->operands[operandIndex].assignedRegister;
+                    registerEntry = linkedInstruction->operands[operandIndex].assignedRegister;
                 RegPoolEntry *mreg = (RegPoolEntry *)linkedInstruction->operands[operandIndex].forcedBaseRegister;
-                if (reg && reg->isVirtual && !linkedInstruction->operands[operandIndex].originalRegister) {
+                if (registerEntry && registerEntry->isVirtual && !linkedInstruction->operands[operandIndex].originalRegister) {
                     reportError("original reg not set\n");
                     return false;
                 }
                 if (mreg) {
-                    if (!reg) {
+                    if (!registerEntry) {
                         reportError("original reg not set, but mapped base reg is\n");
                         return false;
                     }
@@ -175,13 +175,13 @@ bool checkOpt3(Program *program)
                         return false;
                     }
                 }
-                if (reg && reg->isVirtual != 1 && mreg && reg != mreg) {
+                if (registerEntry && registerEntry->isVirtual != 1 && mreg && registerEntry != mreg) {
                     reportError("register is base, but mapped base register, it isn't.. reg=%s mreg=%s\n",
-                                  reg->registerName(), mreg->registerName());
+                                  registerEntry->registerName(), mreg->registerName());
                     return false;
                 }
-                if (reg) {
-                    for (unsigned partIndex = 0; partIndex != (unsigned)reg->partCount; partIndex++) {
+                if (registerEntry) {
+                    for (unsigned partIndex = 0; partIndex != (unsigned)registerEntry->partCount; partIndex++) {
                         OpSlot *slot = operand->getPart(partIndex);
                         if (!slot)
                             continue;

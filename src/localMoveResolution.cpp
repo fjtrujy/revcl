@@ -8,15 +8,15 @@ bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl);
 int unresolveMove(Block *blk, Instr *mv);
 
 
-bool queueMoveForResolution(Block *blk, Instr *instruction)
+bool queueMoveForResolution(Block *block, Instr *instruction)
 {
     if (!instruction)
         return false;
     if (instruction->concreteMoveOpcode)
-        unresolveMove(blk, instruction);
-    instruction->nextMoveInstruction = blk->moveListHead;
-    blk->pendingMoveCount++;
-    blk->moveListHead = instruction;
+        unresolveMove(block, instruction);
+    instruction->nextMoveInstruction = block->moveListHead;
+    block->pendingMoveCount++;
+    block->moveListHead = instruction;
     return true;
 }
 

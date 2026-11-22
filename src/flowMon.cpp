@@ -15,7 +15,7 @@ bool emulateAndCollectRegisterUses(Program *p, instStream *s);
 bool initBackTrace(Program *p);
 bool disposeBackTrace(Program *p);
 bool doBackTrace(Program *p, instStream *s, RegPoolEntry *reg, int part, int depth, int mode, bool hot);
-bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b);
+bool buildCrossStreamThroughputPairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b);
 
 bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
 {
@@ -59,12 +59,12 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
     }
     for (streamCursor = program->streamHead; streamCursor; streamCursor = streamCursor->nextStream) {
         for (regUse *registerUse = streamCursor->getWorkTable()->registerUses.head; registerUse; registerUse = registerUse->next) {
-            RegPoolEntry *reg = registerUse->registerEntry;
-            if (!reg) {
+            RegPoolEntry *registerEntry = registerUse->registerEntry;
+            if (!registerEntry) {
                 reportError("found a reg ref with no reg!\n");
                 return false;
             }
-            for (int part = 0; part != reg->partCount; part++) {
+            for (int part = 0; part != registerEntry->partCount; part++) {
                 bool hot = false;
                 int mode = 0;
                 if ((registerUse->externalInputMask >> part) & 1) {
@@ -75,7 +75,7 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
                     }
                     mode = (externalBlockMode != 0) + 1;
                 }
-                if (registerUse->outputMask & (1 << part) & reg->tracksHotOutputPaths)
+                if (registerUse->outputMask & (1 << part) & registerEntry->tracksHotOutputPaths)
                     hot = true;
                 if (!hot && !mode)
                     continue;
@@ -87,13 +87,13 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
                     if (mode == 1)
                         mode = 2;
                 }
-                if (!doBackTrace(program, streamCursor, reg, part, depth, mode, hot)) {
+                if (!doBackTrace(program, streamCursor, registerEntry, part, depth, mode, hot)) {
                     reportError("failed to back trace a register!\n");
                     return false;
                 }
                 if (program->resolvedStreams) {
                     for (instStream *resolvedStream = program->resolvedStreams; resolvedStream; resolvedStream = resolvedStream->nextResolvedStream) {
-                        if (!int_buildTpairs(program, reg, part, resolvedStream, streamCursor)) {
+                        if (!buildCrossStreamThroughputPairs(program, registerEntry, part, resolvedStream, streamCursor)) {
                             reportError("failed to build the tpairs\n");
                             return false;
                         }

@@ -45,18 +45,18 @@ bool makeLpWork(instStream *stream, int maxSpread)
         int latest = 0;
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
-            RegPoolEntry *reg = registerOperand(operand, 1);
-            if (reg) {
-                for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            if (registerEntry) {
+                for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                     ol_s *operandLocation = operand->parts[partIndex].operandLocations.head;
                     if (operandLocation) {
-                        Instr *src = operandLocation->instruction;
+                        Instr *sourceInstruction = operandLocation->instruction;
                         Operand *otherOperand = operandAtLocation(operandLocation);
-                        if (!src || !otherOperand) {
+                        if (!sourceInstruction || !otherOperand) {
                             reportError("in_s not set\n");
                             return false;
                         }
-                        int latestRequiredRow = src->instructionId + otherOperand->outputLatency + operand->additionalLatency;
+                        int latestRequiredRow = sourceInstruction->instructionId + otherOperand->outputLatency + operand->additionalLatency;
                         if (latest < latestRequiredRow)
                             latest = latestRequiredRow;
                     }
@@ -69,17 +69,17 @@ bool makeLpWork(instStream *stream, int maxSpread)
         int earliest = 30000;
         for (int sourceOperandIndex = 0; sourceOperandIndex != instruction->operandCount; sourceOperandIndex++) {
             Operand *operand = &instruction->operands[sourceOperandIndex];
-            RegPoolEntry *reg = registerOperand(operand, 2);
-            if (reg) {
-                for (int sourcePartIndex = 0; sourcePartIndex != reg->partCount; sourcePartIndex++) {
+            RegPoolEntry *registerEntry = registerOperand(operand, 2);
+            if (registerEntry) {
+                for (int sourcePartIndex = 0; sourcePartIndex != registerEntry->partCount; sourcePartIndex++) {
                     for (ol_s *operandLocation = operand->parts[sourcePartIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
-                        Instr *dst = operandLocation->instruction;
+                        Instr *destinationInstruction = operandLocation->instruction;
                         Operand *otherOperand = operandAtLocation(operandLocation);
-                        if (!dst || !otherOperand) {
+                        if (!destinationInstruction || !otherOperand) {
                             reportError("in_s not set\n");
                             return false;
                         }
-                        int earliestRequiredRow = dst->instructionId - operand->outputLatency - otherOperand->additionalLatency;
+                        int earliestRequiredRow = destinationInstruction->instructionId - operand->outputLatency - otherOperand->additionalLatency;
                         if (earliest > earliestRequiredRow)
                             earliest = earliestRequiredRow;
                     }
@@ -101,17 +101,17 @@ bool makeLpWork(instStream *stream, int maxSpread)
         char *outputCursor = buf;
         for (int destinationOperandIndex = 0; destinationOperandIndex != instruction->operandCount; destinationOperandIndex++) {
             Operand *operand = &instruction->operands[destinationOperandIndex];
-            RegPoolEntry *reg = registerOperand(operand, 1);
-            if (reg) {
-                outputCursor += formatIntoBuffer(outputCursor, " %s: ", reg->registerName());
+            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            if (registerEntry) {
+                outputCursor += formatIntoBuffer(outputCursor, " %s: ", registerEntry->registerName());
                 int rlo = 30000, rhi = 0;
                 bool any = false;
-                for (int destinationPartIndex = 0; destinationPartIndex != reg->partCount; destinationPartIndex++) {
+                for (int destinationPartIndex = 0; destinationPartIndex != registerEntry->partCount; destinationPartIndex++) {
                     if ((operand->componentMask >> destinationPartIndex) & 1) {
                         ol_s *operandLocation = operand->parts[destinationPartIndex].operandLocations.head;
                         if (operandLocation) {
-                            Instr *src = operandLocation->instruction;
-                            int dependencyDistance = instruction->instructionId - src->instructionId;
+                            Instr *sourceInstruction = operandLocation->instruction;
+                            int dependencyDistance = instruction->instructionId - sourceInstruction->instructionId;
                             any = true;
                             if (dependencyDistance < rlo)
                                 rlo = dependencyDistance;
@@ -171,33 +171,33 @@ bool lsqChain(workTable *table)
     reportError(lsqChainHopeError);
     abortAfterError();
     for (regUse *registerUse = table->registerUses.head; registerUse; registerUse = registerUse->next) {
-        RegPoolEntry *reg = registerUse->registerEntry;
-        if (reg->registerClass != 8)
+        RegPoolEntry *registerEntry = registerUse->registerEntry;
+        if (registerEntry->registerClass != 8)
             continue;
         Instr *list[1024];
         Instr *instruction = table->linearInstructions.head;
-        reportInfo("lsqi- scan %s\n", reg->registerName());
+        reportInfo("lsqi- scan %s\n", registerEntry->registerName());
         int chainedInstructionCount = 0;
         bool bad = false;
         bool ok = true;
         for (; instruction; instruction = instruction->linearLink.nextInstruction) {
             int opc = instruction->opcodeId();
-            if (instruction->outputMaskForRegister(reg, 0xff)) {
+            if (instruction->outputMaskForRegister(registerEntry, 0xff)) {
                 if (!(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4) || bad) {
                     ok = false;
                     break;
                 }
                 list[chainedInstructionCount++] = instruction;
             }
-            if (instruction->inputMaskForRegister(reg, 0xff)
+            if (instruction->inputMaskForRegister(registerEntry, 0xff)
                 && !(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4))
                 bad = true;
         }
         if (!ok || chainedInstructionCount <= 1)
             continue;
-        reportInfo("lsChain for %s\n", reg->registerName());
-        Operand *src = &list[0]->operands[1];
-        if (src->externalPartMask != 1) {
+        reportInfo("lsChain for %s\n", registerEntry->registerName());
+        Operand *sourceOperand = &list[0]->operands[1];
+        if (sourceOperand->externalPartMask != 1) {
             reportError("this isn't externally set!\n");
             abortAfterError();
         }
@@ -235,10 +235,10 @@ bool lsqChain(workTable *table)
             reportError(lsqChainNewInstrError);
             return false;
         }
-        newInstruction->operands[0].assignedRegister = reg;
+        newInstruction->operands[0].assignedRegister = registerEntry;
         newInstruction->operands[0].externalPartMask = 1;
         newInstruction->operands[0].componentMask = 1;
-        newInstruction->operands[1].assignedRegister = reg;
+        newInstruction->operands[1].assignedRegister = registerEntry;
         newInstruction->operands[1].externalPartMask = 1;
         newInstruction->operands[1].componentMask = 1;
         newInstruction->operands[2].immediateValue.setInt(total);
@@ -249,14 +249,14 @@ bool lsqChain(workTable *table)
         for (Instr *instruction = newInstruction->linearLink.nextInstruction; instruction; instruction = instruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
-                if (operand->assignedRegister != reg)
+                if (operand->assignedRegister != registerEntry)
                     continue;
                 if (!isRegisterOperand(operand, 1)) {
                     reportError(lsqChainNotInputError);
                     return false;
                 }
                 operand->parts[0].operandLocations.clear();
-                if (!link_oParts(newInstruction, 0, 0, instruction, operandIndex, 0)) {
+                if (!linkOperandParts(newInstruction, 0, 0, instruction, operandIndex, 0)) {
                     reportError(lsqChainLinkError);
                     return false;
                 }

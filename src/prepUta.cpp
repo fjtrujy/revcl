@@ -64,7 +64,7 @@ workTable *prepUta(Program *program, instStream *stream, int loopSize, char smar
     newWorkTable->externalMinimumLength = scheduleTable->externalMinimumLength;
     regUseList &regs = scheduleTable->registerUses;
     for (regUse *registerUse = regs.head; registerUse; registerUse = registerUse->next) {
-        if (!newWorkTable->qRegRef(registerUse)) {
+        if (!newWorkTable->queueRegisterUse(registerUse)) {
             reportError("failed to add a cloned regref in %s\n", stream->streamName());
             scheduleTable->dump();
             delete newWorkTable;
@@ -75,11 +75,11 @@ workTable *prepUta(Program *program, instStream *stream, int loopSize, char smar
         if (currentInstruction->getOwningStream() != stream) {
             reportError("owner not set or mismatch for prepUta .. istOwner = %x we are %x!\n",
                           currentInstruction->getOwningStream(), program);
-            currentInstruction->leDump();
+            currentInstruction->dumpInstructionContext();
             exitAfterCleanup(-1);
         }
         currentInstruction->candidateAttemptLimit = 0;
-        if (currentInstruction->isNonSynthetic() && !currentInstruction->isNop() && !newWorkTable->qInstruction(currentInstruction)) {
+        if (currentInstruction->isNonSynthetic() && !currentInstruction->isNop() && !newWorkTable->queueInstruction(currentInstruction)) {
             reportError("iStream: failed to queue instruction into table for opt\n");
             exitAfterCleanup(-1);
         }
