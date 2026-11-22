@@ -73,7 +73,7 @@ tools/rh9/rootfs/
 # Historical binaries, extracted vendor archives and private research.
 archive/
 asm/
-vuc/
+vuc/AGENTS.md
 .github/mcp.json
 config/matching-evidence/
 config/matching-evidence.json

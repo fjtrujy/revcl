@@ -5,10 +5,24 @@ VCL byte-matching project at the repository root.
 
 ## Target and baseline
 
-The canonical input is the *tracked ZIP*, not the untracked extracted binary:
+The canonical input is the **separately downloaded, unmodified x86 ZIP**, not
+an extracted or rebuilt binary. Vendor archives are not committed in this
+rewritten public-source history:
 
 `archive/upstream/vuc/downloads/X86linux_vuc2004_1.zip`
-(member `X86linux_vuc2004_1/vuc`).
+(member `X86linux_vuc2004_1/vuc`). Download the original ZIP separately:
+
+```sh
+mkdir -p archive/upstream/vuc/downloads
+curl -fL https://ps2-linux.tensioncore.com/download/vuc/X86linux_vuc2004_1.zip \
+  -o archive/upstream/vuc/downloads/X86linux_vuc2004_1.zip
+printf '%s  %s\n' \
+  dacfbeaf4efcde68d45b186c5ed55316fe1a21d1f0aa4350c78580934daf6680 \
+  archive/upstream/vuc/downloads/X86linux_vuc2004_1.zip | shasum -a 256 -c -
+```
+
+The ZIP hash is `dacfbeaf4efcde68d45b186c5ed55316fe1a21d1f0aa4350c78580934daf6680`.
+The following SHA-256 instead identifies the original executable inside it:
 
 SHA-256: `14c77997057f279ab25a3591c6a379d6e4744f2b1551271d43602948c037d8cf`
 

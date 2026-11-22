@@ -121,3 +121,11 @@ without adding proprietary or unreviewed reference materials.
 
 The distinct VUC 2004.1 reconstruction is developed on the
 [`vuc` branch](https://github.com/fjtrujy/revcl/tree/vuc).
+
+## VUC reconstruction (in progress)
+
+The separate [VUC 2004.1 reconstruction](vuc/README.md) is maintained in
+`vuc/`. It contains accepted historical function-level matches and its own
+verification scripts. VUC is **not yet a complete, linked executable**, and
+its reference compiler, inputs and licensing differ from VCL. Third-party
+VUC binaries and extracted archives are not distributed with this project.
