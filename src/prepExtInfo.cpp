@@ -12,32 +12,32 @@ int getToEnd(Instr *in);
 int getFromStart(Instr *in);
 int guessKeyLen(Program *p, int key, int start, int end);
 
-bool prepExtInfo(Program *p, instStream *s, bool noExt)
+bool prepExtInfo(Program *program, instStream *stream, bool noExt)
 {
-    workTable *wt = s->getTable();
-    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-        in->clearExternalTimingConstraints();
-    wt->externalMinimumLength = 0;
+    workTable *table = stream->getTable();
+    for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+        instruction->clearExternalTimingConstraints();
+    table->externalMinimumLength = 0;
     if (noExt)
         return 1;
     bool changed = 0;
-    int id = s->streamId;
-    regUse *ru;
-    regUseList *ul = &wt->registerUses;
-    for (ru = ul->head; ru; ru = ru->next) {
-        RegPoolEntry *reg = ru->registerEntry;
+    int id = stream->streamId;
+    regUse *registerUse;
+    regUseList *ul = &table->registerUses;
+    for (registerUse = ul->head; registerUse; registerUse = registerUse->next) {
+        RegPoolEntry *reg = registerUse->registerEntry;
         for (int k = 0; k != reg->partCount; k++) {
-            regUseSlot *sl = &ru->slots[k];
+            regUseSlot *sl = &registerUse->slots[k];
             if (!sl) {
                 reportError("failed to get rrp\n");
                 return 0;
             }
             sl->earliestExternalCycle = 0;
             sl->latestExternalCycle = 30000;
-            for (ol_s *ol = sl->inputLocations.head; ol; ol = ol->next) {
-                Instr *in = ol->instruction;
-                Operand *op = &in->operands[ol->operandIndex];
-                OpSlot *part = op->getPart(ol->componentIndex);
+            for (ol_s *operandLocation = sl->inputLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                Instr *instruction = operandLocation->instruction;
+                Operand *operand = &instruction->operands[operandLocation->operandIndex];
+                OpSlot *part = operand->getPart(operandLocation->componentIndex);
                 short best = 0;
                 ol_s *e = part->operandLocations.head;
                 if (e) {
@@ -56,7 +56,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         }
                         int sid = ss->streamId;
                         bool same = sid == id;
-                        int kl = guessKeyLen(p, key, sid, id);
+                        int kl = guessKeyLen(program, key, sid, id);
                         if (kl < 0) {
                             reportError("minimal length .. bah\n");
                             return 0;
@@ -67,32 +67,32 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                             return 0;
                         }
                         int total = te + kl;
-                        int d = src->outputLatency + op->additionalLatency - total - 1;
+                        int d = src->outputLatency + operand->additionalLatency - total - 1;
                         if ((setter->hasRawTableOrImmediateToken() || same) && d > best)
                             best = d;
                     }
-                    if (op->externalBlockModeFlag)
-                        in->raiseExternalInputPairedConstraint(best);
+                    if (operand->externalBlockModeFlag)
+                        instruction->raiseExternalInputPairedConstraint(best);
                     else
-                        in->raiseExternalInputConstraint(best);
+                        instruction->raiseExternalInputConstraint(best);
                 } else {
                     reportError("no external setter for prepExtInfo.. register is %s.%d\n",
                                   reg->registerName(), k);
                     return 0;
                 }
             }
-            for (ol_s *ol = sl->outputLocations.head; ol; ol = ol->next) {
-                Instr *in = ol->instruction;
-                if (!in) {
+            for (ol_s *operandLocation = sl->outputLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                Instr *instruction = operandLocation->instruction;
+                if (!instruction) {
                     reportError("not get visible output\n");
                     return 0;
                 }
                 short best = 0;
-                Operand *op = &in->operands[ol->operandIndex];
-                olList *xl = &op->getPart(ol->componentIndex)->operandLocations;
+                Operand *operand = &instruction->operands[operandLocation->operandIndex];
+                olList *xl = &operand->getPart(operandLocation->componentIndex)->operandLocations;
                 ol_s *e = xl->firstExternalLocation();
-                if (!ol->isExtUsed() || e) {
-                    if (!e || ol->isExtUsed()) {
+                if (!operandLocation->isExtUsed() || e) {
+                    if (!e || operandLocation->isExtUsed()) {
                         for (; e; e = e->nextExternalLocation()) {
                             int key = e->pathKey;
                             if (!key) {
@@ -110,7 +110,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                                 reportError("failed to get the setters ist\n");
                                 return 0;
                             }
-                            int kl = guessKeyLen(p, key, id, ss->streamId);
+                            int kl = guessKeyLen(program, key, id, ss->streamId);
                             if (kl < 0) {
                                 reportError("minimal length .. bah\n");
                                 return 0;
@@ -121,90 +121,90 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                                 return 0;
                             }
                             int total = fs + kl;
-                            int d = op->outputLatency + dst->additionalLatency - total - 1;
+                            int d = operand->outputLatency + dst->additionalLatency - total - 1;
                             if (user->hasRawTableOrImmediateToken() && d > best)
                                 best = d;
                         }
-                        if (op->externalBlockModeFlag)
-                            in->raiseExternalOutputPairedConstraint(best);
+                        if (operand->externalBlockModeFlag)
+                            instruction->raiseExternalOutputPairedConstraint(best);
                         else
-                            in->raiseExternalOutputConstraint(best);
+                            instruction->raiseExternalOutputConstraint(best);
                     } else {
                         reportError("operand doesn't think there's any external users, but - there's an entry on it's ext list\n");
-                        ol->dumpOperandContext();
+                        operandLocation->dumpOperandContext();
                         xl->validateOperandLocations();
                         return 0;
                     }
                 } else {
                     reportError("operand is tagged as being used externally - but.. there's no ext entry on it's oll?\n");
-                    ol->dumpOperandContext();
+                    operandLocation->dumpOperandContext();
                     return 0;
                 }
             }
             if (reg->tracksHotOutputPaths && !noExt) {
-                ol_s *ol;
-                for (ol = sl->externalInputLocations.head; ol; ol = ol->next) {
-                    int key = ol->pathKey;
+                ol_s *operandLocation;
+                for (operandLocation = sl->externalInputLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                    int key = operandLocation->pathKey;
                     if (!key) {
                         reportError("can't have a null minkey for ext\n");
                         return 0;
                     }
-                    Instr *in = ol->instruction;
-                    if (!in) {
+                    Instr *instruction = operandLocation->instruction;
+                    if (!instruction) {
                         reportError("not get visible input\n");
                         return 0;
                     }
-                    instStream *ss = in->getOwningStream();
+                    instStream *ss = instruction->getOwningStream();
                     if (!ss) {
                         reportError("failed to get the setters ist\n");
                         return 0;
                     }
                     int sourceId = ss->streamId;
-                    int kl = guessKeyLen(p, key, sourceId, id);
+                    int kl = guessKeyLen(program, key, sourceId, id);
                     if (kl < 0) {
                         reportError("minimal length .. bah\n");
                         return 0;
                     }
-                    int te = getToEnd(in);
+                    int te = getToEnd(instruction);
                     if (te < 0) {
                         reportError("distance to end -ve..error\n");
                         return 0;
                     }
                     int total = te + kl;
-                    int d = in->baseIssueSpacing - total - 1;
-                    if (in->hasRawTableOrImmediateToken() && d > sl->earliestExternalCycle) {
+                    int d = instruction->baseIssueSpacing - total - 1;
+                    if (instruction->hasRawTableOrImmediateToken() && d > sl->earliestExternalCycle) {
                         changed = 1;
                         sl->earliestExternalCycle = d;
                     }
                 }
-                for (ol = sl->externalSourceLocations.head; ol; ol = ol->next) {
-                    int key = ol->pathKey;
+                for (operandLocation = sl->externalSourceLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                    int key = operandLocation->pathKey;
                     if (!key) {
                         reportError("can't have a null minkey for ext\n");
                         return 0;
                     }
-                    Instr *in = ol->instruction;
-                    if (!in) {
+                    Instr *instruction = operandLocation->instruction;
+                    if (!instruction) {
                         reportError("not get visible input\n");
                         return 0;
                     }
-                    instStream *ss = in->getOwningStream();
+                    instStream *ss = instruction->getOwningStream();
                     if (!ss) {
                         reportError("failed to get the setters ist\n");
                         return 0;
                     }
-                    int kl = guessKeyLen(p, key, id, ss->streamId);
+                    int kl = guessKeyLen(program, key, id, ss->streamId);
                     if (kl < 0) {
                         reportError("minimal length .. bah\n");
                         return 0;
                     }
-                    int fs = getFromStart(in);
+                    int fs = getFromStart(instruction);
                     if (fs < 0) {
                         reportError("distance from start -ve..error\n");
                         return 0;
                     }
                     int d = fs + kl + 1;
-                    if (in->hasRawTableOrImmediateToken() && d < sl->latestExternalCycle) {
+                    if (instruction->hasRawTableOrImmediateToken() && d < sl->latestExternalCycle) {
                         changed = 1;
                         sl->latestExternalCycle = d;
                     }
@@ -221,84 +221,84 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 workTable *wb = b->getTable();
                 if (wa->codeModeValue == 3 && wb->codeModeValue == 3) {
                     int sourceId = a->streamId;
-                    int k1 = guessKeyLen(p, tp->src, sourceId, id);
+                    int k1 = guessKeyLen(program, tp->src, sourceId, id);
                     if (k1 < 0) {
                         reportError("failed to guess the key length\n");
                         return 0;
                     }
-                    int k2 = guessKeyLen(p, tp->dst, id, b->streamId);
+                    int k2 = guessKeyLen(program, tp->dst, id, b->streamId);
                     if (k2 < 0) {
                         reportError("distance to dst is bad\n");
                         return 0;
                     }
-                    Instr *w = wa->linearInstructions.tail;
+                    Instr *writerInstruction = wa->linearInstructions.tail;
                     Operand *wo = 0;
-                    for (; w; w = w->linearLink.previousInstruction)
-                        if ((wo = w->findOutputOperand(reg, 1 << k)) != 0)
+                    for (; writerInstruction; writerInstruction = writerInstruction->linearLink.previousInstruction)
+                        if ((wo = writerInstruction->findOutputOperand(reg, 1 << k)) != 0)
                             break;
                     if (!wo) {
                         reportError("can't get last writer\n");
                         return 0;
                     }
                     Instr *u = wb->linearInstructions.head;
-                    Operand *uo = 0;
+                    Operand *userOperand = 0;
                     for (; u; u = u->linearLink.nextInstruction)
-                        if ((uo = u->findInputOperand(reg, 1 << k)) != 0)
+                        if ((userOperand = u->findInputOperand(reg, 1 << k)) != 0)
                             break;
-                    if (!uo) {
+                    if (!userOperand) {
                         reportError("can't get first user \n");
                         return 0;
                     }
-                    int te = getToEnd(w);
+                    int te = getToEnd(writerInstruction);
                     if (te < 0) {
                         reportError("<ve to end \n");
                         return 0;
                     }
                     int fs = getFromStart(u);
                     int total = te + k1 + k2 + fs;
-                    int d = wo->outputLatency + uo->additionalLatency - total - 1;
-                    if (d > wt->externalMinimumLength)
-                        wt->externalMinimumLength = d;
+                    int d = wo->outputLatency + userOperand->additionalLatency - total - 1;
+                    if (d > table->externalMinimumLength)
+                        table->externalMinimumLength = d;
                 }
             }
         }
     }
     if (changed) {
-        for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-            for (int i = 0; i != in->operandCount; i++) {
-                Operand *op = &in->operands[i];
-                RegPoolEntry *r = isRegisterOperand(op, 2) ? op->assignedRegister : 0;
-                if (r && r->tracksHotOutputPaths) {
-                    regUse *u = ul->findByRegister(r);
+        for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+            for (int i = 0; i != instruction->operandCount; i++) {
+                Operand *operand = &instruction->operands[i];
+                RegPoolEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
+                if (registerEntry && registerEntry->tracksHotOutputPaths) {
+                    regUse *u = ul->findByRegister(registerEntry);
                     if (!u) {
                         reportError("failed to find regref\n");
                         exitAfterCleanup(-1);
                     }
-                    for (int k = 0; k != r->partCount; k++)
-                        if ((op->componentMask >> k) & 1) {
+                    for (int k = 0; k != registerEntry->partCount; k++)
+                        if ((operand->componentMask >> k) & 1) {
                             regUseSlot *slot = &u->slots[k];
-                            in->raiseExternalInputPairedConstraint(slot->earliestExternalCycle);
-                            int bound = in->baseIssueSpacing - slot->latestExternalCycle;
-                            in->raiseExternalOutputPairedConstraint(bound);
+                            instruction->raiseExternalInputPairedConstraint(slot->earliestExternalCycle);
+                            int bound = instruction->baseIssueSpacing - slot->latestExternalCycle;
+                            instruction->raiseExternalOutputPairedConstraint(bound);
                         }
                 }
             }
     }
-    Instr *in;
-    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-        for (int i = 0; i != in->operandCount; i++) {
-            Operand *op = &in->operands[i];
-            RegPoolEntry *reg = op->assignedRegister;
+    Instr *instruction;
+    for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+        for (int i = 0; i != instruction->operandCount; i++) {
+            Operand *operand = &instruction->operands[i];
+            RegPoolEntry *reg = operand->assignedRegister;
             if (reg) {
                 regUse *u = ul->findByRegister(reg);
-                if (isRegisterOperand(op, 1))
-                    op->reductionHazardMask = u->hazardMask & op->externalPartMask;
-                if (isRegisterOperand(op, 2))
-                    op->reductionHazardMask = u->sourcePathHazardMask & op->externalPartMask;
-                op->reductionHazardMask |= u->hazardBroadcastMask;
+                if (isRegisterOperand(operand, 1))
+                    operand->reductionHazardMask = u->hazardMask & operand->externalPartMask;
+                if (isRegisterOperand(operand, 2))
+                    operand->reductionHazardMask = u->sourcePathHazardMask & operand->externalPartMask;
+                operand->reductionHazardMask |= u->hazardBroadcastMask;
             }
         }
-    int endType = s->getEndType();
+    int endType = stream->getEndType();
     if ((unsigned char)endType == 2) {
         goto branchBound;
     }
@@ -308,9 +308,9 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
 success:
     return 1;
 branchBound:
-    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-        if (in->opcodeId() == 0xa5)
-            in->raiseExternalOutputConstraint(2);
+    for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+        if (instruction->opcodeId() == 0xa5)
+            instruction->raiseExternalOutputConstraint(2);
     goto success;
 }
 

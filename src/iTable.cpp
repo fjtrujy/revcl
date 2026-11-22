@@ -60,12 +60,12 @@ bool workTable::init(unsigned char mode, int size)
 
 bool workTable::dispose()
 {
-    Instr *p = pendingInstructions.head;
-    while (p) {
-        Instr *next = p->pendingLink.nextInstruction;
-        if (p->position.loopRow < 0)
-            delete p;
-        p = next;
+    Instr *currentInstruction = pendingInstructions.head;
+    while (currentInstruction) {
+        Instr *next = currentInstruction->pendingLink.nextInstruction;
+        if (currentInstruction->position.loopRow < 0)
+            delete currentInstruction;
+        currentInstruction = next;
     }
     postOptimizationPrepared = 0;
     if (!freeLockLists(registerLockLists)) {
@@ -111,16 +111,16 @@ void workTable::dump()
         break;
     case 1:
     case 4:
-        for (Instr *p = linearInstructions.head; p; p = p->linearLink.nextInstruction)
-            p->dumpOperandDiagnostics(false);
+        for (Instr *currentInstruction = linearInstructions.head; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction)
+            currentInstruction->dumpOperandDiagnostics(false);
         break;
     case 3:
     case 5:
         for (int i = rangeStart; i < rangeEnd; i++) {
-            wtRow *r = rowAt(i);
-            if (!r)
+            wtRow *row = rowAt(i);
+            if (!row)
                 abortAfterError();
-            r->refreshInstructionOperands(i);
+            row->refreshInstructionOperands(i);
         }
         break;
     case 2: {
@@ -130,19 +130,19 @@ void workTable::dump()
             abortAfterError();
         }
         if (!lsz && rangeEnd < 0) {
-            wtRow *r = rows;
-            for (int n = rowCapacity - 1; n >= 0; n--, r++)
-                if (r->entries[0].instruction || r->entries[1].instruction)
+            wtRow *row = rows;
+            for (int n = rowCapacity - 1; n >= 0; n--, row++)
+                if (row->entries[0].instruction || row->entries[1].instruction)
                     break;
         }
         for (int i = rangeStart; i < rangeEnd; i++) {
-            wtRow *r = rowAt(i);
-            if (!r)
+            wtRow *row = rowAt(i);
+            if (!row)
                 abortAfterError();
-            r->refreshInstructionOperands(i);
+            row->refreshInstructionOperands(i);
         }
-        for (Instr *p = pendingInstructions.head; p; p = p->pendingLink.nextInstruction)
-            p->dumpOperandDiagnostics(false);
+        for (Instr *currentInstruction = pendingInstructions.head; currentInstruction; currentInstruction = currentInstruction->pendingLink.nextInstruction)
+            currentInstruction->dumpOperandDiagnostics(false);
         break;
     }
     default:
@@ -167,16 +167,16 @@ bool workTable::reserveEntry(int key, int row, int slot)
         abortAfterError();
         return false;
     }
-    Instr **ie = ((cls_unk30 *)this)->getIE_ck(row);
-    if (!ie) {
+    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(row);
+    if (!pipelineEntries) {
         reportError("failed to reserve instruction!\n");
         return false;
     }
-    if (ie[slot]) {
+    if (pipelineEntries[slot]) {
         reportError("can't reserve instruction - something already there!\n");
         abortAfterError();
     }
-    ie[slot] = (Instr *)key;
+    pipelineEntries[slot] = (Instr *)key;
     return true;
 }
 
@@ -255,15 +255,15 @@ int workTable::getPhysicalLen()
 
 Instr *workTable::getConditionalBranch()
 {
-    Instr *b = getBranch();
-    if (b && ((b->branchFlags >> 2) & 1))
-        return b;
+    Instr *secondInstruction = getBranch();
+    if (secondInstruction && ((secondInstruction->branchFlags >> 2) & 1))
+        return secondInstruction;
     return 0;
 }
 
 Instr *workTable::getBranch()
 {
-    Instr *b = 0;
+    Instr *secondInstruction = 0;
     switch (codeModeValue) {
     case 3:
         if (!rows) {
@@ -274,11 +274,11 @@ Instr *workTable::getBranch()
             int r = rangeEnd - 2;
             if (r < rangeStart)
                 return 0;
-            b = rowAt(r)->getEntry(1);
+            secondInstruction = rowAt(r)->getEntry(1);
         }
         break;
     case 1:
-        b = linearInstructions.tail;
+        secondInstruction = linearInstructions.tail;
         break;
     case 4:
         break;
@@ -288,47 +288,47 @@ Instr *workTable::getBranch()
         abortAfterError();
     }
     }
-    instStream *o = ownerStream;
-    if (!o) {
+    instStream *otherStream = ownerStream;
+    if (!otherStream) {
         reportWarning("no owner set for getBranch\n");
         abortAfterError();
-    } else if (b) {
-        if (b->branchFlags) {
-            if (b->tildePrefix)
+    } else if (secondInstruction) {
+        if (secondInstruction->branchFlags) {
+            if (secondInstruction->tildePrefix)
                 return 0;
-            else if (!o->branchType) {
-                const char *ownerName = o->streamName();
+            else if (!otherStream->branchType) {
+                const char *ownerName = otherStream->streamName();
                 reportError("iTable::getBranch() for %s table has a branch at the end, but owning stream doesn't think it branches\n",
                               ownerName);
                 dump();
                 abortAfterError();
             }
-        } else if (o->branchType) {
+        } else if (otherStream->branchType) {
             reportError("iTable::getBranch() - owner thinks it has a branch, but the instruction doesn't seem to be one\n");
             abortAfterError();
         }
-    } else if (o->branchType) {
+    } else if (otherStream->branchType) {
         reportError("iTable::getBranch - owning stream thinks it has a branch - but there's no instruction here!\n");
         abortAfterError();
     }
-    return (b && b->branchFlags) ? b : 0;
+    return (secondInstruction && secondInstruction->branchFlags) ? secondInstruction : 0;
 }
 
 bool UnlinkFromLinear(Block *blk, Instr *n);
 bool decrementInstructionPipelineCounts(Block *blk, Instr *in);
 
-inline bool workTable::unlinkAndUnlog(Instr *in)
+inline bool workTable::unlinkAndUnlog(Instr *instruction)
 {
     if (pendingInstructions.count) {
         reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", pendingInstructions.count);
         return 0;
     }
-    if (!UnlinkFromLinear((Block *)this, in)) {
+    if (!UnlinkFromLinear((Block *)this, instruction)) {
         reportError("logUnlinkFromLinear: failed to unlink instruction from linear\n");
         abortAfterError();
     }
-    in->ownerTable = 0;
-    if (!decrementInstructionPipelineCounts((Block *)this, in)) {
+    instruction->ownerTable = 0;
+    if (!decrementInstructionPipelineCounts((Block *)this, instruction)) {
         reportError("failed to unlog instruction\n");
         return 0;
     }
@@ -337,26 +337,26 @@ inline bool workTable::unlinkAndUnlog(Instr *in)
 
 bool workTable::removeBranch()
 {
-    Instr *b = getBranch();
-    if (!b) {
+    Instr *secondInstruction = getBranch();
+    if (!secondInstruction) {
         reportError("removeBranch - couldn't find a branch instruction\n");
         return 0;
     }
-    if (!unlinkAndUnlog(b)) {
+    if (!unlinkAndUnlog(secondInstruction)) {
         reportError("failed to take out the branch instruction\n");
         return 0;
     }
-    delete b;
+    delete secondInstruction;
     return 1;
 }
 
 int workTable::getCondLid()
 {
     int lid = -1;
-    Instr *b = getBranch();
-    Instr *c = (b && ((b->branchFlags >> 2) & 1)) ? b : 0;
-    if (c)
-        lid = c->position.loopIteration;
+    Instr *secondInstruction = getBranch();
+    Instr *cloneInstruction = (secondInstruction && ((secondInstruction->branchFlags >> 2) & 1)) ? secondInstruction : 0;
+    if (cloneInstruction)
+        lid = cloneInstruction->position.loopIteration;
     if (loopSize) {
         if (lid < 0)
             reportError("getCondLid : no terminating conditional!\n");
@@ -366,20 +366,20 @@ int workTable::getCondLid()
     return lid;
 }
 
-bool workTable::takeOut(Instr *i)
+bool workTable::takeOut(Instr *instruction)
 {
-    InstructionPosition *p = &i->position;
-    wtRow *row = &rows[p->loopRow];
-    row->entries[p->pipelineIndex].instruction = (Instr *)i->replacedInstructionWord;
-    i->clearSlot();
+    InstructionPosition *position = &instruction->position;
+    wtRow *row = &rows[position->loopRow];
+    row->entries[position->pipelineIndex].instruction = (Instr *)instruction->replacedInstructionWord;
+    instruction->clearSlot();
     return 1;
 }
 
-bool workTable::putIn(Instr *i)
+bool workTable::putIn(Instr *instruction)
 {
-    InstructionPosition *p = &i->position;
-    wtRow *row = &rows[p->loopRow];
-    row->entries[p->pipelineIndex].instruction = i;
+    InstructionPosition *position = &instruction->position;
+    wtRow *row = &rows[position->loopRow];
+    row->entries[position->pipelineIndex].instruction = instruction;
     return 1;
 }
 
@@ -409,47 +409,47 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
     }
     int j, i;
     for (j = to->rangeEnd, i = from->rangeStart; i != from->rangeEnd; i++, j++) {
-        wtRow *sr = &from->rows[i];
-        wtRow *dr = &to->rows[j];
+        wtRow *sourceRow = &from->rows[i];
+        wtRow *destinationRow = &to->rows[j];
         for (int p = 0; p != 2; p++) {
-            Instr *c;
-            Instr *in = sr->getEntry(p);
-            c = 0;
-            if (dr->getEntry(p)) {
+            Instr *cloneInstruction;
+            Instr *instruction = sourceRow->getEntry(p);
+            cloneInstruction = 0;
+            if (destinationRow->getEntry(p)) {
                 reportError("CloneAppend: would overwrite inst in target\n");
                 return 0;
             }
-            if (in) {
-                if (!in->opcodeInfo) {
+            if (instruction) {
+                if (!instruction->opcodeInfo) {
                     reportError("no II in inst\n");
                     from->dump();
                 }
-                if (!in->isNop() || a7) {
-                    int lid = in->position.loopIteration;
+                if (!instruction->isNop() || a7) {
+                    int lid = instruction->position.loopIteration;
                     if (lid <= lidS && lid >= lidE) {
-                        unsigned char f = in->branchFlags;
-                        if ((f && a5) || !in->getBranchType()) {
-                            c = in->clone();
-                            if (!c) {
+                        unsigned char f = instruction->branchFlags;
+                        if ((f && a5) || !instruction->getBranchType()) {
+                            cloneInstruction = instruction->clone();
+                            if (!cloneInstruction) {
                                 reportError("failed to clone instruction\n");
                                 return 0;
                             }
-                            c->cloneImage = 0;
-                            in->cloneImage = 0;
+                            cloneInstruction->cloneImage = 0;
+                            instruction->cloneImage = 0;
                             if (a6)
-                                c->expectedAliasLoopId = lidS - lid;
+                                cloneInstruction->expectedAliasLoopId = lidS - lid;
                         }
                     }
                 }
             }
-            dr->entries[p].instruction = c;
-            if (c) {
+            destinationRow->entries[p].instruction = cloneInstruction;
+            if (cloneInstruction) {
                 InstructionPosition pos;
-                c->setOwner((cls_unk30 *)to);
+                cloneInstruction->setOwner((cls_unk30 *)to);
                 pos.setRow(j);
                 pos.pipelineIndex = p;
-                InstructionPosition *loc = &c->position;
-                c->position.linearRow = pos.linearRow;
+                InstructionPosition *loc = &cloneInstruction->position;
+                cloneInstruction->position.linearRow = pos.linearRow;
                 loc->loopRow = pos.loopRow;
                 loc->loopIteration = pos.loopIteration;
                 loc->pipelineIndex = pos.pipelineIndex;
@@ -462,15 +462,15 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
 
 void workTable::dumpSynthetics()
 {
-    for (Instr *i = linearInstructions.head; i; i = i->linearLink.nextInstruction)
-        if (i->syntheticKind)
-            i->dumpOperandDiagnostics(false);
+    for (Instr *instruction = linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+        if (instruction->syntheticKind)
+            instruction->dumpOperandDiagnostics(false);
 }
 
 bool workTable::clearClones()
 {
-    for (Instr *i = linearInstructions.head; i; i = i->linearLink.nextInstruction)
-        i->cloneImage = 0;
+    for (Instr *instruction = linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+        instruction->cloneImage = 0;
     return 1;
 }
 
@@ -495,11 +495,11 @@ bool workTable::setTableRawMode(unsigned char mode)
 
 Instr *earliestInsertionInstruction;
 
-void trackEarliestInsertion(Instr *in)
+void trackEarliestInsertion(Instr *instruction)
 {
-    if (in) {
-        if (!earliestInsertionInstruction || in->insertionSerial < earliestInsertionInstruction->insertionSerial)
-            earliestInsertionInstruction = in;
+    if (instruction) {
+        if (!earliestInsertionInstruction || instruction->insertionSerial < earliestInsertionInstruction->insertionSerial)
+            earliestInsertionInstruction = instruction;
     }
 }
 
@@ -522,30 +522,30 @@ bool workTable::hasSafeTrailingInstructions()
         return 0;
     if (rangeEnd <= 0)
         return 1;
-    wtRow *r = rowAt(rangeEnd - 1);
-    if (!r)
+    wtRow *row = rowAt(rangeEnd - 1);
+    if (!row)
         return 0;
-    Instr *in = r->entries[1].instruction;
-    if (in) {
-        if (in->ramAccessType || in->branchFlags)
+    Instr *instruction = row->entries[1].instruction;
+    if (instruction) {
+        if (instruction->ramAccessType || instruction->branchFlags)
             return 0;
-        int op = getOpcodeId(in->opcodeInfo);
+        int op = getOpcodeId(instruction->opcodeInfo);
         if (op >= 165 && op <= 167)
             return 0;
     }
-    r = rowAt(rangeEnd - 2);
-    if (!r)
+    row = rowAt(rangeEnd - 2);
+    if (!row)
         return 1;
-    in = r->entries[1].instruction;
-    if (in && getOpcodeId(in->opcodeInfo) == 165)
+    instruction = row->entries[1].instruction;
+    if (instruction && getOpcodeId(instruction->opcodeInfo) == 165)
         return 0;
     return 1;
 }
 
 Instr **cls_unk30::getIE_ck(int rl)
 {
-    workTable *t = (workTable *)this;
-    if (!t->rows) {
+    workTable *table = (workTable *)this;
+    if (!table->rows) {
         reportError("checkie: table not set\n");
         return 0;
     }
@@ -553,50 +553,50 @@ Instr **cls_unk30::getIE_ck(int rl)
         reportError("checkie() - rl<0\n");
         return 0;
     }
-    if (t->loopSize) {
-        if (t->rangeStart) {
+    if (table->loopSize) {
+        if (table->rangeStart) {
             reportError("getIE_ck - iStart not zero for loop table\n");
             abortAfterError();
         }
-        if (rl >= t->loopSize)
-            rl %= t->loopSize;
+        if (rl >= table->loopSize)
+            rl %= table->loopSize;
     }
-    if (rl >= t->rowCapacity) {
-        reportError("checkie() - rl>=m_MaxSize %d,%d\n", rl, t->rowCapacity);
+    if (rl >= table->rowCapacity) {
+        reportError("checkie() - rl>=m_MaxSize %d,%d\n", rl, table->rowCapacity);
         return 0;
     }
-    return (Instr **)&t->rows[rl];
+    return (Instr **)&table->rows[rl];
 }
 
 Instr *workTable::getInstr(int rl, int p)
 {
-    Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
-    if (!ie)
+    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rl);
+    if (!pipelineEntries)
         return 0;
     if (p < 0 || p >= 2) {
         reportError("out of bounds pipe\n");
         return 0;
     }
-    return ie[p];
+    return pipelineEntries[p];
 }
 
-static inline Instr *getPipeInstr(Instr **ie, int p)
+static inline Instr *getPipeInstr(Instr **pipelineEntries, int p)
 {
-    if (!ie)
+    if (!pipelineEntries)
         return 0;
     if (p < 0 || p >= 2) {
         reportError("out of bounds pipe\n");
         return 0;
     }
-    return ie[p];
+    return pipelineEntries[p];
 }
 
 Instr *workTable::getInstrInRange(int rl, int p)
 {
     if (rl < rangeStart || rl >= rangeEnd)
         return 0;
-    Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
-    return getPipeInstr(ie, p);
+    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rl);
+    return getPipeInstr(pipelineEntries, p);
 }
 
 const char *codeModeName(int mode)
@@ -636,17 +636,17 @@ int workTable::getPipeCount(int p)
     return instructionCountsByPipe[p];
 }
 
-bool logInstr(Block *blk, Instr *in)
+bool logInstr(Block *blk, Instr *instruction)
 {
-    if (in->permittedPipelineMask == 3)
+    if (instruction->permittedPipelineMask == 3)
         blk->dualPipelineInstructionCount++;
     else {
         int n = 0;
-        if (in->permittedPipelineMask & 1) {
+        if (instruction->permittedPipelineMask & 1) {
             blk->instructionCountsByPipe[0]++;
             n = 1;
         }
-        if (in->permittedPipelineMask & 2) {
+        if (instruction->permittedPipelineMask & 2) {
             n++;
             blk->instructionCountsByPipe[1]++;
         }
@@ -659,17 +659,17 @@ bool logInstr(Block *blk, Instr *in)
     return 1;
 }
 
-bool decrementInstructionPipelineCounts(Block *blk, Instr *in)
+bool decrementInstructionPipelineCounts(Block *blk, Instr *instruction)
 {
-    if (in->permittedPipelineMask == 3)
+    if (instruction->permittedPipelineMask == 3)
         blk->dualPipelineInstructionCount--;
     else {
         int n = 0;
-        if (in->permittedPipelineMask & 1) {
+        if (instruction->permittedPipelineMask & 1) {
             blk->instructionCountsByPipe[0]--;
             n = 1;
         }
-        if (in->permittedPipelineMask & 2) {
+        if (instruction->permittedPipelineMask & 2) {
             n++;
             blk->instructionCountsByPipe[1]--;
         }
@@ -701,21 +701,21 @@ int workTable::getCurrentDoneSize()
     if (loopSize)
         return loopSize;
     int size = 0;
-    for (Instr *i = completedInstructions.head; i; i = i->pendingLink.nextInstruction) {
-        int row = i->position.linearRow;
+    for (Instr *instruction = completedInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction) {
+        int row = instruction->position.linearRow;
         if (row < 0) {
             reportError("getCurrentDoneSize()\n");
             return -1;
         }
-        short m = i->externalOutputConstraint;
-        if (m < i->externalOutputPairedConstraint)
-            m = i->externalOutputPairedConstraint;
+        short m = instruction->externalOutputConstraint;
+        if (m < instruction->externalOutputPairedConstraint)
+            m = instruction->externalOutputPairedConstraint;
         int minToEnd = m;
         if (minToEnd < 0) {
             reportError("getCurrentDoneSize() - minToEnd was bad\n");
             return -1;
         }
-        if (i->branchFlags && minToEnd <= 0)
+        if (instruction->branchFlags && minToEnd <= 0)
             minToEnd = 1;
         if (row + minToEnd + 1 > size)
             size = row + minToEnd + 1;
@@ -727,16 +727,16 @@ int workTable::getCurrentDoneSize()
 
 bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1, int *minSfx2)
 {
-    Instr *i = completedInstructions.head;
+    Instr *instruction = completedInstructions.head;
     *maxLid = -1;
     *maxBranchLid = -1;
     *minSfx1 = 30000;
     *minSfx2 = 30000;
-    for (; i; i = i->pendingLink.nextInstruction) {
-        int lid = i->position.loopIteration;
+    for (; instruction; instruction = instruction->pendingLink.nextInstruction) {
+        int lid = instruction->position.loopIteration;
         if (lid > *maxLid)
             *maxLid = lid;
-        switch ((unsigned char)i->schedulerCategory) {
+        switch ((unsigned char)instruction->schedulerCategory) {
         case 0:
             break;
         case 1:
@@ -751,7 +751,7 @@ bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1,
             reportError("getCurrentLidStats - bad sfx\n");
             return 0;
         }
-        if (i->branchFlags && lid > *maxBranchLid)
+        if (instruction->branchFlags && lid > *maxBranchLid)
             *maxBranchLid = lid;
     }
     if (*minSfx1 >= 30000)
@@ -852,12 +852,12 @@ bool workTable::setSkip(int row, char skip)
         reportError("setskip >= end\n");
         return 0;
     }
-    wtRow *r = rowAt(row);
-    if (!r) {
+    wtRow *targetRow = rowAt(row);
+    if (!targetRow) {
         reportError("failed to get ie in setSkip\n");
         return 0;
     }
-    r->skip = skip;
+    targetRow->skip = skip;
     return 1;
 }
 
@@ -1013,16 +1013,16 @@ bool workTable::makeLinearList()
         return 0;
     }
     for (int i = rangeStart; i < rangeEnd; i++) {
-        Instr **ie = ((cls_unk30 *)this)->getIE_ck(i);
-        if (!ie) {
+        Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(i);
+        if (!pipelineEntries) {
             reportError("iTable::makeLinearList - failed to get ientry\n");
             return 0;
         }
         for (int p = 0; p != 2; p++) {
-            Instr *in = ie[p];
-            if (in && !logAddLinear_Tail(in)) {
+            Instr *instruction = pipelineEntries[p];
+            if (instruction && !logAddLinear_Tail(instruction)) {
                 reportError("iTable - failed to add an instruction\n");
-                in->leDump();
+                instruction->leDump();
                 return 0;
             }
         }
@@ -1030,18 +1030,18 @@ bool workTable::makeLinearList()
     return 1;
 }
 
-bool workTable::logUnlinkFromLinear(Instr *in)
+bool workTable::logUnlinkFromLinear(Instr *instruction)
 {
     if (pendingInstructions.count) {
         reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", pendingInstructions.count);
         return 0;
     }
-    if (!UnlinkFromLinear((Block *)this, in)) {
+    if (!UnlinkFromLinear((Block *)this, instruction)) {
         reportError("logUnlinkFromLinear: failed to unlink instruction from linear\n");
         abortAfterError();
     }
-    in->ownerTable = 0;
-    if (!decrementInstructionPipelineCounts((Block *)this, in)) {
+    instruction->ownerTable = 0;
+    if (!decrementInstructionPipelineCounts((Block *)this, instruction)) {
         reportError("failed to unlog instruction\n");
         return 0;
     }
@@ -1056,17 +1056,17 @@ bool workTable::relinkRawIt()
     }
     clearLinear();
     for (int i = rangeStart; i < rangeEnd; i++) {
-        wtRow *r = rowAt(i);
-        if (!r) {
+        wtRow *row = rowAt(i);
+        if (!row) {
             reportError("iTable::makeLinearList - failed to get ientry\n");
             return 0;
         }
         for (int p = 0; p != 2; p++) {
-            Instr *in = r->entries[p].instruction;
-            if (in) {
-                in->linearLink.previousInstruction = 0;
-                in->linearLink.nextInstruction = 0;
-                if (!logAddLinear_Tail(in)) {
+            Instr *instruction = row->entries[p].instruction;
+            if (instruction) {
+                instruction->linearLink.previousInstruction = 0;
+                instruction->linearLink.nextInstruction = 0;
+                if (!logAddLinear_Tail(instruction)) {
                     reportError("failed to add linear tail\n");
                     return 0;
                 }
@@ -1109,47 +1109,47 @@ workTable *workTable::localClone()
     nt->nextInsertionSerial = 0;
     nt->ownerStream = ownerStream;
     regUseList &regs = registerUses;
-    for (regUse *r = regs.head; r; r = r->next) {
-        regUse *cloned = r->Clone();
+    for (regUse *recordedUse = regs.head; recordedUse; recordedUse = recordedUse->next) {
+        regUse *cloned = recordedUse->Clone();
         if (!nt->registerUses.append(cloned)) {
             reportError("failed to add cloned regref to list\n");
-            delete r;
+            delete recordedUse;
             return 0;
         }
     }
-    for (Instr *in = linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-        Instr *c = in->clone();
-        for (int i = 0; i != c->operandCount; i++) {
-            Operand *op = &in->operands[i];
-            RegPoolEntry *reg = registerOperand(op, 1);
+    for (Instr *instruction = linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+        Instr *cloneInstruction = instruction->clone();
+        for (int i = 0; i != cloneInstruction->operandCount; i++) {
+            Operand *operand = &instruction->operands[i];
+            RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
-            int mask = op->componentMask & ~op->externalPartMask;
+            int mask = operand->componentMask & ~operand->externalPartMask;
             for (int k = 0; k != reg->partCount; k++) {
                 int bit = 1 << k;
                 if (mask & bit) {
-                ol_s *o = op->parts[k].operandLocations.head;
-                if (!o || o->next) {
+                ol_s *operandLocation = operand->parts[k].operandLocations.head;
+                if (!operandLocation || operandLocation->next) {
                     reportError("more or less than one oploc for non-extern input\n");
                     return 0;
                 }
-                Instr *setter = o->instruction;
+                Instr *setter = operandLocation->instruction;
                 if (!setter) {
                     reportError("could not get setting op for setter\n");
                     return 0;
                 }
-                instStream *s = setter->getOwningStream();
-                if (s != ownerStream) {
-                    reportError("owner of setter not us %p vs %p\n", setter->ownerTable, this, s);
+                instStream *stream = setter->getOwningStream();
+                if (stream != ownerStream) {
+                    reportError("owner of setter not us %p vs %p\n", setter->ownerTable, this, stream);
                     return 0;
                 }
                 if (!setter->cloneImage) {
                     reportError("qInstruction - setter had null work clone set\n");
                     return 0;
                 }
-                Instr *w = setter->cloneImage;
-                int p1 = o->componentIndex;
-                int p0 = o->operandIndex;
-                if (!link_oParts(w, p0, p1, c, i, k)) {
+                Instr *writerInstruction = setter->cloneImage;
+                int p1 = operandLocation->componentIndex;
+                int p0 = operandLocation->operandIndex;
+                if (!link_oParts(writerInstruction, p0, p1, cloneInstruction, i, k)) {
                     reportError("failed to link local oparts\n");
                     return 0;
                 }
@@ -1157,7 +1157,7 @@ workTable *workTable::localClone()
             }
             }
         }
-        if (!nt->logAddLinear_Tail(c)) {
+        if (!nt->logAddLinear_Tail(cloneInstruction)) {
             reportError("iTable::qInstruction - failed to add to linear list tail\n");
             return 0;
         }
@@ -1209,17 +1209,17 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
         pos.loopRow = op->loopRow;
         pos.loopIteration = op->loopIteration;
         pos.pipelineIndex = op->pipelineIndex;
-        InstructionPosition *p = &nw->position;
-        p->linearRow = old->position.linearRow;
-        p->loopRow = pos.loopRow;
-        p->loopIteration = pos.loopIteration;
-        p->pipelineIndex = pos.pipelineIndex;
+        InstructionPosition *position = &nw->position;
+        position->linearRow = old->position.linearRow;
+        position->loopRow = pos.loopRow;
+        position->loopIteration = pos.loopIteration;
+        position->pipelineIndex = pos.pipelineIndex;
         if (!takeOut(old)) {
             reportError("failed to take out old instruction\n");
             return 0;
         }
-        wtRow *row = &rows[p->loopRow];
-        row->entries[p->pipelineIndex].instruction = nw;
+        wtRow *row = &rows[position->loopRow];
+        row->entries[position->pipelineIndex].instruction = nw;
     }
     return 1;
 }
@@ -1231,19 +1231,19 @@ bool workTable::destroyInstruction(Instr *&in)
         return 0;
     }
     if (rows) {
-        InstructionPosition *p = &in->position;
-        int row = p->loopRow;
-        int pipe = p->pipelineIndex;
-        Instr **ie = ((cls_unk30 *)this)->getIE_ck(row);
-        if (!ie) {
+        InstructionPosition *position = &in->position;
+        int row = position->loopRow;
+        int pipe = position->pipelineIndex;
+        Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(row);
+        if (!pipelineEntries) {
             reportError("logUnlinkFromLinear: failed to get IE where insn ought to be (line %d.%d)\n", row, pipe);
             return 0;
         }
-        if (ie[pipe] != in) {
+        if (pipelineEntries[pipe] != in) {
             reportError("logUnlinkFromLinear: instruction wasn't where I thought it'd be!\n");
             return 0;
         }
-        ie[pipe] = 0;
+        pipelineEntries[pipe] = 0;
     }
     in = 0;
     return 1;

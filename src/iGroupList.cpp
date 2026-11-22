@@ -8,12 +8,12 @@ iGroupList::iGroupList()
 
 iGroupList::~iGroupList()
 {
-    iGroupNode *n = head;
-    while (n) {
-        iGroupNode *next = n->next;
-        if (n)
-            ::operator delete(n);
-        n = next;
+    iGroupNode *groupNode = head;
+    while (groupNode) {
+        iGroupNode *next = groupNode->next;
+        if (groupNode)
+            ::operator delete(groupNode);
+        groupNode = next;
     }
     head = 0;
 }
@@ -34,12 +34,12 @@ void iGroupList::init()
 
 void iGroupList::clear()
 {
-    iGroupNode *n = head;
-    while (n) {
-        iGroupNode *next = n->next;
-        if (n)
-            ::operator delete(n);
-        n = next;
+    iGroupNode *groupNode = head;
+    while (groupNode) {
+        iGroupNode *next = groupNode->next;
+        if (groupNode)
+            ::operator delete(groupNode);
+        groupNode = next;
     }
     head = 0;
 }
@@ -69,10 +69,10 @@ bool iGroupList::add(void *p, int sz)
 
 void iGroupList::dump()
 {
-    iGroupNode *n;
+    iGroupNode *groupNode;
     int i = 0;
-    for (n = head; n; n = n->next, i++)
-        reportInfo(" [%4d ] [%d sz=%d]\n", i, n->itemPointer, n->itemSize);
+    for (groupNode = head; groupNode; groupNode = groupNode->next, i++)
+        reportInfo(" [%4d ] [%d sz=%d]\n", i, groupNode->itemPointer, groupNode->itemSize);
     if (i)
         reportInfo(" .. %d nodes\n", i);
 }
@@ -158,64 +158,64 @@ int iGroupLog::add(Instr *ins)
     return count++;
 }
 
-int iGroupLog::logTable(workTable *wt)
+int iGroupLog::logTable(workTable *sourceTable)
 {
     if (table) {
         reportError("logTable - called - but the table is already open\n");
         return 0;
     }
-    for (regUse *p = wt->registerUses.head; p; p = p->next) {
-        RegPoolEntry *reg = p->registerEntry;
+    for (regUse *previousUse = sourceTable->registerUses.head; previousUse; previousUse = previousUse->next) {
+        RegPoolEntry *reg = previousUse->registerEntry;
         for (int i = 0; i != reg->partCount; i++) {
-            if (((p->externalInputMask & p->externalOutputMask) >> i) & 1) {
-            Instr *in;
-            for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-                in->dependencyReachabilityFlags = 0;
-            for (Instr *cur = (in = wt->linearInstructions.head); in; cur = (in = in->linearLink.nextInstruction))
+            if (((previousUse->externalInputMask & previousUse->externalOutputMask) >> i) & 1) {
+            Instr *instruction;
+            for (instruction = sourceTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+                instruction->dependencyReachabilityFlags = 0;
+            for (Instr *cur = (instruction = sourceTable->linearInstructions.head); instruction; cur = (instruction = instruction->linearLink.nextInstruction))
                 for (int j = 0; j != cur->operandCount; j++) {
-                    Operand *op = &cur->operands[j];
-                    RegPoolEntry *r = op->assignedRegister;
-                    if (r == reg && op->externalPartMask)
-                        for (int k = 0; k != r->partCount; k++) {
-                            if (isRegisterOperand(op, 2) && ((op->externalPartMask >> k) & 1))
-                                in->markDependencyOutputReachable();
-                            if (isRegisterOperand(op, 1) && ((op->externalPartMask >> k) & 1))
-                                in->markDependencyInputReachable();
+                    Operand *operand = &cur->operands[j];
+                    RegPoolEntry *registerEntry = operand->assignedRegister;
+                    if (registerEntry == reg && operand->externalPartMask)
+                        for (int k = 0; k != registerEntry->partCount; k++) {
+                            if (isRegisterOperand(operand, 2) && ((operand->externalPartMask >> k) & 1))
+                                instruction->markDependencyOutputReachable();
+                            if (isRegisterOperand(operand, 1) && ((operand->externalPartMask >> k) & 1))
+                                instruction->markDependencyInputReachable();
                         }
                 }
             bool changed;
             do {
                 changed = false;
-                for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-                    if (in->inputDependencyReachable)
-                        for (int j = 0; j != in->operandCount; j++) {
-                            Operand *op = &in->operands[j];
-                            RegPoolEntry *r = registerOperand(op, 2);
-                            if (r)
-                                for (int k = 0; k != r->partCount; k++)
-                                    for (ol_s *o = op->parts[k].operandLocations.firstInternalLocation(); o; o = o->nextInternalLocation()) {
-                                        Instr *t = o->instruction;
+                for (instruction = sourceTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+                    if (instruction->inputDependencyReachable)
+                        for (int j = 0; j != instruction->operandCount; j++) {
+                            Operand *operand = &instruction->operands[j];
+                            RegPoolEntry *registerEntry = registerOperand(operand, 2);
+                            if (registerEntry)
+                                for (int k = 0; k != registerEntry->partCount; k++)
+                                    for (ol_s *operandLocation = operand->parts[k].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation()) {
+                                        Instr *t = operandLocation->instruction;
                                         changed = changed || t->markDependencyInputReachable();
                                     }
                         }
-                wtInstrList *list = &wt->linearInstructions;
-                for (in = list->tail; in; in = in->linearLink.previousInstruction)
-                    if (in->outputDependencyReachable)
-                        for (int j = 0; j != in->operandCount; j++) {
-                            Operand *op = &in->operands[j];
-                            RegPoolEntry *r = registerOperand(op, 1);
-                            if (r)
-                                for (int k = 0; k != r->partCount; k++)
-                                    for (ol_s *o = op->parts[k].operandLocations.firstInternalLocation(); o; o = o->nextInternalLocation())
-                                        o->instruction->outputDependencyReachable = 1;
+                wtInstrList *list = &sourceTable->linearInstructions;
+                for (instruction = list->tail; instruction; instruction = instruction->linearLink.previousInstruction)
+                    if (instruction->outputDependencyReachable)
+                        for (int j = 0; j != instruction->operandCount; j++) {
+                            Operand *operand = &instruction->operands[j];
+                            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+                            if (registerEntry)
+                                for (int k = 0; k != registerEntry->partCount; k++)
+                                    for (ol_s *operandLocation = operand->parts[k].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation())
+                                        operandLocation->instruction->outputDependencyReachable = 1;
                         }
             } while (changed);
             reportInfo("  dumping scan for %s\n", reg->maskName(1 << i));
             int n = 0;
-            for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-                if (in->dependencyReachabilityFlags == 3) {
-                    const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
-                    reportInfo("  [%4d] %d %s\n", n++, in->instructionId, name);
+            for (instruction = sourceTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+                if (instruction->dependencyReachabilityFlags == 3) {
+                    const char *name = instruction->opcodeInfo ? instruction->opcodeInfo->mnemonic : "NO_BASE_INST";
+                    reportInfo("  [%4d] %d %s\n", n++, instruction->instructionId, name);
                 }
             reportInfo("  ..%d matches\n", n);
             }

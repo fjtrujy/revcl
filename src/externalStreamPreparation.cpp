@@ -17,93 +17,93 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
 void splitCtime(workTable *wt, int l, int m);
 
 
-bool prepareExternalSchedulingForProgram(Program *p)
+bool prepareExternalSchedulingForProgram(Program *program)
 {
-    instStream *s;
-    for (s = p->streamHead; s; s = s->nextStream)
-        s->externalSchedulingPrepared = s->usesFreeRawLayout() ? 0 : 1;
-    for (s = p->streamHead; s; s = s->nextStream) {
-        if (s->externalSchedulingPrepared)
+    instStream *stream;
+    for (stream = program->streamHead; stream; stream = stream->nextStream)
+        stream->externalSchedulingPrepared = stream->usesFreeRawLayout() ? 0 : 1;
+    for (stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (stream->externalSchedulingPrepared)
             continue;
-        if (!prepExtInfo(p, s, 0)) {
-            reportError("failed to prep external info for stream %s\n", s->streamName());
+        if (!prepExtInfo(program, stream, 0)) {
+            reportError("failed to prep external info for stream %s\n", stream->streamName());
             return false;
         }
-        if (!removeNops(p, s)) {
-            reportError("failed to sred a table from %s\n", s->streamName());
+        if (!removeNops(program, stream)) {
+            reportError("failed to sred a table from %s\n", stream->streamName());
             return false;
         }
-        s->externalSchedulingPrepared = 1;
+        stream->externalSchedulingPrepared = 1;
     }
     return true;
 }
 
-bool removeNops(Program *p, instStream *s)
+bool removeNops(Program *program, instStream *stream)
 {
-    if (!s->workTablePtr) {
-        reportError("work table not set in %s\n", s->streamName());
+    if (!stream->workTablePtr) {
+        reportError("work table not set in %s\n", stream->streamName());
         exitAfterCleanup(-1);
     }
-    workTable *wt = s->workTablePtr;
-    if (!wt) {
+    workTable *table = stream->workTablePtr;
+    if (!table) {
         reportError("no work table \n");
         return false;
     }
-    int len = wt->getRangeEnd() - wt->getRangeStart();
+    int len = table->getRangeEnd() - table->getRangeStart();
     if (len == 0)
         return true;
-    if (wt->externalMinimumLength < 0) {
+    if (table->externalMinimumLength < 0) {
         reportError("the minimal length is -ve for ext\n");
         return false;
     }
-    if (len < wt->externalMinimumLength) {
-        reportError("table is lready too short (%d<%d)\n", len, wt->externalMinimumLength);
+    if (len < table->externalMinimumLength) {
+        reportError("table is lready too short (%d<%d)\n", len, table->externalMinimumLength);
         return false;
     }
-    RegPool *hw = GetRP(10);
-    if (!hw) {
+    RegPool *hardwarePool = GetRP(10);
+    if (!hardwarePool) {
         reportError("failed to get hw register pool - maybe this isn't vpu?\n");
         return false;
     }
-    initializeScheduledCycleTimes(wt);
-    if (!resetProcessorThroughput(p)) {
+    initializeScheduledCycleTimes(table);
+    if (!resetProcessorThroughput(program)) {
         reportError("failed to reset for emu\n");
         return false;
     }
     bool lastOk = true;
-    if (!s->branchType) {
-        if (s->endType != 1)
+    if (!stream->branchType) {
+        if (stream->endType != 1)
             lastOk = false;
     } else {
         lastOk = false;
     }
     int curTick = 0;
-    int logLen = wt->getRawOrSyntheticLogicalLength();
+    int logLen = table->getRawOrSyntheticLogicalLength();
     ol_s *inflight[1024];
-    for (int rl = wt->getRangeStart(); rl != wt->getRangeEnd(); rl++) {
-        wtRow *row = (wtRow *)((cls_unk30 *)wt)->getIE_ck(rl);
+    for (int rl = table->getRangeStart(); rl != table->getRangeEnd(); rl++) {
+        wtRow *row = (wtRow *)((cls_unk30 *)table)->getIE_ck(rl);
         if (row->skip) {
             reportError("skip already set for line\n");
             return false;
         }
         if (!row->countEntries()) {
             int tNow = row->cycleTime;
-            int n = p->proc.gatherInflight(inflight);
+            int n = program->proc.gatherInflight(inflight);
             if (n < 0) {
                 reportError("error gathering inflight data\n");
                 return false;
             }
-            int m = wt->getRangeEnd();
+            int m = table->getRangeEnd();
             int k;
             for (k = 0; k != n; k++) {
-                ol_s *ol = inflight[k];
-                Instr *in = ol->instruction;
-                Operand *op = operandAtLocation(ol);
-                RegPoolEntry *reg = op->assignedRegister;
-                int part = ol->componentIndex;
-                int lat = ol->cycleOffset;
+                ol_s *operandLocation = inflight[k];
+                Instr *instruction = operandLocation->instruction;
+                Operand *operand = operandAtLocation(operandLocation);
+                RegPoolEntry *reg = operand->assignedRegister;
+                int part = operandLocation->componentIndex;
+                int lat = operandLocation->cycleOffset;
                 if (reg->tracksHotOutputPaths) {
-                    int tv = in->baseIssueSpacing;
+                    int tv = instruction->baseIssueSpacing;
                     if (tv <= 6)
                         exitWithError("bad throught value in register\n");
                     int thr = lat;
@@ -112,12 +112,12 @@ bool removeNops(Program *p, instStream *s)
                     else if (reg->registerIndex != 0x32)
                         exitWithError("non p-q has throughput?\n");
                     int l = rl + 1;
-                    wtRow *r = row;
-                    while (r++, l < wt->getRangeEnd()) {
-                        int t = r->cycleTime;
+                    wtRow *followingRow = row;
+                    while (followingRow++, l < table->getRangeEnd()) {
+                        int t = followingRow->cycleTime;
                         if (t > tNow + thr)
                             break;
-                        if (r->outputMaskFor(reg, 0xff)) {
+                        if (followingRow->outputMaskFor(reg, 0xff)) {
                             if (t != tNow + thr) {
                                 reportError("unexpected thruput stall detected\n");
                                 return false;
@@ -129,11 +129,11 @@ bool removeNops(Program *p, instStream *s)
                         l++;
                     }
                 }
-                for (ol_s *u = op->parts[part].operandLocations.firstInternalLocation(); u && !u->isExt(); u = u->next) {
-                    Instr *ui = u->instruction;
-                    if (operandAtLocation(u)->externalBlockModeFlag && op->outputLatency > 1) {
-                        int ul = ui->position.linearRow;
-                        int tu = wt->ctime(ul);
+                for (ol_s *userLocation = operand->parts[part].operandLocations.firstInternalLocation(); userLocation && !userLocation->isExt(); userLocation = userLocation->next) {
+                    Instr *userInstruction = userLocation->instruction;
+                    if (operandAtLocation(userLocation)->externalBlockModeFlag && operand->outputLatency > 1) {
+                        int ul = userInstruction->position.linearRow;
+                        int tu = table->ctime(ul);
                         if (tu <= tNow) {
                             reportError("user is before now .. tUser=%d tNow = %d\n", tu, tNow);
                             return false;
@@ -148,51 +148,51 @@ bool removeNops(Program *p, instStream *s)
                 }
             }
             bool ok = true;
-            if (rl == wt->getRangeEnd() - 1 && !lastOk)
+            if (rl == table->getRangeEnd() - 1 && !lastOk)
                 ok = false;
             for (k = 0; k != n && ok; k++) {
-                ol_s *ol = inflight[k];
-                Operand *op = operandAtLocation(ol);
-                int part = ol->componentIndex;
-                int lat = ol->cycleOffset;
-                ol_s *u = op->parts[part].operandLocations.firstInternalLocation();
-                if (u) {
-                    Instr *ui = u->instruction;
-                    Operand *uo = operandAtLocation(u);
-                    int ul = ui->position.linearRow;
-                    int tu = wt->ctime(ul) - 1;
-                    if (!op->externalBlockModeFlag && !uo->externalBlockModeFlag && ul < m && tNow + lat > tu)
+                ol_s *operandLocation = inflight[k];
+                Operand *operand = operandAtLocation(operandLocation);
+                int part = operandLocation->componentIndex;
+                int lat = operandLocation->cycleOffset;
+                ol_s *userLocation = operand->parts[part].operandLocations.firstInternalLocation();
+                if (userLocation) {
+                    Instr *userInstruction = userLocation->instruction;
+                    Operand *userOperand = operandAtLocation(userLocation);
+                    int ul = userInstruction->position.linearRow;
+                    int tu = table->ctime(ul) - 1;
+                    if (!operand->externalBlockModeFlag && !userOperand->externalBlockModeFlag && ul < m && tNow + lat > tu)
                         ok = false;
                 }
             }
-            if (ok && rl < wt->getRangeEnd() - 1 && rl + 1 < m && row[1].getMinimumExtraLatencyAge() == 1)
+            if (ok && rl < table->getRangeEnd() - 1 && rl + 1 < m && row[1].getMinimumExtraLatencyAge() == 1)
                 ok = false;
-            if (m < wt->getRangeEnd()) {
-                int tm = wt->ctime(m);
-                wtRow *r = row + 1;
-                for (int l = rl + 1; l < m && ok; l++, r++) {
-                    int base = r->cycleTime - 1;
+            if (m < table->getRangeEnd()) {
+                int tm = table->ctime(m);
+                wtRow *scannedRow = row + 1;
+                for (int l = rl + 1; l < m && ok; l++, scannedRow++) {
+                    int base = scannedRow->cycleTime - 1;
                     for (int pp = 0; pp != 2; pp++) {
-                        Instr *in = r->getEntry(pp);
-                        if (!in)
+                        Instr *instruction = scannedRow->getEntry(pp);
+                        if (!instruction)
                             continue;
-                        for (int i = 0; i != in->operandCount; i++) {
-                            Operand *o = &in->operands[i];
-                            RegPoolEntry *w = registerOperand(o, 2);
-                            if (o->reductionHazardMask)
+                        for (int i = 0; i != instruction->operandCount; i++) {
+                            Operand *otherOperand = &instruction->operands[i];
+                            RegPoolEntry *writerRegister = registerOperand(otherOperand, 2);
+                            if (otherOperand->reductionHazardMask)
                                 ok = false;
-                            if (w && !o->externalBlockModeFlag) {
-                                int t = base + o->outputLatency;
+                            if (writerRegister && !otherOperand->externalBlockModeFlag) {
+                                int t = base + otherOperand->outputLatency;
                                 if (t < tm) {
                                     int l2 = m;
-                                    wtRow *r2 = (wtRow *)((cls_unk30 *)wt)->getIE_ck(m);
-                                    while (l2 < wt->getRangeEnd() && r2->cycleTime < t) {
+                                    wtRow *r2 = (wtRow *)((cls_unk30 *)table)->getIE_ck(m);
+                                    while (l2 < table->getRangeEnd() && r2->cycleTime < t) {
                                         r2++;
                                         l2++;
                                     }
-                                    if (l2 < wt->getRangeEnd()) {
+                                    if (l2 < table->getRangeEnd()) {
                                         if (r2->cycleTime == t) {
-                                            if (r2->inputMaskFor(w, 0xff))
+                                            if (r2->inputMaskFor(writerRegister, 0xff))
                                                 ok = false;
                                         }
                                     }
@@ -204,16 +204,16 @@ bool removeNops(Program *p, instStream *s)
             }
             if (ok) {
                 if (rl + 1 < m) {
-                    wtRow *r = row + 1;
+                    wtRow *candidateRow = row + 1;
                     int l = rl + 1;
                     do {
-                        int base = r->cycleTime - 1;
+                        int base = candidateRow->cycleTime - 1;
                         for (int pp = 0; pp != 2; pp++) {
-                            Instr *in = GetI((Instr **)r, pp);
-                            if (in) {
-                                short e = in->externalInputConstraint;
-                                if (e < in->externalInputPairedConstraint)
-                                    e = in->externalInputPairedConstraint;
+                            Instr *instruction = GetI((Instr **)candidateRow, pp);
+                            if (instruction) {
+                                short e = instruction->externalInputConstraint;
+                                if (e < instruction->externalInputPairedConstraint)
+                                    e = instruction->externalInputPairedConstraint;
                                 if (e > base) {
                                     ok = false;
                                     break;
@@ -221,23 +221,23 @@ bool removeNops(Program *p, instStream *s)
                             }
                         }
                         l++;
-                        r++;
+                        candidateRow++;
                     } while (l < m && ok);
                 }
                 if (ok) {
-                    if (m >= wt->getRangeEnd()) {
-                        int last = wt->getRawOrSyntheticLogicalLength() - 1;
-                        for (int l = wt->getRangeStart(); l < m && ok; l++) {
-                            wtRow *r = (wtRow *)((cls_unk30 *)wt)->getIE_ck(l);
+                    if (m >= table->getRangeEnd()) {
+                        int last = table->getRawOrSyntheticLogicalLength() - 1;
+                        for (int l = table->getRangeStart(); l < m && ok; l++) {
+                            wtRow *sampledRow = (wtRow *)((cls_unk30 *)table)->getIE_ck(l);
                             int dist = last - row->cycleTime;
                             if (dist < 0)
                                 exitWithError("distance to end appears to be less than zero\n");
                             for (int pp = 0; pp != 2; pp++) {
-                                Instr *in = GetI((Instr **)r, pp);
-                                if (in) {
-                                    short e = in->externalOutputConstraint;
-                                    if (e < in->externalOutputPairedConstraint)
-                                        e = in->externalOutputPairedConstraint;
+                                Instr *instruction = GetI((Instr **)sampledRow, pp);
+                                if (instruction) {
+                                    short e = instruction->externalOutputConstraint;
+                                    if (e < instruction->externalOutputPairedConstraint)
+                                        e = instruction->externalOutputPairedConstraint;
                                     if (e < dist) {
                                         ok = false;
                                         break;
@@ -247,24 +247,24 @@ bool removeNops(Program *p, instStream *s)
                         }
                     }
                     if (ok) {
-                        if (m >= wt->getRangeEnd()) {
-                            int last = wt->getRawOrSyntheticLogicalLength() - 1;
-                            if (last < wt->externalMinimumLength)
+                        if (m >= table->getRangeEnd()) {
+                            int last = table->getRawOrSyntheticLogicalLength() - 1;
+                            if (last < table->externalMinimumLength)
                                 ok = false;
-                            if (s->endType != 1 && last <= 1)
+                            if (stream->endType != 1 && last <= 1)
                                 ok = false;
                         }
                         if (ok) {
                             row->skip = 1;
-                            splitCtime(wt, rl, m);
-                            if (m >= wt->getRangeEnd())
-                                wt->declaredRawLength = --logLen;
+                            splitCtime(table, rl, m);
+                            if (m >= table->getRangeEnd())
+                                table->declaredRawLength = --logLen;
                         }
                     }
                 }
             }
         }
-        int d = emuInst(p, row, rl, false, false);
+        int d = emuInst(program, row, rl, false, false);
         if (d < 0) {
             reportError("failed to emu an ientry\n");
             return false;
@@ -274,51 +274,51 @@ bool removeNops(Program *p, instStream *s)
             reportError("unexpected time !.. currTick=%d cTime=%d\n", curTick, row->cycleTime);
             return false;
         }
-        if (curTick != p->emulatedCycleCount) {
+        if (curTick != program->emulatedCycleCount) {
             reportError("currTick doesn't match cpu\n");
             return false;
         }
     }
-    if (wt->getRawOrSyntheticLogicalLength() != p->emulatedCycleCount) {
+    if (table->getRawOrSyntheticLogicalLength() != program->emulatedCycleCount) {
         reportError("at end of table logical len not correct\n");
         return false;
     }
     return true;
 }
 
-void initializeScheduledCycleTimes(workTable *wt)
+void initializeScheduledCycleTimes(workTable *table)
 {
-    wtRow *row = wt->rows + wt->rangeStart;
-    for (int l = wt->rangeStart; l != wt->rangeEnd; l++, row++) {
-        int rel = l - wt->rangeStart;
+    wtRow *row = table->rows + table->rangeStart;
+    for (int l = table->rangeStart; l != table->rangeEnd; l++, row++) {
+        int rel = l - table->rangeStart;
         for (int p = 0; p != 2; p++) {
-            Instr *in = GetI((Instr **)row, p);
-            if (in && in->scheduledCycle != rel)
+            Instr *instruction = GetI((Instr **)row, p);
+            if (instruction && instruction->scheduledCycle != rel)
                 exitWithError("l=%d exec time mismatch in instruction %d!=%d\n",
-                              l, in->scheduledCycle, rel);
+                              l, instruction->scheduledCycle, rel);
         }
         short *time = &row->cycleTime;
-        *time = l - wt->rangeStart;
+        *time = l - table->rangeStart;
     }
 }
 
-void splitCtime(workTable *wt, int l, int m)
+void splitCtime(workTable *table, int l, int m)
 {
-    if (l < wt->rangeStart || l >= wt->rangeEnd)
+    if (l < table->rangeStart || l >= table->rangeEnd)
         exitWithError("nop line is bad\n");
     if (m <= l)
         exitWithError("m<l for splitCtime()\n");
-    if (m > wt->rangeEnd)
-        m = wt->rangeEnd;
-    wtRow *row = &wt->rows[l];
+    if (m > table->rangeEnd)
+        m = table->rangeEnd;
+    wtRow *row = &table->rows[l];
     for (; l < m; l++, row++)
         row->cycleTime--;
 }
 
-int getCtime(workTable *wt, int l)
+int getCtime(workTable *table, int l)
 {
-    if (l < wt->rangeStart || l >= wt->rangeEnd)
+    if (l < table->rangeStart || l >= table->rangeEnd)
         exitWithError("nop line is bad\n");
-    return wt->rows[l].cycleTime;
+    return table->rows[l].cycleTime;
 }
 

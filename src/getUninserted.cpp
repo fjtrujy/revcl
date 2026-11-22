@@ -8,16 +8,16 @@
 int getToEnd(Instr *in);
 int getFromStart(Instr *in);
 
-instStream *selectUninsertedStream(Program *p)
+instStream *selectUninsertedStream(Program *program)
 {
-    instStream *s = p->streamHead;
+    instStream *stream = program->streamHead;
     instStream *best = 0;
     int minIn = 1000000;
     int maxOut = -1000000;
-    for (; s; s = s->nextStream) {
-        if (s->getCodeMode() == 1) {
-            int in = s->getUninsertedxInputs();
-            int out = s->getUninsertedxOutputs();
+    for (; stream; stream = stream->nextStream) {
+        if (stream->getCodeMode() == 1) {
+            int in = stream->getUninsertedxInputs();
+            int out = stream->getUninsertedxOutputs();
             if (in < 0) {
                 reportError("failed to get uninserted inputs\n");
                 return 0;
@@ -27,11 +27,11 @@ instStream *selectUninsertedStream(Program *p)
                 return 0;
             }
             if (in < minIn) {
-                best = s;
+                best = stream;
                 minIn = in;
                 maxOut = out;
             } else if (in == minIn && out > maxOut) {
-                best = s;
+                best = stream;
                 maxOut = out;
             }
         }
@@ -46,27 +46,27 @@ int instStream::getUninsertedxInputs()
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = workTablePtr->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-        int base = getFromStart(in);
+    for (Instr *instruction = workTablePtr->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+        int base = getFromStart(instruction);
         if (base < 0) {
             reportError("iStream::: getUninsertedxInputs - failed\n");
             return -1;
         }
-        base += schedulingStatistics.reverseLatencyDepth - in->schedulingStatistics.reverseLatencyDepth;
-        Operand *op;
-        for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-            RegPoolEntry *reg = registerOperand(op, 1);
-            if (!reg || !op->externalPartMask)
+        base += schedulingStatistics.reverseLatencyDepth - instruction->schedulingStatistics.reverseLatencyDepth;
+        Operand *operand;
+        for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+            RegPoolEntry *reg = registerOperand(operand, 1);
+            if (!reg || !operand->externalPartMask)
                 continue;
             for (int k = 0; k != reg->partCount; k++) {
-                if ((op->externalPartMask >> k) & 1) {
-                ol_s *ol = op->parts[k].operandLocations.head;
-                if (!ol) {
+                if ((operand->externalPartMask >> k) & 1) {
+                ol_s *operandLocation = operand->parts[k].operandLocations.head;
+                if (!operandLocation) {
                     reportError("no setter list found during getuninstxi!\n");
                     return -1;
                 }
-                for (; ol; ol = ol->next) {
-                    Instr *setter = ol->instruction;
+                for (; operandLocation; operandLocation = operandLocation->next) {
+                    Instr *setter = operandLocation->instruction;
                     if (setter->getOwningStream() == this || setter->optimizedInstructionImageWord)
                         continue;
                     int te = getToEnd(setter);
@@ -74,8 +74,8 @@ int instStream::getUninsertedxInputs()
                         reportError("getUninsertedxInputs - failed to get to end for a setter\n");
                         return -1;
                     }
-                    Operand *src = operandAtLocation(ol);
-                    if (te + base + ol->cycleOffset + 1 < src->outputLatency + op->additionalLatency) {
+                    Operand *src = operandAtLocation(operandLocation);
+                    if (te + base + operandLocation->cycleOffset + 1 < src->outputLatency + operand->additionalLatency) {
                         if (reg->partCount == 1)
                             count += 4;
                         else
@@ -96,22 +96,22 @@ int instStream::getUninsertedxOutputs()
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = workTablePtr->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-        int base = getToEnd(in);
+    for (Instr *instruction = workTablePtr->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+        int base = getToEnd(instruction);
         if (base < 0) {
             reportError("iStream::: getUninsertedxOutputs - failed\n");
             return -1;
         }
-        base += schedulingStatistics.forwardLatencyDepth - in->schedulingStatistics.forwardLatencyDepth;
-        Operand *op;
-        for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-            RegPoolEntry *reg = registerOperand(op, 2);
-            if (!reg || !op->externalPartMask)
+        base += schedulingStatistics.forwardLatencyDepth - instruction->schedulingStatistics.forwardLatencyDepth;
+        Operand *operand;
+        for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+            RegPoolEntry *reg = registerOperand(operand, 2);
+            if (!reg || !operand->externalPartMask)
                 continue;
             for (int k = 0; k != reg->partCount; k++) {
-                if ((op->externalPartMask >> k) & 1) {
-                    for (ol_s *ol = op->parts[k].operandLocations.head; ol; ol = ol->next) {
-                        Instr *user = ol->instruction;
+                if ((operand->externalPartMask >> k) & 1) {
+                    for (ol_s *operandLocation = operand->parts[k].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                        Instr *user = operandLocation->instruction;
                         if (user->getOwningStream() == this || user->optimizedInstructionImageWord)
                             continue;
                         int fs = getFromStart(user);
@@ -119,8 +119,8 @@ int instStream::getUninsertedxOutputs()
                             reportError("getUninsertedxOutputs - failed to get to end for a setter\n");
                             return -1;
                         }
-                        Operand *src = operandAtLocation(ol);
-                        if (base + fs + ol->cycleOffset + 1 < op->outputLatency + src->additionalLatency) {
+                        Operand *src = operandAtLocation(operandLocation);
+                        if (base + fs + operandLocation->cycleOffset + 1 < operand->outputLatency + src->additionalLatency) {
                             if (reg->partCount == 1)
                                 count += 4;
                             else
@@ -134,40 +134,40 @@ int instStream::getUninsertedxOutputs()
     return count;
 }
 
-int getToEnd(Instr *in)
+int getToEnd(Instr *instruction)
 {
-    workTable *wt = (workTable *)in->ownerTable;
-    if (!wt) {
+    workTable *table = (workTable *)instruction->ownerTable;
+    if (!table) {
         reportError("instruction had no owner for getToEnd()\n");
         return -1;
     }
-    instStream *s = wt->ownerStream;
-    if (!s) {
+    instStream *stream = table->ownerStream;
+    if (!stream) {
         reportError("failed to get owner owner\n");
         return -1;
     }
-    Instr *img = in;
-    if (in->optimizedInstructionImageWord) {
-        img = (Instr *)in->optimizedInstructionImageWord;
+    Instr *img = instruction;
+    if (instruction->optimizedInstructionImageWord) {
+        img = (Instr *)instruction->optimizedInstructionImageWord;
         if (!img->ownerTable) {
             reportError("image had no owner\n");
             return -1;
         }
-        if (s != img->getOwningStream()) {
+        if (stream != img->getOwningStream()) {
             reportError("our image was in different stream\n");
             return -1;
         }
-        wt = (workTable *)img->ownerTable;
-        if (wt->codeModeValue != 3) {
+        table = (workTable *)img->ownerTable;
+        if (table->codeModeValue != 3) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
         }
     }
-    switch (wt->codeModeValue) {
+    switch (table->codeModeValue) {
     case 1:
-        return in->schedulingStatistics.reverseLatencyDepth;
+        return instruction->schedulingStatistics.reverseLatencyDepth;
     case 3: {
-        int len = wt->getRawOrSyntheticLogicalLength();
+        int len = table->getRawOrSyntheticLogicalLength();
         if (len < 0) {
             reportError("logical len<0 for table \n");
             return -1;
@@ -180,7 +180,7 @@ int getToEnd(Instr *in)
         int te = len - et - 1;
         if (te < 0) {
             reportError("te<0... for getLLen.. eTim=%d tSiz=%d\n", et, len, te);
-            wt->dump();
+            table->dump();
             reportError("instruction is\n");
             img->dumpOperandDiagnostics(false);
             break;
@@ -190,47 +190,47 @@ int getToEnd(Instr *in)
     case 4:
         return 0;
     default:
-        const char *modeName = codeModeName(wt->codeModeValue);
+        const char *modeName = codeModeName(table->codeModeValue);
         reportError("bad code mode for getToEnd()..mode=%s\n", modeName);
         break;
     }
     return -1;
 }
 
-int getFromStart(Instr *in)
+int getFromStart(Instr *instruction)
 {
-    workTable *wt = (workTable *)in->ownerTable;
-    if (!wt) {
+    workTable *table = (workTable *)instruction->ownerTable;
+    if (!table) {
         reportError("instruction had no owner for getToEnd()\n");
         return -1;
     }
-    instStream *s = wt->ownerStream;
-    if (!s) {
+    instStream *stream = table->ownerStream;
+    if (!stream) {
         reportError("failed to get owner owner\n");
         return -1;
     }
-    Instr *img = in;
-    if (in->optimizedInstructionImageWord) {
-        img = (Instr *)in->optimizedInstructionImageWord;
+    Instr *img = instruction;
+    if (instruction->optimizedInstructionImageWord) {
+        img = (Instr *)instruction->optimizedInstructionImageWord;
         if (!img->ownerTable) {
             reportError("image had no owner\n");
             return -1;
         }
-        if (s != img->getOwningStream()) {
+        if (stream != img->getOwningStream()) {
             reportError("our image was in different stream\n");
             return -1;
         }
-        wt = (workTable *)img->ownerTable;
-        if (wt->codeModeValue != 3) {
+        table = (workTable *)img->ownerTable;
+        if (table->codeModeValue != 3) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
         }
     }
-    switch (wt->codeModeValue) {
+    switch (table->codeModeValue) {
     case 1:
-        return in->schedulingStatistics.forwardLatencyDepth;
+        return instruction->schedulingStatistics.forwardLatencyDepth;
     case 3: {
-        int len = wt->getRawOrSyntheticLogicalLength();
+        int len = table->getRawOrSyntheticLogicalLength();
         if (len < 0) {
             reportError("logical len<0 for table \n");
             return -1;
@@ -257,25 +257,25 @@ int getFromStart(Instr *in)
 bool optReset(Program *p);
 bool setRange(int start, int end, int lsz);
 
-bool loadLocks(Program *p, workTable *wt)
+bool loadLocks(Program *program, workTable *table)
 {
-    if (!wt) {
+    if (!table) {
         reportError("load locks to registers - failed\n");
         return false;
     }
-    if (!wt->postOptimizationPrepared) {
+    if (!table->postOptimizationPrepared) {
         reportError("locks aren't valid for loadlocks\n");
         return false;
     }
-    if (!optReset(p)) {
+    if (!optReset(program)) {
         reportError("failed to opt reset\n");
         return false;
     }
-    setRange(wt->getRangeStart(), wt->getRangeEnd(), wt->getLoopSize());
-    for (regUse *ru = wt->registerUses.head; ru; ru = ru->next) {
-        RegPoolEntry *reg = ru->registerEntry;
+    setRange(table->getRangeStart(), table->getRangeEnd(), table->getLoopSize());
+    for (regUse *registerUse = table->registerUses.head; registerUse; registerUse = registerUse->next) {
+        RegPoolEntry *reg = registerUse->registerEntry;
         for (int i = 0; i != reg->partCount; i++) {
-            regUseSlot *rs = &ru->slots[i];
+            regUseSlot *rs = &registerUse->slots[i];
             if (!rs) {
                 reportError("failed to get rrp\n");
                 exitAfterCleanup(-1);

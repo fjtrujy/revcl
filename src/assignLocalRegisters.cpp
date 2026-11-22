@@ -36,46 +36,46 @@ extern const char setInATabCheckError[];
 extern const char setInATabLocalIdError[];
 extern const char setInATabVirtualError[];
 
-bool assignLocalRegisters(Program *p, workTable *wt)
+bool assignLocalRegisters(Program *program, workTable *table)
 {
-    int len = wt->getPhysicalLen();
+    int len = table->getPhysicalLen();
     if (len < 0) {
         reportError(assignLocalBadTableError);
         exitAfterCleanup(-1);
     }
-    if (wt->pendingInstructions.count) {
-        reportError(assignLocalPendingError, wt->pendingInstructions.count);
-        for (Instr *in = wt->pendingInstructions.head; in; in = in->pendingLink.nextInstruction)
-            in->dumpOperandDiagnostics(false);
+    if (table->pendingInstructions.count) {
+        reportError(assignLocalPendingError, table->pendingInstructions.count);
+        for (Instr *instruction = table->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction)
+            instruction->dumpOperandDiagnostics(false);
         exitAfterCleanup(-1);
     }
-    if (wt->allocationMode != 2) {
+    if (table->allocationMode != 2) {
         reportError(assignLocalExternalError);
         exitAfterCleanup(-1);
     }
-    unsigned int mode = wt->codeModeValue;
+    unsigned int mode = table->codeModeValue;
     if ((unsigned char)mode != 3) {
         reportError(assignLocalModeError, mode);
         exitAfterCleanup(-1);
     }
-    if (!wt->postOptimizationPrepared) {
+    if (!table->postOptimizationPrepared) {
         reportError(assignLocalLocksError);
         exitAfterCleanup(-1);
     }
     if (len) {
-        setRange(wt->getRangeStart(), wt->getRangeEnd(), wt->getLoopSize());
+        setRange(table->getRangeStart(), table->getRangeEnd(), table->getLoopSize());
         for (unsigned i = 0; i != 12; i++) {
-            RegPool *rp = GetRP(i);
-            if (rp && !rp->assignRegistersForWorkTable(wt))
+            RegPool *pool = GetRP(i);
+            if (pool && !pool->assignRegistersForWorkTable(table))
                 return false;
         }
-        if (!resetProgramAllocationsForSecondPass(p)) {
+        if (!resetProgramAllocationsForSecondPass(program)) {
             reportError(assignLocalCleanupError);
             abortAfterError();
             return false;
         }
     }
-    wt->allocationMode = 3;
+    table->allocationMode = 3;
     return true;
 }
 
@@ -109,26 +109,26 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         bool on = (mask >> i) & 1;
         if (!on)
             continue;
-        RegisterPartLockList *ll = (RegisterPartLockList *)reg->getPartPayload(i);
-        if (!ll) {
+        RegisterPartLockList *lockList = (RegisterPartLockList *)reg->getPartPayload(i);
+        if (!lockList) {
             reportError(buildTTabLockListError, reg->registerName());
             return false;
         }
-        OperandLock *lk = ll->outputLocks;
-        if (!lk)
+        OperandLock *lock = lockList->outputLocks;
+        if (!lock)
             continue;
-        bool shared = ll->unk_2b != 0;
+        bool shared = lockList->unk_2b != 0;
         set |= 1 << i;
-        if (lsz && ll->externalOutputCount)
+        if (lsz && lockList->externalOutputCount)
             shared = true;
-        for (; lk; lk = lk->nextSibling) {
+        for (; lock; lock = lock->nextSibling) {
             int s = 0, e = 0;
-            if (!lockLiveRange(ll, lk, &s, &e)) {
+            if (!lockLiveRange(lockList, lock, &s, &e)) {
                 reportError(buildTTabLiveRangeError);
                 exitAfterCleanup(-1);
             }
             if (s < 0) {
-                if (lk->ownerType != 2) {
+                if (lock->ownerType != 2) {
                     reportError("not extern in .. -ve s\n");
                     return false;
                 }
@@ -140,7 +140,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                 } else
                     s = 0;
             } else {
-                if (lk->ownerType == 2) {
+                if (lock->ownerType == 2) {
                     reportError("extern in .. rl_s>0\n");
                     return false;
                 }
@@ -151,7 +151,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                 else
                     e = allocationTimelineEnd;
             }
-            int r = lk->loopRow;
+            int r = lock->loopRow;
             if (r >= 0)
                 candidateRegisterTimeline[r] |= 0x80;
             for (int c = s; c < e; c++) {
@@ -160,9 +160,9 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                     idx = c % lsz;
                 unsigned char v = candidateRegisterTimeline[idx];
                 if (((v >> i) & 1) && !shared) {
-                    int overlap = ll->unk_2b != 0;
+                    int overlap = lockList->unk_2b != 0;
                     reportError(buildTTabOverlapError, overlap);
-                    ll->checkCounts();
+                    lockList->checkCounts();
                     dumpTTab();
                     return false;
                 }
@@ -197,8 +197,8 @@ bool genRegPool::initAlloc(int start, int end)
         reportError(initAllocTooBigError);
         return false;
     }
-    RegPoolEntry *e = registerEntries;
-    if (!e) {
+    RegPoolEntry *registerEntry = registerEntries;
+    if (!registerEntry) {
         reportError("RegPool:Dump - no table?\n");
         return false;
     }
@@ -210,11 +210,11 @@ bool genRegPool::initAlloc(int start, int end)
     maximumAllocationParts = 0;
     int i = 0;
     int count = entryCount;
-    for (; i != count; i++, e++) {
-        if (e->enabledPhysicalRegister)
-            registerPartAvailabilityMask[i] = (1 << e->partCount) - 1;
-        if (e->partCount > maximumAllocationParts) {
-            maximumAllocationParts = e->partCount;
+    for (; i != count; i++, registerEntry++) {
+        if (registerEntry->enabledPhysicalRegister)
+            registerPartAvailabilityMask[i] = (1 << registerEntry->partCount) - 1;
+        if (registerEntry->partCount > maximumAllocationParts) {
+            maximumAllocationParts = registerEntry->partCount;
             count = entryCount;
         }
     }
@@ -315,9 +315,9 @@ int genRegPool::bestReg()
     return which;
 }
 
-bool genRegPool::set_in_aTab(regUse *ru)
+bool genRegPool::set_in_aTab(regUse *registerUse)
 {
-    RegPoolEntry *reg = ru->registerEntry;
+    RegPoolEntry *reg = registerUse->registerEntry;
     if (!reg) {
         reportError("regref had no register\n");
         return false;
@@ -334,7 +334,7 @@ bool genRegPool::set_in_aTab(regUse *ru)
             exitAfterCleanup(-1);
         }
         if (reg->enabledPhysicalRegister) {
-            unsigned char mask = ru->inputMask | ru->outputMask | ru->throughputMask;
+            unsigned char mask = registerUse->inputMask | registerUse->outputMask | registerUse->throughputMask;
             if (!mask) {
                 reportError("error here\n");
                 exitAfterCleanup(-1);
@@ -346,11 +346,11 @@ bool genRegPool::set_in_aTab(regUse *ru)
                     reportError("failed to get rll\n");
                     return false;
                 }
-                RegisterPartLockList *ll = (RegisterPartLockList *)reg->getPartPayload(i);
-                if (ll) {
-                    if (!ll->assigned)
+                RegisterPartLockList *lockList = (RegisterPartLockList *)reg->getPartPayload(i);
+                if (lockList) {
+                    if (!lockList->assigned)
                         set |= 1 << i;
-                    ll->assigned = 1;
+                    lockList->assigned = 1;
                 }
             }
             if (set) {

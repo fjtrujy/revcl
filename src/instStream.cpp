@@ -82,12 +82,12 @@ void instStream::dump(int)
     labels.noopListTraversal();
     inputLinks.dump();
     canLoop();
-    workTable *wt = workTablePtr;
-    if (!wt) {
+    workTable *table = workTablePtr;
+    if (!table) {
         reportWarning("iStream:: dump - null work table - defaulting to inputTable\n");
-        wt = &sourceTable;
+        table = &sourceTable;
     }
-    wt->dump();
+    table->dump();
     outputLinks.dump();
     int dep = getRecordedDependencyLength();
     int log = getRecordedLogicalLength();
@@ -102,36 +102,36 @@ void instStream::zeroStats()
         reportError("no work table set for zeroStats!\n");
         exitAfterCleanup(-1);
     }
-    for (Instr *i = workTablePtr->linearInstructions.head; i; i = i->linearLink.nextInstruction)
-        i->schedulingStatistics.zeroAllCounters();
+    for (Instr *instruction = workTablePtr->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+        instruction->schedulingStatistics.zeroAllCounters();
     schedulingStatistics.zeroAllCounters();
 }
 
-bool instStream::iOwn(Instr *i)
+bool instStream::iOwn(Instr *instruction)
 {
-    if (!i) {
+    if (!instruction) {
         reportWarning("iStream::iOwn - passed a null pointer\n");
         return false;
     }
-    instStream *o = i->getOwningStream();
-    if (!o) {
+    instStream *otherStream = instruction->getOwningStream();
+    if (!otherStream) {
         reportWarning("iStream::iOwn - no owner for instruction\n");
         return false;
     }
-    return o == this;
+    return otherStream == this;
 }
 
 bool instStream::patchLatencies()
 {
-    workTable *wt = workTablePtr;
+    workTable *table = workTablePtr;
     int n = 0;
-    if (!wt) {
+    if (!table) {
         reportError("iStream::PatchLatencies - no work table\n");
         return false;
     }
-    for (Instr *i = wt->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
-        i->linearOrderIndex = n;
-        if (!i->patchBranchLatencies()) {
+    for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+        instruction->linearOrderIndex = n;
+        if (!instruction->patchBranchLatencies()) {
             reportError("failed to patch latencies for instruction\n");
             return false;
         }
@@ -228,27 +228,27 @@ const char *instStream::startTypeName()
 bool instStream::canLoop()
 {
     if (branchType == 1 || branchType == 5) {
-        instStream *s = outputLinks.getStream(1);
-        if (!s) {
+        instStream *stream = outputLinks.getStream(1);
+        if (!stream) {
             reportError("canLoop - bad return from outIST getFirst\n");
             exitAfterCleanup(-1);
         } else {
-            int sv = s->optimizationRecordCount;
-            unsigned char z = s->branchType;
+            int sv = stream->optimizationRecordCount;
+            unsigned char z = stream->branchType;
             z >>= 4;
             z >>= 4;
             if (z)
                 return false;
-            s->optimizationRecordCount = sv;
+            stream->optimizationRecordCount = sv;
         }
-        return s == this;
+        return stream == this;
     }
     return false;
 }
 
-static inline void dumpEmitStream(instStream *s)
+static inline void dumpEmitStream(instStream *stream)
 {
-    s->dump(false);
+    stream->dump(false);
 }
 
 char *instStream::emit(char *buf, int a, int *p1, int *p2)
@@ -270,10 +270,10 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
         reportInfo("skip target emit. .coz it's no longer visible\n");
         return buf;
     }
-    for (mNode *n = labels.head; n; n = n->next) {
-        if (n->name && (isReferencedLabel(owningProgram, n->name)
-                          || isExportedSymbol(owningProgram, n->name) || n->flags))
-            buf += formatIntoBuffer(buf, "%s:\n", n->name);
+    for (mNode *node = labels.head; node; node = node->next) {
+        if (node->name && (isReferencedLabel(owningProgram, node->name)
+                          || isExportedSymbol(owningProgram, node->name) || node->flags))
+            buf += formatIntoBuffer(buf, "%s:\n", node->name);
     }
     if (passThroughText) {
         buf += formatIntoBuffer(buf, "\n%s\n", passThroughText);
@@ -309,8 +309,8 @@ bool instStream::flowReset()
         reportError("iStream::flowReset() - failed to dispose regrefs\n");
         return false;
     }
-    for (Instr *i = workTablePtr->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
-        if (!i->resetFlowDependencies()) {
+    for (Instr *instruction = workTablePtr->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+        if (!instruction->resetFlowDependencies()) {
             reportError("failed to init flow for isn\n");
             return false;
         }
@@ -340,16 +340,16 @@ void instStream::dumpSynthetics()
 char *instStream::emitLabels(char *buf)
 {
     if (emissionStartIndex >= 0) {
-        for (mNode *n = labels.head; n; n = n->next) {
-            if (n->name) {
+        for (mNode *node = labels.head; node; node = node->next) {
+            if (node->name) {
                 const char *p = "__v_";
-                const char *s = n->name;
+                const char *s = node->name;
                 while (*p && *s && *p == *s) {
                     p++;
                     s++;
                 }
                 if (*p)
-                    buf += formatIntoBuffer(buf, "%-40s = %d\n", n->name, emissionStartIndex);
+                    buf += formatIntoBuffer(buf, "%-40s = %d\n", node->name, emissionStartIndex);
             }
         }
     }
@@ -376,9 +376,9 @@ char *instStream::getBranchTargetImmediate()
 {
     char *r = 0;
     requireTable("getBranch  - no work table!\n");
-    Instr *br = workTablePtr->getBranch();
-    if (br)
-        r = br->getBranchTargetImmediate();
+    Instr *branchInstruction = workTablePtr->getBranch();
+    if (branchInstruction)
+        r = branchInstruction->getBranchTargetImmediate();
     else
         reportWarning("getBranchTargetImmediate:: failed to get branch\n");
     return r;
@@ -386,87 +386,87 @@ char *instStream::getBranchTargetImmediate()
 
 RegPoolEntry *instStream::getBranchTargetRegister()
 {
-    RegPoolEntry *r = 0;
+    RegPoolEntry *registerEntry = 0;
     requireTable("getBranch  - no work table!\n");
-    Instr *br = workTablePtr->getBranch();
-    if (br)
-        r = br->getBranchTargetRegister();
+    Instr *branchInstruction = workTablePtr->getBranch();
+    if (branchInstruction)
+        registerEntry = branchInstruction->getBranchTargetRegister();
     else
         reportWarning("getBranchTargetImmediate:: failed to get branch\n");
-    return r;
+    return registerEntry;
 }
 
 unsigned char instStream::getCodeMode()
 {
-    workTable *wt = workTablePtr;
-    if (wt)
-        return wt->codeModeValue;
+    workTable *table = workTablePtr;
+    if (table)
+        return table->codeModeValue;
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
 
 const char *instStream::getCodeModeName()
 {
-    workTable *wt = workTablePtr;
-    if (wt)
-        return codeModeName(wt->codeModeValue);
+    workTable *table = workTablePtr;
+    if (table)
+        return codeModeName(table->codeModeValue);
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
 
 unsigned char instStream::getRawSchedulingMode()
 {
-    workTable *wt = workTablePtr;
-    if (wt)
-        return wt->getTableRawMode();
+    workTable *table = workTablePtr;
+    if (table)
+        return table->getTableRawMode();
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
 
-static inline bool isRawTable(workTable *wt)
+static inline bool isRawTable(workTable *table)
 {
-    return wt->codeModeValue == 3;
+    return table->codeModeValue == 3;
 }
 
-static inline bool isFreeRawTable(workTable *wt)
+static inline bool isFreeRawTable(workTable *table)
 {
-    return isRawTable(wt) && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
+    return isRawTable(table) && (table->rawSchedulingMode == 1 || table->rawSchedulingMode == 3);
 }
 
 bool instStream::usesFreeRawLayout()
 {
-    workTable *wt = workTablePtr;
-    if (!wt)
+    workTable *table = workTablePtr;
+    if (!table)
         return false;
-    return isFreeRawTable(wt);
+    return isFreeRawTable(table);
 }
 
-static inline bool isFixedRawTable(workTable *wt)
+static inline bool isFixedRawTable(workTable *table)
 {
-    return isRawTable(wt) && (wt->rawSchedulingMode == 2 || wt->rawSchedulingMode == 4);
+    return isRawTable(table) && (table->rawSchedulingMode == 2 || table->rawSchedulingMode == 4);
 }
 
 bool instStream::usesFixedRawLayout()
 {
-    workTable *wt = workTablePtr;
-    if (!wt)
+    workTable *table = workTablePtr;
+    if (!table)
         return false;
-    return isFixedRawTable(wt);
+    return isFixedRawTable(table);
 }
 
 unsigned char instStream::getAllocMode()
 {
-    workTable *wt = workTablePtr;
-    if (wt)
-        return wt->allocationMode;
+    workTable *table = workTablePtr;
+    if (table)
+        return table->allocationMode;
     reportError("getAllocMode - work table not set\n");
     return 0;
 }
 
 bool instStream::isOutsideRawMode()
 {
-    workTable *wt = workTablePtr;
-    if (wt && wt->codeModeValue == 3)
+    workTable *table = workTablePtr;
+    if (table && table->codeModeValue == 3)
         return false;
     return true;
 }
@@ -490,18 +490,18 @@ int instStream::checkStartEndStatus()
     return ok;
 }
 
-bool instStream::processCmdSynth(Instr *i)
+bool instStream::processCmdSynth(Instr *instruction)
 {
-    if (!i) {
+    if (!instruction) {
         reportError("processCmdSynth - passed a null ptr\n");
         return false;
     }
-    if (i->parsedLoopId > 0) {
+    if (instruction->parsedLoopId > 0) {
         reportUserMessage("parseLid set for processCmdSynth\n");
-        i->leDump();
+        instruction->leDump();
         return false;
     }
-    switch ((unsigned char)i->syntheticKind) {
+    switch ((unsigned char)instruction->syntheticKind) {
     case 5:
         if (endType != 1) {
             reportError("CONT directive encountered - but end mode isn't null\n");
@@ -510,26 +510,26 @@ bool instStream::processCmdSynth(Instr *i)
         endType = 2;
         break;
     case 8:
-        if (!i->getImmediateOperand(0, &knownMinimumLoopCount) || !i->getImmediateOperand(1, &safeMinimumLoopCount)) {
+        if (!instruction->getImmediateOperand(0, &knownMinimumLoopCount) || !instruction->getImmediateOperand(1, &safeMinimumLoopCount)) {
             reportUserMessage("failed to decode the --LoopCS directive, one of the 2 expected operands failed to parse\n");
-            i->leDump();
+            instruction->leDump();
             return false;
         }
         if (knownMinimumLoopCount <= 0) {
             reportUserMessage("for --LoopCS, the minimum known count (arg 1) must be must be >0\n");
-            i->leDump();
+            instruction->leDump();
             return false;
         }
         if (safeMinimumLoopCount < 0) {
             reportUserMessage("for --LoopCS, the minimum safe count (arg 2) must be must be >=0\n");
-            i->leDump();
+            instruction->leDump();
             return false;
         }
         break;
     case 9:
-        if (!i->getImmediateOperand(0, &extraLoopCount) || extraLoopCount < 0) {
+        if (!instruction->getImmediateOperand(0, &extraLoopCount) || extraLoopCount < 0) {
             reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopExtra. value must be >=0\n");
-            i->leDump();
+            instruction->leDump();
             return false;
         }
         break;
@@ -548,9 +548,9 @@ bool instStream::processCmdSynth(Instr *i)
         reportUserMessage("unexpected synthetic instruction encountered\n");
         break;
     case 12:
-        if (!i->getImmediateOperand(0, &absoluteLoopCount) || absoluteLoopCount <= 2) {
+        if (!instruction->getImmediateOperand(0, &absoluteLoopCount) || absoluteLoopCount <= 2) {
             reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopAbs. value must be >=2\n");
-            i->leDump();
+            instruction->leDump();
             return false;
         }
         break;
@@ -560,12 +560,12 @@ bool instStream::processCmdSynth(Instr *i)
 
 bool instStream::disposeInputTable()
 {
-    workTable *t = &sourceTable;
-    if (t == workTablePtr) {
+    workTable *table = &sourceTable;
+    if (table == workTablePtr) {
         reportError("can't dispose of input table while it's the work table\n");
         abortAfterError();
     }
-    return t->dispose();
+    return table->dispose();
 }
 
 void instStream::copySourceRecordsFrom(instStream *src)

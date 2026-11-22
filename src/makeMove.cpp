@@ -32,8 +32,8 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
             reportError("failed to get a free move\n");
             abortAfterError();
         }
-        Operand *in = mv->getOp(1);
-        if (!in) {
+        Operand *inputOperand = mv->getOp(1);
+        if (!inputOperand) {
             reportError("failed to get move input!\n");
             exitAfterCleanup(1);
         }
@@ -48,9 +48,9 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
             abortAfterError();
         }
         mv->candidateAttemptLimit = blk->loopSize;
-        in->assignedRegister = reg;
-        in->operandStatus = 1;
-        in->forcedBaseRegister = 0;
+        inputOperand->assignedRegister = reg;
+        inputOperand->operandStatus = 1;
+        inputOperand->forcedBaseRegister = 0;
         out->operandStatus = 1;
         out->forcedBaseRegister = 0;
         mv->requiresFullLoopMoveDrag = 1;
@@ -74,36 +74,36 @@ static inline void countCreatedMove(Block *blk, Instr *mv)
     adjustMoveCount(blk, mv, 1);
 }
 
-int getMove(Block *blk, Instr *in, int now)
+int getMove(Block *blk, Instr *instruction, int now)
 {
     Operand *bestOp = 0;
     int bestScore = -1;
     RegPoolEntry *bestReg = 0;
     OperandLock *bestLk = 0;
-    if (in->moveRecordWord)
+    if (instruction->moveRecordWord)
         return 2;
-    Operand *op;
+    Operand *operand;
     int i;
-    for (i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *r = registerOperand(op, 1);
-        if (r) {
-            r->minimumMoveRow = 0x7fff;
-            r->maximumMoveRow = -1;
+    for (i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        if (registerEntry) {
+            registerEntry->minimumMoveRow = 0x7fff;
+            registerEntry->maximumMoveRow = -1;
         }
     }
     Operand *op2;
-    for (i = 0; (op2 = in->getOp(i)) != 0; i++) {
+    for (i = 0; (op2 = instruction->getOp(i)) != 0; i++) {
         RegPoolEntry *reg = registerOperand(op2, 1);
         if (reg && isVuRegister(reg) && op2->operandStatus != 2) {
-            OperandLock *lk = 0;
+            OperandLock *lock = 0;
             int score = -1;
             for (int p = 0; p != reg->partCount; p++) {
                 if ((op2->componentMask >> p) & 1) {
-                    lk = &op2->parts[p];
-                    OperandLock *parent = lk->getParent();
-                    if (lk->getPriority() == 2 && score < 10000)
+                    lock = &op2->parts[p];
+                    OperandLock *parent = lock->getParent();
+                    if (lock->getPriority() == 2 && score < 10000)
                         score = 10000;
-                    if (lk->getPriority() == 1 && score < 20000)
+                    if (lock->getPriority() == 1 && score < 20000)
                         score = 20000;
                     if (parent->ownerType != 2) {
                         int row = parent->linearRow;
@@ -139,19 +139,19 @@ int getMove(Block *blk, Instr *in, int now)
                     }
                 }
             }
-            int s1 = in->optimizedInstructionImageWord;
+            int s1 = instruction->optimizedInstructionImageWord;
             Instr *s2 = blk->pendingInstructions.head;
             if (score > bestScore) {
-                in->optimizedInstructionImageWord = s1;
+                instruction->optimizedInstructionImageWord = s1;
                 blk->pendingInstructions.head = s2;
                 bestOp = op2;
                 bestScore = score;
                 bestReg = reg;
-                bestLk = lk;
+                bestLk = lock;
             }
         }
     }
-    op = 0;
+    operand = 0;
     if (!bestReg) {
         reportWarning("getMove: didn't set rg_old during pass\n");
         return 4;
@@ -165,8 +165,8 @@ int getMove(Block *blk, Instr *in, int now)
     int mask = 0;
     int p;
     for (p = 0; p != bestReg->partCount; p++) {
-        OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
-        if (o && o->activeReferenceCount)
+        OperandLock *outputLock = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
+        if (outputLock && outputLock->activeReferenceCount)
             mask |= 1 << p;
     }
     Instr *mv = makeMove(blk, bestReg);
@@ -174,11 +174,11 @@ int getMove(Block *blk, Instr *in, int now)
     no_move:
         Instr *earliest = 0;
         for (p = 0; p != bestReg->partCount; p++) {
-            OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
-            if (((mask >> p) & 1) && o && o->activeReferenceCount) {
-                Instr *oi = o->ownerInstr();
-                if (oi && (!earliest || oi->position.getRow() < earliest->position.getRow()))
-                    earliest = oi;
+            OperandLock *outputLock = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
+            if (((mask >> p) & 1) && outputLock && outputLock->activeReferenceCount) {
+                Instr *otherInstruction = outputLock->ownerInstr();
+                if (otherInstruction && (!earliest || otherInstruction->position.getRow() < earliest->position.getRow()))
+                    earliest = otherInstruction;
             }
         }
         if (!earliest)
@@ -195,9 +195,9 @@ int getMove(Block *blk, Instr *in, int now)
             mv->schedulingStatistics.copyCountersFrom(&owner->schedulingStatistics);
         } else {
             mv->moveChainDepth = 1;
-            mv->linearOrderIndex = in->linearOrderIndex - 1;
-            mv->candidateAttemptLimit = in->candidateAttemptLimit;
-            mv->schedulingStatistics.copyCountersFrom(&in->schedulingStatistics);
+            mv->linearOrderIndex = instruction->linearOrderIndex - 1;
+            mv->candidateAttemptLimit = instruction->candidateAttemptLimit;
+            mv->schedulingStatistics.copyCountersFrom(&instruction->schedulingStatistics);
         }
         mv->candidateCostOffset = 0;
         Operand *out = mv->getOp(0);
@@ -213,19 +213,19 @@ int getMove(Block *blk, Instr *in, int now)
         for (Instr *it = blk->pendingInstructions.head; it; it = (Instr *)it->pendingLink.nextInstruction) {
             int n;
             for (n = 0; n != it->operandCount; n++) {
-                Operand *op = &it->operands[n];
-                RegPoolEntry *reg = registerOperand(op, 1);
+                Operand *operand = &it->operands[n];
+                RegPoolEntry *reg = registerOperand(operand, 1);
                 if (reg == bestReg) {
                     bool stale = false;
-                    if (op->operandStatus != 1) {
-                        if (op->componentMask & newBits) {
+                    if (operand->operandStatus != 1) {
+                        if (operand->componentMask & newBits) {
                             reportError("cant age input - but the old register status is now invalid\n");
                             abortAfterError();
                         }
                         stale = true;
                     }
-                    if (op->componentMask & oldBits) {
-                        if (op->componentMask & newBits) {
+                    if (operand->componentMask & oldBits) {
+                        if (operand->componentMask & newBits) {
                             reportError("neither old new bits are valid - valid register state is spread over too many different registers\n");
                             abortAfterError();
                         }
@@ -236,9 +236,9 @@ int getMove(Block *blk, Instr *in, int now)
                         continue;
                     }
                     for (int p = 0; p != reg->partCount; p++) {
-                        if ((op->componentMask >> p) & 1) {
-                            OperandLock *lk = &op->parts[p];
-                            OperandLock *par = lk->getParent();
+                        if ((operand->componentMask >> p) & 1) {
+                            OperandLock *lock = &operand->parts[p];
+                            OperandLock *par = lock->getParent();
                             RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(p);
                             RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(p);
                             if (par->insertedIntoLockList) {
@@ -266,26 +266,26 @@ int getMove(Block *blk, Instr *in, int now)
                                     moveOutLock->operandStatusCode = out->getStatus();
                                 }
                                 moved |= 1 << p;
-                                if (!oldL->removeInput(lk)) {
+                                if (!oldL->removeInput(lock)) {
                                     reportError("failed to deregister an input during move create\n");
                                     return -1;
                                 }
-                                if (!newL->addInput(&out->parts[p], lk, op->additionalLatency, op->externalBlockModeFlag)) {
+                                if (!newL->addInput(&out->parts[p], lock, operand->additionalLatency, operand->externalBlockModeFlag)) {
                                     reportError("failed to register input to a moves output\n");
                                     return -1;
                                 }
-                                op->assignedRegister = newReg;
+                                operand->assignedRegister = newReg;
                             } else {
                                 if (par->ownerLockList == newL) {
-                                    if (!oldL->removeInput(lk)) {
+                                    if (!oldL->removeInput(lock)) {
                                         reportError("failed to deregister an input during move create\n");
                                         return -1;
                                     }
-                                    if (!newL->addInput(par, lk, op->additionalLatency, op->externalBlockModeFlag)) {
+                                    if (!newL->addInput(par, lock, operand->additionalLatency, operand->externalBlockModeFlag)) {
                                         reportError("failed to register an input during move create\n");
                                         return -1;
                                     }
-                                    op->assignedRegister = newReg;
+                                    operand->assignedRegister = newReg;
                                 } else {
                                     reportError("hmm candidate for moving wasn't one after all\n");
                                     abortAfterError();
@@ -296,27 +296,27 @@ int getMove(Block *blk, Instr *in, int now)
                 }
             }
             for (n = 0; n != it->operandCount; n++) {
-                Operand *op = &it->operands[n];
-                RegPoolEntry *reg = registerOperand(op, 2);
+                Operand *operand = &it->operands[n];
+                RegPoolEntry *reg = registerOperand(operand, 2);
                 if (reg == bestReg) {
-                    if (op->operandStatus != 1) {
+                    if (operand->operandStatus != 1) {
                         mv->requiresFullLoopMoveDrag = 0;
-                        oldBits |= op->componentMask;
+                        oldBits |= operand->componentMask;
                     } else {
-                        newBits |= op->componentMask;
+                        newBits |= operand->componentMask;
                         for (int p = 0; p != reg->partCount; p++) {
-                            if ((op->componentMask >> p) & 1) {
+                            if ((operand->componentMask >> p) & 1) {
                                 RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(p);
                                 RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(p);
-                                if (!oldL->removeOutput(&op->parts[p])) {
+                                if (!oldL->removeOutput(&operand->parts[p])) {
                                     reportError("retargetOutputOperands: failed to deregister output\n");
                                     return -1;
                                 }
-                                if (!newL->addOutput(&op->parts[p], it->baseIssueSpacing, op->outputLatency, op->externalBlockModeFlag)) {
+                                if (!newL->addOutput(&operand->parts[p], it->baseIssueSpacing, operand->outputLatency, operand->externalBlockModeFlag)) {
                                     reportError("retargetOutputOperands : failed to reregister output\n");
                                     return -1;
                                 }
-                                op->assignedRegister = newReg;
+                                operand->assignedRegister = newReg;
                             }
                         }
                     }
@@ -324,7 +324,7 @@ int getMove(Block *blk, Instr *in, int now)
             }
         }
         int g1 = discardedEmptyMoveCount;
-        int zm0 = (unsigned char)in->operandCount;
+        int zm0 = (unsigned char)instruction->operandCount;
         zm0 >>= 4;
         zm0 >>= 4;
         if (zm0)
@@ -366,47 +366,47 @@ bool undoMove(Block *blk, Instr *mv)
     if (mv->concreteMoveOpcode)
         unresolveMove(blk, mv);
     Operand *out = mv->getOp(0);
-    Operand *in = mv->getOp(1);
-    RegPoolEntry *orig = in->assignedRegister;
+    Operand *inputOperand = mv->getOp(1);
+    RegPoolEntry *orig = inputOperand->assignedRegister;
     RegPoolEntry *dup = out->assignedRegister;
     if (!UnlinkFromToDo(blk, mv))
         reportError("failed to unlink from todolist!\n");
-    for (Instr *i = blk->pendingInstructions.head; i; i = (Instr *)i->pendingLink.nextInstruction) {
-        for (int n = 0; n != i->operandCount; n++) {
-            Operand *op = &i->operands[n];
-            RegPoolEntry *r = op->assignedRegister;
-            if (r == dup) {
-                op->assignedRegister = orig;
-                if (isRegisterOperand(op, 1)) {
-                    for (int p = 0; p != r->partCount; p++) {
-                        if ((bool)((op->componentMask >> p) & 1)) {
-                            OperandLock *lk = &op->parts[p];
-                            OperandLock *parent = lk->getParent();
+    for (Instr *instruction = blk->pendingInstructions.head; instruction; instruction = (Instr *)instruction->pendingLink.nextInstruction) {
+        for (int n = 0; n != instruction->operandCount; n++) {
+            Operand *operand = &instruction->operands[n];
+            RegPoolEntry *registerEntry = operand->assignedRegister;
+            if (registerEntry == dup) {
+                operand->assignedRegister = orig;
+                if (isRegisterOperand(operand, 1)) {
+                    for (int p = 0; p != registerEntry->partCount; p++) {
+                        if ((bool)((operand->componentMask >> p) & 1)) {
+                            OperandLock *lock = &operand->parts[p];
+                            OperandLock *parent = lock->getParent();
                             RegisterPartLockList *newList = (RegisterPartLockList *)orig->getPartPayload(p);
                             RegisterPartLockList *oldList = (RegisterPartLockList *)dup->getPartPayload(p);
                             if ((bool)((out->componentMask >> p) & 1) && parent == &out->parts[p])
-                                parent = in->parts[p].getParent();
-                            if (!oldList->removeInput(lk)) {
+                                parent = inputOperand->parts[p].getParent();
+                            if (!oldList->removeInput(lock)) {
                                 reportError("failed to deregister input lock for undo move\n");
                                 return true;
                             }
-                            if (!newList->addInput(parent, lk, op->additionalLatency, op->externalBlockModeFlag)) {
+                            if (!newList->addInput(parent, lock, operand->additionalLatency, operand->externalBlockModeFlag)) {
                                 reportError("undo move - failed to register input\n");
                                 return true;
                             }
                         }
                     }
                 }
-                if (isRegisterOperand(op, 2)) {
-                    for (int p = 0; p != r->partCount; p++) {
-                        if ((bool)((op->componentMask >> p) & 1)) {
+                if (isRegisterOperand(operand, 2)) {
+                    for (int p = 0; p != registerEntry->partCount; p++) {
+                        if ((bool)((operand->componentMask >> p) & 1)) {
                             RegisterPartLockList *newList = (RegisterPartLockList *)orig->getPartPayload(p);
                             RegisterPartLockList *oldList = (RegisterPartLockList *)dup->getPartPayload(p);
-                            if (!oldList->removeOutput(&op->parts[p])) {
+                            if (!oldList->removeOutput(&operand->parts[p])) {
                                 reportError("failed to deregister output lock for undo move\n");
                                 return true;
                             }
-                            if (!newList->addOutput(&op->parts[p], i->baseIssueSpacing, op->outputLatency, op->externalBlockModeFlag)) {
+                            if (!newList->addOutput(&operand->parts[p], instruction->baseIssueSpacing, operand->outputLatency, operand->externalBlockModeFlag)) {
                                 reportError("undo move - failed to register output\n");
                                 return true;
                             }
@@ -417,17 +417,17 @@ bool undoMove(Block *blk, Instr *mv)
         }
     }
     for (int p = 0; p != dup->partCount; p++) {
-        if ((bool)((in->componentMask >> p) & 1)) {
+        if ((bool)((inputOperand->componentMask >> p) & 1)) {
             RegisterPartLockList *l = (RegisterPartLockList *)orig->getPartPayload(p);
             if (!l) {
                 reportError("failed to get lock list for old reg in move undo\n");
                 abortAfterError();
             }
-            if (!in->parts[p].getParent()) {
+            if (!inputOperand->parts[p].getParent()) {
                 reportError("undoMove: failed to get parent for old lock!\n");
                 abortAfterError();
             }
-            if (!l->removeInput(&in->parts[p])) {
+            if (!l->removeInput(&inputOperand->parts[p])) {
                 reportError("undoMove : failed to register input lock\n");
                 abortAfterError();
             }
@@ -456,17 +456,17 @@ Instr *makeMove(Block *, RegPoolEntry *);
 bool undoMovesTo(Block *blk, Instr *stop)
 {
     bool done;
-    Instr *i = blk->pendingInstructions.tail;
+    Instr *instruction = blk->pendingInstructions.tail;
     do {
-        Instr *prev = i->pendingLink.previousInstruction;
-        done = (i == stop);
-        if (i->moveRecordWord) {
-            if (!undoMove(blk, i)) {
+        Instr *prev = instruction->pendingLink.previousInstruction;
+        done = (instruction == stop);
+        if (instruction->moveRecordWord) {
+            if (!undoMove(blk, instruction)) {
                 reportError("failed to undo move !\n");
                 abortAfterError();
             }
         }
-        i = prev;
+        instruction = prev;
     } while (!done);
     return true;
 }

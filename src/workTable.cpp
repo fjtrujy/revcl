@@ -15,8 +15,8 @@ void regUseList::dumpRegisterUses()
 {
     if (hasConsistentCount()) {
         for (int i = 0; i != 12; i++) {
-            RegPool *rp = GetRP(i);
-            if (rp)
+            RegPool *pool = GetRP(i);
+            if (pool)
                 dumpRegisterClassUses(i);
         }
     }
@@ -28,9 +28,9 @@ int regUseList::dumpRegisterClassUses(int regClass)
 {
     int n = 0;
     regUse *listHead = head;
-    regUse *ru;
-    for (ru = listHead; ru; ru = ru->next) {
-        RegPoolEntry *reg = ru->registerEntry;
+    regUse *registerUse;
+    for (registerUse = listHead; registerUse; registerUse = registerUse->next) {
+        RegPoolEntry *reg = registerUse->registerEntry;
         if (!reg) {
             reportError("found reg ref with no reg!\n");
             exitAfterCleanup(-1);
@@ -41,9 +41,9 @@ int regUseList::dumpRegisterClassUses(int regClass)
     }
     if (n == 0)
         return 0;
-    for (ru = listHead; ru; ru = ru->next) {
-        if (ru->registerEntry->isClass(regClass))
-            ru->validateAndDumpParts();
+    for (registerUse = listHead; registerUse; registerUse = registerUse->next) {
+        if (registerUse->registerEntry->isClass(regClass))
+            registerUse->validateAndDumpParts();
     }
     return n;
 }
@@ -77,9 +77,9 @@ regUse *regUseList::findByRegister(RegPoolEntry *reg)
 
 regUse *regUseList::firstReal()
 {
-    regUse *p;
-    for (p = head; p; p = p->next) {
-        RegPoolEntry *reg = p->registerEntry;
+    regUse *previousUse;
+    for (previousUse = head; previousUse; previousUse = previousUse->next) {
+        RegPoolEntry *reg = previousUse->registerEntry;
         if (!reg) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -87,14 +87,14 @@ regUse *regUseList::firstReal()
         if (!reg->isVirtual)
             break;
     }
-    return p;
+    return previousUse;
 }
 
 regUse *regUse::nextReal()
 {
-    regUse *p;
-    for (p = next; p; p = p->next) {
-        RegPoolEntry *reg = p->registerEntry;
+    regUse *previousUse;
+    for (previousUse = next; previousUse; previousUse = previousUse->next) {
+        RegPoolEntry *reg = previousUse->registerEntry;
         if (!reg) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -102,14 +102,14 @@ regUse *regUse::nextReal()
         if (!reg->isVirtual)
             break;
     }
-    return p;
+    return previousUse;
 }
 
 regUse *regUseList::firstVirtual()
 {
-    regUse *p;
-    for (p = head; p; p = p->next) {
-        RegPoolEntry *reg = p->registerEntry;
+    regUse *previousUse;
+    for (previousUse = head; previousUse; previousUse = previousUse->next) {
+        RegPoolEntry *reg = previousUse->registerEntry;
         if (!reg) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -117,14 +117,14 @@ regUse *regUseList::firstVirtual()
         if (reg->isVirtual)
             break;
     }
-    return p;
+    return previousUse;
 }
 
 regUse *regUse::nextVirtual()
 {
-    regUse *p;
-    for (p = next; p; p = p->next) {
-        RegPoolEntry *reg = p->registerEntry;
+    regUse *previousUse;
+    for (previousUse = next; previousUse; previousUse = previousUse->next) {
+        RegPoolEntry *reg = previousUse->registerEntry;
         if (!reg) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -132,7 +132,7 @@ regUse *regUse::nextVirtual()
         if (reg->isVirtual)
             break;
     }
-    return p;
+    return previousUse;
 }
 
 bool regUseList::optReset()
@@ -162,9 +162,9 @@ bool regUseSlot::optReset()
     return true;
 }
 
-bool regUseSlot::addOutput(ol_s *ol)
+bool regUseSlot::addOutput(ol_s *operandLocation)
 {
-    if (!outputLocations.insertExternalLocation(ol)) {
+    if (!outputLocations.insertExternalLocation(operandLocation)) {
         reportError("failed to add oploc to output list sort\n");
         return false;
     }
@@ -250,10 +250,10 @@ ol_s *regUseSlot::findPreviousOutputAtPosition(int pos, bool all)
     if (all)
         pos = 0xff;
     ol_s *prev = 0;
-    for (ol_s *p = outputLocations.head; p; p = p->next) {
-        if (pos < p->cycleOffset)
+    for (ol_s *currentLocation = outputLocations.head; currentLocation; currentLocation = currentLocation->next) {
+        if (pos < currentLocation->cycleOffset)
             break;
-        prev = p;
+        prev = currentLocation;
     }
     return prev;
 }
@@ -261,13 +261,13 @@ ol_s *regUseSlot::findPreviousOutputAtPosition(int pos, bool all)
 int regUseList::countUncoveredRegisterClassUses(int regClass)
 {
     int n = 0;
-    for (regUse *p = head; p; p = p->next) {
-        RegPoolEntry *reg = p->registerEntry;
+    for (regUse *previousUse = head; previousUse; previousUse = previousUse->next) {
+        RegPoolEntry *reg = previousUse->registerEntry;
         if (reg->registerClass != regClass || reg == reg->ownerPool->zeroRegister)
             continue;
-        if (~p->inputMask & p->throughputMask)
+        if (~previousUse->inputMask & previousUse->throughputMask)
             n++;
-        else if (!p->outputMask)
+        else if (!previousUse->outputMask)
             n++;
     }
     return n;
@@ -277,9 +277,9 @@ void regUseList::dumpVirtualRegisterUses()
 {
     if (hasConsistentCount()) {
         for (int i = 0; i != 12; i++) {
-            RegPool *rp = GetRP(i);
-            if (rp && rp->virtualPartCount) {
-                reportInfo("%s\n", rp->poolName);
+            RegPool *pool = GetRP(i);
+            if (pool && pool->virtualPartCount) {
+                reportInfo("%s\n", pool->poolName);
                 dumpRegisterClassAllocations(i);
             }
         }
@@ -295,33 +295,33 @@ static inline bool isVirtualRegister(RegPoolEntry *reg)
 
 void regUseList::dumpRegisterClassAllocations(int regClass)
 {
-    regUse *p;
-    for (p = head; p; p = p->next) {
-        RegPoolEntry *reg = p->registerEntry;
+    regUse *previousUse;
+    for (previousUse = head; previousUse; previousUse = previousUse->next) {
+        RegPoolEntry *reg = previousUse->registerEntry;
         RegPoolEntry *phys = reg->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();
         if (!isVirtualRegister(reg))
             alloc = reg->registerName();
-        int mask = p->inputMask | p->outputMask | p->externalInputMask | p->externalOutputMask | p->throughputMask;
-        if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && p->isExternal()) {
+        int mask = previousUse->inputMask | previousUse->outputMask | previousUse->externalInputMask | previousUse->externalOutputMask | previousUse->throughputMask;
+        if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && previousUse->isExternal()) {
             const char *thr = "";
-            if (p->throughputMask & ~(p->inputMask | p->outputMask | p->externalInputMask | p->externalOutputMask))
+            if (previousUse->throughputMask & ~(previousUse->inputMask | previousUse->outputMask | previousUse->externalInputMask | previousUse->externalOutputMask))
                 thr = "-THR";
             reportInfo(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc, thr);
         }
     }
-    for (p = head; p; p = p->next) {
-        RegPoolEntry *reg = p->registerEntry;
+    for (previousUse = head; previousUse; previousUse = previousUse->next) {
+        RegPoolEntry *reg = previousUse->registerEntry;
         RegPoolEntry *phys = reg->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();
         if (!isVirtualRegister(reg))
             alloc = reg->registerName();
-        int mask = p->inputMask | p->outputMask | p->externalInputMask | p->externalOutputMask | p->throughputMask;
-        if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && !p->isExternal())
+        int mask = previousUse->inputMask | previousUse->outputMask | previousUse->externalInputMask | previousUse->externalOutputMask | previousUse->throughputMask;
+        if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && !previousUse->isExternal())
             reportInfo(" LOCAL : %20s - %s\n", reg->maskName(mask), alloc);
     }
 }
