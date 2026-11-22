@@ -29,25 +29,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-
-      - name: Install native compilers and test dependencies
+      - name: Install native C++ compilers and CMake
         run: |
           test "$(uname -m)" = "x86_64"
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends cmake g++ clang
-          python -m pip install -r scripts/requirements.txt
 
       - name: Build native 64-bit Linux executable
         run: |
           cmake --preset ${{ matrix.preset }}
-          cmake --build --preset ${{ matrix.preset }}
+          cmake --build --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)"
           file tmp/cmake/${{ matrix.preset }}/vcl
 
-      - name: Run unit tests and compare all VCL fixture output hashes
-        run: ctest --preset ${{ matrix.preset }} --output-on-failure
+      - name: Run Python-free CTest checks in parallel
+        run: ctest --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
 
       - uses: actions/upload-artifact@v7
         with:
@@ -56,11 +51,9 @@ jobs:
           if-no-files-found: error
 
   linux-arm64:
-    # Standard ARM64 hosted runners are not available for private repos.
-    # QEMU provides an ARM64 Linux userland on a regular Ubuntu runner.
-    name: Linux arm64 (QEMU) ${{ matrix.compiler }} + tests
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    name: Linux arm64 native ${{ matrix.compiler }} + tests
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -74,27 +67,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - name: Build and test Linux arm64 ELF inside the ARM64 userland
+      - name: Install native ARM64 compilers and CMake
         run: |
-          docker run --rm --platform linux/arm64 \
-            -v "$PWD:/work" -w /work ubuntu:24.04 bash -euc '
-              export DEBIAN_FRONTEND=noninteractive
-              apt-get update
-              apt-get install -y --no-install-recommends \
-                cmake make g++ clang python3 python3-venv python3-pip file
-              python3 -m venv /tmp/vcl-ci-venv
-              /tmp/vcl-ci-venv/bin/pip install -r scripts/requirements.txt
-              test "$(uname -m)" = "aarch64"
-              cmake --preset ${{ matrix.preset }} \
-                -DPython3_EXECUTABLE=/tmp/vcl-ci-venv/bin/python
-              cmake --build --preset ${{ matrix.preset }}
-              file tmp/cmake/${{ matrix.preset }}/vcl
-              ctest --preset ${{ matrix.preset }} --output-on-failure
-            '
+          test "$(uname -m)" = "aarch64"
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake g++ clang
+
+      - name: Build native ARM64 executable
+        run: |
+          cmake --preset ${{ matrix.preset }}
+          cmake --build --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)"
+          file tmp/cmake/${{ matrix.preset }}/vcl
+
+      - name: Run Python-free CTest checks in parallel
+        run: ctest --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
 
       - uses: actions/upload-artifact@v7
         with:
@@ -117,13 +103,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-
-      - name: Install test dependencies
-        run: python -m pip install -r scripts/requirements.txt
-
       - name: Configure native macOS build
         run: |
           test "$(uname -m)" = "${{ matrix.arch }}"
@@ -131,11 +110,11 @@ jobs:
 
       - name: Compile native Mach-O executable
         run: |
-          cmake --build --preset macos
+          cmake --build --preset macos --parallel "$(sh scripts/ci/cpu-count.sh)"
           file tmp/cmake/macos/vcl
 
-      - name: Run Python unit suite and 11 VCL fixtures
-        run: ctest --preset macos
+      - name: Run Python-free CTest checks in parallel
+        run: ctest --preset macos --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
 
       - name: Upload native macOS executable
         uses: actions/upload-artifact@v7

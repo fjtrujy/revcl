@@ -1,0 +1,83 @@
+# CTest fixture runner: use CMake's native process runner and SHA-256 routines.
+# Each test writes to its own directory, allowing parallel CTest execution.
+foreach(required REVCL_SOURCE_DIR REVCL_OUTPUT_DIR REVCL_BINARY REVCL_CASE)
+  if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
+    message(FATAL_ERROR "Missing required argument: ${required}")
+  endif()
+endforeach()
+
+set(corpus "${REVCL_SOURCE_DIR}/tests/oracle")
+file(READ "${corpus}/cases.json" cases_json)
+file(READ "${corpus}/expected_stdout_sha256.json" hashes_json)
+string(JSON case_count LENGTH "${cases_json}")
+math(EXPR case_last "${case_count} - 1")
+set(found FALSE)
+foreach(i RANGE 0 ${case_last})
+  string(JSON name GET "${cases_json}" ${i} name)
+  if(NOT "${name}" STREQUAL "${REVCL_CASE}")
+    continue()
+  endif()
+  set(found TRUE)
+  string(JSON archived ERROR_VARIABLE archive_error GET "${cases_json}" ${i} archive)
+  if(NOT archive_error)
+    message(FATAL_ERROR "${name}: archived cases require external preprocessing")
+  endif()
+  string(JSON input GET "${cases_json}" ${i} input)
+  string(JSON success GET "${cases_json}" ${i} success)
+  string(JSON flag_count LENGTH "${cases_json}" ${i} flags)
+  set(flags)
+  if(flag_count GREATER 0)
+    math(EXPR flag_last "${flag_count} - 1")
+    foreach(j RANGE 0 ${flag_last})
+      string(JSON flag GET "${cases_json}" ${i} flags ${j})
+      list(APPEND flags "${flag}")
+    endforeach()
+  endif()
+  break()
+endforeach()
+if(NOT found)
+  message(FATAL_ERROR "Unknown standalone VCL case: ${REVCL_CASE}")
+endif()
+
+string(JSON expected_exit GET "${hashes_json}" "${REVCL_CASE}" exit_status)
+string(JSON expected_digest GET "${hashes_json}" "${REVCL_CASE}" stdout_sha256)
+set(input_path "tests/oracle/fixtures/${input}")
+if(NOT EXISTS "${REVCL_SOURCE_DIR}/${input_path}")
+  message(FATAL_ERROR "Missing fixture input: ${input_path}")
+endif()
+file(MAKE_DIRECTORY "${REVCL_OUTPUT_DIR}")
+set(stdout_file "${REVCL_OUTPUT_DIR}/${REVCL_CASE}.stdout")
+set(stderr_file "${REVCL_OUTPUT_DIR}/${REVCL_CASE}.stderr")
+
+execute_process(
+  COMMAND "${REVCL_BINARY}" -w -n ${flags} "${input_path}"
+  WORKING_DIRECTORY "${REVCL_SOURCE_DIR}"
+  OUTPUT_FILE "${stdout_file}"
+  ERROR_FILE "${stderr_file}"
+  RESULT_VARIABLE exit_status
+  TIMEOUT 15)
+
+if(NOT "${exit_status}" STREQUAL "${expected_exit}")
+  file(READ "${stderr_file}" stderr)
+  message(FATAL_ERROR
+    "${REVCL_CASE}: exit ${exit_status}, expected ${expected_exit}; stderr: ${stderr}")
+endif()
+if(success)
+  file(SIZE "${stdout_file}" output_size)
+  if(output_size EQUAL 0)
+    message(FATAL_ERROR "${REVCL_CASE}: expected nonempty output")
+  endif()
+else()
+  file(READ "${stderr_file}" stderr)
+  string(FIND "${stderr}" "USER:" user_error)
+  if(user_error EQUAL -1)
+    message(FATAL_ERROR "${REVCL_CASE}: missing USER: diagnostic: ${stderr}")
+  endif()
+endif()
+
+file(SHA256 "${stdout_file}" actual_digest)
+if(NOT "${actual_digest}" STREQUAL "${expected_digest}")
+  message(FATAL_ERROR
+    "${REVCL_CASE}: stdout SHA-256 mismatch: expected ${expected_digest}, got ${actual_digest}")
+endif()
+message(STATUS "${REVCL_CASE}: exit ${exit_status}, SHA-256 ${actual_digest} verified")

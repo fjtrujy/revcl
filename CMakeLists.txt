@@ -81,12 +81,21 @@ else()
   endif()
 
   if(BUILD_TESTING)
-    find_package(Python3 REQUIRED COMPONENTS Interpreter)
-    add_test(NAME python-unit
-      COMMAND "${Python3_EXECUTABLE}" -m unittest discover -s tests/unit -q)
-    set_tests_properties(python-unit PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-    # Each standalone fixture becomes a distinct CTest case. The archived
-    # macro-heavy input requires MASP and remains in the separate oracle suite.
+    # Native CMake/CTest validation does not require a Python interpreter.
+    # The Python tests under tests/unit exercise optional decompilation tools,
+    # not the VCL executable, and remain available to developers separately.
+    add_test(NAME project-configuration
+      COMMAND "${CMAKE_COMMAND}"
+        "-DREVCL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VerifyProject.cmake")
+    add_test(NAME cli-help
+      COMMAND "${CMAKE_COMMAND}"
+        "-DREVCL_BINARY=$<TARGET_FILE:vcl>"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VerifyCLI.cmake")
+
+    # Individual fixture tests check the complete generated stdout SHA,
+    # correct status, and errors using CMake's execute_process/file(SHA256).
+    # The archived macro-heavy input needs MASP and is tested separately.
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracle/cases.json" _cases_json)
     string(JSON _case_count LENGTH "${_cases_json}")
     math(EXPR _last_case "${_case_count} - 1")
@@ -97,9 +106,13 @@ else()
         continue()
       endif()
       add_test(NAME "fixture-${_case_name}"
-        COMMAND "${Python3_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/ci/test_modern_vcl.py"
-        --executable "$<TARGET_FILE:vcl>" --case "${_case_name}")
+        COMMAND "${CMAKE_COMMAND}"
+          "-DREVCL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+          "-DREVCL_OUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/fixture-results"
+          "-DREVCL_BINARY=$<TARGET_FILE:vcl>"
+          "-DREVCL_CASE=${_case_name}"
+          -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VerifyFixture.cmake")
+      set_tests_properties("fixture-${_case_name}" PROPERTIES TIMEOUT 20)
     endforeach()
   endif()
 endif()

@@ -35,10 +35,10 @@
     }
   ],
   "buildPresets": [
-    {"name":"macos","configurePreset":"macos","jobs":2},
-    {"name":"linux-gcc","configurePreset":"linux-gcc","jobs":2},
-    {"name":"linux-clang","configurePreset":"linux-clang","jobs":2},
-    {"name":"historical","configurePreset":"historical","jobs":2}
+    {"name":"macos","configurePreset":"macos"},
+    {"name":"linux-gcc","configurePreset":"linux-gcc"},
+    {"name":"linux-clang","configurePreset":"linux-clang"},
+    {"name":"historical","configurePreset":"historical"}
   ],
   "testPresets": [
     {"name":"macos","configurePreset":"macos","output":{"outputOnFailure":true}},
