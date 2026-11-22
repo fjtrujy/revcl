@@ -35,7 +35,7 @@ bool setLocks(Instr *in)
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
                     RegisterPartLockList *ll = s->unk_04;
-                    s->setFrom(&in->unk_13e8);
+                    s->setFrom(&in->position);
                     if (!ll->addOutputLock(s)) {
                         reportError("oh no - add output lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
@@ -49,7 +49,7 @@ bool setLocks(Instr *in)
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
                     RegisterPartLockList *ll = s->unk_04;
-                    s->setFrom(&in->unk_13e8);
+                    s->setFrom(&in->position);
                     if (!ll->addInputLock(s)) {
                         reportError("SetLocks: oh no - add input lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
@@ -250,7 +250,7 @@ done:
 
 bool moveLocks(Instr *const in, InstructionPosition *pos)
 {
-    InstructionPosition *d = &in->unk_13e8;
+    InstructionPosition *d = &in->position;
     d->unk_00 = pos->unk_00;
     d->unk_04 = pos->unk_04;
     d->unk_03 = pos->unk_03;
@@ -265,7 +265,7 @@ bool moveLocks(Instr *const in, InstructionPosition *pos)
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
                     RegisterPartLockList *ll = s->unk_04;
-                    s->setFrom(&in->unk_13e8);
+                    s->setFrom(&in->position);
                     if (!ll->moveOutputLock(s)) {
                         reportError("oh no - move output lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
@@ -280,7 +280,7 @@ bool moveLocks(Instr *const in, InstructionPosition *pos)
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
                     RegisterPartLockList *ll = s->unk_04;
-                    s->setFrom(&in->unk_13e8);
+                    s->setFrom(&in->position);
                     if (!ll->moveInputLock(s)) {
                         reportError("oh no - move input lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
@@ -375,7 +375,7 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
         *minPos = 30000;
         return 0x10000;
     }
-    if (stagger_080b33ac && in->unk_13ce && (bool)(r4 & 1)) {
+    if (stagger_080b33ac && in->ramAccessType && (bool)(r4 & 1)) {
         *minPos = row + 1;
         return 0x10000;
     }
@@ -391,7 +391,7 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
     }
 
     int fr = 0;
-    if (!in->unk_1410) {
+    if (!in->hasExtraPredecessors) {
         if (!func_0806558c(in, &fr)) {
             reportError("check fdeps failed\n");
             exitAfterCleanup(-1);
@@ -437,7 +437,7 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
     }
     r = pos->unk_04;
     wtRow *row = &wt->unk_2c[r];
-    InstructionPosition *s = &in->unk_13e8;
+    InstructionPosition *s = &in->position;
     b = pos->unk_00;
     s->unk_04 = r;
     char a = pos->unk_03;
@@ -474,7 +474,7 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
 
 bool UndoInsert(workTable *wt, Instr *in)
 {
-    if (in->unk_1388)
+    if (in->branchFlags)
         wt->unk_84 = 0;
     if (in->unk_142c) {
         if (!in->unk_142e) {
@@ -515,12 +515,12 @@ bool reduceExtents(workTable *wt)
     do {
         moved = 0;
         for (int r = wt->unk_30; __builtin_expect(r != wt->unk_34, 1); r++) {
-            wtRow *row = wt->func_080724f0(r);
+            wtRow *row = wt->getRowByIndex(r);
             for (int p = 0; p != 2; p++) {
                 Instr *in = row->getEntry(p);
                 if (!in)
                     continue;
-                int lo = in->unk_13e8.unk_00;
+                int lo = in->position.unk_00;
                 int cnt = 0;
                 int minEnd = 30000;
                 Operand *op;
@@ -547,7 +547,7 @@ bool reduceExtents(workTable *wt)
                     InstructionPosition pos;
                     bool found = false;
                     for (; t > lo; t--) {
-                        pos.func_0805874c(t);
+                        pos.setFromLinearRow(t);
                         if (!func_0807e130(wt, in, &pos, false)) {
                             found = true;
                             break;
@@ -600,19 +600,19 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 int maxPos = pos->unk_00 - par->unk_18 - s->unk_18;
                 int start = pos->unk_00 - back;
                 if (!back)
-                    start = oi->unk_13e8.unk_00 + 1;
+                    start = oi->position.unk_00 + 1;
                 if (!par->unk_15)
                     start -= par->unk_18;
                 bool single = true;
                 if (oi->unk_13d1) {
-                    start = oi->unk_13e8.unk_00 + 1;
-                    if (maxPos > wt->unk_38 + oi->unk_13e8.unk_00)
-                        maxPos = wt->unk_38 + oi->unk_13e8.unk_00;
+                    start = oi->position.unk_00 + 1;
+                    if (maxPos > wt->unk_38 + oi->position.unk_00)
+                        maxPos = wt->unk_38 + oi->position.unk_00;
                     if (maxPos > oi->unk_1430)
                         maxPos = oi->unk_1430;
                     single = false;
                 }
-                InstructionPosition *opos = &oi->unk_13e8;
+                InstructionPosition *opos = &oi->position;
                 if (start <= opos->unk_00)
                     continue;
                 if (start > maxPos)
@@ -620,8 +620,8 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 bool moved = false;
                 char pipe = opos->unk_02;
                 InstructionPosition np;
-                np.func_0805878c(pipe);
-                np.func_0805874c(start);
+                np.setInstructionPipe(pipe);
+                np.setFromLinearRow(start);
                 if (depth <= 3) {
                     int b = back;
                     if (oi->unk_13d1)
@@ -635,7 +635,7 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 cur.unk_03 = np.unk_03;
                 cur.unk_02 = np.unk_02;
                 for (; start <= maxPos; start++) {
-                    cur.func_0805874c(start);
+                    cur.setFromLinearRow(start);
                     if (!func_0807e130(wt, oi, &cur, false)) {
                         np.unk_00 = cur.unk_00;
                         np.unk_04 = cur.unk_04;
@@ -706,7 +706,7 @@ int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
         l = in->unk_13b4;
     if (l && g_080b3374 >= 0 && g_080b3374 - r4 <= l)
         return 0x10000;
-    if (stagger_080b33ac && in->unk_13ce && (bool)(r4 & 1))
+    if (stagger_080b33ac && in->ramAccessType && (bool)(r4 & 1))
         return 0x10000;
 
     if (wt->unk_38) {
@@ -716,7 +716,7 @@ int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
         return 0x8000;
     }
 
-    if (!in->unk_1410) {
+    if (!in->hasExtraPredecessors) {
         int fr = 0;
         if (!func_0806558c(in, &fr)) {
             reportError("check fdeps failed\n");
@@ -745,7 +745,7 @@ int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
 
 int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
 {
-    int row = in->unk_13e8.getRow() < 0 ? pos->getRow() : in->unk_13e8.getRow();
+    int row = in->position.getRow() < 0 ? pos->getRow() : in->position.getRow();
     if (row < 0) {
         reportError("inst not inserted\n");
         abortAfterError();
@@ -765,16 +765,16 @@ int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
                 Instr *oi = par->ownerInstr();
                 if (!oi)
                     continue;
-                int t = in->unk_13e8.unk_00 - par->unk_18 - s->unk_18;
-                int oiRow = oi->unk_13e8.unk_00;
+                int t = in->position.unk_00 - par->unk_18 - s->unk_18;
+                int oiRow = oi->position.unk_00;
                 if (t <= oiRow)
                     continue;
                 bool found = false;
                 InstructionPosition trial;
                 InstructionPosition dest;
-                dest.func_0805874c(t);
+                dest.setFromLinearRow(t);
                 for (; oiRow < t; t--) {
-                    trial.func_0805874c(t);
+                    trial.setFromLinearRow(t);
                     if (!func_0807e130(wt, oi, &trial, true)) {
                         dest.unk_00 = trial.unk_00;
                         dest.unk_04 = trial.unk_04;
@@ -810,7 +810,7 @@ int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwar
     if (in->unk_138c == 3) {
         if (upwards) {
             for (int i = 0; i != 2; i++) {
-                pos->func_0805878c(i);
+                pos->setInstructionPipe(i);
                 int r = func_0807dc44(wt, in, pos);
                 if (!r)
                     return 0;
@@ -818,7 +818,7 @@ int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwar
             }
         } else {
             for (int i = 1; i >= 0; i--) {
-                pos->func_0805878c(i);
+                pos->setInstructionPipe(i);
                 int r = func_0807dc44(wt, in, pos);
                 if (!r)
                     return 0;
@@ -827,13 +827,13 @@ int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwar
         }
         return result;
     }
-    pos->func_0805878c(in->unk_13e8.getPipe());
+    pos->setInstructionPipe(in->position.getPipe());
     return func_0807dc44(wt, in, pos);
 }
 
 int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos)
 {
-    int row = in->unk_13e8.getRow() < 0 ? pos->getRow() : in->unk_13e8.getRow();
+    int row = in->position.getRow() < 0 ? pos->getRow() : in->position.getRow();
     if (row < 0) {
         reportError("inst not inserted\n");
         abortAfterError();
@@ -852,18 +852,18 @@ int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos)
                 Instr *oi = par->ownerInstr();
                 if (!oi)
                     continue;
-                if (oi->unk_13ce != 1 && oi->unk_13f0.unk_04 != 0)
+                if (oi->ramAccessType != 1 && oi->unk_13f0.unk_04 != 0)
                     continue;
-                int t = in->unk_13e8.unk_00 - par->unk_18 - s->unk_18;
-                int oiRow = oi->unk_13e8.unk_00;
+                int t = in->position.unk_00 - par->unk_18 - s->unk_18;
+                int oiRow = oi->position.unk_00;
                 if (t <= oiRow)
                     continue;
                 bool found = false;
                 InstructionPosition trial;
                 InstructionPosition dest;
-                dest.func_0805874c(t);
+                dest.setFromLinearRow(t);
                 for (; oiRow < t; t--) {
-                    trial.func_0805874c(t);
+                    trial.setFromLinearRow(t);
                     if (!func_0807e130(wt, oi, &trial, true)) {
                         dest.unk_00 = trial.unk_00;
                         dest.unk_04 = trial.unk_04;

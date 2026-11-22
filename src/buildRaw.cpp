@@ -18,7 +18,7 @@ static inline void dumpRow(wtRow *row)
 
 bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int loopMode)
 {
-    workTable *t = &s->unk_148;
+    workTable *t = &s->sourceTable;
     if (!t) {
         reportError("build: failed to get input table from ist\n");
         return false;
@@ -28,7 +28,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         return false;
     }
     t->unk_10 = s;
-    if (!t->func_08073774(loopMode)) {
+    if (!t->setTableRawMode(loopMode)) {
         reportError("failed to set sub mode\n");
         return false;
     }
@@ -46,7 +46,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         }
         b->labels.clearNodes();
         Instr *in = b->instructions[0];
-        if (in && in->unk_13cd) {
+        if (in && in->syntheticKind) {
             if (!s->processCmdSynth(in)) {
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
@@ -56,7 +56,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             }
             continue;
         }
-        wtRow *row = t->func_080724f0(rows);
+        wtRow *row = t->getRowByIndex(rows);
         if (!row) {
             reportError("failed to get ied\n");
             return false;
@@ -68,7 +68,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             Instr *in = b->instructions[j];
             if (!in)
                 continue;
-            if (in->unk_13cd) {
+            if (in->syntheticKind) {
                 reportError("encountered a synth instruction in raw mode\n");
                 return false;
             }
@@ -77,13 +77,13 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
             }
-            short lid = in->unk_1420;
+            short lid = in->parsedLoopId;
             if (lid < 0) {
                 reportError("-ve parseLid set\n");
                 return false;
             }
             if (lid) {
-                if (in->func_08054138()) {
+                if (in->isNop()) {
                     reportUserMessage("loopid set on a nop\n");
                     in->leDump();
                     return false;
@@ -94,7 +94,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                     return false;
                 }
                 looped = true;
-            } else if (looped && !in->func_08054138()) {
+            } else if (looped && !in->isNop()) {
                 reportError("flow::build - parse id wasn't set for a supposedly looped instruction.type\n");
                 in->leDump();
                 return false;
@@ -125,7 +125,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             rows++;
         }
     }
-    s->unk_2ce = branchType;
+    s->branchType = branchType;
     if (branchRow >= 0) {
         int d = rows - branchRow - 1;
         if (d <= 0) {
@@ -152,7 +152,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
     setRangeFrom(t);
     int maxLid = 0;
     for (i = 0; i != rows; i++) {
-        wtRow *row = t->func_080724f0(i);
+        wtRow *row = t->getRowByIndex(i);
         if (!row) {
             reportError("failed to get ie from table\n");
             return false;
@@ -163,17 +163,17 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                 continue;
             int lid, pos;
             if (looped) {
-                lid = in->unk_1420 - 1;
+                lid = in->parsedLoopId - 1;
                 pos = i + rows * lid;
             } else {
                 pos = i;
                 lid = 0;
             }
-            in->unk_1420 = -1;
+            in->parsedLoopId = -1;
             if (lid > maxLid)
                 maxLid = lid;
-            in->unk_13e8.func_0805878c(j);
-            in->unk_13e8.func_0805874c(pos);
+            in->position.setInstructionPipe(j);
+            in->position.setFromLinearRow(pos);
         }
     }
     if (looped && !maxLid) {

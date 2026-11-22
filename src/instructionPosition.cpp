@@ -7,7 +7,7 @@ int g_080b336c = -1;
 int g_080b3370 = -2;
 int g_080b3374 = -3;
 
-void cls08058718::func_080586e0()
+void cls08058718::clearInstructionPosition()
 {
     unk_00 = -1;
     unk_04 = -1;
@@ -31,7 +31,7 @@ void cls08058718::func_08058744()
 {
 }
 
-void cls08058718::func_0805874c(short v)
+void cls08058718::setFromLinearRow(short v)
 {
     int g = g_080b336c;
     if (g == 0 || v < g) {
@@ -45,7 +45,7 @@ void cls08058718::func_0805874c(short v)
     }
 }
 
-void cls08058718::func_0805878c(char c)
+void cls08058718::setInstructionPipe(char c)
 {
     unk_02 = c;
 }
@@ -78,7 +78,7 @@ int setRangeFrom(workTable *t)
         reportError("can't set range from a non raw/raw_preexp/mid table\n");
         return 0;
     }
-    return setRange(t->func_0807411c(), t->func_080741c0(), t->func_080741b4());
+    return setRange(t->getRangeStart(), t->getRangeEnd(), t->getLoopSize());
 }
 
 bool setRange(int start, int end, int lsz)

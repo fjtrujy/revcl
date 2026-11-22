@@ -15,7 +15,7 @@ bool checkOpt1(Program *p)
             reportError("null work table\n");
             return false;
         }
-        if (wt != &s->unk_148) {
+        if (wt != &s->sourceTable) {
             reportError("work table isn't input table\n");
             return false;
         }
@@ -32,8 +32,8 @@ bool checkOpt2(Program *p)
             reportError("null work table\n");
             return false;
         }
-        if (s->func_0806d908() != 4) {
-            if (s->getTable() != s->unk_214) {
+        if (s->getCodeMode() != 4) {
+            if (s->getTable() != s->optimizedTable) {
                 reportError("work table isn't opt table\n");
                 return false;
             }
@@ -42,7 +42,7 @@ bool checkOpt2(Program *p)
                 return false;
             }
         } else {
-            if (s->getTable() != &s->unk_148) {
+            if (s->getTable() != &s->sourceTable) {
                 reportError("checkopt2 - synth table wasn't input\n");
                 return false;
             }
@@ -71,12 +71,12 @@ bool checkOpt3(Program *p)
                 reportError("table set for abstract list\n");
                 return false;
             }
-            for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
-                if (in->unk_13e8.getPipe() != -1) {
+            for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+                if (in->position.getPipe() != -1) {
                     reportError("pipe is set for non-inserted instruction\n");
                     return false;
                 }
-                if (in->unk_13e8.getRow() != -1) {
+                if (in->position.getRow() != -1) {
                     reportError("rline is set for non-inserted\n");
                     return false;
                 }
@@ -87,8 +87,8 @@ bool checkOpt3(Program *p)
             }
         }
         if (wt->unk_09 == 3) {
-            int start = wt->func_0807411c();
-            int end = wt->func_080741c0();
+            int start = wt->getRangeStart();
+            int end = wt->getRangeEnd();
             if (start < 0 || end < start) {
                 reportError("invalid table range\n");
                 return false;
@@ -119,11 +119,11 @@ bool checkOpt3(Program *p)
                         return false;
                     }
                     prev = in;
-                    if (in->unk_13e8.getRow() != i) {
+                    if (in->position.getRow() != i) {
                         reportError("instruction is very lost\n");
                         return false;
                     }
-                    if (in->unk_13e8.getPipe() != j) {
+                    if (in->position.getPipe() != j) {
                         reportError("instruction is quite lost\n");
                         return false;
                     }
@@ -134,7 +134,7 @@ bool checkOpt3(Program *p)
                     count++;
                 }
             }
-            int lcount = wt->unk_88.count;
+            int lcount = wt->linearInstructions.count;
             if (count != lcount) {
                 reportError("linear count and itable mismatch (%d != %d) for %s\n",
                               lcount, count, s->streamName());
@@ -143,7 +143,7 @@ bool checkOpt3(Program *p)
             }
         }
 
-        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             for (int k = 0; k != in->operandCount; k++) {
                 Operand *op = &in->operands[k];
                 RegPoolEntry *reg;
@@ -201,21 +201,21 @@ bool checkOpt3(Program *p)
                                 reportError("oploc not tied to instruction in checkopt3\n");
                                 return false;
                             }
-                            if (!oi->func_08054168()) {
+                            if (!oi->getOwningStream()) {
                                 reportError("oploc instruction doesnt have ist set\n");
                                 return false;
                             }
                             if (!o->isExt()) {
-                                if (oi->func_08054168() != s) {
+                                if (oi->getOwningStream() != s) {
                                     reportError("internal oploc but instruction not from this stream\n");
                                     return false;
                                 }
                                 if (wt->unk_09 == 3) {
-                                    if (__builtin_expect(oi->unk_13e8.getRow() < last, 0)) {
+                                    if (__builtin_expect(oi->position.getRow() < last, 0)) {
                                         reportError("local oplocs  aren't in order\n");
                                         return false;
                                     }
-                                    last = oi->unk_13e8.getRow();
+                                    last = oi->position.getRow();
                                 }
                             }
                         }

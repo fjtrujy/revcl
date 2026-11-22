@@ -28,11 +28,11 @@ bool makeLpWork(instStream *s, int maxSpread)
         reportError(lpWorkNoTableError);
         return false;
     }
-    if (s->unk_220) {
+    if (s->savedTable) {
         reportError(lpWorkSavedTableError);
         return false;
     }
-    s->unk_220 = wt;
+    s->savedTable = wt;
     s->workTablePtr = 0;
     workTable *nt = wt->localClone();
     s->workTablePtr = nt;
@@ -41,7 +41,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         return false;
     }
     Instr *in;
-    for (in = nt->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (in = nt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         int latest = 0;
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
@@ -65,7 +65,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         }
         in->unk_0c = latest;
     }
-    for (in = nt->unk_88.tail; in; in = in->unk_1c.unk_04) {
+    for (in = nt->linearInstructions.tail; in; in = in->unk_1c.unk_04) {
         int earliest = 30000;
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
@@ -95,7 +95,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         }
     }
     char buf[256];
-    for (in = nt->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (in = nt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         int lo = 30000;
         int hi = 0;
         char *p = buf;
@@ -149,18 +149,18 @@ bool disposeLpWork(instStream *s)
         return false;
     }
     delete s->workTablePtr;
-    if (s->unk_220 == 0) {
+    if (s->savedTable == 0) {
         reportError(lpWorkDisposeNoSavedError);
         return false;
     }
-    s->workTablePtr = s->unk_220;
-    s->unk_220 = 0;
+    s->workTablePtr = s->savedTable;
+    s->savedTable = 0;
     return true;
 }
 
 bool keepLpWork(instStream *s)
 {
-    s->unk_220 = 0;
+    s->savedTable = 0;
     return true;
 }
 
@@ -175,7 +175,7 @@ bool lsqChain(workTable *wt)
         if (reg->registerClass != 8)
             continue;
         Instr *list[1024];
-        Instr *in = wt->unk_88.head;
+        Instr *in = wt->linearInstructions.head;
         reportInfo("lsqi- scan %s\n", reg->registerName());
         int n = 0;
         bool bad = false;
@@ -226,10 +226,10 @@ bool lsqChain(workTable *wt)
         }
         iInfo *ii;
         if (total < 0) {
-            ii = func_0806bf74(0x70);
+            ii = getOpcodeInfoById(0x70);
             total = -total;
         } else
-            ii = func_0806bf74(0x6e);
+            ii = getOpcodeInfoById(0x6e);
         Instr *ni = new Instr(ii);
         if (!ni) {
             reportError(lsqChainNewInstrError);
@@ -275,12 +275,12 @@ bool splitStreams()
 bool modLsqq(Instr *in, int imm)
 {
     iInfo *ii;
-    switch ((unsigned char)in->unk_13ce) {
+    switch ((unsigned char)in->ramAccessType) {
     case 1:
-        ii = func_0806bf74(0x9b);
+        ii = getOpcodeInfoById(0x9b);
         break;
     case 2:
-        ii = func_0806bf74(0xa0);
+        ii = getOpcodeInfoById(0xa0);
         break;
     default:
         reportError("mod_lsqq: ?\n");
@@ -288,8 +288,8 @@ bool modLsqq(Instr *in, int imm)
         return false;
     }
     in->opcodeInfo = ii;
-    in->operands[2].unk_2c[0].func_080560e8();
-    in->operands[1].unk_2c[0].func_080560e8();
+    in->operands[2].unk_2c[0].clearSlotLocations();
+    in->operands[1].unk_2c[0].clearSlotLocations();
     in->operandCount = 2;
     in->operands[1].unk_27 = 1;
     Operand *op = &in->operands[1];

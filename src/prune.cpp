@@ -87,7 +87,7 @@ bool initPrune(instStream *s)
         reportError("failed to get work table\n");
         return false;
     }
-    for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00)
         if (!initPrune(in)) {
             reportError("init prune failed\n");
             return false;
@@ -144,9 +144,9 @@ int tryPrune(instStream *s)
         return 0;
     }
     bool raw = false;
-    if (t->unk_09 == 4 || t->func_08073754() == 4)
+    if (t->unk_09 == 4 || t->getTableRawMode() == 4)
         raw = true;
-    for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         int r = tryPrune(in, raw);
         if (r < 0) {
             reportError("rec  prune failed for instruction\n");
@@ -261,9 +261,9 @@ bool doPrune(instStream *s)
         reportError("failed to get work table\n");
         return false;
     }
-    if (t->func_08073754() == 4 || t->func_08073754() == 3)
+    if (t->getTableRawMode() == 4 || t->getTableRawMode() == 3)
         return true;
-    Instr *first = t->unk_88.head;
+    Instr *first = t->linearInstructions.head;
     Instr *in = first;
     Instr *next;
     if (first) do {
@@ -275,7 +275,7 @@ bool doPrune(instStream *s)
             return false;
         }
         if (r == 0) {
-            if (!in->func_08054138()) {
+            if (!in->isNop()) {
                 reportVerboseInfo("REMOVE INST: ");
                 int saved = errorOccurred;
                 errorOccurred = quiet_080bbd98;
@@ -356,22 +356,22 @@ int doPrune(Instr *in)
             }
             m = inOR;
         } else if (!outOR)
-            m = in->unk_138f;
+            m = in->destinationMask;
         else
             m = outOR;
-        if (m & ~in->unk_138f) {
-            reportError("inOR was out of range of instruction mod bits nb=%x,mb=%x!\n", m, in->unk_138f);
+        if (m & ~in->destinationMask) {
+            reportError("inOR was out of range of instruction mod bits nb=%x,mb=%x!\n", m, in->destinationMask);
             dumpPruneInstruction(in);
             return -1;
         }
-        if (m != in->unk_138f) {
-            reportVerboseInfo("PRUNE FIELD: [%s->%s]  ", func_08052064(in->unk_138f), func_08052064(m));
+        if (m != in->destinationMask) {
+            reportVerboseInfo("PRUNE FIELD: [%s->%s]  ", func_08052064(in->destinationMask), func_08052064(m));
             int saved = errorOccurred;
             errorOccurred = quiet_080bbd98;
             in->leDump();
             errorOccurred = saved;
         }
-        in->unk_138f = m;
+        in->destinationMask = m;
         for (i = 0; (op = in->getOp(i)) != 0; i++) {
             if (op->unk_04 == 1 || op->unk_04 == 9)
                 op->unk_07 = m;

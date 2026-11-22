@@ -15,7 +15,7 @@ instStream *selectUninsertedStream(Program *p)
     int minIn = 1000000;
     int maxOut = -1000000;
     for (; s; s = s->nextStream) {
-        if (s->func_0806d908() == 1) {
+        if (s->getCodeMode() == 1) {
             int in = s->getUninsertedxInputs();
             int out = s->getUninsertedxOutputs();
             if (in < 0) {
@@ -46,7 +46,7 @@ int instStream::getUninsertedxInputs()
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = workTablePtr->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = workTablePtr->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         int base = getFromStart(in);
         if (base < 0) {
             reportError("iStream::: getUninsertedxInputs - failed\n");
@@ -67,7 +67,7 @@ int instStream::getUninsertedxInputs()
                 }
                 for (; ol; ol = ol->unk_00) {
                     Instr *setter = ol->unk_04;
-                    if (setter->func_08054168() == this || setter->unk_00)
+                    if (setter->getOwningStream() == this || setter->unk_00)
                         continue;
                     int te = getToEnd(setter);
                     if (te < 0) {
@@ -96,7 +96,7 @@ int instStream::getUninsertedxOutputs()
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = workTablePtr->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = workTablePtr->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         int base = getToEnd(in);
         if (base < 0) {
             reportError("iStream::: getUninsertedxOutputs - failed\n");
@@ -112,7 +112,7 @@ int instStream::getUninsertedxOutputs()
                 if ((op->unk_27 >> k) & 1) {
                     for (ol_s *ol = op->unk_2c[k].unk_54.head; ol; ol = ol->unk_00) {
                         Instr *user = ol->unk_04;
-                        if (user->func_08054168() == this || user->unk_00)
+                        if (user->getOwningStream() == this || user->unk_00)
                             continue;
                         int fs = getFromStart(user);
                         if (fs < 0) {
@@ -153,7 +153,7 @@ int getToEnd(Instr *in)
             reportError("image had no owner\n");
             return -1;
         }
-        if (s != img->func_08054168()) {
+        if (s != img->getOwningStream()) {
             reportError("our image was in different stream\n");
             return -1;
         }
@@ -172,7 +172,7 @@ int getToEnd(Instr *in)
             reportError("logical len<0 for table \n");
             return -1;
         }
-        int et = img->unk_1394;
+        int et = img->scheduledCycle;
         if (et < 0) {
             reportError("exec time not set\n");
             return -1;
@@ -216,7 +216,7 @@ int getFromStart(Instr *in)
             reportError("image had no owner\n");
             return -1;
         }
-        if (s != img->func_08054168()) {
+        if (s != img->getOwningStream()) {
             reportError("our image was in different stream\n");
             return -1;
         }
@@ -235,7 +235,7 @@ int getFromStart(Instr *in)
             reportError("logical len<0 for table \n");
             return -1;
         }
-        int et = img->unk_1394;
+        int et = img->scheduledCycle;
         if (et < 0) {
             reportError("exec time not set\n");
             return -1;
@@ -271,7 +271,7 @@ bool loadLocks(Program *p, workTable *wt)
         reportError("failed to opt reset\n");
         return false;
     }
-    setRange(wt->func_0807411c(), wt->func_080741c0(), wt->func_080741b4());
+    setRange(wt->getRangeStart(), wt->getRangeEnd(), wt->getLoopSize());
     for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
         for (int i = 0; i != reg->partCount; i++) {
@@ -285,9 +285,9 @@ bool loadLocks(Program *p, workTable *wt)
                 reportError("no rll set in regref\n");
                 exitAfterCleanup(-1);
             }
-            RegisterPartLockList *cur = (RegisterPartLockList *)reg->func_0805a908(i);
+            RegisterPartLockList *cur = (RegisterPartLockList *)reg->getPartPayload(i);
             if (!cur)
-                reg->func_0805a924(i, (VclPtrWord)rll);
+                reg->setPartPayload(i, (VclPtrWord)rll);
             else if (rll != cur) {
                 reportError("rll mismatch\n");
                 exitAfterCleanup(-1);

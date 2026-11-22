@@ -19,10 +19,10 @@ bool optNormal2(workTable *wt, wrangleCand *c)
         if (d > bestA) {
             best = in;
             bestA = d;
-            bestB = -in->unk_13e4;
+            bestB = -in->linearOrderIndex;
             bestC = in->unk_13f0.unk_00;
         } else if (d == bestA) {
-            int e = -in->unk_13e4;
+            int e = -in->linearOrderIndex;
             if (e > bestB) {
                 bestB = e;
                 bestC = in->unk_13f0.unk_00;

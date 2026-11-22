@@ -50,19 +50,19 @@ bool fiddleBDL(workTable *wt)
         short m = br->unk_13b2 < br->unk_13b0 ? br->unk_13b0 : br->unk_13b2;
         if (m > extlen - 3)
             goto done;
-        wtRow *last = wt->func_080724f0(wt->unk_34 - 1);
+        wtRow *last = wt->getRowByIndex(wt->unk_34 - 1);
         if (!last) {
             reportError(fiddleGetLastIeError);
             return false;
         }
         if (last->countEntries())
             goto done;
-        wtRow *brow = wt->func_080724f0(wt->unk_34 - 2);
+        wtRow *brow = wt->getRowByIndex(wt->unk_34 - 2);
         if (!brow) {
             reportError(fiddleGetBranchIeError);
             return false;
         }
-        wtRow *prow = wt->func_080724f0(wt->unk_34 - 3);
+        wtRow *prow = wt->getRowByIndex(wt->unk_34 - 3);
         if (!prow) {
             reportError(fiddleGetPrevIeError);
             return false;

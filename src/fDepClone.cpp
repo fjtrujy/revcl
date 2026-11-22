@@ -18,11 +18,11 @@ static inline bool fdep_LinkInline(Instr *pre, Instr *post)
         reportError("fdep_Link -passed a null ptr\n");
         return false;
     }
-    if (!pre->unk_13a8.addInstructionLocation(post)) {
+    if (!pre->successorDependencies.addInstructionLocation(post)) {
         reportError("failed to add post to the post list\n");
         return false;
     }
-    if (!post->unk_13a0.addInstructionLocation(pre)) {
+    if (!post->predecessorDependencies.addInstructionLocation(pre)) {
         reportError("failed to add pre to the pre list\n");
         return false;
     }
@@ -33,13 +33,13 @@ static inline bool fdep_LinkInline(Instr *pre, Instr *post)
 bool func_0806558c(Instr *i, int *row)
 {
     *row = 0;
-    for (ol_s *o = i->unk_13a0.head; o; o = o->unk_00) {
+    for (ol_s *o = i->predecessorDependencies.head; o; o = o->unk_00) {
         Instr *in = o->unk_04;
         if (!in) {
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
         }
-        int r = in->unk_13e8.unk_00;
+        int r = in->position.unk_00;
         if (r < 0) {
             *row = -1;
             return true;
@@ -55,20 +55,20 @@ bool func_0806558c(Instr *i, int *row)
 bool func_080655e8(Instr *i, int *row)
 {
     *row = 30000;
-    for (ol_s *o = i->unk_13a8.head; o; o = o->unk_00) {
+    for (ol_s *o = i->successorDependencies.head; o; o = o->unk_00) {
         Instr *in = o->unk_04;
         if (!in) {
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
         }
-        int r = in->unk_13e8.unk_00;
+        int r = in->position.unk_00;
         if (r >= 0 && r < *row)
             *row = r;
     }
     return true;
 }
 
-bool instStream::func_0806563c(bool a, bool b)
+bool instStream::buildForwardDependencies(bool a, bool b)
 {
     if (!workTablePtr) {
         reportWarning("BuildfDepList - no work table set for %s!\n", streamName());
@@ -81,24 +81,24 @@ bool BuildfDepList(workTable *wt, bool force, bool)
 {
     Instr *in;
     Instr *phaseHead;
-    in = wt->unk_88.head;
+    in = wt->linearInstructions.head;
     if (!in)
         goto finalize;
     for (; in; in = in->unk_1c.unk_00) {
-        in->unk_1410 = 0;
-        in->unk_1412 = 0;
-        in->unk_1414 = 0;
-        if (!in->unk_13a0.clear()) {
+        in->hasExtraPredecessors = 0;
+        in->specialRegisterReadMask = 0;
+        in->specialRegisterWriteMask = 0;
+        if (!in->predecessorDependencies.clear()) {
             reportError("failed to dispose of existing prefdeplist\n");
             return false;
         }
-        if (!in->unk_13a8.clear()) {
+        if (!in->successorDependencies.clear()) {
             reportError("failed to dispose of existing postfdeplist\n");
             return false;
         }
     }
     {
-        phaseHead = wt->unk_88.head;
+        phaseHead = wt->linearInstructions.head;
         in = phaseHead;
         if (!phaseHead)
             goto finalize_ready;
@@ -109,18 +109,18 @@ bool BuildfDepList(workTable *wt, bool force, bool)
             int ramBits = 0;
             Operand *ea = 0;
             bool b20 = false;
-            if (in->unk_13d0 & 0x08) {
+            if (in->opcodeFlags & 0x08) {
                 reportError("found an instruction barrier fdep - this should be done with --barrier fixup!\n");
                 in->leDump();
                 return false;
             }
-            if (in->unk_13d0 & 0x10)
+            if (in->opcodeFlags & 0x10)
                 b10 = true;
-            if (in->unk_13d0 & 0x20)
+            if (in->opcodeFlags & 0x20)
                 b20 = true;
-            if (in->unk_13d0 & 0x40)
+            if (in->opcodeFlags & 0x40)
                 b40 = true;
-            if (in->unk_13ce == 2) {
+            if (in->ramAccessType == 2) {
                 ea = getEA(in);
                 if (!ea) {
                     reportError("failed to get ea op for store\n");
@@ -132,7 +132,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                 if (!ramBits)
                     reportWarning("found store instruction with no ram bits\n");
             }
-            if (in->unk_13ce == 1) {
+            if (in->ramAccessType == 1) {
                 ea = getEA(in);
                 if (!ea) {
                     reportError("failed to get ea op for load\n");
@@ -146,18 +146,18 @@ bool BuildfDepList(workTable *wt, bool force, bool)
             if (b20 || b10 || b40) {
                 for (Instr *o = in->unk_1c.unk_04; o; o = o->unk_1c.unk_04) {
                     bool dep = false;
-                    int type = (unsigned char)o->unk_13ce;
+                    int type = (unsigned char)o->ramAccessType;
                     if (((b20 && type == 2) || (b10 && type == 1))
                         && (!ea || ((o->getRamBits() & ramBits)
                                     && (force || tagsMatch(o, in) || sameEA(in, o)))))
                         dep = true;
-                    else if (b40 && (o->unk_13d0 & 0x40)) {
+                    else if (b40 && (o->opcodeFlags & 0x40)) {
                         b40 = false;
                         dep = true;
                     } else {
-                        if (in->unk_13ce == 2 && (o->unk_13d0 & 0x20))
+                        if (in->ramAccessType == 2 && (o->opcodeFlags & 0x20))
                             dep = true;
-                        if (in->unk_13ce == 1 && (o->unk_13d0 & 0x10))
+                        if (in->ramAccessType == 1 && (o->opcodeFlags & 0x10))
                             dep = true;
                     }
                     if (dep) {
@@ -177,7 +177,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                     RegPoolEntry *r = registerOperand(op, 2);
                     if (r) {
                         if (r->registerIndex == 48)
-                            in->unk_1414 = op->unk_07;
+                            in->specialRegisterWriteMask = op->unk_07;
                         if (r->registerIndex == 48 || r->registerIndex == 49) {
                             for (int p = 0; p != r->partCount; p++)
                                 if ((op->unk_07 >> p) & 1)
@@ -190,7 +190,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                     }
                     r = registerOperand(op, 1);
                     if (r && r->registerIndex == 48)
-                        in->unk_1412 = op->unk_07;
+                        in->specialRegisterReadMask = op->unk_07;
                 }
             }
             in = in->unk_1c.unk_00;
@@ -198,7 +198,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
         }
     }
 finalize:
-    phaseHead = wt->unk_88.head;
+    phaseHead = wt->linearInstructions.head;
 finalize_ready:
     in = phaseHead;
     Instr *last[4] = { 0, 0, 0, 0 };
@@ -206,24 +206,24 @@ finalize_ready:
     for (; phaseHead; phaseHead = (Instr *)((in = in->unk_1c.unk_00) != 0)) {
         int p;
         for (p = 0; p != 4; p++)
-            if (((in->unk_1414 >> p) & 1) && !((in->unk_1412 >> p) & 1))
+            if (((in->specialRegisterWriteMask >> p) & 1) && !((in->specialRegisterReadMask >> p) & 1))
                 last[p] = in;
         for (p = 0; p != 4; p++) {
-            if ((in->unk_1412 >> p) & 1) {
+            if ((in->specialRegisterReadMask >> p) & 1) {
                 Instr *w = last[p];
                 if (w)
-                    for (ol_s *l = in->unk_13a0.head; l; l = l->unk_00) {
+                    for (ol_s *l = in->predecessorDependencies.head; l; l = l->unk_00) {
                         Instr *pre = l->unk_04;
-                        if (pre->unk_13e4 < w->unk_13e4) {
-                            w->unk_1410 = 1;
-                            w->unk_13a0.addInstructionLocation(pre);
+                        if (pre->linearOrderIndex < w->linearOrderIndex) {
+                            w->hasExtraPredecessors = 1;
+                            w->predecessorDependencies.addInstructionLocation(pre);
                         }
                     }
             }
         }
         in->func_08054008(false);
-        in->unk_13a0.validateOperandLocations();
-        in->unk_13a8.validateOperandLocations();
+        in->predecessorDependencies.validateOperandLocations();
+        in->successorDependencies.validateOperandLocations();
     }
     return true;
 }
@@ -262,20 +262,20 @@ bool tagsMatch(Instr *a, Instr *b)
 bool fixupCloneFdeps(workTable *wt)
 {
     int n = 0;
-    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         Instr *orig = in->unk_08;
         n += 8;
-        in->unk_13e4 = n;
+        in->linearOrderIndex = n;
         if (!orig) {
             reportError("no original set\n");
             exitAfterCleanup(-1);
         }
-        in->unk_1410 = orig->unk_1410;
-        if (!copyCloneFdeps(in, orig->unk_13a0.head, &in->unk_13a0)) {
+        in->hasExtraPredecessors = orig->hasExtraPredecessors;
+        if (!copyCloneFdeps(in, orig->predecessorDependencies.head, &in->predecessorDependencies)) {
             reportError("failed to fixup the pre fdep list\n");
             return false;
         }
-        if (!copyCloneFdeps(in, orig->unk_13a8.head, &in->unk_13a8)) {
+        if (!copyCloneFdeps(in, orig->successorDependencies.head, &in->successorDependencies)) {
             reportError("failed to fix the post fdeps\n");
             return false;
         }
@@ -289,11 +289,11 @@ bool fdep_Link(Instr *pre, Instr *post)
         reportError("fdep_Link -passed a null ptr\n");
         return false;
     }
-    if (!pre->unk_13a8.addInstructionLocation(post)) {
+    if (!pre->successorDependencies.addInstructionLocation(post)) {
         reportError("failed to add post to the post list\n");
         return false;
     }
-    if (!post->unk_13a0.addInstructionLocation(pre)) {
+    if (!post->predecessorDependencies.addInstructionLocation(pre)) {
         reportError("failed to add pre to the pre list\n");
         return false;
     }
@@ -333,9 +333,9 @@ bool func_08065fd4(Instr *in, Instr *other)
                 if ((op->unk_07 >> p) & 1)
                     for (ol_s *l = op->unk_2c[p].unk_54.head; l; l = l->unk_00) {
                         Instr *x = l->unk_04;
-                        if (x && x != in && x->unk_13e4 < in->unk_13e4) {
-                            in->unk_1410 = 1;
-                            if (!in->unk_13a0.addInstructionLocation(x)) {
+                        if (x && x != in && x->linearOrderIndex < in->linearOrderIndex) {
+                            in->hasExtraPredecessors = 1;
+                            if (!in->predecessorDependencies.addInstructionLocation(x)) {
                                 reportError("failed to add\n");
                                 exitAfterCleanup(-1);
                             }

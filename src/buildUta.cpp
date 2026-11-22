@@ -19,7 +19,7 @@ static inline void dumpUtaInstruction(Instr *in)
 
 bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
 {
-    workTable *t = &s->unk_148;
+    workTable *t = &s->sourceTable;
     if (!t) {
         reportError("build: failed to get input table from ist\n");
         return false;
@@ -41,13 +41,13 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
         Instr *in = b->instructions[0];
         if (!in)
             continue;
-        if (in->unk_1420 > 0) {
+        if (in->parsedLoopId > 0) {
             reportUserMessage("parseLid set for a uta instruction\n");
             in->leDump();
             return false;
         }
-        in->unk_1420 = -1;
-        if (in->unk_13cd) {
+        in->parsedLoopId = -1;
+        if (in->syntheticKind) {
             if (!s->processCmdSynth(in)) {
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
@@ -62,23 +62,23 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
             }
-            if (in->unk_1388) {
+            if (in->branchFlags) {
                 if (branch >= 0) {
                     reportError("more than one branch in uta decode\n");
                     return false;
                 }
-                branch = in->unk_1388;
+                branch = in->branchFlags;
             }
         }
     }
     if (branch < 0)
         branch = 0;
-    s->unk_2ce = branch;
+    s->branchType = branch;
     if (flags)
         reportInfo("d_viFlags - is set to %x on exit<-----------------------------\n", flags);
     return true;
 }
 
-int func_0806e530(int flags);
+int branchLinkTypeForFlags(int flags);
 void func_0806ed78(Program *p, int a);
 bool fixupBtorBranch(Program *p, instStream *s, int *changed);

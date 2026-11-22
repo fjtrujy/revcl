@@ -35,7 +35,7 @@ bool func_08088f20(RegPool *pool, const char *base, int size)
     int idx = 10000;
     for (int i = 0; i != size; i++, e++, idx++) {
         formatIntoBuffer(buf, "(%s+%d)(vi00)", base, i);
-        if (!e->func_0805a8a4(buf)) {
+        if (!e->addRegisterNameAlias(buf)) {
             reportError("init mem area: failed to add register %s\n", buf);
             return false;
         }

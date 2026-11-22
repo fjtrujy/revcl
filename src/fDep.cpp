@@ -47,7 +47,7 @@ static inline bool sameOwner(Instr *a, Instr *b)
 
 bool sameEA(Instr *a, Instr *b)
 {
-    if (!a || !b || !a->unk_13ce || !b->unk_13ce || !sameOwner(a, b))
+    if (!a || !b || !a->ramAccessType || !b->ramAccessType || !sameOwner(a, b))
         return false;
     Operand *ea1 = getEA(a);
     Operand *ea2 = getEA(b);

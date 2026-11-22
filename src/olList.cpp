@@ -12,7 +12,7 @@ void olList::validateOperandLocations()
     if (count != 0) {
         for (; p; p = p->unk_00) {
             if (p->unk_04) {
-                p->unk_04->func_08054168();
+                p->unk_04->getOwningStream();
                 p->unk_04->func_08054008(false);
             }
             n++;
@@ -34,7 +34,7 @@ void olList::dumpOperandLocations()
     if (count != 0) {
         for (; p; p = p->unk_00) {
             if (p->unk_04) {
-                p->unk_04->func_08054168();
+                p->unk_04->getOwningStream();
                 p->unk_04->leDump(p->unk_10, 1 << p->unk_11);
             }
             n++;
@@ -49,7 +49,7 @@ void olList::dumpOperandLocations()
 void ol_s::func_08057fbc()
 {
     if (unk_04) {
-        unk_04->func_08054168();
+        unk_04->getOwningStream();
         unk_04->func_08054008(false);
     }
 }
@@ -57,7 +57,7 @@ void ol_s::func_08057fbc()
 void ol_s::func_08057fec()
 {
     if (unk_04) {
-        unk_04->func_08054168();
+        unk_04->getOwningStream();
         unk_04->leDump(unk_10, 1 << unk_11);
     }
 }
@@ -267,12 +267,12 @@ bool func_080585d4(ol_s *a, ol_s *b)
 
 instStream *func_08058618(ol_s *ol)
 {
-    return ol->unk_04->func_08054168();
+    return ol->unk_04->getOwningStream();
 }
 
 int func_0805862c(ol_s *ol)
 {
-    return ol->unk_04->unk_13e8.unk_00;
+    return ol->unk_04->position.unk_00;
 }
 
 ol_s *func_08058640()

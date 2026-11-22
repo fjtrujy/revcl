@@ -22,16 +22,16 @@ struct rPart {
     ol_s unk_4c[4];     // pending parts
 
     bool flushPending();
-    ol_s* func_0805a164();
+    ol_s* acquireFreePendingLocation();
     bool cycle(bool flag);
-    void func_0805a374();
-    void func_0805a3cc();
+    void resetPartTiming();
+    void resetPartFlowState();
     void func_0805a4d4();
     void func_0805a4e4();
     rPart();
-    VclPtrWord func_0805a948();
-    bool func_0805a954(VclPtrWord v);
-    ol_s* func_0805a968(int i);
+    VclPtrWord getPayload();
+    bool setPayload(VclPtrWord v);
+    ol_s* getPendingLocation(int i);
 };
 
 class RegPool;
@@ -46,13 +46,13 @@ struct RegPoolEntry {
     RegPoolEntry* next;
     const char* registerName();
     RegPoolEntry();
-    void func_0805a300();
-    void func_0805a348();
-    void func_0805a390();
-    mNode* func_0805a8a4(const char* name);
-    void func_0805a4b4();
-    bool func_0805a4f4(bool flag);
-    bool func_0805aa00();
+    void resetRegisterFlowState();
+    void resetRegisterPartTiming();
+    void resetRegisterThroughputState();
+    mNode* addRegisterNameAlias(const char* name);
+    void clearRegisterPartPayloads();
+    bool cycleRegisterParts(bool flag);
+    bool clearPartPayloadMarkers();
     bool optReset();
     char* maskName(int mask);
     int regIndex();
@@ -64,8 +64,8 @@ struct RegPoolEntry {
         return false;
     }
     void func_0805a340();
-    VclPtrWord func_0805a908(int i);
-    bool func_0805a924(int i, VclPtrWord v);
+    VclPtrWord getPartPayload(int i);
+    bool setPartPayload(int i, VclPtrWord v);
     void moveReset();
     rPart* getRP(int i)
     {
@@ -100,7 +100,7 @@ struct RegPoolEntry {
     RegPoolEntry *unk_40;   // next in nassign todo list
     rPart unk_44[4];
     RegWeb *registerWeb;    // register web
-    mList unk_2b8;
+    mList nameAliases;
 
     RegWeb *GetWeb();
 };
@@ -116,10 +116,10 @@ public:
     void Dump();
     RegPoolEntry* findByRegisterIndex(int index);
     RegPoolEntry* findPhysicalByName(const char* name);
-    bool func_08059464();
-    bool func_080594c0();
-    bool func_0805951c();
-    bool func_08059578();
+    bool resetPoolThroughputState();
+    bool resetPoolPartTiming();
+    bool resetPoolFlowState();
+    bool clearPoolPartPayloads();
     bool clearVirtualRegistersForParse();
     static bool isResvd(const char* name, int cls);
     bool cycleRegisters(bool flag);
@@ -130,7 +130,7 @@ public:
     bool markAllocatablePhysicalRegistersUsed();
     bool func_08059c4c();
     bool func_08059c94();
-    bool func_08059cdc();
+    bool resetPoolLocalAllocationState();
     RegPoolEntry* getMoveReg(Instr* move);
     bool ownsRegisterClass(RegPoolEntry* e);
     bool optReset();
@@ -143,15 +143,15 @@ public:
 
     RegPoolEntry* registerEntries;
     int entryCount;
-    short unk_0c;
+    short registerClass;
     short unk_0e;
     RegPoolEntry* zeroRegister;   // zero register
     RegPoolEntry* externalRegister;   // ext register
     int virtualPartCount;
-    RegPoolEntry* unk_1c;
-    RegPoolEntry* unk_20;
-    int unk_24;
-    VclPtrWord unk_28;
+    RegPoolEntry* virtualHead;
+    RegPoolEntry* virtualTail;
+    int virtualCount;
+    VclPtrWord registerPrefix;
     const char* poolName;     // pool name
 };
 

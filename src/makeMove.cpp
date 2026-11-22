@@ -9,13 +9,13 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
 {
     int type = 0;
     Instr *mv = 0;
-    if (blk->unk_b4 + blk->unk_b8 + blk->unk_b0 >= 2 * blk->unk_38)
+    if (blk->oddPipeMoveCount + blk->evenPipeMoveCount + blk->vectorMoveCount >= 2 * blk->unk_38)
         return 0;
     {
         switch (reg->registerClass) {
         case 8:
             type = 1;
-            if (blk->unk_b8 >= blk->unk_38) {
+            if (blk->evenPipeMoveCount >= blk->unk_38) {
                 blk->unk_ad = 1;
                 return mv;
             }
@@ -94,7 +94,7 @@ int getMove(Block *blk, Instr *in, int now)
     Operand *op2;
     for (i = 0; (op2 = in->getOp(i)) != 0; i++) {
         RegPoolEntry *reg = registerOperand(op2, 1);
-        if (reg && func_0806c6c4(reg) && op2->unk_2b != 2) {
+        if (reg && isVuRegister(reg) && op2->unk_2b != 2) {
             OperandLock *lk = 0;
             int score = -1;
             for (int p = 0; p != reg->partCount; p++) {
@@ -140,10 +140,10 @@ int getMove(Block *blk, Instr *in, int now)
                 }
             }
             int s1 = in->unk_00;
-            Instr *s2 = blk->unk_94.head;
+            Instr *s2 = blk->pendingInstructions.head;
             if (score > bestScore) {
                 in->unk_00 = s1;
-                blk->unk_94.head = s2;
+                blk->pendingInstructions.head = s2;
                 bestOp = op2;
                 bestScore = score;
                 bestReg = reg;
@@ -165,7 +165,7 @@ int getMove(Block *blk, Instr *in, int now)
     int mask = 0;
     int p;
     for (p = 0; p != bestReg->partCount; p++) {
-        OperandLock *o = ((RegisterPartLockList *)bestReg->func_0805a908(p))->unk_1c;
+        OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->unk_1c;
         if (o && o->unk_22)
             mask |= 1 << p;
     }
@@ -174,30 +174,30 @@ int getMove(Block *blk, Instr *in, int now)
     no_move:
         Instr *earliest = 0;
         for (p = 0; p != bestReg->partCount; p++) {
-            OperandLock *o = ((RegisterPartLockList *)bestReg->func_0805a908(p))->unk_1c;
+            OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->unk_1c;
             if (((mask >> p) & 1) && o && o->unk_22) {
                 Instr *oi = o->ownerInstr();
-                if (oi && (!earliest || oi->unk_13e8.getRow() < earliest->unk_13e8.getRow()))
+                if (oi && (!earliest || oi->position.getRow() < earliest->position.getRow()))
                     earliest = oi;
             }
         }
         if (!earliest)
-            earliest = blk->unk_a0.head;
+            earliest = blk->completedInstructions.head;
         func_080737b8(earliest);
         return 1;
     }
     {
         setPipeBits(mv);
         if (owner) {
-            mv->unk_13e4 = owner->unk_13e4 + 1;
+            mv->linearOrderIndex = owner->linearOrderIndex + 1;
             mv->unk_1432 = owner->unk_1432 + 1;
             mv->unk_141a = owner->unk_141a;
-            mv->unk_13f0.func_0805e37c(&owner->unk_13f0);
+            mv->unk_13f0.copyCountersFrom(&owner->unk_13f0);
         } else {
             mv->unk_1432 = 1;
-            mv->unk_13e4 = in->unk_13e4 - 1;
+            mv->linearOrderIndex = in->linearOrderIndex - 1;
             mv->unk_141a = in->unk_141a;
-            mv->unk_13f0.func_0805e37c(&in->unk_13f0);
+            mv->unk_13f0.copyCountersFrom(&in->unk_13f0);
         }
         mv->unk_141c = 0;
         Operand *out = mv->getOp(0);
@@ -210,7 +210,7 @@ int getMove(Block *blk, Instr *in, int now)
         int moved = 0;
         int oldBits = 0;
         int newBits = 0;
-        for (Instr *it = blk->unk_94.head; it; it = (Instr *)it->unk_24.unk_00) {
+        for (Instr *it = blk->pendingInstructions.head; it; it = (Instr *)it->unk_24.unk_00) {
             int n;
             for (n = 0; n != it->operandCount; n++) {
                 Operand *op = &it->operands[n];
@@ -239,8 +239,8 @@ int getMove(Block *blk, Instr *in, int now)
                         if ((op->unk_07 >> p) & 1) {
                             OperandLock *lk = &op->unk_2c[p];
                             OperandLock *par = lk->getParent();
-                            RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->func_0805a908(p);
-                            RegisterPartLockList *newL = (RegisterPartLockList *)newReg->func_0805a908(p);
+                            RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(p);
+                            RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(p);
                             if (par->unk_2c) {
                                 OperandLock *oldOut = oldL->unk_1c;
                                 if (!((moved >> p) & 1)) {
@@ -306,8 +306,8 @@ int getMove(Block *blk, Instr *in, int now)
                         newBits |= op->unk_07;
                         for (int p = 0; p != reg->partCount; p++) {
                             if ((op->unk_07 >> p) & 1) {
-                                RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->func_0805a908(p);
-                                RegisterPartLockList *newL = (RegisterPartLockList *)newReg->func_0805a908(p);
+                                RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(p);
+                                RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(p);
                                 if (!oldL->removeOutput(&op->unk_2c[p])) {
                                     reportError("retargetOutputOperands: failed to deregister output\n");
                                     return -1;
@@ -344,7 +344,7 @@ int getMove(Block *blk, Instr *in, int now)
             g_080b33ec++;
             goto no_move;
         }
-        mv->unk_138f = moved;
+        mv->destinationMask = moved;
         mvIn->unk_07 = moved;
         out->unk_07 = moved;
         if (!AddToDo_Head(blk, mv)) {
@@ -371,7 +371,7 @@ bool undoMove(Block *blk, Instr *mv)
     RegPoolEntry *dup = out->unk_18;
     if (!UnlinkFromToDo(blk, mv))
         reportError("failed to unlink from todolist!\n");
-    for (Instr *i = blk->unk_94.head; i; i = (Instr *)i->unk_24.unk_00) {
+    for (Instr *i = blk->pendingInstructions.head; i; i = (Instr *)i->unk_24.unk_00) {
         for (int n = 0; n != i->operandCount; n++) {
             Operand *op = &i->operands[n];
             RegPoolEntry *r = op->unk_18;
@@ -382,8 +382,8 @@ bool undoMove(Block *blk, Instr *mv)
                         if ((bool)((op->unk_07 >> p) & 1)) {
                             OperandLock *lk = &op->unk_2c[p];
                             OperandLock *parent = lk->getParent();
-                            RegisterPartLockList *newList = (RegisterPartLockList *)orig->func_0805a908(p);
-                            RegisterPartLockList *oldList = (RegisterPartLockList *)dup->func_0805a908(p);
+                            RegisterPartLockList *newList = (RegisterPartLockList *)orig->getPartPayload(p);
+                            RegisterPartLockList *oldList = (RegisterPartLockList *)dup->getPartPayload(p);
                             if ((bool)((out->unk_07 >> p) & 1) && parent == &out->unk_2c[p])
                                 parent = in->unk_2c[p].getParent();
                             if (!oldList->removeInput(lk)) {
@@ -400,8 +400,8 @@ bool undoMove(Block *blk, Instr *mv)
                 if (isRegisterOperand(op, 2)) {
                     for (int p = 0; p != r->partCount; p++) {
                         if ((bool)((op->unk_07 >> p) & 1)) {
-                            RegisterPartLockList *newList = (RegisterPartLockList *)orig->func_0805a908(p);
-                            RegisterPartLockList *oldList = (RegisterPartLockList *)dup->func_0805a908(p);
+                            RegisterPartLockList *newList = (RegisterPartLockList *)orig->getPartPayload(p);
+                            RegisterPartLockList *oldList = (RegisterPartLockList *)dup->getPartPayload(p);
                             if (!oldList->removeOutput(&op->unk_2c[p])) {
                                 reportError("failed to deregister output lock for undo move\n");
                                 return true;
@@ -418,7 +418,7 @@ bool undoMove(Block *blk, Instr *mv)
     }
     for (int p = 0; p != dup->partCount; p++) {
         if ((bool)((in->unk_07 >> p) & 1)) {
-            RegisterPartLockList *l = (RegisterPartLockList *)orig->func_0805a908(p);
+            RegisterPartLockList *l = (RegisterPartLockList *)orig->getPartPayload(p);
             if (!l) {
                 reportError("failed to get lock list for old reg in move undo\n");
                 abortAfterError();
@@ -456,7 +456,7 @@ Instr *makeMove(Block *, RegPoolEntry *);
 bool undoMovesTo(Block *blk, Instr *stop)
 {
     bool done;
-    Instr *i = blk->unk_94.tail;
+    Instr *i = blk->pendingInstructions.tail;
     do {
         Instr *prev = i->unk_24.unk_04;
         done = (i == stop);

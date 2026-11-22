@@ -20,7 +20,7 @@ bool emuTable(Program *p, workTable *wt)
         reportWarning("emu - passed a null table ptr!\n");
         return true;
     }
-    if (wt->func_080741b4() || wt->unk_3c) {
+    if (wt->getLoopSize() || wt->unk_3c) {
         reportError("mlid is set, or loop size is set for emu..which is now kinda tricky..\n");
         return false;
     }
@@ -28,8 +28,8 @@ bool emuTable(Program *p, workTable *wt)
     switch (wt->unk_09) {
     case 3: {
         int skipped = 0;
-        for (int line = wt->func_0807411c(); line != wt->func_080741c0(); line++) {
-            wtRow *r = wt->func_080724f0(line);
+        for (int line = wt->getRangeStart(); line != wt->getRangeEnd(); line++) {
+            wtRow *r = wt->getRowByIndex(line);
             if (r) {
                 if (r->skip) {
                     for (int k = 0; k != 2; k++)
@@ -63,7 +63,7 @@ fail:
     return false;
     case 1:
     case 4: {
-        Instr *i = wt->unk_88.head;
+        Instr *i = wt->linearInstructions.head;
         wtRow row;
         for (; i; i = i->unk_1c.unk_00) {
             row.clearEntries();
@@ -99,8 +99,8 @@ bool func_080642ec(Program *p, instStream *s)
     workTable *wt;
 
     wt = s->getTable();
-    int linear = wt->unk_c0[2];
-    int iCount = wt->unk_88.count;
+    int linear = wt->instructionCountsByPipe[2];
+    int iCount = wt->linearInstructions.count;
     if (linear != iCount) {
         reportError("linear count not same as iCount %d!=%d\n", linear, iCount);
         return false;
@@ -110,7 +110,7 @@ bool func_080642ec(Program *p, instStream *s)
         return false;
     }
     count = 0;
-    for (i = wt->unk_88.head; i; i = i->unk_1c.unk_00) {
+    for (i = wt->linearInstructions.head; i; i = i->unk_1c.unk_00) {
         count++;
         for (int op = 0; op != i->operandCount; op++) {
             Operand *o = &i->operands[op];
@@ -158,8 +158,8 @@ bool func_080642ec(Program *p, instStream *s)
             }
         }
     }
-    if (count != wt->unk_c0[2]) {
-        reportError("icount mismatch (%d apparently in list, but %d in table?)\n", count, wt->unk_c0[2]);
+    if (count != wt->instructionCountsByPipe[2]) {
+        reportError("icount mismatch (%d apparently in list, but %d in table?)\n", count, wt->instructionCountsByPipe[2]);
         return false;
     }
     for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
@@ -195,7 +195,7 @@ bool func_080642ec(Program *p, instStream *s)
                     return false;
                 }
                 for (int j = 0; j != 4; j++) {
-                    ol_s *ol = rp->func_0805a968(j);
+                    ol_s *ol = rp->getPendingLocation(j);
                     if (!ol) {
                         reportError("failed to get a pool entry\n");
                         return false;

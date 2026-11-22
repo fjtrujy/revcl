@@ -8,7 +8,7 @@ static inline bool extendForEnd_inl(workTable *wt)
 {
     do {
         int i = wt->unk_34++;
-        wtRow *r = wt->func_080724f0(i);
+        wtRow *r = wt->getRowByIndex(i);
         if (!r) {
             reportError("failed to get ie for end patch\n");
             return false;
@@ -33,33 +33,33 @@ bool func_08062a88(Program *p)
             break;
         case 3:
         case 4:
-            s->unk_21c = wt;
+            s->emissionTable = wt;
             break;
         default:
             reportError("bad code mode for Tidy\n");
             return false;
         }
-        s->unk_265 = 1;
-        if (s->unk_2cd != 1)
-            s->unk_265 = 0;
-        linkNode *n = s->unk_134.unk_00;
+        s->mergeIntoSuccessor = 1;
+        if (s->endType != 1)
+            s->mergeIntoSuccessor = 0;
+        linkNode *n = s->outputLinks.head;
         if (!n)
-            s->unk_265 = 0;
+            s->mergeIntoSuccessor = 0;
         while (n) {
-            if (n->unk_0c->unk_2cd != 3) {
-                s->unk_265 = 0;
+            if (n->otherStream->endType != 3) {
+                s->mergeIntoSuccessor = 0;
                 break;
             }
-            n = n->unk_08;
+            n = n->next;
         }
     }
     for (s = p->streamHead; s; s = s->nextStream) {
-        if (!s->unk_265)
+        if (!s->mergeIntoSuccessor)
             continue;
-        linkNode *n = s->unk_134.unk_00;
+        linkNode *n = s->outputLinks.head;
         while (n) {
-            linkNode *next = n->unk_08;
-            if (!p->unLinkStreams(s, n->unk_0c, n->unk_14)) {
+            linkNode *next = n->next;
+            if (!p->unLinkStreams(s, n->otherStream, n->linkType)) {
                 reportError("failed disappear linkage\n");
                 return false;
             }
@@ -68,8 +68,8 @@ bool func_08062a88(Program *p)
         Instr *b = s->getBranch();
         if (b)
             b->unk_1392 = 1;
-        s->unk_2ce = 0;
-        s->unk_2cd = 3;
+        s->branchType = 0;
+        s->endType = 3;
         if (!s->workTablePtr) {
             reportError("work table not set in %s\n", s->streamName());
             exitAfterCleanup(-1);
@@ -77,7 +77,7 @@ bool func_08062a88(Program *p)
         workTable *wt = s->workTablePtr;
         if (wt->unk_09 == 4)
             continue;
-        if (wt->func_0807411c() < 0)
+        if (wt->getRangeStart() < 0)
             continue;
         if (wt->getPhysicalLen() > 1 && wt->func_08073854())
             continue;
@@ -93,7 +93,7 @@ bool extendForEnd(workTable *wt)
 {
     do {
         int i = wt->unk_34++;
-        wtRow *r = wt->func_080724f0(i);
+        wtRow *r = wt->getRowByIndex(i);
         if (!r) {
             reportError("failed to get ie for end patch\n");
             return false;

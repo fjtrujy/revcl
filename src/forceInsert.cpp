@@ -14,7 +14,7 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         reportError("forceInsert - null in\n");
         return false;
     }
-    InstructionPosition *p = &in->unk_13e8;
+    InstructionPosition *p = &in->position;
     int row = pos->unk_04;
     int pipe = pos->unk_02;
     if (p->unk_04 >= 0) {

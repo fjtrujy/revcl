@@ -25,7 +25,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
         DecodedLine *b = &blocks[i];
         for (int k = 0; k != 2; k++) {
             VclPtrWord in = (VclPtrWord)b->instructions[k];
-            if (!in || !((Instr *)in)->unk_1388)
+            if (!in || !((Instr *)in)->branchFlags)
                 continue;
             char *target = ((Instr *)in)->getBranchTargetImmediate();
             if (target) {
@@ -124,7 +124,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
                 continue;
             int serial = g_080b33a8++;
             in->unk_13e0 = serial;
-            char t = in->unk_13cd;
+            char t = in->syntheticKind;
             switch ((unsigned char)t) {
             case 1:
             case 3:
@@ -145,7 +145,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
                 reportUserMessage("this includes.. having a BDL slot as a branch target.. in this case\n");
                 return false;
             }
-            if (in->unk_1388) {
+            if (in->branchFlags) {
                 if (delay) {
                     reportUserMessage("found a branch in a branch delay slot\n");
                     in->leDump();
@@ -197,14 +197,14 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
             reportError("flowMon::build - new failed\n");
             return false;
         afterNHandler:;
-        s->unk_2c0 = id;
+        s->streamId = id;
         mList *labels = &b->labels;
         if (!labels->nodeCount) {
             int nameLength = mstrlen(getUniqueName(p));
             char *name = new char[nameLength + 128];
             if (name) {
                 formatIntoBuffer(name, "__v_%s_%d", getUniqueName(p), id);
-                if (!s->unk_110.appendNamedNode(name)) {
+                if (!s->labels.appendNamedNode(name)) {
                     reportError("failed to creat add a default name node\n");
                     delete[] name;
                 }
@@ -212,10 +212,10 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
             } else {
                 goto labelError;
             }
-        } else if (!s->unk_110.transferNodesFrom(labels)) {
+        } else if (!s->labels.transferNodesFrom(labels)) {
             goto transferError;
         }
-        s->unk_2d4 |= s->unk_110.takeCombinedFlags();
+        s->unk_2d4 |= s->labels.takeCombinedFlags();
         goto afterTError;
         transferError:
             reportError("failed to grab entries from in at top\n");
@@ -259,7 +259,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
             blocks[i + k].releaseContents();
         if (!p->addStream(s))
             goto streamError;
-        s->workTablePtr = &s->unk_148;
+        s->workTablePtr = &s->sourceTable;
         i = end;
         goto afterSHandler;
         streamError:

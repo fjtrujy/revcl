@@ -8,7 +8,7 @@
 #include "Program.h"
 #include "instStream.h"
 
-bool func_0806c6dc(Program *p);
+bool resetPoolOptimizationState(Program *p);
 
 inline bool resetRegWebs()
 {
@@ -23,7 +23,7 @@ inline bool RegWeb::AddiTable(workTable *t)
         reportError("RegWeb::AddiTable - passed a null pointer\n");
         return false;
     }
-    for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         if (!AddiInstr(in)) {
             reportError("RegWeb::AddiTable: failed to add an isn\n");
             in->func_08054008(false);
@@ -342,7 +342,7 @@ inline bool RegWeb::PatchInstr(Instr *in)
 inline bool RegWeb::PatchITable(workTable *t)
 {
     if (t) {
-        for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             if (!PatchInstr(in)) {
                 reportError("patchiTable - failed\n");
                 in->func_08054008(false);
@@ -396,7 +396,7 @@ inline bool RegWeb::setfMap(RegWeb *w, RegPoolEntry *r)
 inline bool buildRegWebs(Program *p)
 {
     resetRegWebs();
-    if (!func_0806c6dc(p)) {
+    if (!resetPoolOptimizationState(p)) {
         reportError("flow:: reset the webs\n");
         return false;
     }
@@ -424,7 +424,7 @@ inline bool buildRegWebs(Program *p)
 
 inline bool RegWeb::ClearWebs(workTable *t)
 {
-    for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00)
         for (int i = 0; i != in->operandCount; i++)
             in->operands[i].unk_00 = 0;
     return true;

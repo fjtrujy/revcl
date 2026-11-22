@@ -10,7 +10,7 @@ extern bool quiet_080bbd98;
 void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
-int func_0806e530(int flags);
+int branchLinkTypeForFlags(int flags);
 bool fixupBtorBranch(Program *p, instStream *s, int *changed);
 void func_0806ed78(Program *p, int a);
 
@@ -19,9 +19,9 @@ bool resolveStreamBranches(Program *p)
 {
     instStream *s;
     for (s = p->streamHead; s; s = s->nextStream) {
-        switch (s->unk_2cd) {
+        switch (s->endType) {
         case 1: {
-            unsigned char bt = s->unk_2ce;
+            unsigned char bt = s->branchType;
             int headFlags = bt;
             if (!(unsigned char)headFlags || (unsigned char)(headFlags & 4)) {
                 if (s->nextStream) {
@@ -29,8 +29,8 @@ bool resolveStreamBranches(Program *p)
                         reportError("failed to link streams together\n");
                         return false;
                     }
-                    bt = s->unk_2ce;
-                } else if (!s->unk_124) {
+                    bt = s->branchType;
+                } else if (!s->passThroughText) {
                     reportError("fell off the bottom of code! .. last stream should either end in END or be a branch\n");
                     return false;
                 }
@@ -40,7 +40,7 @@ bool resolveStreamBranches(Program *p)
                 int btorMask = 1;
                 int btor = (bt >> 1) & btorMask;
                 if (!(unsigned char)btor) {
-                    int type = func_0806e530(flags);
+                    int type = branchLinkTypeForFlags(flags);
                     char *label = s->getBranchTargetImmediate();
                     if (!label) {
                         reportError("failed to get branch target immediate\n");
@@ -62,7 +62,7 @@ bool resolveStreamBranches(Program *p)
                         return false;
                     }
                     if (br->unk_139c) {
-                        int type = func_0806e530(s->unk_2ce);
+                        int type = branchLinkTypeForFlags(s->branchType);
                         char name[2064];
                         for (char *q = br->unk_139c; *q; q++) {
                             char *r = q;
@@ -87,19 +87,19 @@ bool resolveStreamBranches(Program *p)
             break;
         }
         case 4:
-            if (!s->unk_2d0) {
+            if (!s->endDirectiveText) {
                 reportError("no macro set in end_macro\n");
                 return false;
             }
             /* fall through */
         case 3:
-            if (s->unk_2ce) {
+            if (s->branchType) {
                 reportError("branchtype not null for end / cont\n");
                 return false;
             }
             break;
         case 2:
-            if (s->unk_2ce) {
+            if (s->branchType) {
                 reportError("branchtype not null for end / cont\n");
                 return false;
             }
@@ -123,7 +123,7 @@ bool resolveStreamBranches(Program *p)
         again = false;
         for (s = p->streamHead; s; s = s->nextStream) {
             int btorMask = 1;
-            int btor = (s->unk_2ce >> 1) & btorMask;
+            int btor = (s->branchType >> 1) & btorMask;
             if ((unsigned char)btor) {
                 int changed = 0;
                 if (!fixupBtorBranch(p, s, &changed)) {
@@ -150,7 +150,7 @@ bool resolveStreamBranches(Program *p)
 bool fixupBtorBranch(Program *p, instStream *s, int *changed)
 {
     *changed = 0;
-    if (((s->unk_2ce >> 1) & 1) == 0) {
+    if (((s->branchType >> 1) & 1) == 0) {
         reportError("balFix:: not reg-target\n");
         return false;
     }
@@ -168,24 +168,24 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
     br->func_08054008(false);
     instStream *t;
     for (t = p->streamHead; t; t = t->nextStream)
-        t->unk_226 = 0;
-    s->unk_226 = 1;
+        t->visitState = 0;
+    s->visitState = 1;
     bool first = true;
     bool again;
     do {
         again = false;
         for (t = p->streamHead; t; t = t->nextStream) {
-            if (t->unk_226 != 1)
+            if (t->visitState != 1)
                 continue;
             workTable *wt = t->getTable();
             Instr *in;
             if (first) {
                 in = br->unk_1c.unk_04;
-                t->unk_226 = 0;
+                t->visitState = 0;
                 first = false;
             } else {
-                in = wt->unk_88.tail;
-                t->unk_226 = 2;
+                in = wt->linearInstructions.tail;
+                t->visitState = 2;
             }
             for (; in; in = in->unk_1c.unk_04) {
                 if (in->outputMaskForRegister(reg, 0xff)) {
@@ -194,7 +194,7 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
                 }
             }
             if (in) {
-                if ((in->unk_1388 >> 3) & 1) {
+                if ((in->branchFlags >> 3) & 1) {
                     if (!t->nextStream) {
                         reportUserMessage("no physical successor to a branch+link\n");
                         return false;
@@ -217,14 +217,14 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
                     return false;
                 }
             } else {
-                for (linkNode *n = t->unk_128.unk_00; n; n = n->unk_08) {
-                    instStream *o = n->unk_0c;
+                for (linkNode *n = t->inputLinks.head; n; n = n->next) {
+                    instStream *o = n->otherStream;
                     if (!o) {
                         reportError("null outist\n");
                         return false;
                     }
-                    if (!o->unk_226) {
-                        o->unk_226 = 1;
+                    if (!o->visitState) {
+                        o->visitState = 1;
                         again = true;
                     }
                 }

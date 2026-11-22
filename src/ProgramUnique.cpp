@@ -13,8 +13,8 @@ bool Program::doUnique()
     instStream *s;
     for (s = streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
-        for (Instr *i = wt->unk_88.head; i; i = i->unk_1c.unk_00) {
-            if (!i->unk_1388)
+        for (Instr *i = wt->linearInstructions.head; i; i = i->unk_1c.unk_00) {
+            if (!i->branchFlags)
                 continue;
             iInfo *ii = i->opcodeInfo;
             if (!ii) {
@@ -57,7 +57,7 @@ bool Program::doUnique()
         }
     }
     for (s = streamHead; s; s = s->nextStream) {
-        for (mNode *n = s->unk_110.head; n; n = n->next) {
+        for (mNode *n = s->labels.head; n; n = n->next) {
             if (!func_0806f4e8(this, n->name)) {
                 char *nn = mprefix_del(getUniqueName(this), n->name);
                 if (!nn) {
@@ -90,7 +90,7 @@ bool Program::doUnique()
 bool Program::func_0806e878(const char *name)
 {
     for (instStream *s = streamHead; s; s = s->nextStream) {
-        if (s->unk_110.findByNameIgnoreCase(name))
+        if (s->labels.findByNameIgnoreCase(name))
             return true;
     }
     return false;

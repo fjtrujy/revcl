@@ -12,7 +12,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
         e = in->unk_13b0;
     int line = e + wt->unk_30;
     int thru = -1;
-    int iline = in->unk_13e8.unk_04;
+    int iline = in->position.unk_04;
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
         RegPoolEntry *reg = registerOperand(op, 1);
@@ -73,7 +73,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
         if (registerOperand(op, 2) && op->unk_28)
             line = iline;
     }
-    if (in->unk_1388)
+    if (in->branchFlags)
         line = iline;
     if (found)
         *found = thru == line;
@@ -86,7 +86,7 @@ int latestInsert(workTable *wt, Instr *in, bool *found)
     if (e < in->unk_13b4)
         e = in->unk_13b4;
     int line = wt->unk_34 - e - 1;
-    int iline = in->unk_13e8.unk_04;
+    int iline = in->position.unk_04;
     bool thru = false;
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
@@ -96,7 +96,7 @@ int latestInsert(workTable *wt, Instr *in, bool *found)
             break;
         }
     }
-    if (thru || in->unk_1388)
+    if (thru || in->branchFlags)
         line = iline;
     if (found)
         *found = false;

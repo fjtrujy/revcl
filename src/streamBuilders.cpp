@@ -18,15 +18,15 @@ bool buildPassThru(Program *prog, instStream *s, DecodedLine *blocks, int count)
         reportError("cnum isn't one for pass thru case.. it's %d\n", count);
         return false;
     }
-    s->unk_124 = blocks->passThroughText;
+    s->passThroughText = blocks->passThroughText;
     blocks->passThroughText = 0;
-    workTable *uta = &s->unk_148;
+    workTable *uta = &s->sourceTable;
     if (!uta->init(1, 0)) {
         reportError("failed to init uta\n");
         return false;
     }
     uta->unk_10 = s;
-    s->unk_2ce = 0;
+    s->branchType = 0;
     s->unk_2d6 = 1;
     s->unk_2d7 = 1;
     return true;

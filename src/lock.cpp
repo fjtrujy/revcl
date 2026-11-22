@@ -981,7 +981,7 @@ Instr *cls0805c244::earliestExt()
                         reportError("not get in for earliest ext\n");
                         exitAfterCleanup(-1);
                     }
-                    if (in->unk_13e8.unk_00 < best) {
+                    if (in->position.unk_00 < best) {
                         best = in->unk_1396;
                         res = in;
                     }
@@ -1019,7 +1019,7 @@ cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part)
 {
     for (; p; p = p->unk_08) {
         if (p->unk_04 == reg && p->unk_02 == part) {
-            if (reg->func_0805a908(part) && reg->func_0805a908(part) != (VclPtrWord)p) {
+            if (reg->getPartPayload(part) && reg->getPartPayload(part) != (VclPtrWord)p) {
                 reportError("rg points to rll, but rll list not it\n");
                 exitAfterCleanup(-1);
             }

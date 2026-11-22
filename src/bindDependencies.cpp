@@ -43,11 +43,11 @@ bool bindDependencies(Program *p)
     }
     for (s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
-        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             int bits = in->getRamBits();
             if (!in->unk_139c)
                 continue;
-            if (!in->unk_13ce) {
+            if (!in->ramAccessType) {
                 reportUserMessage("tagString found for non memory instruction\n");
                 return false;
             }
@@ -75,7 +75,7 @@ bool bindDependencies(Program *p)
                         reportError("failed to create a tag register\n");
                         return false;
                     }
-                    switch ((unsigned char)in->unk_13ce) {
+                    switch ((unsigned char)in->ramAccessType) {
                     case 1:
                         if (!addNewInputInl(in, r, bits)) {
                             reportError("failed to add input operand for load\n");
@@ -100,15 +100,15 @@ bool bindDependencies(Program *p)
         }
     }
     for (s = p->streamHead; s; s = s->nextStream) {
-        bool xin = s->unk_2cc == 2;
-        bool xout = s->unk_2cd == 3;
+        bool xin = s->startType == 2;
+        bool xout = s->endType == 3;
         if (xin) {
-            RegPoolEntry *sticky39 = func_0806c224(0x39);
+            RegPoolEntry *sticky39 = findRegisterByGlobalIndex(0x39);
             if (!addXinFor(s, sticky39)) {
                 reportError("failed to add the fpu sticky flags as xin\n");
                 return false;
             }
-            RegPoolEntry *sticky3a = func_0806c224(0x3a);
+            RegPoolEntry *sticky3a = findRegisterByGlobalIndex(0x3a);
             if (!addXinFor(s, sticky3a)) {
                 reportError("failed to add the div sticky flags as xin\n");
                 return false;
@@ -130,7 +130,7 @@ bool bindDependencies(Program *p)
                     reportError("failed to add external output to %s\n", s->streamName());
                     return false;
                 }
-                for (RegPoolEntry *e = rp->unk_1c; e; e = e->next) {
+                for (RegPoolEntry *e = rp->virtualHead; e; e = e->next) {
                     if (xin && !addXinFor(s, e)) {
                         reportError("failed to add external input to %s\n", s->streamName());
                         return false;
@@ -149,7 +149,7 @@ bool bindDependencies(Program *p)
 
 Instr *addXinFor(instStream *s, RegPoolEntry *r)
 {
-    iInfo *info = func_0806bf74(0xbe);
+    iInfo *info = getOpcodeInfoById(0xbe);
     if (!info) {
         reportError("addXinFor - cant get xin_hw\n");
         return 0;
@@ -189,7 +189,7 @@ Instr *addXinFor(instStream *s, RegPoolEntry *r)
 
 Instr *addXoutFor(instStream *s, RegPoolEntry *r)
 {
-    iInfo *info = func_0806bf74(0xbf);
+    iInfo *info = getOpcodeInfoById(0xbf);
     if (!info) {
         reportError("addxoutFor - can't get xout_hw\n");
         return 0;
@@ -272,7 +272,7 @@ bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int 
     op->unk_07 = bits;
     op->unk_04 = kind;
     in->operandCount++;
-    return in->func_08053fac();
+    return in->validateOperands();
 }
 
 bool addNewInput(Instr *in, RegPoolEntry *r, int bits)
@@ -295,7 +295,7 @@ bool addNewOutput(Instr *in, RegPoolEntry *r, int bits, int flag)
 
 RegPoolEntry *getTagRegister(RegPool *pool, char *name)
 {
-    if (RegPool::isResvd(name, pool->unk_0c)) {
+    if (RegPool::isResvd(name, pool->registerClass)) {
         reportUserMessage("can't use %s as a name for one of the %s\n", name, pool->poolName);
         return 0;
     }

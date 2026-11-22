@@ -21,7 +21,7 @@ int func_0807aa28(Program *p)
     instStream *s;
     for (s = p->streamHead; s; s = s->nextStream) {
         s->unk_2dc = 0;
-        if (!s->func_0806d9a0())
+        if (!s->usesFreeRawLayout())
             s->unk_2dc = 1;
     }
     for (s = p->streamHead; s; s = s->nextStream) {
@@ -54,7 +54,7 @@ int func_0807aaf4(Program *p, instStream *s)
         reportError("no work table \n");
         return -1;
     }
-    int len = wt->func_080741c0() - wt->func_0807411c();
+    int len = wt->getRangeEnd() - wt->getRangeStart();
     if (len == 0)
         return 0;
     if (wt->unk_44 < 0) {
@@ -66,7 +66,7 @@ int func_0807aaf4(Program *p, instStream *s)
         return -1;
     }
     func_0807bb84(wt);
-    for (int rl = wt->func_0807411c(); rl != wt->func_080741c0(); rl++) {
+    for (int rl = wt->getRangeStart(); rl != wt->getRangeEnd(); rl++) {
         wtRow *row = (wtRow *)((cls_unk30 *)wt)->getIE_ck(rl);
         int id = row->ctime();
         for (int pp = 0; pp != 2; pp++) {
@@ -96,7 +96,7 @@ int func_0807aaf4(Program *p, instStream *s)
                 wtRow *r = row + 1;
                 int limit = need + id;
                 int bestMask = 0, bestLine = -1, bestPipe = -1, bestCount = 0, count = 0;
-                while (line < wt->func_080741c0() && capMask) {
+                while (line < wt->getRangeEnd() && capMask) {
                     if (r->cycleTime >= limit) {
                         for (int q = 0; q != 2; q++) {
                             if (((bits >> q) & 1) && !GetI((Instr **)r, q)) {

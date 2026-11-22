@@ -36,11 +36,11 @@ int dragDown(workTable *wt)
         moved = 0;
         msl = wt->unk_34;
         for (int l = wt->unk_34 - 1; l >= wt->unk_30; l--) {
-            wtRow *row = wt->func_080724f0(l);
+            wtRow *row = wt->getRowByIndex(l);
             for (int p = 0; p != 2; p++) {
                 Instr *in = row->getEntry(p);
-                if (in && !in->unk_1388) {
-                    int rl = in->unk_13e8.getRow();
+                if (in && !in->branchFlags) {
+                    int rl = in->position.getRow();
                     short mte = in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6;
                     int mn = wt->unk_34 - mte - 1;
                     if (rl != l) {
@@ -71,19 +71,19 @@ int dragDown(workTable *wt)
                             reportError("failed to do local move for raw down\n");
                             return -1;
                         }
-                        if (in->unk_13e8.getRow() != rl)
+                        if (in->position.getRow() != rl)
                             moved++;
                     }
                 }
                 if (in) {
-                    int s = in->unk_13e8.getRow()
+                    int s = in->position.getRow()
                           - (in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2);
                     if (s < msl)
                         msl = s;
                     if (msl < oStart) {
                         short mfs = in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2;
                         reportWarning("%s %d-%d < mSline=%d [%d,%d]\n",
-                                      in->opcodeInfo->mnemonic, in->unk_13e8.getRow(),
+                                      in->opcodeInfo->mnemonic, in->position.getRow(),
                                       mfs,
                                       msl, wt->unk_30, wt->unk_34);
                         const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";

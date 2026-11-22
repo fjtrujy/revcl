@@ -45,12 +45,12 @@ int pullUp(workTable *wt)
         moved = 0;
         mrl = wt->unk_30;
         for (int l = wt->unk_30; l != wt->unk_34; l++) {
-            wtRow *row = wt->func_080724f0(l);
+            wtRow *row = wt->getRowByIndex(l);
             for (int p = 0; p != 2; p++) {
                 Instr *in = row->getEntry(p);
                 if (!in || in == br || in == lbdli)
                     continue;
-                int rl = in->unk_13e8.getRow();
+                int rl = in->position.getRow();
                 if (rl != l) {
                     reportError("rl not l!\n");
                     exitAfterCleanup(-1);
@@ -61,11 +61,11 @@ int pullUp(workTable *wt)
                         reportError("failed to do local move for raw up\n");
                         return -1;
                     }
-                    if (in->unk_13e8.getRow() != rl)
+                    if (in->position.getRow() != rl)
                         moved++;
                 }
                 short mte = in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6;
-                int end = in->unk_13e8.getRow() + mte;
+                int end = in->position.getRow() + mte;
                 if (end > mrl)
                     mrl = end;
                 if (mrl >= wt->unk_34) {
@@ -95,8 +95,8 @@ int pullUp(workTable *wt)
                 return -1;
             }
             InstructionPosition pos;
-            pos.func_0805878c(br->unk_13e8.unk_02);
-            pos.func_0805874c(l);
+            pos.setInstructionPipe(br->position.unk_02);
+            pos.setFromLinearRow(l);
             if (func_0807dc44(wt, br, &pos)) {
                 l++;
             } else {
@@ -116,8 +116,8 @@ int pullUp(workTable *wt)
                 if (l > mrl)
                     mrl = l;
                 if (lbdli) {
-                    pos.func_0805874c(l);
-                    pos.func_0805878c(lbdli->unk_13e8.unk_02);
+                    pos.setFromLinearRow(l);
+                    pos.setInstructionPipe(lbdli->position.unk_02);
                     if (l >= wt->unk_34) {
                         reportError("over run for bdli\n");
                         return -1;

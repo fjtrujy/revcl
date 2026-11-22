@@ -14,7 +14,7 @@ bool rPart::flushPending()
     return true;
 }
 
-ol_s* rPart::func_0805a164()
+ol_s* rPart::acquireFreePendingLocation()
 {
     for (int i = 0; i != 4; i++) {
         if (!unk_4c[i].unk_12) {
@@ -71,20 +71,20 @@ bool rPart::cycle(bool flag)
     return true;
 }
 
-void RegPoolEntry::func_0805a300()
+void RegPoolEntry::resetRegisterFlowState()
 {
     usedSlotMask = 0;
     throughputWriter = 0;
     unk_36 = 0;
     for (int i = 0; i != 4; i++)
-        unk_44[i].func_0805a3cc();
+        unk_44[i].resetPartFlowState();
 }
 
 void RegPoolEntry::func_0805a340()
 {
 }
 
-void RegPoolEntry::func_0805a348()
+void RegPoolEntry::resetRegisterPartTiming()
 {
     for (int i = 0; i != 4; i++) {
         rPart* p = &unk_44[i];
@@ -94,22 +94,22 @@ void RegPoolEntry::func_0805a348()
     }
 }
 
-void rPart::func_0805a374()
+void rPart::resetPartTiming()
 {
     unk_40 = -1;
     unk_42 = -1;
     unk_44 = -1;
 }
 
-void RegPoolEntry::func_0805a390()
+void RegPoolEntry::resetRegisterThroughputState()
 {
     throughputWriter = 0;
     unk_36 = 0;
     for (int i = 0; i != 4; i++)
-        unk_44[i].func_0805a3cc();
+        unk_44[i].resetPartFlowState();
 }
 
-void rPart::func_0805a3cc()
+void rPart::resetPartFlowState()
 {
     unk_00[3] = 0;
     unk_00[2] = 0;
@@ -136,7 +136,7 @@ void rPart::func_0805a3cc()
         unk_4c[i].reset();
 }
 
-void RegPoolEntry::func_0805a4b4()
+void RegPoolEntry::clearRegisterPartPayloads()
 {
     for (int i = 0; i != 4; i++)
         unk_44[i].unk_48 = 0;
@@ -152,7 +152,7 @@ void rPart::func_0805a4e4()
     unk_48 = 0;
 }
 
-bool RegPoolEntry::func_0805a4f4(bool flag)
+bool RegPoolEntry::cycleRegisterParts(bool flag)
 {
     for (int i = 0; i != partCount; i++)
         if (!unk_44[i].cycle(flag))
@@ -182,49 +182,49 @@ RegPoolEntry::RegPoolEntry()
 
 rPart::rPart()
 {
-    func_0805a3cc();
+    resetPartFlowState();
     unk_48 = 0;
 }
 
-mNode* RegPoolEntry::func_0805a8a4(const char* name)
+mNode* RegPoolEntry::addRegisterNameAlias(const char* name)
 {
-    mNode* n = unk_2b8.findByExactName(name);
+    mNode* n = nameAliases.findByExactName(name);
     if (n)
         return n;
-    return unk_2b8.appendNamedNode(name);
+    return nameAliases.appendNamedNode(name);
 }
 
 const char* RegPoolEntry::registerName()
 {
-    const char* name = unk_2b8.firstNodeName();
+    const char* name = nameAliases.firstNodeName();
     if (!name)
         name = "UNNAMED_REGISTER!";
     return name;
 }
 
-VclPtrWord RegPoolEntry::func_0805a908(int i)
+VclPtrWord RegPoolEntry::getPartPayload(int i)
 {
     return unk_44[i].unk_48;
 }
 
-bool RegPoolEntry::func_0805a924(int i, VclPtrWord v)
+bool RegPoolEntry::setPartPayload(int i, VclPtrWord v)
 {
     unk_44[i].unk_48 = v;
     return true;
 }
 
-VclPtrWord rPart::func_0805a948()
+VclPtrWord rPart::getPayload()
 {
     return unk_48;
 }
 
-bool rPart::func_0805a954(VclPtrWord v)
+bool rPart::setPayload(VclPtrWord v)
 {
     unk_48 = v;
     return true;
 }
 
-ol_s* rPart::func_0805a968(int i)
+ol_s* rPart::getPendingLocation(int i)
 {
     return &unk_4c[i];
 }
@@ -249,7 +249,7 @@ bool RegPoolEntry::optReset()
     return true;
 }
 
-bool RegPoolEntry::func_0805aa00()
+bool RegPoolEntry::clearPartPayloadMarkers()
 {
     for (int i = 0; i != partCount; i++) {
         if (unk_44[i].unk_48)
@@ -266,7 +266,7 @@ char* RegPoolEntry::maskName(int mask)
     if (regNameBufPos > 512)
         regNameBufPos = 0;
     char* buf = &regNameBuf[regNameBufPos];
-    const char* name = unk_2b8.firstNodeName();
+    const char* name = nameAliases.firstNodeName();
     if (!name)
         name = "UNNAMED_REGISTER!";
     char* p = buf + formatIntoBuffer(buf, "%s", name);

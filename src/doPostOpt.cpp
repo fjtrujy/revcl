@@ -54,7 +54,7 @@ bool workTable::doPostOpt(int rawMode)
             return false;
         }
         unk_0b = 1;
-        if (unk_94.count) {
+        if (pendingInstructions.count) {
             reportError("doPostOpt - but there's things still to do\n");
             return false;
         }
@@ -73,7 +73,7 @@ bool workTable::doPostOpt(int rawMode)
             return false;
         }
         int expected;
-        wtInstrList *lin = &unk_88;
+        wtInstrList *lin = &linearInstructions;
         expected = lin->count;
         int count = 0;
         if (owner->getEndType() == 2) {
@@ -102,7 +102,7 @@ bool workTable::doPostOpt(int rawMode)
             assignLength(length, rawLengthBits(pw->func_08072eec()));
             break;
         }
-        if (!func_08073774(rawMode)) {
+        if (!setTableRawMode(rawMode)) {
             reportError("doPostOpt : failed to set raw mode..\n");
             return false;
         }
@@ -123,8 +123,8 @@ bool workTable::doPostOpt(int rawMode)
                     int nBranch;
                     switch (rawMode) {
                     case 2: {
-                        int t = in->unk_13e8.unk_04;
-                        in->unk_1394 = t;
+                        int t = in->position.unk_04;
+                        in->scheduledCycle = t;
                         if (unk_30) {
                             reportError("postopt - istart set for fixed mode \n");
                             return false;
@@ -133,8 +133,8 @@ bool workTable::doPostOpt(int rawMode)
                     }
                     case 1: {
                         nBranch = -1;
-                        int t = in->unk_13e8.unk_04;
-                        in->unk_1394 = t - unk_30;
+                        int t = in->position.unk_04;
+                        in->scheduledCycle = t - unk_30;
                         break;
                     }
                     case 3:
@@ -144,12 +144,12 @@ bool workTable::doPostOpt(int rawMode)
                             reportError("no work clone set\n");
                             return false;
                         }
-                        short t = c->unk_1394;
+                        short t = c->scheduledCycle;
                         if (t < 0 || t >= *(int *)&length) {
                             reportError("emutick bad for raw postopt\n");
                             return false;
                         }
-                        in->unk_1394 = t;
+                        in->scheduledCycle = t;
                         break;
                     }
                     default:
@@ -177,7 +177,7 @@ bool workTable::doPostOpt(int rawMode)
                         reportError("doPostOpt -  unlink from done list failed\n");
                         return false;
                     }
-                    if (in->unk_1388) {
+                    if (in->branchFlags) {
                         if (nBranch + 1) {
                             reportError("doPostOpt - more than one branch\n");
                             return false;
@@ -188,10 +188,10 @@ bool workTable::doPostOpt(int rawMode)
                             return false;
                         }
                     }
-                    InstructionPosition *loc = &in->unk_13e8;
+                    InstructionPosition *loc = &in->position;
                     int lid = loc->unk_03;
                     int row = loc->unk_04;
-                    int iloc = in->unk_13e8.unk_00;
+                    int iloc = in->position.unk_00;
                     if (!unk_38 && lid) {
                         reportError("i_lid set not in loop\n");
                         return false;
@@ -220,7 +220,7 @@ bool workTable::doPostOpt(int rawMode)
             dump();
             return false;
         }
-        if (unk_a0.count) {
+        if (completedInstructions.count) {
             reportError("doPostOpt() - things remained on done list after scanning table\n");
             return false;
         }
@@ -282,12 +282,12 @@ bool instStream::setOptTable(workTable *nt)
         reportError("old and new are same\n");
         return false;
     }
-    if (unk_214) {
+    if (optimizedTable) {
         reportError("stream already has opttable set\n");
         return false;
     }
-    for (Instr *in = nt->unk_88.head; in; in = in->unk_1c.unk_00) {
-        if (in->func_08054168() != this) {
+    for (Instr *in = nt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+        if (in->getOwningStream() != this) {
             reportError("didn't own instruction\n");
             return false;
         }
@@ -308,7 +308,7 @@ bool instStream::setOptTable(workTable *nt)
                 dumpOptInstruction(c);
                 return false;
             }
-            if (c->func_08054168() != this) {
+            if (c->getOwningStream() != this) {
                 reportError("setOptTable -  cloned image wsn't owned by us\n");
                 return false;
             }
@@ -340,10 +340,10 @@ bool instStream::setOptTable(workTable *nt)
     nt->clearClones();
     old->clearClones();
     workTablePtr = nt;
-    unk_214 = nt;
+    optimizedTable = nt;
     if (nt->unk_00 >= 0)
         unk_144 |= 1 << nt->unk_00;
-    if (nt->func_080741b4())
+    if (nt->getLoopSize())
         unk_140 = 1;
     return true;
 }

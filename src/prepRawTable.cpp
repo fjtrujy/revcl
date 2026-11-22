@@ -25,9 +25,9 @@ bool workTable::prepRawTable()
         reportError("set raw table - failed to set iLoc range\n");
         return 0;
     }
-    unk_88.reset();
-    unk_a0.reset();
-    unk_94.reset();
+    linearInstructions.reset();
+    completedInstructions.reset();
+    pendingInstructions.reset();
     unk_4c = 0;
     unk_50 = 0;
     unk_3c = 0;
@@ -58,12 +58,12 @@ bool workTable::prepRawTable()
             Instr *in = ie->entries[p].unk_00;
             if (!in)
                 continue;
-            if (in->unk_13cd) {
+            if (in->syntheticKind) {
                 reportError("synth instruction in preptab\n");
                 in->leDump();
                 abortAfterError();
             }
-            if (in->unk_1420 != -1) {
+            if (in->parsedLoopId != -1) {
                 reportError("parseLid isn't cleared in prepTab\n");
                 in->func_08054008(false);
                 exitAfterCleanup(-1);
@@ -72,18 +72,18 @@ bool workTable::prepRawTable()
             int il;
             InstructionPosition *loc;
             if (unk_38) {
-                if (!in->func_08054138())
-                    lid = in->unk_13e8.unk_03;
+                if (!in->isNop())
+                    lid = in->position.unk_03;
                 if (lid < 0) {
                     reportError("lid was <0 during table setup\n");
                     in->leDump();
                     return 0;
                 }
-                loc = &in->unk_13e8;
+                loc = &in->position;
                 loc->unk_03 = lid;
                 il = lid * unk_38 + rl;
             } else {
-                loc = &in->unk_13e8;
+                loc = &in->position;
                 lid = loc->unk_03;
                 if (lid) {
                     reportError("non zero lid for non-loop %d\n", lid);
@@ -96,9 +96,9 @@ bool workTable::prepRawTable()
             if (lid > maxLid)
                 maxLid = lid;
             InstructionPosition pos;
-            pos.func_0805874c(il);
-            pos.func_0805878c(p);
-            in->unk_13e8.unk_00 = pos.unk_00;
+            pos.setFromLinearRow(il);
+            pos.setInstructionPipe(p);
+            in->position.unk_00 = pos.unk_00;
             signed char nl = pos.unk_03;
             loc->unk_04 = pos.unk_04;
             loc->unk_03 = nl;

@@ -19,21 +19,21 @@ bool func_08063154(Program *p)
 {
     instStream *s = p->streamHead;
     while (s) {
-        if (s->func_0806d908() != 4 && !s->disposeInputTable()) {
+        if (s->getCodeMode() != 4 && !s->disposeInputTable()) {
             reportError("failed to dispose input table\n");
             return 0;
         }
-        if (s->func_0806d908() == 3 && !s->func_0806d968()) {
+        if (s->getCodeMode() == 3 && !s->getRawSchedulingMode()) {
             reportError("bad raw mode\n");
             dumpRawStream(s);
             return 0;
         }
         instStream *n = s->nextStream;
         if (n && !n->unk_2d6 && !s->unk_2d7) {
-        linkList *out = &s->unk_134;
-        if (out->unk_08 == 1 && n->unk_128.unk_08 == 1
-            && s->func_0806d9a0() && n->func_0806d9a0()
-            && s->unk_2cd == 1 && n->unk_2cc == 1
+        linkList *out = &s->outputLinks;
+        if (out->count == 1 && n->inputLinks.count == 1
+            && s->usesFreeRawLayout() && n->usesFreeRawLayout()
+            && s->endType == 1 && n->startType == 1
             && !s->getBranch()
             && out->getStream(0) == n
             && !n->unk_2d4 && !s->unk_2d5
@@ -46,14 +46,14 @@ bool func_08063154(Program *p)
                 reportError("failed to unlink streams\n");
                 return 0;
             }
-            if (out->unk_08) {
+            if (out->count) {
                 reportError("there's still out ist's after unlink\n");
                 return 0;
             }
             linkNode *l;
-            while ((l = n->unk_134.unk_00) != 0) {
-                instStream *to = l->unk_0c;
-                int type = l->unk_14;
+            while ((l = n->outputLinks.head) != 0) {
+                instStream *to = l->otherStream;
+                int type = l->linkType;
                 if (!p->unlinkStreams(n, to, type)) {
                     reportError("failed to unlink streams\n");
                     return 0;
@@ -87,7 +87,7 @@ bool catOnTo(workTable *t1, workTable *t2)
         reportError("it_1 or it_2 one of them has no table\n");
         return 0;
     }
-    int end = t1->func_080741c0();
+    int end = t1->getRangeEnd();
     int physicalLen = t2->getPhysicalLen();
     if (!t1->grow(end + physicalLen + 8)) {
         reportError("failed to grow table1\n");
@@ -95,7 +95,7 @@ bool catOnTo(workTable *t1, workTable *t2)
     }
     int dst = t1->unk_34;
     int i;
-    for (i = t2->func_0807411c(); i < t2->func_080741c0(); dst++, i++) {
+    for (i = t2->getRangeStart(); i < t2->getRangeEnd(); dst++, i++) {
         wtRow *src = &t2->unk_2c[i];
         memcpy(&t1->unk_2c[dst], src, 14);
         for (int j = 0; j != 2; j++) {
@@ -155,10 +155,10 @@ bool appendStream(Program *p, instStream *a, instStream *b)
         reportError("failed to cat table2 onto table1\n");
         return 0;
     }
-    int endType = b->unk_2cd;
-    a->unk_2cd = endType;
-    int branchType = b->unk_2ce;
-    a->unk_2ce = branchType;
+    int endType = b->endType;
+    a->endType = endType;
+    int branchType = b->branchType;
+    a->branchType = branchType;
     a->unk_2d5 = b->unk_2d5;
     a->unk_2d7 = b->unk_2d7;
     return 1;

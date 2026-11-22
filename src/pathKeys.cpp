@@ -17,7 +17,7 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
     }
     regUse *u = wt->unk_14.findByRegister(reg);
     n->unk_227 = 0;
-    n->unk_228 = 0;
+    n->hazardFlag = 0;
     n->unk_258 = 0;
     n->unk_234 = u;
     if (u && ((u->unk_0f >> part) & 1)) {
@@ -57,13 +57,13 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
 
 bool func_08061c34(instStream *n)
 {
-    n->unk_226 = 0;
-    for (linkNode *l = n->unk_128.unk_00; l; l = l->unk_08)
-        l->unk_10 = l->unk_14 != 3 && l->unk_14 != 4;
+    n->visitState = 0;
+    for (linkNode *l = n->inputLinks.head; l; l = l->next)
+        l->unk_10 = l->linkType != 3 && l->linkType != 4;
     n->unk_240 = -1;
-    n->unk_244 = 0;
+    n->shortestPathPredecessor = 0;
     n->unk_248 = -1;
-    n->unk_24c = 0;
+    n->longestPathPredecessor = 0;
     n->unk_250 = 0;
     n->unk_254 = 0;
     n->unk_25c = 0;
@@ -77,12 +77,12 @@ int func_08061cb0(Program *p, instStream *n)
         reportError("failed to start a record\n");
         return 0;
     }
-    if (!vc->setBit(p->unk_d4->unk_2c0)) {
+    if (!vc->setBit(p->unk_d4->streamId)) {
         reportError("failed to add target to min path key\n");
         return 0;
     }
-    for (; n; n = n->unk_244) {
-        if (!vc->setBit(n->unk_2c0)) {
+    for (; n; n = n->shortestPathPredecessor) {
+        if (!vc->setBit(n->streamId)) {
             reportError("failed to add to to min path record\n");
             return 0;
         }
@@ -97,12 +97,12 @@ int getMaxPathKey(Program *p, instStream *n)
         reportError("failed to start a record\n");
         return 0;
     }
-    if (!vc->setBit(p->unk_d4->unk_2c0)) {
+    if (!vc->setBit(p->unk_d4->streamId)) {
         reportError("failed to add target to max path key\n");
         return 0;
     }
-    for (; n; n = n->unk_24c) {
-        if (!vc->setBit(n->unk_2c0)) {
+    for (; n; n = n->longestPathPredecessor) {
+        if (!vc->setBit(n->streamId)) {
             reportError("failed to add to record to max path\n");
             return 0;
         }
@@ -117,8 +117,8 @@ bool isPathRaw(Program *p, int key)
         exitAfterCleanup(-1);
     }
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        int id = s->unk_2c0;
-        if (p->backTraceVisitCache.testBit(key, id) && s->func_0806d908() == 1)
+        int id = s->streamId;
+        if (p->backTraceVisitCache.testBit(key, id) && s->getCodeMode() == 1)
             return false;
     }
     return true;
@@ -131,7 +131,7 @@ int guessKeyLen(Program *p, int key, int start, int end)
     bool foundStart = false;
     bool foundEnd = false;
     for (; s; s = s->nextStream) {
-        int id = s->unk_2c0;
+        int id = s->streamId;
         if (p->backTraceVisitCache.testBit(key, id)) {
             bool hit = false;
             if (id == start) {
@@ -157,7 +157,7 @@ void dumpMinPathToTarget(instStream *s)
 {
     reportInfo("%s  minPathToTarget\n", s->streamName());
     int i = 0;
-    for (instStream *q = s->unk_244; q; q = q->unk_244)
+    for (instStream *q = s->shortestPathPredecessor; q; q = q->shortestPathPredecessor)
         reportInfo("    %2d:   [%3d] %s\n", ++i, q->unk_240, q->streamName());
     reportInfo("done .. %s  minPathToTarget\n", s->streamName());
 }
@@ -166,7 +166,7 @@ void dumpMaxPathToTarget(instStream *s)
 {
     reportInfo("%s  maxPathToTarget\n", s->streamName());
     int i = 0;
-    for (instStream *q = s->unk_24c; q; q = q->unk_24c)
+    for (instStream *q = s->longestPathPredecessor; q; q = q->longestPathPredecessor)
         reportInfo("    %2d:   [%3d] %s\n", ++i, q->unk_248, q->streamName());
     reportInfo("done .. %s  maxPathToTarget\n", s->streamName());
 }

@@ -8,22 +8,22 @@
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 
-int func_0806e530(int flags);
+int branchLinkTypeForFlags(int flags);
 
 bool globalPrune(Program *p)
 {
     instStream *s;
     for (s = p->streamHead; s; s = s->nextStream) {
-        if (s->unk_2cc == 2) {
-            s->unk_264 = 1;
-            s->unk_226 = 1;
+        if (s->startType == 2) {
+            s->reachableFromEntry = 1;
+            s->visitState = 1;
         } else {
-            s->unk_264 = 0;
-            s->unk_226 = 0;
+            s->reachableFromEntry = 0;
+            s->visitState = 0;
         }
-        if (s->unk_124) {
+        if (s->passThroughText) {
             reportInfo("pass thru  - setting reached top for %s\n", s->streamName());
-            s->unk_264 = 1;
+            s->reachableFromEntry = 1;
         }
     }
 
@@ -31,17 +31,17 @@ bool globalPrune(Program *p)
     do {
         changed = false;
         for (s = p->streamHead; s; s = s->nextStream) {
-            if (s->unk_226 == 1) {
-                s->unk_226 = 2;
-                for (linkNode *l = s->unk_134.unk_00; l; l = l->unk_08) {
-                    instStream *o = l->unk_0c;
+            if (s->visitState == 1) {
+                s->visitState = 2;
+                for (linkNode *l = s->outputLinks.head; l; l = l->next) {
+                    instStream *o = l->otherStream;
                     if (!o) {
                         reportError("null outist\n");
                         return false;
                     }
-                    o->unk_264 = 1;
-                    if (o->unk_226 == 0) {
-                        o->unk_226 = 1;
+                    o->reachableFromEntry = 1;
+                    if (o->visitState == 0) {
+                        o->visitState = 1;
                         changed = true;
                     }
                 }
@@ -52,12 +52,12 @@ bool globalPrune(Program *p)
     instStream *next;
     for (s = p->streamHead; s; s = next) {
         next = s->nextStream;
-        if (s->unk_264)
+        if (s->reachableFromEntry)
             continue;
         reportInfo("prune inaccessible stream %s\n", s->streamName());
         workTable *t = s->getTable();
-        for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00)
-            if (!in->func_08054138()) {
+        for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00)
+            if (!in->isNop()) {
                 reportInfo("REMOVE INST: ");
                 int saved = errorOccurred;
                 errorOccurred = !quiet_080bbd98;
@@ -65,14 +65,14 @@ bool globalPrune(Program *p)
                 errorOccurred = saved;
             }
         linkNode *l;
-        while ((l = s->unk_128.unk_00) != 0) {
-            if (!p->unlinkStreams(l->unk_0c, s, l->unk_14)) {
+        while ((l = s->inputLinks.head) != 0) {
+            if (!p->unlinkStreams(l->otherStream, s, l->linkType)) {
                 reportError("unlink failed for input\n");
                 return false;
             }
         }
-        while ((l = s->unk_134.unk_00) != 0) {
-            if (!p->unlinkStreams(s, l->unk_0c, l->unk_14)) {
+        while ((l = s->outputLinks.head) != 0) {
+            if (!p->unlinkStreams(s, l->otherStream, l->linkType)) {
                 reportError("unlink failed for output\n");
                 return false;
             }
@@ -88,13 +88,13 @@ bool globalPrune(Program *p)
     for (s = p->streamHead; s; s = follow) {
         follow = s->nextStream;
         instStream *next = follow;
-        if (next && s->unk_2ce && s->func_0806d968() != 4) {
+        if (next && s->branchType && s->getRawSchedulingMode() != 4) {
             bool keepLink = false;
             linkNode *l;
-            for (l = s->unk_134.unk_00; l; l = l->unk_08) {
-                if (l->unk_0c != next)
+            for (l = s->outputLinks.head; l; l = l->next) {
+                if (l->otherStream != next)
                     break;
-                if (!l->unk_14)
+                if (!l->linkType)
                     keepLink = true;
             }
             if (!l) {
@@ -108,7 +108,7 @@ bool globalPrune(Program *p)
                 errorOccurred = !quiet_080bbd98;
                 br->func_08054008(false);
                 errorOccurred = saved;
-                int type = func_0806e530(s->unk_2ce);
+                int type = branchLinkTypeForFlags(s->branchType);
                 if (!p->unlinkStreams(s, next, type)) {
                     reportError("failed to unlink the streams through the branch\n");
                     return false;

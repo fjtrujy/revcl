@@ -41,7 +41,7 @@ Operand::~Operand()
 {
 }
 
-bool Operand::func_080563f8()
+bool Operand::validateKindAndMask()
 {
     switch (unk_04) {
     case 1:
@@ -202,9 +202,9 @@ bool Operand::func_080563f8()
     return false;
 }
 
-void Operand::func_0805665c(int)
+void Operand::diagnoseOperand(int)
 {
-    if (func_080563f8()) {
+    if (validateKindAndMask()) {
         bool ok = true;
         switch (unk_04) {
         case 0:
@@ -245,7 +245,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     const char *rn = 0;
     if (unk_08)
         return 0;
-    if (!func_080563f8())
+    if (!validateKindAndMask())
         return 0;
     if (unk_18) {
         int z = unk_18 == unk_18->ownerPool->zeroRegister;
@@ -418,7 +418,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     return buf;
 }
 
-bool Operand::func_080569cc()
+bool Operand::resetFlowState()
 {
     int i = 0;
     unk_28 = 0;
@@ -439,7 +439,7 @@ static inline bool resetOperandLock(OperandLock *lock)
     return lock->func_0805bcc4();
 }
 
-bool Operand::func_08056a24()
+bool Operand::resetOptimizationSlots()
 {
     for (int i = 0; i != 4; i++) {
         OpSlot *s = &unk_2c[i];
@@ -1364,7 +1364,7 @@ OpSlot *Operand::getPart(int part)
     return 0;
 }
 
-char *Operand::func_08057b90(bool flag, char *buf)
+char *Operand::emitExpectedOperandType(bool flag, char *buf)
 {
     if (!buf)
         return 0;
@@ -1442,10 +1442,10 @@ int Operand::getRegFrom(Operand *src)
         reportError("register not of correct type\n");
         return 0;
     }
-    return func_080563f8();
+    return validateKindAndMask();
 }
 
-const char *Operand::func_08057e40()
+const char *Operand::getRegisterNameOrNone()
 {
     if (!unk_18)
         return "NO_REG";

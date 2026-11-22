@@ -10,7 +10,7 @@
 #include "os.h"
 
 extern char *stallNames_080b3244[3];
-int func_0806c72c(iInfo *ii);
-iInfo *func_0806bf8c(const char *name, bool exact);
+int getOpcodeId(iInfo *ii);
+iInfo *findOpcodeInfoByMnemonic(const char *name, bool exact);
 
 #endif

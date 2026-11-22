@@ -14,7 +14,7 @@ static inline short *thruputTimes(regUse *u, int part)
 static inline int thruputTail(instStream *s, regUse *u, int part)
 {
     int last = u->unk_20[part].unk_3c[10];
-    int length = s->unk_22c;
+    int length = s->backtraceDependencyLength;
     return length - last;
 }
 

@@ -214,15 +214,15 @@ bool stallNode::catStall(ol_s *a, ol_s *b, int type, int val)
         reportError("can't determine - at least one of instructions in stall pair\n");
         return false;
     }
-    instStream *sa = ia->func_08054168();
-    instStream *sb = ib->func_08054168();
-    sa->unk_260 = 1;
-    sb->unk_260 = 1;
+    instStream *sa = ia->getOwningStream();
+    instStream *sb = ib->getOwningStream();
+    sa->participatesInStall = 1;
+    sb->participatesInStall = 1;
     if (!sa || !sb) {
         reportError("can't determine owner ist for one of inputs to stall\n");
         return false;
     }
-    isLocal = sa->unk_2c0 == sb->unk_2c0;
+    isLocal = sa->streamId == sb->streamId;
     if (!user.catInit(b)) {
         reportError("stallInit - failed to add in a user loc\n");
         return false;

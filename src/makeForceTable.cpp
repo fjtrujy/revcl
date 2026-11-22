@@ -36,13 +36,13 @@ workTable *makeForceTable(Program *p, instStream *s)
         reportError("it_new is not raw mode .. %s\n", modeName);
         return 0;
     }
-    int start = wt->func_0807411c();
-    int end = wt->func_080741c0();
+    int start = wt->getRangeStart();
+    int end = wt->getRangeEnd();
     nt->setRange(start, end);
-    for (Instr *in = nt->unk_94.head; in; in = nt->unk_94.head) {
+    for (Instr *in = nt->pendingInstructions.head; in; in = nt->pendingInstructions.head) {
         Instr *clone = in->unk_08;
         InstructionPosition pos;
-        InstructionPosition *r = &clone->unk_13e8;
+        InstructionPosition *r = &clone->position;
         pos.unk_00 = r->unk_00;
         pos.unk_04 = r->unk_04;
         pos.unk_03 = r->unk_03;
@@ -54,7 +54,7 @@ workTable *makeForceTable(Program *p, instStream *s)
         }
     }
     nt->changeMode(3);
-    nt->func_08073774(wt->func_08073754());
+    nt->setTableRawMode(wt->getTableRawMode());
     return nt;
 }
 

@@ -93,7 +93,7 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
             reportError("failed to get instruction for non -internal input\n");
             return false;
         }
-        InstructionPosition *rl = &ins->unk_13e8;
+        InstructionPosition *rl = &ins->position;
         int line = rl->getRow();
         int want = out->unk_32;
         if ((short)line != (short)want) {
@@ -124,7 +124,7 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
             reportError("no inst for rl\n");
             return false;
         }
-        InstructionPosition *rl = &ci->unk_13e8;
+        InstructionPosition *rl = &ci->position;
         int line = rl->getRow();
         int want = c->unk_32;
         if ((short)line != (short)want) {

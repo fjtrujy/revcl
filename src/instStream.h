@@ -62,26 +62,26 @@ public:
     }
 
     bool gatherStats();
-    bool func_0806563c(bool a, bool b);  // build memory dependencies
+    bool buildForwardDependencies(bool a, bool b);  // build memory dependencies
     bool flowReset();
     const char *branchTypeName();
     const char *endTypeName();
-    unsigned char getEndType() { return unk_2cd; }
+    unsigned char getEndType() { return endType; }
     const char *startTypeName();
     char *emit(char *buf, int a, int *p1, int *p2);
     int checkStartEnd()
     {
-        int st = unk_2cc;
+        int st = startType;
         int ok = 0;
         if (st == 1 || st == 2) {
-            int et = unk_2cd;
+            int et = endType;
             unsigned endTypeCount = 4;
             ok = (unsigned)(et - 1) < endTypeCount;
         }
         return ok;
     }
-    unsigned char func_0806d908(); // code mode
-    unsigned char func_0806d968(); // work table mode
+    unsigned char getCodeMode(); // code mode
+    unsigned char getRawSchedulingMode(); // work table mode
     int getUninsertedxInputs();
     int getUninsertedxOutputs();
     const char *getCodeModeName();
@@ -98,82 +98,82 @@ public:
     bool iOwn(Instr *i);
     bool patchLatencies();
     bool canLoop();
-    bool func_0806d9a0();         // raw-mode work table
-    bool func_0806d9d4();
+    bool usesFreeRawLayout();         // raw-mode work table
+    bool usesFixedRawLayout();
     unsigned char getAllocMode();
-    bool func_0806da34();         // not raw mode
+    bool isOutsideRawMode();         // not raw mode
     bool func_0806da58();
-    int func_0806da80();          // out-of-line checkStartEnd
+    int checkStartEndStatus();          // out-of-line checkStartEnd
     bool disposeInputTable();
     bool processCmdSynth(Instr *i);
-    void func_0806dc9c(instStream *src);  // copy record table from src
+    void copySourceRecordsFrom(instStream *src);  // copy record table from src
     bool setOptTable(workTable *nt);
 
     int unk_00;                  // record count
     istRec unk_04[16];
     Program *owningProgram;
-    instStream *nextStream;         // next in Program::unk_a0
+    instStream *nextStream;         // next in Program::completedInstructions
     instStream *previousStream;         // previous stream (to-register branch)
-    mList unk_110;               // name list
-    char *unk_124;               // pass thru
-    linkList unk_128;            // input links
-    linkList unk_134;            // output links
+    mList labels;               // name list
+    char *passThroughText;               // pass thru
+    linkList inputLinks;            // input links
+    linkList outputLinks;            // output links
     char unk_140;
     char unk_141[3];
     int unk_144;
-    workTable unk_148;           // own work table
-    workTable *unk_214;  // opt table
+    workTable sourceTable;           // own work table
+    workTable *optimizedTable;  // opt table
     workTable *workTablePtr;  // work table
-    workTable *unk_21c;  // tidied work table
-    workTable *unk_220;  // saved work table
+    workTable *emissionTable;  // tidied work table
+    workTable *savedTable;  // saved work table
     short unk_224;
-    unsigned char unk_226;      // visit mode (0 unvisited, 1 active, 2 visited, 3 end match, 4 dead end)
+    unsigned char visitState;      // visit mode (0 unvisited, 1 active, 2 visited, 3 end match, 4 dead end)
     char unk_227;
-    char unk_228;               // hazard flag
-    char unk_229;               // visited flag in hazard broadcast
+    char hazardFlag;               // hazard flag
+    char hazardVisited;               // visited flag in hazard broadcast
     char unk_22a[2];
-    int unk_22c;                // dependency length used by back trace
+    int backtraceDependencyLength;                // dependency length used by back trace
     short unk_230;
     short unk_232;
     regUse *unk_234;
-    unsigned *unk_238;          // m_tStore
-    int unk_23c;                // dst key
+    unsigned *traceStore;          // m_tStore
+    int destinationKey;                // dst key
     int unk_240;
-    instStream *unk_244;        // min-path predecessor
+    instStream *shortestPathPredecessor;        // min-path predecessor
     int unk_248;
-    instStream *unk_24c;        // max-path predecessor
+    instStream *longestPathPredecessor;        // max-path predecessor
     instStream *unk_250;        // next in Program::unk_dc
     instStream *unk_254;        // next in Program::unk_d8
     instStream *unk_258;        // next in Program::unk_e0
     instStream *unk_25c;        // next in Program::unk_e4
-    char unk_260;      // set when stream takes part in a stall
+    char participatesInStall;      // set when stream takes part in a stall
     char unk_261;
     char unk_262;
     char unk_263;
-    char unk_264;      // reached top (accessible)
-    char unk_265;      // collapse into successor (tidy)
+    char reachableFromEntry;      // reached top (accessible)
+    char mergeIntoSuccessor;      // collapse into successor (tidy)
     char unk_266[2];
     int unk_268;
     int unk_26c;
-    int unk_270;                 // known min count
-    int unk_274;                 // minimum safe count
+    int knownMinimumLoopCount;                 // known min count
+    int safeMinimumLoopCount;                 // minimum safe count
     cls0805e2e4 unk_278;
-    statCounts unk_290;
+    statCounts stats;
     short unk_2b4;
     short unk_2b6;
     short unk_2b8;
     short unk_2ba;
     int unk_2bc;
-    short unk_2c0;     // stream id
-    short unk_2c2;     // stream serial
+    short streamId;     // stream id
+    short streamSerial;     // stream serial
     short unk_2c4;
     short unk_2c6;
     int unk_2c8;
-    unsigned char unk_2cc;  // start type (ISTST_*)
-    unsigned char unk_2cd;  // end type (ISTET_*; 2 adds 1000 to back trace dep length)
-    unsigned char unk_2ce;  // branch type
+    unsigned char startType;  // start type (ISTST_*)
+    unsigned char endType;  // end type (ISTET_*; 2 adds 1000 to back trace dep length)
+    unsigned char branchType;  // branch type
     char unk_2cf;
-    char *unk_2d0;
+    char *endDirectiveText;
     char unk_2d4;      // dbgTop
     char unk_2d5;      // dbgEnd
     char unk_2d6;
@@ -181,13 +181,13 @@ public:
     int unk_2d8;
     char unk_2dc;
     char unk_2dd[3];
-    int unk_2e0;       // dependency length
-    int unk_2e4;
+    int dependencyLength;       // dependency length
+    int logicalLength;
 
-    int func_0805f284();
-    int func_0805f29c();
+    int getRecordedDependencyLength();
+    int getRecordedLogicalLength();
     int getOrGuessDepLength();
-    int func_0805f354();
+    int getClampedDependencyLength();
     int getOrGuessLogicalLength();
 };
 

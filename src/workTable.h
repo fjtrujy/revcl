@@ -171,19 +171,19 @@ public:
     short unk_80;
     short unk_82;
     Instr *unk_84;
-    wtInstrList unk_88;     // linear list
-    wtInstrList unk_94;
-    wtInstrList unk_a0;
+    wtInstrList linearInstructions;     // linear list
+    wtInstrList pendingInstructions;
+    wtInstrList completedInstructions;
     char unk_ac;
     char unk_ad;
     char unk_ae[2];
-    int unk_b0;             // move count, class 3
-    int unk_b4;             // move count, odd class
-    int unk_b8;             // move count, even class
+    int vectorMoveCount;             // move count, class 3
+    int oddPipeMoveCount;             // move count, odd class
+    int evenPipeMoveCount;             // move count, even class
     int unk_bc;
-    int unk_c0[3];          // per-pipe instr counts, [2] = total in table
+    int instructionCountsByPipe[3];          // per-pipe instr counts, [2] = total in table
 
-    wtRow *func_080724f0(int i);
+    wtRow *getRowByIndex(int i);
     wtRow *rowAt(int i)
     {
         wtRow *r;
@@ -214,21 +214,21 @@ public:
     int getPhysicalLen();
     void dump();
     bool reserveEntry(int key, int row, int slot);
-    Instr *func_08073060();
+    Instr *getConditionalBranch();
     const char *ownerName();
     bool func_08073854();
     bool dispose();
-    bool func_080737e4();
+    bool resetFlowStalls();
     char *emit(char *buf, int a, int *p1, int *p2);
-    int func_08073754();
-    int func_0807411c();    // range start
-    int func_080741b4();    // lsz
-    int func_080741c0();    // range end
+    int getTableRawMode();
+    int getRangeStart();    // range start
+    int getLoopSize();    // lsz
+    int getRangeEnd();    // range end
     bool grow(int n);
     bool replaceInstruction(Instr *old, Instr *nw);
     bool destroyInstruction(Instr *&in);
     bool prepRawTable();
-    bool func_08073774(unsigned char mode);
+    bool setTableRawMode(unsigned char mode);
     bool init(unsigned char mode, int size);
     bool changeMode(unsigned char mode);
     bool clearClones();
@@ -238,7 +238,7 @@ public:
     void resetCounts();
     int getCurrentDoneSize();
     bool getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1, int *minSfx2);
-    bool func_08073f90();
+    bool hasEmptyRange();
     bool setRange();
     bool setRange(int len);
     bool setRange(int s, int e);
@@ -264,14 +264,14 @@ public:
     }
     void clearLinear()
     {
-        unk_88.reset();
-        unk_c0[2] = 0;
+        linearInstructions.reset();
+        instructionCountsByPipe[2] = 0;
         unk_bc = 0;
-        unk_b0 = 0;
-        unk_b4 = 0;
-        unk_c0[0] = 0;
-        unk_b8 = 0;
-        unk_c0[1] = 0;
+        vectorMoveCount = 0;
+        oddPipeMoveCount = 0;
+        instructionCountsByPipe[0] = 0;
+        evenPipeMoveCount = 0;
+        instructionCountsByPipe[1] = 0;
     }
 };
 

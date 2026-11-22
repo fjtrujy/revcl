@@ -29,7 +29,7 @@ bool detectMoves(Program *p)
         workTable *wt = s->getTable();
         if (wt->unk_09 == 1 || isPipeMode(wt)) {
             Instr *next;
-            for (Instr *in = wt->unk_88.head; in; in = next) {
+            for (Instr *in = wt->linearInstructions.head; in; in = next) {
                 next = in->unk_1c.unk_00;
                 int opc;
                 unsigned char mask;
@@ -43,7 +43,7 @@ bool detectMoves(Program *p)
                     continue;
                 RegPoolEntry *srcReg = in->operands[srcOp].unk_18;
                 RegPoolEntry *dstReg = in->operands[dstOp].unk_18;
-                iInfo *info = func_0806bf74(opc);
+                iInfo *info = getOpcodeInfoById(opc);
                 Instr *mv = new Instr(info);
                 if (!mv) {
                     reportError("failed to make a move\n");
@@ -60,7 +60,7 @@ bool detectMoves(Program *p)
                 }
                 sr->unk_18 = srcReg;
                 d->unk_18 = dstReg;
-                mv->unk_138f = mask;
+                mv->destinationMask = mask;
                 sr->unk_07 = mask;
                 d->unk_07 = mask;
                 sr->unk_14 = in->operands[srcOp].unk_14;
@@ -68,7 +68,7 @@ bool detectMoves(Program *p)
                 sr->unk_10 = in->operands[srcOp].unk_10;
                 d->unk_10 = in->operands[dstOp].unk_10;
                 if (isRawTable(wt)) {
-                    int pipe = in->unk_13e8.unk_02;
+                    int pipe = in->position.unk_02;
                     if (!resolveMovePipe(wt, mv, pipe)) {
                         reportError("failed to resolve a detected move for the pipe I found it in\n");
                         return false;

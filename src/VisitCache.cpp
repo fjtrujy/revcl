@@ -157,7 +157,7 @@ void dumpPathKey(Program *p, int key)
 {
     reportInfo("dumping path key '%d'\n", key);
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (testPathBit(&p->backTraceVisitCache, key, s->unk_2c0))
+        if (testPathBit(&p->backTraceVisitCache, key, s->streamId))
             reportInfo("    %d: %s\n", s->streamName());
     }
     reportInfo(" done dumping path key '%d'\n", key);

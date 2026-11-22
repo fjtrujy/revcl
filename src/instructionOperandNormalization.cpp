@@ -2,7 +2,7 @@
 // iHolder and infoList, CIE group 3.
 #include "infoList_shared.h"
 
-int Instr::func_080532d8()
+int Instr::normalizeZeroSources()
 {
     int r = 0;
     int opcode = func_08055ac4();

@@ -10,9 +10,9 @@ bool optDumb2(workTable *wt, wrangleCand *c)
     Instr *best = 0;
     int bestV = 0x7fffffff;
     for (; in; in = in->unk_2c) {
-        if (in->unk_13e4 < bestV) {
+        if (in->linearOrderIndex < bestV) {
             best = in;
-            bestV = in->unk_13e4;
+            bestV = in->linearOrderIndex;
         }
     }
     if (!best)

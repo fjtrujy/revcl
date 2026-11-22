@@ -13,7 +13,7 @@ void cls0805e2e4::func_0805e2fc()
 {
 }
 
-void cls0805e2e4::func_0805e304()
+void cls0805e2e4::invalidateAllCounters()
 {
     unk_00 = unk_02 = -1;
     unk_04 = unk_06 = -1;
@@ -22,7 +22,7 @@ void cls0805e2e4::func_0805e304()
     unk_14 = -1;
 }
 
-void cls0805e2e4::func_0805e340()
+void cls0805e2e4::zeroAllCounters()
 {
     unk_00 = unk_02 = 0;
     unk_04 = unk_06 = 0;
@@ -31,7 +31,7 @@ void cls0805e2e4::func_0805e340()
     unk_14 = 0;
 }
 
-void cls0805e2e4::func_0805e37c(cls0805e2e4 *src)
+void cls0805e2e4::copyCountersFrom(cls0805e2e4 *src)
 {
     unk_00 = src->unk_00;
     unk_02 = src->unk_02;
@@ -43,7 +43,7 @@ void cls0805e2e4::func_0805e37c(cls0805e2e4 *src)
     unk_14 = src->unk_14;
 }
 
-void cls0805e2e4::func_0805e3c0(cls0805e2e4 *o)
+void cls0805e2e4::mergeMaximumCounters(cls0805e2e4 *o)
 {
     if (o->unk_00 > unk_00) unk_00 = o->unk_00;
     if (o->unk_02 > unk_02) unk_02 = o->unk_02;
@@ -108,7 +108,7 @@ bool instStream::gatherStats()
     int maxLat = 0;
     unk_2b4 = -1;
     unk_2b6 = -1;
-    statCounts *sc = &unk_290;
+    statCounts *sc = &stats;
     for (int i = 0; i != 9; i++)
         sc->unk_00[i] = 0;
     unk_2b8 = 0;
@@ -120,7 +120,7 @@ bool instStream::gatherStats()
     }
 
     Instr *in;
-    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         cls0805e2e4 *is = &in->unk_13f0;
         is->unk_00 = is->unk_02 = 0;
         is->unk_04 = is->unk_06 = 0;
@@ -142,7 +142,7 @@ bool instStream::gatherStats()
         }
     }
 
-    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
@@ -171,7 +171,7 @@ bool instStream::gatherStats()
         }
     }
 
-    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r;
@@ -200,7 +200,7 @@ bool instStream::gatherStats()
         }
     }
 
-    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
@@ -222,7 +222,7 @@ bool instStream::gatherStats()
         }
     }
 
-    wtInstrList *lst = &wt->unk_88;
+    wtInstrList *lst = &wt->linearInstructions;
     for (in = lst->tail; in; in = in->unk_1c.unk_04) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
@@ -273,8 +273,8 @@ bool instStream::gatherStats()
     int thru = 0;
     int best = 0;
     int both = 0;
-    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
-        if (in->unk_1388)
+    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+        if (in->branchFlags)
             unk_2b4 = in->unk_13f0.unk_04;
         char c = in->unk_138c;
         if (c == 3)
@@ -283,11 +283,11 @@ bool instStream::gatherStats()
             lower++;
         else
             upper++;
-        unk_278.func_0805e3c0(&in->unk_13f0);
+        unk_278.mergeMaximumCounters(&in->unk_13f0);
     }
 
     int maxIssue = 0;
-    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r = registerOperand(op, 2);
@@ -401,12 +401,12 @@ bool instStream::gatherStats()
     unk_2bc = physSum;
     if (canLoop()) {
         unk_2b8 = unk_2ba;
-        unk_2e4 = best;
+        logicalLength = best;
         if (best <= 1)
-            unk_2e4 = 2;
+            logicalLength = 2;
     } else {
         unk_2b8 = 5;
-        unk_2e4 = 0;
+        logicalLength = 0;
     }
     if (unk_278.unk_04 >= best) {
         unk_2ba = 6;
@@ -424,9 +424,9 @@ bool instStream::gatherStats()
             best = h;
         }
     }
-    unk_2e0 = best;
-    wt->unk_74 = unk_2e0;
-    wt->unk_76 = unk_2e4;
+    dependencyLength = best;
+    wt->unk_74 = dependencyLength;
+    wt->unk_76 = logicalLength;
     wt->unk_78 = depth;
     return true;
 }
@@ -438,17 +438,17 @@ static inline int clampDepLen(int len)
     return len;
 }
 
-int instStream::func_0805f284()
+int instStream::getRecordedDependencyLength()
 {
-    int len = unk_2e0;
+    int len = dependencyLength;
     if (len <= 0)
         len = 0;
     return len;
 }
 
-int instStream::func_0805f29c()
+int instStream::getRecordedLogicalLength()
 {
-    int len = unk_2e4;
+    int len = logicalLength;
     if (len <= 0)
         len = 0;
     return len;
@@ -464,7 +464,7 @@ int instStream::getOrGuessDepLength()
     int len = 0;
     switch (wt->unk_09) {
     case 1:
-        len = clampDepLen(unk_2e0);
+        len = clampDepLen(dependencyLength);
         break;
     case 3:
         len = wt->func_08072eec();
@@ -473,7 +473,7 @@ int instStream::getOrGuessDepLength()
     return len;
 }
 
-int instStream::func_0805f354()
+int instStream::getClampedDependencyLength()
 {
     workTable *wt = getTable();
     if (!wt) {
@@ -484,7 +484,7 @@ int instStream::func_0805f354()
     switch (wt->unk_09) {
     case 1:
     case 3:
-        len = clampDepLen(unk_2e0);
+        len = clampDepLen(dependencyLength);
         break;
     }
     return len;

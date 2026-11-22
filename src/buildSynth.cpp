@@ -19,7 +19,7 @@ static inline void dumpSynthInstruction(Instr *in)
 
 bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
 {
-    workTable *t = &s->unk_148;
+    workTable *t = &s->sourceTable;
     if (!t) {
         reportError("build: failed to get input table from ist\n");
         return false;
@@ -45,15 +45,15 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
         if (!in)
             continue;
         bool isIO = false;
-        if (in->unk_1420 > 0) {
+        if (in->parsedLoopId > 0) {
             reportUserMessage("parseLid set for a synth instruction\n");
             in->leDump();
             return false;
         }
-        in->unk_1420 = -1;
-        switch ((unsigned char)in->unk_13cd) {
+        in->parsedLoopId = -1;
+        switch ((unsigned char)in->syntheticKind) {
         case 11:
-            if (s->unk_2d0) {
+            if (s->endDirectiveText) {
                 reportUserMessage("istream already has end macro attached\n");
                 return false;
             }
@@ -61,16 +61,16 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
                 reportError("EXITM has no macro string attached\n");
                 return false;
             }
-            s->unk_2d0 = dupString(in->operands[0].unk_1c.getString());
+            s->endDirectiveText = dupString(in->operands[0].unk_1c.getString());
         case 1:
         case 3:
             if (stype) {
-                const char *a = func_080554e4((unsigned char)in->unk_13cd);
+                const char *a = func_080554e4((unsigned char)in->syntheticKind);
                 reportError("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", a, func_080554e4(stype));
                 in->leDump();
                 return false;
             }
-            inSynth = stype = (unsigned char)in->unk_13cd;
+            inSynth = stype = (unsigned char)in->syntheticKind;
             break;
         case 2:
             if (stype != 1) {
@@ -130,17 +130,17 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
     }
     switch (stype) {
     case 11:
-        s->unk_2cd = 4;
-        if (!s->unk_2d0) {
+        s->endType = 4;
+        if (!s->endDirectiveText) {
             reportError("exitmacro not set.. but end_macro endtype?\n");
             return false;
         }
         break;
     case 3:
-        s->unk_2cd = 3;
+        s->endType = 3;
         break;
     case 1:
-        s->unk_2cc = 2;
+        s->startType = 2;
         break;
     default:
         reportUserMessage("vcl found a problem making an enter/exit block, and I'll improve this error message later\n");
