@@ -23,16 +23,16 @@ local_review	n	src/ExecRP.cpp	547	func_08051e34	mNode *
 local_review	i	src/Instr.cpp	84	Instr	int
 local_review	op	src/Instr.cpp	86	Instr	Operand *
 local_review	d	src/Instr.cpp	87	Instr	iOpDesc *
-local_review	i	src/Instr.cpp	132	func_08053fac	int
+local_review	i	src/Instr.cpp	132	validateOperands	int
 local_review	i	src/Instr.cpp	142	func_08054008	int
 local_review	j	src/Instr.cpp	147	func_08054008	int
 local_review	op	src/Instr.cpp	148	func_08054008	Operand *
 local_review	r	src/Instr.cpp	149	func_08054008	RegPoolEntry *
 local_review	k	src/Instr.cpp	151	func_08054008	int
-local_review	i	src/Instr.cpp	176	func_0805417c	int
-local_review	i	src/Instr.cpp	192	func_08054214	int
-local_review	op	src/Instr.cpp	193	func_08054214	Operand *
-local_review	k	src/Instr.cpp	194	func_08054214	int
+local_review	i	src/Instr.cpp	176	resetFlowDependencies	int
+local_review	i	src/Instr.cpp	192	clearTransientFlags	int
+local_review	op	src/Instr.cpp	193	clearTransientFlags	Operand *
+local_review	k	src/Instr.cpp	194	clearTransientFlags	int
 local_review	i	src/Instr.cpp	243	func_080543bc	int
 local_review	op	src/Instr.cpp	244	func_080543bc	Operand *
 local_review	r	src/Instr.cpp	245	func_080543bc	RegPoolEntry *
@@ -50,14 +50,14 @@ local_review	i	src/Instr.cpp	331	clone	int
 local_review	d	src/Instr.cpp	332	clone	Operand *
 local_review	r	src/Instr.cpp	376	getRamBits	int
 local_review	op	src/Instr.cpp	394	getRamBits	Operand *
-local_review	i	src/Instr.cpp	423	func_08054b84	int
-local_review	op	src/Instr.cpp	436	func_08054c24	Operand *
-local_review	i	src/Instr.cpp	437	func_08054c24	int
-local_review	r	src/Instr.cpp	438	func_08054c24	RegPoolEntry *
-local_review	op	src/Instr.cpp	455	func_08054cc4	Operand *
-local_review	i	src/Instr.cpp	456	func_08054cc4	int
-local_review	r	src/Instr.cpp	457	func_08054cc4	RegPoolEntry *
-local_review	op	src/Instr.cpp	473	func_08054d64	Operand *
+local_review	i	src/Instr.cpp	423	resetOptimizationState	int
+local_review	op	src/Instr.cpp	436	collectOutputRegisterMask	Operand *
+local_review	i	src/Instr.cpp	437	collectOutputRegisterMask	int
+local_review	r	src/Instr.cpp	438	collectOutputRegisterMask	RegPoolEntry *
+local_review	op	src/Instr.cpp	455	collectInputRegisterMask	Operand *
+local_review	i	src/Instr.cpp	456	collectInputRegisterMask	int
+local_review	r	src/Instr.cpp	457	collectInputRegisterMask	RegPoolEntry *
+local_review	op	src/Instr.cpp	473	getImmediateOperand	Operand *
 local_review	n	src/Instr.cpp	497	changeBranchImmediate	int
 local_review	op	src/Instr.cpp	502	changeBranchImmediate	Operand *
 local_review	sa	src/Instr.cpp	520	link_oParts	OpSlot *
@@ -88,41 +88,41 @@ local_review	ii	src/Instr.cpp	767	getBranchTargetRegister	iInfo *
 local_review	n	src/Instr.cpp	774	getBranchTargetRegister	int
 local_review	op	src/Instr.cpp	779	getBranchTargetRegister	Operand *
 local_review	r	src/Instr.cpp	786	getBranchTargetRegister	RegPoolEntry *
-local_review	i	src/Instr.cpp	801	func_08055720	int
-local_review	op	src/Instr.cpp	802	func_08055720	Operand *
-local_review	i	src/Instr.cpp	811	func_080557a4	int
-local_review	op	src/Instr.cpp	812	func_080557a4	Operand *
-local_review	op	src/Instr.cpp	824	func_08055828	Operand *
-local_review	r	src/Instr.cpp	825	func_08055828	RegPoolEntry *
-local_review	j	src/Instr.cpp	829	func_08055828	int
+local_review	i	src/Instr.cpp	801	findInputOperand	int
+local_review	op	src/Instr.cpp	802	findInputOperand	Operand *
+local_review	i	src/Instr.cpp	811	findOutputOperand	int
+local_review	op	src/Instr.cpp	812	findOutputOperand	Operand *
+local_review	op	src/Instr.cpp	824	hasLinkedOutputFrom	Operand *
+local_review	r	src/Instr.cpp	825	hasLinkedOutputFrom	RegPoolEntry *
+local_review	j	src/Instr.cpp	829	hasLinkedOutputFrom	int
 local_review	i	src/Instr.cpp	847	func_080558f4	int
 local_review	op	src/Instr.cpp	848	func_080558f4	Operand *
 local_review	ie	src/Instr.cpp	866	getIE	Instr **
-local_review	i	src/Instr.cpp	880	func_08055a0c	int
-local_review	op	src/Instr.cpp	881	func_08055a0c	Operand *
+local_review	i	src/Instr.cpp	880	getFirstOutputLatency	int
+local_review	op	src/Instr.cpp	881	getFirstOutputLatency	Operand *
 local_review	r	src/Instr.cpp	890	func_08055a88	bool
 local_review	r	src/Instr.cpp	897	func_08055aa8	bool
-local_review	i	src/Instr.cpp	916	func_08055ae4	int
-local_review	op	src/Instr.cpp	917	func_08055ae4	Operand *
-local_review	a	src/Instr.cpp	970	func_08055ae4	bool
-local_review	b	src/Instr.cpp	971	func_08055ae4	bool
-local_review	c	src/Instr.cpp	972	func_08055ae4	bool
-local_review	d	src/Instr.cpp	973	func_08055ae4	bool
-local_review	v	src/Instr.cpp	974	func_08055ae4	mValue *
-local_review	id	src/Instr.cpp	980	func_08055ae4	int
+local_review	i	src/Instr.cpp	916	expandVirtualStatOperand	int
+local_review	op	src/Instr.cpp	917	expandVirtualStatOperand	Operand *
+local_review	a	src/Instr.cpp	970	expandVirtualStatOperand	bool
+local_review	b	src/Instr.cpp	971	expandVirtualStatOperand	bool
+local_review	c	src/Instr.cpp	972	expandVirtualStatOperand	bool
+local_review	d	src/Instr.cpp	973	expandVirtualStatOperand	bool
+local_review	v	src/Instr.cpp	974	expandVirtualStatOperand	mValue *
+local_review	id	src/Instr.cpp	980	expandVirtualStatOperand	int
 local_review	s	src/LocTag.cpp	210	func_08050eec	char *
 local_review	s	src/LocTag.cpp	225	func_08050f48	char *
 local_review	i	src/Operand.cpp	31	Operand	int
-local_review	ok	src/Operand.cpp	208	func_0805665c	bool
+local_review	ok	src/Operand.cpp	208	diagnoseOperand	bool
 local_review	z	src/Operand.cpp	235	operandZeroValue	int
 local_review	rn	src/Operand.cpp	245	Emit	const char *
 local_review	z	src/Operand.cpp	251	Emit	int
 local_review	s	src/Operand.cpp	350	Emit	char *
 local_review	s	src/Operand.cpp	370	Emit	char *
 local_review	s	src/Operand.cpp	379	Emit	char *
-local_review	i	src/Operand.cpp	423	func_080569cc	int
-local_review	i	src/Operand.cpp	444	func_08056a24	int
-local_review	s	src/Operand.cpp	445	func_08056a24	OpSlot *
+local_review	i	src/Operand.cpp	423	resetFlowState	int
+local_review	i	src/Operand.cpp	444	resetOptimizationSlots	int
+local_review	s	src/Operand.cpp	445	resetOptimizationSlots	OpSlot *
 local_review	m	src/Operand.cpp	509	oDecodeToken	int
 local_review	p	src/Operand.cpp	512	oDecodeToken	char *
 local_review	q	src/Operand.cpp	513	oDecodeToken	char *
@@ -175,15 +175,15 @@ local_review	p	src/Processor.cpp	195	validateOpcodeTableCount	iInfo *
 local_review	i	src/Processor.cpp	208	dumpProcessorRegisterPools	int
 local_review	i	src/Processor.cpp	223	parseReset	int
 local_review	i	src/Processor.cpp	234	statReset	int
-local_review	p	src/Processor.cpp	258	func_0806bf8c	iInfo *
-local_review	s	src/Processor.cpp	262	func_0806bf8c	const char *
-local_review	m	src/Processor.cpp	263	func_0806bf8c	const char *
+local_review	p	src/Processor.cpp	258	findOpcodeInfoByMnemonic	iInfo *
+local_review	s	src/Processor.cpp	262	findOpcodeInfoByMnemonic	const char *
+local_review	m	src/Processor.cpp	263	findOpcodeInfoByMnemonic	const char *
 local_review	i	src/Processor.cpp	285	optReset	int
 local_review	i	src/Processor.cpp	297	Cycle	int
 local_review	i	src/Processor.cpp	309	func_0806c0f8	int
-local_review	i	src/Processor.cpp	348	func_0806c224	int
-local_review	rp	src/Processor.cpp	349	func_0806c224	RegPool *
-local_review	e	src/Processor.cpp	351	func_0806c224	RegPoolEntry *
+local_review	i	src/Processor.cpp	348	findRegisterByGlobalIndex	int
+local_review	rp	src/Processor.cpp	349	findRegisterByGlobalIndex	RegPool *
+local_review	e	src/Processor.cpp	351	findRegisterByGlobalIndex	RegPoolEntry *
 local_review	i	src/Processor.cpp	392	flowReset	int
 local_review	st	src/Processor.cpp	412	reportStalls	infoList *
 local_review	p	src/Processor.cpp	425	checkDispatchEntry	int
@@ -195,12 +195,12 @@ local_review	o	src/Processor.cpp	436	checkDispatchEntry	Instr *
 local_review	j	src/Processor.cpp	441	checkDispatchEntry	int
 local_review	i	src/Processor.cpp	458	wouldPair	int
 local_review	r	src/Processor.cpp	470	wouldPair	int
-local_review	i	src/Processor.cpp	494	func_0806c6dc	int
+local_review	i	src/Processor.cpp	494	resetPoolOptimizationState	int
 local_review	id	src/Processor.cpp	507	iinfoId	int
-local_review	id	src/Processor.cpp	531	func_0806c768	int
-local_review	t	src/Processor.cpp	540	func_0806c768	aaDesc *
-local_review	id	src/Processor.cpp	560	func_0806c7f8	int
-local_review	t	src/Processor.cpp	567	func_0806c7f8	aaUse *
+local_review	id	src/Processor.cpp	531	findAddressAliasDescriptor	int
+local_review	t	src/Processor.cpp	540	findAddressAliasDescriptor	aaDesc *
+local_review	id	src/Processor.cpp	560	findAddressAliasUse	int
+local_review	t	src/Processor.cpp	567	findAddressAliasUse	aaUse *
 local_review	i	src/Processor.cpp	575	emitReset	int
 local_review	i	src/Processor.cpp	587	emitStats	int
 local_review	n	src/Processor.cpp	605	getPoolsByClassID	int
@@ -257,18 +257,18 @@ local_review	p	src/RegPool.cpp	139	Dump	RegPoolEntry *
 local_review	i	src/RegPool.cpp	149	findByRegisterIndex	int
 local_review	e	src/RegPool.cpp	157	findPhysicalByName	RegPoolEntry *
 local_review	i	src/RegPool.cpp	158	findPhysicalByName	int
-local_review	e	src/RegPool.cpp	167	func_08059464	RegPoolEntry *
-local_review	i	src/RegPool.cpp	168	func_08059464	int
-local_review	p	src/RegPool.cpp	170	func_08059464	RegPoolEntry *
-local_review	e	src/RegPool.cpp	179	func_080594c0	RegPoolEntry *
-local_review	i	src/RegPool.cpp	180	func_080594c0	int
-local_review	p	src/RegPool.cpp	182	func_080594c0	RegPoolEntry *
-local_review	e	src/RegPool.cpp	191	func_0805951c	RegPoolEntry *
-local_review	i	src/RegPool.cpp	192	func_0805951c	int
-local_review	p	src/RegPool.cpp	195	func_0805951c	RegPoolEntry *
-local_review	e	src/RegPool.cpp	203	func_08059578	RegPoolEntry *
-local_review	i	src/RegPool.cpp	204	func_08059578	int
-local_review	p	src/RegPool.cpp	206	func_08059578	RegPoolEntry *
+local_review	e	src/RegPool.cpp	167	resetPoolThroughputState	RegPoolEntry *
+local_review	i	src/RegPool.cpp	168	resetPoolThroughputState	int
+local_review	p	src/RegPool.cpp	170	resetPoolThroughputState	RegPoolEntry *
+local_review	e	src/RegPool.cpp	179	resetPoolPartTiming	RegPoolEntry *
+local_review	i	src/RegPool.cpp	180	resetPoolPartTiming	int
+local_review	p	src/RegPool.cpp	182	resetPoolPartTiming	RegPoolEntry *
+local_review	e	src/RegPool.cpp	191	resetPoolFlowState	RegPoolEntry *
+local_review	i	src/RegPool.cpp	192	resetPoolFlowState	int
+local_review	p	src/RegPool.cpp	195	resetPoolFlowState	RegPoolEntry *
+local_review	e	src/RegPool.cpp	203	clearPoolPartPayloads	RegPoolEntry *
+local_review	i	src/RegPool.cpp	204	clearPoolPartPayloads	int
+local_review	p	src/RegPool.cpp	206	clearPoolPartPayloads	RegPoolEntry *
 local_review	p	src/RegPool.cpp	214	clearVirtualRegistersForParse	RegPoolEntry *
 local_review	n	src/RegPool.cpp	216	clearVirtualRegistersForParse	RegPoolEntry *
 local_review	e	src/RegPool.cpp	222	clearVirtualRegistersForParse	RegPoolEntry *
@@ -294,9 +294,9 @@ local_review	p	src/RegPool.cpp	411	func_08059c4c	RegPoolEntry *
 local_review	e	src/RegPool.cpp	419	func_08059c94	RegPoolEntry *
 local_review	i	src/RegPool.cpp	420	func_08059c94	int
 local_review	p	src/RegPool.cpp	423	func_08059c94	RegPoolEntry *
-local_review	p	src/RegPool.cpp	430	func_08059cdc	RegPoolEntry *
-local_review	e	src/RegPool.cpp	437	func_08059cdc	RegPoolEntry *
-local_review	i	src/RegPool.cpp	438	func_08059cdc	int
+local_review	p	src/RegPool.cpp	430	resetPoolLocalAllocationState	RegPoolEntry *
+local_review	e	src/RegPool.cpp	437	resetPoolLocalAllocationState	RegPoolEntry *
+local_review	i	src/RegPool.cpp	438	resetPoolLocalAllocationState	int
 local_review	e	src/RegPool.cpp	468	getMoveReg	RegPoolEntry *
 local_review	e	src/RegPool.cpp	489	optReset	RegPoolEntry *
 local_review	i	src/RegPool.cpp	490	optReset	int
@@ -857,7 +857,7 @@ local_review	bm	src/flowMon.cpp	71	func_08060018	char
 local_review	t	src/flowMon.cpp	95	func_08060018	instStream *
 local_review	s	src/flowMon.cpp	120	func_080603bc	instStream *
 local_review	i	src/flushPending.cpp	10	flushPending	int
-local_review	i	src/flushPending.cpp	19	func_0805a164	int
+local_review	i	src/flushPending.cpp	19	acquireFreePendingLocation	int
 local_review	i	src/flushPending.cpp	36	cycle	int
 local_review	n	src/flushPending.cpp	42	cycle	int
 local_review	c	src/flushPending.cpp	44	cycle	int
@@ -866,16 +866,16 @@ local_review	i	src/flushPending.cpp	50	cycle	int
 local_review	p	src/flushPending.cpp	51	cycle	ol_s *
 local_review	c	src/flushPending.cpp	52	cycle	int
 local_review	v	src/flushPending.cpp	55	cycle	int
-local_review	i	src/flushPending.cpp	79	func_0805a300	int
-local_review	i	src/flushPending.cpp	89	func_0805a348	int
-local_review	p	src/flushPending.cpp	90	func_0805a348	rPart *
-local_review	i	src/flushPending.cpp	108	func_0805a390	int
-local_review	i	src/flushPending.cpp	135	func_0805a3cc	int
-local_review	i	src/flushPending.cpp	141	func_0805a4b4	int
-local_review	i	src/flushPending.cpp	157	func_0805a4f4	int
-local_review	n	src/flushPending.cpp	191	func_0805a8a4	mNode *
+local_review	i	src/flushPending.cpp	79	resetRegisterFlowState	int
+local_review	i	src/flushPending.cpp	89	resetRegisterPartTiming	int
+local_review	p	src/flushPending.cpp	90	resetRegisterPartTiming	rPart *
+local_review	i	src/flushPending.cpp	108	resetRegisterThroughputState	int
+local_review	i	src/flushPending.cpp	135	resetPartFlowState	int
+local_review	i	src/flushPending.cpp	141	clearRegisterPartPayloads	int
+local_review	i	src/flushPending.cpp	157	cycleRegisterParts	int
+local_review	n	src/flushPending.cpp	191	addRegisterNameAlias	mNode *
 local_review	i	src/flushPending.cpp	242	moveReset	int
-local_review	i	src/flushPending.cpp	254	func_0805aa00	int
+local_review	i	src/flushPending.cpp	254	clearPartPayloadMarkers	int
 local_review	p	src/flushPending.cpp	272	maskName	char *
 local_review	i	src/forceInsert.cpp	12	forceInsert	int
 local_review	p	src/forceInsert.cpp	17	forceInsert	InstructionPosition *
@@ -947,7 +947,7 @@ local_review	n	src/gatherStats.cpp	387	gatherStats	int
 local_review	br	src/gatherStats.cpp	419	gatherStats	Instr *
 local_review	h	src/gatherStats.cpp	421	gatherStats	int
 local_review	wt	src/gatherStats.cpp	459	getOrGuessDepLength	workTable *
-local_review	wt	src/gatherStats.cpp	478	func_0805f354	workTable *
+local_review	wt	src/gatherStats.cpp	478	getClampedDependencyLength	workTable *
 local_review	wt	src/gatherStats.cpp	495	getOrGuessLogicalLength	workTable *
 local_review	i	src/gatherStats.cpp	507	clear	int
 local_review	i	src/gatherStats.cpp	515	add	int
@@ -1095,7 +1095,7 @@ local_review	i	src/iTable.cpp	138	dump	int
 local_review	r	src/iTable.cpp	139	dump	wtRow *
 local_review	p	src/iTable.cpp	144	dump	Instr *
 local_review	ie	src/iTable.cpp	170	reserveEntry	Instr **
-local_review	b	src/iTable.cpp	258	func_08073060	Instr *
+local_review	b	src/iTable.cpp	258	getConditionalBranch	Instr *
 local_review	b	src/iTable.cpp	266	getBranch	Instr *
 local_review	r	src/iTable.cpp	274	getBranch	int
 local_review	o	src/iTable.cpp	291	getBranch	instStream *
@@ -1115,8 +1115,8 @@ local_review	in	src/iTable.cpp	416	cloneAppend	Instr *
 local_review	f	src/iTable.cpp	430	cloneAppend	unsigned char
 local_review	i	src/iTable.cpp	465	dumpSynthetics	Instr *
 local_review	i	src/iTable.cpp	472	clearClones	Instr *
-local_review	cm	src/iTable.cpp	487	func_08073774	int
-local_review	i	src/iTable.cpp	510	func_080737e4	int
+local_review	cm	src/iTable.cpp	487	setTableRawMode	int
+local_review	i	src/iTable.cpp	510	resetFlowStalls	int
 local_review	r	src/iTable.cpp	525	func_08073854	wtRow *
 local_review	in	src/iTable.cpp	528	func_08073854	Instr *
 local_review	op	src/iTable.cpp	532	func_08073854	int
@@ -1131,9 +1131,9 @@ local_review	i	src/iTable.cpp	730	getCurrentLidStats	Instr *
 local_review	nt	src/iTable.cpp	772	grow	wtRow *
 local_review	i	src/iTable.cpp	777	grow	int
 local_review	r	src/iTable.cpp	855	setSkip	wtRow *
-local_review	m	src/iTable.cpp	867	func_0807411c	const char *
-local_review	o	src/iTable.cpp	868	func_0807411c	const char *
-local_review	o	src/iTable.cpp	883	func_080741c0	const char *
+local_review	m	src/iTable.cpp	867	getRangeStart	const char *
+local_review	o	src/iTable.cpp	868	getRangeStart	const char *
+local_review	o	src/iTable.cpp	883	getRangeEnd	const char *
 local_review	i	src/iTable.cpp	1015	makeLinearList	int
 local_review	ie	src/iTable.cpp	1016	makeLinearList	Instr **
 local_review	p	src/iTable.cpp	1021	makeLinearList	int
@@ -1250,36 +1250,36 @@ local_review	r	src/instStream.cpp	377	getBranchTargetImmediate	char *
 local_review	br	src/instStream.cpp	379	getBranchTargetImmediate	Instr *
 local_review	r	src/instStream.cpp	389	getBranchTargetRegister	RegPoolEntry *
 local_review	br	src/instStream.cpp	391	getBranchTargetRegister	Instr *
-local_review	wt	src/instStream.cpp	401	func_0806d908	workTable *
+local_review	wt	src/instStream.cpp	401	getCodeMode	workTable *
 local_review	wt	src/instStream.cpp	410	getCodeModeName	workTable *
-local_review	wt	src/instStream.cpp	419	func_0806d968	workTable *
-local_review	wt	src/instStream.cpp	438	func_0806d9a0	workTable *
-local_review	wt	src/instStream.cpp	451	func_0806d9d4	workTable *
+local_review	wt	src/instStream.cpp	419	getRawSchedulingMode	workTable *
+local_review	wt	src/instStream.cpp	438	usesFreeRawLayout	workTable *
+local_review	wt	src/instStream.cpp	451	usesFixedRawLayout	workTable *
 local_review	wt	src/instStream.cpp	459	getAllocMode	workTable *
-local_review	wt	src/instStream.cpp	468	func_0806da34	workTable *
-local_review	st	src/instStream.cpp	483	func_0806da80	int
-local_review	ok	src/instStream.cpp	484	func_0806da80	int
-local_review	et	src/instStream.cpp	486	func_0806da80	int
+local_review	wt	src/instStream.cpp	468	isOutsideRawMode	workTable *
+local_review	st	src/instStream.cpp	483	checkStartEndStatus	int
+local_review	ok	src/instStream.cpp	484	checkStartEndStatus	int
+local_review	et	src/instStream.cpp	486	checkStartEndStatus	int
 local_review	s	src/instStream.cpp	538	processCmdSynth	const char *
 local_review	n	src/instStream.cpp	539	processCmdSynth	const char *
 local_review	t	src/instStream.cpp	563	disposeInputTable	workTable *
-local_review	i	src/instStream.cpp	574	func_0806dc9c	int
-local_review	i	src/instructionBranchFixups.cpp	7	func_08052f84	int
-local_review	op	src/instructionBranchFixups.cpp	8	func_08052f84	Operand *
-local_review	ol	src/instructionBranchFixups.cpp	14	func_08052f84	ol_s *
-local_review	in	src/instructionBranchFixups.cpp	15	func_08052f84	Instr *
-local_review	c	src/instructionBranchFixups.cpp	18	func_08052f84	int
-local_review	j	src/instructionBranchFixups.cpp	22	func_08052f84	int
-local_review	r	src/instructionBranchFixups.cpp	23	func_08052f84	RegPoolEntry *
-local_review	id	src/instructionBranchFixups.cpp	40	func_08053104	int
-local_review	r	src/instructionBranchFixups.cpp	54	func_08053104	RegPoolEntry *
-local_review	i	src/instructionBranchFixups.cpp	75	func_08053104	int
-local_review	r	src/instructionOperandNormalization.cpp	7	func_080532d8	int
-local_review	t	src/instructionOperandNormalization.cpp	25	func_080532d8	RegPoolEntry *
-local_review	op	src/instructionOperandNormalization.cpp	39	func_080532d8	Operand *
-local_review	z	src/instructionOperandNormalization.cpp	41	func_080532d8	RegPoolEntry *
-local_review	i	src/instructionOperandNormalization.cpp	46	func_080532d8	int
-local_review	g	src/instructionPosition.cpp	36	func_0805874c	int
+local_review	i	src/instStream.cpp	574	copySourceRecordsFrom	int
+local_review	i	src/instructionBranchFixups.cpp	7	patchBranchLatencies	int
+local_review	op	src/instructionBranchFixups.cpp	8	patchBranchLatencies	Operand *
+local_review	ol	src/instructionBranchFixups.cpp	14	patchBranchLatencies	ol_s *
+local_review	in	src/instructionBranchFixups.cpp	15	patchBranchLatencies	Instr *
+local_review	c	src/instructionBranchFixups.cpp	18	patchBranchLatencies	int
+local_review	j	src/instructionBranchFixups.cpp	22	patchBranchLatencies	int
+local_review	r	src/instructionBranchFixups.cpp	23	patchBranchLatencies	RegPoolEntry *
+local_review	id	src/instructionBranchFixups.cpp	40	simplifyBranch	int
+local_review	r	src/instructionBranchFixups.cpp	54	simplifyBranch	RegPoolEntry *
+local_review	i	src/instructionBranchFixups.cpp	75	simplifyBranch	int
+local_review	r	src/instructionOperandNormalization.cpp	7	normalizeZeroSources	int
+local_review	t	src/instructionOperandNormalization.cpp	25	normalizeZeroSources	RegPoolEntry *
+local_review	op	src/instructionOperandNormalization.cpp	39	normalizeZeroSources	Operand *
+local_review	z	src/instructionOperandNormalization.cpp	41	normalizeZeroSources	RegPoolEntry *
+local_review	i	src/instructionOperandNormalization.cpp	46	normalizeZeroSources	int
+local_review	g	src/instructionPosition.cpp	36	setFromLinearRow	int
 local_review	p	src/instructionTextEmission.cpp	26	func_0808750c	char *
 local_review	n	src/instructionTextEmission.cpp	32	func_0808750c	int
 local_review	i	src/instructionTextEmission.cpp	34	func_0808750c	int
@@ -1294,7 +1294,7 @@ local_review	r	src/instructionTextEmission.cpp	111	extHook	RegPoolEntry *
 local_review	r	src/linearReduce.cpp	47	func_0807e740	int
 local_review	r	src/linearReduce.cpp	57	func_0807e740	int
 local_review	t	src/linkList.cpp	21	branchLinkType	int
-local_review	n	src/linkList.cpp	48	func_0806dd48	linkNode *
+local_review	n	src/linkList.cpp	48	nextLinkOfType	linkNode *
 local_review	n	src/linkList.cpp	64	~linkList	linkNode *
 local_review	n	src/linkList.cpp	76	findType	linkNode *
 local_review	n	src/linkList.cpp	85	getStream	linkNode *
@@ -1310,8 +1310,8 @@ local_review	p	src/linkList.cpp	253	unlinkStreams	linkNode *
 local_review	n	src/linkList.cpp	266	unLinkStreams	linkNode *
 local_review	p	src/linkList.cpp	270	unLinkStreams	linkNode *
 local_review	p	src/linkList.cpp	278	unLinkStreams	linkNode *
-local_review	n	src/linkList.cpp	288	func_0806e4f0	int
-local_review	p	src/linkList.cpp	289	func_0806e4f0	linkNode *
+local_review	n	src/linkList.cpp	288	countMarkedLinks	int
+local_review	p	src/linkList.cpp	289	countMarkedLinks	linkNode *
 local_review	s	src/linkList.cpp	307	linkTypeName	const char *
 local_review	tr	src/linkMatchList.cpp	12	linkMatchList	regUse *
 local_review	s	src/linkMatchList.cpp	17	linkMatchList	instStream *
@@ -2291,7 +2291,7 @@ parameter_review	a	src/Instr.cpp	239	func_080543bc	Instr *
 parameter_review	b	src/Instr.cpp	239	func_080543bc	Instr *
 parameter_review	a	src/Instr.cpp	258	func_0805449c	Instr *
 parameter_review	b	src/Instr.cpp	258	func_0805449c	Instr *
-parameter_review	n	src/Instr.cpp	471	func_08054d64	int
+parameter_review	n	src/Instr.cpp	471	getImmediateOperand	int
 parameter_review	s	src/Instr.cpp	487	changeBranchImmediate	const char *
 parameter_review	a	src/Instr.cpp	510	link_oParts	Instr *
 parameter_review	b	src/Instr.cpp	510	link_oParts	Instr *
@@ -2304,7 +2304,7 @@ parameter_review	s	src/Instr.cpp	619	setOwner	cls_unk30 *
 parameter_review	t	src/Instr.cpp	629	func_08055254	int
 parameter_review	<unnamed>	src/Instr.cpp	653	func_080552a8	int
 parameter_review	t	src/Instr.cpp	713	func_080554e4	int
-parameter_review	n	src/Instr.cpp	819	func_08055828	unsigned int
+parameter_review	n	src/Instr.cpp	819	hasLinkedOutputFrom	unsigned int
 parameter_review	v	src/Instr.cpp	909	isLiteral	mValue *
 parameter_review	v	src/Instr.cpp	1116	func_08055fbc	short
 parameter_review	v	src/Instr.cpp	1121	func_08055fdc	short
@@ -2314,7 +2314,7 @@ parameter_review	t	src/LocTag.cpp	5	func_0805082c	LocTag *
 parameter_review	t	src/LocTag.cpp	10	func_0805085c	LocTag *
 parameter_review	i	src/LocTag.cpp	216	func_08050f18	int
 parameter_review	i	src/LocTag.cpp	231	func_08050f7c	int
-parameter_review	<unnamed>	src/Operand.cpp	205	func_0805665c	int
+parameter_review	<unnamed>	src/Operand.cpp	205	diagnoseOperand	int
 parameter_review	op	src/Operand.cpp	233	operandZeroValue	Operand *
 parameter_review	<unnamed>	src/Operand.cpp	243	Emit	bool
 parameter_review	<unnamed>	src/Operand.cpp	453	buildImplicitOperand	bool
@@ -2334,7 +2334,7 @@ parameter_review	s	src/Parser.cpp	474	func_08050810	const char *
 parameter_review	p	src/Processor.cpp	206	dumpProcessorRegisterPools	Program *
 parameter_review	p	src/Processor.cpp	213	parseReset	Program *
 parameter_review	p	src/Processor.cpp	232	statReset	Program *
-parameter_review	id	src/Processor.cpp	243	func_0806bf74	int
+parameter_review	id	src/Processor.cpp	243	getOpcodeInfoById	int
 parameter_review	p	src/Processor.cpp	283	optReset	Program *
 parameter_review	p	src/Processor.cpp	294	Cycle	Program *
 parameter_review	p	src/Processor.cpp	306	func_0806c0f8	Program *
@@ -2347,12 +2347,12 @@ parameter_review	ie	src/Processor.cpp	419	checkDispatchEntry	Instr **
 parameter_review	ie	src/Processor.cpp	452	wouldPair	Instr **
 parameter_review	in	src/Processor.cpp	452	wouldPair	Instr *
 parameter_review	p	src/Processor.cpp	452	wouldPair	unsigned int
-parameter_review	r	src/Processor.cpp	487	func_0806c6c4	RegPoolEntry *
-parameter_review	p	src/Processor.cpp	492	func_0806c6dc	Program *
+parameter_review	r	src/Processor.cpp	487	isVuRegister	RegPoolEntry *
+parameter_review	p	src/Processor.cpp	492	resetPoolOptimizationState	Program *
 parameter_review	op	src/Processor.cpp	503	iinfoId	iInfo *
-parameter_review	op	src/Processor.cpp	515	func_0806c72c	iInfo *
-parameter_review	in	src/Processor.cpp	520	func_0806c768	Instr *
-parameter_review	in	src/Processor.cpp	554	func_0806c7f8	Instr *
+parameter_review	op	src/Processor.cpp	515	getOpcodeId	iInfo *
+parameter_review	in	src/Processor.cpp	520	findAddressAliasDescriptor	Instr *
+parameter_review	in	src/Processor.cpp	554	findAddressAliasUse	Instr *
 parameter_review	p	src/Processor.cpp	573	emitReset	Program *
 parameter_review	p	src/Processor.cpp	584	emitStats	Program *
 parameter_review	s	src/Program.cpp	77	addStream	instStream *
@@ -2535,8 +2535,8 @@ parameter_review	a	src/fDep.cpp	48	sameEA	Instr *
 parameter_review	b	src/fDep.cpp	48	sameEA	Instr *
 parameter_review	i	src/fDepClone.cpp	33	func_0806558c	Instr *
 parameter_review	i	src/fDepClone.cpp	55	func_080655e8	Instr *
-parameter_review	a	src/fDepClone.cpp	71	func_0806563c	bool
-parameter_review	b	src/fDepClone.cpp	71	func_0806563c	bool
+parameter_review	a	src/fDepClone.cpp	71	buildForwardDependencies	bool
+parameter_review	b	src/fDepClone.cpp	71	buildForwardDependencies	bool
 parameter_review	<unnamed>	src/fDepClone.cpp	80	BuildfDepList	bool
 parameter_review	wt	src/fDepClone.cpp	80	BuildfDepList	workTable *
 parameter_review	a	src/fDepClone.cpp	231	tagsMatch	Instr *
@@ -2567,13 +2567,13 @@ parameter_review	<unnamed>	src/flowBuildHooks.cpp	10	func_08085a9c	Program *
 parameter_review	b	src/flowMon.cpp	20	func_08060018	bool
 parameter_review	p	src/flowMon.cpp	20	func_08060018	Program *
 parameter_review	p	src/flowMon.cpp	118	func_080603bc	Program *
-parameter_review	i	src/flushPending.cpp	205	func_0805a908	int
-parameter_review	i	src/flushPending.cpp	210	func_0805a924	int
-parameter_review	v	src/flushPending.cpp	210	func_0805a924	VclPtrWord
-parameter_review	v	src/flushPending.cpp	221	func_0805a954	VclPtrWord
-parameter_review	i	src/flushPending.cpp	227	func_0805a968	int
+parameter_review	i	src/flushPending.cpp	205	getPartPayload	int
+parameter_review	i	src/flushPending.cpp	210	setPartPayload	int
+parameter_review	v	src/flushPending.cpp	210	setPartPayload	VclPtrWord
+parameter_review	v	src/flushPending.cpp	221	setPayload	VclPtrWord
+parameter_review	i	src/flushPending.cpp	227	getPendingLocation	int
 parameter_review	in	src/forceInsert.cpp	10	forceInsert	Instr *
-parameter_review	o	src/gatherStats.cpp	46	func_0805e3c0	cls0805e2e4 *
+parameter_review	o	src/gatherStats.cpp	46	mergeMaximumCounters	cls0805e2e4 *
 parameter_review	in	src/gatherStats.cpp	511	add	Instr *
 parameter_review	i	src/gatherStats.cpp	523	get	int
 parameter_review	p	src/genRegPool.cpp	49	assignExtRegisters	Program *
@@ -2708,8 +2708,8 @@ parameter_review	wt	src/instStream.cpp	426	isRawTable	workTable *
 parameter_review	wt	src/instStream.cpp	431	isFreeRawTable	workTable *
 parameter_review	wt	src/instStream.cpp	444	isFixedRawTable	workTable *
 parameter_review	i	src/instStream.cpp	493	processCmdSynth	Instr *
-parameter_review	v	src/instructionPosition.cpp	34	func_0805874c	short
-parameter_review	c	src/instructionPosition.cpp	48	func_0805878c	char
+parameter_review	v	src/instructionPosition.cpp	34	setFromLinearRow	short
+parameter_review	c	src/instructionPosition.cpp	48	setInstructionPipe	char
 parameter_review	t	src/instructionPosition.cpp	67	setRangeFrom	workTable *
 parameter_review	in	src/instructionTextEmission.cpp	14	dumpEmitInstruction	Instr *
 parameter_review	<unnamed>	src/instructionTextEmission.cpp	19	func_0808750c	int
@@ -2733,7 +2733,7 @@ parameter_review	s	src/linkList.cpp	12	findRef	instStream *
 parameter_review	f	src/linkList.cpp	19	branchLinkType	unsigned int
 parameter_review	n	src/linkList.cpp	122	relink	linkNode *
 parameter_review	n	src/linkList.cpp	151	unlink	linkNode *
-parameter_review	s	src/linkList.cpp	169	func_0806dff4	instStream *
+parameter_review	s	src/linkList.cpp	169	findLinkToStream	instStream *
 parameter_review	s	src/linkList.cpp	174	addNewRef	instStream *
 parameter_review	s	src/linkList.cpp	197	linkTypeOk	instStream *
 parameter_review	a	src/linkList.cpp	204	linkStreams	instStream *
