@@ -1,25 +1,5 @@
 kind	name	file	line	function	type
-local_review	s	src/ExecRP.cpp	130	handleProgramNameDirective	char *
-local_review	s	src/ExecRP.cpp	148	handleMpgDirective	char *
-local_review	s	src/ExecRP.cpp	159	handleGlobalDirective	char *
-local_review	s	src/ExecRP.cpp	175	handleBeginRawDirective	char *
-local_review	s	src/ExecRP.cpp	215	handleBeginRawLoopDirective	char *
-local_review	ea	src/ExecRP.cpp	270	handleVuWorkAreaDirective	char *
-local_review	sz	src/ExecRP.cpp	275	handleVuWorkAreaDirective	char *
-local_review	arg	src/ExecRP.cpp	355	handleSyntaxDirective	char *
-local_review	d	src/ExecRP.cpp	382	findRegisteredDirective	Directive *
-local_review	i	src/ExecRP.cpp	383	findRegisteredDirective	int
-local_review	i	src/ExecRP.cpp	392	setRegisterRangeEnabled	int
-local_review	d	src/ExecRP.cpp	402	setRegisterRangeEnabled	char *
-local_review	s	src/ExecRP.cpp	403	setRegisterRangeEnabled	char *
 local_review	j	src/ExecRP.cpp	417	setRegisterRangeEnabled	int
-local_review	r	src/ExecRP.cpp	419	setRegisterRangeEnabled	RegPoolEntry *
-local_review	tmp	src/ExecRP.cpp	439	setRegisterRangeEnabled	int
-local_review	r	src/ExecRP.cpp	444	setRegisterRangeEnabled	RegPoolEntry *
-local_review	d	src/ExecRP.cpp	516	pushVisibilityScope	char *
-local_review	i	src/ExecRP.cpp	517	pushVisibilityScope	int
-local_review	n	src/ExecRP.cpp	531	pushVisibilityScope	mNode *
-local_review	n	src/ExecRP.cpp	547	popVisibilityScope	mNode *
 local_review	i	src/Instr.cpp	84	Instr	int
 local_review	op	src/Instr.cpp	86	Instr	Operand *
 local_review	d	src/Instr.cpp	87	Instr	iOpDesc *
@@ -161,78 +141,21 @@ local_review	q	src/Parser.cpp	435	isTokenSeparatorCharacter	const char *
 local_review	ch	src/Parser.cpp	436	isTokenSeparatorCharacter	char
 local_review	i	src/Processor.cpp	31	Processor	int
 local_review	i	src/Processor.cpp	33	Processor	int
-local_review	i	src/Processor.cpp	73	Init	int
-local_review	e	src/Processor.cpp	98	Init	RegPoolEntry *
-local_review	e	src/Processor.cpp	107	Init	RegPoolEntry *
 local_review	i	src/Processor.cpp	145	dumpRegisterPools	int
-local_review	n	src/Processor.cpp	152	gatherInflight	int
-local_review	i	src/Processor.cpp	153	gatherInflight	int
-local_review	r	src/Processor.cpp	155	gatherInflight	int
 local_review	i	src/Processor.cpp	168	clearAllRegisterAssignmentsFirstPass	int
 local_review	i	src/Processor.cpp	178	clearAllRegisterAssignmentsSecondPass	int
-local_review	n	src/Processor.cpp	194	validateOpcodeTableCount	int
-local_review	p	src/Processor.cpp	195	validateOpcodeTableCount	iInfo *
 local_review	i	src/Processor.cpp	208	dumpProcessorRegisterPools	int
 local_review	i	src/Processor.cpp	223	parseReset	int
 local_review	i	src/Processor.cpp	234	statReset	int
-local_review	p	src/Processor.cpp	258	findOpcodeInfoByMnemonic	iInfo *
-local_review	s	src/Processor.cpp	262	findOpcodeInfoByMnemonic	const char *
-local_review	m	src/Processor.cpp	263	findOpcodeInfoByMnemonic	const char *
 local_review	i	src/Processor.cpp	285	optReset	int
 local_review	i	src/Processor.cpp	297	Cycle	int
 local_review	i	src/Processor.cpp	309	resetProcessorThroughput	int
-local_review	i	src/Processor.cpp	348	findRegisterByGlobalIndex	int
-local_review	rp	src/Processor.cpp	349	findRegisterByGlobalIndex	RegPool *
-local_review	e	src/Processor.cpp	351	findRegisterByGlobalIndex	RegPoolEntry *
 local_review	i	src/Processor.cpp	392	flowReset	int
-local_review	st	src/Processor.cpp	412	reportStalls	infoList *
-local_review	p	src/Processor.cpp	425	checkDispatchEntry	int
-local_review	in	src/Processor.cpp	426	checkDispatchEntry	Instr *
-local_review	i	src/Processor.cpp	431	checkDispatchEntry	int
-local_review	r	src/Processor.cpp	432	checkDispatchEntry	RegPoolEntry *
-local_review	q	src/Processor.cpp	435	checkDispatchEntry	int
-local_review	o	src/Processor.cpp	436	checkDispatchEntry	Instr *
-local_review	j	src/Processor.cpp	441	checkDispatchEntry	int
-local_review	i	src/Processor.cpp	458	wouldPair	int
-local_review	r	src/Processor.cpp	470	wouldPair	int
 local_review	i	src/Processor.cpp	494	resetPoolOptimizationState	int
 local_review	id	src/Processor.cpp	507	iinfoId	int
-local_review	id	src/Processor.cpp	531	findAddressAliasDescriptor	int
-local_review	t	src/Processor.cpp	540	findAddressAliasDescriptor	aaDesc *
-local_review	id	src/Processor.cpp	560	findAddressAliasUse	int
-local_review	t	src/Processor.cpp	567	findAddressAliasUse	aaUse *
 local_review	i	src/Processor.cpp	575	emitReset	int
 local_review	i	src/Processor.cpp	587	emitStats	int
-local_review	n	src/Processor.cpp	605	getPoolsByClassID	int
-local_review	i	src/Processor.cpp	606	getPoolsByClassID	int
-local_review	rp	src/Processor.cpp	607	getPoolsByClassID	RegPool *
-local_review	s	src/Processor.cpp	626	setUniqueName	char *
-local_review	s	src/Program.cpp	58	dispose	instStream *
-local_review	s	src/Program.cpp	151	dumpProgramStreamsAndRegisters	instStream *
-local_review	s	src/Program.cpp	158	findStreamById	instStream *
-local_review	s	src/Program.cpp	168	findStream	instStream *
-local_review	in	src/Program.cpp	179	retarget	linkNode *
-local_review	br	src/Program.cpp	210	retarget	Instr *
-local_review	ok	src/Program.cpp	246	decodeAndSplitStreams	bool
-local_review	i	src/Program.cpp	248	decodeAndSplitStreams	int
-local_review	s	src/Program.cpp	258	patchAllStreamLatencies	instStream *
-local_review	s	src/Program.cpp	267	emitProgram	instStream *
-local_review	i	src/Program.cpp	277	emitProgram	int
 local_review	m	src/Program.cpp	297	emitProgram	int
-local_review	n	src/Program.cpp	297	emitProgram	int
-local_review	s	src/Program.cpp	332	emitLabels	instStream *
-local_review	s	src/Program.cpp	344	isReferencedLabel	instStream *
-local_review	l	src/Program.cpp	346	isReferencedLabel	linkNode *
-local_review	t	src/Program.cpp	353	isReferencedLabel	instStream *
-local_review	l	src/Program.cpp	373	streamExportsSymbol	mList *
-local_review	n	src/Program.cpp	374	streamExportsSymbol	mNode *
-local_review	s	src/Program.cpp	388	recalcFlowUIDs	instStream *
-local_review	n	src/Program.cpp	389	recalcFlowUIDs	int
-local_review	s	src/Program.cpp	424	resetProgramAllocationsForFirstPass	instStream *
-local_review	wt	src/Program.cpp	425	resetProgramAllocationsForFirstPass	workTable *
-local_review	s	src/Program.cpp	456	dumpFlow	instStream *
-local_review	id	src/Program.cpp	465	dumpFlow	int
-local_review	l	src/Program.cpp	467	dumpFlow	linkNode *
 local_review	s	src/ProgramUnique.cpp	13	doUnique	instStream *
 local_review	wt	src/ProgramUnique.cpp	15	doUnique	workTable *
 local_review	i	src/ProgramUnique.cpp	16	doUnique	Instr *
@@ -1425,78 +1348,12 @@ local_review	e	src/loopDebris.cpp	757	explodeLoop	epiRec *
 local_review	t	src/loopDebris.cpp	767	explodeLoop	workTable *
 local_review	b	src/loopDebris.cpp	774	explodeLoop	Instr *
 local_review	x	src/loopDebris.cpp	800	explodeLoop	epiRec *
-local_review	t	src/mValue.cpp	54	promoteIntegralValueType	int
 local_review	p	src/mValue.cpp	177	setString	const char *
 local_review	d	src/mValue.cpp	178	setString	char *
-local_review	fa	src/mValue.cpp	328	addValues	float
-local_review	fb	src/mValue.cpp	328	addValues	float
-local_review	ia	src/mValue.cpp	329	addValues	int
-local_review	ib	src/mValue.cpp	329	addValues	int
-local_review	ua	src/mValue.cpp	330	addValues	unsigned int
-local_review	ub	src/mValue.cpp	330	addValues	unsigned int
-local_review	t	src/mValue.cpp	331	addValues	int
-local_review	fa	src/mValue.cpp	377	subtractValues	float
-local_review	fb	src/mValue.cpp	377	subtractValues	float
-local_review	ia	src/mValue.cpp	378	subtractValues	int
-local_review	ib	src/mValue.cpp	378	subtractValues	int
-local_review	ua	src/mValue.cpp	379	subtractValues	unsigned int
-local_review	ub	src/mValue.cpp	379	subtractValues	unsigned int
-local_review	t	src/mValue.cpp	380	subtractValues	int
-local_review	fa	src/mValue.cpp	426	multiplyValues	float
-local_review	fb	src/mValue.cpp	426	multiplyValues	float
-local_review	ia	src/mValue.cpp	427	multiplyValues	int
-local_review	ib	src/mValue.cpp	427	multiplyValues	int
-local_review	ua	src/mValue.cpp	428	multiplyValues	unsigned int
-local_review	ub	src/mValue.cpp	428	multiplyValues	unsigned int
-local_review	t	src/mValue.cpp	429	multiplyValues	int
-local_review	fa	src/mValue.cpp	475	divideValues	float
-local_review	fb	src/mValue.cpp	475	divideValues	float
-local_review	ia	src/mValue.cpp	476	divideValues	int
-local_review	ib	src/mValue.cpp	476	divideValues	int
-local_review	ua	src/mValue.cpp	477	divideValues	unsigned int
-local_review	ub	src/mValue.cpp	477	divideValues	unsigned int
-local_review	t	src/mValue.cpp	478	divideValues	int
-local_review	t	src/mValue.cpp	529	promoteIntType	int
-local_review	ia	src/mValue.cpp	539	moduloValues	int
-local_review	ib	src/mValue.cpp	539	moduloValues	int
-local_review	ua	src/mValue.cpp	540	moduloValues	unsigned int
-local_review	ub	src/mValue.cpp	540	moduloValues	unsigned int
-local_review	t	src/mValue.cpp	549	moduloValues	int
-local_review	ia	src/mValue.cpp	579	shiftValuesLeft	int
-local_review	ib	src/mValue.cpp	579	shiftValuesLeft	int
-local_review	ua	src/mValue.cpp	580	shiftValuesLeft	unsigned int
-local_review	ub	src/mValue.cpp	580	shiftValuesLeft	unsigned int
-local_review	t	src/mValue.cpp	589	shiftValuesLeft	int
-local_review	ia	src/mValue.cpp	617	shiftValuesRight	int
-local_review	ib	src/mValue.cpp	617	shiftValuesRight	int
-local_review	ua	src/mValue.cpp	618	shiftValuesRight	unsigned int
-local_review	ub	src/mValue.cpp	618	shiftValuesRight	unsigned int
-local_review	t	src/mValue.cpp	627	shiftValuesRight	int
-local_review	ia	src/mValue.cpp	655	logicalOrValues	int
-local_review	ib	src/mValue.cpp	655	logicalOrValues	int
-local_review	ua	src/mValue.cpp	656	logicalOrValues	unsigned int
-local_review	ub	src/mValue.cpp	656	logicalOrValues	unsigned int
-local_review	t	src/mValue.cpp	665	logicalOrValues	int
-local_review	ia	src/mValue.cpp	693	logicalAndValues	int
-local_review	ib	src/mValue.cpp	693	logicalAndValues	int
-local_review	ua	src/mValue.cpp	694	logicalAndValues	unsigned int
-local_review	ub	src/mValue.cpp	694	logicalAndValues	unsigned int
-local_review	t	src/mValue.cpp	703	logicalAndValues	int
-local_review	t	src/mValue.cpp	731	promoteType	int
-local_review	t	src/mValue.cpp	747	bitwiseAndValues	int
-local_review	t	src/mValue.cpp	767	bitwiseOrValues	int
-local_review	t	src/mValue.cpp	787	bitwiseXorValues	int
-local_review	p	src/mValue.cpp	802	hasOnlyImmediateCharacters	const char *
 local_review	p	src/mValue.cpp	863	parse	const char *
 local_review	c	src/mValue.cpp	864	parse	char
 local_review	d	src/mValue.cpp	909	parse	const char *
 local_review	ch	src/mValue.cpp	911	parse	char
-local_review	tmp	src/mValue.cpp	950	makeNumeric	mValue
-local_review	p	src/mValue.cpp	965	asChars	char *
-local_review	za	src/mValue.cpp	990	sameImmediateValue	unsigned int
-local_review	zb	src/mValue.cpp	991	sameImmediateValue	unsigned int
-local_review	pa	src/mValue.cpp	992	sameImmediateValue	unsigned int *
-local_review	pb	src/mValue.cpp	993	sameImmediateValue	unsigned int *
 local_review	i	src/main.cpp	86	main	int
 local_review	fd	src/main.cpp	243	main	int
 local_review	n	src/main.cpp	444	main	int
@@ -2245,48 +2102,6 @@ local_review	p	src/xpNode.cpp	644	visitUnknownSymbols	xun *
 local_review	n	src/xpNode.cpp	664	countUnknownExpressionSymbols	xpNode *
 local_review	i	src/xpNode.cpp	675	countUnknownSymbolsInNode	int
 local_review	s	src/xpNode.cpp	685	countUnknownSymbolsInNode	const char *
-parameter_review	t	src/ExecRP.cpp	75	handleInitVfDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	80	handleInitViDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	85	handleRemoveVfDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	90	handleRemoveViDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	104	handleInitAllVfDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	109	handleInitAllViDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	114	handleDisableAlignmentDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	121	handleDisableEbitDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	128	handleProgramNameDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	140	handleVuDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	146	handleMpgDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	157	handleGlobalDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	165	handleBeginRawDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	189	handleEndRawDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	204	handleBeginRawLoopDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	229	handleEndRawLoopDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	245	handleVuWorkAreaDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	307	ExecRP_skip_directive	LocTag *
-parameter_review	t	src/ExecRP.cpp	314	handleAlignmentDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	319	handleHideDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	324	handleShowDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	329	handleEndHideDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	334	handleEndShowDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	339	handleUniqueDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	353	handleSyntaxDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	372	ExecRP_directive_name	LocTag *
-parameter_review	t	src/ExecRP.cpp	377	findRegisteredDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	389	setRegisterRangeEnabled	LocTag *
-parameter_review	t	src/ExecRP.cpp	463	handleInitHwRegisterType1	LocTag *
-parameter_review	t	src/ExecRP.cpp	468	handleInitHwRegisterType2	LocTag *
-parameter_review	t	src/ExecRP.cpp	473	handleRemoveHwRegisterType1	LocTag *
-parameter_review	t	src/ExecRP.cpp	478	handleRemoveHwRegisterType2	LocTag *
-parameter_review	t	src/ExecRP.cpp	483	enableAllRegistersInPool	LocTag *
-parameter_review	t	src/ExecRP.cpp	492	handleInitAllHwRegisterType1	LocTag *
-parameter_review	t	src/ExecRP.cpp	497	handleInitAllHwRegisterType2	LocTag *
-parameter_review	t	src/ExecRP.cpp	502	alwaysAcceptDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	507	alwaysRejectDirective	LocTag *
-parameter_review	t	src/ExecRP.cpp	512	pushVisibilityScope	LocTag *
-parameter_review	v	src/ExecRP.cpp	512	pushVisibilityScope	int
-parameter_review	t	src/ExecRP.cpp	540	ExecRP_show_line	LocTag *
-parameter_review	t	src/ExecRP.cpp	545	popVisibilityScope	LocTag *
-parameter_review	v	src/ExecRP.cpp	545	popVisibilityScope	int
 parameter_review	a	src/Instr.cpp	239	hasDirectOperandDependency	Instr *
 parameter_review	b	src/Instr.cpp	239	hasDirectOperandDependency	Instr *
 parameter_review	a	src/Instr.cpp	258	writesInputRegisterOf	Instr *
@@ -2331,54 +2146,8 @@ parameter_review	kw	src/Parser.cpp	454	matchesLeadingKeyword	const char *
 parameter_review	s	src/Parser.cpp	454	matchesLeadingKeyword	const char *
 parameter_review	s	src/Parser.cpp	469	matchesFirstSpecialKeyword	const char *
 parameter_review	s	src/Parser.cpp	474	matchesSecondSpecialKeyword	const char *
-parameter_review	p	src/Processor.cpp	206	dumpProcessorRegisterPools	Program *
-parameter_review	p	src/Processor.cpp	213	parseReset	Program *
-parameter_review	p	src/Processor.cpp	232	statReset	Program *
 parameter_review	id	src/Processor.cpp	243	getOpcodeInfoById	int
-parameter_review	p	src/Processor.cpp	283	optReset	Program *
-parameter_review	p	src/Processor.cpp	294	Cycle	Program *
-parameter_review	p	src/Processor.cpp	306	resetProcessorThroughput	Program *
-parameter_review	t	src/Processor.cpp	318	getRP	unsigned int
-parameter_review	t	src/Processor.cpp	379	GetRP	unsigned int
-parameter_review	p	src/Processor.cpp	388	flowReset	Program *
-parameter_review	p	src/Processor.cpp	401	reportUBS	Program *
-parameter_review	p	src/Processor.cpp	410	reportStalls	Program *
-parameter_review	ie	src/Processor.cpp	419	checkDispatchEntry	Instr **
-parameter_review	ie	src/Processor.cpp	452	wouldPair	Instr **
-parameter_review	in	src/Processor.cpp	452	wouldPair	Instr *
-parameter_review	p	src/Processor.cpp	452	wouldPair	unsigned int
-parameter_review	r	src/Processor.cpp	487	isVuRegister	RegPoolEntry *
-parameter_review	p	src/Processor.cpp	492	resetPoolOptimizationState	Program *
-parameter_review	op	src/Processor.cpp	503	iinfoId	iInfo *
-parameter_review	op	src/Processor.cpp	515	getOpcodeId	iInfo *
-parameter_review	in	src/Processor.cpp	520	findAddressAliasDescriptor	Instr *
-parameter_review	in	src/Processor.cpp	554	findAddressAliasUse	Instr *
-parameter_review	p	src/Processor.cpp	573	emitReset	Program *
-parameter_review	p	src/Processor.cpp	584	emitStats	Program *
-parameter_review	s	src/Program.cpp	77	addStream	instStream *
-parameter_review	s	src/Program.cpp	101	insertStreamAfter	instStream *
-parameter_review	s	src/Program.cpp	128	removeStream	instStream *
-parameter_review	b	src/Program.cpp	149	dumpProgramStreamsAndRegisters	int
-parameter_review	p	src/Program.cpp	149	dumpProgramStreamsAndRegisters	Program *
-parameter_review	id	src/Program.cpp	156	findStreamById	int
 parameter_review	to	src/Program.cpp	174	retarget	instStream *
-parameter_review	a	src/Program.cpp	229	decodeAndSplitStreams	int
-parameter_review	p	src/Program.cpp	256	patchAllStreamLatencies	Program *
-parameter_review	p	src/Program.cpp	265	emitProgram	Program *
-parameter_review	p	src/Program.cpp	320	setUniqueName	Program *
-parameter_review	p	src/Program.cpp	325	getUniqueName	Program *
-parameter_review	p	src/Program.cpp	330	emitLabels	Program *
-parameter_review	p	src/Program.cpp	342	isReferencedLabel	Program *
-parameter_review	p	src/Program.cpp	371	streamExportsSymbol	Program *
-parameter_review	s	src/Program.cpp	371	streamExportsSymbol	instStream *
-parameter_review	p	src/Program.cpp	381	isExportedSymbol	Program *
-parameter_review	p	src/Program.cpp	386	recalcFlowUIDs	Program *
-parameter_review	p	src/Program.cpp	418	resetProgramAllocationsForFirstPass	Program *
-parameter_review	p	src/Program.cpp	435	resetProgramAllocationsForSecondPass	Program *
-parameter_review	l	src/Program.cpp	444	printNamedLink	linkNode *
-parameter_review	s	src/Program.cpp	451	isEntryStream	instStream *
-parameter_review	s	src/Program.cpp	452	isExitStream	instStream *
-parameter_review	p	src/Program.cpp	454	dumpFlow	Program *
 parameter_review	c	src/RegPool.cpp	235	isRegNameChar	char
 parameter_review	p	src/RegPool.cpp	310	findVirtual	RegPoolEntry *
 parameter_review	e	src/RegPool.cpp	481	ownsRegisterClass	RegPoolEntry *
@@ -2833,52 +2602,9 @@ parameter_review	ld	src/loopDebris.cpp	582	mainRec	loopDebris *
 parameter_review	ld	src/loopDebris.cpp	587	explodeLoop	loopDebris *
 parameter_review	s	src/loopDebris.cpp	587	explodeLoop	instStream *
 parameter_review	n	src/mList.cpp	11	mNode_detach_inl	mNode *
-parameter_review	a	src/mValue.cpp	45	maximumValueType	int
-parameter_review	b	src/mValue.cpp	45	maximumValueType	int
-parameter_review	a	src/mValue.cpp	52	promoteIntegralValueType	int
-parameter_review	b	src/mValue.cpp	52	promoteIntegralValueType	int
-parameter_review	v	src/mValue.cpp	129	setInt	int
 parameter_review	s	src/mValue.cpp	142	setString	const char *
 parameter_review	n	src/mValue.cpp	160	setString	int
 parameter_review	s	src/mValue.cpp	160	setString	const char *
-parameter_review	v	src/mValue.cpp	187	setUInt	unsigned int
-parameter_review	v	src/mValue.cpp	200	setFloat	float
-parameter_review	v	src/mValue.cpp	293	getUIntInl	mValue *
-parameter_review	v	src/mValue.cpp	304	getIntInl	mValue *
-parameter_review	v	src/mValue.cpp	315	getFloatInl	mValue *
-parameter_review	a	src/mValue.cpp	326	addValues	mValue *
-parameter_review	b	src/mValue.cpp	326	addValues	mValue *
-parameter_review	a	src/mValue.cpp	375	subtractValues	mValue *
-parameter_review	b	src/mValue.cpp	375	subtractValues	mValue *
-parameter_review	a	src/mValue.cpp	424	multiplyValues	mValue *
-parameter_review	b	src/mValue.cpp	424	multiplyValues	mValue *
-parameter_review	a	src/mValue.cpp	473	divideValues	mValue *
-parameter_review	b	src/mValue.cpp	473	divideValues	mValue *
-parameter_review	t	src/mValue.cpp	522	isNumType	unsigned int
-parameter_review	a	src/mValue.cpp	527	promoteIntType	int
-parameter_review	b	src/mValue.cpp	527	promoteIntType	int
-parameter_review	a	src/mValue.cpp	537	moduloValues	mValue *
-parameter_review	b	src/mValue.cpp	537	moduloValues	mValue *
-parameter_review	a	src/mValue.cpp	577	shiftValuesLeft	mValue *
-parameter_review	b	src/mValue.cpp	577	shiftValuesLeft	mValue *
-parameter_review	a	src/mValue.cpp	615	shiftValuesRight	mValue *
-parameter_review	b	src/mValue.cpp	615	shiftValuesRight	mValue *
-parameter_review	a	src/mValue.cpp	653	logicalOrValues	mValue *
-parameter_review	b	src/mValue.cpp	653	logicalOrValues	mValue *
-parameter_review	a	src/mValue.cpp	691	logicalAndValues	mValue *
-parameter_review	b	src/mValue.cpp	691	logicalAndValues	mValue *
-parameter_review	a	src/mValue.cpp	729	promoteType	int
-parameter_review	b	src/mValue.cpp	729	promoteType	int
-parameter_review	a	src/mValue.cpp	737	bitwiseAndValues	mValue *
-parameter_review	b	src/mValue.cpp	737	bitwiseAndValues	mValue *
-parameter_review	a	src/mValue.cpp	757	bitwiseOrValues	mValue *
-parameter_review	b	src/mValue.cpp	757	bitwiseOrValues	mValue *
-parameter_review	a	src/mValue.cpp	777	bitwiseXorValues	mValue *
-parameter_review	b	src/mValue.cpp	777	bitwiseXorValues	mValue *
-parameter_review	s	src/mValue.cpp	797	hasOnlyImmediateCharacters	const char *
-parameter_review	s	src/mValue.cpp	814	parse	const char *
-parameter_review	a	src/mValue.cpp	988	sameImmediateValue	mValue *
-parameter_review	b	src/mValue.cpp	988	sameImmediateValue	mValue *
 parameter_review	p	src/main.cpp	567	reportErrors	Program *
 parameter_review	p	src/main.cpp	573	reportWarnings	Program *
 parameter_review	a	src/main.cpp	579	validateFlowDependenciesAndHazards	bool

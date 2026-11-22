@@ -42,21 +42,21 @@ void mValue::clear()
     type = NONE;
 }
 
-int maximumValueType(int a, int b)
+int maximumValueType(int leftType, int rightType)
 {
-    if (b > a)
-        a = b;
-    return a;
+    if (rightType > leftType)
+        leftType = rightType;
+    return leftType;
 }
 
-int promoteIntegralValueType(int a, int b)
+int promoteIntegralValueType(int leftType, int rightType)
 {
-    int t = a;
-    if (b > a)
-        t = b;
-    if (t == mValue::FLOAT)
+    int promotedType = leftType;
+    if (rightType > leftType)
+        promotedType = rightType;
+    if (promotedType == mValue::FLOAT)
         return mValue::NONE;
-    return t;
+    return promotedType;
 }
 
 bool mValue::getFloat(float *out)
@@ -126,7 +126,7 @@ bool mValue::set(mValue *src)
     return true;
 }
 
-bool mValue::setInt(int v)
+bool mValue::setInt(int newValue)
 {
     if (type == STRING) {
         if (str)
@@ -134,7 +134,7 @@ bool mValue::setInt(int v)
         str = 0;
     }
     type = NONE;
-    i = v;
+    i = newValue;
     type = INT;
     return true;
 }
@@ -184,7 +184,7 @@ bool mValue::setString(const char *s, int n)
     return true;
 }
 
-bool mValue::setUInt(unsigned int v)
+bool mValue::setUInt(unsigned int newValue)
 {
     if (type == STRING) {
         if (str)
@@ -192,12 +192,12 @@ bool mValue::setUInt(unsigned int v)
         str = 0;
     }
     type = NONE;
-    u = v;
+    u = newValue;
     type = UINT;
     return true;
 }
 
-bool mValue::setFloat(float v)
+bool mValue::setFloat(float newValue)
 {
     if (type == STRING) {
         if (str)
@@ -206,7 +206,7 @@ bool mValue::setFloat(float v)
     }
     type = NONE;
     type = FLOAT;
-    f = v;
+    f = newValue;
     return true;
 }
 
@@ -290,80 +290,80 @@ const char *immediateValueTypeName(int type)
     return "EXP_DATATYPE_UNKNOWN";
 }
 
-static inline bool getUIntInl(mValue *v, unsigned int *out)
+static inline bool getUIntInl(mValue *sourceValue, unsigned int *out)
 {
-    switch (v->type) {
-    case mValue::UINT: *out = v->u; break;
-    case mValue::INT: *out = v->i; break;
-    case mValue::FLOAT: *out = (unsigned int)v->f; break;
+    switch (sourceValue->type) {
+    case mValue::UINT: *out = sourceValue->u; break;
+    case mValue::INT: *out = sourceValue->i; break;
+    case mValue::FLOAT: *out = (unsigned int)sourceValue->f; break;
     default: return false;
     }
     return true;
 }
 
-static inline bool getIntInl(mValue *v, int *out)
+static inline bool getIntInl(mValue *sourceValue, int *out)
 {
-    switch (v->type) {
-    case mValue::UINT: *out = v->u; break;
-    case mValue::INT: *out = v->i; break;
-    case mValue::FLOAT: *out = (int)v->f; break;
+    switch (sourceValue->type) {
+    case mValue::UINT: *out = sourceValue->u; break;
+    case mValue::INT: *out = sourceValue->i; break;
+    case mValue::FLOAT: *out = (int)sourceValue->f; break;
     default: return false;
     }
     return true;
 }
 
-static inline bool getFloatInl(mValue *v, float *out)
+static inline bool getFloatInl(mValue *sourceValue, float *out)
 {
-    switch (v->type) {
-    case mValue::UINT: *out = (float)v->u; break;
-    case mValue::INT: *out = (float)v->i; break;
-    case mValue::FLOAT: *out = v->f; break;
+    switch (sourceValue->type) {
+    case mValue::UINT: *out = (float)sourceValue->u; break;
+    case mValue::INT: *out = (float)sourceValue->i; break;
+    case mValue::FLOAT: *out = sourceValue->f; break;
     default: return false;
     }
     return true;
 }
 
-bool addValues(mValue *dst, mValue *a, mValue *b)
+bool addValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    float fa, fb;
-    int ia, ib;
-    unsigned int ua, ub;
-    int t;
-    if (!a)
+    float leftFloat, rightFloat;
+    int leftInt, rightInt;
+    unsigned int leftUnsigned, rightUnsigned;
+    int promotedType;
+    if (!leftValue)
         goto fail;
-    if (!b)
+    if (!rightValue)
         goto fail;
-    if (a->type < mValue::UINT || a->type > mValue::FLOAT)
+    if (leftValue->type < mValue::UINT || leftValue->type > mValue::FLOAT)
         goto fail;
-    if (b->type < mValue::UINT || b->type > mValue::FLOAT)
+    if (rightValue->type < mValue::UINT || rightValue->type > mValue::FLOAT)
         goto fail;
-    t = a->type;
-    if ((int)b->type > t)
-        t = b->type;
-    dst->type = t;
-    if (t == mValue::NONE)
+    promotedType = leftValue->type;
+    if ((int)rightValue->type > promotedType)
+        promotedType = rightValue->type;
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE)
         return false;
-    switch ((unsigned)t) {
+    switch ((unsigned)promotedType) {
     case mValue::FLOAT:
-        if (getFloatInl(a, &fa) && getFloatInl(b, &fb)) {
-            dst->f = fa + fb;
+        if (getFloatInl(leftValue, &leftFloat) && getFloatInl(rightValue, &rightFloat)) {
+            dst->f = leftFloat + rightFloat;
             return true;
         }
         reportError("failed to get args\n");
         return false;
     case mValue::INT:
-        if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
+        if (!getIntInl(leftValue, &leftInt) || !getIntInl(rightValue, &rightInt)) {
             reportError("failed to get args\n");
             return false;
         }
-        dst->i = ia + ib;
+        dst->i = leftInt + rightInt;
         return true;
     case mValue::UINT:
-        if (!getUIntInl(a, &ua) || !getUIntInl(b, &ub)) {
+        if (!getUIntInl(leftValue, &leftUnsigned) || !getUIntInl(rightValue, &rightUnsigned)) {
             printf("failed to get args\n");
             return false;
         }
-        dst->u = ua + ub;
+        dst->u = leftUnsigned + rightUnsigned;
         return true;
     }
     printf("bad type to expr\n");
@@ -372,47 +372,47 @@ fail:
     return false;
 }
 
-bool subtractValues(mValue *dst, mValue *a, mValue *b)
+bool subtractValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    float fa, fb;
-    int ia, ib;
-    unsigned int ua, ub;
-    int t;
-    if (!a)
+    float leftFloat, rightFloat;
+    int leftInt, rightInt;
+    unsigned int leftUnsigned, rightUnsigned;
+    int promotedType;
+    if (!leftValue)
         goto fail;
-    if (!b)
+    if (!rightValue)
         goto fail;
-    if (a->type < mValue::UINT || a->type > mValue::FLOAT)
+    if (leftValue->type < mValue::UINT || leftValue->type > mValue::FLOAT)
         goto fail;
-    if (b->type < mValue::UINT || b->type > mValue::FLOAT)
+    if (rightValue->type < mValue::UINT || rightValue->type > mValue::FLOAT)
         goto fail;
-    t = a->type;
-    if ((int)b->type > t)
-        t = b->type;
-    dst->type = t;
-    if (t == mValue::NONE)
+    promotedType = leftValue->type;
+    if ((int)rightValue->type > promotedType)
+        promotedType = rightValue->type;
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE)
         return false;
-    switch ((unsigned)t) {
+    switch ((unsigned)promotedType) {
     case mValue::FLOAT:
-        if (getFloatInl(a, &fa) && getFloatInl(b, &fb)) {
-            dst->f = fa - fb;
+        if (getFloatInl(leftValue, &leftFloat) && getFloatInl(rightValue, &rightFloat)) {
+            dst->f = leftFloat - rightFloat;
             return true;
         }
         reportError("failed to get args\n");
         return false;
     case mValue::INT:
-        if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
+        if (!getIntInl(leftValue, &leftInt) || !getIntInl(rightValue, &rightInt)) {
             reportError("failed to get args\n");
             return false;
         }
-        dst->i = ia - ib;
+        dst->i = leftInt - rightInt;
         return true;
     case mValue::UINT:
-        if (!getUIntInl(a, &ua) || !getUIntInl(b, &ub)) {
+        if (!getUIntInl(leftValue, &leftUnsigned) || !getUIntInl(rightValue, &rightUnsigned)) {
             printf("failed to get args\n");
             return false;
         }
-        dst->u = ua - ub;
+        dst->u = leftUnsigned - rightUnsigned;
         return true;
     }
     printf("bad type to expr\n");
@@ -421,47 +421,47 @@ fail:
     return false;
 }
 
-bool multiplyValues(mValue *dst, mValue *a, mValue *b)
+bool multiplyValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    float fa, fb;
-    int ia, ib;
-    unsigned int ua, ub;
-    int t;
-    if (!a)
+    float leftFloat, rightFloat;
+    int leftInt, rightInt;
+    unsigned int leftUnsigned, rightUnsigned;
+    int promotedType;
+    if (!leftValue)
         goto fail;
-    if (!b)
+    if (!rightValue)
         goto fail;
-    if (a->type < mValue::UINT || a->type > mValue::FLOAT)
+    if (leftValue->type < mValue::UINT || leftValue->type > mValue::FLOAT)
         goto fail;
-    if (b->type < mValue::UINT || b->type > mValue::FLOAT)
+    if (rightValue->type < mValue::UINT || rightValue->type > mValue::FLOAT)
         goto fail;
-    t = a->type;
-    if ((int)b->type > t)
-        t = b->type;
-    dst->type = t;
-    if (t == mValue::NONE)
+    promotedType = leftValue->type;
+    if ((int)rightValue->type > promotedType)
+        promotedType = rightValue->type;
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE)
         return false;
-    switch ((unsigned)t) {
+    switch ((unsigned)promotedType) {
     case mValue::FLOAT:
-        if (getFloatInl(a, &fa) && getFloatInl(b, &fb)) {
-            dst->f = fa * fb;
+        if (getFloatInl(leftValue, &leftFloat) && getFloatInl(rightValue, &rightFloat)) {
+            dst->f = leftFloat * rightFloat;
             return true;
         }
         reportError("failed to get args\n");
         return false;
     case mValue::INT:
-        if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
+        if (!getIntInl(leftValue, &leftInt) || !getIntInl(rightValue, &rightInt)) {
             reportError("failed to get args\n");
             return false;
         }
-        dst->i = ia * ib;
+        dst->i = leftInt * rightInt;
         return true;
     case mValue::UINT:
-        if (!getUIntInl(a, &ua) || !getUIntInl(b, &ub)) {
+        if (!getUIntInl(leftValue, &leftUnsigned) || !getUIntInl(rightValue, &rightUnsigned)) {
             printf("failed to get args\n");
             return false;
         }
-        dst->u = ua * ub;
+        dst->u = leftUnsigned * rightUnsigned;
         return true;
     }
     printf("bad type to expr\n");
@@ -470,47 +470,47 @@ fail:
     return false;
 }
 
-bool divideValues(mValue *dst, mValue *a, mValue *b)
+bool divideValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    float fa, fb;
-    int ia, ib;
-    unsigned int ua, ub;
-    int t;
-    if (!a)
+    float leftFloat, rightFloat;
+    int leftInt, rightInt;
+    unsigned int leftUnsigned, rightUnsigned;
+    int promotedType;
+    if (!leftValue)
         goto fail;
-    if (!b)
+    if (!rightValue)
         goto fail;
-    if (a->type < mValue::UINT || a->type > mValue::FLOAT)
+    if (leftValue->type < mValue::UINT || leftValue->type > mValue::FLOAT)
         goto fail;
-    if (b->type < mValue::UINT || b->type > mValue::FLOAT)
+    if (rightValue->type < mValue::UINT || rightValue->type > mValue::FLOAT)
         goto fail;
-    t = a->type;
-    if ((int)b->type > t)
-        t = b->type;
-    dst->type = t;
-    if (t == mValue::NONE)
+    promotedType = leftValue->type;
+    if ((int)rightValue->type > promotedType)
+        promotedType = rightValue->type;
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE)
         return false;
-    switch ((unsigned)t) {
+    switch ((unsigned)promotedType) {
     case mValue::FLOAT:
-        if (getFloatInl(a, &fa) && getFloatInl(b, &fb)) {
-            dst->f = fa / fb;
+        if (getFloatInl(leftValue, &leftFloat) && getFloatInl(rightValue, &rightFloat)) {
+            dst->f = leftFloat / rightFloat;
             return true;
         }
         reportError("failed to get args\n");
         return false;
     case mValue::INT:
-        if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
+        if (!getIntInl(leftValue, &leftInt) || !getIntInl(rightValue, &rightInt)) {
             reportError("failed to get args\n");
             return false;
         }
-        dst->i = ia / ib;
+        dst->i = leftInt / rightInt;
         return true;
     case mValue::UINT:
-        if (!getUIntInl(a, &ua) || !getUIntInl(b, &ub)) {
+        if (!getUIntInl(leftValue, &leftUnsigned) || !getUIntInl(rightValue, &rightUnsigned)) {
             printf("failed to get args\n");
             return false;
         }
-        dst->u = ua / ub;
+        dst->u = leftUnsigned / rightUnsigned;
         return true;
     }
     printf("bad type to expr\n");
@@ -519,43 +519,43 @@ fail:
     return false;
 }
 
-static inline bool isNumType(unsigned int t)
+static inline bool isNumType(unsigned int valueType)
 {
-    return t >= mValue::UINT && t <= mValue::FLOAT;
+    return valueType >= mValue::UINT && valueType <= mValue::FLOAT;
 }
 
-static inline int promoteIntType(int a, int b)
+static inline int promoteIntType(int leftType, int rightType)
 {
-    int t = a;
-    if (b > a)
-        t = b;
-    if (t == mValue::FLOAT)
+    int promotedType = leftType;
+    if (rightType > leftType)
+        promotedType = rightType;
+    if (promotedType == mValue::FLOAT)
         return mValue::NONE;
-    return t;
+    return promotedType;
 }
 
-bool moduloValues(mValue *dst, mValue *a, mValue *b)
+bool moduloValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    int ia, ib;
-    unsigned int ua, ub;
-    if (!a || !b) {
+    int leftInt, rightInt;
+    unsigned int leftUnsigned, rightUnsigned;
+    if (!leftValue || !rightValue) {
         printf("xpVal::mod null arg passed\n");
         return false;
     }
-    if (!isNumType(a->type) || !isNumType(b->type)) {
+    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
         printf("xpVal::mod invalid arg\n");
         return false;
     }
-    int t = promoteIntType(a->type, b->type);
-    dst->type = t;
-    if (t == mValue::NONE) {
+    int promotedType = promoteIntType(leftValue->type, rightValue->type);
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE) {
         printf("xpVal::mod type promote failed\n");
         return false;
     }
-    if (t != mValue::UINT) {
-        if (t == mValue::INT) {
-            if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
-                dst->i = ia % ib;
+    if (promotedType != mValue::UINT) {
+        if (promotedType == mValue::INT) {
+            if (getIntInl(leftValue, &leftInt) && getIntInl(rightValue, &rightInt)) {
+                dst->i = leftInt % rightInt;
                 goto success;
             }
             printf("failed to get args\n");
@@ -564,8 +564,8 @@ bool moduloValues(mValue *dst, mValue *a, mValue *b)
         printf("bad type to expr\n");
         return false;
     }
-    if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
-        dst->u = ua % ub;
+    if (getUIntInl(leftValue, &leftUnsigned) && getUIntInl(rightValue, &rightUnsigned)) {
+        dst->u = leftUnsigned % rightUnsigned;
         goto success;
     }
     printf("failed to get args\n");
@@ -574,28 +574,28 @@ success:
     return true;
 }
 
-bool shiftValuesLeft(mValue *dst, mValue *a, mValue *b)
+bool shiftValuesLeft(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    int ia, ib;
-    unsigned int ua, ub;
-    if (!a || !b) {
+    int leftInt, rightInt;
+    unsigned int leftUnsigned, rightUnsigned;
+    if (!leftValue || !rightValue) {
         printf("xpVal::shfl null arg passed\n");
         return false;
     }
-    if (!isNumType(a->type) || !isNumType(b->type)) {
+    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
         printf("xpVal::shfl invalid arg\n");
         return false;
     }
-    int t = promoteIntType(a->type, b->type);
-    dst->type = t;
-    if (t == mValue::NONE) {
+    int promotedType = promoteIntType(leftValue->type, rightValue->type);
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE) {
         printf("xpVal::shfl type promote failed\n");
         return false;
     }
-    if (t != mValue::UINT) {
-        if (t == mValue::INT) {
-            if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
-                dst->i = ia << ib;
+    if (promotedType != mValue::UINT) {
+        if (promotedType == mValue::INT) {
+            if (getIntInl(leftValue, &leftInt) && getIntInl(rightValue, &rightInt)) {
+                dst->i = leftInt << rightInt;
                 return true;
             }
             printf("failed to get args\n");
@@ -604,36 +604,36 @@ bool shiftValuesLeft(mValue *dst, mValue *a, mValue *b)
         printf("bad type to expr\n");
         return false;
     }
-    if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
-        dst->u = ua << ub;
+    if (getUIntInl(leftValue, &leftUnsigned) && getUIntInl(rightValue, &rightUnsigned)) {
+        dst->u = leftUnsigned << rightUnsigned;
         return true;
     }
     printf("failed to get args\n");
     return false;
 }
 
-bool shiftValuesRight(mValue *dst, mValue *a, mValue *b)
+bool shiftValuesRight(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    int ia, ib;
-    unsigned int ua, ub;
-    if (!a || !b) {
+    int leftInt, rightInt;
+    unsigned int leftUnsigned, rightUnsigned;
+    if (!leftValue || !rightValue) {
         printf("xpVal::shfr null arg passed\n");
         return false;
     }
-    if (!isNumType(a->type) || !isNumType(b->type)) {
+    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
         printf("xpVal::shfr invalid arg\n");
         return false;
     }
-    int t = promoteIntType(a->type, b->type);
-    dst->type = t;
-    if (t == mValue::NONE) {
+    int promotedType = promoteIntType(leftValue->type, rightValue->type);
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE) {
         printf("xpVal::shfr type promote failed\n");
         return false;
     }
-    if (t != mValue::UINT) {
-        if (t == mValue::INT) {
-            if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
-                dst->i = ia >> ib;
+    if (promotedType != mValue::UINT) {
+        if (promotedType == mValue::INT) {
+            if (getIntInl(leftValue, &leftInt) && getIntInl(rightValue, &rightInt)) {
+                dst->i = leftInt >> rightInt;
                 return true;
             }
             printf("failed to get args\n");
@@ -642,36 +642,36 @@ bool shiftValuesRight(mValue *dst, mValue *a, mValue *b)
         printf("bad type to expr\n");
         return false;
     }
-    if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
-        dst->u = ua >> ub;
+    if (getUIntInl(leftValue, &leftUnsigned) && getUIntInl(rightValue, &rightUnsigned)) {
+        dst->u = leftUnsigned >> rightUnsigned;
         return true;
     }
     printf("failed to get args\n");
     return false;
 }
 
-bool logicalOrValues(mValue *dst, mValue *a, mValue *b)
+bool logicalOrValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    int ia, ib;
-    unsigned int ua, ub;
-    if (!a || !b) {
+    int leftInt, rightInt;
+    unsigned int leftUnsigned, rightUnsigned;
+    if (!leftValue || !rightValue) {
         printf("xpVal::logor null arg passed\n");
         return false;
     }
-    if (!isNumType(a->type) || !isNumType(b->type)) {
+    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
         printf("xpVal::logor invalid arg\n");
         return false;
     }
-    int t = promoteIntType(a->type, b->type);
-    dst->type = t;
-    if (t == mValue::NONE) {
+    int promotedType = promoteIntType(leftValue->type, rightValue->type);
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE) {
         printf("xpVal::logor type promote failed\n");
         return false;
     }
-    if (t != mValue::UINT) {
-        if (t == mValue::INT) {
-            if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
-                dst->i = ia || ib;
+    if (promotedType != mValue::UINT) {
+        if (promotedType == mValue::INT) {
+            if (getIntInl(leftValue, &leftInt) && getIntInl(rightValue, &rightInt)) {
+                dst->i = leftInt || rightInt;
                 return true;
             }
             printf("failed to get args\n");
@@ -680,36 +680,36 @@ bool logicalOrValues(mValue *dst, mValue *a, mValue *b)
         printf("bad type to expr\n");
         return false;
     }
-    if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
-        dst->u = ua || ub;
+    if (getUIntInl(leftValue, &leftUnsigned) && getUIntInl(rightValue, &rightUnsigned)) {
+        dst->u = leftUnsigned || rightUnsigned;
         return true;
     }
     printf("failed to get args\n");
     return false;
 }
 
-bool logicalAndValues(mValue *dst, mValue *a, mValue *b)
+bool logicalAndValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    int ia, ib;
-    unsigned int ua, ub;
-    if (!a || !b) {
+    int leftInt, rightInt;
+    unsigned int leftUnsigned, rightUnsigned;
+    if (!leftValue || !rightValue) {
         printf("xpVal::logand null arg passed\n");
         return false;
     }
-    if (!isNumType(a->type) || !isNumType(b->type)) {
+    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
         printf("xpVal::logand invalid arg\n");
         return false;
     }
-    int t = promoteIntType(a->type, b->type);
-    dst->type = t;
-    if (t == mValue::NONE) {
+    int promotedType = promoteIntType(leftValue->type, rightValue->type);
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE) {
         printf("xpVal::logand type promote failed\n");
         return false;
     }
-    if (t != mValue::UINT) {
-        if (t == mValue::INT) {
-            if (getIntInl(a, &ia) && getIntInl(b, &ib)) {
-                dst->i = ia && ib;
+    if (promotedType != mValue::UINT) {
+        if (promotedType == mValue::INT) {
+            if (getIntInl(leftValue, &leftInt) && getIntInl(rightValue, &rightInt)) {
+                dst->i = leftInt && rightInt;
                 return true;
             }
             printf("failed to get args\n");
@@ -718,100 +718,100 @@ bool logicalAndValues(mValue *dst, mValue *a, mValue *b)
         printf("bad type to expr\n");
         return false;
     }
-    if (getUIntInl(a, &ua) && getUIntInl(b, &ub)) {
-        dst->u = ua && ub;
+    if (getUIntInl(leftValue, &leftUnsigned) && getUIntInl(rightValue, &rightUnsigned)) {
+        dst->u = leftUnsigned && rightUnsigned;
         return true;
     }
     printf("failed to get args\n");
     return false;
 }
 
-static inline int promoteType(int a, int b)
+static inline int promoteType(int leftType, int rightType)
 {
-    int t = a;
-    if (b > a)
-        t = b;
-    return t;
+    int promotedType = leftType;
+    if (rightType > leftType)
+        promotedType = rightType;
+    return promotedType;
 }
 
-bool bitwiseAndValues(mValue *dst, mValue *a, mValue *b)
+bool bitwiseAndValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    if (!a || !b) {
+    if (!leftValue || !rightValue) {
         printf("xpVal::bitand null arg passed\n");
         return false;
     }
-    if (!isNumType(a->type) || !isNumType(b->type)) {
+    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
         printf("xpVal::bitand invalid arg\n");
         return false;
     }
-    int t = promoteType(a->type, b->type);
-    dst->type = t;
-    if (t == mValue::NONE) {
+    int promotedType = promoteType(leftValue->type, rightValue->type);
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE) {
         printf("xpVal::bitand type promote failed\n");
         return false;
     }
-    dst->u = a->u & b->u;
+    dst->u = leftValue->u & rightValue->u;
     return true;
 }
 
-bool bitwiseOrValues(mValue *dst, mValue *a, mValue *b)
+bool bitwiseOrValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    if (!a || !b) {
+    if (!leftValue || !rightValue) {
         printf("xpVal::bitor null arg passed\n");
         return false;
     }
-    if (!isNumType(a->type) || !isNumType(b->type)) {
+    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
         printf("xpVal::bitor invalid arg\n");
         return false;
     }
-    int t = promoteType(a->type, b->type);
-    dst->type = t;
-    if (t == mValue::NONE) {
+    int promotedType = promoteType(leftValue->type, rightValue->type);
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE) {
         printf("xpVal::bitor type promote failed\n");
         return false;
     }
-    dst->u = a->u | b->u;
+    dst->u = leftValue->u | rightValue->u;
     return true;
 }
 
-bool bitwiseXorValues(mValue *dst, mValue *a, mValue *b)
+bool bitwiseXorValues(mValue *dst, mValue *leftValue, mValue *rightValue)
 {
-    if (!a || !b) {
+    if (!leftValue || !rightValue) {
         printf("xpVal::bitxor null arg passed\n");
         return false;
     }
-    if (!isNumType(a->type) || !isNumType(b->type)) {
+    if (!isNumType(leftValue->type) || !isNumType(rightValue->type)) {
         printf("xpVal::bitxor invalid arg\n");
         return false;
     }
-    int t = promoteType(a->type, b->type);
-    dst->type = t;
-    if (t == mValue::NONE) {
+    int promotedType = promoteType(leftValue->type, rightValue->type);
+    dst->type = promotedType;
+    if (promotedType == mValue::NONE) {
         printf("xpVal::bitxor type promote failed\n");
         return false;
     }
-    dst->u = a->u ^ b->u;
+    dst->u = leftValue->u ^ rightValue->u;
     return true;
 }
 
-bool hasOnlyImmediateCharacters(const char *s)
+bool hasOnlyImmediateCharacters(const char *literalText)
 {
-    if (!s)
+    if (!literalText)
         return false;
-    for (; *s; s++) {
-        const char *p = immediateLiteralCharacters;
-        while (*p) {
-            if (*p == *s)
+    for (; *literalText; literalText++) {
+        const char *allowedCharacterCursor = immediateLiteralCharacters;
+        while (*allowedCharacterCursor) {
+            if (*allowedCharacterCursor == *literalText)
                 break;
-            p++;
+            allowedCharacterCursor++;
         }
-        if (!*p)
+        if (!*allowedCharacterCursor)
             return false;
     }
     return true;
 }
 
-bool mValue::parse(const char *s)
+bool mValue::parse(const char *literalText)
 {
     if (type == STRING) {
         if (str)
@@ -819,7 +819,7 @@ bool mValue::parse(const char *s)
         str = 0;
     }
     type = NONE;
-    if (!s)
+    if (!literalText)
         return false;
     int dots = 0;
     int digits = 0;
@@ -830,34 +830,34 @@ bool mValue::parse(const char *s)
     bool isFlt = false;
     bool hasExp = false;
     int expSign = 0;
-    const char *start = s;
-    if (s[0] == '0' && s[1]) {
-        switch (s[1]) {
+    const char *start = literalText;
+    if (literalText[0] == '0' && literalText[1]) {
+        switch (literalText[1]) {
         case 'x':
         case 'X':
             base = 1;
             radix = 16;
             rtype = parseFloatImmediateMode ? FLOAT : UINT;
-            start = s + 2;
+            start = literalText + 2;
             break;
         case 'b':
         case 'B':
             radix = 2;
             base = 2;
-            start = s + 2;
+            start = literalText + 2;
             break;
         case 'z':
         case 'Z':
             base = 1;
             radix = 16;
             rtype = FLOAT;
-            start = s + 2;
+            start = literalText + 2;
             break;
         }
     }
     int skip = 0;
     if (!*start) {
-        printf("badly formed literal %s\n", s);
+        printf("badly formed literal %s\n", literalText);
         return false;
     }
     for (const char *p = start; *p; p++) {
@@ -868,7 +868,7 @@ bool mValue::parse(const char *s)
             if (c == '.') {
                 dots++;
                 if (isFlt) {
-                    printf("error in floating point expression '%s'\n", s);
+                    printf("error in floating point expression '%s'\n", literalText);
                     return false;
                 }
                 if (dots > 1) {
@@ -884,11 +884,11 @@ bool mValue::parse(const char *s)
             if (c == 'e' && (p[1] == '+' || p[1] == '-')) {
                 rtype = FLOAT;
                 if (expSign) {
-                    printf("already found exponent in %s\n", s);
+                    printf("already found exponent in %s\n", literalText);
                     return false;
                 }
                 if (hasExp) {
-                    printf("error in float expression %s\n", s);
+                    printf("error in float expression %s\n", literalText);
                     return false;
                 }
                 if (isFlt)
@@ -922,11 +922,11 @@ bool mValue::parse(const char *s)
             digits++;
     }
     if (skip || !digits) {
-        reportError("error parsing literal %s\n", s);
+        reportError("error parsing literal %s\n", literalText);
         return false;
     }
     if (isFlt)
-        f = strtod(s, 0);
+        f = strtod(literalText, 0);
     else
         i = value;
     type = rtype;
@@ -947,10 +947,10 @@ char *mValue::getString()
 bool mValue::makeNumeric()
 {
     if (type == STRING) {
-        mValue tmp(NONE);
-        tmp.parse(str);
-        if (isNumType(tmp.type))
-            set(&tmp);
+        mValue parsedValue(NONE);
+        parsedValue.parse(str);
+        if (isNumType(parsedValue.type))
+            set(&parsedValue);
     }
     return isNumType(type);
 }
@@ -962,48 +962,48 @@ char *mValue::asChars()
 {
     if (immediateValueStringOffset > 2048)
         immediateValueStringOffset = 0;
-    char *p = immediateFormattingBuffer + immediateValueStringOffset;
+    char *outputCursor = immediateFormattingBuffer + immediateValueStringOffset;
     switch (type) {
     case INT:
-        formatIntoBuffer(p, "%d", i);
+        formatIntoBuffer(outputCursor, "%d", i);
         break;
     case UINT:
-        formatIntoBuffer(p, "%u", u);
+        formatIntoBuffer(outputCursor, "%u", u);
         break;
     case FLOAT:
-        formatIntoBuffer(p, "%1.9e", f);
+        formatIntoBuffer(outputCursor, "%1.9e", f);
         break;
     case STRING:
         if (!str) {
             reportError("asChars - but no str for a literal\n");
             return 0;
         }
-        formatIntoBuffer(p, "%s", str);
+        formatIntoBuffer(outputCursor, "%s", str);
         break;
     }
-    immediateValueStringOffset += mstrlen(p) + 1;
-    return p;
+    immediateValueStringOffset += mstrlen(outputCursor) + 1;
+    return outputCursor;
 }
 
-bool sameImmediateValue(mValue *a, mValue *b)
+bool sameImmediateValue(mValue *leftValue, mValue *rightValue)
 {
-    unsigned int za = 0;
-    unsigned int zb = 0;
-    unsigned int *pa = &za;
-    unsigned int *pb = &zb;
-    if (a && b) {
-        if (a->type != b->type)
+    unsigned int leftDefaultWord = 0;
+    unsigned int rightDefaultWord = 0;
+    unsigned int *leftWordPointer = &leftDefaultWord;
+    unsigned int *rightWordPointer = &rightDefaultWord;
+    if (leftValue && rightValue) {
+        if (leftValue->type != rightValue->type)
             return false;
-        if (a->type == mValue::STRING)
-            return asciiCaseEqual(a->str, b->str);
+        if (leftValue->type == mValue::STRING)
+            return asciiCaseEqual(leftValue->str, rightValue->str);
     }
-    if (a && a->type == mValue::STRING)
+    if (leftValue && leftValue->type == mValue::STRING)
         return false;
-    if (b && b->type == mValue::STRING)
+    if (rightValue && rightValue->type == mValue::STRING)
         return false;
-    if (a && isNumType(a->type))
-        pa = &a->u;
-    if (b && isNumType(b->type))
-        pb = &b->u;
-    return *pa == *pb;
+    if (leftValue && isNumType(leftValue->type))
+        leftWordPointer = &leftValue->u;
+    if (rightValue && isNumType(rightValue->type))
+        rightWordPointer = &rightValue->u;
+    return *leftWordPointer == *rightWordPointer;
 }

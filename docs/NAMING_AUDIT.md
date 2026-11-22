@@ -802,6 +802,68 @@ stripped VCL executable exactly at SHA-256
 `83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
 Modern CTest and generated naming-inventory checks are also required.
 
+## Scoped parameters and local variables: directive, flow, processor and value review
+
+Following the merge of PR #10, source review shifted away from completed
+address-based identifiers to genuinely useful **function-scoped** names. This
+milestone applies **284 direct C++ identifier renames** in four core
+implementation files, and updates their public declaration parameter names
+where applicable. The original AST review queue loses **131 parameter** and
+**143 local-variable** entries (274 tracked resolutions); ten additional
+identifiers were improved in those same scopes even though they were not in
+the original short-name queue.
+
+### Evidence and naming decisions
+
+- **Directive handlers (`ExecRP.cpp`, 62 renames):** all short `LocTag *t`
+  handler parameters become `sourceLine`. Directive-specific tokens identify
+  a program name, MPG address, exported symbol, reorder option, syntax option
+  or work-area address/size. In register-range parsing the input/output
+  cursors, token index, register entry and swapped bounds are distinct.
+  Visibility-scope push/pop uses `visibilityMode` and `scopeNode`.
+- **Program/flow (`Program.cpp`, 52 renames):** `Program *p` becomes `program`
+  and instruction-stream arguments/iterators become `stream`. Stream
+  retargeting distinguishes incoming/outgoing links, predecessor stream and
+  branch instruction. Decoding distinguishes build type, decoded lines and
+  split result. Emission names optimizer indices, output cursor and emitted
+  instruction count; backtrace/flow routines identify label nodes, stream
+  indices and path links. `Program.h` is kept consistent for affected APIs.
+- **Processor (`Processor.cpp`, 61 renames):** register-pool initialization
+  distinguishes descriptor indexes and register entries. Pipeline pairing
+  uses `pipelineEntries`, `pipeIndex`, `pairedPipeIndex`,
+  `pairedInstruction` and the two output registers. Opcode lookup and
+  address-alias search identify opcode info, input/mnemonic cursors,
+  descriptor candidates and opcode IDs. Pool lookup identifies class,
+  output capacity and matched counts rather than reusing `p`, `r` and `n`.
+- **Typed expression values (`mValue.cpp`, 109 renames):** arithmetic and
+  comparison consistently distinguish `leftValue`/`rightValue`, signed,
+  unsigned and floating conversions, and the selected `promotedType`.
+  Literal parsing, numeric conversion and immediate formatting identify
+  their source and buffer cursors. Matching public declarations in `mValue.h`
+  use the same operand names. Existing order, promotion, conversion and error
+  handling are preserved, including unused/unreachable locals.
+
+### Reproducibility and boundaries
+
+Each rename was applied within its specific function body by a lexical
+scanner that preserves strings and comments; affected declarations were
+removed from the *original, owner/function-qualified* AST review queue. This
+avoids the unsafe alternative of replacing single-letter names globally.
+There are no alias macros, structural field changes, parameter ordering
+changes, code-path rewrites, source-file moves or VUC branch changes.
+
+The current fixed-baseline inventory retains **734** short/generic parameter
+review entries and **2,103** local-variable review entries, down from 865 and
+2,246 just before this change. These queues flag potential review work,
+not proof that every remaining short name should be replaced. The 64 unknown
+owner-qualified fields also remain unchanged, pending substantive evidence.
+
+Acceptance requires the native build and 13 CTest fixtures, historical
+RH9/i686 GCC 3.2 rebuild and byte-exact `exact-sha256` test, plus the
+generated naming inventory consistency check. The reference stripped ELF
+SHA-256 is
+`83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
