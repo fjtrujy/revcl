@@ -123,7 +123,7 @@ bool workTable::doPostOpt(int rawMode)
                     int nBranch;
                     switch (rawMode) {
                     case 2: {
-                        int t = in->position.unk_04;
+                        int t = in->position.loopRow;
                         in->scheduledCycle = t;
                         if (rangeStart) {
                             reportError("postopt - istart set for fixed mode \n");
@@ -133,13 +133,13 @@ bool workTable::doPostOpt(int rawMode)
                     }
                     case 1: {
                         nBranch = -1;
-                        int t = in->position.unk_04;
+                        int t = in->position.loopRow;
                         in->scheduledCycle = t - rangeStart;
                         break;
                     }
                     case 3:
                     case 4: {
-                        Instr *c = in->unk_08;
+                        Instr *c = in->cloneImage;
                         if (!c) {
                             reportError("no work clone set\n");
                             return false;
@@ -156,9 +156,9 @@ bool workTable::doPostOpt(int rawMode)
                         reportError("raw post mode for postopt\n");
                         return false;
                     }
-                    if (!in->unk_1428) {
-                        if (in->unk_30 != (cls_unk30 *)this) {
-                            reportError("owner not this for non-move...%p\n", in->unk_30);
+                    if (!in->moveRecordWord) {
+                        if (in->ownerTable != (cls_unk30 *)this) {
+                            reportError("owner not this for non-move...%p\n", in->ownerTable);
                             dumpOptInstruction(in);
                             return false;
                         }
@@ -168,7 +168,7 @@ bool workTable::doPostOpt(int rawMode)
                         }
                         count++;
                     } else {
-                        if (in->unk_30) {
+                        if (in->ownerTable) {
                             reportError("owner not 0 for move\n");
                             return false;
                         }
@@ -189,9 +189,9 @@ bool workTable::doPostOpt(int rawMode)
                         }
                     }
                     InstructionPosition *loc = &in->position;
-                    int lid = loc->unk_03;
-                    int row = loc->unk_04;
-                    int iloc = in->position.unk_00;
+                    int lid = loc->loopIteration;
+                    int row = loc->loopRow;
+                    int iloc = in->position.linearRow;
                     if (!loopSize && lid) {
                         reportError("i_lid set not in loop\n");
                         return false;
@@ -286,7 +286,7 @@ bool instStream::setOptTable(workTable *nt)
         reportError("stream already has opttable set\n");
         return false;
     }
-    for (Instr *in = nt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = nt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         if (in->getOwningStream() != this) {
             reportError("didn't own instruction\n");
             return false;
@@ -295,9 +295,9 @@ bool instStream::setOptTable(workTable *nt)
             reportError("doPostLinearOpt - optClone set in image?\n");
             return false;
         }
-        Instr *c = in->unk_08;
+        Instr *c = in->cloneImage;
         if (!c) {
-            if (!in->unk_1428) {
+            if (!in->moveRecordWord) {
                 reportError("doPostLinearOpt - inst wasn't cloned, but not a move either\n");
                 dumpOptInstruction(in);
                 return false;
@@ -312,7 +312,7 @@ bool instStream::setOptTable(workTable *nt)
                 reportError("setOptTable -  cloned image wsn't owned by us\n");
                 return false;
             }
-            workTable *owner = (workTable *)c->unk_30;
+            workTable *owner = (workTable *)c->ownerTable;
             if (owner != getTable()) {
                 reportError("clone owner wasn't our work table\n");
                 return false;
@@ -342,8 +342,8 @@ bool instStream::setOptTable(workTable *nt)
     workTablePtr = nt;
     optimizedTable = nt;
     if (nt->unk_00 >= 0)
-        unk_144 |= 1 << nt->unk_00;
+        appliedOptimizationMask |= 1 << nt->unk_00;
     if (nt->getLoopSize())
-        unk_140 = 1;
+        hasLoopOptimization = 1;
     return true;
 }

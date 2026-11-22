@@ -4,12 +4,12 @@
 #include "instStream.h"
 #include "genRegPool.h"
 
-void func_0804c220(char *p, int n);
+void clearRawBytes(char *p, int n);
 RegPool *GetRP(unsigned t);
-bool func_0806f610(Program *p);
-bool func_0806f6a4(Program *p);
+bool resetProgramAllocationsForFirstPass(Program *p);
+bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
-int func_0804bf50(unsigned int);
+int countSetBits(unsigned int);
 int setRangeFrom(workTable *t);
 bool lockLiveRange(RegisterPartLockList *ll, OperandLock *lk, int *s, int *e);
 
@@ -45,7 +45,7 @@ bool assignLocalRegisters(Program *p, workTable *wt)
     }
     if (wt->pendingInstructions.count) {
         reportError(assignLocalPendingError, wt->pendingInstructions.count);
-        for (Instr *in = wt->pendingInstructions.head; in; in = in->unk_24.unk_00)
+        for (Instr *in = wt->pendingInstructions.head; in; in = in->pendingLink.nextInstruction)
             in->dumpOperandDiagnostics(false);
         exitAfterCleanup(-1);
     }
@@ -69,7 +69,7 @@ bool assignLocalRegisters(Program *p, workTable *wt)
             if (rp && !rp->func_08088e54(wt))
                 return false;
         }
-        if (!func_0806f6a4(p)) {
+        if (!resetProgramAllocationsForSecondPass(p)) {
             reportError(assignLocalCleanupError);
             abortAfterError();
             return false;
@@ -81,22 +81,22 @@ bool assignLocalRegisters(Program *p, workTable *wt)
 
 void clearATab()
 {
-    func_0804c220(aTab_080bce40, 0x20000);
+    clearRawBytes(aTab_080bce40, 0x20000);
 }
 
 void clearTTab()
 {
-    func_0804c220(tTab_080dce40, 0x1000);
+    clearRawBytes(tTab_080dce40, 0x1000);
 }
 
 void genRegPool::func_08089a4c()
 {
-    func_0804c220(unk_30, 0x20);
+    clearRawBytes(unk_30, 0x20);
 }
 
 bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
 {
-    func_0804c220(tTab_080dce40, 0x1000);
+    clearRawBytes(tTab_080dce40, 0x1000);
     if (!mask)
         return true;
     char set = 0;
@@ -179,8 +179,8 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
 
 bool genRegPool::initAlloc(int start, int end)
 {
-    func_0804c220(aTab_080bce40, 0x20000);
-    func_0804c220(unk_30, 0x20);
+    clearRawBytes(aTab_080bce40, 0x20000);
+    clearRawBytes(unk_30, 0x20);
     if (start) {
         reportError(initAllocNonZeroBaseError);
         return false;
@@ -251,7 +251,7 @@ int genRegPool::fitCost(int reg)
         unsigned char a = row[reg];
         if (t & a)
             return -1;
-        int n = func_0804bf50((t | a) & 0x7f);
+        int n = countSetBits((t | a) & 0x7f);
         if (n > maxParts_080bce20) {
             reportError("nbits overrun \n");
             exitAfterCleanup(-1);

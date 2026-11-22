@@ -9,50 +9,50 @@ cls0805e2e4::~cls0805e2e4()
 {
 }
 
-void cls0805e2e4::func_0805e2fc()
+void cls0805e2e4::noopStatisticsHook()
 {
 }
 
 void cls0805e2e4::invalidateAllCounters()
 {
-    unk_00 = unk_02 = -1;
-    unk_04 = unk_06 = -1;
-    unk_08 = unk_0c = -1;
-    unk_10 = -1;
-    unk_14 = -1;
+    reverseLatencyDepth = reverseDependencyHeight = -1;
+    forwardLatencyDepth = forwardDependencyHeight = -1;
+    moveCount = moveDistance = -1;
+    moveChainLength = -1;
+    independentLatencyDepth = -1;
 }
 
 void cls0805e2e4::zeroAllCounters()
 {
-    unk_00 = unk_02 = 0;
-    unk_04 = unk_06 = 0;
-    unk_08 = unk_0c = 0;
-    unk_10 = 0;
-    unk_14 = 0;
+    reverseLatencyDepth = reverseDependencyHeight = 0;
+    forwardLatencyDepth = forwardDependencyHeight = 0;
+    moveCount = moveDistance = 0;
+    moveChainLength = 0;
+    independentLatencyDepth = 0;
 }
 
 void cls0805e2e4::copyCountersFrom(cls0805e2e4 *src)
 {
-    unk_00 = src->unk_00;
-    unk_02 = src->unk_02;
-    unk_04 = src->unk_04;
-    unk_06 = src->unk_06;
-    unk_08 = src->unk_08;
-    unk_0c = src->unk_0c;
-    unk_10 = src->unk_10;
-    unk_14 = src->unk_14;
+    reverseLatencyDepth = src->reverseLatencyDepth;
+    reverseDependencyHeight = src->reverseDependencyHeight;
+    forwardLatencyDepth = src->forwardLatencyDepth;
+    forwardDependencyHeight = src->forwardDependencyHeight;
+    moveCount = src->moveCount;
+    moveDistance = src->moveDistance;
+    moveChainLength = src->moveChainLength;
+    independentLatencyDepth = src->independentLatencyDepth;
 }
 
 void cls0805e2e4::mergeMaximumCounters(cls0805e2e4 *o)
 {
-    if (o->unk_00 > unk_00) unk_00 = o->unk_00;
-    if (o->unk_02 > unk_02) unk_02 = o->unk_02;
-    if (o->unk_04 > unk_04) unk_04 = o->unk_04;
-    if (o->unk_06 > unk_06) unk_06 = o->unk_06;
-    if (o->unk_08 > unk_08) unk_08 = o->unk_08;
-    if (o->unk_10 > unk_10) unk_10 = o->unk_10;
-    if (o->unk_0c > unk_0c) unk_0c = o->unk_0c;
-    if (o->unk_14 > unk_14) unk_14 = o->unk_14;
+    if (o->reverseLatencyDepth > reverseLatencyDepth) reverseLatencyDepth = o->reverseLatencyDepth;
+    if (o->reverseDependencyHeight > reverseDependencyHeight) reverseDependencyHeight = o->reverseDependencyHeight;
+    if (o->forwardLatencyDepth > forwardLatencyDepth) forwardLatencyDepth = o->forwardLatencyDepth;
+    if (o->forwardDependencyHeight > forwardDependencyHeight) forwardDependencyHeight = o->forwardDependencyHeight;
+    if (o->moveCount > moveCount) moveCount = o->moveCount;
+    if (o->moveChainLength > moveChainLength) moveChainLength = o->moveChainLength;
+    if (o->moveDistance > moveDistance) moveDistance = o->moveDistance;
+    if (o->independentLatencyDepth > independentLatencyDepth) independentLatencyDepth = o->independentLatencyDepth;
 }
 
 char g_080de2a0[1024];  // stall reason text buffer
@@ -86,7 +86,7 @@ const char *stallReasonStr(short why)
         s = "branch instruction dependency chain height";
         break;
     case 9:
-        formatIntoBuffer(g_080de2a0, "issue pressure on %s", func_0806c6a0((char)((why & 0xff00) >> 8)));
+        formatIntoBuffer(g_080de2a0, "issue pressure on %s", deviceNameByIndex((char)((why & 0xff00) >> 8)));
         s = g_080de2a0;
         break;
     case 10:
@@ -98,12 +98,12 @@ const char *stallReasonStr(short why)
 
 bool instStream::gatherStats()
 {
-    cls0805e2e4 *st = &unk_278;
-    st->unk_00 = st->unk_02 = -1;
-    st->unk_04 = st->unk_06 = -1;
-    st->unk_08 = st->unk_0c = -1;
-    st->unk_10 = -1;
-    st->unk_14 = -1;
+    cls0805e2e4 *st = &schedulingStatistics;
+    st->reverseLatencyDepth = st->reverseDependencyHeight = -1;
+    st->forwardLatencyDepth = st->forwardDependencyHeight = -1;
+    st->moveCount = st->moveDistance = -1;
+    st->moveChainLength = -1;
+    st->independentLatencyDepth = -1;
     int physSum = 0;
     int maxLat = 0;
     unk_2b4 = -1;
@@ -111,8 +111,8 @@ bool instStream::gatherStats()
     statCounts *sc = &stats;
     for (int i = 0; i != 9; i++)
         sc->unk_00[i] = 0;
-    unk_2b8 = 0;
-    unk_2ba = 0;
+    savedStallReason = 0;
+    currentStallReason = 0;
     workTable *wt = getTable();
     if (!wt) {
         reportError("failed to gather stats - no get work table\n");
@@ -120,13 +120,13 @@ bool instStream::gatherStats()
     }
 
     Instr *in;
-    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
-        cls0805e2e4 *is = &in->unk_13f0;
-        is->unk_00 = is->unk_02 = 0;
-        is->unk_04 = is->unk_06 = 0;
-        is->unk_08 = is->unk_0c = 0;
-        is->unk_10 = 0;
-        is->unk_14 = 0;
+    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
+        cls0805e2e4 *is = &in->schedulingStatistics;
+        is->reverseLatencyDepth = is->reverseDependencyHeight = 0;
+        is->forwardLatencyDepth = is->forwardDependencyHeight = 0;
+        is->moveCount = is->moveDistance = 0;
+        is->moveChainLength = 0;
+        is->independentLatencyDepth = 0;
         int logged = 0;
         if (in) {
             for (int j = 0; j != 9; j++) {
@@ -142,14 +142,14 @@ bool instStream::gatherStats()
         }
     }
 
-    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r = (isRegisterOperand(op, 1) && op->operandStatus != 2) ? op->assignedRegister : 0;
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
                     if ((op->componentMask >> p) & 1) {
-                        for (ol_s *ol = op->parts[p].unk_54.head; ol; ol = ol->next) {
+                        for (ol_s *ol = op->parts[p].operandLocations.head; ol; ol = ol->next) {
                             if (!ol->instruction) {
                                 reportError("failed to get setting instruction!\n");
                                 return false;
@@ -171,7 +171,7 @@ bool instStream::gatherStats()
         }
     }
 
-    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r;
@@ -182,40 +182,40 @@ bool instStream::gatherStats()
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
                     if (((op->componentMask & ~op->externalPartMask) >> p) & 1) {
-                        if (op->parts[p].unk_54.count != 1) {
+                        if (op->parts[p].operandLocations.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = op->parts[p].unk_54.head->instruction;
-                        Operand *so = operandAtLocation(op->parts[p].unk_54.head);
-                        int d = src->unk_13f0.unk_04 + so->outputLatency + op->additionalLatency;
-                        int h = src->unk_13f0.unk_06 + 1;
-                        if (d > in->unk_13f0.unk_04)
-                            in->unk_13f0.unk_04 = d;
-                        if (h > in->unk_13f0.unk_06)
-                            in->unk_13f0.unk_06 = h;
+                        Instr *src = op->parts[p].operandLocations.head->instruction;
+                        Operand *so = operandAtLocation(op->parts[p].operandLocations.head);
+                        int d = src->schedulingStatistics.forwardLatencyDepth + so->outputLatency + op->additionalLatency;
+                        int h = src->schedulingStatistics.forwardDependencyHeight + 1;
+                        if (d > in->schedulingStatistics.forwardLatencyDepth)
+                            in->schedulingStatistics.forwardLatencyDepth = d;
+                        if (h > in->schedulingStatistics.forwardDependencyHeight)
+                            in->schedulingStatistics.forwardDependencyHeight = h;
                     }
                 }
             }
         }
     }
 
-    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r = (isRegisterOperand(op, 1) && op->operandStatus != 2) ? op->assignedRegister : 0;
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
                     if (((op->componentMask & ~op->externalPartMask) >> p) & 1) {
-                        if (op->parts[p].unk_54.count != 1) {
+                        if (op->parts[p].operandLocations.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = op->parts[p].unk_54.head->instruction;
-                        Operand *so = operandAtLocation(op->parts[p].unk_54.head);
-                        int d = src->unk_13f0.unk_14 + so->outputLatency + op->additionalLatency;
-                        if (d > in->unk_13f0.unk_14)
-                            in->unk_13f0.unk_14 = d;
+                        Instr *src = op->parts[p].operandLocations.head->instruction;
+                        Operand *so = operandAtLocation(op->parts[p].operandLocations.head);
+                        int d = src->schedulingStatistics.independentLatencyDepth + so->outputLatency + op->additionalLatency;
+                        if (d > in->schedulingStatistics.independentLatencyDepth)
+                            in->schedulingStatistics.independentLatencyDepth = d;
                     }
                 }
             }
@@ -223,7 +223,7 @@ bool instStream::gatherStats()
     }
 
     wtInstrList *lst = &wt->linearInstructions;
-    for (in = lst->tail; in; in = in->unk_1c.unk_04) {
+    for (in = lst->tail; in; in = in->linearLink.previousInstruction) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r;
@@ -234,18 +234,18 @@ bool instStream::gatherStats()
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
                     if (((op->componentMask & ~op->externalPartMask) >> p) & 1) {
-                        if (op->parts[p].unk_54.count != 1) {
+                        if (op->parts[p].operandLocations.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = op->parts[p].unk_54.head->instruction;
-                        Operand *so = operandAtLocation(op->parts[p].unk_54.head);
-                        int d = in->unk_13f0.unk_00 + so->outputLatency + op->additionalLatency;
-                        int h = in->unk_13f0.unk_02 + 1;
-                        if (d > src->unk_13f0.unk_00)
-                            src->unk_13f0.unk_00 = d;
-                        if (h > src->unk_13f0.unk_02)
-                            src->unk_13f0.unk_02 = h;
+                        Instr *src = op->parts[p].operandLocations.head->instruction;
+                        Operand *so = operandAtLocation(op->parts[p].operandLocations.head);
+                        int d = in->schedulingStatistics.reverseLatencyDepth + so->outputLatency + op->additionalLatency;
+                        int h = in->schedulingStatistics.reverseDependencyHeight + 1;
+                        if (d > src->schedulingStatistics.reverseLatencyDepth)
+                            src->schedulingStatistics.reverseLatencyDepth = d;
+                        if (h > src->schedulingStatistics.reverseDependencyHeight)
+                            src->schedulingStatistics.reverseDependencyHeight = h;
                     }
                 }
             }
@@ -253,18 +253,18 @@ bool instStream::gatherStats()
     }
 
     for (in = lst->tail; in; ) {
-        iLink *link = &in->unk_1c;
-        Instr *m = link->unk_04;
-        for (; m; m = m->unk_1c.unk_04) {
+        iLink *link = &in->linearLink;
+        Instr *m = link->previousInstruction;
+        for (; m; m = m->linearLink.previousInstruction) {
             if (hasDirectOperandDependency(m, in)) {
-                m->unk_13f0.unk_08++;
-                m->unk_13f0.unk_0c += in->unk_13f0.unk_0c + 1;
-                m->unk_13f0.unk_10 = in->unk_13f0.unk_10 + 1;
+                m->schedulingStatistics.moveCount++;
+                m->schedulingStatistics.moveDistance += in->schedulingStatistics.moveDistance + 1;
+                m->schedulingStatistics.moveChainLength = in->schedulingStatistics.moveChainLength + 1;
             }
         }
         // Keep the original pointer-word load while reading a complete
         // address on either 32- or 64-bit targets.
-        m = (Instr *)*(VclPtrWord *)&link->unk_04;
+        m = (Instr *)*(VclPtrWord *)&link->previousInstruction;
         in = m;
     }
 
@@ -273,9 +273,9 @@ bool instStream::gatherStats()
     int thru = 0;
     int best = 0;
     int both = 0;
-    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         if (in->branchFlags)
-            unk_2b4 = in->unk_13f0.unk_04;
+            unk_2b4 = in->schedulingStatistics.forwardLatencyDepth;
         char c = in->permittedPipelineMask;
         if (c == 3)
             both++;
@@ -283,11 +283,11 @@ bool instStream::gatherStats()
             lower++;
         else
             upper++;
-        unk_278.mergeMaximumCounters(&in->unk_13f0);
+        schedulingStatistics.mergeMaximumCounters(&in->schedulingStatistics);
     }
 
     int maxIssue = 0;
-    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r = registerOperand(op, 2);
@@ -297,7 +297,7 @@ bool instStream::gatherStats()
                     int n1 = 0;
                     int nOther = 0;
                     if ((op->componentMask >> p) & 1) {
-                        for (ol_s *ol = op->parts[p].unk_54.firstInternalLocation(); ol; ol = ol->nextInternalLocation()) {
+                        for (ol_s *ol = op->parts[p].operandLocations.firstInternalLocation(); ol; ol = ol->nextInternalLocation()) {
                             char c = ol->instruction->permittedPipelineMask;
                             if (c == 3)
                                 nBoth++;
@@ -336,20 +336,20 @@ bool instStream::gatherStats()
                 l++;
         }
         if (u > best) {
-            unk_2ba = 3;
+            currentStallReason = 3;
             best = u;
         }
         if (l > best) {
-            unk_2ba = 4;
+            currentStallReason = 4;
             best = l;
         }
     }
     if (maxIssue > best) {
         best = maxIssue;
-        unk_2ba = 1;
+        currentStallReason = 1;
     }
 
-    int depth = unk_278.unk_14;
+    int depth = schedulingStatistics.independentLatencyDepth;
     if (depth < 0)
         depth = 0;
     for (regUse *ru = wt->registerUses.head; ru; ru = ru->next) {
@@ -372,11 +372,11 @@ bool instStream::gatherStats()
         }
     }
     if (thru > best) {
-        unk_2ba = 2;
+        currentStallReason = 2;
         best = thru;
     }
     if (maxLat > best) {
-        unk_2ba = 1;
+        currentStallReason = 1;
         best = maxLat;
     }
     for (int i = 0; i != 9; i++) {
@@ -387,7 +387,7 @@ bool instStream::gatherStats()
         int n = (sc->unk_00[i] + 1) >> 1;
         if (n > best) {
             best = n;
-            unk_2ba = (i << 8) | 9;
+            currentStallReason = (i << 8) | 9;
         }
     }
     if (physSum < best * 4)
@@ -398,29 +398,29 @@ bool instStream::gatherStats()
         physSum = 0x4000;
     if (wt->codeModeValue == 3 && physSum < wt->getPhysicalLen())
         physSum = wt->getPhysicalLen();
-    unk_2bc = physSum;
+    physicalInstructionBudget = physSum;
     if (canLoop()) {
-        unk_2b8 = unk_2ba;
+        savedStallReason = currentStallReason;
         logicalLength = best;
         if (best <= 1)
             logicalLength = 2;
     } else {
-        unk_2b8 = 5;
+        savedStallReason = 5;
         logicalLength = 0;
     }
-    if (unk_278.unk_04 >= best) {
-        unk_2ba = 6;
-        best = unk_278.unk_04 + 1;
+    if (schedulingStatistics.forwardLatencyDepth >= best) {
+        currentStallReason = 6;
+        best = schedulingStatistics.forwardLatencyDepth + 1;
     }
-    if (unk_278.unk_00 >= best) {
-        unk_2ba = 7;
-        best = unk_278.unk_00 + 1;
+    if (schedulingStatistics.reverseLatencyDepth >= best) {
+        currentStallReason = 7;
+        best = schedulingStatistics.reverseLatencyDepth + 1;
     }
     Instr *br = wt->getBranch();
     if (br) {
-        int h = br->unk_13f0.unk_04 + 2;
+        int h = br->schedulingStatistics.forwardLatencyDepth + 2;
         if (best <= h) {
-            unk_2ba = 8;
+            currentStallReason = 8;
             best = h;
         }
     }

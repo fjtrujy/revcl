@@ -18,32 +18,32 @@ bool optHDown(workTable *wt, wrangleCand *c)
     int bestA = 0x80000000;
     Instr *best = 0;
     int bestB = 0x80000000, bestC = 0x80000000, bestD = 0x7fffffff;
-    for (; in; in = in->unk_2c) {
+    for (; in; in = in->nextMoveInstruction) {
         int cost = hDownRegCost(in);
-        int a = in->unk_13f0.unk_0c - in->unk_1418 + in->unk_13f0.unk_00 + cost;
+        int a = in->schedulingStatistics.moveDistance - in->candidateAttemptCount + in->schedulingStatistics.reverseLatencyDepth + cost;
         if (a > bestA) {
             best = in;
             bestA = a;
-            int b = in->unk_13f0.unk_08 - in->unk_1418;
-            int h = in->unk_13f0.unk_06;
+            int b = in->schedulingStatistics.moveCount - in->candidateAttemptCount;
+            int h = in->schedulingStatistics.forwardDependencyHeight;
             bestB = b + (h >> 2) + cost;
-            bestC = in->unk_13f0.unk_00;
+            bestC = in->schedulingStatistics.reverseLatencyDepth;
         } else if (a == bestA) {
-            int b = in->unk_13f0.unk_08 - in->unk_1418;
-            int h = in->unk_13f0.unk_06;
+            int b = in->schedulingStatistics.moveCount - in->candidateAttemptCount;
+            int h = in->schedulingStatistics.forwardDependencyHeight;
             int e = b + (h >> 2) + cost;
             if (e > bestB) {
                 bestB = e;
-                bestC = in->unk_13f0.unk_00;
+                bestC = in->schedulingStatistics.reverseLatencyDepth;
                 best = in;
             } else if (e == bestB) {
-                int f = in->unk_141e + in->unk_141c;
+                int f = in->candidateBaseRow + in->candidateCostOffset;
                 if (f < bestD) {
                     bestD = f;
-                    bestC = in->unk_13f0.unk_00;
+                    bestC = in->schedulingStatistics.reverseLatencyDepth;
                     best = in;
-                } else if (f == bestD && in->unk_13f0.unk_02 > bestC) {
-                    bestC = in->unk_13f0.unk_00;
+                } else if (f == bestD && in->schedulingStatistics.reverseDependencyHeight > bestC) {
+                    bestC = in->schedulingStatistics.reverseLatencyDepth;
                     best = in;
                 }
             }
@@ -52,8 +52,8 @@ bool optHDown(workTable *wt, wrangleCand *c)
     if (!best)
         return false;
     c->unk_00 = best;
-    c->unk_04 = best->unk_141e + best->unk_141c;
-    c->unk_06 = best->unk_1418 & 1;
+    c->unk_04 = best->candidateBaseRow + best->candidateCostOffset;
+    c->unk_06 = best->candidateAttemptCount & 1;
     return true;
 }
 
@@ -80,28 +80,28 @@ bool optDUp(workTable *wt, wrangleCand *c)
     Instr *best = 0;
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;
-    for (; in; in = in->unk_2c) {
-        int a = in->unk_13f0.unk_0c;
-        a -= in->unk_1418;
+    for (; in; in = in->nextMoveInstruction) {
+        int a = in->schedulingStatistics.moveDistance;
+        a -= in->candidateAttemptCount;
         if (a > bestA) {
             best = in;
             bestA = a;
-            bestB = in->unk_13f0.unk_08 - in->unk_1418 + in->unk_13f0.unk_04;
-            bestC = in->unk_13f0.unk_00;
+            bestB = in->schedulingStatistics.moveCount - in->candidateAttemptCount + in->schedulingStatistics.forwardLatencyDepth;
+            bestC = in->schedulingStatistics.reverseLatencyDepth;
         } else if (a == bestA) {
-            int e = in->unk_13f0.unk_08 - in->unk_1418 + in->unk_13f0.unk_04;
+            int e = in->schedulingStatistics.moveCount - in->candidateAttemptCount + in->schedulingStatistics.forwardLatencyDepth;
             if (e > bestB) {
                 bestB = e;
-                bestC = in->unk_13f0.unk_00;
+                bestC = in->schedulingStatistics.reverseLatencyDepth;
                 best = in;
             } else if (e == bestB) {
-                int f = in->unk_141e + in->unk_141c;
+                int f = in->candidateBaseRow + in->candidateCostOffset;
                 if (f < bestD) {
                     bestD = f;
-                    bestC = in->unk_13f0.unk_00;
+                    bestC = in->schedulingStatistics.reverseLatencyDepth;
                     best = in;
-                } else if (f == bestD && in->unk_13f0.unk_02 > bestC) {
-                    bestC = in->unk_13f0.unk_00;
+                } else if (f == bestD && in->schedulingStatistics.reverseDependencyHeight > bestC) {
+                    bestC = in->schedulingStatistics.reverseLatencyDepth;
                     best = in;
                 }
             }
@@ -110,7 +110,7 @@ bool optDUp(workTable *wt, wrangleCand *c)
     if (!best)
         return false;
     c->unk_00 = best;
-    c->unk_04 = best->unk_141e + best->unk_141c;
-    c->unk_06 = best->unk_1418 & 1;
+    c->unk_04 = best->candidateBaseRow + best->candidateCostOffset;
+    c->unk_06 = best->candidateAttemptCount & 1;
     return true;
 }

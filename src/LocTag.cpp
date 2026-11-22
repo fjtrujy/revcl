@@ -46,7 +46,7 @@ char *LocTag::tokenizeSourceLine(int *commentMode, char *input)
     char *writeCursor = lineText;
     while (*readCursor) {
         bool splitHere = false;
-        bool isTokenChar = func_08050708(*readCursor);
+        bool isTokenChar = isTokenSeparatorCharacter(*readCursor);
         if (*commentMode == 2) {
             if (processedCharCount > 1 && readCursor[-2] == '*' && readCursor[-1] == '/') {
                 *commentMode = 0;

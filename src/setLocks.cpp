@@ -15,7 +15,7 @@ bool setRange(int start, int end, int lsz);
 int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos);
 int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos);
-int func_0804bf50(unsigned int x);
+int countSetBits(unsigned int x);
 extern bool stagger_080b33ac;
 
 static inline void dumpLockInstruction(Instr *in)
@@ -251,10 +251,10 @@ done:
 bool moveLocks(Instr *const in, InstructionPosition *pos)
 {
     InstructionPosition *d = &in->position;
-    d->unk_00 = pos->unk_00;
-    d->unk_04 = pos->unk_04;
-    d->unk_03 = pos->unk_03;
-    d->unk_02 = pos->unk_02;
+    d->linearRow = pos->linearRow;
+    d->loopRow = pos->loopRow;
+    d->loopIteration = pos->loopIteration;
+    d->pipelineIndex = pos->pipelineIndex;
     for (int i = 0; i != in->operandCount; i++) {
         Operand *op = &in->operands[i];
         RegPoolEntry *r = op->assignedRegister;
@@ -341,16 +341,16 @@ bool setPipeBits(Instr *in)
 
 int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
 {
-    int row = pos->unk_00;
-    int pipe = pos->unk_02;
-    int r4 = pos->unk_04;
+    int row = pos->linearRow;
+    int pipe = pos->pipelineIndex;
+    int r4 = pos->loopRow;
 
     if (*minPos < row)
         *minPos = row;
 
-    short e = in->unk_13b2;
-    if (e < in->unk_13b0)
-        e = in->unk_13b0;
+    short e = in->externalInputConstraint;
+    if (e < in->externalInputPairedConstraint)
+        e = in->externalInputPairedConstraint;
     int v = e;
     if (r4 < v + g_080b3370) {
         int m = *minPos;
@@ -368,9 +368,9 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
         return 0x10000;
     }
 
-    short l = in->unk_13b6;
-    if (l < in->unk_13b4)
-        l = in->unk_13b4;
+    short l = in->externalOutputConstraint;
+    if (l < in->externalOutputPairedConstraint)
+        l = in->externalOutputPairedConstraint;
     if (l && g_080b3374 >= 0 && g_080b3374 - r4 <= l) {
         *minPos = 30000;
         return 0x10000;
@@ -407,8 +407,8 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
         }
     }
 
-    Instr **ie = ((cls_unk30 *)wt)->getIE_ck(pos->unk_04);
-    if (ie[pipe] != (Instr *)in->unk_1398) {
+    Instr **ie = ((cls_unk30 *)wt)->getIE_ck(pos->loopRow);
+    if (ie[pipe] != (Instr *)in->replacedInstructionWord) {
         *minPos = row + 1;
         return 0x40;
     }
@@ -416,7 +416,7 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
         (*minPos)++;
         return 0x80;
     }
-    return checkLocks(in, &pos->unk_00, minPos);
+    return checkLocks(in, &pos->linearRow, minPos);
 }
 
 bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
@@ -429,22 +429,22 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
     short r = 0;
     char p = 0;
     {
-        int zp = (unsigned char)pos->unk_03;
+        int zp = (unsigned char)pos->loopIteration;
         zp >>= 4;
         zp >>= 4;
         if (zp)
             return r != p;
     }
-    r = pos->unk_04;
+    r = pos->loopRow;
     wtRow *row = &wt->rows[r];
     InstructionPosition *s = &in->position;
-    b = pos->unk_00;
-    s->unk_04 = r;
-    char a = pos->unk_03;
-    s->unk_03 = a;
+    b = pos->linearRow;
+    s->loopRow = r;
+    char a = pos->loopIteration;
+    s->loopIteration = a;
     p = pos->getPipe();
-    s->unk_00 = b;
-    s->unk_02 = p;
+    s->linearRow = b;
+    s->pipelineIndex = p;
     row->entries[p].unk_00 = in;
     b = setLocks(in);
     if (!(char)b) {
@@ -465,7 +465,7 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
             reportError("failed to add to done\n");
             abortAfterError();
         }
-        zt = ((unsigned char)pos->unk_02 | (unsigned char)pos->unk_03);
+        zt = ((unsigned char)pos->pipelineIndex | (unsigned char)pos->loopIteration);
         zt >>= 4;
         zt >>= 4;
     } while (zt);
@@ -520,7 +520,7 @@ bool reduceExtents(workTable *wt)
                 Instr *in = row->getEntry(p);
                 if (!in)
                     continue;
-                int lo = in->position.unk_00;
+                int lo = in->position.linearRow;
                 int cnt = 0;
                 int minEnd = 30000;
                 Operand *op;
@@ -540,7 +540,7 @@ bool reduceExtents(workTable *wt)
                         }
                     }
                     if (registerOperand(op, 1))
-                        cnt -= func_0804bf50(op->componentMask);
+                        cnt -= countSetBits(op->componentMask);
                 }
                 if (minEnd < 30000 && __builtin_expect(cnt >= 0, 1)) {
                     int t = minEnd;
@@ -597,28 +597,28 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 Instr *oi = par->ownerInstr();
                 if (!oi)
                     continue;
-                int maxPos = pos->unk_00 - par->issueLatency - s->issueLatency;
-                int start = pos->unk_00 - back;
+                int maxPos = pos->linearRow - par->issueLatency - s->issueLatency;
+                int start = pos->linearRow - back;
                 if (!back)
-                    start = oi->position.unk_00 + 1;
+                    start = oi->position.linearRow + 1;
                 if (!par->unk_15)
                     start -= par->issueLatency;
                 bool single = true;
                 if (oi->unk_13d1) {
-                    start = oi->position.unk_00 + 1;
-                    if (maxPos > wt->loopSize + oi->position.unk_00)
-                        maxPos = wt->loopSize + oi->position.unk_00;
+                    start = oi->position.linearRow + 1;
+                    if (maxPos > wt->loopSize + oi->position.linearRow)
+                        maxPos = wt->loopSize + oi->position.linearRow;
                     if (maxPos > oi->moveRowOffset)
                         maxPos = oi->moveRowOffset;
                     single = false;
                 }
                 InstructionPosition *opos = &oi->position;
-                if (start <= opos->unk_00)
+                if (start <= opos->linearRow)
                     continue;
                 if (start > maxPos)
                     continue;
                 bool moved = false;
-                char pipe = opos->unk_02;
+                char pipe = opos->pipelineIndex;
                 InstructionPosition np;
                 np.setInstructionPipe(pipe);
                 np.setFromLinearRow(start);
@@ -630,17 +630,17 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                     n += drag(wt, oi, &np, b, depth + 1);
                 }
                 InstructionPosition cur;
-                cur.unk_00 = np.unk_00;
-                cur.unk_04 = np.unk_04;
-                cur.unk_03 = np.unk_03;
-                cur.unk_02 = np.unk_02;
+                cur.linearRow = np.linearRow;
+                cur.loopRow = np.loopRow;
+                cur.loopIteration = np.loopIteration;
+                cur.pipelineIndex = np.pipelineIndex;
                 for (; start <= maxPos; start++) {
                     cur.setFromLinearRow(start);
                     if (!func_0807e130(wt, oi, &cur, false)) {
-                        np.unk_00 = cur.unk_00;
-                        np.unk_04 = cur.unk_04;
-                        np.unk_03 = cur.unk_03;
-                        np.unk_02 = cur.unk_02;
+                        np.linearRow = cur.linearRow;
+                        np.loopRow = cur.loopRow;
+                        np.loopIteration = cur.loopIteration;
+                        np.pipelineIndex = cur.pipelineIndex;
                         moved = true;
                         if (single)
                             break;
@@ -691,19 +691,19 @@ RegisterPartLockList *workTable::getLockList(RegPoolEntry *reg, int part)
 
 int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
 {
-    int row = pos->unk_00;
-    int pipe = pos->unk_02;
-    int r4 = pos->unk_04;
+    int row = pos->linearRow;
+    int pipe = pos->pipelineIndex;
+    int r4 = pos->loopRow;
 
-    short e = in->unk_13b2;
-    if (e < in->unk_13b0)
-        e = in->unk_13b0;
+    short e = in->externalInputConstraint;
+    if (e < in->externalInputPairedConstraint)
+        e = in->externalInputPairedConstraint;
     if (r4 < e + g_080b3370)
         return 0x10000;
 
-    short l = in->unk_13b6;
-    if (l < in->unk_13b4)
-        l = in->unk_13b4;
+    short l = in->externalOutputConstraint;
+    if (l < in->externalOutputPairedConstraint)
+        l = in->externalOutputPairedConstraint;
     if (l && g_080b3374 >= 0 && g_080b3374 - r4 <= l)
         return 0x10000;
     if (stagger_080b33ac && in->ramAccessType && (bool)(r4 & 1))
@@ -735,12 +735,12 @@ int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
     if (lr <= row)
         return 0x100000;
 
-    Instr **ie = ((cls_unk30 *)wt)->getIE_ck(pos->unk_04);
-    if (ie[pipe] != (Instr *)in->unk_1398 && ie[pipe] != in)
+    Instr **ie = ((cls_unk30 *)wt)->getIE_ck(pos->loopRow);
+    if (ie[pipe] != (Instr *)in->replacedInstructionWord && ie[pipe] != in)
         return 0x40;
     if (!wouldPair(ie, in, pipe))
         return 0x80;
-    return canMoveLocks(in, &pos->unk_00);
+    return canMoveLocks(in, &pos->linearRow);
 }
 
 int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
@@ -765,8 +765,8 @@ int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
                 Instr *oi = par->ownerInstr();
                 if (!oi)
                     continue;
-                int t = in->position.unk_00 - par->issueLatency - s->issueLatency;
-                int oiRow = oi->position.unk_00;
+                int t = in->position.linearRow - par->issueLatency - s->issueLatency;
+                int oiRow = oi->position.linearRow;
                 if (t <= oiRow)
                     continue;
                 bool found = false;
@@ -776,10 +776,10 @@ int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
                 for (; oiRow < t; t--) {
                     trial.setFromLinearRow(t);
                     if (!func_0807e130(wt, oi, &trial, true)) {
-                        dest.unk_00 = trial.unk_00;
-                        dest.unk_04 = trial.unk_04;
-                        dest.unk_03 = trial.unk_03;
-                        dest.unk_02 = trial.unk_02;
+                        dest.linearRow = trial.linearRow;
+                        dest.loopRow = trial.loopRow;
+                        dest.loopIteration = trial.loopIteration;
+                        dest.pipelineIndex = trial.pipelineIndex;
                         found = true;
                         break;
                     }
@@ -852,10 +852,10 @@ int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos)
                 Instr *oi = par->ownerInstr();
                 if (!oi)
                     continue;
-                if (oi->ramAccessType != 1 && oi->unk_13f0.unk_04 != 0)
+                if (oi->ramAccessType != 1 && oi->schedulingStatistics.forwardLatencyDepth != 0)
                     continue;
-                int t = in->position.unk_00 - par->issueLatency - s->issueLatency;
-                int oiRow = oi->position.unk_00;
+                int t = in->position.linearRow - par->issueLatency - s->issueLatency;
+                int oiRow = oi->position.linearRow;
                 if (t <= oiRow)
                     continue;
                 bool found = false;
@@ -865,10 +865,10 @@ int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos)
                 for (; oiRow < t; t--) {
                     trial.setFromLinearRow(t);
                     if (!func_0807e130(wt, oi, &trial, true)) {
-                        dest.unk_00 = trial.unk_00;
-                        dest.unk_04 = trial.unk_04;
-                        dest.unk_03 = trial.unk_03;
-                        dest.unk_02 = trial.unk_02;
+                        dest.linearRow = trial.linearRow;
+                        dest.loopRow = trial.loopRow;
+                        dest.loopIteration = trial.loopIteration;
+                        dest.pipelineIndex = trial.pipelineIndex;
                         found = true;
                         break;
                     }

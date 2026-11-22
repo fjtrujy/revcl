@@ -24,15 +24,15 @@ Tool tools_080b301c[3] = {
 };
 unsigned char toolMask_080b3034 = 7;
 char toolOpt_080b3035 = 'I';
-char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
+char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int argEnd,
                     char **argv, bool keepTemps);
 
-bool func_0804a608(unsigned char flags)
+bool usesGaspPreprocessor(unsigned char flags)
 {
     return (flags & 6) != 0;
 }
 
-bool func_0804a61c(unsigned char flags)
+bool usesGccPreprocessor(unsigned char flags)
 {
     return flags & 1;
 }
@@ -47,7 +47,7 @@ static inline bool toolOptMatches(unsigned char mask, char opt)
     return false;
 }
 
-bool func_0804a62c(unsigned char mask, char opt)
+bool matchesToolOption(unsigned char mask, char opt)
 {
     unsigned int bits = mask;
     if (toolMask_080b3034 & bits) {
@@ -57,27 +57,27 @@ bool func_0804a62c(unsigned char mask, char opt)
     return false;
 }
 
-void func_0804a658(unsigned char *flags)
+void enableGccPreprocessing(unsigned char *flags)
 {
     *flags |= 1;
 }
 
-void func_0804a664(unsigned char *flags)
+void enableGaspPreprocessing(unsigned char *flags)
 {
     *flags |= 2;
 }
 
-void func_0804a670(unsigned char *flags)
+void enableAlternateGaspPreprocessing(unsigned char *flags)
 {
     *flags |= 4;
 }
 
-char *func_0804a67c(unsigned char flags, char *buf, int *len, int argFirst, int argEnd,
+char *runSelectedPreprocessors(unsigned char flags, char *buf, int *len, int argFirst, int argEnd,
                     char **argv, bool keepTemps)
 {
     for (int i = 0; i != 3; i++) {
         if ((flags >> i) & 1) {
-            buf = func_0804a6e0(i, buf, len, argFirst, argEnd, argv, keepTemps);
+            buf = runSinglePreprocessor(i, buf, len, argFirst, argEnd, argv, keepTemps);
             if (!buf)
                 return 0;
         }
@@ -85,7 +85,7 @@ char *func_0804a67c(unsigned char flags, char *buf, int *len, int argFirst, int 
     return buf;
 }
 
-char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
+char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int argEnd,
                     char **argv, bool keepTemps)
 {
     char cmd[1024];

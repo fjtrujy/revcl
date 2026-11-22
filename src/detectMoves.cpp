@@ -30,7 +30,7 @@ bool detectMoves(Program *p)
         if (wt->codeModeValue == 1 || isPipeMode(wt)) {
             Instr *next;
             for (Instr *in = wt->linearInstructions.head; in; in = next) {
-                next = in->unk_1c.unk_00;
+                next = in->linearLink.nextInstruction;
                 int opc;
                 unsigned char mask;
                 int dstOp;
@@ -68,7 +68,7 @@ bool detectMoves(Program *p)
                 sr->forcedBaseRegister = in->operands[srcOp].forcedBaseRegister;
                 d->forcedBaseRegister = in->operands[dstOp].forcedBaseRegister;
                 if (isRawTable(wt)) {
-                    int pipe = in->position.unk_02;
+                    int pipe = in->position.pipelineIndex;
                     if (!resolveMovePipe(wt, mv, pipe)) {
                         reportError("failed to resolve a detected move for the pipe I found it in\n");
                         return false;

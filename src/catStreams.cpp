@@ -7,7 +7,7 @@
 #include "os.h"
 
 bool UnlinkFromLinear(Block *blk, Instr *n);
-bool func_0806f4a0(Program *p, instStream *s);
+bool streamExportsSymbol(Program *p, instStream *s);
 bool appendStream(Program *p, instStream *a, instStream *b);
 
 static inline void dumpRawStream(instStream *s)
@@ -15,7 +15,7 @@ static inline void dumpRawStream(instStream *s)
     s->dump(0);
 }
 
-bool func_08063154(Program *p)
+bool concatenateCompatibleStreams(Program *p)
 {
     instStream *s = p->streamHead;
     while (s) {
@@ -29,15 +29,15 @@ bool func_08063154(Program *p)
             return 0;
         }
         instStream *n = s->nextStream;
-        if (n && !n->unk_2d6 && !s->unk_2d7) {
+        if (n && !n->containsBarrier && !s->mergedBarrierFlag) {
         linkList *out = &s->outputLinks;
         if (out->count == 1 && n->inputLinks.count == 1
             && s->usesFreeRawLayout() && n->usesFreeRawLayout()
             && s->endType == 1 && n->startType == 1
             && !s->getBranch()
             && out->getStream(0) == n
-            && !n->unk_2d4 && !s->unk_2d5
-            && !func_0806f4a0(p, n)) {
+            && !n->leadingLabelFlags && !s->trailingLabelFlags
+            && !streamExportsSymbol(p, n)) {
             if (!appendStream(p, s, n)) {
                 reportError("failed to append %s onto %s\n", n->streamName(), s->streamName());
                 return 0;
@@ -105,7 +105,7 @@ bool catOnTo(workTable *t1, workTable *t2)
                     reportError("failed to remlinear\n");
                     return 0;
                 }
-                in->unk_30 = 0;
+                in->ownerTable = 0;
                 in->setOwner((cls_unk30 *)t1);
             }
             src->entries[j].unk_00 = 0;
@@ -141,11 +141,11 @@ bool appendStream(Program *p, instStream *a, instStream *b)
         reportError("cat streams - passed a null pointer\n");
         return 0;
     }
-    if (b->unk_2d4) {
+    if (b->leadingLabelFlags) {
         reportError("dbgTop set for ist_2 ->>>>>>>>>>>>>>please code this!\n");
         return 0;
     }
-    if (a->unk_2d5) {
+    if (a->trailingLabelFlags) {
         reportError("dbgEnd set for ist_1 ->>>>>>>>>>>>>>please code this!\n");
         return 0;
     }
@@ -159,8 +159,8 @@ bool appendStream(Program *p, instStream *a, instStream *b)
     a->endType = endType;
     int branchType = b->branchType;
     a->branchType = branchType;
-    a->unk_2d5 = b->unk_2d5;
-    a->unk_2d7 = b->unk_2d7;
+    a->trailingLabelFlags = b->trailingLabelFlags;
+    a->mergedBarrierFlag = b->mergedBarrierFlag;
     return 1;
 }
 

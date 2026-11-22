@@ -15,7 +15,7 @@ int guessKeyLen(Program *p, int key, int start, int end);
 bool prepExtInfo(Program *p, instStream *s, bool noExt)
 {
     workTable *wt = s->getTable();
-    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         in->clearExternalTimingConstraints();
     wt->externalMinimumLength = 0;
     if (noExt)
@@ -39,7 +39,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 Operand *op = &in->operands[ol->operandIndex];
                 OpSlot *part = op->getPart(ol->componentIndex);
                 short best = 0;
-                ol_s *e = part->unk_54.head;
+                ol_s *e = part->operandLocations.head;
                 if (e) {
                     for (; e; e = e->next) {
                         int key = e->pathKey;
@@ -68,7 +68,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         }
                         int total = te + kl;
                         int d = src->outputLatency + op->additionalLatency - total - 1;
-                        if ((setter->func_08055548() || same) && d > best)
+                        if ((setter->hasRawTableOrImmediateToken() || same) && d > best)
                             best = d;
                     }
                     if (op->unk_0b)
@@ -89,7 +89,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 }
                 short best = 0;
                 Operand *op = &in->operands[ol->operandIndex];
-                olList *xl = &op->getPart(ol->componentIndex)->unk_54;
+                olList *xl = &op->getPart(ol->componentIndex)->operandLocations;
                 ol_s *e = xl->firstExternalLocation();
                 if (!ol->isExtUsed() || e) {
                     if (!e || ol->isExtUsed()) {
@@ -122,7 +122,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                             }
                             int total = fs + kl;
                             int d = op->outputLatency + dst->additionalLatency - total - 1;
-                            if (user->func_08055548() && d > best)
+                            if (user->hasRawTableOrImmediateToken() && d > best)
                                 best = d;
                         }
                         if (op->unk_0b)
@@ -172,7 +172,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     }
                     int total = te + kl;
                     int d = in->baseIssueSpacing - total - 1;
-                    if (in->func_08055548() && d > sl->earliestExternalCycle) {
+                    if (in->hasRawTableOrImmediateToken() && d > sl->earliestExternalCycle) {
                         changed = 1;
                         sl->earliestExternalCycle = d;
                     }
@@ -204,7 +204,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         return 0;
                     }
                     int d = fs + kl + 1;
-                    if (in->func_08055548() && d < sl->latestExternalCycle) {
+                    if (in->hasRawTableOrImmediateToken() && d < sl->latestExternalCycle) {
                         changed = 1;
                         sl->latestExternalCycle = d;
                     }
@@ -233,7 +233,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     }
                     Instr *w = wa->linearInstructions.tail;
                     Operand *wo = 0;
-                    for (; w; w = w->unk_1c.unk_04)
+                    for (; w; w = w->linearLink.previousInstruction)
                         if ((wo = w->findOutputOperand(reg, 1 << k)) != 0)
                             break;
                     if (!wo) {
@@ -242,7 +242,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     }
                     Instr *u = wb->linearInstructions.head;
                     Operand *uo = 0;
-                    for (; u; u = u->unk_1c.unk_00)
+                    for (; u; u = u->linearLink.nextInstruction)
                         if ((uo = u->findInputOperand(reg, 1 << k)) != 0)
                             break;
                     if (!uo) {
@@ -264,7 +264,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
         }
     }
     if (changed) {
-        for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+        for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
                 RegPoolEntry *r = isRegisterOperand(op, 2) ? op->assignedRegister : 0;
@@ -285,7 +285,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
             }
     }
     Instr *in;
-    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *reg = op->assignedRegister;
@@ -308,7 +308,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
 success:
     return 1;
 branchBound:
-    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         if (in->opcodeId() == 0xa5)
             in->raiseExternalOutputConstraint(2);
     goto success;

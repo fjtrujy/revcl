@@ -12,7 +12,7 @@ bool processActiveList(Program *p)
             reportError("an inconsistency in the active list?\n");
             return false;
         }
-        if (s->unk_224 != 0) {
+        if (s->outputLocationCount != 0) {
             s->visitState = 3;
             if (s->nextMatchedStream) {
                 reportError("new match is already set\n");
@@ -116,25 +116,25 @@ bool extendBackTrace(Program *p, instStream *n)
             case 2:
             case 3:
             case 4: {
-                int dmin = o->unk_240;
+                int dmin = o->minimumPathLength;
                 if (dmin < 0) {
                     reportError("think I've already been here, but there's no distance to target\n");
                     return false;
                 }
-                int len = n->unk_240 + n->backtraceDependencyLength;
+                int len = n->minimumPathLength + n->backtraceDependencyLength;
                 if (len < dmin) {
                     o->shortestPathPredecessor = n;
                     if (!recalcMinTraceLengths(p)) {
                         reportError("failed to recalc trace lengths\n");
                         return false;
                     }
-                    if (o->unk_240 != len) {
+                    if (o->minimumPathLength != len) {
                         reportError("after recalculating the minimal path lengths, got an unexpected result\n");
                         return false;
                     }
                 }
                 if (p->trackMaximumPathLength) {
-                    int dmax = o->unk_248;
+                    int dmax = o->maximumPathLength;
                     if (dmax < 0) {
                         reportError("think I've already been here, but there's no maximal distance to target\n");
                         return false;
@@ -147,14 +147,14 @@ bool extendBackTrace(Program *p, instStream *n)
                         }
                     }
                     if (notOnPath) {
-                        int len2 = n->unk_248 + n->backtraceDependencyLength;
+                        int len2 = n->maximumPathLength + n->backtraceDependencyLength;
                         if (len2 > dmax) {
                             o->longestPathPredecessor = n;
                             if (!recalcMaxTraceLengths(p)) {
                                 reportError("failed to recalc trace lengths\n");
                                 return false;
                             }
-                            if (o->unk_248 != len2) {
+                            if (o->maximumPathLength != len2) {
                                 reportError("after recalculating the maximal path lengths, got an unexpected result\n");
                                 return false;
                             }
@@ -187,10 +187,10 @@ bool addNewActive(Program *p, instStream *n, instStream *from)
     p->activeStreams = n;
     n->visitState = 1;
     n->shortestPathPredecessor = from;
-    n->unk_240 = from->unk_240 + from->backtraceDependencyLength;
+    n->minimumPathLength = from->minimumPathLength + from->backtraceDependencyLength;
     if (p->trackMaximumPathLength) {
         n->longestPathPredecessor = from;
-        n->unk_248 = from->unk_248 + from->backtraceDependencyLength;
+        n->maximumPathLength = from->maximumPathLength + from->backtraceDependencyLength;
     }
     return true;
 }
@@ -203,12 +203,12 @@ bool recalcMinTraceLengths(Program *p)
         int len = 0;
         for (instStream *q = s->shortestPathPredecessor; q; q = q->shortestPathPredecessor)
             len += q->backtraceDependencyLength;
-        if (s->unk_240 < len) {
+        if (s->minimumPathLength < len) {
             reportError("recalcPaths - code produced a longer path.. but should be tracking shortest ..path is %s nLen=%d, but old length was %d!\n",
-                          s->streamName(), len, s->unk_240);
+                          s->streamName(), len, s->minimumPathLength);
             return false;
         }
-        s->unk_240 = len;
+        s->minimumPathLength = len;
     }
     return true;
 }
@@ -221,12 +221,12 @@ bool recalcMaxTraceLengths(Program *p)
         int len = 0;
         for (instStream *q = s->longestPathPredecessor; q; q = q->longestPathPredecessor)
             len += q->backtraceDependencyLength;
-        if (s->unk_248 > len) {
+        if (s->maximumPathLength > len) {
             reportError("recalcPaths - code produced a shorter maximal path.. but should be tracking longest ..path is %s nLen=%d, but old length was %d!\n",
-                          s->streamName(), len, s->unk_248);
+                          s->streamName(), len, s->maximumPathLength);
             return false;
         }
-        s->unk_248 = len;
+        s->maximumPathLength = len;
     }
     return true;
 }

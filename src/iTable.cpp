@@ -62,8 +62,8 @@ bool workTable::dispose()
 {
     Instr *p = pendingInstructions.head;
     while (p) {
-        Instr *next = p->unk_24.unk_00;
-        if (p->position.unk_04 < 0)
+        Instr *next = p->pendingLink.nextInstruction;
+        if (p->position.loopRow < 0)
             delete p;
         p = next;
     }
@@ -111,7 +111,7 @@ void workTable::dump()
         break;
     case 1:
     case 4:
-        for (Instr *p = linearInstructions.head; p; p = p->unk_1c.unk_00)
+        for (Instr *p = linearInstructions.head; p; p = p->linearLink.nextInstruction)
             p->dumpOperandDiagnostics(false);
         break;
     case 3:
@@ -141,7 +141,7 @@ void workTable::dump()
                 abortAfterError();
             r->refreshInstructionOperands(i);
         }
-        for (Instr *p = pendingInstructions.head; p; p = p->unk_24.unk_00)
+        for (Instr *p = pendingInstructions.head; p; p = p->pendingLink.nextInstruction)
             p->dumpOperandDiagnostics(false);
         break;
     }
@@ -327,7 +327,7 @@ inline bool workTable::unlinkAndUnlog(Instr *in)
         reportError("logUnlinkFromLinear: failed to unlink instruction from linear\n");
         abortAfterError();
     }
-    in->unk_30 = 0;
+    in->ownerTable = 0;
     if (!func_08073bb0((Block *)this, in)) {
         reportError("failed to unlog instruction\n");
         return 0;
@@ -356,7 +356,7 @@ int workTable::getCondLid()
     Instr *b = getBranch();
     Instr *c = (b && ((b->branchFlags >> 2) & 1)) ? b : 0;
     if (c)
-        lid = c->position.unk_03;
+        lid = c->position.loopIteration;
     if (loopSize) {
         if (lid < 0)
             reportError("getCondLid : no terminating conditional!\n");
@@ -369,8 +369,8 @@ int workTable::getCondLid()
 bool workTable::takeOut(Instr *i)
 {
     InstructionPosition *p = &i->position;
-    wtRow *row = &rows[p->unk_04];
-    row->entries[p->unk_02].unk_00 = (Instr *)i->unk_1398;
+    wtRow *row = &rows[p->loopRow];
+    row->entries[p->pipelineIndex].unk_00 = (Instr *)i->replacedInstructionWord;
     i->clearSlot();
     return 1;
 }
@@ -378,8 +378,8 @@ bool workTable::takeOut(Instr *i)
 bool workTable::putIn(Instr *i)
 {
     InstructionPosition *p = &i->position;
-    wtRow *row = &rows[p->unk_04];
-    row->entries[p->unk_02].unk_00 = i;
+    wtRow *row = &rows[p->loopRow];
+    row->entries[p->pipelineIndex].unk_00 = i;
     return 1;
 }
 
@@ -425,7 +425,7 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                     from->dump();
                 }
                 if (!in->isNop() || a7) {
-                    int lid = in->position.unk_03;
+                    int lid = in->position.loopIteration;
                     if (lid <= lidS && lid >= lidE) {
                         unsigned char f = in->branchFlags;
                         if ((f && a5) || !in->getBranchType()) {
@@ -434,8 +434,8 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                                 reportError("failed to clone instruction\n");
                                 return 0;
                             }
-                            c->unk_08 = 0;
-                            in->unk_08 = 0;
+                            c->cloneImage = 0;
+                            in->cloneImage = 0;
                             if (a6)
                                 c->expectedAliasLoopId = lidS - lid;
                         }
@@ -447,12 +447,12 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                 InstructionPosition pos;
                 c->setOwner((cls_unk30 *)to);
                 pos.setRow(j);
-                pos.unk_02 = p;
+                pos.pipelineIndex = p;
                 InstructionPosition *loc = &c->position;
-                c->position.unk_00 = pos.unk_00;
-                loc->unk_04 = pos.unk_04;
-                loc->unk_03 = pos.unk_03;
-                loc->unk_02 = pos.unk_02;
+                c->position.linearRow = pos.linearRow;
+                loc->loopRow = pos.loopRow;
+                loc->loopIteration = pos.loopIteration;
+                loc->pipelineIndex = pos.pipelineIndex;
             }
         }
     }
@@ -462,15 +462,15 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
 
 void workTable::dumpSynthetics()
 {
-    for (Instr *i = linearInstructions.head; i; i = i->unk_1c.unk_00)
+    for (Instr *i = linearInstructions.head; i; i = i->linearLink.nextInstruction)
         if (i->syntheticKind)
             i->dumpOperandDiagnostics(false);
 }
 
 bool workTable::clearClones()
 {
-    for (Instr *i = linearInstructions.head; i; i = i->unk_1c.unk_00)
-        i->unk_08 = 0;
+    for (Instr *i = linearInstructions.head; i; i = i->linearLink.nextInstruction)
+        i->cloneImage = 0;
     return 1;
 }
 
@@ -701,15 +701,15 @@ int workTable::getCurrentDoneSize()
     if (loopSize)
         return loopSize;
     int size = 0;
-    for (Instr *i = completedInstructions.head; i; i = i->unk_24.unk_00) {
-        int row = i->position.unk_00;
+    for (Instr *i = completedInstructions.head; i; i = i->pendingLink.nextInstruction) {
+        int row = i->position.linearRow;
         if (row < 0) {
             reportError("getCurrentDoneSize()\n");
             return -1;
         }
-        short m = i->unk_13b6;
-        if (m < i->unk_13b4)
-            m = i->unk_13b4;
+        short m = i->externalOutputConstraint;
+        if (m < i->externalOutputPairedConstraint)
+            m = i->externalOutputPairedConstraint;
         int minToEnd = m;
         if (minToEnd < 0) {
             reportError("getCurrentDoneSize() - minToEnd was bad\n");
@@ -732,8 +732,8 @@ bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1,
     *maxBranchLid = -1;
     *minSfx1 = 30000;
     *minSfx2 = 30000;
-    for (; i; i = i->unk_24.unk_00) {
-        int lid = i->position.unk_03;
+    for (; i; i = i->pendingLink.nextInstruction) {
+        int lid = i->position.loopIteration;
         if (lid > *maxLid)
             *maxLid = lid;
         switch ((unsigned char)i->schedulerCategory) {
@@ -1040,7 +1040,7 @@ bool workTable::logUnlinkFromLinear(Instr *in)
         reportError("logUnlinkFromLinear: failed to unlink instruction from linear\n");
         abortAfterError();
     }
-    in->unk_30 = 0;
+    in->ownerTable = 0;
     if (!func_08073bb0((Block *)this, in)) {
         reportError("failed to unlog instruction\n");
         return 0;
@@ -1064,8 +1064,8 @@ bool workTable::relinkRawIt()
         for (int p = 0; p != 2; p++) {
             Instr *in = r->entries[p].unk_00;
             if (in) {
-                in->unk_1c.unk_04 = 0;
-                in->unk_1c.unk_00 = 0;
+                in->linearLink.previousInstruction = 0;
+                in->linearLink.nextInstruction = 0;
                 if (!logAddLinear_Tail(in)) {
                     reportError("failed to add linear tail\n");
                     return 0;
@@ -1117,7 +1117,7 @@ workTable *workTable::localClone()
             return 0;
         }
     }
-    for (Instr *in = linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         Instr *c = in->clone();
         for (int i = 0; i != c->operandCount; i++) {
             Operand *op = &in->operands[i];
@@ -1127,7 +1127,7 @@ workTable *workTable::localClone()
             for (int k = 0; k != reg->partCount; k++) {
                 int bit = 1 << k;
                 if (mask & bit) {
-                ol_s *o = op->parts[k].unk_54.head;
+                ol_s *o = op->parts[k].operandLocations.head;
                 if (!o || o->next) {
                     reportError("more or less than one oploc for non-extern input\n");
                     return 0;
@@ -1139,14 +1139,14 @@ workTable *workTable::localClone()
                 }
                 instStream *s = setter->getOwningStream();
                 if (s != ownerStream) {
-                    reportError("owner of setter not us %p vs %p\n", setter->unk_30, this, s);
+                    reportError("owner of setter not us %p vs %p\n", setter->ownerTable, this, s);
                     return 0;
                 }
-                if (!setter->unk_08) {
+                if (!setter->cloneImage) {
                     reportError("qInstruction - setter had null work clone set\n");
                     return 0;
                 }
-                Instr *w = setter->unk_08;
+                Instr *w = setter->cloneImage;
                 int p1 = o->componentIndex;
                 int p0 = o->operandIndex;
                 if (!link_oParts(w, p0, p1, c, i, k)) {
@@ -1169,16 +1169,16 @@ workTable *workTable::localClone()
 
 bool workTable::replaceInstruction(Instr *old, Instr *nw)
 {
-    if (old->unk_30 != (cls_unk30 *)this) {
+    if (old->ownerTable != (cls_unk30 *)this) {
         reportError("old instruction isn't in table\n");
         return 0;
     }
-    cls_unk30 *own = nw->unk_30;
+    cls_unk30 *own = nw->ownerTable;
     if (own) {
         reportError("replaceInstruction - new instruction already has owner\n");
         return 0;
     }
-    Instr *prev = old->unk_1c.unk_04;
+    Instr *prev = old->linearLink.previousInstruction;
     if (!logUnlinkFromLinear(old)) {
         reportError("failed to take out old instruction from linear\n");
         return 0;
@@ -1205,21 +1205,21 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
         }
         InstructionPosition pos;
         InstructionPosition *op = &old->position;
-        pos.unk_00 = op->unk_00;
-        pos.unk_04 = op->unk_04;
-        pos.unk_03 = op->unk_03;
-        pos.unk_02 = op->unk_02;
+        pos.linearRow = op->linearRow;
+        pos.loopRow = op->loopRow;
+        pos.loopIteration = op->loopIteration;
+        pos.pipelineIndex = op->pipelineIndex;
         InstructionPosition *p = &nw->position;
-        p->unk_00 = old->position.unk_00;
-        p->unk_04 = pos.unk_04;
-        p->unk_03 = pos.unk_03;
-        p->unk_02 = pos.unk_02;
+        p->linearRow = old->position.linearRow;
+        p->loopRow = pos.loopRow;
+        p->loopIteration = pos.loopIteration;
+        p->pipelineIndex = pos.pipelineIndex;
         if (!takeOut(old)) {
             reportError("failed to take out old instruction\n");
             return 0;
         }
-        wtRow *row = &rows[p->unk_04];
-        row->entries[p->unk_02].unk_00 = nw;
+        wtRow *row = &rows[p->loopRow];
+        row->entries[p->pipelineIndex].unk_00 = nw;
     }
     return 1;
 }
@@ -1232,8 +1232,8 @@ bool workTable::destroyInstruction(Instr *&in)
     }
     if (rows) {
         InstructionPosition *p = &in->position;
-        int row = p->unk_04;
-        int pipe = p->unk_02;
+        int row = p->loopRow;
+        int pipe = p->pipelineIndex;
         Instr **ie = ((cls_unk30 *)this)->getIE_ck(row);
         if (!ie) {
             reportError("logUnlinkFromLinear: failed to get IE where insn ought to be (line %d.%d)\n", row, pipe);

@@ -80,11 +80,11 @@ public:
     LocTag *parsedLines;
 };
 
-bool func_080506e0(const char *s);
-bool func_08050708(char c);
-bool func_08050780(const char *s, const char *kw);
-bool func_080507f4(const char *s);
-bool func_08050810(const char *s);
+bool hasTrailingLabelColon(const char *s);
+bool isTokenSeparatorCharacter(char c);
+bool matchesLeadingKeyword(const char *s, const char *kw);
+bool matchesFirstSpecialKeyword(const char *s);
+bool matchesSecondSpecialKeyword(const char *s);
 bool isLocTagValid(LocTag *t);
 int getLineTokenCount(LocTag *t);
 

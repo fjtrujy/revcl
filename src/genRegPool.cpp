@@ -3,12 +3,12 @@
 #include "instStream.h"
 #include "genRegPool.h"
 
-void func_0804c220(char *p, int n);
+void clearRawBytes(char *p, int n);
 RegPool *GetRP(unsigned t);
-bool func_0806f610(Program *p);
-bool func_0806f6a4(Program *p);
+bool resetProgramAllocationsForFirstPass(Program *p);
+bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
-int func_0804bf50(unsigned int);
+int countSetBits(unsigned int);
 int setRangeFrom(workTable *t);
 
 extern int maxParts_080bce20;
@@ -21,14 +21,14 @@ extern char regMask_080dde40[32];
 
 void clearRegMask()
 {
-    func_0804c220(regMask_080dde40, 32);
+    clearRawBytes(regMask_080dde40, 32);
 }
 
 bool initRegMask(RegPool *pool)
 {
     RegPoolEntry *e = pool->registerEntries;
     int *mp = &maxParts_080bce20;
-    func_0804c220(regMask_080dde40, 32);
+    clearRawBytes(regMask_080dde40, 32);
     for (int i = 0; i != pool->entryCount; i++, e++) {
         if (!e->unk_16)
             regMask_080dde40[i] = (1 << e->partCount) - 1;
@@ -48,7 +48,7 @@ int firstEmptyMask(RegPool *pool)
 
 bool assignExtRegisters(Program *p)
 {
-    if (!func_0806f610(p)) {
+    if (!resetProgramAllocationsForFirstPass(p)) {
         reportError("failed to allocReset before ext assign\n");
         return false;
     }
@@ -68,7 +68,7 @@ bool assignExtRegisters(Program *p)
                 return false;
             }
         }
-        for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
             for (int j = 0; j != in->operandCount; j++) {
                 Operand *op = &in->operands[j];
                 RegPoolEntry *reg = op->assignedRegister;
@@ -95,7 +95,7 @@ bool assignExtRegisters(Program *p)
         }
         wt->allocationMode = 2;
     }
-    if (!func_0806f6a4(p)) {
+    if (!resetProgramAllocationsForSecondPass(p)) {
         reportError("failed to clean up after global alloc\n");
         return false;
     }

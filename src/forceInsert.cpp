@@ -15,9 +15,9 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         return false;
     }
     InstructionPosition *p = &in->position;
-    int row = pos->unk_04;
-    int pipe = pos->unk_02;
-    if (p->unk_04 >= 0) {
+    int row = pos->loopRow;
+    int pipe = pos->pipelineIndex;
+    if (p->loopRow >= 0) {
         reportError("instruction already inserted\n");
         return false;
     }
@@ -39,14 +39,14 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         return false;
     }
     Instr **slot = &ie[pipe];
-    if (*slot != (Instr *)in->unk_1398) {
+    if (*slot != (Instr *)in->replacedInstructionWord) {
         reportError("instruction already inserted or bad key\n");
         return false;
     }
-    p->unk_00 = pos->unk_00;
-    p->unk_04 = pos->unk_04;
-    p->unk_03 = pos->unk_03;
-    p->unk_02 = pos->unk_02;
+    p->linearRow = pos->linearRow;
+    p->loopRow = pos->loopRow;
+    p->loopIteration = pos->loopIteration;
+    p->pipelineIndex = pos->pipelineIndex;
     *slot = in;
     in->insertionSerial = unk_40;
     unk_40++;

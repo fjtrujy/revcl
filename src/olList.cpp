@@ -250,7 +250,7 @@ void markLocationExternallyUsed(ol_s *ol)
 
 int func_080585a8(ol_s *ol)
 {
-    return ol->instruction->func_08055548();
+    return ol->instruction->hasRawTableOrImmediateToken();
 }
 
 int instructionSerialAtLocation(ol_s *ol)
@@ -272,7 +272,7 @@ instStream *locationOwningStream(ol_s *ol)
 
 int locationRow(ol_s *ol)
 {
-    return ol->instruction->position.unk_00;
+    return ol->instruction->position.linearRow;
 }
 
 ol_s *allocateLocationNode()

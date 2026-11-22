@@ -92,7 +92,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
     }
     if (owner->branchType)
         nulls = 2;
-    int top = (unsigned char)owner->unk_2d4;
+    int top = (unsigned char)owner->leadingLabelFlags;
 
     if (codeModeValue == 4) {
         *p1 = nulls;
@@ -116,7 +116,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         for (int i = 0; i != nulls; i++) {
             int f = 0;
             if (isEnd && i == 0) {
-                f = (unsigned char)(owner->unk_2d5 | 2);
+                f = (unsigned char)(owner->trailingLabelFlags | 2);
                 done = 1;
             }
             f |= top;
@@ -131,15 +131,15 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         instStream *s = ownerStream;
         if (s) {
             buf += formatIntoBuffer(buf, "; ");
-            if (s->unk_140)
+            if (s->hasLoopOptimization)
                 buf += formatIntoBuffer(buf, "_LPOPT_");
             else
                 buf += formatIntoBuffer(buf, "_LNOPT_");
             buf += formatIntoBuffer(buf, "w=[ ");
-            if (s->unk_144) {
+            if (s->appliedOptimizationMask) {
                 for (int i = 0; i != getNumOptimisers(); i++) {
                     int bit = 1 << i;
-                    if (s->unk_144 & bit)
+                    if (s->appliedOptimizationMask & bit)
                         buf += formatIntoBuffer(buf, "%s ", getOptimiserName(i));
                 }
             }
@@ -168,11 +168,11 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             (*p2)++;
             if (isEnd) {
                 if (i == end - 2) {
-                    f = (unsigned char)(s->unk_2d5 | 2);
+                    f = (unsigned char)(s->trailingLabelFlags | 2);
                     done = 1;
                 }
             } else if (i == rangeEnd - 1)
-                f = (unsigned char)s->unk_2d5;
+                f = (unsigned char)s->trailingLabelFlags;
             f |= top;
             top = 0;
             switch (mode) {
@@ -223,7 +223,7 @@ fail:
 
 extern bool noEbit_080b3017;
 extern char *stallNames_080b3244[3];
-int func_0804bf50(unsigned int);
+int countSetBits(unsigned int);
 char *emitNop(char *buf, int flags, int *len);
 char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b);
 
@@ -284,7 +284,7 @@ char *emitNop(char *buf, int flags, int *len)
     char *p = line;
     if (noEbit_080b3017)
         flags &= ~2;
-    char *s = func_08052314(flags);
+    char *s = formatInstructionModifiers(flags);
     char *d = mods;
     while (*s)
         *d++ = *s++;
@@ -301,7 +301,7 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
 {
     char line[320];
     char mods[16];
-    char *s = func_08052314(flags);
+    char *s = formatInstructionModifiers(flags);
     char *p = line;
     char *d = mods;
     while (*s)
@@ -345,7 +345,7 @@ char *emitDestMask(char *p, int mdBits, unsigned char mods)
             }
             break;
         case 3:
-            if (func_0804bf50(mods) != 1) {
+            if (countSetBits(mods) != 1) {
                 reportError("not just one mod bit for MD_ONE\n");
                 return 0;
             }

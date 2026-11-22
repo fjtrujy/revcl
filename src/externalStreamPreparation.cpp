@@ -6,24 +6,24 @@
 #include "ol_s_inline.h"
 
 bool prepExtInfo(Program *p, instStream *s, bool b);
-int func_0807aaf4(Program *p, instStream *s);
+int insertStreamRegisterCaps(Program *p, instStream *s);
 void func_0807bb84(workTable *wt);
 bool removeNops(Program *p, instStream *s);
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
 bool doCap(int line, int pipe, int mask);
 RegPool *GetRP(unsigned t);
-bool func_0806c0f8(Program *p);
+bool resetProcessorThroughput(Program *p);
 int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
 void splitCtime(workTable *wt, int l, int m);
 
 
-bool func_0807aee4(Program *p)
+bool prepareExternalSchedulingForProgram(Program *p)
 {
     instStream *s;
     for (s = p->streamHead; s; s = s->nextStream)
-        s->unk_2dc = s->usesFreeRawLayout() ? 0 : 1;
+        s->externalSchedulingPrepared = s->usesFreeRawLayout() ? 0 : 1;
     for (s = p->streamHead; s; s = s->nextStream) {
-        if (s->unk_2dc)
+        if (s->externalSchedulingPrepared)
             continue;
         if (!prepExtInfo(p, s, 0)) {
             reportError("failed to prep external info for stream %s\n", s->streamName());
@@ -33,7 +33,7 @@ bool func_0807aee4(Program *p)
             reportError("failed to sred a table from %s\n", s->streamName());
             return false;
         }
-        s->unk_2dc = 1;
+        s->externalSchedulingPrepared = 1;
     }
     return true;
 }
@@ -66,7 +66,7 @@ bool removeNops(Program *p, instStream *s)
         return false;
     }
     func_0807bb84(wt);
-    if (!func_0806c0f8(p)) {
+    if (!resetProcessorThroughput(p)) {
         reportError("failed to reset for emu\n");
         return false;
     }
@@ -129,10 +129,10 @@ bool removeNops(Program *p, instStream *s)
                         l++;
                     }
                 }
-                for (ol_s *u = op->parts[part].unk_54.firstInternalLocation(); u && !u->isExt(); u = u->next) {
+                for (ol_s *u = op->parts[part].operandLocations.firstInternalLocation(); u && !u->isExt(); u = u->next) {
                     Instr *ui = u->instruction;
                     if (operandAtLocation(u)->unk_0b && op->outputLatency > 1) {
-                        int ul = ui->position.unk_00;
+                        int ul = ui->position.linearRow;
                         int tu = wt->ctime(ul);
                         if (tu <= tNow) {
                             reportError("user is before now .. tUser=%d tNow = %d\n", tu, tNow);
@@ -155,11 +155,11 @@ bool removeNops(Program *p, instStream *s)
                 Operand *op = operandAtLocation(ol);
                 int part = ol->componentIndex;
                 int lat = ol->unk_12;
-                ol_s *u = op->parts[part].unk_54.firstInternalLocation();
+                ol_s *u = op->parts[part].operandLocations.firstInternalLocation();
                 if (u) {
                     Instr *ui = u->instruction;
                     Operand *uo = operandAtLocation(u);
-                    int ul = ui->position.unk_00;
+                    int ul = ui->position.linearRow;
                     int tu = wt->ctime(ul) - 1;
                     if (!op->unk_0b && !uo->unk_0b && ul < m && tNow + lat > tu)
                         ok = false;
@@ -211,9 +211,9 @@ bool removeNops(Program *p, instStream *s)
                         for (int pp = 0; pp != 2; pp++) {
                             Instr *in = GetI((Instr **)r, pp);
                             if (in) {
-                                short e = in->unk_13b2;
-                                if (e < in->unk_13b0)
-                                    e = in->unk_13b0;
+                                short e = in->externalInputConstraint;
+                                if (e < in->externalInputPairedConstraint)
+                                    e = in->externalInputPairedConstraint;
                                 if (e > base) {
                                     ok = false;
                                     break;
@@ -235,9 +235,9 @@ bool removeNops(Program *p, instStream *s)
                             for (int pp = 0; pp != 2; pp++) {
                                 Instr *in = GetI((Instr **)r, pp);
                                 if (in) {
-                                    short e = in->unk_13b6;
-                                    if (e < in->unk_13b4)
-                                        e = in->unk_13b4;
+                                    short e = in->externalOutputConstraint;
+                                    if (e < in->externalOutputPairedConstraint)
+                                        e = in->externalOutputPairedConstraint;
                                     if (e < dist) {
                                         ok = false;
                                         break;
@@ -274,12 +274,12 @@ bool removeNops(Program *p, instStream *s)
             reportError("unexpected time !.. currTick=%d cTime=%d\n", curTick, row->cycleTime);
             return false;
         }
-        if (curTick != p->unk_80) {
+        if (curTick != p->emulatedCycleCount) {
             reportError("currTick doesn't match cpu\n");
             return false;
         }
     }
-    if (wt->func_08072eec() != p->unk_80) {
+    if (wt->func_08072eec() != p->emulatedCycleCount) {
         reportError("at end of table logical len not correct\n");
         return false;
     }

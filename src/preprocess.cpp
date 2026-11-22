@@ -8,7 +8,7 @@
 #include "os.h"
 
 int reportUserMessage(const char *fmt, ...);
-char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
+char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int argEnd,
                     char **argv, bool keepTemps);
 
 const char *matchedDirective;
@@ -32,7 +32,7 @@ static inline bool startsWith(const char *s, const char *prefix)
     return *p == 0;
 }
 
-bool func_0804a410(const char *buf)
+bool warnAboutMissingPreprocessing(const char *buf)
 {
     if (!buf) {
         reportUserMessage("Input was a null pointer?\n");

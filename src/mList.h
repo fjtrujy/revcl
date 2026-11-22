@@ -17,7 +17,7 @@ public:
     bool appendNode(mNode *node);
     bool detachNode(mNode *node);
     bool transferNodesFrom(mList *other);
-    void func_0804b534();
+    void noopListTraversal();
     char *firstNodeName();
     char *appendNamedLabels(char *buf);
     int combinedFlags();

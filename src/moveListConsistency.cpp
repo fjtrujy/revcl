@@ -10,7 +10,7 @@ int unresolveMove(Block *blk, Instr *mv);
 void func_0807f308(Block *blk)
 {
     int n = 0;
-    for (Instr *in = blk->moveListHead; in; in = in->unk_2c, n++)
+    for (Instr *in = blk->moveListHead; in; in = in->nextMoveInstruction, n++)
         in->dumpOperandDiagnostics(false);
     if (n != blk->unk_50) {
         reportError("oh no! consistency\n");

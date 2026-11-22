@@ -13,7 +13,7 @@ bool Program::doUnique()
     instStream *s;
     for (s = streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
-        for (Instr *i = wt->linearInstructions.head; i; i = i->unk_1c.unk_00) {
+        for (Instr *i = wt->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
             if (!i->branchFlags)
                 continue;
             iInfo *ii = i->opcodeInfo;
@@ -21,7 +21,7 @@ bool Program::doUnique()
                 reportError("no inst for a branch\n");
                 return false;
             }
-            int n = ii->unk_1a;
+            int n = ii->branchTargetOperandSelector;
             if (!n) {
                 reportError("doUnique - branch target operand not set\n");
                 exitAfterCleanup(-1);

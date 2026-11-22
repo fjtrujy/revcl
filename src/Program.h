@@ -22,7 +22,7 @@ struct Program {
     bool decodeAndSplitStreams(Parser *parser, int a, bool newSyntax);
 
     Processor proc;
-    int unk_80;         // emulated length
+    int emulatedCycleCount;
     char unk_84[4];
     mList uniqueNamePrefixes;       // names prefixed by doUnique
     bool symbolicOutput;

@@ -50,10 +50,10 @@ bool emuTable(Program *p, workTable *wt)
                 return false;
             }
         }
-        wt->unk_0c = p->unk_80;
-        skipped += p->unk_80;
+        wt->unk_0c = p->emulatedCycleCount;
+        skipped += p->emulatedCycleCount;
         if (skipped < wt->getPhysicalLen()) {
-            reportError("logical len < physical len.. %d<%d!\n", p->unk_80, wt->getPhysicalLen());
+            reportError("logical len < physical len.. %d<%d!\n", p->emulatedCycleCount, wt->getPhysicalLen());
             wt->dump();
             return false;
         }
@@ -65,7 +65,7 @@ fail:
     case 4: {
         Instr *i = wt->linearInstructions.head;
         wtRow row;
-        for (; i; i = i->unk_1c.unk_00) {
+        for (; i; i = i->linearLink.nextInstruction) {
             row.clearEntries();
             row.entries[0].unk_00 = i;
             int r = emuInst(p, &row, -1, true, true);
@@ -110,7 +110,7 @@ bool func_080642ec(Program *p, instStream *s)
         return false;
     }
     count = 0;
-    for (i = wt->linearInstructions.head; i; i = i->unk_1c.unk_00) {
+    for (i = wt->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
         count++;
         for (int op = 0; op != i->operandCount; op++) {
             Operand *o = &i->operands[op];

@@ -10,7 +10,7 @@ extern RegPoolEntry *g_080de6ac;
 extern mValue *g_080de6b0;
 extern int g_080de6b4;
 int func_0806aa54(Instr *in);
-int func_08067e18(Program *p, instStream *s);
+int expandOneLoopIntoRegions(Program *p, instStream *s);
 
 
 bool explodeRaw(Program *p)
@@ -37,7 +37,7 @@ bool explodeRaw(Program *p)
             reportWarning("setting minimum safe count to 1000 for %s\n", s->streamName());
             s->safeMinimumLoopCount = 10000;
         }
-        int r = func_08067e18(p, s);
+        int r = expandOneLoopIntoRegions(p, s);
         if (r < 0) {
             reportError("failed to construct epilogue/prologues\n");
             return false;

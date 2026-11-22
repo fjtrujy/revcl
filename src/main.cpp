@@ -14,24 +14,24 @@
 #include "Parser.h"
 
 void usage();
-bool func_0804a2b4(Program *p, bool a, bool b, bool c);
-bool func_0804a358(Program *p);
-bool func_0804a410(const char *buf);
-bool func_0804a608(unsigned char flags);
-bool func_0804a61c(unsigned char flags);
-bool func_0804a62c(unsigned char mask, char opt);
-void func_0804a658(unsigned char *flags);
-void func_0804a664(unsigned char *flags);
-void func_0804a670(unsigned char *flags);
-char *func_0804a67c(unsigned char flags, char *buf, int *len, int argFirst, int argEnd,
+bool validateFlowDependenciesAndHazards(Program *p, bool a, bool b, bool c);
+bool analyzeAndPropagateMoves(Program *p);
+bool warnAboutMissingPreprocessing(const char *buf);
+bool usesGaspPreprocessor(unsigned char flags);
+bool usesGccPreprocessor(unsigned char flags);
+bool matchesToolOption(unsigned char mask, char opt);
+void enableGccPreprocessing(unsigned char *flags);
+void enableGaspPreprocessing(unsigned char *flags);
+void enableAlternateGaspPreprocessing(unsigned char *flags);
+char *runSelectedPreprocessors(unsigned char flags, char *buf, int *len, int argFirst, int argEnd,
                     char **argv, bool keepTemps);
 
-bool func_080603bc(Program *p);
-bool func_08062a88(Program *p);
-bool func_08063154(Program *p);
+bool gatherAllStreamStatistics(Program *p);
+bool tidyProgramStreams(Program *p);
+bool concatenateCompatibleStreams(Program *p);
 bool Prune(Program *p);
 bool globalPrune(Program *p);
-bool func_08069324(Program *p, bool init);
+bool resolveProgramImmediateFixups(Program *p, bool init);
 bool explodeRaw(Program *p);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 bool patchAllStreamLatencies(Program *p);
@@ -42,18 +42,18 @@ bool doLinear(Program *p, int smart);
 bool doLoop(Program *p, int smart);
 bool doRawAndSynth(Program *p, int smart);
 bool relaxOpt(Program *p);
-bool func_08079fdc(Program *p, int smart, bool sizeReduce);
-int func_0807aa28(Program *p);
-bool func_0807aee4(Program *p);
+bool optimizeProgramScheduling(Program *p, int smart, bool sizeReduce);
+int insertAllRegisterCaps(Program *p);
+bool prepareExternalSchedulingForProgram(Program *p);
 bool bindExternals(Program *p);
-bool func_08085a9c(Program *p);
+bool noopFlowBuildHook(Program *p);
 bool buildRegWebs(Program *p);
 void dumpThru(Program *p);
 bool assignExtRegisters(Program *p);
 
-bool func_08060018(Program *p, bool a);
-bool func_0806a74c(Program *p);
-bool func_0806ae58(Program *p);
+bool rebuildFlowDependencies(Program *p, bool a);
+bool collapseProgramStreams(Program *p);
+bool noopMovePropagationHook(Program *p);
 bool detectMoves(Program *p);
 void reportUBS(Program *p);
 void reportStalls(Program *p);
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
     int len;
 
     for (; i < argc && argv[i][0] == '-'; i++) {
-        if (func_0804a62c(0xff, argv[i][1]))
+        if (matchesToolOption(0xff, argv[i][1]))
             continue;
         switch (argv[i][1]) {
         case 'H':
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
             dumpRegs = true;
             break;
         case 'G':
-            func_0804a658(&gaspFlags);
+            enableGccPreprocessing(&gaspFlags);
             break;
         case 'K':
             reportInfo("keep temporary files in /tmp enabled (/tmp/vclin. etc\n");
@@ -170,13 +170,13 @@ int main(int argc, char **argv)
             break;
         case 'g':
             if (argv[i][2] == '+')
-                func_0804a670(&gaspFlags);
+                enableAlternateGaspPreprocessing(&gaspFlags);
             else {
                 if (argv[i][2]) {
                     reportUserMessage("bad command line option '%s' .. only -g+ or -g allowed\n", argv[i]);
                     exitAfterCleanup(-1);
                 }
-                func_0804a664(&gaspFlags);
+                enableGaspPreprocessing(&gaspFlags);
             }
             break;
         case 'j':
@@ -258,19 +258,19 @@ int main(int argc, char **argv)
         exitAfterCleanup(-1);
     }
     if (!noPreprocess) {
-        buf = func_0804a67c(gaspFlags, buf, &len, 1, i, argv, keepTemps);
+        buf = runSelectedPreprocessors(gaspFlags, buf, &len, 1, i, argv, keepTemps);
         if (!buf) {
             reportError("One of the preprocessing stages failed\n");
             exitAfterCleanup(-1);
         }
     }
-    if (!func_0804a410(buf)) {
+    if (!warnAboutMissingPreprocessing(buf)) {
         reportUserMessage("Simple buffer check failed.. please read the above USER comments\n");
         exitAfterCleanup(-1);
     }
 
     Parser parser;
-    if (!parser.initializeParser(buf, inFile, func_0804a608(gaspFlags), func_0804a61c(gaspFlags))) {
+    if (!parser.initializeParser(buf, inFile, usesGaspPreprocessor(gaspFlags), usesGccPreprocessor(gaspFlags))) {
         reportError("failed to init parser\n");
         exitAfterCleanup(-1);
     }
@@ -299,7 +299,7 @@ int main(int argc, char **argv)
         reportError("failed to do a global prune\n");
         exitAfterCleanup(-1);
     }
-    if (!func_0804a2b4(&flow, flag_080b300d, true, false)) {
+    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, true, false)) {
         reportError("generic dependency failed\n");
         exitAfterCleanup(-1);
     }
@@ -307,17 +307,17 @@ int main(int argc, char **argv)
         reportError("failed to patch some instruction latencies\n");
         exitAfterCleanup(-1);
     }
-    if (!func_08085a9c(&flow)) {
+    if (!noopFlowBuildHook(&flow)) {
         reportError("failed to bind dependency info into the stream\n");
         return 0;
     }
-    if (!func_0804a2b4(&flow, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
         exitAfterCleanup(-1);
     if (!Prune(&flow)) {
         reportError("Failed to prune..\n");
         exitAfterCleanup(-1);
     }
-    if (!func_0804a2b4(&flow, flag_080b300d, false, false)) {
+    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false)) {
         reportError("generic dependency code decided to die\n");
         exitAfterCleanup(-1);
     }
@@ -325,11 +325,11 @@ int main(int argc, char **argv)
         reportError("failed to gather flow\n");
         exitAfterCleanup(-1);
     }
-    if (!func_0804a2b4(&flow, flag_080b300d, false, false)) {
+    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false)) {
         reportError("generic dependency code decided to die\n");
         exitAfterCleanup(-1);
     }
-    if (!func_0804a358(&flow)) {
+    if (!analyzeAndPropagateMoves(&flow)) {
         reportError("failed to do basic operation processing\n");
         return 0;
     }
@@ -340,17 +340,17 @@ int main(int argc, char **argv)
         reportError("failed to assign externally visible stream registers\n");
         exitAfterCleanup(-1);
     }
-    if (!func_0804a2b4(&flow, flag_080b300d, false, false)) {
+    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false)) {
         reportError("generic dependency code decided to die\n");
         exitAfterCleanup(-1);
     }
     int smart = dumb = !dumb;
     if (!noLoops_080b300e) {
-        if (!func_08069324(&flow, true)) {
+        if (!resolveProgramImmediateFixups(&flow, true)) {
             reportError("failed to initialise immediate fixups\n");
             exitAfterCleanup(-1);
         }
-        if (!func_080603bc(&flow)) {
+        if (!gatherAllStreamStatistics(&flow)) {
             reportError("failed to restat\n");
             exitAfterCleanup(-1);
         }
@@ -362,11 +362,11 @@ int main(int argc, char **argv)
             reportError("failed to explode raw loops after loop opt\n");
             exitAfterCleanup(-1);
         }
-        if (!func_0804a2b4(&flow, flag_080b300d, false, false)) {
+        if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false)) {
             reportError("generic dependency failed after loop explode\n");
             exitAfterCleanup(-1);
         }
-        if (!func_08069324(&flow, false)) {
+        if (!resolveProgramImmediateFixups(&flow, false)) {
             reportError("imm fixup failed to patch something\n");
             exitAfterCleanup(-1);
         }
@@ -374,7 +374,7 @@ int main(int argc, char **argv)
             reportError("Failed to prune..\n");
             exitAfterCleanup(-1);
         }
-        if (!func_0804a2b4(&flow, flag_080b300d, false, false))
+        if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
             exitAfterCleanup(-1);
         if (!bindExternals(&flow)) {
             reportError("failed to bind externals\n");
@@ -384,12 +384,12 @@ int main(int argc, char **argv)
             reportError("failed to gather flow\n");
             exitAfterCleanup(-1);
         }
-        if (!func_0804a2b4(&flow, flag_080b300d, false, false))
+        if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
             exitAfterCleanup(-1);
     }
-    if (!func_0804a358(&flow))
+    if (!analyzeAndPropagateMoves(&flow))
         reportError("failed to do basic ops 2\n");
-    if (!func_08069324(&flow, true)) {
+    if (!resolveProgramImmediateFixups(&flow, true)) {
         reportError("failed to initialise immediate fixups\n");
         exitAfterCleanup(-1);
     }
@@ -401,19 +401,19 @@ int main(int argc, char **argv)
         reportError("failed to convert all uta linear->raw\n");
         exitAfterCleanup(-1);
     }
-    if (!func_0804a2b4(&flow, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
         exitAfterCleanup(-1);
-    if (!func_08069324(&flow, false)) {
+    if (!resolveProgramImmediateFixups(&flow, false)) {
         reportError("imm fixup failed to patch something\n");
         exitAfterCleanup(-1);
     }
-    if (!func_08063154(&flow)) {
+    if (!concatenateCompatibleStreams(&flow)) {
         reportError("failed to concatenate streams\n");
         exitAfterCleanup(-1);
     }
-    if (!func_0804a2b4(&flow, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
         exitAfterCleanup(-1);
-    if (!func_0804a358(&flow)) {
+    if (!analyzeAndPropagateMoves(&flow)) {
         reportError("basic operation pass failed\n");
         exitAfterCleanup(-1);
     }
@@ -421,35 +421,35 @@ int main(int argc, char **argv)
         reportError("failed to relax opt\n");
         exitAfterCleanup(-1);
     }
-    if (!func_08069324(&flow, true)) {
+    if (!resolveProgramImmediateFixups(&flow, true)) {
         reportError("imm fixup failed to patch something\n");
         exitAfterCleanup(-1);
     }
-    if (!func_08079fdc(&flow, smart, sizeReduce_080b3015)) {
+    if (!optimizeProgramScheduling(&flow, smart, sizeReduce_080b3015)) {
         reportError("raw and Synth pass2 failed\n");
         dumpProgramStreamsAndRegisters(&flow, false);
         exitAfterCleanup(-1);
     }
-    if (!func_08062a88(&flow)) {
+    if (!tidyProgramStreams(&flow)) {
         reportError("failed to concatenate streams\n");
         exitAfterCleanup(-1);
     }
-    if (!func_0804a2b4(&flow, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
         exitAfterCleanup(-1);
-    if (!func_08069324(&flow, false)) {
+    if (!resolveProgramImmediateFixups(&flow, false)) {
         reportError("imm fixup failed to patch something\n");
         exitAfterCleanup(-1);
     }
     if (sizeReduce_080b3015) {
-        int n = func_0807aa28(&flow);
+        int n = insertAllRegisterCaps(&flow);
         if (n < 0)
             exitWithError("failed to add capping instructions for non-blocking operands, or something\n");
-        if (n && !func_0804a2b4(&flow, flag_080b300d, false, false))
+        if (n && !validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
             exitWithError("after adding capping instructions - failed to chase dependencies\n");
-        if (!func_0807aee4(&flow))
+        if (!prepareExternalSchedulingForProgram(&flow))
             exitWithError("failed to remove nops from the sequence\n");
     }
-    if (!func_0804a2b4(&flow, flag_080b300d, false, true))
+    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, true))
         exitAfterCleanup(-1);
     if (!loadStalls(&flow)) {
         reportError("failed to load stalls!\n");
@@ -559,7 +559,7 @@ void usage()
     exitAfterCleanup(0);
 }
 
-void func_0804a2a4()
+void markInputError()
 {
     errorOccurred = 1;
 }
@@ -576,9 +576,9 @@ static inline void reportWarnings(Program *p)
     reportStalls(p);
 }
 
-bool func_0804a2b4(Program *p, bool a, bool b, bool c)
+bool validateFlowDependenciesAndHazards(Program *p, bool a, bool b, bool c)
 {
-    if (!func_08060018(p, a)) {
+    if (!rebuildFlowDependencies(p, a)) {
         reportError("vcl found a bug in itself while chasing dependencies\n");
         return false;
     }
@@ -594,9 +594,9 @@ bool func_0804a2b4(Program *p, bool a, bool b, bool c)
     return true;
 }
 
-bool func_0804a358(Program *p)
+bool analyzeAndPropagateMoves(Program *p)
 {
-    if (flag_080b3018 && !func_0806a74c(p)) {
+    if (flag_080b3018 && !collapseProgramStreams(p)) {
         reportError("failed to collapse instructions\n");
         return false;
     }
@@ -604,15 +604,15 @@ bool func_0804a358(Program *p)
         reportError("failed to detect moves!\n");
         return false;
     }
-    if (!func_0804a2b4(p, flag_080b300d, false, false)) {
+    if (!validateFlowDependenciesAndHazards(p, flag_080b300d, false, false)) {
         reportError("generic dependency code decided to die\n");
         return false;
     }
-    if (!func_0806ae58(p)) {
+    if (!noopMovePropagationHook(p)) {
         reportError("failed to prune moves\n");
         return false;
     }
-    if (!func_0804a2b4(p, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(p, flag_080b300d, false, false))
         return false;
     return true;
 }

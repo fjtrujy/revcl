@@ -6,10 +6,10 @@
 #include "instStream.h"
 
 int reportError(const char *fmt, ...);
-bool func_08061c34(instStream *n);
+bool resetStreamPathSearch(instStream *n);
 bool extendBackTrace(Program *p, instStream *n);
 bool processActiveList(Program *p);
-int func_08061cb0(Program *p, instStream *n);
+int buildMinimumPathKey(Program *p, instStream *n);
 
 bool tPairList::clear()
 {
@@ -85,7 +85,7 @@ void tPair::reset()
     b = 0;
 }
 
-void tPair::func_08058ab0()
+void tPair::noopThroughputPairHook()
 {
 }
 
@@ -102,7 +102,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
     p->traceStoreEnabled = 0;
     p->trackMaximumPathLength = 0;
     for (instStream *i = p->streamHead; i; i = i->nextStream) {
-        if (!func_08061c34(i)) {
+        if (!resetStreamPathSearch(i)) {
             reportError("failed to do a local init for the back trace\n");
             return false;
         }
@@ -114,14 +114,14 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
     for (instStream *i = p->activeStreams; i; i = i->nextActiveStream) {
         i->shortestPathPredecessor = 0;
         i->longestPathPredecessor = 0;
-        i->unk_240 = 0;
-        i->unk_248 = 0;
+        i->minimumPathLength = 0;
+        i->maximumPathLength = 0;
     }
     if (!processActiveList(p)) {
         reportError("failed to do internal trace for  a t pair\n");
         return false;
     }
-    regUse *tr = t->unk_234;
+    regUse *tr = t->backtraceRegisterUse;
     if (!tr) {
         reportError("there's  no regref set in t target\n");
         return false;
@@ -131,7 +131,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
         return false;
     }
     for (instStream *s = p->sourceStreams; s; s = s->nextSourceStream) {
-        regUse *sr = s->unk_234;
+        regUse *sr = s->backtraceRegisterUse;
         if (!sr) {
             reportError("there's no regref in t src\n");
             return false;
@@ -141,7 +141,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
             return false;
         }
         int dst_key = t->destinationKey;
-        int src_key = func_08061cb0(p, s);
+        int src_key = buildMinimumPathKey(p, s);
         if (dst_key < 0) {
             reportError("dst_key is bad in tpair\n");
             return false;

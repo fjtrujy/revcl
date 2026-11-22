@@ -15,22 +15,22 @@ bool loadStalls(Program *p)
             reportError("no instruction in stall\n");
             return 0;
         }
-        cls_unk30 *owner = in->unk_30;
+        cls_unk30 *owner = in->ownerTable;
         if (!owner) {
             reportError("instruction has no owner!\n");
             return 0;
         }
-        if (owner->unk_09 != 3) {
+        if (owner->codeModeValue != 3) {
             reportError("bad code mode for stall\n");
             return 0;
         }
         InstructionPosition *loc = &in->position;
-        wtRow *ie = (wtRow *)owner->getIE_ck(loc->unk_04);
+        wtRow *ie = (wtRow *)owner->getIE_ck(loc->loopRow);
         if (!ie) {
             reportError("couldn't get ie for instruction\n");
             return 0;
         }
-        if (ie->entries[loc->unk_02].unk_00 != in) {
+        if (ie->entries[loc->pipelineIndex].unk_00 != in) {
             reportError("instruction wasn't where I thought it was\n");
             return 0;
         }

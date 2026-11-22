@@ -10,7 +10,7 @@ RegPoolEntry *g_080de6ac;
 mValue *g_080de6b0;
 int g_080de6b4;
 int func_0806aa54(Instr *in);
-int func_08067e18(Program *p, instStream *s);
+int expandOneLoopIntoRegions(Program *p, instStream *s);
 
 static inline int fitsSigned(int v, int bits)
 {
@@ -57,13 +57,13 @@ bool pushImmediate(ol_s *ol)
     return true;
 }
 
-bool func_0806a74c(Program *p)
+bool collapseProgramStreams(Program *p)
 {
     bool changed = false;
     instStream *s;
     for (s = p->streamHead; s; s = s->nextStream) {
         workTable *t = s->getTable();
-        for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
             if (__builtin_expect(in->opcodeId() != 0x6d, 1))
                 continue;
             mValue *v = &in->operands[2].immediateValue;
@@ -95,7 +95,7 @@ bool func_0806a74c(Program *p)
         changed = false;
         for (s = p->streamHead; s; s = s->nextStream) {
             workTable *t = s->getTable();
-            for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+            for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
                 int k = func_0806aa54(in);
                 if (k == -2) {
                     reportError("an immediate is wrong someplace\n");
@@ -104,7 +104,7 @@ bool func_0806a74c(Program *p)
                 if (k < 0)
                     continue;
                 bool ok = true;
-                ol_s *list = in->operands[k].parts[0].unk_54.head;
+                ol_s *list = in->operands[k].parts[0].operandLocations.head;
                 for (ol_s *ol = list; ol && ok; ol = ol->next) {
                     Instr *user = ol->instruction;
                     Operand *op = operandAtLocation(ol);
@@ -126,7 +126,7 @@ bool func_0806a74c(Program *p)
                         ok = false;
                         break;
                     }
-                    for (ol_s *u = op->parts[0].unk_54.head; u; u = u->next)
+                    for (ol_s *u = op->parts[0].operandLocations.head; u; u = u->next)
                         if (u->instruction != in) {
                             ok = false;
                             break;

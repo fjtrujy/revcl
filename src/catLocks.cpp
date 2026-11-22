@@ -130,8 +130,8 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
 {
     int ret;
     int lsz = g_080b336c;
-    int p = ((InstructionPosition *)pos)->unk_00;
-    int sz = ((InstructionPosition *)pos)->unk_04;
+    int p = ((InstructionPosition *)pos)->linearRow;
+    int sz = ((InstructionPosition *)pos)->loopRow;
     int mp = p;
     ret = checkOverlap(out, pos, &mp);
     if (ret)

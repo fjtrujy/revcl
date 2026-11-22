@@ -5,9 +5,9 @@
 #include "os.h"
 #include "VUStr.h"
 
-int func_0804bf50(unsigned int);
+int countSetBits(unsigned int);
 bool asciiCaseEqual(const char *a, const char *b);
-void func_0804c0c8(char *s);
+void removeTrailingComponentSuffix(char *s);
 int mstrlen(const char *s);
 
 

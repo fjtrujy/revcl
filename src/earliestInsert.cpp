@@ -7,12 +7,12 @@
 
 int earliestInsert(workTable *wt, Instr *in, bool *found)
 {
-    short e = in->unk_13b2;
-    if (e < in->unk_13b0)
-        e = in->unk_13b0;
+    short e = in->externalInputConstraint;
+    if (e < in->externalInputPairedConstraint)
+        e = in->externalInputPairedConstraint;
     int line = e + wt->rangeStart;
     int thru = -1;
-    int iline = in->position.unk_04;
+    int iline = in->position.loopRow;
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
         RegPoolEntry *reg = registerOperand(op, 1);
@@ -82,11 +82,11 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
 
 int latestInsert(workTable *wt, Instr *in, bool *found)
 {
-    short e = in->unk_13b6;
-    if (e < in->unk_13b4)
-        e = in->unk_13b4;
+    short e = in->externalOutputConstraint;
+    if (e < in->externalOutputPairedConstraint)
+        e = in->externalOutputPairedConstraint;
     int line = wt->rangeEnd - e - 1;
-    int iline = in->position.unk_04;
+    int iline = in->position.loopRow;
     bool thru = false;
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {

@@ -41,14 +41,14 @@ bool makeLpWork(instStream *s, int maxSpread)
         return false;
     }
     Instr *in;
-    for (in = nt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (in = nt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         int latest = 0;
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 for (int j = 0; j != reg->partCount; j++) {
-                    ol_s *ol = op->parts[j].unk_54.head;
+                    ol_s *ol = op->parts[j].operandLocations.head;
                     if (ol) {
                         Instr *src = ol->instruction;
                         Operand *o = operandAtLocation(ol);
@@ -56,30 +56,30 @@ bool makeLpWork(instStream *s, int maxSpread)
                             reportError("in_s not set\n");
                             return false;
                         }
-                        int v = src->unk_0c + o->outputLatency + op->additionalLatency;
+                        int v = src->instructionId + o->outputLatency + op->additionalLatency;
                         if (latest < v)
                             latest = v;
                     }
                 }
             }
         }
-        in->unk_0c = latest;
+        in->instructionId = latest;
     }
-    for (in = nt->linearInstructions.tail; in; in = in->unk_1c.unk_04) {
+    for (in = nt->linearInstructions.tail; in; in = in->linearLink.previousInstruction) {
         int earliest = 30000;
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *reg = registerOperand(op, 2);
             if (reg) {
                 for (int j = 0; j != reg->partCount; j++) {
-                    for (ol_s *ol = op->parts[j].unk_54.head; ol; ol = ol->next) {
+                    for (ol_s *ol = op->parts[j].operandLocations.head; ol; ol = ol->next) {
                         Instr *dst = ol->instruction;
                         Operand *o = operandAtLocation(ol);
                         if (!dst || !o) {
                             reportError("in_s not set\n");
                             return false;
                         }
-                        int v = dst->unk_0c - op->outputLatency - o->additionalLatency;
+                        int v = dst->instructionId - op->outputLatency - o->additionalLatency;
                         if (earliest > v)
                             earliest = v;
                     }
@@ -87,15 +87,15 @@ bool makeLpWork(instStream *s, int maxSpread)
             }
         }
         if (earliest != 30000) {
-            if (earliest < in->unk_0c) {
+            if (earliest < in->instructionId) {
                 reportError(lpWorkHtNewError);
                 return false;
             }
-            in->unk_0c = earliest;
+            in->instructionId = earliest;
         }
     }
     char buf[256];
-    for (in = nt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (in = nt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         int lo = 30000;
         int hi = 0;
         char *p = buf;
@@ -108,10 +108,10 @@ bool makeLpWork(instStream *s, int maxSpread)
                 bool any = false;
                 for (int j = 0; j != reg->partCount; j++) {
                     if ((op->componentMask >> j) & 1) {
-                        ol_s *ol = op->parts[j].unk_54.head;
+                        ol_s *ol = op->parts[j].operandLocations.head;
                         if (ol) {
                             Instr *src = ol->instruction;
-                            int d = in->unk_0c - src->unk_0c;
+                            int d = in->instructionId - src->instructionId;
                             any = true;
                             if (d < rlo)
                                 rlo = d;
@@ -180,7 +180,7 @@ bool lsqChain(workTable *wt)
         int n = 0;
         bool bad = false;
         bool ok = true;
-        for (; in; in = in->unk_1c.unk_00) {
+        for (; in; in = in->linearLink.nextInstruction) {
             int opc = in->opcodeId();
             if (in->outputMaskForRegister(reg, 0xff)) {
                 if (!(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4) || bad) {
@@ -246,7 +246,7 @@ bool lsqChain(workTable *wt)
             reportError(lsqChainAddError);
             return false;
         }
-        for (Instr *in = ni->unk_1c.unk_00; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = ni->linearLink.nextInstruction; in; in = in->linearLink.nextInstruction) {
             for (int k = 0; k != in->operandCount; k++) {
                 Operand *op = &in->operands[k];
                 if (op->assignedRegister != reg)
@@ -255,7 +255,7 @@ bool lsqChain(workTable *wt)
                     reportError(lsqChainNotInputError);
                     return false;
                 }
-                op->parts[0].unk_54.clear();
+                op->parts[0].operandLocations.clear();
                 if (!link_oParts(ni, 0, 0, in, k, 0)) {
                     reportError(lsqChainLinkError);
                     return false;

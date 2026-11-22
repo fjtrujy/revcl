@@ -18,7 +18,7 @@ static inline bool extendForEnd_inl(workTable *wt)
     return true;
 }
 
-bool func_08062a88(Program *p)
+bool tidyProgramStreams(Program *p)
 {
     instStream *s;
     for (s = p->streamHead; s; s = s->nextStream) {

@@ -77,7 +77,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
     p->traceStoreEnabled = latency && !blocking;
     p->traceTargetStream = t;
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (!func_08061ab0(s, reg, part)) {
+        if (!initializeRegisterBacktraceLocation(s, reg, part)) {
             reportError("failed to do a local init for the back trace\n");
             return false;
         }
@@ -100,8 +100,8 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
         }
         s->shortestPathPredecessor = 0;
         s->longestPathPredecessor = 0;
-        s->unk_240 = 0;
-        s->unk_248 = 0;
+        s->minimumPathLength = 0;
+        s->maximumPathLength = 0;
     }
     if (!processActiveList(p)) {
         reportError("the initial trace failed\n");
@@ -149,20 +149,20 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
     if (latency) {
         for (instStream *s = p->streamHead; s; s = s->nextStream) {
             if (s->visitState == 2 || s->visitState == 4) {
-                if (!s->unk_234) {
+                if (!s->backtraceRegisterUse) {
                     workTable *wt = s->getTable();
                     if (!wt) {
                         reportError("no work table\n");
                         return false;
                     }
-                    s->unk_234 = wt->registerUses.AddNewRegRef(reg);
-                    if (!s->unk_234) {
+                    s->backtraceRegisterUse = wt->registerUses.AddNewRegRef(reg);
+                    if (!s->backtraceRegisterUse) {
                         reportError("couldn't add regref to table\n");
                         return false;
                     }
                 }
-                s->unk_234->throughputMask |= 1 << part;
-                s->unk_227 = 1;
+                s->backtraceRegisterUse->throughputMask |= 1 << part;
+                s->pendingHazardBroadcast = 1;
             }
         }
         if (!blocking) {
@@ -181,7 +181,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
                         continue;
                     n->hazardVisited = 1;
                     if (testTstore_inl(p, k->traceStore, n->streamId)) {
-                        regUse *u = n->unk_234;
+                        regUse *u = n->backtraceRegisterUse;
                         if (!u) {
                             reportError("couldn't get regref for hazard broadcast op for reg %s.%d in %s hazard start=%s target=%s mode=%d\n",
                                           reg->registerName(), part, n->streamName(), k->streamName(),
@@ -204,10 +204,10 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
         }
         if (!blocking) {
         for (instStream *s = p->streamHead; s; s = s->nextStream) {
-            if (s->unk_227) {
+            if (s->pendingHazardBroadcast) {
                 s->nextResolvedStream = p->resolvedStreams;
                 p->resolvedStreams = s;
-                int key = func_08061cb0(p, s);
+                int key = buildMinimumPathKey(p, s);
                 s->destinationKey = key;
                 if (key < 0) {
                     reportError("failed to get minimal path for localT tracker\n");

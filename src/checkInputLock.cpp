@@ -27,7 +27,7 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
     int ret;
     int lsz = g_080b336c;
     ret = 0;
-    int p = ((InstructionPosition *)pos)->unk_00;
+    int p = ((InstructionPosition *)pos)->linearRow;
 
     in->priority = 0;
     if (in->unk_19 == 2) {
@@ -146,7 +146,7 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
     int ret = checkOverlap(out, pos, minPos);
     if (isRegLock(out))
         return 0;
-    int p = ((InstructionPosition *)pos)->unk_00;
+    int p = ((InstructionPosition *)pos)->linearRow;
     int first;
     if (out->unk_15)
         first = p + 1;
@@ -225,7 +225,7 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
             ext = true;
     }
 
-    int sz = ((InstructionPosition *)pos)->unk_04;
+    int sz = ((InstructionPosition *)pos)->loopRow;
     int s = sz + (first - p);
     int e = sz + (lim - p);
     wrapRangeLocal(s, e);
@@ -248,7 +248,7 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
         } else if (lockRangesOverlap(s, e, ls, le)) {
             first -= p;
             int v = lk->unk_4e - first + 1;
-            nextLoopPosition(v, ((InstructionPosition *)pos)->unk_00, g_080b336c, he);
+            nextLoopPosition(v, ((InstructionPosition *)pos)->linearRow, g_080b336c, he);
             if (*minPos < he)
                 *minPos = he;
             return ret | 2;
@@ -274,7 +274,7 @@ int cls0805c244::checkOverlap(OperandLock *out, short *pos, int *minPos)
             continue;
         if (lockRangesOverlap(s, e, os, oe - 1)) {
             ret |= 1;
-            int p = ((InstructionPosition *)pos)->unk_00;
+            int p = ((InstructionPosition *)pos)->linearRow;
             int v;
             if (!g_080b336c)
                 v = oe;

@@ -38,7 +38,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             reportError("previous thruput write already set for instruction\n");
             return -1;
         }
-        int lid = (signed char)in->position.unk_03;
+        int lid = (signed char)in->position.loopIteration;
         if (uta) {
             if (lid != -1) {
                 reportError("lid>=0 for uta mode emu\n");
@@ -64,7 +64,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             if (uta)
                                 rp->unk_00[6] = -1;
                             else
-                                rp->unk_00[6] = p->unk_80;
+                                rp->unk_00[6] = p->emulatedCycleCount;
                             rp->unk_00[4] = line;
                             rp->unk_00[5] = k;
                         }
@@ -154,7 +154,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                 }
             } while (--stall);
         }
-        cyc = p->unk_80;
+        cyc = p->emulatedCycleCount;
     }
     for (k = 0; k != 2; k++)
         if (row->entries[k].unk_00)
@@ -245,14 +245,14 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             if (uta)
                                 rp->unk_00[11] = -1;
                             else
-                                rp->unk_00[11] = p->unk_80;
+                                rp->unk_00[11] = p->emulatedCycleCount;
                         }
                         rp->unk_00[12] = line;
                         rp->unk_00[13] = k;
                         if (uta)
                             rp->unk_00[14] = -1;
                         else
-                            rp->unk_00[14] = p->unk_80;
+                            rp->unk_00[14] = p->emulatedCycleCount;
                         rp->unk_00[16] = op->outputLatency;
                         rp->unk_00[15] = tp;
                         rp->unk_00[0] += tp;

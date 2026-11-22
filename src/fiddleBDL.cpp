@@ -47,7 +47,7 @@ bool fiddleBDL(workTable *wt)
         int extlen = wt->rangeEnd - wt->rangeStart;
         if (extlen <= 2 || !br)
             goto done;
-        short m = br->unk_13b2 < br->unk_13b0 ? br->unk_13b0 : br->unk_13b2;
+        short m = br->externalInputConstraint < br->externalInputPairedConstraint ? br->externalInputPairedConstraint : br->externalInputConstraint;
         if (m > extlen - 3)
             goto done;
         wtRow *last = wt->getRowByIndex(wt->rangeEnd - 1);
@@ -112,7 +112,7 @@ bool fiddleBDL(workTable *wt)
                 }
                 if (func_0807dc44(wt, prev, &posB))
                     ok = false;
-                int m2 = prev->unk_13b6 < prev->unk_13b4 ? prev->unk_13b4 : prev->unk_13b6;
+                int m2 = prev->externalOutputConstraint < prev->externalOutputPairedConstraint ? prev->externalOutputPairedConstraint : prev->externalOutputConstraint;
                 if ((short)m2)
                     ok = false;
                 if (!moveLocks(br, &posB)) {

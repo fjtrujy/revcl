@@ -17,10 +17,10 @@ struct Program;
 
 // 16-byte record in the leading table of a stream (name guessed).
 struct istRec {
-    int unk_00;
-    int unk_04;
-    int unk_08;
-    int unk_0c;
+    int instructionCount;
+    int optimalLength;
+    int mainLoopId;
+    int candidateLoopId;
 };
 
 class instStream {
@@ -109,8 +109,8 @@ public:
     void copySourceRecordsFrom(instStream *src);  // copy record table from src
     bool setOptTable(workTable *nt);
 
-    int unk_00;                  // record count
-    istRec unk_04[16];
+    int optimizationRecordCount;
+    istRec optimizationRecords[16];
     Program *owningProgram;
     instStream *nextStream;         // next in Program::completedInstructions
     instStream *previousStream;         // previous stream (to-register branch)
@@ -118,29 +118,29 @@ public:
     char *passThroughText;               // pass thru
     linkList inputLinks;            // input links
     linkList outputLinks;            // output links
-    char unk_140;
+    char hasLoopOptimization;
     char unk_141[3];
-    int unk_144;
+    int appliedOptimizationMask;
     workTable sourceTable;           // own work table
     workTable *optimizedTable;  // opt table
     workTable *workTablePtr;  // work table
     workTable *emissionTable;  // tidied work table
     workTable *savedTable;  // saved work table
-    short unk_224;
+    short outputLocationCount;
     unsigned char visitState;      // visit mode (0 unvisited, 1 active, 2 visited, 3 end match, 4 dead end)
-    char unk_227;
+    char pendingHazardBroadcast;
     char hazardFlag;               // hazard flag
     char hazardVisited;               // visited flag in hazard broadcast
     char unk_22a[2];
     int backtraceDependencyLength;                // dependency length used by back trace
-    short unk_230;
-    short unk_232;
-    regUse *unk_234;
+    short earliestOutputLocation;
+    short latestOutputLocation;
+    regUse *backtraceRegisterUse;
     unsigned *traceStore;          // m_tStore
     int destinationKey;                // dst key
-    int unk_240;
+    int minimumPathLength;
     instStream *shortestPathPredecessor;        // min-path predecessor
-    int unk_248;
+    int maximumPathLength;
     instStream *longestPathPredecessor;        // max-path predecessor
     instStream *nextSourceStream;
     instStream *nextMatchedStream;
@@ -153,33 +153,33 @@ public:
     char reachableFromEntry;      // reached top (accessible)
     char mergeIntoSuccessor;      // collapse into successor (tidy)
     char unk_266[2];
-    int unk_268;
-    int unk_26c;
+    int absoluteLoopCount;
+    int extraLoopCount;
     int knownMinimumLoopCount;                 // known min count
     int safeMinimumLoopCount;                 // minimum safe count
-    cls0805e2e4 unk_278;
+    cls0805e2e4 schedulingStatistics;
     statCounts stats;
     short unk_2b4;
     short unk_2b6;
-    short unk_2b8;
-    short unk_2ba;
-    int unk_2bc;
+    short savedStallReason;
+    short currentStallReason;
+    int physicalInstructionBudget;
     short streamId;     // stream id
     short streamSerial;     // stream serial
-    short unk_2c4;
+    short loopRegionRole;
     short unk_2c6;
-    int unk_2c8;
+    int emissionStartIndex;
     unsigned char startType;  // start type (ISTST_*)
     unsigned char endType;  // end type (ISTET_*; 2 adds 1000 to back trace dep length)
     unsigned char branchType;  // branch type
     char unk_2cf;
     char *endDirectiveText;
-    char unk_2d4;      // dbgTop
-    char unk_2d5;      // dbgEnd
-    char unk_2d6;
-    char unk_2d7;
+    char leadingLabelFlags;
+    char trailingLabelFlags;
+    char containsBarrier;
+    char mergedBarrierFlag;
     int unk_2d8;
-    char unk_2dc;
+    char externalSchedulingPrepared;
     char unk_2dd[3];
     int dependencyLength;       // dependency length
     int logicalLength;

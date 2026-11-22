@@ -80,7 +80,7 @@ void RegPoolEntry::resetRegisterFlowState()
         parts[i].resetPartFlowState();
 }
 
-void RegPoolEntry::func_0805a340()
+void RegPoolEntry::noopRegisterFlowHook()
 {
 }
 
@@ -142,12 +142,12 @@ void RegPoolEntry::clearRegisterPartPayloads()
         parts[i].payload = 0;
 }
 
-void rPart::func_0805a4d4()
+void rPart::resetPartPayloadFirstPass()
 {
     payload = 0;
 }
 
-void rPart::func_0805a4e4()
+void rPart::resetPartPayloadSecondPass()
 {
     payload = 0;
 }
@@ -271,7 +271,7 @@ char* RegPoolEntry::maskName(int mask)
         name = "UNNAMED_REGISTER!";
     char* p = buf + formatIntoBuffer(buf, "%s", name);
     if (partCount > 1)
-        p += formatIntoBuffer(p, "%s", func_080520d4(mask));
+        p += formatIntoBuffer(p, "%s", formatDottedComponentMask(mask));
     *p = 0;
     regNameBufPos = p - regNameBuf + 1;
     return buf;

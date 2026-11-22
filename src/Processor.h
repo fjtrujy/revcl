@@ -49,8 +49,8 @@ public:
     bool clearProcessorLists();
     void dumpRegisterPools();
     int gatherInflight(ol_s **out);
-    bool func_0806bd40();
-    bool func_0806bd88();
+    bool clearAllRegisterAssignmentsFirstPass();
+    bool clearAllRegisterAssignmentsSecondPass();
     void validateOpcodeTableCount();
 
     bool setUniqueName(const char *name);

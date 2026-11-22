@@ -20,19 +20,19 @@ static inline int thruputTail(instStream *s, regUse *u, int part)
 
 bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
 {
-    regUse *tr = t->unk_234;
+    regUse *tr = t->backtraceRegisterUse;
     if (!tr) {
         reportError("bThru enabled - but no btRegRef in the target!\n");
         return false;
     }
     for (instStream *s = p->sourceStreams; s; s = s->nextSourceStream) {
-        regUse *sr = s->unk_234;
+        regUse *sr = s->backtraceRegisterUse;
         if (!sr) {
             reportError("no btRegRef for something on the match list %s.%d target=%s stream is %s!\n",
                           reg->registerName(), part, t->streamName(), s->streamName());
             return false;
         }
-        int key = func_08061cb0(p, s);
+        int key = buildMinimumPathKey(p, s);
         if (key <= 0) {
             reportError("minimal path key was bad\n");
             return false;
@@ -62,7 +62,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
             n->pathKey = key;
         }
         if (isPathRaw(p, key)) {
-            int dist = s->unk_240;
+            int dist = s->minimumPathLength;
             int last = sr->slots[part].timingValues[11];
             short *lastAddress = thruputTimes(sr, part);
             int tend = thruputTail(s, sr, part);

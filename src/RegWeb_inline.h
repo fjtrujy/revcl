@@ -23,7 +23,7 @@ inline bool RegWeb::AddiTable(workTable *t)
         reportError("RegWeb::AddiTable - passed a null pointer\n");
         return false;
     }
-    for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         if (!AddiInstr(in)) {
             reportError("RegWeb::AddiTable: failed to add an isn\n");
             in->dumpOperandDiagnostics(false);
@@ -80,7 +80,7 @@ inline bool RegWeb::AddiInstr(Instr *in)
                 bool used = (op->componentMask >> j) & 1;
                 if (!used)
                     continue;
-                ol_s *ol = op->parts[j].unk_54.head;
+                ol_s *ol = op->parts[j].operandLocations.head;
                 if (!ol) {
                     reportError("found input operand part with empty olList..\n");
                     reportError("this should have been caught by now..\n");
@@ -342,7 +342,7 @@ inline bool RegWeb::PatchInstr(Instr *in)
 inline bool RegWeb::PatchITable(workTable *t)
 {
     if (t) {
-        for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
             if (!PatchInstr(in)) {
                 reportError("patchiTable - failed\n");
                 in->dumpOperandDiagnostics(false);
@@ -424,7 +424,7 @@ inline bool buildRegWebs(Program *p)
 
 inline bool RegWeb::ClearWebs(workTable *t)
 {
-    for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         for (int i = 0; i != in->operandCount; i++)
             in->operands[i].registerWeb = 0;
     return true;

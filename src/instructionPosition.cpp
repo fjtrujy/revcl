@@ -9,18 +9,18 @@ int g_080b3374 = -3;
 
 void cls08058718::clearInstructionPosition()
 {
-    unk_00 = -1;
-    unk_04 = -1;
-    unk_02 = -1;
-    unk_03 = -1;
+    linearRow = -1;
+    loopRow = -1;
+    pipelineIndex = -1;
+    loopIteration = -1;
 }
 
 cls08058718::cls08058718()
 {
-    unk_00 = -1;
-    unk_04 = -1;
-    unk_02 = -1;
-    unk_03 = -1;
+    linearRow = -1;
+    loopRow = -1;
+    pipelineIndex = -1;
+    loopIteration = -1;
 }
 
 cls08058718::~cls08058718()
@@ -35,22 +35,22 @@ void cls08058718::setFromLinearRow(short v)
 {
     int g = g_080b336c;
     if (g == 0 || v < g) {
-        unk_04 = v;
-        unk_00 = v;
-        unk_03 = 0;
+        loopRow = v;
+        linearRow = v;
+        loopIteration = 0;
     } else {
-        unk_00 = v;
-        unk_04 = v % g;
-        unk_03 = v / g;
+        linearRow = v;
+        loopRow = v % g;
+        loopIteration = v / g;
     }
 }
 
 void cls08058718::setInstructionPipe(char c)
 {
-    unk_02 = c;
+    pipelineIndex = c;
 }
 
-int func_0805879c()
+int alwaysOnePositionCheck()
 {
     return 1;
 }

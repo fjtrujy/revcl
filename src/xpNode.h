@@ -9,19 +9,19 @@
 class xpNode {
 public:
     char unk_00;
-    unsigned char unk_01;
-    unsigned char unk_02;  // operator type (xpOp::type), 0 = literal
-    unsigned char unk_03;  // precedence
-    unsigned char unk_04;
-    unsigned char unk_05;
+    unsigned char depth;
+    unsigned char operatorType;
+    unsigned char precedence;
+    unsigned char operandArity;
+    unsigned char childCount;
     xpNode *parent;
     xpNode *child[2];
     mValue val;
 
     xpNode();
     ~xpNode();
-    bool func_0804e778();
-    void func_0804e794();
+    bool clearExpressionNodeValue();
+    void dumpExpressionNodeValue();
     void reset();
     bool isFull();
     bool decode();
@@ -45,8 +45,8 @@ public:
     bool reset();
     void calcDepths();
     void setDepth(xpNode *n, int depth);
-    void func_0804ea8c(xpNode *n);
-    void func_0804ead0();
+    void visitExpressionDescendants(xpNode *n);
+    void resetExpressionDepths();
     void dumpNode(xpNode *n);
     void dump();
     bool evalExp(const char *s);
@@ -55,8 +55,8 @@ public:
     bool evalFloat(float *out);
     bool evalInt(int *out);
     bool rec_Eval(xpNode *n);
-    int func_0804f8f0();
-    void func_0804f920(xpNode *n);
+    int countUnknownExpressionSymbols();
+    void countUnknownSymbolsInNode(xpNode *n);
 
     inline bool clear();
 };

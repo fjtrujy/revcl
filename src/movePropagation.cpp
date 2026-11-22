@@ -10,7 +10,7 @@ extern RegPoolEntry *g_080de6ac;
 extern mValue *g_080de6b0;
 extern int g_080de6b4;
 int func_0806aa54(Instr *in);
-int func_08067e18(Program *p, instStream *s);
+int expandOneLoopIntoRegions(Program *p, instStream *s);
 
 
 extern const char propagateValidMaskError[];
@@ -18,7 +18,7 @@ extern const char propagateValidDetailError[];
 extern const char propagateTwoWritesError[];
 extern const char propagateNormaliseError[];
 
-bool func_0806ae58(Program *p)
+bool noopMovePropagationHook(Program *p)
 {
     return true;
 }
@@ -27,7 +27,7 @@ int propagateMoves(workTable *t)
 {
     wtInstrList *list = &t->linearInstructions;
     int count = 0;
-    for (Instr *in = list->tail; in; in = in->unk_1c.prev()) {
+    for (Instr *in = list->tail; in; in = in->linearLink.prev()) {
         if (in->normalizeZeroSources() < 0) {
             reportError(propagateNormaliseError);
             return 0;
@@ -40,12 +40,12 @@ int propagateMoves(workTable *t)
         int keep = 0;
         int srcWritten = 0;
         int valid = mask;
-        int row = in->position.unk_00;
-        Instr *n = in->unk_1c.next();
+        int row = in->position.linearRow;
+        Instr *n = in->linearLink.next();
         Instr *cur = n;
         if (row >= 0) {
-            Instr *p = in->unk_1c.prev();
-            if (p && p->position.unk_00 == row) {
+            Instr *p = in->linearLink.prev();
+            if (p && p->position.linearRow == row) {
                 bool a;
                 if (p->collectOutputRegisterMask(dst, &a)) {
                     reportError(propagateTwoWritesError);
@@ -54,7 +54,7 @@ int propagateMoves(workTable *t)
                 bool b;
                 srcWritten = p->collectOutputRegisterMask(src, &b);
             }
-            if (n && n->position.unk_00 == row) {
+            if (n && n->position.linearRow == row) {
                 bool a;
                 if (n->collectOutputRegisterMask(dst, &a)) {
                     reportError(propagateTwoWritesError);
@@ -62,13 +62,13 @@ int propagateMoves(workTable *t)
                 }
                 bool b;
                 srcWritten |= n->collectOutputRegisterMask(src, &b);
-                cur = n->unk_1c.next();
+                cur = n->linearLink.next();
             }
         }
         int pendSrc = 0;
         int pendDst = 0;
         while (cur && valid) {
-            int r = cur->position.unk_00;
+            int r = cur->position.linearRow;
             if (r < 0 || r != row) {
                 srcWritten |= pendSrc;
                 valid &= ~pendDst;
@@ -92,7 +92,7 @@ int propagateMoves(workTable *t)
             pendSrc |= cur->collectOutputRegisterMask(src, &c);
             bool d;
             pendDst |= cur->collectOutputRegisterMask(dst, &d);
-            cur = cur->unk_1c.unk_00;
+            cur = cur->linearLink.nextInstruction;
             row = r;
         }
         if (~valid & in->operands[0].externalPartMask) {
@@ -117,7 +117,7 @@ int removeDeadMoves(workTable *t)
     int count = 0;
     Instr *next;
     for (Instr *in = t->linearInstructions.head; in; in = next) {
-        next = in->unk_1c.unk_00;
+        next = in->linearLink.nextInstruction;
         if (in->abstractMoveOpcode && in->operands[0].assignedRegister == in->operands[1].assignedRegister) {
             if (!t->destroyInstruction(in)) {
                 reportError("failed to destroy a move\n");

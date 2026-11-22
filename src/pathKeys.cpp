@@ -1,14 +1,14 @@
 #include "os.h"
 #include "backTrace_shared.h"
 
-bool func_08061c34(instStream *n);
+bool resetStreamPathSearch(instStream *n);
 
 static inline regUseSlot *registerPart(regUse *u, int part)
 {
     return &u->slots[part];
 }
 
-bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
+bool initializeRegisterBacktraceLocation(instStream *n, RegPoolEntry *reg, int part)
 {
     workTable *wt = n->getTable();
     if (!wt) {
@@ -16,53 +16,53 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
         return 0;
     }
     regUse *u = wt->registerUses.findByRegister(reg);
-    n->unk_227 = 0;
+    n->pendingHazardBroadcast = 0;
     n->hazardFlag = 0;
     n->nextResolvedStream = 0;
-    n->unk_234 = u;
+    n->backtraceRegisterUse = u;
     if (u && ((u->outputMask >> part) & 1)) {
         if (wt->codeMode() == 1 || wt->codeMode() == 4) {
-            n->unk_224 = 1;
-            n->unk_230 = 0;
-            n->unk_232 = 0;
+            n->outputLocationCount = 1;
+            n->earliestOutputLocation = 0;
+            n->latestOutputLocation = 0;
         } else {
             int count = u->slots[part].outputLocations.count;
-            n->unk_224 = count;
+            n->outputLocationCount = count;
             ol_s *head = u->slots[part].outputLocations.head;
             if (!head) {
                 reportError("visible outputs has no head for l_init.. but it should!\n");
                 return 0;
             }
             int lo = head->unk_12;
-            n->unk_230 = lo;
+            n->earliestOutputLocation = lo;
             ol_s *last = registerPart(u, part)->findPreviousOutputAtPosition(0, true);
             if (!last) {
                 reportError("visible outputs had nothing visible at infinity\n");
                 return 0;
             }
             int hi = last->unk_12;
-            n->unk_232 = hi;
-            if (n->unk_230 > n->unk_232) {
+            n->latestOutputLocation = hi;
+            if (n->earliestOutputLocation > n->latestOutputLocation) {
                 reportError("minimal writeVal was > maximal writeVal\n");
                 return 0;
             }
         }
     } else {
-        n->unk_224 = 0;
-        n->unk_230 = -1;
-        n->unk_232 = -2;
+        n->outputLocationCount = 0;
+        n->earliestOutputLocation = -1;
+        n->latestOutputLocation = -2;
     }
-    return func_08061c34(n);
+    return resetStreamPathSearch(n);
 }
 
-bool func_08061c34(instStream *n)
+bool resetStreamPathSearch(instStream *n)
 {
     n->visitState = 0;
     for (linkNode *l = n->inputLinks.head; l; l = l->next)
         l->unk_10 = l->linkType != 3 && l->linkType != 4;
-    n->unk_240 = -1;
+    n->minimumPathLength = -1;
     n->shortestPathPredecessor = 0;
-    n->unk_248 = -1;
+    n->maximumPathLength = -1;
     n->longestPathPredecessor = 0;
     n->nextSourceStream = 0;
     n->nextMatchedStream = 0;
@@ -70,7 +70,7 @@ bool func_08061c34(instStream *n)
     return true;
 }
 
-int func_08061cb0(Program *p, instStream *n)
+int buildMinimumPathKey(Program *p, instStream *n)
 {
     VisitCache *vc = &p->backTraceVisitCache;
     if (!vc->startRecord()) {
@@ -158,7 +158,7 @@ void dumpMinPathToTarget(instStream *s)
     reportInfo("%s  minPathToTarget\n", s->streamName());
     int i = 0;
     for (instStream *q = s->shortestPathPredecessor; q; q = q->shortestPathPredecessor)
-        reportInfo("    %2d:   [%3d] %s\n", ++i, q->unk_240, q->streamName());
+        reportInfo("    %2d:   [%3d] %s\n", ++i, q->minimumPathLength, q->streamName());
     reportInfo("done .. %s  minPathToTarget\n", s->streamName());
 }
 
@@ -167,6 +167,6 @@ void dumpMaxPathToTarget(instStream *s)
     reportInfo("%s  maxPathToTarget\n", s->streamName());
     int i = 0;
     for (instStream *q = s->longestPathPredecessor; q; q = q->longestPathPredecessor)
-        reportInfo("    %2d:   [%3d] %s\n", ++i, q->unk_248, q->streamName());
+        reportInfo("    %2d:   [%3d] %s\n", ++i, q->maximumPathLength, q->streamName());
     reportInfo("done .. %s  maxPathToTarget\n", s->streamName());
 }

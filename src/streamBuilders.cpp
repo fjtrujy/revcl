@@ -27,8 +27,8 @@ bool buildPassThru(Program *prog, instStream *s, DecodedLine *blocks, int count)
     }
     uta->ownerStream = s;
     s->branchType = 0;
-    s->unk_2d6 = 1;
-    s->unk_2d7 = 1;
+    s->containsBarrier = 1;
+    s->mergedBarrierFlag = 1;
     return true;
 }
 

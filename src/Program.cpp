@@ -8,7 +8,7 @@ void disposeBackTrace(Program *p);
 void dumpProcessorRegisterPools(Program *p);
 bool parseReset(Program *p);
 const char *linkTypeName(int type);
-bool func_0804c03c(const char *a, const char *b);
+bool equalExactStrings(const char *a, const char *b);
 bool emitReset(Program *p);
 char *emitStats(Program *p, char *buf);
 char *emitFileStart(Program *p, char *buf);
@@ -272,13 +272,13 @@ char *emitProgram(Program *p, char *out, int comments)
     }
     char *buf = out;
     for (s = p->streamHead; s; s = s->nextStream) {
-        if (s->unk_00) {
+        if (s->optimizationRecordCount) {
             buf += formatIntoBuffer(buf, "; === __LP__ %s:\n", s->streamName());
-            for (int i = 0; i != s->unk_00; i++) {
-                if (s->unk_04[i].unk_00 > 0) {
+            for (int i = 0; i != s->optimizationRecordCount; i++) {
+                if (s->optimizationRecords[i].instructionCount > 0) {
                     buf += formatIntoBuffer(buf, "; === %16s : optimal=%d clid=%d mlid=%d size=(%d) ",
-                                         getOptimiserName(i), s->unk_04[i].unk_04, s->unk_04[i].unk_0c,
-                                         s->unk_04[i].unk_08, s->unk_04[i].unk_00);
+                                         getOptimiserName(i), s->optimizationRecords[i].optimalLength, s->optimizationRecords[i].candidateLoopId,
+                                         s->optimizationRecords[i].mainLoopId, s->optimizationRecords[i].instructionCount);
                     buf += formatIntoBuffer(buf, "\n");
                 }
             }
@@ -295,7 +295,7 @@ char *emitProgram(Program *p, char *out, int comments)
     for (s = p->streamHead; s; s = s->nextStream) {
         s->dump(0);
         int n = 0, m = 0;
-        s->unk_2c8 = total;
+        s->emissionStartIndex = total;
         buf = s->emit(buf, comments, &n, &m);
         if (!buf) {
             reportError("flowMon : failed to write a stream\n");
@@ -361,14 +361,14 @@ bool isReferencedLabel(Program *p, char *name)
         }
         if (s->getBranch()) {
             char *tgt = s->getBranchTargetImmediate();
-            if (tgt && func_0804c03c(tgt, name))
+            if (tgt && equalExactStrings(tgt, name))
                 return true;
         }
     }
     return p->uniqueNamePrefixes.findByExactName(name) != 0;
 }
 
-bool func_0806f4a0(Program *p, instStream *s)
+bool streamExportsSymbol(Program *p, instStream *s)
 {
     mList *l = &s->labels;
     for (mNode *n = l->head; n; n = n->next) {
@@ -415,9 +415,9 @@ bool recalcFlowUIDs(Program *p)
     return true;
 }
 
-bool func_0806f610(Program *p)
+bool resetProgramAllocationsForFirstPass(Program *p)
 {
-    if (!p->proc.func_0806bd40()) {
+    if (!p->proc.clearAllRegisterAssignmentsFirstPass()) {
         reportError("failed to alloc reset the cpu\n");
         return false;
     }
@@ -432,9 +432,9 @@ bool func_0806f610(Program *p)
     return true;
 }
 
-bool func_0806f6a4(Program *p)
+bool resetProgramAllocationsForSecondPass(Program *p)
 {
-    if (!p->proc.func_0806bd88()) {
+    if (!p->proc.clearAllRegisterAssignmentsSecondPass()) {
         reportError("failed to alloc reset the cpu\n");
         return false;
     }

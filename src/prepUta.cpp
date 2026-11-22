@@ -41,7 +41,7 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
         reportError("iStream::prepUta - failed alloc table\n");
         exitAfterCleanup(-1);
     }
-    if (!nt->init(2, s->unk_2bc)) {
+    if (!nt->init(2, s->physicalInstructionBudget)) {
         reportError("failed to allocate large table\n");
         delete nt;
         return 0;
@@ -54,7 +54,7 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
         nt->setRange();
     setRangeFrom(nt);
     g_080de284 = smart;
-    nt->statistics.copyCountersFrom(&s->unk_278);
+    nt->statistics.copyCountersFrom(&s->schedulingStatistics);
     copyShort(nt->unk_74, wt->unk_74);
     copyShort(nt->unk_76, wt->unk_76);
     copyShort(nt->unk_78, wt->unk_78);
@@ -71,14 +71,14 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
             return 0;
         }
     }
-    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         if (in->getOwningStream() != s) {
             reportError("owner not set or mismatch for prepUta .. istOwner = %x we are %x!\n",
                           in->getOwningStream(), p);
             in->leDump();
             exitAfterCleanup(-1);
         }
-        in->unk_141a = 0;
+        in->candidateAttemptLimit = 0;
         if (in->isNonSynthetic() && !in->isNop() && !nt->qInstruction(in)) {
             reportError("iStream: failed to queue instruction into table for opt\n");
             exitAfterCleanup(-1);

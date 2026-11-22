@@ -169,53 +169,53 @@ int iGroupLog::logTable(workTable *wt)
         for (int i = 0; i != reg->partCount; i++) {
             if (((p->externalInputMask & p->externalOutputMask) >> i) & 1) {
             Instr *in;
-            for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+            for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
                 in->unk_0e = 0;
-            for (Instr *cur = (in = wt->linearInstructions.head); in; cur = (in = in->unk_1c.unk_00))
+            for (Instr *cur = (in = wt->linearInstructions.head); in; cur = (in = in->linearLink.nextInstruction))
                 for (int j = 0; j != cur->operandCount; j++) {
                     Operand *op = &cur->operands[j];
                     RegPoolEntry *r = op->assignedRegister;
                     if (r == reg && op->externalPartMask)
                         for (int k = 0; k != r->partCount; k++) {
                             if (isRegisterOperand(op, 2) && ((op->externalPartMask >> k) & 1))
-                                in->func_08055aa8();
+                                in->markDependencyOutputReachable();
                             if (isRegisterOperand(op, 1) && ((op->externalPartMask >> k) & 1))
-                                in->func_08055a88();
+                                in->markDependencyInputReachable();
                         }
                 }
             bool changed;
             do {
                 changed = false;
-                for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+                for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
                     if (in->unk_0e_1)
                         for (int j = 0; j != in->operandCount; j++) {
                             Operand *op = &in->operands[j];
                             RegPoolEntry *r = registerOperand(op, 2);
                             if (r)
                                 for (int k = 0; k != r->partCount; k++)
-                                    for (ol_s *o = op->parts[k].unk_54.firstInternalLocation(); o; o = o->nextInternalLocation()) {
+                                    for (ol_s *o = op->parts[k].operandLocations.firstInternalLocation(); o; o = o->nextInternalLocation()) {
                                         Instr *t = o->instruction;
-                                        changed = changed || t->func_08055a88();
+                                        changed = changed || t->markDependencyInputReachable();
                                     }
                         }
                 wtInstrList *list = &wt->linearInstructions;
-                for (in = list->tail; in; in = in->unk_1c.unk_04)
+                for (in = list->tail; in; in = in->linearLink.previousInstruction)
                     if (in->unk_0e_0)
                         for (int j = 0; j != in->operandCount; j++) {
                             Operand *op = &in->operands[j];
                             RegPoolEntry *r = registerOperand(op, 1);
                             if (r)
                                 for (int k = 0; k != r->partCount; k++)
-                                    for (ol_s *o = op->parts[k].unk_54.firstInternalLocation(); o; o = o->nextInternalLocation())
+                                    for (ol_s *o = op->parts[k].operandLocations.firstInternalLocation(); o; o = o->nextInternalLocation())
                                         o->instruction->unk_0e_0 = 1;
                         }
             } while (changed);
             reportInfo("  dumping scan for %s\n", reg->maskName(1 << i));
             int n = 0;
-            for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+            for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
                 if (in->unk_0e == 3) {
                     const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
-                    reportInfo("  [%4d] %d %s\n", n++, in->unk_0c, name);
+                    reportInfo("  [%4d] %d %s\n", n++, in->instructionId, name);
                 }
             reportInfo("  ..%d matches\n", n);
             }
