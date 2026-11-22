@@ -35,10 +35,13 @@ file(READ "${REVCL_SOURCE_DIR}/config/build.json" build_config)
 string(JSON flag_count LENGTH "${build_config}" cxxflags)
 string(JSON first_flag GET "${build_config}" cxxflags 0)
 string(JSON second_flag GET "${build_config}" cxxflags 1)
+string(JSON third_flag GET "${build_config}" cxxflags 2)
 string(JSON unit_count LENGTH "${build_config}" units)
-if(NOT flag_count EQUAL 2 OR NOT first_flag STREQUAL "-O2"
-    OR NOT second_flag STREQUAL "-frename-registers" OR NOT unit_count EQUAL 10)
-  message(FATAL_ERROR "Historical GCC flags or 10 required owner-specific overrides changed")
+if(NOT flag_count EQUAL 3 OR NOT first_flag STREQUAL "-O2"
+    OR NOT second_flag STREQUAL "-frename-registers"
+    OR NOT third_flag STREQUAL "-fmerge-all-constants"
+    OR unit_count GREATER 5)
+  message(FATAL_ERROR "Historical GCC common flags or per-file exceptions regressed")
 endif()
 file(READ "${REVCL_SOURCE_DIR}/tools/rh9/vcl.sha256" sha_manifest)
 if(NOT sha_manifest STREQUAL

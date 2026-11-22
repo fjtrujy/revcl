@@ -1,15 +1,24 @@
 {
-  "cxxflags": ["-O2", "-frename-registers"],
+  "cxxflags": [
+    "-O2",
+    "-frename-registers",
+    "-fmerge-all-constants"
+  ],
   "units": {
-    "src/RegWeb.cpp": ["-fno-weak"],
-    "src/wrangleCore.cpp": ["-fno-cse-follow-jumps"],
-    "src/wrangle.cpp": ["-fno-cse-follow-jumps"],
-    "src/doPostOpt.cpp": ["-mno-fp-ret-in-387"],
-    "src/workTable.cpp": ["-fmerge-all-constants"],
-    "src/infoList.cpp": ["-finline-functions"],
-    "src/explodeRaw.cpp": ["-fmerge-all-constants"],
-    "src/prepExtInfo.cpp": ["-fmerge-all-constants"],
-    "src/hwRegPool.cpp": ["-fmerge-all-constants"],
-    "src/prepReduce.cpp": ["-fmerge-all-constants"]
+    "src/RegWeb.cpp": [
+      "-fno-weak"
+    ],
+    "src/wrangleCore.cpp": [
+      "-fno-cse-follow-jumps"
+    ],
+    "src/wrangle.cpp": [
+      "-fno-cse-follow-jumps"
+    ],
+    "src/doPostOpt.cpp": [
+      "-mno-fp-ret-in-387"
+    ],
+    "src/infoList.cpp": [
+      "-finline-functions"
+    ]
   }
 }
