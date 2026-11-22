@@ -91,9 +91,13 @@ historical compiler options. The frozen fixtures are in `tests/oracle/`.
 Reverse-engineering research material and third-party downloads are maintained
 separately rather than redistributed here.
 
-For recovering meaningful source names, see the [naming audit](docs/NAMING_AUDIT.md),
-its owner-qualified field review queues, and the native C scanner in
-`tools/naming-audit.c`. Naming-only changes must preserve the historical SHA.
+The [naming progress report](docs/NAMING_PROGRESS.md) tracks unresolved or
+provisional file, class, struct, function, field, parameter and variable names.
+It includes a fixed baseline and a repeatable update/check command so naming
+progress can be reviewed in each commit. See the
+[naming audit](docs/NAMING_AUDIT.md) and its owner-qualified review queues
+for evidence and ABI-safe rename rules. Naming-only changes must preserve
+the historical SHA.
 
 ## Contributing and licensing
 
