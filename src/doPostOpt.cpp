@@ -63,12 +63,12 @@ bool workTable::doPostOpt(int rawMode)
             reportError("doPostOpt - not get owner\n");
             return false;
         }
-        workTable *pw = owner->getTable();
-        if (!pw) {
+        workTable *scheduleTable = owner->getTable();
+        if (!scheduleTable) {
             reportError("failed to get work table from owner\n");
             return false;
         }
-        if (pw == this) {
+        if (scheduleTable == this) {
             reportError("doPostOpt ..parent work table is us!\n");
             return false;
         }
@@ -99,7 +99,7 @@ bool workTable::doPostOpt(int rawMode)
         }
         case 3:
         case 4:
-            assignLength(length, rawLengthBits(pw->getRawOrSyntheticLogicalLength()));
+            assignLength(length, rawLengthBits(scheduleTable->getRawOrSyntheticLogicalLength()));
             break;
         }
         if (!setTableRawMode(rawMode)) {
@@ -108,17 +108,17 @@ bool workTable::doPostOpt(int rawMode)
         }
         int rl;
         for (rl = rangeStart; rl < rangeEnd; rl++) {
-            Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
-            if (!ie) {
+            Instr **instructionSlot = ((cls_unk30 *)this)->getIE_ck(rl);
+            if (!instructionSlot) {
                 reportError("iTable::doPostOpt - failed to get ientry\n");
                 return false;
             }
-            if (((wtRow *)ie)->skip) {
+            if (((wtRow *)instructionSlot)->skip) {
                 reportError("bSkip is set\n");
                 return false;
             }
             for (int p = 0; p != 2; p++) {
-                Instr *in = ie[p];
+                Instr *in = instructionSlot[p];
                 if (in) {
                     int nBranch;
                     switch (rawMode) {
@@ -208,7 +208,7 @@ bool workTable::doPostOpt(int rawMode)
                     }
                     if (lid > maxLid)
                         maxLid = lid;
-                    if (!ie[p]) {
+                    if (!instructionSlot[p]) {
                         reportError("damn - lost instruction at %d:%d!\n", rl, p);
                         return false;
                     }
@@ -258,18 +258,18 @@ bool workTable::doPostOpt(int rawMode)
     return true;
 }
 
-static inline bool isRawTable(workTable *wt)
+static inline bool isRawTable(workTable *scheduleTable)
 {
-    return wt->codeModeValue == 3;
+    return scheduleTable->codeModeValue == 3;
 }
 
-bool instStream::setOptTable(workTable *nt)
+bool instStream::setOptTable(workTable *scheduleTable)
 {
-    if (!nt) {
+    if (!scheduleTable) {
         reportError("can't set opt table to null ptr - use clear\n");
         abortAfterError();
     }
-    if (!isRawTable(nt)) {
+    if (!isRawTable(scheduleTable)) {
         reportError("setOptTable - table not vsm\n");
         return false;
     }
@@ -278,7 +278,7 @@ bool instStream::setOptTable(workTable *nt)
         reportError("no old work table\n");
         return false;
     }
-    if (old == nt) {
+    if (old == scheduleTable) {
         reportError("old and new are same\n");
         return false;
     }
@@ -286,7 +286,7 @@ bool instStream::setOptTable(workTable *nt)
         reportError("stream already has opttable set\n");
         return false;
     }
-    for (Instr *in = nt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
+    for (Instr *in = scheduleTable->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         if (in->getOwningStream() != this) {
             reportError("didn't own instruction\n");
             return false;
@@ -321,29 +321,29 @@ bool instStream::setOptTable(workTable *nt)
                 reportError("operand count mismatch between original and opt image\n");
                 return false;
             }
-            for (int i = 0; i != in->operandCount; i++) {
-                char io = in->operands[i].direction;
-                char cio = c->operands[i].direction;
-                if (io != cio) {
-                    if (cio != 1 && io != 3) {
+            for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
+                char inputDirection = in->operands[operandIndex].direction;
+                char cio = c->operands[operandIndex].direction;
+                if (inputDirection != cio) {
+                    if (cio != 1 && inputDirection != 3) {
                         reportError("io type mismatch for something that wasn't a whacked input\n");
                         return false;
                     }
-                    in->operands[i].assignedRegister = c->operands[i].assignedRegister;
-                    in->operands[i].direction = cio;
+                    in->operands[operandIndex].assignedRegister = c->operands[operandIndex].assignedRegister;
+                    in->operands[operandIndex].direction = cio;
                 }
             }
             in->originalInstructionImageWord = (VclPtrWord)c;
             c->optimizedInstructionImageWord = (VclPtrWord)in;
         }
     }
-    nt->clearClones();
+    scheduleTable->clearClones();
     old->clearClones();
-    workTablePtr = nt;
-    optimizedTable = nt;
-    if (nt->optimizerIndex >= 0)
-        appliedOptimizationMask |= 1 << nt->optimizerIndex;
-    if (nt->getLoopSize())
+    workTablePtr = scheduleTable;
+    optimizedTable = scheduleTable;
+    if (scheduleTable->optimizerIndex >= 0)
+        appliedOptimizationMask |= 1 << scheduleTable->optimizerIndex;
+    if (scheduleTable->getLoopSize())
         hasLoopOptimization = 1;
     return true;
 }

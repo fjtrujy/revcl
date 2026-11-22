@@ -4,26 +4,26 @@
 #include "RegPool.h"
 #include "wrangle.h"
 
-bool optDumb2(workTable *wt, wrangleCand *c)
+bool optDumb2(workTable *scheduleTable, wrangleCand *candidate)
 {
-    Instr *in = wt->moveListHead;
+    Instr *instruction = scheduleTable->moveListHead;
     Instr *best = 0;
     int bestV = 0x7fffffff;
-    for (; in; in = in->nextMoveInstruction) {
-        if (in->linearOrderIndex < bestV) {
-            best = in;
-            bestV = in->linearOrderIndex;
+    for (; instruction; instruction = instruction->nextMoveInstruction) {
+        if (instruction->linearOrderIndex < bestV) {
+            best = instruction;
+            bestV = instruction->linearOrderIndex;
         }
     }
     if (!best)
         return false;
-    c->candidateInstruction = best;
-    c->candidateRow = (best->candidateAttemptCount >> 1) + best->candidateBaseRow;
+    candidate->candidateInstruction = best;
+    candidate->candidateRow = (best->candidateAttemptCount >> 1) + best->candidateBaseRow;
     if (!best->moveRecordWord) {
-        int row = wt->lastScheduledPosition.getRow();
-        if (c->candidateRow < (short)row)
-            c->candidateRow = row;
+        int row = scheduleTable->lastScheduledPosition.getRow();
+        if (candidate->candidateRow < (short)row)
+            candidate->candidateRow = row;
     }
-    c->candidatePipe = best->candidateAttemptCount & 1;
+    candidate->candidatePipe = best->candidateAttemptCount & 1;
     return true;
 }

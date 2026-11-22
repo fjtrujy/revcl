@@ -10,31 +10,31 @@ int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPositi
 int countSetBits(unsigned int x);
 RegPoolEntry *getZeroReg(unsigned int type);
 
-static inline bool isRawTable(workTable *wt)
+static inline bool isRawTable(workTable *scheduleTable)
 {
-    return wt->codeModeValue == 3;
+    return scheduleTable->codeModeValue == 3;
 }
 
-static inline bool isPipeMode(workTable *wt)
+static inline bool isPipeMode(workTable *scheduleTable)
 {
-    return isRawTable(wt) && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
+    return isRawTable(scheduleTable) && (scheduleTable->rawSchedulingMode == 1 || scheduleTable->rawSchedulingMode == 3);
 }
 
-inline bool atEarliest(workTable *wt, Instr *instruction)
+inline bool atEarliest(workTable *scheduleTable, Instr *instruction)
 {
     bool found = false;
     if (!instruction)
         return false;
-    int e = earliestInsert(wt, instruction, &found);
+    int e = earliestInsert(scheduleTable, instruction, &found);
     return found && e == instruction->position.loopRow;
 }
 
-bool isAtEarliest(workTable *wt, Instr *instruction)
+bool isAtEarliest(workTable *scheduleTable, Instr *instruction)
 {
     bool found = false;
     if (!instruction)
         return false;
-    int e = earliestInsert(wt, instruction, &found);
+    int e = earliestInsert(scheduleTable, instruction, &found);
     return found && e == instruction->position.loopRow;
 }
 
@@ -48,7 +48,7 @@ extern const char sredMoveInstError[];
 extern const char sredLatestBeforeError[];
 extern const char sredBadlyPlacedError[];
 
-bool sredInstr(workTable *wt, Instr *instruction, bool up)
+bool sredInstr(workTable *scheduleTable, Instr *instruction, bool up)
 {
     InstructionPosition pos;
     int iline = instruction->position.loopRow;
@@ -58,7 +58,7 @@ bool sredInstr(workTable *wt, Instr *instruction, bool up)
     int tline;
 
     if (up) {
-        tline = earliestInsert(wt, instruction, &found);
+        tline = earliestInsert(scheduleTable, instruction, &found);
         if (tline > iline) {
             short mfs = instruction->externalInputConstraint < instruction->externalInputPairedConstraint ? instruction->externalInputPairedConstraint : instruction->externalInputConstraint;
             reportError(sredEarliestAfterError,
@@ -70,7 +70,7 @@ bool sredInstr(workTable *wt, Instr *instruction, bool up)
         step = 1;
         upwards = true;
     } else {
-        tline = latestInsert(wt, instruction, &found);
+        tline = latestInsert(scheduleTable, instruction, &found);
         if (tline < iline) {
             reportError(sredLatestBeforeError, tline, iline);
             dumpSredInstruction(instruction);
@@ -83,52 +83,52 @@ bool sredInstr(workTable *wt, Instr *instruction, bool up)
         return true;
     if (found) {
         pos.setFromLinearRow(tline);
-        if (!checkPlacementInAllowedPipelines(wt, instruction, &pos, upwards))
+        if (!checkPlacementInAllowedPipelines(scheduleTable, instruction, &pos, upwards))
             goto move;
         tline += step;
     }
     for (; tline != iline; tline += step) {
         pos.setFromLinearRow(tline);
-        wtRow *row = wt->getRowByIndex(tline);
+        wtRow *row = scheduleTable->getRowByIndex(tline);
         if (row->countEntries() == 1
-            && !checkPlacementInAllowedPipelines(wt, instruction, &pos, upwards))
+            && !checkPlacementInAllowedPipelines(scheduleTable, instruction, &pos, upwards))
             goto move;
     }
     return true;
 
 move:
-    if (!wt->takeOut(instruction) || !moveLocks(instruction, &pos) || !wt->putIn(instruction)) {
+    if (!scheduleTable->takeOut(instruction) || !moveLocks(instruction, &pos) || !scheduleTable->putIn(instruction)) {
         reportError(sredMoveInstError);
         return false;
     }
     return true;
 }
 
-bool sredTable(workTable *wt)
+bool sredTable(workTable *scheduleTable)
 {
-    if (!isPipeMode(wt))
+    if (!isPipeMode(scheduleTable))
         return true;
-    int i = wt->rangeStart;
-    int n = wt->rangeEnd;
+    int i = scheduleTable->rangeStart;
+    int n = scheduleTable->rangeEnd;
     if (i != n) {
-        i = n = wt->loopSize;
+        i = n = scheduleTable->loopSize;
         if (i) {
             reportError("can't do modular reduction\n");
             return false;
         }
-        setRange(wt->rangeStart, wt->rangeEnd, 0);
+        setRange(scheduleTable->rangeStart, scheduleTable->rangeEnd, 0);
 
         int changed;
         do {
             changed = false;
-            for (i = wt->rangeStart; i != wt->rangeEnd; i++) {
-                Instr *instruction = wt->getRowByIndex(i)->onlyEntry();
+            for (i = scheduleTable->rangeStart; i != scheduleTable->rangeEnd; i++) {
+                Instr *instruction = scheduleTable->getRowByIndex(i)->onlyEntry();
                 if (instruction) {
                     if (instruction->position.loopRow != i) {
                         reportError(sredBadlyPlacedError);
                         return false;
                     }
-                    if (!sredInstr(wt, instruction, true)) {
+                    if (!sredInstr(scheduleTable, instruction, true)) {
                         reportError("failed to sred a line\n");
                         return false;
                     }
@@ -138,14 +138,14 @@ bool sredTable(workTable *wt)
 
         do {
             changed = false;
-            for (i = wt->rangeEnd - 1; i >= wt->rangeStart; i--) {
-                Instr *in = wt->getRowByIndex(i)->onlyEntry();
-                if (in && !atEarliest(wt, in)) {
+            for (i = scheduleTable->rangeEnd - 1; i >= scheduleTable->rangeStart; i--) {
+                Instr *in = scheduleTable->getRowByIndex(i)->onlyEntry();
+                if (in && !atEarliest(scheduleTable, in)) {
                     if (in->position.loopRow != i) {
                         reportError(sredBadlyPlacedError);
                         return false;
                     }
-                    if (!sredInstr(wt, in, false)) {
+                    if (!sredInstr(scheduleTable, in, false)) {
                         reportError("failed to sred a line\n");
                         return false;
                     }

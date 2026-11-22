@@ -34,21 +34,21 @@ bool makeLpWork(instStream *stream, int maxSpread)
     }
     stream->savedTable = table;
     stream->workTablePtr = 0;
-    workTable *nt = table->localClone();
-    stream->workTablePtr = nt;
-    if (!nt) {
+    workTable *scheduleTable = table->localClone();
+    stream->workTablePtr = scheduleTable;
+    if (!scheduleTable) {
         reportError(lpWorkCloneTableError);
         return false;
     }
     Instr *instruction;
-    for (instruction = nt->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+    for (instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
         int latest = 0;
-        for (int i = 0; i != instruction->operandCount; i++) {
-            Operand *operand = &instruction->operands[i];
+        for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+            Operand *operand = &instruction->operands[operandIndex];
             RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
-                for (int j = 0; j != reg->partCount; j++) {
-                    ol_s *operandLocation = operand->parts[j].operandLocations.head;
+                for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                    ol_s *operandLocation = operand->parts[partIndex].operandLocations.head;
                     if (operandLocation) {
                         Instr *src = operandLocation->instruction;
                         Operand *otherOperand = operandAtLocation(operandLocation);
@@ -65,7 +65,7 @@ bool makeLpWork(instStream *stream, int maxSpread)
         }
         instruction->instructionId = latest;
     }
-    for (instruction = nt->linearInstructions.tail; instruction; instruction = instruction->linearLink.previousInstruction) {
+    for (instruction = scheduleTable->linearInstructions.tail; instruction; instruction = instruction->linearLink.previousInstruction) {
         int earliest = 30000;
         for (int i = 0; i != instruction->operandCount; i++) {
             Operand *operand = &instruction->operands[i];
@@ -95,15 +95,15 @@ bool makeLpWork(instStream *stream, int maxSpread)
         }
     }
     char buf[256];
-    for (instruction = nt->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+    for (instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
         int lo = 30000;
         int hi = 0;
-        char *p = buf;
+        char *outputCursor = buf;
         for (int i = 0; i != instruction->operandCount; i++) {
             Operand *operand = &instruction->operands[i];
             RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
-                p += formatIntoBuffer(p, " %s: ", reg->registerName());
+                outputCursor += formatIntoBuffer(outputCursor, " %s: ", reg->registerName());
                 int rlo = 30000, rhi = 0;
                 bool any = false;
                 for (int j = 0; j != reg->partCount; j++) {
@@ -117,16 +117,16 @@ bool makeLpWork(instStream *stream, int maxSpread)
                                 rlo = d;
                             if (d > rhi)
                                 rhi = d;
-                            p += formatIntoBuffer(p, "%3d ", d);
+                            outputCursor += formatIntoBuffer(outputCursor, "%3d ", d);
                         } else
-                            p += formatIntoBuffer(p, "xxx ");
+                            outputCursor += formatIntoBuffer(outputCursor, "xxx ");
                     } else
-                        p += formatIntoBuffer(p, "... ");
+                        outputCursor += formatIntoBuffer(outputCursor, "... ");
                 }
                 if (any) {
-                    p += formatIntoBuffer(p, "[%d %d] (%d) ", rlo, rhi, rhi - rlo);
+                    outputCursor += formatIntoBuffer(outputCursor, "[%d %d] (%d) ", rlo, rhi, rhi - rlo);
                     if (rhi - rlo > maxSpread)
-                        p += formatIntoBuffer(p, "!!!");
+                        outputCursor += formatIntoBuffer(outputCursor, "!!!");
                     if (rlo < lo)
                         lo = rlo;
                     if (rhi > hi)
@@ -134,10 +134,10 @@ bool makeLpWork(instStream *stream, int maxSpread)
                 }
             }
         }
-        p += formatIntoBuffer(p, "    -> %d %d (%d)", lo, hi, hi - lo);
+        outputCursor += formatIntoBuffer(outputCursor, "    -> %d %d (%d)", lo, hi, hi - lo);
         if (lo > maxSpread)
-            p += formatIntoBuffer(p, " ****");
-        p[10] = 0;
+            outputCursor += formatIntoBuffer(outputCursor, " ****");
+        outputCursor[10] = 0;
     }
     return true;
 }
@@ -247,8 +247,8 @@ bool lsqChain(workTable *table)
             return false;
         }
         for (Instr *instruction = ni->linearLink.nextInstruction; instruction; instruction = instruction->linearLink.nextInstruction) {
-            for (int k = 0; k != instruction->operandCount; k++) {
-                Operand *operand = &instruction->operands[k];
+            for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+                Operand *operand = &instruction->operands[operandIndex];
                 if (operand->assignedRegister != reg)
                     continue;
                 if (!isRegisterOperand(operand, 1)) {
@@ -256,7 +256,7 @@ bool lsqChain(workTable *table)
                     return false;
                 }
                 operand->parts[0].operandLocations.clear();
-                if (!link_oParts(ni, 0, 0, instruction, k, 0)) {
+                if (!link_oParts(ni, 0, 0, instruction, operandIndex, 0)) {
                     reportError(lsqChainLinkError);
                     return false;
                 }

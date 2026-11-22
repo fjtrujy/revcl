@@ -97,9 +97,9 @@ int getMove(Block *blk, Instr *instruction, int now)
         if (reg && isVuRegister(reg) && op2->operandStatus != 2) {
             OperandLock *lock = 0;
             int score = -1;
-            for (int p = 0; p != reg->partCount; p++) {
-                if ((op2->componentMask >> p) & 1) {
-                    lock = &op2->parts[p];
+            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                if ((op2->componentMask >> partIndex) & 1) {
+                    lock = &op2->parts[partIndex];
                     OperandLock *parent = lock->getParent();
                     if (lock->getPriority() == 2 && score < 10000)
                         score = 10000;
@@ -211,9 +211,9 @@ int getMove(Block *blk, Instr *instruction, int now)
         int oldBits = 0;
         int newBits = 0;
         for (Instr *it = blk->pendingInstructions.head; it; it = (Instr *)it->pendingLink.nextInstruction) {
-            int n;
-            for (n = 0; n != it->operandCount; n++) {
-                Operand *operand = &it->operands[n];
+            int operandIndex;
+            for (operandIndex = 0; operandIndex != it->operandCount; operandIndex++) {
+                Operand *operand = &it->operands[operandIndex];
                 RegPoolEntry *reg = registerOperand(operand, 1);
                 if (reg == bestReg) {
                     bool stale = false;
@@ -295,8 +295,8 @@ int getMove(Block *blk, Instr *instruction, int now)
                     }
                 }
             }
-            for (n = 0; n != it->operandCount; n++) {
-                Operand *operand = &it->operands[n];
+            for (operandIndex = 0; operandIndex != it->operandCount; operandIndex++) {
+                Operand *operand = &it->operands[operandIndex];
                 RegPoolEntry *reg = registerOperand(operand, 2);
                 if (reg == bestReg) {
                     if (operand->operandStatus != 1) {
@@ -372,20 +372,20 @@ bool undoMove(Block *blk, Instr *mv)
     if (!UnlinkFromToDo(blk, mv))
         reportError("failed to unlink from todolist!\n");
     for (Instr *instruction = blk->pendingInstructions.head; instruction; instruction = (Instr *)instruction->pendingLink.nextInstruction) {
-        for (int n = 0; n != instruction->operandCount; n++) {
-            Operand *operand = &instruction->operands[n];
+        for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+            Operand *operand = &instruction->operands[operandIndex];
             RegPoolEntry *registerEntry = operand->assignedRegister;
             if (registerEntry == dup) {
                 operand->assignedRegister = orig;
                 if (isRegisterOperand(operand, 1)) {
-                    for (int p = 0; p != registerEntry->partCount; p++) {
-                        if ((bool)((operand->componentMask >> p) & 1)) {
-                            OperandLock *lock = &operand->parts[p];
+                    for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+                        if ((bool)((operand->componentMask >> partIndex) & 1)) {
+                            OperandLock *lock = &operand->parts[partIndex];
                             OperandLock *parent = lock->getParent();
-                            RegisterPartLockList *newList = (RegisterPartLockList *)orig->getPartPayload(p);
-                            RegisterPartLockList *oldList = (RegisterPartLockList *)dup->getPartPayload(p);
-                            if ((bool)((out->componentMask >> p) & 1) && parent == &out->parts[p])
-                                parent = inputOperand->parts[p].getParent();
+                            RegisterPartLockList *newList = (RegisterPartLockList *)orig->getPartPayload(partIndex);
+                            RegisterPartLockList *oldList = (RegisterPartLockList *)dup->getPartPayload(partIndex);
+                            if ((bool)((out->componentMask >> partIndex) & 1) && parent == &out->parts[partIndex])
+                                parent = inputOperand->parts[partIndex].getParent();
                             if (!oldList->removeInput(lock)) {
                                 reportError("failed to deregister input lock for undo move\n");
                                 return true;

@@ -68,13 +68,13 @@ bool calculateLatestDependencyRow(Instr *instruction, int *row)
     return true;
 }
 
-bool instStream::buildForwardDependencies(bool a, bool b)
+bool instStream::buildForwardDependencies(bool forceDependencyChecks, bool b)
 {
     if (!workTablePtr) {
         reportWarning("BuildfDepList - no work table set for %s!\n", streamName());
         return false;
     }
-    return BuildfDepList(workTablePtr, a, b);
+    return BuildfDepList(workTablePtr, forceDependencyChecks, b);
 }
 
 bool BuildfDepList(workTable *table, bool force, bool)
@@ -171,17 +171,17 @@ bool BuildfDepList(workTable *table, bool force, bool)
                 reportError("tag string, but no match criteria set\n");
                 return false;
             }
-            for (int k = 0; k != instruction->operandCount; k++) {
-                Operand *operand = &instruction->operands[k];
+            for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+                Operand *operand = &instruction->operands[operandIndex];
                 if (operand) {
                     RegPoolEntry *registerEntry = registerOperand(operand, 2);
                     if (registerEntry) {
                         if (registerEntry->registerIndex == 48)
                             instruction->specialRegisterWriteMask = operand->componentMask;
                         if (registerEntry->registerIndex == 48 || registerEntry->registerIndex == 49) {
-                            for (int p = 0; p != registerEntry->partCount; p++)
-                                if ((operand->componentMask >> p) & 1)
-                                    for (ol_s *operandLocation = operand->parts[p].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++)
+                                if ((operand->componentMask >> partIndex) & 1)
+                                    for (ol_s *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                                         Instr *linkedInstruction = operandLocation->instruction;
                                         if (linkedInstruction)
                                             addAdditionalClonePredecessors(instruction, linkedInstruction);
@@ -230,31 +230,31 @@ finalize_ready:
 
 bool tagsMatch(Instr *instruction, Instr *secondInstruction)
 {
-    char *p = instruction->branchLabelTags;
-    if (!p)
+    char *firstTags = instruction->branchLabelTags;
+    if (!firstTags)
         return false;
     char *q0 = secondInstruction->branchLabelTags;
     if (!q0)
         return false;
-    while (*p) {
-        char *q = q0;
-        while (*q) {
-            char *s = p;
-            while (*q && *s && *q != ':' && *s != ':') {
-                q++;
-                s++;
+    while (*firstTags) {
+        char *secondTags = q0;
+        while (*secondTags) {
+            char *firstTagCursor = firstTags;
+            while (*secondTags && *firstTagCursor && *secondTags != ':' && *firstTagCursor != ':') {
+                secondTags++;
+                firstTagCursor++;
             }
-            if (*q == *s)
+            if (*secondTags == *firstTagCursor)
                 return true;
-            while (*q && *q != ':')
-                q++;
-            if (*q == ':')
-                q++;
+            while (*secondTags && *secondTags != ':')
+                secondTags++;
+            if (*secondTags == ':')
+                secondTags++;
         }
-        while (*p && *p != ':')
-            p++;
-        if (*p == ':')
-            p++;
+        while (*firstTags && *firstTags != ':')
+            firstTags++;
+        if (*firstTags == ':')
+            firstTags++;
     }
     return false;
 }
@@ -325,13 +325,13 @@ bool addAdditionalClonePredecessors(Instr *instruction, Instr *other)
 {
     instruction->dumpOperandDiagnostics(false);
     other->dumpOperandDiagnostics(false);
-    for (int k = 0; k != other->operandCount; k++) {
-        Operand *operand = &other->operands[k];
+    for (int operandIndex = 0; operandIndex != other->operandCount; operandIndex++) {
+        Operand *operand = &other->operands[operandIndex];
         RegPoolEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
-            for (int p = 0; p != registerEntry->partCount; p++)
-                if ((operand->componentMask >> p) & 1)
-                    for (ol_s *operandLocation = operand->parts[p].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++)
+                if ((operand->componentMask >> partIndex) & 1)
+                    for (ol_s *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                         Instr *linkedInstruction = operandLocation->instruction;
                         if (linkedInstruction && linkedInstruction != instruction && linkedInstruction->linearOrderIndex < instruction->linearOrderIndex) {
                             instruction->hasExtraPredecessors = 1;

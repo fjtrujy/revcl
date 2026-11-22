@@ -30,20 +30,20 @@ bool initializeMemoryRegisterArea(RegPool *pool, const char *base, int size)
         reportError(memRegPoolAllocError);
         return false;
     }
-    RegPoolEntry *e = tab;
+    RegPoolEntry *registerEntry = tab;
     pool->entryCount = size;
     int idx = 10000;
-    for (int i = 0; i != size; i++, e++, idx++) {
+    for (int i = 0; i != size; i++, registerEntry++, idx++) {
         formatIntoBuffer(buf, "(%s+%d)(vi00)", base, i);
-        if (!e->addRegisterNameAlias(buf)) {
+        if (!registerEntry->addRegisterNameAlias(buf)) {
             reportError("init mem area: failed to add register %s\n", buf);
             return false;
         }
-        e->allocatable = true;
-        e->registerIndex = idx;
-        e->registerClass = 11;
-        e->ownerPool = pool;
-        e->partCount = 4;
+        registerEntry->allocatable = true;
+        registerEntry->registerIndex = idx;
+        registerEntry->registerClass = 11;
+        registerEntry->ownerPool = pool;
+        registerEntry->partCount = 4;
     }
     return true;
 }

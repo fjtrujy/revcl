@@ -10,18 +10,18 @@ static inline regUseSlot *registerPart(regUse *registerUse, int part)
 
 bool initializeRegisterBacktraceLocation(instStream *stream, RegPoolEntry *reg, int part)
 {
-    workTable *wt = stream->getTable();
-    if (!wt) {
+    workTable *scheduleTable = stream->getTable();
+    if (!scheduleTable) {
         reportError("failed to get work table\n");
         return 0;
     }
-    regUse *registerUse = wt->registerUses.findByRegister(reg);
+    regUse *registerUse = scheduleTable->registerUses.findByRegister(reg);
     stream->pendingHazardBroadcast = 0;
     stream->hazardFlag = 0;
     stream->nextResolvedStream = 0;
     stream->backtraceRegisterUse = registerUse;
     if (registerUse && ((registerUse->outputMask >> part) & 1)) {
-        if (wt->codeMode() == 1 || wt->codeMode() == 4) {
+        if (scheduleTable->codeMode() == 1 || scheduleTable->codeMode() == 4) {
             stream->outputLocationCount = 1;
             stream->earliestOutputLocation = 0;
             stream->latestOutputLocation = 0;

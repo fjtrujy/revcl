@@ -12,8 +12,8 @@ bool Program::doUnique()
 {
     instStream *stream;
     for (stream = streamHead; stream; stream = stream->nextStream) {
-        workTable *wt = stream->getTable();
-        for (Instr *instruction = wt->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+        workTable *scheduleTable = stream->getTable();
+        for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
             if (!instruction->branchFlags)
                 continue;
             iInfo *instructionInfo = instruction->opcodeInfo;
@@ -32,23 +32,23 @@ bool Program::doUnique()
                 exitAfterCleanup(-1);
             }
             if (op->operandKind == 0x1b) {
-                mValue *v = &op->immediateValue;
-                if (v->type != mValue::STRING) {
+                mValue *expressionValue = &op->immediateValue;
+                if (expressionValue->type != mValue::STRING) {
                     reportError("doUnique: a branch target isn't a literal string\n");
                     return false;
                 }
-                char *name = v->getString();
+                char *name = expressionValue->getString();
                 if (!name) {
                     reportError("failed to get name\n");
                     return false;
                 }
                 if (!isExportedSymbol(this, name)) {
-                    char *nn = mprefix_del(getUniqueName(this), name);
-                    if (!nn) {
+                    char *qualifiedName = mprefix_del(getUniqueName(this), name);
+                    if (!qualifiedName) {
                         reportError("failed to cat name\n");
                         return false;
                     }
-                    if (!v->setString(nn)) {
+                    if (!expressionValue->setString(qualifiedName)) {
                         reportError("failed to set name\n");
                         return false;
                     }

@@ -24,26 +24,26 @@ Instr *getMove(int type, int)
         exitAfterCleanup(-1);
     }
 
-    moveRec *mr = (moveRec *)freeMoveRecordsByType[type];
-    if (mr) {
-        freeMoveRecordsByType[type] = (VclPtrWord)mr->nextFree;
-        Instr *in = mr->instruction;
+    moveRec *moveRecord = (moveRec *)freeMoveRecordsByType[type];
+    if (moveRecord) {
+        freeMoveRecordsByType[type] = (VclPtrWord)moveRecord->nextFree;
+        Instr *in = moveRecord->instruction;
         if (!in) {
             reportError("getFreeMove - inst not set\n");
             exitAfterCleanup(-1);
         }
-        if (in->moveRecordWord != (VclPtrWord)mr) {
-            reportError(moveRecMismatchError, in->moveRecordWord, mr);
+        if (in->moveRecordWord != (VclPtrWord)moveRecord) {
+            reportError(moveRecMismatchError, in->moveRecordWord, moveRecord);
             exitAfterCleanup(-1);
         }
-        if (!mr->moveRegister) {
+        if (!moveRecord->moveRegister) {
             reportError("getFreeMove: m_Reg not set\n");
             exitAfterCleanup(-1);
         }
-        in->operands[0].assignedRegister = mr->moveRegister;
-        mr->moveRegister->moveReset();
-        for (int i = 0; i != mr->moveRegister->partCount; i++) {
-            RegisterPartLockList *registerPartLocks = &mr->partLocks[i];
+        in->operands[0].assignedRegister = moveRecord->moveRegister;
+        moveRecord->moveRegister->moveReset();
+        for (int i = 0; i != moveRecord->moveRegister->partCount; i++) {
+            RegisterPartLockList *registerPartLocks = &moveRecord->partLocks[i];
             if (!registerPartLocks) {
                 reportError(moveRecNullRllError);
                 abortAfterError();
@@ -51,7 +51,7 @@ Instr *getMove(int type, int)
             registerPartLocks->nextLockList = 0;
             registerPartLocks->reset();
             registerPartLocks->calculateLoopStats = 0;
-            mr->moveRegister->setPartPayload(i, (VclPtrWord)registerPartLocks);
+            moveRecord->moveRegister->setPartPayload(i, (VclPtrWord)registerPartLocks);
         }
         in->nextMoveInstruction = 0;
         in->pendingLink.previousInstruction = 0;
@@ -64,8 +64,8 @@ Instr *getMove(int type, int)
         return in;
     }
 
-    mr = new moveRec(type);
-    if (!mr) {
+    moveRecord = new moveRec(type);
+    if (!moveRecord) {
         reportError("new : failed to get moveRec\n");
         exitAfterCleanup(-1);
     }
@@ -100,7 +100,7 @@ Instr *getMove(int type, int)
         reportError("failed to get move reg\n");
         exitAfterCleanup(-1);
     }
-    in->moveRecordWord = (VclPtrWord)mr;
+    in->moveRecordWord = (VclPtrWord)moveRecord;
     Operand *operand = in->getOp(0);
     if (!operand) {
         reportError("failed to get move output!\n");
@@ -111,15 +111,15 @@ Instr *getMove(int type, int)
         reportError(moveRecSidefxError);
         exitAfterCleanup(-1);
     }
-    for (int i = 0; i != reg->partCount; i++) {
-        RegisterPartLockList *l = &mr->partLocks[i];
+    for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+        RegisterPartLockList *l = &moveRecord->partLocks[partIndex];
         l->nextLockList = 0;
         l->reset();
         l->calculateLoopStats = 0;
-        reg->setPartPayload(i, (VclPtrWord)l);
+        reg->setPartPayload(partIndex, (VclPtrWord)l);
     }
-    mr->instruction = in;
-    mr->moveRegister = reg;
+    moveRecord->instruction = in;
+    moveRecord->moveRegister = reg;
     return in;
 }
 
@@ -129,23 +129,23 @@ bool addFreeMove(Instr *in)
         reportError("addFReeMove - null input\n");
         exitAfterCleanup(-1);
     }
-    moveRec *mr = (moveRec *)in->moveRecordWord;
-    if (!mr) {
+    moveRec *moveRecord = (moveRec *)in->moveRecordWord;
+    if (!moveRecord) {
         reportError("not a move to free\n");
         exitAfterCleanup(-1);
     }
-    RegPoolEntry *reg = mr->moveRegister;
+    RegPoolEntry *reg = moveRecord->moveRegister;
     if (!reg) {
         reportError("m_Reg not set in mr\n");
         exitAfterCleanup(-1);
     }
     reg->moveReset();
-    for (int i = 0; i != reg->partCount; i++) {
-        RegisterPartLockList *registerPartLocks = &mr->partLocks[i];
+    for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+        RegisterPartLockList *registerPartLocks = &moveRecord->partLocks[partIndex];
         registerPartLocks->nextLockList = 0;
         registerPartLocks->reset();
     }
-    if (in != mr->instruction) {
+    if (in != moveRecord->instruction) {
         reportError("no instruction set in mr\n");
         exitAfterCleanup(-1);
     }
@@ -165,8 +165,8 @@ bool addFreeMove(Instr *in)
     in->opcodeInfo = instructionInfo;
     in->permittedPipelineMask = instructionInfo->pipelineMask;
     in->opcodeResourceMask = instructionInfo->resourceMask;
-    mr->nextFree = (moveRec *)freeMoveRecordsByType[mr->moveType];
-    freeMoveRecordsByType[mr->moveType] = (VclPtrWord)mr;
+    moveRecord->nextFree = (moveRec *)freeMoveRecordsByType[moveRecord->moveType];
+    freeMoveRecordsByType[moveRecord->moveType] = (VclPtrWord)moveRecord;
     return true;
 }
 
@@ -252,7 +252,7 @@ bool detectMove(Instr *instruction, int &opc, unsigned char &mask, int &dstOp, i
     return true;
 }
 
-bool resolveMovePipe(workTable *wt, Instr *instruction, int pipe)
+bool resolveMovePipe(workTable *scheduleTable, Instr *instruction, int pipe)
 {
     if (instruction->abstractMoveOpcode == 0xb2)
         instruction->concreteMoveOpcode = 0xb3;
@@ -264,21 +264,21 @@ bool resolveMovePipe(workTable *wt, Instr *instruction, int pipe)
         return false;
     }
     if (instruction->permittedPipelineMask == 3)
-        wt->vectorMoveCount--;
+        scheduleTable->vectorMoveCount--;
     else if (instruction->permittedPipelineMask & 1)
-        wt->oddPipeMoveCount--;
+        scheduleTable->oddPipeMoveCount--;
     else
-        wt->evenPipeMoveCount--;
+        scheduleTable->evenPipeMoveCount--;
     iInfo *instructionInfo = getOpcodeInfoById(instruction->concreteMoveOpcode);
     instruction->opcodeInfo = instructionInfo;
     instruction->permittedPipelineMask = instructionInfo->pipelineMask;
     instruction->opcodeResourceMask = instructionInfo->resourceMask;
     if (instruction->permittedPipelineMask == 3)
-        wt->vectorMoveCount++;
+        scheduleTable->vectorMoveCount++;
     else if (instruction->permittedPipelineMask & 1)
-        wt->oddPipeMoveCount++;
+        scheduleTable->oddPipeMoveCount++;
     else
-        wt->evenPipeMoveCount++;
+        scheduleTable->evenPipeMoveCount++;
     return true;
 }
 

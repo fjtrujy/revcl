@@ -2,14 +2,14 @@
 #include "Parser.h"
 #include "os.h"
 
-bool isLocTagValid(LocTag *t)
+bool isLocTagValid(LocTag *locationTag)
 {
-    return (t->lineText && t->tokenCount) || (!t->lineText && !t->tokenCount);
+    return (locationTag->lineText && locationTag->tokenCount) || (!locationTag->lineText && !locationTag->tokenCount);
 }
 
-int getLineTokenCount(LocTag *t)
+int getLineTokenCount(LocTag *locationTag)
 {
-    return t->tokenCount;
+    return locationTag->tokenCount;
 }
 
 

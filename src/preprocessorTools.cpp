@@ -129,11 +129,11 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
                 } else {
                     close(fdOut);
                     fdOut = -1;
-                    char *p = cmd + sprintf(cmd, "%s ", t->cmd);
+                    char *commandCursor = cmd + sprintf(cmd, "%s ", t->cmd);
                     for (int i = argFirst; i < argEnd; i++)
                         if (toolOptMatches(1 << tool, argv[i][1]))
-                            p += sprintf(p, "%s ", argv[i]);
-                    sprintf(p, "%s > %s\n", inPath, outPath);
+                            commandCursor += sprintf(commandCursor, "%s ", argv[i]);
+                    sprintf(commandCursor, "%s > %s\n", inPath, outPath);
                     int rc = system(cmd);
                     if (rc) {
                         reportError("system returned %d\n", rc);

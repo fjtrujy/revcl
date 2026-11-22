@@ -304,16 +304,16 @@ int branchLinkTypeForFlags(int flags)
 
 const char *linkTypeName(int type)
 {
-    const char *s = "IFT_UNKNOWN";
+    const char *linkTypeText = "IFT_UNKNOWN";
     switch (type) {
-    case -1: s = "IFT_BAD"; break;
-    case 0: s = "IFT_FALL"; break;
-    case 1: s = "IFT_ABS"; break;
-    case 2: s = "IFT_REG"; break;
-    case 3: s = "IFT_ABS_LINK"; break;
-    case 4: s = "IFT_REG_LINK"; break;
-    case 5: s = "IFT_REG_RET"; break;
+    case -1: linkTypeText = "IFT_BAD"; break;
+    case 0: linkTypeText = "IFT_FALL"; break;
+    case 1: linkTypeText = "IFT_ABS"; break;
+    case 2: linkTypeText = "IFT_REG"; break;
+    case 3: linkTypeText = "IFT_ABS_LINK"; break;
+    case 4: linkTypeText = "IFT_REG_LINK"; break;
+    case 5: linkTypeText = "IFT_REG_RET"; break;
     }
-    return s;
+    return linkTypeText;
 }
 

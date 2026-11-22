@@ -91,8 +91,8 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
             reportError("failed to build tta externalb\n");
             exitAfterCleanup(-1);
         }
-        int r = bestReg();
-        if (r < 0) {
+        int registerIndex = bestReg();
+        if (registerIndex < 0) {
             if (!countMarkedPhysicalRegisters()) {
                 reportError("vcl failed to allocate a register of type %s, but there's no registers of this type available for it to use.. maybe adding a .init_.. directive would help\n", poolName);
                 suppressFurtherErrors();
@@ -101,8 +101,8 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
                 list->dumpVirtualRegisterUses();
             return false;
         }
-        best->assignedPhysicalRegister = &registerEntries[r];
-        if (!set_t_in_aTab(r)) {
+        best->assignedPhysicalRegister = &registerEntries[registerIndex];
+        if (!set_t_in_aTab(registerIndex)) {
             registerUse->validateAndDumpParts();
             list->dumpRegisterUses();
             reportError("failed to set t\n");
@@ -159,8 +159,8 @@ bool genRegPool::assignExt(instStream *stream)
                     return false;
                 }
             }
-            int r = firstEmptyMask(this);
-            if (r < 0) {
+            int registerIndex = firstEmptyMask(this);
+            if (registerIndex < 0) {
                 if (!countMarkedPhysicalRegisters()) {
                     reportError("vcl failed to assign a register of type %s, but there's no registers of that type available for it to use, maybe adding a .init.. directive would help\n");
                     suppressFurtherErrors();
@@ -173,7 +173,7 @@ bool genRegPool::assignExt(instStream *stream)
                 suppressFurtherErrors();
                 return false;
             }
-            reg->assignedPhysicalRegister = &registerEntries[r];
+            reg->assignedPhysicalRegister = &registerEntries[registerIndex];
         }
     }
     return true;
@@ -191,9 +191,9 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
         return false;
     }
     workTable *table = stream->getTable();
-    regUseList *l = &table->registerUses;
+    regUseList *registerUseList = &table->registerUses;
     regUse *registerUse;
-    for (registerUse = l->firstVirtual(); registerUse; registerUse = registerUse->nextVirtual()) {
+    for (registerUse = registerUseList->firstVirtual(); registerUse; registerUse = registerUse->nextVirtual()) {
         if (registerUse->registerEntry == reg) {
             if (!registerUse->isExternal()) {
                 reportError("discard disjoint - found a match - but it's not external\n");
@@ -216,7 +216,7 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
         reportError("xiBits is outside of iBits \n");
         return false;
     }
-    for (regUse *o = l->head; o; o = o->next) {
+    for (regUse *o = registerUseList->head; o; o = o->next) {
         RegPoolEntry *registerEntry = o->registerEntry;
         if (!registerEntry) {
             reportError("flowMon::discard disjoint forced regref with null reg\n");
@@ -239,23 +239,23 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
             break;
         }
         case 3:
-            for (int i = 0; i != reg->partCount; i++) {
+            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
                 int as = 0, ae = 0;
                 bool aa = false;
                 int bs = 0, be = 0;
                 bool ba = false;
-                if (!regRefLiveRange(registerUse, i, &as, &ae, &aa)) {
+                if (!regRefLiveRange(registerUse, partIndex, &as, &ae, &aa)) {
                     reportError("couldn't determine live range_a\n");
                     return false;
                 }
-                if (!regRefLiveRange(o, i, &bs, &be, &ba)) {
-                    reportError("couldn't determine live range_b.%d\n", i);
+                if (!regRefLiveRange(o, partIndex, &bs, &be, &ba)) {
+                    reportError("couldn't determine live range_b.%d\n", partIndex);
                     o->validateAndDumpParts();
                     table->dump();
                     return false;
                 }
                 if (!(aa && ba) && (be >= 0 || ae >= 0) && as < be && ae > bs)
-                    m |= 1 << i;
+                    m |= 1 << partIndex;
             }
             if (registerUse->outputMask && o->outputMask && hack_slo(table, reg, registerEntry))
                 m |= 0x80;

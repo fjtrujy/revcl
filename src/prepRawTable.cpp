@@ -5,9 +5,9 @@
 bool setRangeFrom(workTable *t);
 void resetRange();
 
-static inline void dumpRawInstruction(Instr *in)
+static inline void dumpRawInstruction(Instr *instruction)
 {
-    in->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
 }
 
 bool workTable::prepRawTable()
@@ -45,17 +45,17 @@ bool workTable::prepRawTable()
     if (tlen == 0)
         rawSchedulingMode = 1;
     for (int rl = 0; rl < rangeEnd; rl++) {
-        wtRow *ie = (wtRow *)((cls_unk30 *)this)->getIE_ck(rl);
-        if (!ie) {
+        wtRow *workRow = (wtRow *)((cls_unk30 *)this)->getIE_ck(rl);
+        if (!workRow) {
             reportError("iTable::prepTable - failed to get ientry\n");
             return 0;
         }
-        if (ie->skip) {
+        if (workRow->skip) {
             reportError("bSkip set for preptabl\n");
             return 0;
         }
-        for (int p = 0; p != 2; p++) {
-            Instr *in = ie->entries[p].instruction;
+        for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
+            Instr *in = workRow->entries[entryIndex].instruction;
             if (!in)
                 continue;
             if (in->syntheticKind) {
@@ -97,7 +97,7 @@ bool workTable::prepRawTable()
                 maxLid = lid;
             InstructionPosition pos;
             pos.setFromLinearRow(il);
-            pos.setInstructionPipe(p);
+            pos.setInstructionPipe(entryIndex);
             in->position.linearRow = pos.linearRow;
             signed char nl = pos.loopIteration;
             loc->loopRow = pos.loopRow;

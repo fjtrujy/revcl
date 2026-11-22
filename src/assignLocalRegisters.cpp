@@ -105,11 +105,11 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         return false;
     }
     int lsz = activeLoopSize;
-    for (int i = 0; i != reg->partCount; i++) {
-        bool on = (mask >> i) & 1;
+    for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+        bool on = (mask >> partIndex) & 1;
         if (!on)
             continue;
-        RegisterPartLockList *lockList = (RegisterPartLockList *)reg->getPartPayload(i);
+        RegisterPartLockList *lockList = (RegisterPartLockList *)reg->getPartPayload(partIndex);
         if (!lockList) {
             reportError(buildTTabLockListError, reg->registerName());
             return false;
@@ -118,7 +118,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         if (!lock)
             continue;
         bool shared = lockList->unk_2b != 0;
-        set |= 1 << i;
+        set |= 1 << partIndex;
         if (lsz && lockList->externalOutputCount)
             shared = true;
         for (; lock; lock = lock->nextSibling) {
@@ -159,14 +159,14 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                 if (lsz)
                     idx = c % lsz;
                 unsigned char v = candidateRegisterTimeline[idx];
-                if (((v >> i) & 1) && !shared) {
+                if (((v >> partIndex) & 1) && !shared) {
                     int overlap = lockList->unk_2b != 0;
                     reportError(buildTTabOverlapError, overlap);
                     lockList->checkCounts();
                     dumpTTab();
                     return false;
                 }
-                candidateRegisterTimeline[idx] = v | (1 << i);
+                candidateRegisterTimeline[idx] = v | (1 << partIndex);
             }
         }
     }
@@ -340,16 +340,16 @@ bool genRegPool::set_in_aTab(regUse *registerUse)
                 exitAfterCleanup(-1);
             }
             int set = 0;
-            for (int i = 0; i != reg->partCount; i++) {
-                bool on = (mask >> i) & 1;
-                if (on && !reg->getPartPayload(i)) {
+            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                bool on = (mask >> partIndex) & 1;
+                if (on && !reg->getPartPayload(partIndex)) {
                     reportError("failed to get rll\n");
                     return false;
                 }
-                RegisterPartLockList *lockList = (RegisterPartLockList *)reg->getPartPayload(i);
+                RegisterPartLockList *lockList = (RegisterPartLockList *)reg->getPartPayload(partIndex);
                 if (lockList) {
                     if (!lockList->assigned)
-                        set |= 1 << i;
+                        set |= 1 << partIndex;
                     lockList->assigned = 1;
                 }
             }

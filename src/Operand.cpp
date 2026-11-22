@@ -28,10 +28,10 @@ Operand::Operand()
     externalComponentMask = 0;
     externalPartMask = 0;
     operandStatus = 0;
-    int i;
-    for (i = 0; i != 4; i++) {
-        if (!parts[i].operandLocations.clear()) {
-            reportError("failed to flow reset part %d\n", i);
+    int partIndex;
+    for (partIndex = 0; partIndex != 4; partIndex++) {
+        if (!parts[partIndex].operandLocations.clear()) {
+            reportError("failed to flow reset part %d\n", partIndex);
             break;
         }
     }
@@ -242,7 +242,7 @@ static inline int operandZeroValue(Operand *operand)
 
 char *Operand::Emit(char *buf, bool, bool symbolic)
 {
-    const char *rn = 0;
+    const char *registerNameText = 0;
     if (isImplicit)
         return 0;
     if (!validateKindAndMask())
@@ -260,7 +260,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
                 reportError("no original register set register is %s\n", assignedRegister->registerName());
                 return 0;
             }
-            rn = originalRegister->registerName();
+            registerNameText = originalRegister->registerName();
         }
     } else {
         RegPoolEntry *reg = assignedRegister;
@@ -269,14 +269,14 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
                 reportError("non symbolic emit.. but found a virtual register in an operand!\n");
                 return 0;
             }
-            rn = reg->registerName();
+            registerNameText = reg->registerName();
             reg->usedSlotMask |= componentMask;
         }
     }
     switch (operandKind) {
     case 13:
     emit_x:
-        buf += formatIntoBuffer(buf, "%sx", rn);
+        buf += formatIntoBuffer(buf, "%sx", registerNameText);
         break;
     case 3:
         if (componentMask & 1)
@@ -290,7 +290,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         return 0;
     case 14:
     emit_y:
-        buf += formatIntoBuffer(buf, "%sy", rn);
+        buf += formatIntoBuffer(buf, "%sy", registerNameText);
         break;
     case 4:
         buf += formatIntoBuffer(buf, "I");
@@ -306,7 +306,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         break;
     case 15:
     emit_z:
-        buf += formatIntoBuffer(buf, "%sz", rn);
+        buf += formatIntoBuffer(buf, "%sz", registerNameText);
         break;
     case 8:
         buf += formatIntoBuffer(buf, "R");
@@ -319,40 +319,40 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         break;
     case 16:
     emit_w:
-        buf += formatIntoBuffer(buf, "%sw", rn);
+        buf += formatIntoBuffer(buf, "%sw", registerNameText);
         break;
     case 11:
-        buf += formatIntoBuffer(buf, "%sxyz", rn);
+        buf += formatIntoBuffer(buf, "%sxyz", registerNameText);
         break;
     case 1:
     case 2:
-        buf += formatIntoBuffer(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", registerNameText);
         break;
     case 39:
     case 40:
     case 41:
     case 42:
-        buf += formatIntoBuffer(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", registerNameText);
         break;
     case 43:
     case 44:
-        buf += formatIntoBuffer(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", registerNameText);
         break;
     case 54:
-        buf += formatIntoBuffer(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", registerNameText);
         break;
     case 34:
-        buf += formatIntoBuffer(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", registerNameText);
         break;
     case 27: {
         mValue *imm = &immediateValue;
         if (!imm->isNumeric()) {
-            char *s = imm->asChars();
-            if (!s) {
+            char *immediateText = imm->asChars();
+            if (!immediateText) {
                 reportError("failed to get chars from immediate operand\n");
                 return 0;
             }
-            buf += formatIntoBuffer(buf, "%s", s);
+            buf += formatIntoBuffer(buf, "%s", immediateText);
         } else {
             if (decodeImmediateCategory(immediateDataType) == 2)
                 buf += formatIntoBuffer(buf, "%d", imm->i);
@@ -363,7 +363,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     }
     case 29:
     case 46: {
-        if (!rn) {
+        if (!registerNameText) {
             reportError("null rn - abort _BLAH_EA_IMM\n");
             return 0;
         }
@@ -372,7 +372,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             reportError("failed to get chars from ximm blah_ea_imm\n");
             return 0;
         }
-        buf += formatIntoBuffer(buf, "%s(%s)", s, rn);
+        buf += formatIntoBuffer(buf, "%s(%s)", s, registerNameText);
         break;
     }
     case 31: {
@@ -382,33 +382,33 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         buf += formatIntoBuffer(buf, "%s", s);
     }
     case 30:
-        if (!rn) {
+        if (!registerNameText) {
             reportError("null rn - abort _V_EA_REG\n");
             return 0;
         }
     case 28:
-        buf += formatIntoBuffer(buf, "(%s)", rn);
+        buf += formatIntoBuffer(buf, "(%s)", registerNameText);
         break;
     case 32:
-        if (!rn) {
+        if (!registerNameText) {
             reportError("null rn - abort _V_EA_INC\n");
             return 0;
         }
-        buf += formatIntoBuffer(buf, "(%s++)", rn);
+        buf += formatIntoBuffer(buf, "(%s++)", registerNameText);
         break;
     case 33:
-        if (!rn) {
+        if (!registerNameText) {
             reportError("null rn - abort _V_EA_DEC\n");
             return 0;
         }
-        buf += formatIntoBuffer(buf, "(--%s)", rn);
+        buf += formatIntoBuffer(buf, "(--%s)", registerNameText);
         break;
     case 37:
-        if (!rn) {
+        if (!registerNameText) {
             reportError("emit ramreg - no rn\n");
             return 0;
         }
-        buf += formatIntoBuffer("ramreg-[%s]", rn);
+        buf += formatIntoBuffer("ramreg-[%s]", registerNameText);
         break;
     case 55:
     default:
@@ -420,14 +420,14 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
 
 bool Operand::resetFlowState()
 {
-    int i = 0;
+    int partIndex = 0;
     reductionHazardMask = 0;
     externalComponentMask = 0;
     externalPartMask = 0;
     operandStatus = 0;
-    for (; i != 4; i++) {
-        if (!parts[i].operandLocations.clear()) {
-            reportError("failed to flow reset part %d\n", i);
+    for (; partIndex != 4; partIndex++) {
+        if (!parts[partIndex].operandLocations.clear()) {
+            reportError("failed to flow reset part %d\n", partIndex);
             return false;
         }
     }
@@ -441,8 +441,8 @@ static inline bool resetOperandLock(OperandLock *lock)
 
 bool Operand::resetOptimizationSlots()
 {
-    for (int i = 0; i != 4; i++) {
-        OpSlot *slot = &parts[i];
+    for (int partIndex = 0; partIndex != 4; partIndex++) {
+        OpSlot *slot = &parts[partIndex];
         resetOperandLock(slot);
         slot->conflictingOutputLockCount = 0;
         slot->outputConflictMarked[0] = 0;
@@ -526,18 +526,18 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return false;
     }
 
-    char *t = tok;
+    char *tokenCursor = tok;
     char c;
-    while ((c = *t) && c != ':')
-        t++;
+    while ((c = *tokenCursor) && c != ':')
+        tokenCursor++;
     if (c == ':') {
-        *t = 0;
-        char *td = out->branchLabelText;
-        t++;
+        *tokenCursor = 0;
+        char *labelCursor = out->branchLabelText;
+        tokenCursor++;
         int chars = 0;
         int seps = 1;
-        while (*t) {
-            if (*t != ':') {
+        while (*tokenCursor) {
+            if (*tokenCursor != ':') {
                 seps = 0;
                 chars++;
             } else {
@@ -545,28 +545,28 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 seps++;
             }
             if (seps <= 1 || chars)
-                *td++ = *t;
-            t++;
+                *labelCursor++ = *tokenCursor;
+            tokenCursor++;
         }
         if (seps)
-            td--;
+            labelCursor--;
         uA = ((int *)tok)[1];
         uB = ((int *)tok)[2];
-        if (td == out->branchLabelText) {
+        if (labelCursor == out->branchLabelText) {
             ((int *)tok)[1] = uA;
             ((int *)tok)[2] = uB;
             reportWarning("ignoring empty tag\n");
             out->branchLabelText[0] = 0;
         } else {
-            td[0] = ':';
-            td[1] = 0;
+            labelCursor[0] = ':';
+            labelCursor[1] = 0;
         }
     }
 
-    char *e = tok;
-    while (*e)
-        e++;
-    count = e - tok;
+    char *tokenEnd = tok;
+    while (*tokenEnd)
+        tokenEnd++;
+    count = tokenEnd - tok;
     out->name[0] = 0;
     out->immediateText[0] = 0;
     out->physicalRegisterName[0] = 0;
@@ -590,19 +590,19 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     case 35: {
         d = out->name;
         out->forcePhysicalBinding = 1;
-        e = tok;
-        while (*e && *e != '(')
-            *d++ = *e++;
+        tokenEnd = tok;
+        while (*tokenEnd && *tokenEnd != '(')
+            *d++ = *tokenEnd++;
         *d = 0;
-        if (*e) {
-            if (*e != '(') {
+        if (*tokenEnd) {
+            if (*tokenEnd != '(') {
                 reportError("oDecodeToken: bad fl4s\n");
                 return false;
             }
-            e++;
+            tokenEnd++;
             d = out->physicalRegisterName;
-            while (*e && *e != ')')
-                *d++ = *e++;
+            while (*tokenEnd && *tokenEnd != ')')
+                *d++ = *tokenEnd++;
             *d = 0;
         }
         if (newSyntax) {
@@ -948,7 +948,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         if (z0)
             return false;
         tok[uA] = zG;
-        char *r = e - 1;
+        char *r = tokenEnd - 1;
         if (*r != ')' || *tok != '(')
             return false;
         start = tok + 1;
@@ -958,19 +958,19 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     case 36:
         d = out->name;
         out->forcePhysicalBinding = 1;
-        e = tok;
-        while (*e && *e != '(')
-            *d++ = *e++;
+        tokenEnd = tok;
+        while (*tokenEnd && *tokenEnd != '(')
+            *d++ = *tokenEnd++;
         *d = 0;
-        if (*e) {
-            if (*e != '(') {
+        if (*tokenEnd) {
+            if (*tokenEnd != '(') {
                 reportError("oDecodeToken: bad ints\n");
                 return false;
             }
-            e++;
+            tokenEnd++;
             d = out->physicalRegisterName;
-            while (*e && *e != ')')
-                *d++ = *e++;
+            while (*tokenEnd && *tokenEnd != ')')
+                *d++ = *tokenEnd++;
             *d = 0;
         }
         {
@@ -1015,7 +1015,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         tok[uB] = zG;
         if (*tok != '(')
             return false;
-        p = e - 1;
+        p = tokenEnd - 1;
         while (p != tok && *p != ')') {
             switch (*p) {
             case 'x': out->addressComponentMask |= 1; break;
@@ -1036,7 +1036,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->componentMask = 1;
         if (count <= 4)
             return false;
-        p = e - 1;
+        p = tokenEnd - 1;
         while (p != tok && *p != ')') {
             switch (*p) {
             case 'x': out->addressComponentMask |= 1; break;
@@ -1050,7 +1050,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         if (*p != ')')
             return false;
         end = p;
-        q = e;
+        q = tokenEnd;
         while (q != tok && *q != '(')
             q--;
         if (*q != '(')
@@ -1074,9 +1074,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->componentMask = 1;
         if (count <= 4)
             return false;
-        if (e[-1] != ')' || e[-2] != '+')
+        if (tokenEnd[-1] != ')' || tokenEnd[-2] != '+')
             return false;
-        char *r = e - 3;
+        char *r = tokenEnd - 3;
         if (*r != '+' || *tok != '(')
             return false;
         start = tok + 1;
@@ -1087,7 +1087,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->componentMask = 1;
         if (count <= 4)
             return false;
-        char *r = e - 1;
+        char *r = tokenEnd - 1;
         if (*r != ')' || tok[0] != '(' || tok[1] != '-' || tok[2] != '-')
             return false;
         start = tok + 3;
@@ -1173,7 +1173,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         if (count <= 2)
             return false;
         out->componentMask = 1;
-        p = e - 1;
+        p = tokenEnd - 1;
         if (*p != ')')
             return false;
         do
@@ -1182,7 +1182,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         start = p + 1;
         p = tok;
         char *stop = start - 1;
-        end = e - 1;
+        end = tokenEnd - 1;
         d = out->immediateText;
         for (s = tok; s != stop; )
             *d++ = *s++;
@@ -1204,7 +1204,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 *d++ = *s++;
         }
         reportError("oDecode: general BAD '%s'\n", opKindName(kind));
-        e = 0;
+        tokenEnd = 0;
         q = 0;
         break;
     }
@@ -1214,62 +1214,62 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
 
 const char *opKindName(int kind)
 {
-    const char *s = "BAD_OPERAND";
+    const char *kindName = "BAD_OPERAND";
     switch (kind) {
-    case 0: s = "OP_NULL"; break;
-    case 1: s = "OP_V_FL4"; break;
-    case 2: s = "OP_V_INT"; break;
-    case 3: s = "OP_V_FL1"; break;
-    case 4: s = "OP_V_I"; break;
-    case 5: s = "OP_V_P"; break;
-    case 6: s = "OP_V_nP"; break;
-    case 7: s = "OP_V_Q"; break;
-    case 8: s = "OP_V_R"; break;
-    case 9: s = "OP_V_ACC"; break;
-    case 10: s = "OP_V_ACCXYZ"; break;
-    case 11: s = "OP_V_FLXYZ"; break;
-    case 13: s = "OP_V_FLX"; break;
-    case 14: s = "OP_V_FLY"; break;
-    case 15: s = "OP_V_FLZ"; break;
-    case 16: s = "OP_V_FLW"; break;
-    case 17: s = "OP_V_CLIP"; break;
-    case 18: case 19: case 20: case 21: s = "OP_V_STAT"; break;
-    case 22: s = "OP_V_STAT_DIV"; break;
-    case 23: s = "OP_V_STAT_ALU"; break;
-    case 24: s = "OP_V_STAT_TST"; break;
-    case 25: s = "OP_V_STAT_SET"; break;
-    case 26: s = "OP_V_MAC"; break;
-    case 27: s = "OP_IMM"; break;
-    case 28: s = "OP_V_EA"; break;
-    case 29: s = "OP_V_EA_IMM"; break;
-    case 30: s = "OP_V_EA_REG"; break;
-    case 31: s = "OP_V_EA_IMM_REG"; break;
-    case 32: s = "OP_V_EA_INC"; break;
-    case 33: s = "OP_V_EA_DEC"; break;
-    case 34: s = "OP_V_INT1"; break;
-    case 35: s = "OP_V_FL4S"; break;
-    case 36: s = "OP_V_INTS"; break;
-    case 37: s = "OP_V_MEMREG"; break;
-    case 38: s = "OP_V_TBD"; break;
-    case 39: s = "OP_C_GPR32"; break;
-    case 40: s = "OP_C_GPR64"; break;
-    case 41: s = "OP_C_GPR128"; break;
-    case 42: s = "OP_C_GPRS"; break;
-    case 43: s = "OP_C_FPR"; break;
-    case 44: s = "OP_C_FPRS"; break;
-    case 45: s = "OP_V_CLIPA"; break;
-    case 46: s = "OP_C_EA_IMM"; break;
-    case 47: s = "OP_C_HILO0"; break;
-    case 48: s = "OP_C_HILO1"; break;
-    case 49: s = "OP_C_FSTAT"; break;
-    case 50: s = "OP_C_FCOND"; break;
-    case 51: s = "OP_C_FACC"; break;
-    case 52: s = "OP_C_FDIV"; break;
-    case 53: s = "OP_C_SHFTA"; break;
-    case 54: s = "OP_C_GPR64_31($ra)"; break;
-    case 55: s = "OP_EXT_DEP"; break;
+    case 0: kindName = "OP_NULL"; break;
+    case 1: kindName = "OP_V_FL4"; break;
+    case 2: kindName = "OP_V_INT"; break;
+    case 3: kindName = "OP_V_FL1"; break;
+    case 4: kindName = "OP_V_I"; break;
+    case 5: kindName = "OP_V_P"; break;
+    case 6: kindName = "OP_V_nP"; break;
+    case 7: kindName = "OP_V_Q"; break;
+    case 8: kindName = "OP_V_R"; break;
+    case 9: kindName = "OP_V_ACC"; break;
+    case 10: kindName = "OP_V_ACCXYZ"; break;
+    case 11: kindName = "OP_V_FLXYZ"; break;
+    case 13: kindName = "OP_V_FLX"; break;
+    case 14: kindName = "OP_V_FLY"; break;
+    case 15: kindName = "OP_V_FLZ"; break;
+    case 16: kindName = "OP_V_FLW"; break;
+    case 17: kindName = "OP_V_CLIP"; break;
+    case 18: case 19: case 20: case 21: kindName = "OP_V_STAT"; break;
+    case 22: kindName = "OP_V_STAT_DIV"; break;
+    case 23: kindName = "OP_V_STAT_ALU"; break;
+    case 24: kindName = "OP_V_STAT_TST"; break;
+    case 25: kindName = "OP_V_STAT_SET"; break;
+    case 26: kindName = "OP_V_MAC"; break;
+    case 27: kindName = "OP_IMM"; break;
+    case 28: kindName = "OP_V_EA"; break;
+    case 29: kindName = "OP_V_EA_IMM"; break;
+    case 30: kindName = "OP_V_EA_REG"; break;
+    case 31: kindName = "OP_V_EA_IMM_REG"; break;
+    case 32: kindName = "OP_V_EA_INC"; break;
+    case 33: kindName = "OP_V_EA_DEC"; break;
+    case 34: kindName = "OP_V_INT1"; break;
+    case 35: kindName = "OP_V_FL4S"; break;
+    case 36: kindName = "OP_V_INTS"; break;
+    case 37: kindName = "OP_V_MEMREG"; break;
+    case 38: kindName = "OP_V_TBD"; break;
+    case 39: kindName = "OP_C_GPR32"; break;
+    case 40: kindName = "OP_C_GPR64"; break;
+    case 41: kindName = "OP_C_GPR128"; break;
+    case 42: kindName = "OP_C_GPRS"; break;
+    case 43: kindName = "OP_C_FPR"; break;
+    case 44: kindName = "OP_C_FPRS"; break;
+    case 45: kindName = "OP_V_CLIPA"; break;
+    case 46: kindName = "OP_C_EA_IMM"; break;
+    case 47: kindName = "OP_C_HILO0"; break;
+    case 48: kindName = "OP_C_HILO1"; break;
+    case 49: kindName = "OP_C_FSTAT"; break;
+    case 50: kindName = "OP_C_FCOND"; break;
+    case 51: kindName = "OP_C_FACC"; break;
+    case 52: kindName = "OP_C_FDIV"; break;
+    case 53: kindName = "OP_C_SHFTA"; break;
+    case 54: kindName = "OP_C_GPR64_31($ra)"; break;
+    case 55: kindName = "OP_EXT_DEP"; break;
     }
-    return s;
+    return kindName;
 }
 
 int registerClassForOperandKind(int kind)

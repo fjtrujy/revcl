@@ -19,16 +19,16 @@ static inline void dumpSynthInstruction(Instr *instruction)
 
 bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
 {
-    workTable *t = &s->sourceTable;
-    if (!t) {
+    workTable *scheduleTable = &s->sourceTable;
+    if (!scheduleTable) {
         reportError("build: failed to get input table from ist\n");
         return false;
     }
-    if (!t->init(4, 0)) {
+    if (!scheduleTable->init(4, 0)) {
         reportError("failed to init synth table for '%s'\n", s->streamName());
         return false;
     }
-    t->ownerStream = s;
+    scheduleTable->ownerStream = s;
     int inSynth;
     int stype;
     int flags = 0;
@@ -65,8 +65,8 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
         case 1:
         case 3:
             if (stype) {
-                const char *a = syntheticTypeName((unsigned char)in->syntheticKind);
-                reportError("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", a, syntheticTypeName(stype));
+                const char *syntheticName = syntheticTypeName((unsigned char)in->syntheticKind);
+                reportError("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", syntheticName, syntheticTypeName(stype));
                 in->leDump();
                 return false;
             }
@@ -121,7 +121,7 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
         }
         if (isIO) {
             decodedLine->instructions[0] = 0;
-            if (!t->logAddLinear_Tail(in)) {
+            if (!scheduleTable->logAddLinear_Tail(in)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
             }

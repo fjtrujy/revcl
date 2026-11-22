@@ -150,12 +150,12 @@ bool doBackTrace(Program *program, instStream *t, RegPoolEntry *reg, int part, i
         for (instStream *s = program->streamHead; s; s = s->nextStream) {
             if (s->visitState == 2 || s->visitState == 4) {
                 if (!s->backtraceRegisterUse) {
-                    workTable *wt = s->getTable();
-                    if (!wt) {
+                    workTable *scheduleTable = s->getTable();
+                    if (!scheduleTable) {
                         reportError("no work table\n");
                         return false;
                     }
-                    s->backtraceRegisterUse = wt->registerUses.AddNewRegRef(reg);
+                    s->backtraceRegisterUse = scheduleTable->registerUses.AddNewRegRef(reg);
                     if (!s->backtraceRegisterUse) {
                         reportError("couldn't add regref to table\n");
                         return false;

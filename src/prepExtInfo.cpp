@@ -23,11 +23,11 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
     bool changed = 0;
     int id = stream->streamId;
     regUse *registerUse;
-    regUseList *ul = &table->registerUses;
-    for (registerUse = ul->head; registerUse; registerUse = registerUse->next) {
+    regUseList *registerUseList = &table->registerUses;
+    for (registerUse = registerUseList->head; registerUse; registerUse = registerUse->next) {
         RegPoolEntry *reg = registerUse->registerEntry;
-        for (int k = 0; k != reg->partCount; k++) {
-            regUseSlot *registerUseSlot = &registerUse->slots[k];
+        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            regUseSlot *registerUseSlot = &registerUse->slots[partIndex];
             if (!registerUseSlot) {
                 reportError("failed to get rrp\n");
                 return 0;
@@ -77,7 +77,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         instruction->raiseExternalInputConstraint(best);
                 } else {
                     reportError("no external setter for prepExtInfo.. register is %s.%d\n",
-                                  reg->registerName(), k);
+                                  reg->registerName(), partIndex);
                     return 0;
                 }
             }
@@ -210,31 +210,31 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                     }
                 }
             }
-            for (tPair *tp = registerUseSlot->throughputPairs.head; tp; tp = tp->next) {
-                instStream *a = (instStream *)tp->a;
-                instStream *b = (instStream *)tp->b;
+            for (tPair *transitionPair = registerUseSlot->throughputPairs.head; transitionPair; transitionPair = transitionPair->next) {
+                instStream *a = (instStream *)transitionPair->a;
+                instStream *b = (instStream *)transitionPair->b;
                 if (!a || !b) {
                     reportError("there's no src or dst in a tpair\n");
                     return 0;
                 }
-                workTable *wa = a->getTable();
+                workTable *scheduleTable = a->getTable();
                 workTable *wb = b->getTable();
-                if (wa->codeModeValue == 3 && wb->codeModeValue == 3) {
+                if (scheduleTable->codeModeValue == 3 && wb->codeModeValue == 3) {
                     int sourceId = a->streamId;
-                    int k1 = guessKeyLen(program, tp->src, sourceId, id);
+                    int k1 = guessKeyLen(program, transitionPair->src, sourceId, id);
                     if (k1 < 0) {
                         reportError("failed to guess the key length\n");
                         return 0;
                     }
-                    int k2 = guessKeyLen(program, tp->dst, id, b->streamId);
+                    int k2 = guessKeyLen(program, transitionPair->dst, id, b->streamId);
                     if (k2 < 0) {
                         reportError("distance to dst is bad\n");
                         return 0;
                     }
-                    Instr *writerInstruction = wa->linearInstructions.tail;
+                    Instr *writerInstruction = scheduleTable->linearInstructions.tail;
                     Operand *wo = 0;
                     for (; writerInstruction; writerInstruction = writerInstruction->linearLink.previousInstruction)
-                        if ((wo = writerInstruction->findOutputOperand(reg, 1 << k)) != 0)
+                        if ((wo = writerInstruction->findOutputOperand(reg, 1 << partIndex)) != 0)
                             break;
                     if (!wo) {
                         reportError("can't get last writer\n");
@@ -243,7 +243,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                     Instr *u = wb->linearInstructions.head;
                     Operand *userOperand = 0;
                     for (; u; u = u->linearLink.nextInstruction)
-                        if ((userOperand = u->findInputOperand(reg, 1 << k)) != 0)
+                        if ((userOperand = u->findInputOperand(reg, 1 << partIndex)) != 0)
                             break;
                     if (!userOperand) {
                         reportError("can't get first user \n");
@@ -269,7 +269,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                 Operand *operand = &instruction->operands[i];
                 RegPoolEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
                 if (registerEntry && registerEntry->tracksHotOutputPaths) {
-                    regUse *u = ul->findByRegister(registerEntry);
+                    regUse *u = registerUseList->findByRegister(registerEntry);
                     if (!u) {
                         reportError("failed to find regref\n");
                         exitAfterCleanup(-1);
@@ -290,7 +290,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
             Operand *operand = &instruction->operands[i];
             RegPoolEntry *reg = operand->assignedRegister;
             if (reg) {
-                regUse *u = ul->findByRegister(reg);
+                regUse *u = registerUseList->findByRegister(reg);
                 if (isRegisterOperand(operand, 1))
                     operand->reductionHazardMask = u->hazardMask & operand->externalPartMask;
                 if (isRegisterOperand(operand, 2))

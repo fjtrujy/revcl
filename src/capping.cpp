@@ -49,40 +49,40 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
         reportError("work table not set in %s\n", stream->streamName());
         exitAfterCleanup(-1);
     }
-    workTable *wt = stream->workTablePtr;
-    if (!wt) {
+    workTable *scheduleTable = stream->workTablePtr;
+    if (!scheduleTable) {
         reportError("no work table \n");
         return -1;
     }
-    int len = wt->getRangeEnd() - wt->getRangeStart();
+    int len = scheduleTable->getRangeEnd() - scheduleTable->getRangeStart();
     if (len == 0)
         return 0;
-    if (wt->externalMinimumLength < 0) {
+    if (scheduleTable->externalMinimumLength < 0) {
         reportError("the minimal length is -ve for ext\n");
         return -1;
     }
-    if (len < wt->externalMinimumLength) {
-        reportError("table is lready too short (%d<%d)\n", len, wt->externalMinimumLength);
+    if (len < scheduleTable->externalMinimumLength) {
+        reportError("table is lready too short (%d<%d)\n", len, scheduleTable->externalMinimumLength);
         return -1;
     }
-    initializeScheduledCycleTimes(wt);
-    for (int rl = wt->getRangeStart(); rl != wt->getRangeEnd(); rl++) {
-        wtRow *row = (wtRow *)((cls_unk30 *)wt)->getIE_ck(rl);
+    initializeScheduledCycleTimes(scheduleTable);
+    for (int rl = scheduleTable->getRangeStart(); rl != scheduleTable->getRangeEnd(); rl++) {
+        wtRow *row = (wtRow *)((cls_unk30 *)scheduleTable)->getIE_ck(rl);
         int id = row->ctime();
         for (int pp = 0; pp != 2; pp++) {
             Instr *in = GetI((Instr **)row, pp);
             if (!in)
                 continue;
             Operand *operand;
-            for (int i = 0; i != in->operandCount; i++) {
-                operand = &in->operands[i];
+            for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
+                operand = &in->operands[operandIndex];
                 RegPoolEntry *reg = registerOperand(operand, 2);
                 ol_s *live = operand->parts[0].operandLocations.head;
                 if (!reg || operand->externalBlockModeFlag || !live)
                     continue;
                 RegPoolEntry *capReg = 0;
                 int capMask = 0;
-                int bits = findCap(wt, in, i, &capReg, &capMask);
+                int bits = findCap(scheduleTable, in, operandIndex, &capReg, &capMask);
                 if (bits < 0) {
                     reportError("cancap failed\n");
                     return -1;
@@ -96,7 +96,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
                 wtRow *workRow = row + 1;
                 int limit = need + id;
                 int bestMask = 0, bestLine = -1, bestPipe = -1, bestCount = 0, count = 0;
-                while (line < wt->getRangeEnd() && capMask) {
+                while (line < scheduleTable->getRangeEnd() && capMask) {
                     if (workRow->cycleTime >= limit) {
                         for (int q = 0; q != 2; q++) {
                             if (((bits >> q) & 1) && !GetI((Instr **)workRow, q)) {
@@ -130,7 +130,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
             }
         }
     }
-    if (added && !wt->relinkRawIt()) {
+    if (added && !scheduleTable->relinkRawIt()) {
         reportError("failed to relink table after adding cap instruction\n");
         return 0;
     }

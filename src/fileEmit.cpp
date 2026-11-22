@@ -98,8 +98,8 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         *p1 = nulls;
         *p2 = nulls;
     } else {
-        for (int i = rangeStart; i != rangeEnd; i++) {
-            wtRow *workRow = &rows[i];
+        for (int rowIndex = rangeStart; rowIndex != rangeEnd; rowIndex++) {
+            wtRow *workRow = &rows[rowIndex];
             if (!workRow->skip)
                 (*p1)++;
             (*p2)++;
@@ -241,22 +241,22 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
         return buf;
     }
     buf += formatIntoBuffer(buf, "         ");
-    int i;
-    for (i = 0; i != 2; i++)
-        if (entries[i].instruction)
-            flags |= entries[i].instruction->instructionModifierBits;
+    int entryIndex;
+    for (entryIndex = 0; entryIndex != 2; entryIndex++)
+        if (entries[entryIndex].instruction)
+            flags |= entries[entryIndex].instruction->instructionModifierBits;
     int len = 0;
-    for (i = 0; i != 2; i++) {
-        if (!entries[i].instruction)
+    for (entryIndex = 0; entryIndex != 2; entryIndex++) {
+        if (!entries[entryIndex].instruction)
             buf = emitNop(buf, flags, &len);
         else
-            buf = emitInstr(entries[i].instruction, buf, false, flags, upper);
+            buf = emitInstr(entries[entryIndex].instruction, buf, false, flags, upper);
         if (!buf) {
-            reportError("failed to emit upper for pipe %d ie\n", i);
+            reportError("failed to emit upper for pipe %d ie\n", entryIndex);
             return 0;
         }
         flags = 0;
-        if (i != 1)
+        if (entryIndex != 1)
             buf += formatIntoBuffer(buf, "         ");
     }
     if (maxStallLength) {
@@ -330,9 +330,9 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
     return buf + formatIntoBuffer(buf, "%s", line);
 }
 
-char *emitDestMask(char *p, int mdBits, unsigned char mods)
+char *emitDestMask(char *outputCursor, int mdBits, unsigned char mods)
 {
-    if (p) {
+    if (outputCursor) {
         switch (mdBits) {
         case 0:
             goto done;
@@ -359,15 +359,15 @@ char *emitDestMask(char *p, int mdBits, unsigned char mods)
             return 0;
         }
         if (mods != 15) {
-            *p++ = '.';
-            if (mods & 1) *p++ = 'x';
-            if (mods & 2) *p++ = 'y';
-            if (mods & 4) *p++ = 'z';
-            if (mods & 8) *p++ = 'w';
+            *outputCursor++ = '.';
+            if (mods & 1) *outputCursor++ = 'x';
+            if (mods & 2) *outputCursor++ = 'y';
+            if (mods & 4) *outputCursor++ = 'z';
+            if (mods & 8) *outputCursor++ = 'w';
         }
     }
 done:
-    return p;
+    return outputCursor;
 }
 
 extern const char bindExtForcedBaseError[] = "operand is forced to base, but not this one\n";

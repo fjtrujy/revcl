@@ -14,10 +14,10 @@ int buildMinimumPathKey(Program *p, instStream *n);
 bool tPairList::clear()
 {
     while (head) {
-        tPair *p = head;
-        head = p->next;
-        if (p)
-            ::operator delete(p);
+        tPair *transitionPair = head;
+        head = transitionPair->next;
+        if (transitionPair)
+            ::operator delete(transitionPair);
     }
     count = 0;
     return true;
@@ -26,7 +26,7 @@ bool tPairList::clear()
 void tPairList::dump()
 {
     int n = 0;
-    for (tPair *p = head; p; p = p->next)
+    for (tPair *transitionPair = head; transitionPair; transitionPair = transitionPair->next)
         n++;
     if (n != count) {
         reportError("     tpairdump : entry count mismatch\n");
@@ -48,18 +48,18 @@ bool tPairList::addPair(void *a, void *b, int src, int dst)
         reportError("tPairList::addKey() dst_key is bad\n");
         return false;
     }
-    tPair *p = new tPair(tPair::INIT);
-    if (!p) {
+    tPair *transitionPair = new tPair(tPair::INIT);
+    if (!transitionPair) {
         reportError("failed to get a new pair\n");
         return false;
     }
-    p->a = a;
-    p->b = b;
-    p->src = src;
-    p->dst = dst;
-    p->next = head;
+    transitionPair->a = a;
+    transitionPair->b = b;
+    transitionPair->src = src;
+    transitionPair->dst = dst;
+    transitionPair->next = head;
     count++;
-    head = p;
+    head = transitionPair;
     return true;
 }
 

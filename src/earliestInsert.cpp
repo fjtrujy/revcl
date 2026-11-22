@@ -5,21 +5,21 @@
 #include "Instr.h"
 #include "ol_s_inline.h"
 
-int earliestInsert(workTable *wt, Instr *instruction, bool *found)
+int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
 {
     short e = instruction->externalInputConstraint;
     if (e < instruction->externalInputPairedConstraint)
         e = instruction->externalInputPairedConstraint;
-    int line = e + wt->rangeStart;
+    int line = e + scheduleTable->rangeStart;
     int thru = -1;
     int iline = instruction->position.loopRow;
     Operand *operand;
     for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
         RegPoolEntry *reg = registerOperand(operand, 1);
         if (reg) {
-            for (int p = 0; p != reg->partCount; p++) {
-                if ((operand->componentMask >> p) & 1) {
-                    OpSlot *slot = &operand->parts[p];
+            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                if ((operand->componentMask >> partIndex) & 1) {
+                    OpSlot *slot = &operand->parts[partIndex];
                     OperandLock *par = slot->getParent();
                     if (slot->operandStatusCode != 2) {
                         int s = par->linearRow;
@@ -80,12 +80,12 @@ int earliestInsert(workTable *wt, Instr *instruction, bool *found)
     return line;
 }
 
-int latestInsert(workTable *wt, Instr *instruction, bool *found)
+int latestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
 {
     short e = instruction->externalOutputConstraint;
     if (e < instruction->externalOutputPairedConstraint)
         e = instruction->externalOutputPairedConstraint;
-    int line = wt->rangeEnd - e - 1;
+    int line = scheduleTable->rangeEnd - e - 1;
     int iline = instruction->position.loopRow;
     bool thru = false;
     Operand *operand;

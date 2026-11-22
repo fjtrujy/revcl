@@ -4,7 +4,7 @@
 #include "RegPool.h"
 #include "instStream.h"
 
-bool prepareReductionCandidates(Program *program, instStream *stream, workTable *wt)
+bool prepareReductionCandidates(Program *program, instStream *stream, workTable *scheduleTable)
 {
     if (stream->usesFreeRawLayout()) {
         stream->allowUpwardReduction = 1;
@@ -22,8 +22,8 @@ bool prepareReductionCandidates(Program *program, instStream *stream, workTable 
                           stream->streamName());
             return true;
         }
-        regUseList *ul = &wt->registerUses;
-        for (regUse *registerUse = ul->head; registerUse; registerUse = registerUse->next)
+        regUseList *registerUseList = &scheduleTable->registerUses;
+        for (regUse *registerUse = registerUseList->head; registerUse; registerUse = registerUse->next)
             if (registerUse->hazardBroadcastMask)
                 ext = true;
         if (ext) {
@@ -31,14 +31,14 @@ bool prepareReductionCandidates(Program *program, instStream *stream, workTable 
             stream->allowDownwardReduction = 0;
             stream->reductionSkipped = 1;
         }
-        for (Instr *instruction = wt->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-            for (int i = 0; i != instruction->operandCount; i++) {
-                Operand *operand = &instruction->operands[i];
+        for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+            for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+                Operand *operand = &instruction->operands[operandIndex];
                 RegPoolEntry *reg = operand->assignedRegister;
                 operand->reductionHazardMask = 0;
                 if (!reg)
                     continue;
-                regUse *ru = ul->findByRegister(reg);
+                regUse *ru = registerUseList->findByRegister(reg);
                 if (isRegisterOperand(operand, 1))
                     operand->reductionHazardMask = ru->hazardMask & operand->externalPartMask;
                 if (isRegisterOperand(operand, 2))

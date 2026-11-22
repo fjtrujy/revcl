@@ -76,8 +76,8 @@ void RegPoolEntry::resetRegisterFlowState()
     usedSlotMask = 0;
     throughputWriter = 0;
     unk_36 = 0;
-    for (int i = 0; i != 4; i++)
-        parts[i].resetPartFlowState();
+    for (int partIndex = 0; partIndex != 4; partIndex++)
+        parts[partIndex].resetPartFlowState();
 }
 
 void RegPoolEntry::noopRegisterFlowHook()
@@ -86,8 +86,8 @@ void RegPoolEntry::noopRegisterFlowHook()
 
 void RegPoolEntry::resetRegisterPartTiming()
 {
-    for (int i = 0; i != 4; i++) {
-        rPart* registerPart = &parts[i];
+    for (int partIndex = 0; partIndex != 4; partIndex++) {
+        rPart* registerPart = &parts[partIndex];
         registerPart->unk_40 = -1;
         registerPart->earliestPendingReadCycle = -1;
         registerPart->latestPendingReadCycle = -1;
@@ -105,8 +105,8 @@ void RegPoolEntry::resetRegisterThroughputState()
 {
     throughputWriter = 0;
     unk_36 = 0;
-    for (int i = 0; i != 4; i++)
-        parts[i].resetPartFlowState();
+    for (int partIndex = 0; partIndex != 4; partIndex++)
+        parts[partIndex].resetPartFlowState();
 }
 
 void rPart::resetPartFlowState()
@@ -138,8 +138,8 @@ void rPart::resetPartFlowState()
 
 void RegPoolEntry::clearRegisterPartPayloads()
 {
-    for (int i = 0; i != 4; i++)
-        parts[i].payload = 0;
+    for (int partIndex = 0; partIndex != 4; partIndex++)
+        parts[partIndex].payload = 0;
 }
 
 void rPart::resetPartPayloadFirstPass()
@@ -154,8 +154,8 @@ void rPart::resetPartPayloadSecondPass()
 
 bool RegPoolEntry::cycleRegisterParts(bool flag)
 {
-    for (int i = 0; i != partCount; i++)
-        if (!parts[i].cycle(flag))
+    for (int partIndex = 0; partIndex != partCount; partIndex++)
+        if (!parts[partIndex].cycle(flag))
             return false;
     return true;
 }
@@ -202,14 +202,14 @@ const char* RegPoolEntry::registerName()
     return name;
 }
 
-VclPtrWord RegPoolEntry::getPartPayload(int i)
+VclPtrWord RegPoolEntry::getPartPayload(int partIndex)
 {
-    return parts[i].payload;
+    return parts[partIndex].payload;
 }
 
-bool RegPoolEntry::setPartPayload(int i, VclPtrWord v)
+bool RegPoolEntry::setPartPayload(int partIndex, VclPtrWord v)
 {
-    parts[i].payload = v;
+    parts[partIndex].payload = v;
     return true;
 }
 
@@ -239,8 +239,8 @@ void RegPoolEntry::moveReset()
     allocatable = false;
     registerWeb = 0;
     uniqueNameSerial = 0;
-    for (int i = 0; i != partCount; i++)
-        parts[i].payload = 0;
+    for (int partIndex = 0; partIndex != partCount; partIndex++)
+        parts[partIndex].payload = 0;
 }
 
 bool RegPoolEntry::optReset()
@@ -251,9 +251,9 @@ bool RegPoolEntry::optReset()
 
 bool RegPoolEntry::clearPartPayloadMarkers()
 {
-    for (int i = 0; i != partCount; i++) {
-        if (parts[i].payload)
-            ((char*)parts[i].payload)[3] = 0;
+    for (int partIndex = 0; partIndex != partCount; partIndex++) {
+        if (parts[partIndex].payload)
+            ((char*)parts[partIndex].payload)[3] = 0;
     }
     return true;
 }
@@ -269,11 +269,11 @@ char* RegPoolEntry::maskName(int mask)
     const char* name = nameAliases.firstNodeName();
     if (!name)
         name = "UNNAMED_REGISTER!";
-    char* p = buf + formatIntoBuffer(buf, "%s", name);
+    char* outputCursor = buf + formatIntoBuffer(buf, "%s", name);
     if (partCount > 1)
-        p += formatIntoBuffer(p, "%s", formatDottedComponentMask(mask));
-    *p = 0;
-    regNameBufPos = p - regNameBuf + 1;
+        outputCursor += formatIntoBuffer(outputCursor, "%s", formatDottedComponentMask(mask));
+    *outputCursor = 0;
+    regNameBufPos = outputCursor - regNameBuf + 1;
     return buf;
 }
 

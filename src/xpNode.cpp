@@ -6,7 +6,7 @@
 struct xpNodeDel {
     char pad[0x14];
     mValue val;
-    ~xpNodeDel() { mValue *v = &val; v->clear(); }
+    ~xpNodeDel() { mValue *expressionValue = &val; expressionValue->clear(); }
 };
 
 struct xunDel {
@@ -132,9 +132,9 @@ bool xpNode::decode()
 
 const char *xpNode::getLiteral()
 {
-    char *s = val.getString();
-    if (s)
-        return s;
+    char *literalText = val.getString();
+    if (literalText)
+        return literalText;
     return "<no_literal>";
 }
 
@@ -196,7 +196,7 @@ void xpTree::setDepth(xpNode *node, int depth)
     }
 }
 
-static inline void setDepthInl(xpTree *t, xpNode *node, int depth)
+static inline void setDepthInl(xpTree *expressionTree, xpNode *node, int depth)
 {
     if (node) {
         node->depth = depth;
@@ -205,7 +205,7 @@ static inline void setDepthInl(xpTree *t, xpNode *node, int depth)
         if (node->childCount) {
             int childDepth = d + 1;
             do {
-                t->setDepth(node->child[i], childDepth);
+                expressionTree->setDepth(node->child[i], childDepth);
                 i++;
             } while (i != node->childCount);
         }
@@ -267,28 +267,28 @@ const char *parseExpressionTokenIntoNode(const char *s, xpNode *node, bool binar
     if (!*s)
         return 0;
     int len = 0;
-    const char *p = s;
+    const char *tokenCursor = s;
     xpOp *found = 0;
     int state = 1;
     int dots = 0;
     do {
-        char c = *p;
-        if (c == '(' || c == ')')
+        char tokenCharacter = *tokenCursor;
+        if (tokenCharacter == '(' || tokenCharacter == ')')
             break;
         switch (state) {
         case 1:
-            if (c == '.') {
+            if (tokenCharacter == '.') {
                 if (dots)
                     state = 0;
                 dots++;
             }
-            else if (c == 'e')
+            else if (tokenCharacter == 'e')
                 state = len ? 2 : 0;
-            else if (!(c >= '0' && c <= '9') && c != '_')
+            else if (!(tokenCharacter >= '0' && tokenCharacter <= '9') && tokenCharacter != '_')
                 state = 0;
             break;
         case 2:
-            if (c == '-' || c == '+')
+            if (tokenCharacter == '-' || tokenCharacter == '+')
                 state = 3;
             else
                 state = 0;
@@ -300,11 +300,11 @@ const char *parseExpressionTokenIntoNode(const char *s, xpNode *node, bool binar
         for (int i = 2; i != 20; i++) {
             xpOp *operatorInfo = &expressionOperatorTable[i];
             if ((len || (binary ? operatorInfo->arity > 1 : operatorInfo->arity <= 1)) && state != 3) {
-                const char *a = operatorInfo->name, *b = p;
-                for (; *a; a++, b++)
-                    if (*b != *a)
+                const char *operatorCursor = operatorInfo->name, *inputCursor = tokenCursor;
+                for (; *operatorCursor; operatorCursor++, inputCursor++)
+                    if (*inputCursor != *operatorCursor)
                         break;
-                if (!*a) {
+                if (!*operatorCursor) {
                     found = operatorInfo;
                     break;
                 }
@@ -313,15 +313,15 @@ const char *parseExpressionTokenIntoNode(const char *s, xpNode *node, bool binar
         if (found)
             break;
         len++;
-        p++;
-    } while (*p);
+        tokenCursor++;
+    } while (*tokenCursor);
     if (len) {
         found = &expressionOperatorTable[0];
     } else {
         if (!found)
             return 0;
         s = found->name;
-        for (const char *q = s; *q; q++, p++)
+        for (const char *scanCursor = s; *scanCursor; scanCursor++, tokenCursor++)
             len++;
     }
     if (!node->val.setString(s, len))
@@ -329,7 +329,7 @@ const char *parseExpressionTokenIntoNode(const char *s, xpNode *node, bool binar
     node->operatorType = found->type;
     node->precedence = found->prec;
     node->operandArity = found->arity;
-    return p;
+    return tokenCursor;
 }
 
 static inline xpOp *findOp(unsigned char type)
@@ -682,10 +682,10 @@ void xpTree::countUnknownSymbolsInNode(xpNode *node)
     } else {
         if (node->val.makeNumeric())
             return;
-        const char *s = node->val.getString();
-        if (!s)
-            s = "<no_literal>";
-        if (s && !recordUnknownSymbol(s)) {
+        const char *literalText = node->val.getString();
+        if (!literalText)
+            literalText = "<no_literal>";
+        if (literalText && !recordUnknownSymbol(literalText)) {
             reportError("failed to add an unknown\n");
             expressionUnknownSymbolCount = -1;
             return;

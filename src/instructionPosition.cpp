@@ -45,9 +45,9 @@ void cls08058718::setFromLinearRow(short v)
     }
 }
 
-void cls08058718::setInstructionPipe(char c)
+void cls08058718::setInstructionPipe(char pipeIndex)
 {
-    pipelineIndex = c;
+    pipelineIndex = pipeIndex;
 }
 
 int alwaysOnePositionCheck()
@@ -64,21 +64,21 @@ void resetRange()
 
 bool setRange(int start, int end, int lsz);
 
-int setRangeFrom(workTable *t)
+int setRangeFrom(workTable *scheduleTable)
 {
-    if (!t) {
+    if (!scheduleTable) {
         reportError("setRangeFrom - null ptr\n");
         return 0;
     }
-    if (!t->rows) {
+    if (!scheduleTable->rows) {
         reportError("setRangeFrom - can't set range .. there's no table\n");
         return 0;
     }
-    if (t->codeMode() != 3 && t->codeMode() != 2 && t->codeMode() != 5) {
+    if (scheduleTable->codeMode() != 3 && scheduleTable->codeMode() != 2 && scheduleTable->codeMode() != 5) {
         reportError("can't set range from a non raw/raw_preexp/mid table\n");
         return 0;
     }
-    return setRange(t->getRangeStart(), t->getRangeEnd(), t->getLoopSize());
+    return setRange(scheduleTable->getRangeStart(), scheduleTable->getRangeEnd(), scheduleTable->getLoopSize());
 }
 
 bool setRange(int start, int end, int lsz)

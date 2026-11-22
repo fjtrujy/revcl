@@ -63,12 +63,12 @@ bool scheduleMidTableMode0(workTable *table, wrangleFunc f)
         reportError("failed to set OS_setWatchdog\n");
         return false;
     }
-    bool r = wrangleMode0Worker(table, f);
+    bool schedulingSucceeded = wrangleMode0Worker(table, f);
     if (!clearWatchdog()) {
         reportError("failed to clear watchdog timer\n");
         return false;
     }
-    return r;
+    return schedulingSucceeded;
 }
 
 bool wrangleMode0Worker(workTable *table, wrangleFunc f)
@@ -429,15 +429,15 @@ bool buildCandidateList2(workTable *table)
                     minRow = 0;
             }
         }
-        for (int i = 0; i != instruction->operandCount; i++) {
-            Operand *operand = &instruction->operands[i];
+        for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+            Operand *operand = &instruction->operands[operandIndex];
             RegPoolEntry *registerEntry = operand->assignedRegister;
             if (!registerEntry)
                 continue;
-            for (int j = 0; j != registerEntry->partCount; j++) {
-                if ((operand->componentMask >> j) & 1) {
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+                if ((operand->componentMask >> partIndex) & 1) {
                     if (isRegisterOperand(operand, 1)) {
-                        OpSlot *slot = &operand->parts[j];
+                        OpSlot *slot = &operand->parts[partIndex];
                         OperandLock *operandLock = slot->getParent();
                         if (!operandLock) {
                             reportError("input had no link\n");

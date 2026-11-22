@@ -22,12 +22,12 @@ void iGroupList::init()
 {
     if (head)
         reportWarning("igrouplist::init - first set!\n");
-    iGroupNode *n = head;
-    while (n) {
-        iGroupNode *next = n->next;
-        if (n)
-            ::operator delete(n);
-        n = next;
+    iGroupNode *instructionGroupNode = head;
+    while (instructionGroupNode) {
+        iGroupNode *next = instructionGroupNode->next;
+        if (instructionGroupNode)
+            ::operator delete(instructionGroupNode);
+        instructionGroupNode = next;
     }
     head = 0;
 }
@@ -55,15 +55,15 @@ bool iGroupList::add(void *p, int sz)
 {
     if (sz <= 0)
         return 1;
-    iGroupNode *n = new iGroupNode(iGroupNode::INIT);
-    if (!n) {
+    iGroupNode *instructionGroupNode = new iGroupNode(iGroupNode::INIT);
+    if (!instructionGroupNode) {
         reportError("failed to get a new iGroupNode\n");
         return 0;
     }
-    n->itemPointer = p;
-    n->itemSize = sz;
-    n->next = head;
-    head = n;
+    instructionGroupNode->itemPointer = p;
+    instructionGroupNode->itemSize = sz;
+    instructionGroupNode->next = head;
+    head = instructionGroupNode;
     return 1;
 }
 
@@ -166,14 +166,14 @@ int iGroupLog::logTable(workTable *sourceTable)
     }
     for (regUse *previousUse = sourceTable->registerUses.head; previousUse; previousUse = previousUse->next) {
         RegPoolEntry *reg = previousUse->registerEntry;
-        for (int i = 0; i != reg->partCount; i++) {
-            if (((previousUse->externalInputMask & previousUse->externalOutputMask) >> i) & 1) {
+        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            if (((previousUse->externalInputMask & previousUse->externalOutputMask) >> partIndex) & 1) {
             Instr *instruction;
             for (instruction = sourceTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
                 instruction->dependencyReachabilityFlags = 0;
             for (Instr *cur = (instruction = sourceTable->linearInstructions.head); instruction; cur = (instruction = instruction->linearLink.nextInstruction))
-                for (int j = 0; j != cur->operandCount; j++) {
-                    Operand *operand = &cur->operands[j];
+                for (int operandIndex = 0; operandIndex != cur->operandCount; operandIndex++) {
+                    Operand *operand = &cur->operands[operandIndex];
                     RegPoolEntry *registerEntry = operand->assignedRegister;
                     if (registerEntry == reg && operand->externalPartMask)
                         for (int k = 0; k != registerEntry->partCount; k++) {
@@ -210,7 +210,7 @@ int iGroupLog::logTable(workTable *sourceTable)
                                         operandLocation->instruction->outputDependencyReachable = 1;
                         }
             } while (changed);
-            reportInfo("  dumping scan for %s\n", reg->maskName(1 << i));
+            reportInfo("  dumping scan for %s\n", reg->maskName(1 << partIndex));
             int n = 0;
             for (instruction = sourceTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
                 if (instruction->dependencyReachabilityFlags == 3) {

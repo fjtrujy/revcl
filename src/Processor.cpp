@@ -28,10 +28,10 @@ Processor::Processor()
     uniqueAll = 0;
     decodeMode = 0;
     decodeSubMode = 0;
-    for (int i = 0; i != 12; i++)
-        processorRegisterPools[i] = 0;
-    for (int i = 0; i != 3; i++)
-        freeMoveRecordsByType[i] = 0;
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        processorRegisterPools[poolIndex] = 0;
+    for (int moveTypeIndex = 0; moveTypeIndex != 3; moveTypeIndex++)
+        freeMoveRecordsByType[moveTypeIndex] = 0;
 }
 
 Processor::~Processor()
@@ -142,9 +142,9 @@ bool Processor::clearProcessorLists()
 
 void Processor::dumpRegisterPools()
 {
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i])
-            processorRegisterPools[i]->Dump();
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex])
+            processorRegisterPools[poolIndex]->Dump();
 }
 
 int Processor::gatherInflight(ol_s **out)
@@ -165,8 +165,8 @@ int Processor::gatherInflight(ol_s **out)
 
 bool Processor::clearAllRegisterAssignmentsFirstPass()
 {
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->clearRegisterAssignmentsFirstPass()) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->clearRegisterAssignmentsFirstPass()) {
             reportError("failed to alloc reset an rpool\n");
             return false;
         }
@@ -175,8 +175,8 @@ bool Processor::clearAllRegisterAssignmentsFirstPass()
 
 bool Processor::clearAllRegisterAssignmentsSecondPass()
 {
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->clearRegisterAssignmentsSecondPass()) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->clearRegisterAssignmentsSecondPass()) {
             reportError("failed to alloc reset an rpool\n");
             return false;
         }
@@ -205,9 +205,9 @@ void Processor::validateOpcodeTableCount()
 
 void dumpProcessorRegisterPools(Program *program)
 {
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i])
-            processorRegisterPools[i]->Dump();
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex])
+            processorRegisterPools[poolIndex]->Dump();
 }
 
 bool parseReset(Program *program)
@@ -220,10 +220,10 @@ bool parseReset(Program *program)
     program->proc.decodeSubMode = 0;
     program->proc.savedDecodeMode = 0;
     program->proc.savedDecodeSubMode = 0;
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->clearVirtualRegistersForParse()) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->clearVirtualRegistersForParse()) {
             reportError("Processor::parseReset() - failed to reset %s\n",
-                          processorRegisterPools[i]->poolName);
+                          processorRegisterPools[poolIndex]->poolName);
             return false;
         }
     return true;
@@ -231,10 +231,10 @@ bool parseReset(Program *program)
 
 bool statReset(Program *program)
 {
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->resetPoolPartTiming()) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->resetPoolPartTiming()) {
             reportError("Processor::statReset() - failed to stat %s\n",
-                          processorRegisterPools[i]->poolName);
+                          processorRegisterPools[poolIndex]->poolName);
             return false;
         }
     return true;
@@ -282,10 +282,10 @@ iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
 
 bool optReset(Program *program)
 {
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->clearPoolPartPayloads()) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->clearPoolPartPayloads()) {
             reportError("Processor::optReset() - failed to reset %s\n",
-                          processorRegisterPools[i]->poolName);
+                          processorRegisterPools[poolIndex]->poolName);
             return false;
         }
     return true;
@@ -294,10 +294,10 @@ bool optReset(Program *program)
 bool Cycle(Program *program, bool flag)
 {
     program->emulatedCycleCount++;
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->cycleRegisters(flag)) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->cycleRegisters(flag)) {
             reportError("Processor::Cycle() - failed to cycle %s\n",
-                          processorRegisterPools[i]->poolName);
+                          processorRegisterPools[poolIndex]->poolName);
             return false;
         }
     return true;
@@ -306,10 +306,10 @@ bool Cycle(Program *program, bool flag)
 bool resetProcessorThroughput(Program *program)
 {
     program->emulatedCycleCount = 0;
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->resetPoolThroughputState()) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->resetPoolThroughputState()) {
             reportError("Processor::emuReset() - failed to reset %s\n",
-                          processorRegisterPools[i]->poolName);
+                          processorRegisterPools[poolIndex]->poolName);
             return false;
         }
     return true;
@@ -389,10 +389,10 @@ bool flowReset(Program *program)
 {
     program->proc.usedBeforeSet.clear();
     program->proc.stalls.clear();
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->resetPoolFlowState()) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->resetPoolFlowState()) {
             reportError("Processor::flowReset() - failed to reset %s\n",
-                          processorRegisterPools[i]->poolName);
+                          processorRegisterPools[poolIndex]->poolName);
             return false;
         }
     return true;
@@ -491,10 +491,10 @@ bool isVuRegister(RegPoolEntry *registerEntry)
 
 bool resetPoolOptimizationState(Program *program)
 {
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->optReset()) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->optReset()) {
             reportError("Processor::optReset() - failed to reset %s\n",
-                          processorRegisterPools[i]->poolName);
+                          processorRegisterPools[poolIndex]->poolName);
             return false;
         }
     return true;
@@ -572,10 +572,10 @@ aaUse *findAddressAliasUse(Instr *instruction)
 
 bool emitReset(Program *program)
 {
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && !processorRegisterPools[i]->emitReset()) {
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && !processorRegisterPools[poolIndex]->emitReset()) {
             reportError("Processor::emitReset() - failed to reset %s\n",
-                          processorRegisterPools[i]->poolName);
+                          processorRegisterPools[poolIndex]->poolName);
             return false;
         }
     return true;
@@ -584,12 +584,12 @@ bool emitReset(Program *program)
 char *emitStats(Program *program, char *buf)
 {
     buf += formatIntoBuffer(buf, "; register stats:\n");
-    for (int i = 0; i != 12; i++)
-        if (processorRegisterPools[i] && processorRegisterPools[i]->virtualPartCount) {
-            buf = processorRegisterPools[i]->emitStats(buf);
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++)
+        if (processorRegisterPools[poolIndex] && processorRegisterPools[poolIndex]->virtualPartCount) {
+            buf = processorRegisterPools[poolIndex]->emitStats(buf);
             if (!buf) {
                 reportError("Processor::emitStats() - failed to emit stats for %s\n",
-                              processorRegisterPools[i]->poolName);
+                              processorRegisterPools[poolIndex]->poolName);
                 return 0;
             }
         }

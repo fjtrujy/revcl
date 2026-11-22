@@ -82,12 +82,12 @@ bool initPrune(Program *program)
 
 bool initPrune(instStream *stream)
 {
-    workTable *t = stream->getTable();
-    if (!t) {
+    workTable *scheduleTable = stream->getTable();
+    if (!scheduleTable) {
         reportError("failed to get work table\n");
         return false;
     }
-    for (Instr *instruction = t->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+    for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
         if (!initPrune(instruction)) {
             reportError("init prune failed\n");
             return false;
@@ -138,15 +138,15 @@ static inline void dumpPruneInstruction(Instr *instruction)
 int tryPrune(instStream *stream)
 {
     int n = 0;
-    workTable *t = stream->getTable();
-    if (!t) {
+    workTable *scheduleTable = stream->getTable();
+    if (!scheduleTable) {
         reportError("failed to get work table\n");
         return 0;
     }
     bool raw = false;
-    if (t->codeModeValue == 4 || t->getTableRawMode() == 4)
+    if (scheduleTable->codeModeValue == 4 || scheduleTable->getTableRawMode() == 4)
         raw = true;
-    for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
+    for (Instr *in = scheduleTable->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         int r = tryPrune(in, raw);
         if (r < 0) {
             reportError("rec  prune failed for instruction\n");
@@ -165,10 +165,10 @@ int tryPrune(Instr *instruction, bool raw)
         return 0;
     if (raw) {
         Operand *r, *op, *lookup;
-        for (int i = 0;
-             ((i < 0 ? (lookup = instruction->getOp(i)) :
-                       (lookup = i < instruction->operandCount ? &instruction->operands[i] : 0)),
-              r = lookup, op = lookup, lookup = 0, op) != 0; i++) {
+        for (int operandIndex = 0;
+             ((operandIndex < 0 ? (lookup = instruction->getOp(operandIndex)) :
+                       (lookup = operandIndex < instruction->operandCount ? &instruction->operands[operandIndex] : 0)),
+              r = lookup, op = lookup, lookup = 0, op) != 0; operandIndex++) {
             if (r->isInput())
                 (RegPoolEntry *&)r = r->assignedRegister;
             else
@@ -184,9 +184,9 @@ int tryPrune(Instr *instruction, bool raw)
         if (!reg)
             continue;
         int cnt = 0;
-        for (int s = 0; s != reg->partCount; s++) {
-            if ((out->componentMask >> s) & 1)
-            for (ol_s *location = out->parts[s].operandLocations.head; location; location = location->next) {
+        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            if ((out->componentMask >> partIndex) & 1)
+            for (ol_s *location = out->parts[partIndex].operandLocations.head; location; location = location->next) {
                 Operand *src = operandAtLocation(location);
                 if (!src) {
                     reportError("failed to get an operand from an oploc\n");
@@ -197,18 +197,18 @@ int tryPrune(Instr *instruction, bool raw)
                     reportError("there was a reg mismatch\n");
                     return -1;
                 }
-                if (sw != s) {
+                if (sw != partIndex) {
                     reportError("swizzle detected\n");
                     return -1;
                 }
-                if (!((src->componentMask >> s) & 1)) {
+                if (!((src->componentMask >> partIndex) & 1)) {
                     reportError("there was a mop bit mismatch\n");
                     return -1;
                 }
-                if (((src->pruneMask >> s) & 1) && ((~out->pruneMask >> s) & 1)) {
+                if (((src->pruneMask >> partIndex) & 1) && ((~out->pruneMask >> partIndex) & 1)) {
                     cnt++;
                     n++;
-                    out->pruneMask |= 1 << s;
+                    out->pruneMask |= 1 << partIndex;
                 }
             }
         }
@@ -256,14 +256,14 @@ extern bool quietDiagnostics;
 
 bool doPrune(instStream *stream)
 {
-    workTable *t = stream->getTable();
-    if (!t) {
+    workTable *scheduleTable = stream->getTable();
+    if (!scheduleTable) {
         reportError("failed to get work table\n");
         return false;
     }
-    if (t->getTableRawMode() == 4 || t->getTableRawMode() == 3)
+    if (scheduleTable->getTableRawMode() == 4 || scheduleTable->getTableRawMode() == 3)
         return true;
-    Instr *first = t->linearInstructions.head;
+    Instr *first = scheduleTable->linearInstructions.head;
     Instr *in = first;
     Instr *next;
     if (first) do {
@@ -282,7 +282,7 @@ bool doPrune(instStream *stream)
                 in->leDump();
                 errorOccurred = saved;
             }
-            if (!t->destroyInstruction(in)) {
+            if (!scheduleTable->destroyInstruction(in)) {
                 reportError("failed to destroy instruction\n");
                 if (in)
                     dumpPruneInstruction(in);

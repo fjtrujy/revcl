@@ -5,29 +5,29 @@
 bool Instr::patchBranchLatencies()
 {
     for (int i = 0; i != operandCount; i++) {
-        Operand *op = &operands[i];
-        if (!registerOperand(op, 1))
+        Operand *operand = &operands[i];
+        if (!registerOperand(operand, 1))
             continue;
-        op->additionalLatency = 0;
+        operand->additionalLatency = 0;
         if (!(branchFlags & 4))
             continue;
-        for (ol_s *ol = op->parts[0].operandLocations.head; ol; ol = ol->next) {
-            Instr *in = ol->instruction;
+        for (ol_s *location = operand->parts[0].operandLocations.head; location; location = location->next) {
+            Instr *in = location->instruction;
             bool found = false;
             if (in->ramAccessType) {
-                int c = ol->operandIndex;
+                int c = location->operandIndex;
                 if ((char)c == 0)
                     continue;
             }
             for (int j = 0; j != in->operandCount; j++) {
-                RegPoolEntry *r = registerOperand(&in->operands[j], 1);
-                if (r && (unsigned)(r->registerIndex - 54) <= 5) {
+                RegPoolEntry *registerEntry = registerOperand(&in->operands[j], 1);
+                if (registerEntry && (unsigned)(registerEntry->registerIndex - 54) <= 5) {
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                op->additionalLatency = 1;
+                operand->additionalLatency = 1;
                 break;
             }
         }
@@ -51,10 +51,10 @@ int Instr::simplifyBranch()
     if (branchFlags & 8)
         return 1;
     if (operandCount == 2) {
-        RegPoolEntry *r = operands[0].assignedRegister;
-        if (!r)
+        RegPoolEntry *registerEntry = operands[0].assignedRegister;
+        if (!registerEntry)
             return -1;
-        if (r->registerIndex == 0x20) {
+        if (registerEntry->registerIndex == 0x20) {
             if (id == 0xa8)
                 return 0;
             if (id == 0xa9)
@@ -72,9 +72,9 @@ int Instr::simplifyBranch()
             return 0;
     }
     if (target > 0) {
-        for (int i = 0; i != operandCount; i++) {
-            operands[i].assignedRegister = 0;
-            operands[i].operandKind = 0;
+        for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+            operands[operandIndex].assignedRegister = 0;
+            operands[operandIndex].operandKind = 0;
         }
         operandCount = 1;
         operands[0].operandKind = 0x1b;

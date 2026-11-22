@@ -7,9 +7,9 @@
 int normal2RegCost(Instr *in);
 int vuta1RegCost(Instr *in);
 
-bool optNormal2(workTable *wt, wrangleCand *c)
+bool optNormal2(workTable *scheduleTable, wrangleCand *candidate)
 {
-    Instr *instruction = wt->moveListHead;
+    Instr *instruction = scheduleTable->moveListHead;
     Instr *best = 0;
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;
@@ -42,17 +42,17 @@ bool optNormal2(workTable *wt, wrangleCand *c)
     }
     if (!best)
         return false;
-    c->candidateInstruction = best;
-    c->candidateRow = (best->candidateAttemptCount >> 2) + best->candidateBaseRow;
-    c->candidatePipe = (best->candidateAttemptCount >> 3) & 1;
+    candidate->candidateInstruction = best;
+    candidate->candidateRow = (best->candidateAttemptCount >> 2) + best->candidateBaseRow;
+    candidate->candidatePipe = (best->candidateAttemptCount >> 3) & 1;
     return true;
 }
 
 int normal2RegCost(Instr *instruction)
 {
     int cost = 0;
-    for (int i = 0; i != instruction->operandCount; i++) {
-        RegPoolEntry *registerEntry = instruction->operands[i].inRegOp2();
+    for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        RegPoolEntry *registerEntry = instruction->operands[operandIndex].inRegOp2();
         if (registerEntry) {
             switch (registerEntry->registerIndex) {
             case 55:

@@ -94,12 +94,12 @@ bool catOnTo(workTable *t1, workTable *t2)
         return 0;
     }
     int dst = t1->rangeEnd;
-    int i;
-    for (i = t2->getRangeStart(); i < t2->getRangeEnd(); dst++, i++) {
-        wtRow *src = &t2->rows[i];
+    int rowIndex;
+    for (rowIndex = t2->getRangeStart(); rowIndex < t2->getRangeEnd(); dst++, rowIndex++) {
+        wtRow *src = &t2->rows[rowIndex];
         memcpy(&t1->rows[dst], src, 14);
-        for (int j = 0; j != 2; j++) {
-            Instr *in = src->entries[j].instruction;
+        for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
+            Instr *in = src->entries[entryIndex].instruction;
             if (in) {
                 if (!UnlinkFromLinear((Block *)t2, in)) {
                     reportError("failed to remlinear\n");
@@ -108,11 +108,11 @@ bool catOnTo(workTable *t1, workTable *t2)
                 in->ownerTable = 0;
                 in->setOwner((cls_unk30 *)t1);
             }
-            src->entries[j].instruction = 0;
+            src->entries[entryIndex].instruction = 0;
         }
     }
-    for (i = t1->rangeStart; i < t1->rangeEnd; i++) {
-        wtRow *workRow = &t1->rows[i];
+    for (rowIndex = t1->rangeStart; rowIndex < t1->rangeEnd; rowIndex++) {
+        wtRow *workRow = &t1->rows[rowIndex];
         for (int j = 0; j != 2; j++) {
             Instr *in = workRow->entries[j].instruction;
             if (in && !UnlinkFromLinear((Block *)t1, in)) {

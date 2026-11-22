@@ -16,16 +16,16 @@ static inline void copyShort(short &to, const short &from)
 workTable *prepUta(Program *p, instStream *s, int loopSize, char smart);
 extern int nextReservedInstructionKey;
 
-workTable *makeForceTable(Program *p, instStream *s)
+workTable *makeForceTable(Program *program, instStream *stream)
 {
-    workTable *wt = s->getTable();
-    int mode = wt->codeModeValue;
+    workTable *scheduleTable = stream->getTable();
+    int mode = scheduleTable->codeModeValue;
     if ((unsigned char)mode != 3) {
         const char *modeName = codeModeName(mode);
         reportError("it_old is not raw mode - %s\n", modeName);
         return 0;
     }
-    workTable *nt = prepUta(p, s, 0, 0);
+    workTable *nt = prepUta(program, stream, 0, 0);
     if (!nt) {
         reportError("failed to make a lock table for makeForceTable\n");
         return 0;
@@ -36,25 +36,25 @@ workTable *makeForceTable(Program *p, instStream *s)
         reportError("it_new is not raw mode .. %s\n", modeName);
         return 0;
     }
-    int start = wt->getRangeStart();
-    int end = wt->getRangeEnd();
+    int start = scheduleTable->getRangeStart();
+    int end = scheduleTable->getRangeEnd();
     nt->setRange(start, end);
-    for (Instr *in = nt->pendingInstructions.head; in; in = nt->pendingInstructions.head) {
-        Instr *clone = in->cloneImage;
+    for (Instr *instruction = nt->pendingInstructions.head; instruction; instruction = nt->pendingInstructions.head) {
+        Instr *clone = instruction->cloneImage;
         InstructionPosition pos;
-        InstructionPosition *r = &clone->position;
-        pos.linearRow = r->linearRow;
-        pos.loopRow = r->loopRow;
-        pos.loopIteration = r->loopIteration;
-        pos.pipelineIndex = r->pipelineIndex;
-        if (!nt->forceInsert(in, &pos)) {
+        InstructionPosition *instructionPosition = &clone->position;
+        pos.linearRow = instructionPosition->linearRow;
+        pos.loopRow = instructionPosition->loopRow;
+        pos.loopIteration = instructionPosition->loopIteration;
+        pos.pipelineIndex = instructionPosition->pipelineIndex;
+        if (!nt->forceInsert(instruction, &pos)) {
             reportError("failed to force an insert into table\n");
             delete nt;
             return 0;
         }
     }
     nt->changeMode(3);
-    nt->setTableRawMode(wt->getTableRawMode());
+    nt->setTableRawMode(scheduleTable->getTableRawMode());
     return nt;
 }
 

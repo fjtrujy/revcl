@@ -42,8 +42,8 @@ bool bindDependencies(Program *program)
         return false;
     }
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *wt = stream->getTable();
-        for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
+        workTable *scheduleTable = stream->getTable();
+        for (Instr *in = scheduleTable->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
             int bits = in->getRamBits();
             if (!in->branchLabelTags)
                 continue;
@@ -174,13 +174,13 @@ Instr *addXinFor(instStream *stream, RegPoolEntry *registerEntry)
     }
     op->assignedRegister = registerEntry;
     op->componentMask = (1 << registerEntry->partCount) - 1;
-    workTable *wt = stream->getTable();
-    if (!wt) {
+    workTable *scheduleTable = stream->getTable();
+    if (!scheduleTable) {
         reportError("can't get work table\n");
         delete in;
         return 0;
     }
-    if (!wt->logAddLinear_Tail(in)) {
+    if (!scheduleTable->logAddLinear_Tail(in)) {
         reportError("failed to an external input to the tail of list\n");
         return 0;
     }
@@ -214,13 +214,13 @@ Instr *addXoutFor(instStream *stream, RegPoolEntry *registerEntry)
     }
     op->assignedRegister = registerEntry;
     op->componentMask = (1 << registerEntry->partCount) - 1;
-    workTable *wt = stream->getTable();
-    if (!wt) {
+    workTable *scheduleTable = stream->getTable();
+    if (!scheduleTable) {
         reportError("can't get work table\n");
         delete in;
         return 0;
     }
-    if (!wt->logAddLinear_Head(in)) {
+    if (!scheduleTable->logAddLinear_Head(in)) {
         reportError("failed to an external output to the head of list\n");
         return 0;
     }

@@ -34,9 +34,9 @@ bool loadStalls(Program *program)
             reportError("instruction wasn't where I thought it was\n");
             return 0;
         }
-        for (int i = 0; i != 3; i++) {
-            if (n->stallByType[i]) {
-                if (!workRow->addStall(i, n->stallByType[i])) {
+        for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++) {
+            if (n->stallByType[stallTypeIndex]) {
+                if (!workRow->addStall(stallTypeIndex, n->stallByType[stallTypeIndex])) {
                     reportError("failed to load a stall\n");
                     return 0;
                 }

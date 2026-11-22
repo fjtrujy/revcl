@@ -51,22 +51,22 @@ int regUseList::dumpRegisterClassUses(int regClass)
 void regUse::validateAndDumpParts()
 {
     RegPoolEntry *reg = registerEntry;
-    int i;
+    int partIndex;
     int j = 0;
     if (reg->partCount != 0)
         do
             j++;
         while (j != reg->partCount);
-    for (i = 0; i != reg->partCount; i++) {
-        if (slots[i].throughputSums[0] && !((outputMask >> i) & 1)) {
+    for (partIndex = 0; partIndex != reg->partCount; partIndex++) {
+        if (slots[partIndex].throughputSums[0] && !((outputMask >> partIndex) & 1)) {
             reportError(thruSumOobError,
-                          reg->registerName(), i);
+                          reg->registerName(), partIndex);
             exitAfterCleanup(-1);
         }
     }
-    for (i = 0; i != reg->partCount; i++) {
-        if (slots[i].throughputPairs.count)
-            slots[i].throughputPairs.dump();
+    for (partIndex = 0; partIndex != reg->partCount; partIndex++) {
+        if (slots[partIndex].throughputPairs.count)
+            slots[partIndex].throughputPairs.dump();
     }
 }
 
@@ -138,9 +138,9 @@ regUse *regUse::nextVirtual()
 bool regUseList::optReset()
 {
     for (regUse *registerUse = head; registerUse; registerUse = registerUse->next) {
-        for (int i = 0; i != 4; i++) {
-            registerUse->slots[i].assignmentPayload = 0;
-            registerUse->slots[i].registerLock.resetLock();
+        for (int partIndex = 0; partIndex != 4; partIndex++) {
+            registerUse->slots[partIndex].assignmentPayload = 0;
+            registerUse->slots[partIndex].registerLock.resetLock();
         }
     }
     return true;
@@ -148,9 +148,9 @@ bool regUseList::optReset()
 
 bool regUse::optReset()
 {
-    for (int i = 0; i != 4; i++) {
-        slots[i].assignmentPayload = 0;
-        slots[i].registerLock.resetLock();
+    for (int partIndex = 0; partIndex != 4; partIndex++) {
+        slots[partIndex].assignmentPayload = 0;
+        slots[partIndex].registerLock.resetLock();
     }
     return true;
 }
@@ -212,28 +212,28 @@ regUse *regUse::Clone()
     registerUse->unk_16 = unk_16;
     registerUse->unk_11 = unk_11;
     registerUse->externalBlockMode = externalBlockMode;
-    for (int i = 0; i != reg->partCount; i++) {
-        registerUse->slots[i].throughputSums[0] = slots[i].throughputSums[0];
-        registerUse->slots[i].throughputSums[1] = slots[i].throughputSums[1];
-        registerUse->slots[i].throughputSums[3] = slots[i].throughputSums[3];
-        registerUse->slots[i].throughputSums[2] = slots[i].throughputSums[2];
-        registerUse->slots[i].timingValues[0] = slots[i].timingValues[0];
-        registerUse->slots[i].timingValues[1] = slots[i].timingValues[1];
-        registerUse->slots[i].timingValues[2] = slots[i].timingValues[2];
-        registerUse->slots[i].timingValues[3] = slots[i].timingValues[3];
-        registerUse->slots[i].timingValues[4] = slots[i].timingValues[4];
-        registerUse->slots[i].timingValues[5] = slots[i].timingValues[5];
-        registerUse->slots[i].timingValues[6] = slots[i].timingValues[6];
-        registerUse->slots[i].timingValues[7] = slots[i].timingValues[7];
-        registerUse->slots[i].timingValues[8] = slots[i].timingValues[8];
-        registerUse->slots[i].timingValues[9] = slots[i].timingValues[9];
-        registerUse->slots[i].timingValues[10] = slots[i].timingValues[10];
-        registerUse->slots[i].timingValues[11] = slots[i].timingValues[11];
-        registerUse->slots[i].timingValues[12] = slots[i].timingValues[12];
-        registerUse->slots[i].earliestExternalCycle = slots[i].earliestExternalCycle;
-        registerUse->slots[i].latestExternalCycle = slots[i].latestExternalCycle;
-        registerUse->slots[i].assignmentPayload = 0;
-        registerUse->slots[i].registerLock.resetLock();
+    for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+        registerUse->slots[partIndex].throughputSums[0] = slots[partIndex].throughputSums[0];
+        registerUse->slots[partIndex].throughputSums[1] = slots[partIndex].throughputSums[1];
+        registerUse->slots[partIndex].throughputSums[3] = slots[partIndex].throughputSums[3];
+        registerUse->slots[partIndex].throughputSums[2] = slots[partIndex].throughputSums[2];
+        registerUse->slots[partIndex].timingValues[0] = slots[partIndex].timingValues[0];
+        registerUse->slots[partIndex].timingValues[1] = slots[partIndex].timingValues[1];
+        registerUse->slots[partIndex].timingValues[2] = slots[partIndex].timingValues[2];
+        registerUse->slots[partIndex].timingValues[3] = slots[partIndex].timingValues[3];
+        registerUse->slots[partIndex].timingValues[4] = slots[partIndex].timingValues[4];
+        registerUse->slots[partIndex].timingValues[5] = slots[partIndex].timingValues[5];
+        registerUse->slots[partIndex].timingValues[6] = slots[partIndex].timingValues[6];
+        registerUse->slots[partIndex].timingValues[7] = slots[partIndex].timingValues[7];
+        registerUse->slots[partIndex].timingValues[8] = slots[partIndex].timingValues[8];
+        registerUse->slots[partIndex].timingValues[9] = slots[partIndex].timingValues[9];
+        registerUse->slots[partIndex].timingValues[10] = slots[partIndex].timingValues[10];
+        registerUse->slots[partIndex].timingValues[11] = slots[partIndex].timingValues[11];
+        registerUse->slots[partIndex].timingValues[12] = slots[partIndex].timingValues[12];
+        registerUse->slots[partIndex].earliestExternalCycle = slots[partIndex].earliestExternalCycle;
+        registerUse->slots[partIndex].latestExternalCycle = slots[partIndex].latestExternalCycle;
+        registerUse->slots[partIndex].assignmentPayload = 0;
+        registerUse->slots[partIndex].registerLock.resetLock();
     }
     return registerUse;
 }

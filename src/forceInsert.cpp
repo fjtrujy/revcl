@@ -9,7 +9,7 @@ bool AddDone_Tail(Block *blk, Instr *n);
 
 bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
 {
-    int i = 0;
+    int operandIndex = 0;
     if (!in) {
         reportError("forceInsert - null in\n");
         return false;
@@ -29,8 +29,8 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         reportError("ForceInsert - after end\n");
         return false;
     }
-    Instr **ie = ((cls_unk30 *)this)->getIE_ck(row);
-    if (!ie) {
+    Instr **instructionSlot = ((cls_unk30 *)this)->getIE_ck(row);
+    if (!instructionSlot) {
         reportError("couldn't get ie\n");
         return false;
     }
@@ -38,7 +38,7 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         reportError("out of bounds pipe\n");
         return false;
     }
-    Instr **slot = &ie[pipe];
+    Instr **slot = &instructionSlot[pipe];
     if (*slot != (Instr *)in->replacedInstructionWord) {
         reportError("instruction already inserted or bad key\n");
         return false;
@@ -50,14 +50,14 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
     *slot = in;
     in->insertionSerial = nextInsertionSerial;
     nextInsertionSerial++;
-    for (i = 0; i != in->operandCount; i++) {
-        Operand *operand = &in->operands[i];
+    for (operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
+        Operand *operand = &in->operands[operandIndex];
         RegPoolEntry *reg = registerOperand(operand, 1);
         if (!reg)
             continue;
-        for (int k = 0; k != reg->partCount; k++) {
-            if ((bool)((operand->componentMask >> k) & 1)) {
-                OperandLock *operandLock = &operand->parts[k];
+        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            if ((bool)((operand->componentMask >> partIndex) & 1)) {
+                OperandLock *operandLock = &operand->parts[partIndex];
                 if (!operandLock) {
                     reportError("failed to get lock \n");
                     return false;
@@ -75,8 +75,8 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
             }
         }
     }
-    for (i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
+    for (operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
+        Operand *op = &in->operands[operandIndex];
         RegPoolEntry *reg = registerOperand(op, 2);
         if (!reg)
             continue;

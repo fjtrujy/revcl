@@ -383,17 +383,17 @@ bool workTable::putIn(Instr *instruction)
     return 1;
 }
 
-bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bool a6, bool a7)
+bool cloneAppend(workTable *from, workTable *scheduleTable, int lidS, int lidE, bool a5, bool a6, bool a7)
 {
     if (lidE > lidS) {
         reportError("CloneAppend - lid_e>lid_s\n");
         abortAfterError();
     }
-    if (!to) {
+    if (!scheduleTable) {
         reportError("CloneAppend - null input pointer\n");
         return 0;
     }
-    if (!to->rows) {
+    if (!scheduleTable->rows) {
         reportError("clone append - source table has no attached table\n");
         return 0;
     }
@@ -402,20 +402,20 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
         return 0;
     }
     int n = from->rangeEnd - from->rangeStart;
-    int need = n + to->rangeEnd;
-    if (need > to->rowCapacity && !to->grow(need + 0x20)) {
+    int need = n + scheduleTable->rangeEnd;
+    if (need > scheduleTable->rowCapacity && !scheduleTable->grow(need + 0x20)) {
         reportError("uh-oh, failed to grow a table\n");
         return 0;
     }
-    int j, i;
-    for (j = to->rangeEnd, i = from->rangeStart; i != from->rangeEnd; i++, j++) {
+    int rowIndex, i;
+    for (rowIndex = scheduleTable->rangeEnd, i = from->rangeStart; i != from->rangeEnd; i++, rowIndex++) {
         wtRow *sourceRow = &from->rows[i];
-        wtRow *destinationRow = &to->rows[j];
-        for (int p = 0; p != 2; p++) {
+        wtRow *destinationRow = &scheduleTable->rows[rowIndex];
+        for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
             Instr *cloneInstruction;
-            Instr *instruction = sourceRow->getEntry(p);
+            Instr *instruction = sourceRow->getEntry(entryIndex);
             cloneInstruction = 0;
-            if (destinationRow->getEntry(p)) {
+            if (destinationRow->getEntry(entryIndex)) {
                 reportError("CloneAppend: would overwrite inst in target\n");
                 return 0;
             }
@@ -442,12 +442,12 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                     }
                 }
             }
-            destinationRow->entries[p].instruction = cloneInstruction;
+            destinationRow->entries[entryIndex].instruction = cloneInstruction;
             if (cloneInstruction) {
                 InstructionPosition pos;
-                cloneInstruction->setOwner((cls_unk30 *)to);
-                pos.setRow(j);
-                pos.pipelineIndex = p;
+                cloneInstruction->setOwner((cls_unk30 *)scheduleTable);
+                pos.setRow(rowIndex);
+                pos.pipelineIndex = entryIndex;
                 InstructionPosition *loc = &cloneInstruction->position;
                 cloneInstruction->position.linearRow = pos.linearRow;
                 loc->loopRow = pos.loopRow;
@@ -456,7 +456,7 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
             }
         }
     }
-    to->rangeEnd += n;
+    scheduleTable->rangeEnd += n;
     return 1;
 }
 
@@ -507,8 +507,8 @@ bool workTable::resetFlowStalls()
 {
     declaredRawLength = -1;
     if (rows && rangeStart >= 0) {
-        for (int i = rangeStart; i < rangeEnd; i++)
-            if (!rows[i].clearStalls()) {
+        for (int rowIndex = rangeStart; rowIndex < rangeEnd; rowIndex++)
+            if (!rows[rowIndex].clearStalls()) {
                 reportError("failed to flow reset ientry\n");
                 return 0;
             }
@@ -542,14 +542,14 @@ bool workTable::hasSafeTrailingInstructions()
     return 1;
 }
 
-Instr **cls_unk30::getIE_ck(int rl)
+Instr **cls_unk30::getIE_ck(int rowIndex)
 {
     workTable *table = (workTable *)this;
     if (!table->rows) {
         reportError("checkie: table not set\n");
         return 0;
     }
-    if (rl < 0) {
+    if (rowIndex < 0) {
         reportError("checkie() - rl<0\n");
         return 0;
     }
@@ -558,37 +558,37 @@ Instr **cls_unk30::getIE_ck(int rl)
             reportError("getIE_ck - iStart not zero for loop table\n");
             abortAfterError();
         }
-        if (rl >= table->loopSize)
-            rl %= table->loopSize;
+        if (rowIndex >= table->loopSize)
+            rowIndex %= table->loopSize;
     }
-    if (rl >= table->rowCapacity) {
-        reportError("checkie() - rl>=m_MaxSize %d,%d\n", rl, table->rowCapacity);
+    if (rowIndex >= table->rowCapacity) {
+        reportError("checkie() - rl>=m_MaxSize %d,%d\n", rowIndex, table->rowCapacity);
         return 0;
     }
-    return (Instr **)&table->rows[rl];
+    return (Instr **)&table->rows[rowIndex];
 }
 
-Instr *workTable::getInstr(int rl, int p)
+Instr *workTable::getInstr(int rl, int pipelineIndex)
 {
     Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rl);
     if (!pipelineEntries)
         return 0;
-    if (p < 0 || p >= 2) {
+    if (pipelineIndex < 0 || pipelineIndex >= 2) {
         reportError("out of bounds pipe\n");
         return 0;
     }
-    return pipelineEntries[p];
+    return pipelineEntries[pipelineIndex];
 }
 
-static inline Instr *getPipeInstr(Instr **pipelineEntries, int p)
+static inline Instr *getPipeInstr(Instr **pipelineEntries, int pipelineIndex)
 {
     if (!pipelineEntries)
         return 0;
-    if (p < 0 || p >= 2) {
+    if (pipelineIndex < 0 || pipelineIndex >= 2) {
         reportError("out of bounds pipe\n");
         return 0;
     }
-    return pipelineEntries[p];
+    return pipelineEntries[pipelineIndex];
 }
 
 Instr *workTable::getInstrInRange(int rl, int p)
@@ -627,13 +627,13 @@ const char *allocModeName(unsigned int mode)
     return "ALLOC_MODE_????";
 }
 
-int workTable::getPipeCount(int p)
+int workTable::getPipeCount(int pipeIndex)
 {
-    if (p < 0 || p > 2) {
+    if (pipeIndex < 0 || pipeIndex > 2) {
         reportError("get pipe count - bad pipe\n");
         abortAfterError();
     }
-    return instructionCountsByPipe[p];
+    return instructionCountsByPipe[pipeIndex];
 }
 
 bool logInstr(Block *blk, Instr *instruction)
@@ -761,15 +761,15 @@ bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1,
     return 1;
 }
 
-bool workTable::grow(int n)
+bool workTable::grow(int rowIndex)
 {
     if (!rows) {
         reportError("can't grow.. there's nothing here\n");
         return 0;
     }
-    if (n <= rowCapacity)
+    if (rowIndex <= rowCapacity)
         return 1;
-    wtRow *workRow = new wtRow[n];
+    wtRow *workRow = new wtRow[rowIndex];
     if (!workRow) {
         reportError("failed to get new tab\n");
         return 0;
@@ -780,7 +780,7 @@ bool workTable::grow(int n)
     }
     delete[] rows;
     rows = workRow;
-    rowCapacity = n;
+    rowCapacity = rowIndex;
     return 1;
 }
 
@@ -864,9 +864,9 @@ bool workTable::setSkip(int row, char skip)
 int workTable::getRangeStart()
 {
     if (!rows) {
-        const char *m = codeModeStr(codeModeValue);
-        const char *o = ownerStream ? ownerStream->streamName() : "UNOWNED_TABLE";
-        reportError("getStart called .. no table for %s mode %s\n", o, m);
+        const char *modeName = codeModeStr(codeModeValue);
+        const char *ownerName = ownerStream ? ownerStream->streamName() : "UNOWNED_TABLE";
+        reportError("getStart called .. no table for %s mode %s\n", ownerName, modeName);
         exitAfterCleanup(-1);
     }
     return rangeStart;
@@ -880,8 +880,8 @@ int workTable::getLoopSize()
 int workTable::getRangeEnd()
 {
     if (!rows) {
-        const char *o = ownerStream ? ownerStream->streamName() : "UNOWNED_TABLE";
-        reportError("getEnd called .. no table for %s\n", o);
+        const char *ownerName = ownerStream ? ownerStream->streamName() : "UNOWNED_TABLE";
+        reportError("getEnd called .. no table for %s\n", ownerName);
         reportError("getEnd called .. no table\n");
         exitAfterCleanup(-1);
     }
@@ -1018,8 +1018,8 @@ bool workTable::makeLinearList()
             reportError("iTable::makeLinearList - failed to get ientry\n");
             return 0;
         }
-        for (int p = 0; p != 2; p++) {
-            Instr *instruction = pipelineEntries[p];
+        for (int pipelineIndex = 0; pipelineIndex != 2; pipelineIndex++) {
+            Instr *instruction = pipelineEntries[pipelineIndex];
             if (instruction && !logAddLinear_Tail(instruction)) {
                 reportError("iTable - failed to add an instruction\n");
                 instruction->leDump();
@@ -1061,8 +1061,8 @@ bool workTable::relinkRawIt()
             reportError("iTable::makeLinearList - failed to get ientry\n");
             return 0;
         }
-        for (int p = 0; p != 2; p++) {
-            Instr *instruction = row->entries[p].instruction;
+        for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
+            Instr *instruction = row->entries[entryIndex].instruction;
             if (instruction) {
                 instruction->linearLink.previousInstruction = 0;
                 instruction->linearLink.nextInstruction = 0;
@@ -1092,26 +1092,26 @@ workTable *workTable::localClone()
         reportError("table to be locally cloned isn't uta\n");
         return 0;
     }
-    workTable *nt = new workTable;
-    if (!nt) {
+    workTable *scheduleTable = new workTable;
+    if (!scheduleTable) {
         reportError("failed to get new table\n");
         return 0;
     }
-    nt->init(1, 0);
-    nt->minimumSafeLoopCount = minimumSafeLoopCount;
-    nt->statistics.copyCountersFrom(&statistics);
-    nt->streamDependencyLength = streamDependencyLength;
-    nt->streamLogicalLength = streamLogicalLength;
-    nt->logicalInstructionLength = logicalInstructionLength;
-    nt->externalMinimumLength = externalMinimumLength;
+    scheduleTable->init(1, 0);
+    scheduleTable->minimumSafeLoopCount = minimumSafeLoopCount;
+    scheduleTable->statistics.copyCountersFrom(&statistics);
+    scheduleTable->streamDependencyLength = streamDependencyLength;
+    scheduleTable->streamLogicalLength = streamLogicalLength;
+    scheduleTable->logicalInstructionLength = logicalInstructionLength;
+    scheduleTable->externalMinimumLength = externalMinimumLength;
     unsigned int t = (unsigned char)allocationMode;
-    nt->allocationMode = t;
-    nt->nextInsertionSerial = 0;
-    nt->ownerStream = ownerStream;
+    scheduleTable->allocationMode = t;
+    scheduleTable->nextInsertionSerial = 0;
+    scheduleTable->ownerStream = ownerStream;
     regUseList &regs = registerUses;
     for (regUse *recordedUse = regs.head; recordedUse; recordedUse = recordedUse->next) {
         regUse *cloned = recordedUse->Clone();
-        if (!nt->registerUses.append(cloned)) {
+        if (!scheduleTable->registerUses.append(cloned)) {
             reportError("failed to add cloned regref to list\n");
             delete recordedUse;
             return 0;
@@ -1124,10 +1124,10 @@ workTable *workTable::localClone()
             RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
             int mask = operand->componentMask & ~operand->externalPartMask;
-            for (int k = 0; k != reg->partCount; k++) {
-                int bit = 1 << k;
+            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                int bit = 1 << partIndex;
                 if (mask & bit) {
-                ol_s *operandLocation = operand->parts[k].operandLocations.head;
+                ol_s *operandLocation = operand->parts[partIndex].operandLocations.head;
                 if (!operandLocation || operandLocation->next) {
                     reportError("more or less than one oploc for non-extern input\n");
                     return 0;
@@ -1149,7 +1149,7 @@ workTable *workTable::localClone()
                 Instr *writerInstruction = setter->cloneImage;
                 int p1 = operandLocation->componentIndex;
                 int p0 = operandLocation->operandIndex;
-                if (!link_oParts(writerInstruction, p0, p1, cloneInstruction, i, k)) {
+                if (!link_oParts(writerInstruction, p0, p1, cloneInstruction, i, partIndex)) {
                     reportError("failed to link local oparts\n");
                     return 0;
                 }
@@ -1157,14 +1157,14 @@ workTable *workTable::localClone()
             }
             }
         }
-        if (!nt->logAddLinear_Tail(cloneInstruction)) {
+        if (!scheduleTable->logAddLinear_Tail(cloneInstruction)) {
             reportError("iTable::qInstruction - failed to add to linear list tail\n");
             return 0;
         }
     }
-    nt->clearClones();
+    scheduleTable->clearClones();
     clearClones();
-    return nt;
+    return scheduleTable;
 }
 
 bool workTable::replaceInstruction(Instr *old, Instr *nw)

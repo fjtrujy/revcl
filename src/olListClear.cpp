@@ -13,15 +13,15 @@ int mstrlen(const char *s);
 
 bool olList::clear()
 {
-    ol_s *p = head;
-    if (p) {
+    ol_s *location = head;
+    if (location) {
         ol_s *f = olFreeList;
         do {
-            ol_s *n = p->next;
-            p->next = f;
-            f = p;
-            p = n;
-        } while (p);
+            ol_s *n = location->next;
+            location->next = f;
+            f = location;
+            location = n;
+        } while (location);
         olFreeList = f;
     }
     head = 0;
