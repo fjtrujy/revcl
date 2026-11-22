@@ -10,39 +10,39 @@ bool UnlinkFromLinear(Block *blk, Instr *n);
 bool streamExportsSymbol(Program *p, instStream *s);
 bool appendStream(Program *p, instStream *a, instStream *b);
 
-static inline void dumpRawStream(instStream *s)
+static inline void dumpRawStream(instStream *stream)
 {
-    s->dump(0);
+    stream->dump(0);
 }
 
-bool concatenateCompatibleStreams(Program *p)
+bool concatenateCompatibleStreams(Program *program)
 {
-    instStream *s = p->streamHead;
-    while (s) {
-        if (s->getCodeMode() != 4 && !s->disposeInputTable()) {
+    instStream *stream = program->streamHead;
+    while (stream) {
+        if (stream->getCodeMode() != 4 && !stream->disposeInputTable()) {
             reportError("failed to dispose input table\n");
             return 0;
         }
-        if (s->getCodeMode() == 3 && !s->getRawSchedulingMode()) {
+        if (stream->getCodeMode() == 3 && !stream->getRawSchedulingMode()) {
             reportError("bad raw mode\n");
-            dumpRawStream(s);
+            dumpRawStream(stream);
             return 0;
         }
-        instStream *n = s->nextStream;
-        if (n && !n->containsBarrier && !s->mergedBarrierFlag) {
-        linkList *out = &s->outputLinks;
+        instStream *n = stream->nextStream;
+        if (n && !n->containsBarrier && !stream->mergedBarrierFlag) {
+        linkList *out = &stream->outputLinks;
         if (out->count == 1 && n->inputLinks.count == 1
-            && s->usesFreeRawLayout() && n->usesFreeRawLayout()
-            && s->endType == 1 && n->startType == 1
-            && !s->getBranch()
+            && stream->usesFreeRawLayout() && n->usesFreeRawLayout()
+            && stream->endType == 1 && n->startType == 1
+            && !stream->getBranch()
             && out->getStream(0) == n
-            && !n->leadingLabelFlags && !s->trailingLabelFlags
-            && !streamExportsSymbol(p, n)) {
-            if (!appendStream(p, s, n)) {
-                reportError("failed to append %s onto %s\n", n->streamName(), s->streamName());
+            && !n->leadingLabelFlags && !stream->trailingLabelFlags
+            && !streamExportsSymbol(program, n)) {
+            if (!appendStream(program, stream, n)) {
+                reportError("failed to append %s onto %s\n", n->streamName(), stream->streamName());
                 return 0;
             }
-            if (!p->unlinkStreams(s, n, 0)) {
+            if (!program->unlinkStreams(stream, n, 0)) {
                 reportError("failed to unlink streams\n");
                 return 0;
             }
@@ -54,16 +54,16 @@ bool concatenateCompatibleStreams(Program *p)
             while ((l = n->outputLinks.head) != 0) {
                 instStream *to = l->otherStream;
                 int type = l->linkType;
-                if (!p->unlinkStreams(n, to, type)) {
+                if (!program->unlinkStreams(n, to, type)) {
                     reportError("failed to unlink streams\n");
                     return 0;
                 }
-                if (!p->linkStreams(s, to, type)) {
+                if (!program->linkStreams(stream, to, type)) {
                     reportError("failed to link together streams\n");
                     return 0;
                 }
             }
-            if (!p->removeStream(n)) {
+            if (!program->removeStream(n)) {
                 reportError("failed to unlink ist_n\n");
                 return 0;
             }
@@ -71,7 +71,7 @@ bool concatenateCompatibleStreams(Program *p)
             continue;
         }
         }
-        s = s->nextStream;
+        stream = stream->nextStream;
     }
     return 1;
 }
@@ -112,9 +112,9 @@ bool catOnTo(workTable *t1, workTable *t2)
         }
     }
     for (i = t1->rangeStart; i < t1->rangeEnd; i++) {
-        wtRow *r = &t1->rows[i];
+        wtRow *workRow = &t1->rows[i];
         for (int j = 0; j != 2; j++) {
-            Instr *in = r->entries[j].instruction;
+            Instr *in = workRow->entries[j].instruction;
             if (in && !UnlinkFromLinear((Block *)t1, in)) {
                 reportError("failed to link in from it1\n");
                 return 0;
@@ -135,9 +135,9 @@ bool catOnTo(workTable *t1, workTable *t2)
     return 1;
 }
 
-bool appendStream(Program *p, instStream *a, instStream *b)
+bool appendStream(Program *program, instStream *stream, instStream *b)
 {
-    if (!a || !b) {
+    if (!stream || !b) {
         reportError("cat streams - passed a null pointer\n");
         return 0;
     }
@@ -145,22 +145,22 @@ bool appendStream(Program *p, instStream *a, instStream *b)
         reportError("dbgTop set for ist_2 ->>>>>>>>>>>>>>please code this!\n");
         return 0;
     }
-    if (a->trailingLabelFlags) {
+    if (stream->trailingLabelFlags) {
         reportError("dbgEnd set for ist_1 ->>>>>>>>>>>>>>please code this!\n");
         return 0;
     }
-    workTable *t1 = a->getTable();
+    workTable *t1 = stream->getTable();
     workTable *t2 = b->getWorkTable();
     if (!catOnTo(t1, t2)) {
         reportError("failed to cat table2 onto table1\n");
         return 0;
     }
     int endType = b->endType;
-    a->endType = endType;
+    stream->endType = endType;
     int branchType = b->branchType;
-    a->branchType = branchType;
-    a->trailingLabelFlags = b->trailingLabelFlags;
-    a->mergedBarrierFlag = b->mergedBarrierFlag;
+    stream->branchType = branchType;
+    stream->trailingLabelFlags = b->trailingLabelFlags;
+    stream->mergedBarrierFlag = b->mergedBarrierFlag;
     return 1;
 }
 

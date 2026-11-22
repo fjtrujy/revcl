@@ -9,7 +9,7 @@
 #include "decodedLine.h"
 
 
-bool splitParserStream(Program *p, DecodedLine *blocks, int count)
+bool splitParserStream(Program *program, DecodedLine *blocks, int count)
 {
     int i = 0;
     if (!blocks) {
@@ -22,9 +22,9 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
     }
 
     for (; i != count; i++) {
-        DecodedLine *b = &blocks[i];
+        DecodedLine *decodedLine = &blocks[i];
         for (int k = 0; k != 2; k++) {
-            VclPtrWord in = (VclPtrWord)b->instructions[k];
+            VclPtrWord in = (VclPtrWord)decodedLine->instructions[k];
             if (!in || !((Instr *)in)->branchFlags)
                 continue;
             char *target = ((Instr *)in)->getBranchTargetImmediate();
@@ -56,7 +56,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
                         ((Instr *)in)->leDump(-1);
                         return false;
                     }
-                    if (!p->uniqueNamePrefixes.findByExactName(buf) && !p->uniqueNamePrefixes.findOrAppendByExactName(buf)) {
+                    if (!program->uniqueNamePrefixes.findByExactName(buf) && !program->uniqueNamePrefixes.findOrAppendByExactName(buf)) {
                         reportError("failed to add tag name '%s' to the global tag list\n", buf);
                         return false;
                     }
@@ -161,7 +161,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
         }
         b->flowId = id;
     }
-    p->flowIdCount = uid;
+    program->flowIdCount = uid;
 
     mList unused;
     i = 0;
@@ -190,21 +190,21 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
             } while (end < count);
         }
         int n = end - i;
-        instStream *s = new instStream;
-        if (!s) goto allocationOfStreamFailed;
+        instStream *stream = new instStream;
+        if (!stream) goto allocationOfStreamFailed;
         goto afterNHandler;
         allocationOfStreamFailed:
             reportError("flowMon::build - new failed\n");
             return false;
         afterNHandler:;
-        s->streamId = id;
+        stream->streamId = id;
         mList *labels = &b->labels;
         if (!labels->nodeCount) {
-            int nameLength = mstrlen(getUniqueName(p));
+            int nameLength = mstrlen(getUniqueName(program));
             char *name = new char[nameLength + 128];
             if (name) {
-                formatIntoBuffer(name, "__v_%s_%d", getUniqueName(p), id);
-                if (!s->labels.appendNamedNode(name)) {
+                formatIntoBuffer(name, "__v_%s_%d", getUniqueName(program), id);
+                if (!stream->labels.appendNamedNode(name)) {
                     reportError("failed to creat add a default name node\n");
                     delete[] name;
                 }
@@ -212,10 +212,10 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
             } else {
                 goto labelError;
             }
-        } else if (!s->labels.transferNodesFrom(labels)) {
+        } else if (!stream->labels.transferNodesFrom(labels)) {
             goto transferError;
         }
-        s->leadingLabelFlags |= s->labels.takeCombinedFlags();
+        stream->leadingLabelFlags |= stream->labels.takeCombinedFlags();
         goto afterTError;
         transferError:
             reportError("failed to grab entries from in at top\n");
@@ -228,25 +228,25 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
         afterAError:;
         switch (mode) {
         case 1:
-            if (!buildUta(p, s, b, n)) {
+            if (!buildUta(program, stream, b, n)) {
                 reportInfo("buildUta table failed for some reason\n");
                 return false;
             }
             break;
         case 6:
-            if (!buildPassThru(p, s, b, n)) {
+            if (!buildPassThru(program, stream, b, n)) {
                 reportInfo("buildPass failed for some reason\n");
                 return false;
             }
             break;
         case 3:
-            if (!buildRaw(p, s, b, n, sub)) {
+            if (!buildRaw(program, stream, b, n, sub)) {
                 reportInfo("buildRaw table failed for some reason\n");
                 return false;
             }
             break;
         case 4:
-            if (!buildSynth(p, s, b, n)) {
+            if (!buildSynth(program, stream, b, n)) {
                 reportInfo("buildSynth table failed for some reason\n");
                 return false;
             }
@@ -257,9 +257,9 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
         }
         for (int k = 0; k != n; k++)
             blocks[i + k].releaseContents();
-        if (!p->addStream(s))
+        if (!program->addStream(stream))
             goto streamError;
-        s->workTablePtr = &s->sourceTable;
+        stream->workTablePtr = &stream->sourceTable;
         i = end;
         goto afterSHandler;
         streamError:
@@ -267,23 +267,23 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
             return false;
         afterSHandler:;
     }
-    if (!expandRawTables(p)) {
+    if (!expandRawTables(program)) {
         reportError("failed to expand raw tables\n");
         return false;
     }
-    if (!resolveStreamBranches(p)) {
+    if (!resolveStreamBranches(program)) {
         reportError("failed to resolve branches after constructing streams\n");
         return false;
     }
-    if (p->proc.uniqueAll && !p->doUnique()) {
+    if (program->proc.uniqueAll && !program->doUnique()) {
         reportError("failed to do unique processing\n");
         return false;
     }
-    if (!bindDependencies(p)) {
+    if (!bindDependencies(program)) {
         reportError("bindDependencies1 failed\n");
         return false;
     }
-    if (!recalcFlowUIDs(p)) {
+    if (!recalcFlowUIDs(program)) {
         reportError("failed to recalc flow uids\n");
         return false;
     }

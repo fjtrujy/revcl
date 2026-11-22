@@ -2,11 +2,11 @@
 
 #include "backTrace_shared.h"
 
-bool initBackTrace(Program *p)
+bool initBackTrace(Program *program)
 {
     int mx = -1;
     instStream *s;
-    for (s = p->streamHead; s; s = s->nextStream) {
+    for (s = program->streamHead; s; s = s->nextStream) {
         if (s->streamId < 0) {
             reportError("flowUID<0 for g_initBackTrace\n");
             return false;
@@ -19,22 +19,22 @@ bool initBackTrace(Program *p)
         return false;
     }
     int n = mx + 1;
-    for (s = p->streamHead; s; s = s->nextStream) {
+    for (s = program->streamHead; s; s = s->nextStream) {
         if (!g_initBackTrace(s, n)) {
             reportError("[Depend] failed to g_initBackTrace a stream\n");
             return false;
         }
     }
-    p->traceStoreWordCount = (n + 31) >> 2;
-    if (!p->backTraceVisitCache.init(n)) {
+    program->traceStoreWordCount = (n + 31) >> 2;
+    if (!program->backTraceVisitCache.init(n)) {
         reportError("flowMin::flowReset - failed to init visit cache\n");
         return false;
     }
-    if (!p->backTraceVisitCache.startRecord()) {
+    if (!program->backTraceVisitCache.startRecord()) {
         reportError("flowReset: failed to start record\n");
         return false;
     }
-    int key = p->backTraceVisitCache.endRecord();
+    int key = program->backTraceVisitCache.endRecord();
     if (key != 0) {
         reportError("flowMon::flowReset - got an unexpected key back for null bit vector (%d)\n", key);
         return false;
@@ -42,13 +42,13 @@ bool initBackTrace(Program *p)
     return true;
 }
 
-bool disposeBackTrace(Program *p)
+bool disposeBackTrace(Program *program)
 {
-    p->traceStoreWordCount = 0;
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (s->traceStore)
-            delete[] s->traceStore;
-        s->traceStore = 0;
+    program->traceStoreWordCount = 0;
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (stream->traceStore)
+            delete[] stream->traceStore;
+        stream->traceStore = 0;
     }
     return true;
 }
@@ -87,11 +87,11 @@ bool g_initBackTrace(instStream *s, int n)
     return true;
 }
 
-bool g_disposeBackTrace(instStream *s)
+bool g_disposeBackTrace(instStream *stream)
 {
-    if (s->traceStore)
-        delete[] s->traceStore;
-    s->traceStore = 0;
+    if (stream->traceStore)
+        delete[] stream->traceStore;
+    stream->traceStore = 0;
     return true;
 }
 

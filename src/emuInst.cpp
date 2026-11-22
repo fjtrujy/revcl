@@ -12,7 +12,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
 bool Cycle(Program *p, bool flag);
 
 
-int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
+int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
 {
     int k;
     int stalls = 0;
@@ -25,7 +25,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     }
     if (row->skip)
         return 0;
-    if (uta && !Cycle(p, uta)) {
+    if (uta && !Cycle(program, uta)) {
         reportError("Processor::Emu - failed initial cycle for uta!\n");
         return -1;
     }
@@ -59,17 +59,17 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             if (reg) {
                 for (int part = 0; part != reg->partCount; part++)
                     if ((op->componentMask >> part) & 1) {
-                        rPart *rp = &reg->parts[part];
-                        if (rp->emulationTimingMetrics[4] < 0) {
+                        rPart *registerPart = &reg->parts[part];
+                        if (registerPart->emulationTimingMetrics[4] < 0) {
                             if (uta)
-                                rp->emulationTimingMetrics[6] = -1;
+                                registerPart->emulationTimingMetrics[6] = -1;
                             else
-                                rp->emulationTimingMetrics[6] = p->emulatedCycleCount;
-                            rp->emulationTimingMetrics[4] = line;
-                            rp->emulationTimingMetrics[5] = k;
+                                registerPart->emulationTimingMetrics[6] = program->emulatedCycleCount;
+                            registerPart->emulationTimingMetrics[4] = line;
+                            registerPart->emulationTimingMetrics[5] = k;
                         }
-                        rp->emulationTimingMetrics[7] = line;
-                        rp->emulationTimingMetrics[8] = k;
+                        registerPart->emulationTimingMetrics[7] = line;
+                        registerPart->emulationTimingMetrics[8] = k;
                     }
             }
             if (reg && op->externalBlockModeFlag) {
@@ -80,7 +80,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                         if (rp->pendingSource && (lat = rp->pendingSource->cycleOffset) != 0) {
                             ol_s tmp;
                             tmp.init(in, o, part, false);
-                            if (commit && !p->proc.stalls.addStall(rp->pendingSource, &tmp, 0, lat)) {
+                            if (commit && !program->proc.stalls.addStall(rp->pendingSource, &tmp, 0, lat)) {
                                 reportError("failed to add an internal latency stall\n");
                                 return -1;
                             }
@@ -120,7 +120,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             tmp.init(in, o, part, false);
                             if (commit) {
                                 int issueLock = rp->issueLock;
-                                if (!p->proc.stalls.addStall(rp->pendingSource, &tmp, 1, issueLock)) {
+                                if (!program->proc.stalls.addStall(rp->pendingSource, &tmp, 1, issueLock)) {
                                     reportError("failed to add an internal thruput stall\n");
                                     return -1;
                                 }
@@ -148,13 +148,13 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         if (stall) {
             stalls = stall;
             do {
-                if (!Cycle(p, uta)) {
+                if (!Cycle(program, uta)) {
                     reportError("failed to cycle cpu\n");
                     exitAfterCleanup(-1);
                 }
             } while (--stall);
         }
-        cyc = p->emulatedCycleCount;
+        cyc = program->emulatedCycleCount;
     }
     for (k = 0; k != 2; k++)
         if (row->entries[k].instruction)
@@ -216,10 +216,10 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                                 reportError("failed to flush pending outputs before a blocking output\n");
                                 return -1;
                             }
-                            ol_s *ol = &rp->currentLocation;
-                            ol->init(in, o, part, false);
-                            ol->cycleOffset = clampByte(op->outputLatency);
-                            rp->pendingSource = ol;
+                            ol_s *location = &rp->currentLocation;
+                            location->init(in, o, part, false);
+                            location->cycleOffset = clampByte(op->outputLatency);
+                            rp->pendingSource = location;
                             rp->cycleAge = 0;
                         } else {
                             ol_s *ol = rp->acquireFreePendingLocation();
@@ -245,14 +245,14 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             if (uta)
                                 rp->emulationTimingMetrics[11] = -1;
                             else
-                                rp->emulationTimingMetrics[11] = p->emulatedCycleCount;
+                                rp->emulationTimingMetrics[11] = program->emulatedCycleCount;
                         }
                         rp->emulationTimingMetrics[12] = line;
                         rp->emulationTimingMetrics[13] = k;
                         if (uta)
                             rp->emulationTimingMetrics[14] = -1;
                         else
-                            rp->emulationTimingMetrics[14] = p->emulatedCycleCount;
+                            rp->emulationTimingMetrics[14] = program->emulatedCycleCount;
                         rp->emulationTimingMetrics[16] = op->outputLatency;
                         rp->emulationTimingMetrics[15] = tp;
                         rp->emulationTimingMetrics[0] += tp;
@@ -263,7 +263,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         }
     }
     stalls++;
-    if (!Cycle(p, uta)) {
+    if (!Cycle(program, uta)) {
         reportError("failed to cycle cpu!\n");
         return -1;
     }

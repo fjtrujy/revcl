@@ -39,13 +39,13 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
     int branchRow = -1;
     int branchType = 0;
     for (; i != count; i++) {
-        DecodedLine *b = &blocks[i];
-        if (b->labels.combinedFlags()) {
+        DecodedLine *decodedLine = &blocks[i];
+        if (decodedLine->labels.combinedFlags()) {
             reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
         }
-        b->labels.clearNodes();
-        Instr *in = b->instructions[0];
+        decodedLine->labels.clearNodes();
+        Instr *in = decodedLine->instructions[0];
         if (in && in->syntheticKind) {
             if (!s->processCmdSynth(in)) {
                 reportUserMessage("failed to process an instruction\n");
@@ -65,14 +65,14 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         int n = 0;
         int valid = 0;
         for (int j = 0; j != 2; j++) {
-            Instr *in = b->instructions[j];
+            Instr *in = decodedLine->instructions[j];
             if (!in)
                 continue;
             if (in->syntheticKind) {
                 reportError("encountered a synth instruction in raw mode\n");
                 return false;
             }
-            b->instructions[j] = 0;
+            decodedLine->instructions[j] = 0;
             if (!t->logAddLinear_Tail(in)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;

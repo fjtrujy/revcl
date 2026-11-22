@@ -3,9 +3,9 @@
 
 bool allowInputLockLoopWrapping;
 
-static inline bool canWrapInputLock(OperandLock *in)
+static inline bool canWrapInputLock(OperandLock *operandLock)
 {
-    return in->operandStatusCode == 1;
+    return operandLock->operandStatusCode == 1;
 }
 
 static inline void wrapInputRange(int &s, int &e)
@@ -21,7 +21,7 @@ static inline void wrapInputRange(int &s, int &e)
     }
 }
 
-int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
+int cls0805c244::checkInputLock(OperandLock *operandLock, short *pos, int *minPos)
 {
     OperandLock *lock = outputLocks;
     int ret;
@@ -29,8 +29,8 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
     ret = 0;
     int p = ((InstructionPosition *)pos)->linearRow;
 
-    in->priority = 0;
-    if (in->operandStatusCode == 2) {
+    operandLock->priority = 0;
+    if (operandLock->operandStatusCode == 2) {
         reportError("CheckInputLock::aa input\n");
         abortAfterError();
         return 0;
@@ -38,7 +38,7 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
     if (calculateLoopStats)
         return 0;
 
-    OperandLock *par = in->getParent();
+    OperandLock *par = operandLock->getParent();
     int lo = par->earliestReadyCycle;
     int hi = par->latestReadyCycle;
 
@@ -61,8 +61,8 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
                 int need;
                 if (p < par->earliestConsumerFreeCycle)
                     need = par->latestReadyCycle - room;
-                else if (canWrapInputLock(in)) {
-                    in->priority = 1;
+                else if (canWrapInputLock(operandLock)) {
+                    operandLock->priority = 1;
                     return 0x100;
                 } else
                     need = 30000;
@@ -74,7 +74,7 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
         return 0;
     }
 
-    int start = par->fullLatencyReadyCycle + in->issueLatency;
+    int start = par->fullLatencyReadyCycle + operandLock->issueLatency;
     if (p < start) {
         if (start > *minPos)
             *minPos = start;
@@ -85,8 +85,8 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
 
     int d = p - lo;
     if (lsz && d >= lsz) {
-        if (canWrapInputLock(in)) {
-            in->priority = 3;
+        if (canWrapInputLock(operandLock)) {
+            operandLock->priority = 3;
             return 0x100;
         }
         *minPos = 30000;
@@ -114,8 +114,8 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
                 return ret | 0x10;
             }
         } else if (lockRangesOverlap(s, e, ls, le)) {
-            if (allowInputLockLoopWrapping && lsz && canWrapInputLock(in)) {
-                in->priority = 2;
+            if (allowInputLockLoopWrapping && lsz && canWrapInputLock(operandLock)) {
+                operandLock->priority = 2;
                 ret |= 0x100;
             } else {
                 *minPos = 30000;
@@ -194,20 +194,20 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
     }
 
     if (lsz && containsRegisterOutput) {
-        OperandLock *h = sortedOutputLocks;
-        if (h->activeReferenceCount) {
+        OperandLock *operandLock = sortedOutputLocks;
+        if (operandLock->activeReferenceCount) {
             *minPos = 30000;
             return ret | 4;
         }
-        if (h->scheduledConsumerCount) {
-            if (first <= h->latestReadyCycle) {
-                int v = h->latestReadyCycle - (first - p) + 1;
+        if (operandLock->scheduledConsumerCount) {
+            if (first <= operandLock->latestReadyCycle) {
+                int v = operandLock->latestReadyCycle - (first - p) + 1;
                 if (*minPos < v)
                     *minPos = v;
                 ret |= 0x4000;
             }
-            int hs = h->earliestConsumerFreeCycle + lsz;
-            he = h->latestReadyCycle + lsz;
+            int hs = operandLock->earliestConsumerFreeCycle + lsz;
+            he = operandLock->latestReadyCycle + lsz;
             if (hs < last) {
                 *minPos = 30000;
                 return 0x20000;

@@ -48,18 +48,18 @@ bool rPart::cycle(bool flag)
             n = 1;
         }
         for (int i = 0; i != 4; i++) {
-            ol_s* p = &pendingLocations[i];
-            int c = p->cycleOffset;
+            ol_s* location = &pendingLocations[i];
+            int c = location->cycleOffset;
             if (!c)
                 continue;
             int v = c - 1;
-            p->cycleOffset = v > 255 ? 255 : v;
+            location->cycleOffset = v > 255 ? 255 : v;
             if (v == 0) {
                 if (++n > 1) {
                     reportError("WARNING !! CYCLE wrote thru more than once!\n");
                     return false;
                 }
-                cur->copyLocationFrom(p);
+                cur->copyLocationFrom(location);
                 cycleAge = 0;
             }
         }
@@ -87,10 +87,10 @@ void RegPoolEntry::noopRegisterFlowHook()
 void RegPoolEntry::resetRegisterPartTiming()
 {
     for (int i = 0; i != 4; i++) {
-        rPart* p = &parts[i];
-        p->unk_40 = -1;
-        p->earliestPendingReadCycle = -1;
-        p->latestPendingReadCycle = -1;
+        rPart* registerPart = &parts[i];
+        registerPart->unk_40 = -1;
+        registerPart->earliestPendingReadCycle = -1;
+        registerPart->latestPendingReadCycle = -1;
     }
 }
 
@@ -188,9 +188,9 @@ rPart::rPart()
 
 mNode* RegPoolEntry::addRegisterNameAlias(const char* name)
 {
-    mNode* n = nameAliases.findByExactName(name);
-    if (n)
-        return n;
+    mNode* macroNode = nameAliases.findByExactName(name);
+    if (macroNode)
+        return macroNode;
     return nameAliases.appendNamedNode(name);
 }
 

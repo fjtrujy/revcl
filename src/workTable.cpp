@@ -137,10 +137,10 @@ regUse *regUse::nextVirtual()
 
 bool regUseList::optReset()
 {
-    for (regUse *p = head; p; p = p->next) {
+    for (regUse *registerUse = head; registerUse; registerUse = registerUse->next) {
         for (int i = 0; i != 4; i++) {
-            p->slots[i].assignmentPayload = 0;
-            p->slots[i].registerLock.resetLock();
+            registerUse->slots[i].assignmentPayload = 0;
+            registerUse->slots[i].registerLock.resetLock();
         }
     }
     return true;
@@ -193,49 +193,49 @@ regUse *regUse::Clone()
         reportError("regref::Clone - input had no register\n");
         return 0;
     }
-    regUse *n = new regUse(reg);
-    if (!n) {
+    regUse *registerUse = new regUse(reg);
+    if (!registerUse) {
         reportError("failed to get new regref in clone\n");
         return 0;
     }
-    n->unk_18 = unk_18;
-    n->hazardMask = hazardMask;
-    n->definingInstruction = definingInstruction;
-    n->sourcePathHazardMask = sourcePathHazardMask;
-    n->hazardBroadcastMask = hazardBroadcastMask;
-    n->externalInputMask = externalInputMask;
-    n->registerEntry = registerEntry;
-    n->externalOutputMask = externalOutputMask;
-    n->inputMask = inputMask;
-    n->outputMask = outputMask;
-    n->throughputMask = throughputMask;
-    n->unk_16 = unk_16;
-    n->unk_11 = unk_11;
-    n->externalBlockMode = externalBlockMode;
+    registerUse->unk_18 = unk_18;
+    registerUse->hazardMask = hazardMask;
+    registerUse->definingInstruction = definingInstruction;
+    registerUse->sourcePathHazardMask = sourcePathHazardMask;
+    registerUse->hazardBroadcastMask = hazardBroadcastMask;
+    registerUse->externalInputMask = externalInputMask;
+    registerUse->registerEntry = registerEntry;
+    registerUse->externalOutputMask = externalOutputMask;
+    registerUse->inputMask = inputMask;
+    registerUse->outputMask = outputMask;
+    registerUse->throughputMask = throughputMask;
+    registerUse->unk_16 = unk_16;
+    registerUse->unk_11 = unk_11;
+    registerUse->externalBlockMode = externalBlockMode;
     for (int i = 0; i != reg->partCount; i++) {
-        n->slots[i].throughputSums[0] = slots[i].throughputSums[0];
-        n->slots[i].throughputSums[1] = slots[i].throughputSums[1];
-        n->slots[i].throughputSums[3] = slots[i].throughputSums[3];
-        n->slots[i].throughputSums[2] = slots[i].throughputSums[2];
-        n->slots[i].timingValues[0] = slots[i].timingValues[0];
-        n->slots[i].timingValues[1] = slots[i].timingValues[1];
-        n->slots[i].timingValues[2] = slots[i].timingValues[2];
-        n->slots[i].timingValues[3] = slots[i].timingValues[3];
-        n->slots[i].timingValues[4] = slots[i].timingValues[4];
-        n->slots[i].timingValues[5] = slots[i].timingValues[5];
-        n->slots[i].timingValues[6] = slots[i].timingValues[6];
-        n->slots[i].timingValues[7] = slots[i].timingValues[7];
-        n->slots[i].timingValues[8] = slots[i].timingValues[8];
-        n->slots[i].timingValues[9] = slots[i].timingValues[9];
-        n->slots[i].timingValues[10] = slots[i].timingValues[10];
-        n->slots[i].timingValues[11] = slots[i].timingValues[11];
-        n->slots[i].timingValues[12] = slots[i].timingValues[12];
-        n->slots[i].earliestExternalCycle = slots[i].earliestExternalCycle;
-        n->slots[i].latestExternalCycle = slots[i].latestExternalCycle;
-        n->slots[i].assignmentPayload = 0;
-        n->slots[i].registerLock.resetLock();
+        registerUse->slots[i].throughputSums[0] = slots[i].throughputSums[0];
+        registerUse->slots[i].throughputSums[1] = slots[i].throughputSums[1];
+        registerUse->slots[i].throughputSums[3] = slots[i].throughputSums[3];
+        registerUse->slots[i].throughputSums[2] = slots[i].throughputSums[2];
+        registerUse->slots[i].timingValues[0] = slots[i].timingValues[0];
+        registerUse->slots[i].timingValues[1] = slots[i].timingValues[1];
+        registerUse->slots[i].timingValues[2] = slots[i].timingValues[2];
+        registerUse->slots[i].timingValues[3] = slots[i].timingValues[3];
+        registerUse->slots[i].timingValues[4] = slots[i].timingValues[4];
+        registerUse->slots[i].timingValues[5] = slots[i].timingValues[5];
+        registerUse->slots[i].timingValues[6] = slots[i].timingValues[6];
+        registerUse->slots[i].timingValues[7] = slots[i].timingValues[7];
+        registerUse->slots[i].timingValues[8] = slots[i].timingValues[8];
+        registerUse->slots[i].timingValues[9] = slots[i].timingValues[9];
+        registerUse->slots[i].timingValues[10] = slots[i].timingValues[10];
+        registerUse->slots[i].timingValues[11] = slots[i].timingValues[11];
+        registerUse->slots[i].timingValues[12] = slots[i].timingValues[12];
+        registerUse->slots[i].earliestExternalCycle = slots[i].earliestExternalCycle;
+        registerUse->slots[i].latestExternalCycle = slots[i].latestExternalCycle;
+        registerUse->slots[i].assignmentPayload = 0;
+        registerUse->slots[i].registerLock.resetLock();
     }
-    return n;
+    return registerUse;
 }
 
 const char *regUse::regName()

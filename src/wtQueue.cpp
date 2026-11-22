@@ -191,8 +191,8 @@ bool workTable::qInstruction(Instr *instruction)
         RegPoolEntry *reg = dst->assignedRegister;
         if (!reg)
             continue;
-        regUse *rr = registerUses.findByRegister(reg);
-        if (!rr) {
+        regUse *registerUse = registerUses.findByRegister(reg);
+        if (!registerUse) {
             reportError("find reg ref failed to find rr from owner.. by now - this is fatal.. register %s\n",
                           reg->registerName());
             exitAfterCleanup(-1);
@@ -259,7 +259,7 @@ bool workTable::qInstruction(Instr *instruction)
                 }
             }
         }
-        if (isRegisterOperand(dst, 2) && dst->operandStatus != 2 && activeLoopSize && isVuRegister(reg) && !rr->externalOutputMask)
+        if (isRegisterOperand(dst, 2) && dst->operandStatus != 2 && activeLoopSize && isVuRegister(reg) && !registerUse->externalOutputMask)
             dst->operandStatus = 1;
     }
 
@@ -285,10 +285,10 @@ bool workTable::qInstruction(Instr *instruction)
                     return false;
                 }
                 if ((operand->externalPartMask >> k) & 1) {
-                    RegisterPartLockList *el = (RegisterPartLockList *)reg->getPartPayload(k);
-                    if (!el)
+                    RegisterPartLockList *registerPartLocks = (RegisterPartLockList *)reg->getPartPayload(k);
+                    if (!registerPartLocks)
                         reportError("couldn't get curr lock list for output\n");
-                    if (!el->addExtOutput(lock, false)) {
+                    if (!registerPartLocks->addExtOutput(lock, false)) {
                         reportError("failed to add ext output!\n");
                         return false;
                     }

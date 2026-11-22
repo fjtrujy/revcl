@@ -15,23 +15,23 @@ bool resetProcessorThroughput(Program *p);
 int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
 void splitCtime(workTable *wt, int l, int m);
 
-int insertAllRegisterCaps(Program *p)
+int insertAllRegisterCaps(Program *program)
 {
     int total = 0;
     instStream *s;
-    for (s = p->streamHead; s; s = s->nextStream) {
+    for (s = program->streamHead; s; s = s->nextStream) {
         s->externalSchedulingPrepared = 0;
         if (!s->usesFreeRawLayout())
             s->externalSchedulingPrepared = 1;
     }
-    for (s = p->streamHead; s; s = s->nextStream) {
+    for (s = program->streamHead; s; s = s->nextStream) {
         if (s->externalSchedulingPrepared)
             continue;
-        if (!prepExtInfo(p, s, 0)) {
+        if (!prepExtInfo(program, s, 0)) {
             reportError("failed to prep external info for stream %s\n", s->streamName());
             return -1;
         }
-        int n = insertStreamRegisterCaps(p, s);
+        int n = insertStreamRegisterCaps(program, s);
         if (n < 0) {
             reportError("failed to sred a table from %s\n", s->streamName());
             return -1;
@@ -42,14 +42,14 @@ int insertAllRegisterCaps(Program *p)
     return total;
 }
 
-int insertStreamRegisterCaps(Program *p, instStream *s)
+int insertStreamRegisterCaps(Program *program, instStream *stream)
 {
     int added = 0;
-    if (!s->workTablePtr) {
-        reportError("work table not set in %s\n", s->streamName());
+    if (!stream->workTablePtr) {
+        reportError("work table not set in %s\n", stream->streamName());
         exitAfterCleanup(-1);
     }
-    workTable *wt = s->workTablePtr;
+    workTable *wt = stream->workTablePtr;
     if (!wt) {
         reportError("no work table \n");
         return -1;
@@ -73,12 +73,12 @@ int insertStreamRegisterCaps(Program *p, instStream *s)
             Instr *in = GetI((Instr **)row, pp);
             if (!in)
                 continue;
-            Operand *op;
+            Operand *operand;
             for (int i = 0; i != in->operandCount; i++) {
-                op = &in->operands[i];
-                RegPoolEntry *reg = registerOperand(op, 2);
-                ol_s *live = op->parts[0].operandLocations.head;
-                if (!reg || op->externalBlockModeFlag || !live)
+                operand = &in->operands[i];
+                RegPoolEntry *reg = registerOperand(operand, 2);
+                ol_s *live = operand->parts[0].operandLocations.head;
+                if (!reg || operand->externalBlockModeFlag || !live)
                     continue;
                 RegPoolEntry *capReg = 0;
                 int capMask = 0;
@@ -89,18 +89,18 @@ int insertStreamRegisterCaps(Program *p, instStream *s)
                 }
                 if (!bits)
                     continue;
-                int need = op->outputLatency;
+                int need = operand->outputLatency;
                 if (reg->registerIndex == 0x34 && need > 1)
                     need--;
                 int line = rl + 1;
-                wtRow *r = row + 1;
+                wtRow *workRow = row + 1;
                 int limit = need + id;
                 int bestMask = 0, bestLine = -1, bestPipe = -1, bestCount = 0, count = 0;
                 while (line < wt->getRangeEnd() && capMask) {
-                    if (r->cycleTime >= limit) {
+                    if (workRow->cycleTime >= limit) {
                         for (int q = 0; q != 2; q++) {
-                            if (((bits >> q) & 1) && !GetI((Instr **)r, q)) {
-                                if ((!r->countEntries() && bestLine < 0) || r->countEntries()) {
+                            if (((bits >> q) & 1) && !GetI((Instr **)workRow, q)) {
+                                if ((!workRow->countEntries() && bestLine < 0) || workRow->countEntries()) {
                                     bestLine = line;
                                     bestCount = count;
                                     bestPipe = q;
@@ -110,13 +110,13 @@ int insertStreamRegisterCaps(Program *p, instStream *s)
                             }
                         }
                     }
-                    if (r->inputMaskFor(reg, 0xff))
+                    if (workRow->inputMaskFor(reg, 0xff))
                         break;
-                    if (r->countEntries())
+                    if (workRow->countEntries())
                         count++;
-                    capMask &= ~r->outputMask(capReg);
+                    capMask &= ~workRow->outputMask(capReg);
                     line++;
-                    r++;
+                    workRow++;
                 }
                 if (bestLine < 0)
                     continue;

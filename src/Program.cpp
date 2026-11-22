@@ -171,9 +171,9 @@ instStream *Program::findStream(const char *name)
     return stream;
 }
 
-bool Program::retarget(instStream *from, instStream *to)
+bool Program::retarget(instStream *from, instStream *stream)
 {
-    if (from == to)
+    if (from == stream)
         return true;
     linkNode *next;
     for (linkNode *incomingLink = from->inputLinks.head; incomingLink; incomingLink = next) {
@@ -188,12 +188,12 @@ bool Program::retarget(instStream *from, instStream *to)
             reportError("Retarget:: failed to find matching output\n");
             return false;
         }
-        outgoingLink->otherStream = to;
+        outgoingLink->otherStream = stream;
         if (!from->inputLinks.unlink(incomingLink)) {
             reportError("Retarget::failed to unlink input from old\n");
             return false;
         }
-        if (!to->inputLinks.relink(incomingLink)) {
+        if (!stream->inputLinks.relink(incomingLink)) {
             reportError("Retarget::failed to relink input to new\n");
             return false;
         }
@@ -208,7 +208,7 @@ bool Program::retarget(instStream *from, instStream *to)
         case 1:
         case 3: {
             Instr *branchInstruction = predecessorStream->getBranch();
-            if (branchInstruction && !branchInstruction->changeBranchImmediate(to->streamName())) {
+            if (branchInstruction && !branchInstruction->changeBranchImmediate(stream->streamName())) {
                 reportError("failed to change branch immediate\n");
                 exitAfterCleanup(-1);
             }
@@ -219,7 +219,7 @@ bool Program::retarget(instStream *from, instStream *to)
             reportError("flowMon::Retarget - unexpected output type %d %s\n",
                           outgoingLink->linkType, typeName);
             reportError("error retargeting %s->%s\n",
-                          from->streamName(), to->streamName());
+                          from->streamName(), stream->streamName());
             return false;
         }
     }

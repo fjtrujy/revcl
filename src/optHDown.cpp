@@ -14,37 +14,37 @@ int vuta1RegCost(Instr *in);
 
 bool optHDown(workTable *wt, wrangleCand *c)
 {
-    Instr *in = wt->moveListHead;
+    Instr *instruction = wt->moveListHead;
     int bestA = 0x80000000;
     Instr *best = 0;
     int bestB = 0x80000000, bestC = 0x80000000, bestD = 0x7fffffff;
-    for (; in; in = in->nextMoveInstruction) {
-        int cost = hDownRegCost(in);
-        int a = in->schedulingStatistics.moveDistance - in->candidateAttemptCount + in->schedulingStatistics.reverseLatencyDepth + cost;
+    for (; instruction; instruction = instruction->nextMoveInstruction) {
+        int cost = hDownRegCost(instruction);
+        int a = instruction->schedulingStatistics.moveDistance - instruction->candidateAttemptCount + instruction->schedulingStatistics.reverseLatencyDepth + cost;
         if (a > bestA) {
-            best = in;
+            best = instruction;
             bestA = a;
-            int b = in->schedulingStatistics.moveCount - in->candidateAttemptCount;
-            int h = in->schedulingStatistics.forwardDependencyHeight;
+            int b = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount;
+            int h = instruction->schedulingStatistics.forwardDependencyHeight;
             bestB = b + (h >> 2) + cost;
-            bestC = in->schedulingStatistics.reverseLatencyDepth;
+            bestC = instruction->schedulingStatistics.reverseLatencyDepth;
         } else if (a == bestA) {
-            int b = in->schedulingStatistics.moveCount - in->candidateAttemptCount;
-            int h = in->schedulingStatistics.forwardDependencyHeight;
+            int b = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount;
+            int h = instruction->schedulingStatistics.forwardDependencyHeight;
             int e = b + (h >> 2) + cost;
             if (e > bestB) {
                 bestB = e;
-                bestC = in->schedulingStatistics.reverseLatencyDepth;
-                best = in;
+                bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                best = instruction;
             } else if (e == bestB) {
-                int f = in->candidateBaseRow + in->candidateCostOffset;
+                int f = instruction->candidateBaseRow + instruction->candidateCostOffset;
                 if (f < bestD) {
                     bestD = f;
-                    bestC = in->schedulingStatistics.reverseLatencyDepth;
-                    best = in;
-                } else if (f == bestD && in->schedulingStatistics.reverseDependencyHeight > bestC) {
-                    bestC = in->schedulingStatistics.reverseLatencyDepth;
-                    best = in;
+                    bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                    best = instruction;
+                } else if (f == bestD && instruction->schedulingStatistics.reverseDependencyHeight > bestC) {
+                    bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                    best = instruction;
                 }
             }
         }
@@ -57,13 +57,13 @@ bool optHDown(workTable *wt, wrangleCand *c)
     return true;
 }
 
-int hDownRegCost(Instr *in)
+int hDownRegCost(Instr *instruction)
 {
     int cost = 0;
-    for (int i = 0; i != in->operandCount; i++) {
-        RegPoolEntry *r = in->operands[i].inRegOp2();
-        if (r) {
-            switch (r->registerIndex) {
+    for (int i = 0; i != instruction->operandCount; i++) {
+        RegPoolEntry *registerEntry = instruction->operands[i].inRegOp2();
+        if (registerEntry) {
+            switch (registerEntry->registerIndex) {
             case 55:
             case 56:
             case 59:
@@ -76,33 +76,33 @@ int hDownRegCost(Instr *in)
 
 bool optDUp(workTable *wt, wrangleCand *c)
 {
-    Instr *in = wt->moveListHead;
+    Instr *instruction = wt->moveListHead;
     Instr *best = 0;
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;
-    for (; in; in = in->nextMoveInstruction) {
-        int a = in->schedulingStatistics.moveDistance;
-        a -= in->candidateAttemptCount;
+    for (; instruction; instruction = instruction->nextMoveInstruction) {
+        int a = instruction->schedulingStatistics.moveDistance;
+        a -= instruction->candidateAttemptCount;
         if (a > bestA) {
-            best = in;
+            best = instruction;
             bestA = a;
-            bestB = in->schedulingStatistics.moveCount - in->candidateAttemptCount + in->schedulingStatistics.forwardLatencyDepth;
-            bestC = in->schedulingStatistics.reverseLatencyDepth;
+            bestB = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardLatencyDepth;
+            bestC = instruction->schedulingStatistics.reverseLatencyDepth;
         } else if (a == bestA) {
-            int e = in->schedulingStatistics.moveCount - in->candidateAttemptCount + in->schedulingStatistics.forwardLatencyDepth;
+            int e = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardLatencyDepth;
             if (e > bestB) {
                 bestB = e;
-                bestC = in->schedulingStatistics.reverseLatencyDepth;
-                best = in;
+                bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                best = instruction;
             } else if (e == bestB) {
-                int f = in->candidateBaseRow + in->candidateCostOffset;
+                int f = instruction->candidateBaseRow + instruction->candidateCostOffset;
                 if (f < bestD) {
                     bestD = f;
-                    bestC = in->schedulingStatistics.reverseLatencyDepth;
-                    best = in;
-                } else if (f == bestD && in->schedulingStatistics.reverseDependencyHeight > bestC) {
-                    bestC = in->schedulingStatistics.reverseLatencyDepth;
-                    best = in;
+                    bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                    best = instruction;
+                } else if (f == bestD && instruction->schedulingStatistics.reverseDependencyHeight > bestC) {
+                    bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                    best = instruction;
                 }
             }
         }

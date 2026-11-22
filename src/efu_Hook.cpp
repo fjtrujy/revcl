@@ -11,28 +11,28 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
-static inline void dumpEmitInstruction(Instr *in)
+static inline void dumpEmitInstruction(Instr *instruction)
 {
-    in->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
 }
 
-bool rotateInputComponentMask(void *, Instr *in)
+bool rotateInputComponentMask(void *, Instr *instruction)
 {
-    Operand *op = &in->operands[1];
-    op->componentMask = (((op->componentMask & 8) >> 3) | (op->componentMask << 1)) & 0xf;
+    Operand *operand = &instruction->operands[1];
+    operand->componentMask = (((operand->componentMask & 8) >> 3) | (operand->componentMask << 1)) & 0xf;
     return 1;
 }
 
-bool efu_Hook(void *p, Instr *in)
+bool efu_Hook(void *p, Instr *instruction)
 {
     iInfo *info = (iInfo *)p;
-    Operand *op = &in->operands[1];
+    Operand *operand = &instruction->operands[1];
     switch (info->efuMaskType) {
     case 1: break;
-    case 2: op->componentMask = 3; break;
-    case 3: op->componentMask = 5; break;
-    case 4: op->componentMask = 7; break;
-    case 5: op->componentMask = 15; break;
+    case 2: operand->componentMask = 3; break;
+    case 3: operand->componentMask = 5; break;
+    case 4: operand->componentMask = 7; break;
+    case 5: operand->componentMask = 15; break;
     default:
         reportError("unknown EFU mod bits type during efu_Hook at build\n");
         return 0;
@@ -45,34 +45,34 @@ bool asciiCaseEqual(const char *a, const char *b);
 bool wr2w_Hook(void *p, Instr *in)
 {
     iInfo *info = (iInfo *)p;
-    iInfo *n;
+    iInfo *instructionInfo;
     if (asciiCaseEqual(info->mnemonic, "ilwr"))
-        n = findOpcodeInfoByMnemonic("ilw", false);
+        instructionInfo = findOpcodeInfoByMnemonic("ilw", false);
     else if (asciiCaseEqual(info->mnemonic, "iswr"))
-        n = findOpcodeInfoByMnemonic("isw", false);
+        instructionInfo = findOpcodeInfoByMnemonic("isw", false);
     else {
         reportError("wr2w_Hook - couldn't find instruction '%s'\n", info->mnemonic);
         return 0;
     }
-    if (!n) {
+    if (!instructionInfo) {
         reportError("wr2w_Hook - failed to find extended instruction\n");
         return 0;
     }
-    in->opcodeInfo = n;
+    in->opcodeInfo = instructionInfo;
     in->operands[1].operandKind = 0x1f;
     in->operands[1].immediateValue.setInt(0);
     return 1;
 }
 
-char *emitClip(char *buf, Instr *in, bool upper, char *mods, bool b, int)
+char *emitClip(char *buf, Instr *instruction, bool upper, char *mods, bool b, int)
 {
     bool comma = false;
     int len = formatIntoBuffer(buf, "clipw%s.xyz", mods);
     char *p = buf + len;
     for (int n = p - buf; n < 14; n++)
         *p++ = ' ';
-    for (int i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
+    for (int i = 0; i != instruction->operandCount; i++) {
+        Operand *op = &instruction->operands[i];
         if (op->isImplicit)
             continue;
         if (comma)
@@ -83,37 +83,37 @@ char *emitClip(char *buf, Instr *in, bool upper, char *mods, bool b, int)
             reportError("failed to emit operand\n");
             op->diagnoseOperand(0);
             reportError("from\n");
-            dumpEmitInstruction(in);
+            dumpEmitInstruction(instruction);
             return 0;
         }
     }
     return p;
 }
 
-char *vmove_Emit(char *buf, Instr *in, bool upper, char *mods, bool b, int)
+char *vmove_Emit(char *buf, Instr *instruction, bool upper, char *mods, bool b, int)
 {
     char *p;
-    if (!in)
+    if (!instruction)
         return 0;
-    if (!in->abstractMoveOpcode) {
+    if (!instruction->abstractMoveOpcode) {
         reportError("baseMuid not set in vmove_Emit\n");
         return 0;
     }
-    if (!in->concreteMoveOpcode) {
+    if (!instruction->concreteMoveOpcode) {
         reportError("trying to emit an abstract move\n");
         return 0;
     }
     p = buf;
-    switch (in->concreteMoveOpcode) {
+    switch (instruction->concreteMoveOpcode) {
     case 0xb3:
         p += formatIntoBuffer(buf, "iaddiu");
         for (int n = p - buf; n < 14; n++)
             *p++ = ' ';
-        p = in->operands[0].Emit(p, upper, b);
+        p = instruction->operands[0].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
-        p = in->operands[1].Emit(p, upper, b);
+        p = instruction->operands[1].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
@@ -121,39 +121,39 @@ char *vmove_Emit(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         break;
     case 0xb5:
         p += formatIntoBuffer(buf, "%s%s", "move", mods);
-        p = emitDestMask(p, 1, in->destinationMask);
+        p = emitDestMask(p, 1, instruction->destinationMask);
         if (!p) {
             reportError("failed to emit inst mods for lvfmove\n");
             return 0;
         }
         for (int n = p - buf; n < 14; n++)
             *p++ = ' ';
-        p = in->operands[0].Emit(p, upper, b);
+        p = instruction->operands[0].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
-        p = in->operands[1].Emit(p, upper, b);
+        p = instruction->operands[1].Emit(p, upper, b);
         if (!p)
             goto fail;
         break;
     case 0xb6:
         p += formatIntoBuffer(buf, "%s%s", "max", mods);
-        p = emitDestMask(p, 1, in->destinationMask);
+        p = emitDestMask(p, 1, instruction->destinationMask);
         if (!p) {
             reportError("failed to emit inst mods for lvfmove\n");
             return 0;
         }
         for (int n = p - buf; n < 14; n++)
             *p++ = ' ';
-        p = in->operands[0].Emit(p, upper, b);
+        p = instruction->operands[0].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
-        p = in->operands[1].Emit(p, upper, b);
+        p = instruction->operands[1].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
-        p = in->operands[1].Emit(p, upper, b);
+        p = instruction->operands[1].Emit(p, upper, b);
         if (!p)
             goto fail;
         break;
@@ -207,11 +207,11 @@ bool semSynth(void *p, Instr *in)
         }
     }
     *d = 0;
-    iInfo *ni = findOpcodeInfoByMnemonic(name, false);
-    if (!ni) {
+    iInfo *instructionInfo = findOpcodeInfoByMnemonic(name, false);
+    if (!instructionInfo) {
         reportError("failed to find derived instruction type '%s'\n", name);
         return 0;
     }
-    in->opcodeInfo = ni;
+    in->opcodeInfo = instructionInfo;
     return 1;
 }

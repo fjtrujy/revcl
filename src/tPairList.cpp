@@ -89,48 +89,48 @@ void tPair::noopThroughputPairHook()
 {
 }
 
-bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b)
+bool int_buildTpairs(Program *program, RegPoolEntry *reg, int part, instStream *stream, void *b)
 {
-    if (!t) {
+    if (!stream) {
         reportError("int_buildTpairs - null arg\n");
         return false;
     }
-    p->traceTargetStream = t;
-    p->sourceStreams = 0;
-    p->resolvedStreams = 0;
-    p->activeStreams = 0;
-    p->traceStoreEnabled = 0;
-    p->trackMaximumPathLength = 0;
-    for (instStream *i = p->streamHead; i; i = i->nextStream) {
+    program->traceTargetStream = stream;
+    program->sourceStreams = 0;
+    program->resolvedStreams = 0;
+    program->activeStreams = 0;
+    program->traceStoreEnabled = 0;
+    program->trackMaximumPathLength = 0;
+    for (instStream *i = program->streamHead; i; i = i->nextStream) {
         if (!resetStreamPathSearch(i)) {
             reportError("failed to do a local init for the back trace\n");
             return false;
         }
     }
-    if (!extendBackTrace(p, t)) {
+    if (!extendBackTrace(program, stream)) {
         reportError("failed on the initial extend\n");
         return false;
     }
-    for (instStream *i = p->activeStreams; i; i = i->nextActiveStream) {
+    for (instStream *i = program->activeStreams; i; i = i->nextActiveStream) {
         i->shortestPathPredecessor = 0;
         i->longestPathPredecessor = 0;
         i->minimumPathLength = 0;
         i->maximumPathLength = 0;
     }
-    if (!processActiveList(p)) {
+    if (!processActiveList(program)) {
         reportError("failed to do internal trace for  a t pair\n");
         return false;
     }
-    regUse *tr = t->backtraceRegisterUse;
-    if (!tr) {
+    regUse *registerUse = stream->backtraceRegisterUse;
+    if (!registerUse) {
         reportError("there's  no regref set in t target\n");
         return false;
     }
-    if (tr->registerEntry != reg) {
+    if (registerUse->registerEntry != reg) {
         reportError("there's a mismatch between reg and regref\n");
         return false;
     }
-    for (instStream *s = p->sourceStreams; s; s = s->nextSourceStream) {
+    for (instStream *s = program->sourceStreams; s; s = s->nextSourceStream) {
         regUse *sr = s->backtraceRegisterUse;
         if (!sr) {
             reportError("there's no regref in t src\n");
@@ -140,8 +140,8 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
             reportError("mismatch between regref reg and rg\n");
             return false;
         }
-        int dst_key = t->destinationKey;
-        int src_key = buildMinimumPathKey(p, s);
+        int dst_key = stream->destinationKey;
+        int src_key = buildMinimumPathKey(program, s);
         if (dst_key < 0) {
             reportError("dst_key is bad in tpair\n");
             return false;
@@ -150,7 +150,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
             reportError("src_key is bad in tpair\n");
             return false;
         }
-        if (!tr->slots[part].throughputPairs.addPair(s, b, src_key, dst_key)) {
+        if (!registerUse->slots[part].throughputPairs.addPair(s, b, src_key, dst_key)) {
             reportError("failed to add tpair for tcheck\n");
             return false;
         }

@@ -10,23 +10,23 @@ char *mprefix_del(const char *a, const char *b);
 
 bool Program::doUnique()
 {
-    instStream *s;
-    for (s = streamHead; s; s = s->nextStream) {
-        workTable *wt = s->getTable();
-        for (Instr *i = wt->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
-            if (!i->branchFlags)
+    instStream *stream;
+    for (stream = streamHead; stream; stream = stream->nextStream) {
+        workTable *wt = stream->getTable();
+        for (Instr *instruction = wt->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+            if (!instruction->branchFlags)
                 continue;
-            iInfo *ii = i->opcodeInfo;
-            if (!ii) {
+            iInfo *instructionInfo = instruction->opcodeInfo;
+            if (!instructionInfo) {
                 reportError("no inst for a branch\n");
                 return false;
             }
-            int n = ii->branchTargetOperandSelector;
+            int n = instructionInfo->branchTargetOperandSelector;
             if (!n) {
                 reportError("doUnique - branch target operand not set\n");
                 exitAfterCleanup(-1);
             }
-            Operand *op = &i->operands[n - 1];
+            Operand *op = &instruction->operands[n - 1];
             if (!op->isInput()) {
                 reportError("alleged branch target immediate wasn't an input\n");
                 exitAfterCleanup(-1);
@@ -56,15 +56,15 @@ bool Program::doUnique()
             }
         }
     }
-    for (s = streamHead; s; s = s->nextStream) {
-        for (mNode *n = s->labels.head; n; n = n->next) {
-            if (!isExportedSymbol(this, n->name)) {
-                char *nn = mprefix_del(getUniqueName(this), n->name);
+    for (stream = streamHead; stream; stream = stream->nextStream) {
+        for (mNode *macroNode = stream->labels.head; macroNode; macroNode = macroNode->next) {
+            if (!isExportedSymbol(this, macroNode->name)) {
+                char *nn = mprefix_del(getUniqueName(this), macroNode->name);
                 if (!nn) {
                     reportError("failed to cat\n");
                     return false;
                 }
-                if (!n->setName(nn)) {
+                if (!macroNode->setName(nn)) {
                     reportError("failed to set new name\n");
                     return false;
                 }
@@ -89,8 +89,8 @@ bool Program::doUnique()
 
 bool Program::hasStreamLabel(const char *name)
 {
-    for (instStream *s = streamHead; s; s = s->nextStream) {
-        if (s->labels.findByNameIgnoreCase(name))
+    for (instStream *stream = streamHead; stream; stream = stream->nextStream) {
+        if (stream->labels.findByNameIgnoreCase(name))
             return true;
     }
     return false;

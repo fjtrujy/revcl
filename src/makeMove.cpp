@@ -8,7 +8,7 @@
 Instr *makeMove(Block *blk, RegPoolEntry *reg)
 {
     int type = 0;
-    Instr *mv = 0;
+    Instr *instruction = 0;
     if (blk->oddPipeMoveCount + blk->evenPipeMoveCount + blk->vectorMoveCount >= 2 * blk->loopSize)
         return 0;
     {
@@ -17,7 +17,7 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
             type = 1;
             if (blk->evenPipeMoveCount >= blk->loopSize) {
                 blk->unk_ad = 1;
-                return mv;
+                return instruction;
             }
             break;
         case 9:
@@ -27,17 +27,17 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
             reportError("can't make move for reg %s\n", reg->registerName());
             abortAfterError();
         }
-        mv = getMove(type, 0);
-        if (mv == 0) {
+        instruction = getMove(type, 0);
+        if (instruction == 0) {
             reportError("failed to get a free move\n");
             abortAfterError();
         }
-        Operand *inputOperand = mv->getOp(1);
+        Operand *inputOperand = instruction->getOp(1);
         if (!inputOperand) {
             reportError("failed to get move input!\n");
             exitAfterCleanup(1);
         }
-        Operand *out = mv->getOp(0);
+        Operand *out = instruction->getOp(0);
         if (!out) {
             reportError("failed to get move output!\n");
             exitAfterCleanup(1);
@@ -47,16 +47,16 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
             reportError("failed to dup  a reg\n");
             abortAfterError();
         }
-        mv->candidateAttemptLimit = blk->loopSize;
+        instruction->candidateAttemptLimit = blk->loopSize;
         inputOperand->assignedRegister = reg;
         inputOperand->operandStatus = 1;
         inputOperand->forcedBaseRegister = 0;
         out->operandStatus = 1;
         out->forcedBaseRegister = 0;
-        mv->requiresFullLoopMoveDrag = 1;
-        mv->schedulerCategory = 0;
+        instruction->requiresFullLoopMoveDrag = 1;
+        instruction->schedulerCategory = 0;
     }
-    return mv;
+    return instruction;
 }
 
 void adjustMoveCount(Block *blk, Instr *mv, int);
@@ -69,9 +69,9 @@ void trackEarliestInsertion(Instr *in);
 short g_streamSerial = 1;
 int discardedEmptyMoveCount = 0;
 
-static inline void countCreatedMove(Block *blk, Instr *mv)
+static inline void countCreatedMove(Block *blk, Instr *instruction)
 {
-    adjustMoveCount(blk, mv, 1);
+    adjustMoveCount(blk, instruction, 1);
 }
 
 int getMove(Block *blk, Instr *instruction, int now)
@@ -418,8 +418,8 @@ bool undoMove(Block *blk, Instr *mv)
     }
     for (int p = 0; p != dup->partCount; p++) {
         if ((bool)((inputOperand->componentMask >> p) & 1)) {
-            RegisterPartLockList *l = (RegisterPartLockList *)orig->getPartPayload(p);
-            if (!l) {
+            RegisterPartLockList *registerPartLocks = (RegisterPartLockList *)orig->getPartPayload(p);
+            if (!registerPartLocks) {
                 reportError("failed to get lock list for old reg in move undo\n");
                 abortAfterError();
             }
@@ -427,7 +427,7 @@ bool undoMove(Block *blk, Instr *mv)
                 reportError("undoMove: failed to get parent for old lock!\n");
                 abortAfterError();
             }
-            if (!l->removeInput(&inputOperand->parts[p])) {
+            if (!registerPartLocks->removeInput(&inputOperand->parts[p])) {
                 reportError("undoMove : failed to register input lock\n");
                 abortAfterError();
             }

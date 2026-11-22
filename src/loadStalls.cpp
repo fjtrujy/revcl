@@ -6,9 +6,9 @@
 #include "RegPool.h"
 #include "loadStalls_shared.h"
 
-bool loadStalls(Program *p)
+bool loadStalls(Program *program)
 {
-    infoList *st = &p->proc.stalls;
+    infoList *st = &program->proc.stalls;
     for (stallNode *n = (stallNode *)st->head; n; n = (stallNode *)n->next) {
         Instr *in = n->user.instruction;
         if (!in) {
@@ -25,18 +25,18 @@ bool loadStalls(Program *p)
             return 0;
         }
         InstructionPosition *loc = &in->position;
-        wtRow *ie = (wtRow *)owner->getIE_ck(loc->loopRow);
-        if (!ie) {
+        wtRow *workRow = (wtRow *)owner->getIE_ck(loc->loopRow);
+        if (!workRow) {
             reportError("couldn't get ie for instruction\n");
             return 0;
         }
-        if (ie->entries[loc->pipelineIndex].instruction != in) {
+        if (workRow->entries[loc->pipelineIndex].instruction != in) {
             reportError("instruction wasn't where I thought it was\n");
             return 0;
         }
         for (int i = 0; i != 3; i++) {
             if (n->stallByType[i]) {
-                if (!ie->addStall(i, n->stallByType[i])) {
+                if (!workRow->addStall(i, n->stallByType[i])) {
                     reportError("failed to load a stall\n");
                     return 0;
                 }

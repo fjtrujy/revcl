@@ -507,9 +507,9 @@ bool Instr::changeBranchImmediate(const char *s)
     return operand->immediateValue.setString(s);
 }
 
-bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
+bool link_oParts(Instr *instruction, int aOp, int slot, Instr *b, int bOp, int bSlot)
 {
-    if (!a || !b) {
+    if (!instruction || !b) {
         reportError("link_oParts, null arg pointer!\n");
         return false;
     }
@@ -517,12 +517,12 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
         reportError("swizzle detected for ps2 ?\n");
         return false;
     }
-    OpSlot *sa = &a->operands[aOp].parts[slot];
+    OpSlot *sa = &instruction->operands[aOp].parts[slot];
     OpSlot *sb = &b->operands[bOp].parts[slot];
-    ol_s *oa = sa->operandLocations.addOperandLocation(b, bOp, slot, false);
-    if (oa) {
-        olList *lb = &sb->operandLocations;
-        ol_s *ob = lb->addOperandLocation(a, aOp, slot, false);
+    ol_s *location = sa->operandLocations.addOperandLocation(b, bOp, slot, false);
+    if (location) {
+        olList *locationList = &sb->operandLocations;
+        ol_s *ob = locationList->addOperandLocation(instruction, aOp, slot, false);
         if (!ob) {
             reportError("failed to add ol\n");
             return false;
@@ -538,9 +538,9 @@ static inline void dumpLinkOperand(Operand *operand)
     operand->diagnoseOperand(0);
 }
 
-bool link_oParts(ol_s *o, ol_s *i, int x, int y)
+bool link_oParts(ol_s *location, ol_s *i, int x, int y)
 {
-    if (!o) {
+    if (!location) {
         reportError("link_oParts, null arg pointer2!\n");
         return false;
     }
@@ -548,7 +548,7 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         reportError("link_oParts, null arg pointer2!\n");
         return false;
     }
-    Operand *out = operandAtLocation(o);
+    Operand *out = operandAtLocation(location);
     if (!out) {
         reportError("link_oParts(2) - output not set \n");
         return false;
@@ -558,53 +558,53 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         dumpLinkOperand(out);
         return false;
     }
-    Operand *in = operandAtLocation(i);
-    if (!in) {
+    Operand *operand = operandAtLocation(i);
+    if (!operand) {
         reportError("link_oParts(2) - input not set \n");
         return false;
     }
-    if (!isRegisterOperand(in, 1)) {
+    if (!isRegisterOperand(operand, 1)) {
         reportError("link_oParts - input was not input\n");
         return false;
     }
-    int to = o->componentIndex;
+    int to = location->componentIndex;
     int ti = i->componentIndex;
     if (!((out->componentMask >> to) & 1)) {
         reportError("link_oParts - mod bit not set for output\n");
         return false;
     }
-    if (!((in->componentMask >> ti) & 1)) {
+    if (!((operand->componentMask >> ti) & 1)) {
         reportError("link_oParts - mod bit not set for input\n");
         return false;
     }
-    if (!((in->externalPartMask >> ti) & 1)) {
+    if (!((operand->externalPartMask >> ti) & 1)) {
         reportError("link_oParts_ext - external bit not set for input\n");
         return false;
     }
     out->externalPartMask |= 1 << to;
-    if (locationOwningStream(o) != locationOwningStream(i)) {
-        out->externalComponentMask |= 1 << o->componentIndex;
-        in->externalComponentMask |= 1 << i->componentIndex;
+    if (locationOwningStream(location) != locationOwningStream(i)) {
+        out->externalComponentMask |= 1 << location->componentIndex;
+        operand->externalComponentMask |= 1 << i->componentIndex;
     }
     if (to != ti) {
         reportError("link_oParts - not a bug, but should not happen for this cpu, t_o!=t_i (%d!=%d)\n", to, ti);
         return false;
     }
     OpSlot *so = out->parts + ti;
-    OpSlot *si = in->parts + ti;
-    olList *lo = &so->operandLocations;
-    ol_s *a = lo->copyOperandLocation(i, true);
+    OpSlot *si = operand->parts + ti;
+    olList *locationList = &so->operandLocations;
+    ol_s *a = locationList->copyOperandLocation(i, true);
     if (!a) {
         reportError("failed to add ol_input to output\n");
         return false;
     }
     olList *li = &si->operandLocations;
-    ol_s *b = li->copyOperandLocation(o, true);
+    ol_s *b = li->copyOperandLocation(location, true);
     if (!b) {
         reportError("failed to add ol_ouput to input\n");
         return false;
     }
-    int s = o->cycleOffset;
+    int s = location->cycleOffset;
     if (s > 0xff)
         s = 0xff;
     a->cycleOffset = s;

@@ -26,14 +26,14 @@ void clearRegMask()
 
 bool initRegMask(RegPool *pool)
 {
-    RegPoolEntry *e = pool->registerEntries;
+    RegPoolEntry *registerEntry = pool->registerEntries;
     int *mp = &maximumAllocationParts;
     clearRawBytes(allocationRegisterMask, 32);
-    for (int i = 0; i != pool->entryCount; i++, e++) {
-        if (!e->enabledPhysicalRegister)
-            allocationRegisterMask[i] = (1 << e->partCount) - 1;
-        if (e->partCount > *mp)
-            *mp = e->partCount;
+    for (int i = 0; i != pool->entryCount; i++, registerEntry++) {
+        if (!registerEntry->enabledPhysicalRegister)
+            allocationRegisterMask[i] = (1 << registerEntry->partCount) - 1;
+        if (registerEntry->partCount > *mp)
+            *mp = registerEntry->partCount;
     }
     return true;
 }
@@ -46,39 +46,39 @@ int firstEmptyMask(RegPool *pool)
     return -1;
 }
 
-bool assignExtRegisters(Program *p)
+bool assignExtRegisters(Program *program)
 {
-    if (!resetProgramAllocationsForFirstPass(p)) {
+    if (!resetProgramAllocationsForFirstPass(program)) {
         reportError("failed to allocReset before ext assign\n");
         return false;
     }
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        workTable *wt = s->getTable();
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        workTable *wt = stream->getTable();
         unsigned int mode = (unsigned char)wt->allocationMode;
         if ((char)mode != 1) {
             const char *modeName = allocModeName(mode);
             reportError("AssignExtRegisters - alloc mode not NONE for %s mode %s!\n",
-                          s->streamName(), modeName);
+                          stream->streamName(), modeName);
             return false;
         }
         for (unsigned i = 0; i != 12; i++) {
-            RegPool *rp = GetRP(i);
-            if (rp && !rp->assignExt(s)) {
-                reportError("flowMon::AssignExt registers failed for pool %s\n", rp->poolName);
+            RegPool *registerPool = GetRP(i);
+            if (registerPool && !registerPool->assignExt(stream)) {
+                reportError("flowMon::AssignExt registers failed for pool %s\n", registerPool->poolName);
                 return false;
             }
         }
-        for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-            for (int j = 0; j != in->operandCount; j++) {
-                Operand *op = &in->operands[j];
-                RegPoolEntry *reg = op->assignedRegister;
+        for (Instr *instruction = wt->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+            for (int j = 0; j != instruction->operandCount; j++) {
+                Operand *operand = &instruction->operands[j];
+                RegPoolEntry *reg = operand->assignedRegister;
                 if (reg && reg->isVirtual) {
-                    regUse *ru = wt->registerUses.findByRegister(reg);
-                    if (!ru) {
+                    regUse *registerUse = wt->registerUses.findByRegister(reg);
+                    if (!registerUse) {
                         reportError("failed to find reg ref associated with reg\n");
                         return false;
                     }
-                    if (ru->isExternal()) {
+                    if (registerUse->isExternal()) {
                         RegPoolEntry *ext = reg->assignedPhysicalRegister;
                         if (!ext) {
                             reportError("no ext mapping on register\n");
@@ -88,14 +88,14 @@ bool assignExtRegisters(Program *p)
                             reportError("alloc tmp is virtual in ext assign\n");
                             return false;
                         }
-                        op->assignedRegister = ext;
+                        operand->assignedRegister = ext;
                     }
                 }
             }
         }
         wt->allocationMode = 2;
     }
-    if (!resetProgramAllocationsForSecondPass(p)) {
+    if (!resetProgramAllocationsForSecondPass(program)) {
         reportError("failed to clean up after global alloc\n");
         return false;
     }

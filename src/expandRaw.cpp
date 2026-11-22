@@ -12,14 +12,14 @@ int expandRaw(workTable *wt)
     return wt->changeMode(3);
 }
 
-bool expandRawTables(Program *p)
+bool expandRawTables(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (!s->workTablePtr) {
-            reportError("work table not set in %s\n", s->streamName());
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (!stream->workTablePtr) {
+            reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *wt = s->workTablePtr;
+        workTable *wt = stream->workTablePtr;
         if (wt->codeMode() == 3) {
             reportError("hit a raw table during expraw\n");
             return false;

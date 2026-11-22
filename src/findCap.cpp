@@ -13,21 +13,21 @@ int countSetBits(unsigned int x);
 RegPoolEntry *getZeroReg(unsigned int type);
 
 
-static inline bool isOut(Operand *o) { return o->direction == 2; }
-static inline RegPoolEntry *outR(Operand *o)
+static inline bool isOut(Operand *operand) { return operand->direction == 2; }
+static inline RegPoolEntry *outR(Operand *operand)
 {
-    if (isOut(o))
-        return o->assignedRegister;
+    if (isOut(operand))
+        return operand->assignedRegister;
     return 0;
 }
-static inline bool isPoolZero(RegPool *p, RegPoolEntry *r) { return r == p->zeroRegister; }
+static inline bool isPoolZero(RegPool *registerPool, RegPoolEntry *registerEntry) { return registerEntry == registerPool->zeroRegister; }
 
-int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask)
+int findCap(workTable *wt, Instr *instruction, int opIdx, RegPoolEntry **capReg, int *capMask)
 {
     capInsertionWorkTable = wt;
     selectedCapRegister = 0;
     *capReg = 0;
-    Operand *op = &in->operands[opIdx];
+    Operand *operand = &instruction->operands[opIdx];
     int cap = -1;
     selectedCapPipelineProperties = 0;
     selectedCapMask = 0;
@@ -35,7 +35,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     selectedCapOpcodeInfo = 0;
     selectedCapOriginalInstruction = 0;
 
-    RegPoolEntry *reg = isRegisterOperand(op, 2) ? op->assignedRegister : 0;
+    RegPoolEntry *reg = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
     switch (reg->registerIndex) {
     case 52:
         cap = 0x73;
@@ -48,11 +48,11 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
         cap = 0x74;
         break;
     case 55: case 57: case 59: {
-        if (in->position.getPipe())
+        if (instruction->position.getPipe())
             break;
-        RegPoolEntry *r0 = outR(&in->operands[0]);
+        RegPoolEntry *r0 = outR(&instruction->operands[0]);
         if (!r0) {
-            const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
+            const char *name = instruction->opcodeInfo ? instruction->opcodeInfo->mnemonic : "NO_BASE_INST";
             reportError("couldn't get r0 for %s\n", name);
             return -1;
         }
@@ -64,18 +64,18 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
             int i;
             for (i = 0; i != 32; i++) {
                 RegPoolEntry *e = pool->findByRegisterIndex(i);
-                mask[i] = (e->enabledPhysicalRegister && e->allocatable) ? in->operands[0].componentMask : 0;
+                mask[i] = (e->enabledPhysicalRegister && e->allocatable) ? instruction->operands[0].componentMask : 0;
             }
             mask[0] = 0;
-            for (regUse *ru = wt->registerUses.head; ru; ru = ru->next) {
-                RegPoolEntry *reg = ru->registerEntry;
+            for (regUse *registerUse = wt->registerUses.head; registerUse; registerUse = registerUse->next) {
+                RegPoolEntry *reg = registerUse->registerEntry;
                 if (reg->registerClass != 9)
                     continue;
                 if (reg->isVirtual == 1) {
                     reportError("register isn't base!\n");
                     return -1;
                 }
-                unsigned char m = ru->inputMask | ru->outputMask | ru->throughputMask;
+                unsigned char m = registerUse->inputMask | registerUse->outputMask | registerUse->throughputMask;
                 int idx = pool->regIndex(reg->registerIndex);
                 if (idx < 0) {
                     reportError("failed to get local id\n");
@@ -86,7 +86,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
             }
             int best = 0;
             for (i = 1; i != 32; i++) {
-                int m = in->operands[0].componentMask & mask[i];
+                int m = instruction->operands[0].componentMask & mask[i];
                 int n = countSetBits(m);
                 if (n > best) {
                     RegPoolEntry *e = pool->findByRegisterIndex(i);
@@ -96,7 +96,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
                 }
             }
         } else {
-            selectedCapMask = in->operands[0].componentMask;
+            selectedCapMask = instruction->operands[0].componentMask;
             selectedCapRegister = r0;
         }
         if (selectedCapRegister)
@@ -107,20 +107,20 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
 
     if (cap < 0)
         return 0;
-    iInfo *ii = getOpcodeInfoById(cap);
-    selectedCapOpcodeInfo = ii;
-    if (!ii && cap != 0) {
+    iInfo *instructionInfo = getOpcodeInfoById(cap);
+    selectedCapOpcodeInfo = instructionInfo;
+    if (!instructionInfo && cap != 0) {
         reportError("failed to get II for cap \n");
         return -1;
     }
-    if (!ii) {
+    if (!instructionInfo) {
         reportError("failed to get II for cap \n");
         return -1;
     }
     *capReg = selectedCapRegister;
-    selectedCapOriginalInstruction = in;
+    selectedCapOriginalInstruction = instruction;
     *capMask = selectedCapMask;
-    selectedCapPipelineProperties = ii->unk_0e_w;
+    selectedCapPipelineProperties = instructionInfo->unk_0e_w;
     return selectedCapPipelineProperties;
 }
 
@@ -144,9 +144,9 @@ bool doCap(int line, int pipe, int mask)
         ci->operands[i].componentMask = mask;
 
     if (selectedCapRegister->registerClass == 9) {
-        RegPoolEntry *z = getZeroReg(9);
-        ci->operands[0].assignedRegister = z;
-        ci->operands[0].originalRegister = z;
+        RegPoolEntry *registerEntry = getZeroReg(9);
+        ci->operands[0].assignedRegister = registerEntry;
+        ci->operands[0].originalRegister = registerEntry;
         ci->operands[0].forcedBaseRegister = 0;
         ci->operands[1].assignedRegister = selectedCapRegister;
         ci->operands[1].originalRegister = selectedCapRegister;
@@ -154,16 +154,16 @@ bool doCap(int line, int pipe, int mask)
         selectedCapOriginalInstruction->operands[0].originalRegister = selectedCapRegister;
         selectedCapOriginalInstruction->operands[0].assignedRegister = selectedCapRegister;
         selectedCapOriginalInstruction->operands[0].forcedBaseRegister = 0;
-        regUse *ru = capInsertionWorkTable->registerUses.findByRegister(selectedCapRegister);
-        if (!ru) {
-            ru = capInsertionWorkTable->registerUses.AddNewRegRef(selectedCapRegister);
-            if (!ru) {
+        regUse *registerUse = capInsertionWorkTable->registerUses.findByRegister(selectedCapRegister);
+        if (!registerUse) {
+            registerUse = capInsertionWorkTable->registerUses.AddNewRegRef(selectedCapRegister);
+            if (!registerUse) {
                 reportError("failed to add new regref\n");
                 return true;
             }
         }
-        ru->inputMask |= mask;
-        ru->outputMask |= mask;
+        registerUse->inputMask |= mask;
+        registerUse->outputMask |= mask;
     } else {
         ci->operands[0].assignedRegister = selectedCapRegister;
         ci->operands[0].originalRegister = selectedCapRegister;

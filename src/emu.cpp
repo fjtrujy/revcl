@@ -14,7 +14,7 @@ static inline int clampByte(int v)
     return v > 255 ? 255 : v;
 }
 
-bool emuTable(Program *p, workTable *wt)
+bool emuTable(Program *program, workTable *wt)
 {
     if (!wt) {
         reportWarning("emu - passed a null table ptr!\n");
@@ -29,20 +29,20 @@ bool emuTable(Program *p, workTable *wt)
     case 3: {
         int skipped = 0;
         for (int line = wt->getRangeStart(); line != wt->getRangeEnd(); line++) {
-            wtRow *r = wt->getRowByIndex(line);
-            if (r) {
-                if (r->skip) {
+            wtRow *workRow = wt->getRowByIndex(line);
+            if (workRow) {
+                if (workRow->skip) {
                     for (int k = 0; k != 2; k++)
-                        if (r->entries[k].instruction) {
+                        if (workRow->entries[k].instruction) {
                             reportError("m_bSkip set .. but line contains instructions\n");
                             return false;
                         }
                     skipped++;
                     continue;
                 }
-                if (emuInst(p, r, line, false, true) < 0) {
+                if (emuInst(program, workRow, line, false, true) < 0) {
                     reportError("failed to Emu an inst\n");
-                    r->refreshInstructionOperands(-1);
+                    workRow->refreshInstructionOperands(-1);
                     goto fail;
                 }
             } else {
@@ -50,10 +50,10 @@ bool emuTable(Program *p, workTable *wt)
                 return false;
             }
         }
-        wt->declaredRawLength = p->emulatedCycleCount;
-        skipped += p->emulatedCycleCount;
+        wt->declaredRawLength = program->emulatedCycleCount;
+        skipped += program->emulatedCycleCount;
         if (skipped < wt->getPhysicalLen()) {
-            reportError("logical len < physical len.. %d<%d!\n", p->emulatedCycleCount, wt->getPhysicalLen());
+            reportError("logical len < physical len.. %d<%d!\n", program->emulatedCycleCount, wt->getPhysicalLen());
             wt->dump();
             return false;
         }
@@ -68,7 +68,7 @@ fail:
         for (; i; i = i->linearLink.nextInstruction) {
             row.clearEntries();
             row.entries[0].instruction = i;
-            int r = emuInst(p, &row, -1, true, true);
+            int r = emuInst(program, &row, -1, true, true);
             row.entries[0].instruction = 0;
             if (r < 0) {
                 reportError("failed to uta emu instruction\n");
@@ -92,21 +92,21 @@ static inline void reportRegRefFailure()
     reportError("failed to add reg ref\n");
 }
 
-bool emulateAndCollectRegisterUses(Program *p, instStream *s)
+bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
 {
     int count;
     Instr *i;
     workTable *wt;
 
-    wt = s->getTable();
+    wt = stream->getTable();
     int linear = wt->instructionCountsByPipe[2];
     int iCount = wt->linearInstructions.count;
     if (linear != iCount) {
         reportError("linear count not same as iCount %d!=%d\n", linear, iCount);
         return false;
     }
-    if (!emuTable(p, wt)) {
-        reportError("Processor : failed to emu itable from '%s'\n", s->streamName());
+    if (!emuTable(program, wt)) {
+        reportError("Processor : failed to emu itable from '%s'\n", stream->streamName());
         return false;
     }
     count = 0;
@@ -117,39 +117,39 @@ bool emulateAndCollectRegisterUses(Program *p, instStream *s)
             RegPoolEntry *reg = o->assignedRegister;
             if (!reg)
                 continue;
-            regUse *ru = wt->registerUses.findByRegister(reg);
-            if (!ru) {
-                ru = wt->registerUses.AddNewRegRef(reg);
-                if (!ru) {
+            regUse *registerUse = wt->registerUses.findByRegister(reg);
+            if (!registerUse) {
+                registerUse = wt->registerUses.AddNewRegRef(reg);
+                if (!registerUse) {
                     reportRegRefFailure();
                     return false;
                 }
             }
             if (isRegisterOperand(o, 2))
-                ru->outputMask |= o->componentMask;
+                registerUse->outputMask |= o->componentMask;
             if (isRegisterOperand(o, 1))
-                ru->inputMask |= o->componentMask;
+                registerUse->inputMask |= o->componentMask;
             if (isRegisterOperand(o, 2)) {
                 if (o->externalPartMask) {
                     reportError("operand had xbits set for output!\n");
                     return false;
                 }
             }
-            ru->externalInputMask |= o->externalPartMask;
+            registerUse->externalInputMask |= o->externalPartMask;
             for (int k = 0; k != reg->partCount; k++) {
                 if ((o->externalPartMask >> k) & 1) {
-                    if (ru->externalBlockMode == -1)
-                        ru->externalBlockMode = o->externalBlockModeFlag;
-                    else if (ru->externalBlockMode != (unsigned char)o->externalBlockModeFlag)
+                    if (registerUse->externalBlockMode == -1)
+                        registerUse->externalBlockMode = o->externalBlockModeFlag;
+                    else if (registerUse->externalBlockMode != (unsigned char)o->externalBlockModeFlag)
                         reportWarning("differing block modes for external input for %s..taking first encountered\n",
                                       reg->registerName());
-                    if (!ru->slots[k].inputLocations.addOperandLocation(i, op, k, false)) {
+                    if (!registerUse->slots[k].inputLocations.addOperandLocation(i, op, k, false)) {
                         reportError("failed to add oploc user!\n");
                         return false;
                     }
                 }
                 if (((o->componentMask >> k) & 1) && reg->tracksHotOutputPaths && isRegisterOperand(o, 2)) {
-                    if (!ru->slots[k].sourceLocations.addOperandLocation(i, op, k, false)) {
+                    if (!registerUse->slots[k].sourceLocations.addOperandLocation(i, op, k, false)) {
                         reportError("failed to add a local setter for a thruput check\n");
                         reportError("register is %s\n", reg->registerName());
                         return false;
@@ -170,37 +170,37 @@ bool emulateAndCollectRegisterUses(Program *p, instStream *s)
         }
         for (int part = 0; part != reg->partCount; part++) {
             regUseSlot *slot = &ru->slots[part];
-            rPart *rp = &reg->parts[part];
-            slot->timingValues[0] = rp->emulationTimingMetrics[4];
-            slot->timingValues[1] = rp->emulationTimingMetrics[5];
-            slot->timingValues[2] = rp->emulationTimingMetrics[6];
-            slot->timingValues[3] = rp->emulationTimingMetrics[7];
-            slot->timingValues[4] = rp->emulationTimingMetrics[8];
-            slot->timingValues[5] = rp->emulationTimingMetrics[9];
-            slot->timingValues[6] = rp->emulationTimingMetrics[10];
-            slot->timingValues[7] = rp->emulationTimingMetrics[11];
-            slot->timingValues[8] = rp->emulationTimingMetrics[12];
-            slot->timingValues[9] = rp->emulationTimingMetrics[13];
-            slot->timingValues[10] = rp->emulationTimingMetrics[14];
-            slot->timingValues[11] = rp->emulationTimingMetrics[15];
-            slot->timingValues[12] = rp->emulationTimingMetrics[16];
-            slot->throughputSums[1] = rp->emulationTimingMetrics[1];
-            slot->throughputSums[0] = rp->emulationTimingMetrics[0];
-            slot->throughputSums[3] = rp->emulationTimingMetrics[2];
-            slot->throughputSums[2] = rp->emulationTimingMetrics[3];
+            rPart *registerPart = &reg->parts[part];
+            slot->timingValues[0] = registerPart->emulationTimingMetrics[4];
+            slot->timingValues[1] = registerPart->emulationTimingMetrics[5];
+            slot->timingValues[2] = registerPart->emulationTimingMetrics[6];
+            slot->timingValues[3] = registerPart->emulationTimingMetrics[7];
+            slot->timingValues[4] = registerPart->emulationTimingMetrics[8];
+            slot->timingValues[5] = registerPart->emulationTimingMetrics[9];
+            slot->timingValues[6] = registerPart->emulationTimingMetrics[10];
+            slot->timingValues[7] = registerPart->emulationTimingMetrics[11];
+            slot->timingValues[8] = registerPart->emulationTimingMetrics[12];
+            slot->timingValues[9] = registerPart->emulationTimingMetrics[13];
+            slot->timingValues[10] = registerPart->emulationTimingMetrics[14];
+            slot->timingValues[11] = registerPart->emulationTimingMetrics[15];
+            slot->timingValues[12] = registerPart->emulationTimingMetrics[16];
+            slot->throughputSums[1] = registerPart->emulationTimingMetrics[1];
+            slot->throughputSums[0] = registerPart->emulationTimingMetrics[0];
+            slot->throughputSums[3] = registerPart->emulationTimingMetrics[2];
+            slot->throughputSums[2] = registerPart->emulationTimingMetrics[3];
             if ((ru->outputMask >> part) & 1) {
-                ol_s *out = &rp->currentLocation;
+                ol_s *out = &registerPart->currentLocation;
                 if (out->instruction && !slot->addOutput(out)) {
                     reportError("failed to add an output to an rrp\n");
                     return false;
                 }
                 for (int j = 0; j != 4; j++) {
-                    ol_s *ol = rp->getPendingLocation(j);
-                    if (!ol) {
+                    ol_s *location = registerPart->getPendingLocation(j);
+                    if (!location) {
                         reportError("failed to get a pool entry\n");
                         return false;
                     }
-                    if (ol->cycleOffset && !slot->addOutput(ol)) {
+                    if (location->cycleOffset && !slot->addOutput(location)) {
                         reportError("failed to add a pending output to an rrp\n");
                         return false;
                     }

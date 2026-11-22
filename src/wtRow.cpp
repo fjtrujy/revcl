@@ -92,10 +92,10 @@ Instr *GetI(Instr **ie, int p)
         exitAfterCleanup(-1);
         return 0;
     }
-    Instr *in = ie[p];
-    if ((VclPtrWord)in & 1)
+    Instr *instruction = ie[p];
+    if ((VclPtrWord)instruction & 1)
         return 0;
-    return in;
+    return instruction;
 }
 
 int wtRow::countEntries()

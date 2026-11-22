@@ -3,43 +3,43 @@
 
 bool rotateInputComponentMask(void *, Instr *in);
 
-static inline bool isOutput(Operand *op) { return op->direction == 2; }
-static inline bool isInput(Operand *op) { return op->direction == 1; }
+static inline bool isOutput(Operand *operand) { return operand->direction == 2; }
+static inline bool isInput(Operand *operand) { return operand->direction == 1; }
 
-static inline RegPoolEntry *outReg(Operand *op)
+static inline RegPoolEntry *outReg(Operand *operand)
 {
-    if (isOutput(op))
-        return op->assignedRegister;
+    if (isOutput(operand))
+        return operand->assignedRegister;
     return 0;
 }
 
-static inline RegPoolEntry *inReg(Operand *op)
+static inline RegPoolEntry *inReg(Operand *operand)
 {
-    if (isInput(op))
-        return op->assignedRegister;
+    if (isInput(operand))
+        return operand->assignedRegister;
     return 0;
 }
 
 class Program;
-bool noopIOmaskProgramHook(Program *p)
+bool noopIOmaskProgramHook(Program *program)
 {
     return true;
 }
 
-int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp)
+int hackIOmask(Instr *instruction, int outOp, unsigned char mask, int inOp)
 {
-    iInfo *info = in->opcodeInfo;
+    iInfo *info = instruction->opcodeInfo;
     if (!info) {
         reportError("hackIOmask - no inst set\n");
         return -1;
     }
-    Operand *out = in->getOp(outOp);
+    Operand *out = instruction->getOp(outOp);
     if (!out) {
         reportError("failed to get output op\n");
         return -1;
     }
-    Operand *ip = in->getOp(inOp);
-    if (!ip) {
+    Operand *operand = instruction->getOp(inOp);
+    if (!operand) {
         reportError("failed to get input op\n");
         return -1;
     }
@@ -47,7 +47,7 @@ int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp)
         reportError("output op had no register!\n");
         return -1;
     }
-    if (!inReg(ip)) {
+    if (!inReg(operand)) {
         reportError("input op had no register!\n");
         return -1;
     }
@@ -58,10 +58,10 @@ int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp)
     }
     if (!mask)
         return 0;
-    if ((ip->operandKind == 1 || ip->operandKind == 9) && (out->operandKind == 1 || out->operandKind == 9)) {
+    if ((operand->operandKind == 1 || operand->operandKind == 9) && (out->operandKind == 1 || out->operandKind == 9)) {
         if (info->decodeHook == rotateInputComponentMask)
             return ((bits << 1) & 0xf) | ((mask & 8) >> 3);
         return bits;
     }
-    return ip->componentMask;
+    return operand->componentMask;
 }

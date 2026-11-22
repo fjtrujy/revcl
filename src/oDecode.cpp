@@ -296,8 +296,8 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             }
             s = nameBuf;
             if (pool->virtualPartCount && visibilityScopes.tail && !pool->findPhysicalByName(op.name) && op.name[0] != '_') {
-                for (mNode *n = visibilityScopes.tail; n; n = n->previous) {
-                    char *np = n->name;
+                for (mNode *macroNode = visibilityScopes.tail; macroNode; macroNode = macroNode->previous) {
+                    char *np = macroNode->name;
                     if (!np) {
                         reportError("null name in parsep\n");
                         goto fail;
@@ -319,16 +319,16 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                                 np++;
                         }
                     }
-                    if ((found && n->flags == 0) || (!found && n->flags == 1)) {
-                        s += formatIntoBuffer(s, "%d", (int)(VclPtrWord)n->data);
+                    if ((found && macroNode->flags == 0) || (!found && macroNode->flags == 1)) {
+                        s += formatIntoBuffer(s, "%d", (int)(VclPtrWord)macroNode->data);
                         break;
                     }
                 }
             }
             formatIntoBuffer(s, "%s", op.name);
             char *full = dupString(nameBuf);
-            RegPoolEntry *r = pool->findOrCreateRegister(full);
-            if (!r) {
+            RegPoolEntry *registerEntry = pool->findOrCreateRegister(full);
+            if (!registerEntry) {
                 reportUserMessage("oDecode: not find register '%s' from %s\n", full, pool->poolName);
                 goto fail;
             }
@@ -340,25 +340,25 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                         reportUserMessage("request to bing non-base register\n");
                         goto fail;
                     }
-                    if (r->assignedPhysicalRegister && r->assignedPhysicalRegister != base)
+                    if (registerEntry->assignedPhysicalRegister && registerEntry->assignedPhysicalRegister != base)
                         reportWarning("changing binding for %s from %s to %s\n",
-                                      r->registerName(), r->assignedPhysicalRegister->registerName(),
+                                      registerEntry->registerName(), registerEntry->assignedPhysicalRegister->registerName(),
                                       base->registerName());
-                } else if (r->assignedPhysicalRegister)
-                    base = r->assignedPhysicalRegister;
-                else if (r->isVirtual != 1)
-                    base = r;
+                } else if (registerEntry->assignedPhysicalRegister)
+                    base = registerEntry->assignedPhysicalRegister;
+                else if (registerEntry->isVirtual != 1)
+                    base = registerEntry;
                 if (!base) {
                     reportUserMessage(" can't figure out which base register to map %s to\n",
-                                  r->registerName());
+                                  registerEntry->registerName());
                     goto fail;
                 }
                 if (base->isVirtual == 1) {
                     reportError("what I thought was a base register isn't (%s maps to %s?)\n",
-                                  base->registerName(), r->registerName());
+                                  base->registerName(), registerEntry->registerName());
                     goto fail;
                 }
-                r->assignedPhysicalRegister = base;
+                registerEntry->assignedPhysicalRegister = base;
                 opd->forcedBaseRegister = base;
             } else if (op.physicalRegisterName[0]) {
                 RegPoolEntry *base = pool->findPhysicalByName(op.physicalRegisterName);
@@ -366,7 +366,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     reportUserMessage("failed to find base map reg '%s'\n", op.physicalRegisterName);
                     goto fail;
                 }
-                if (r->isVirtual != 1 && base != r) {
+                if (registerEntry->isVirtual != 1 && base != registerEntry) {
                     reportUserMessage("base registers not the same\n");
                     goto fail;
                 }
@@ -375,10 +375,10 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 RegPoolEntry *e = pool->findPhysicalByName(op.name);
                 if (e && e != e->ownerPool->zeroRegister)
                     opd->forcedBaseRegister = e;
-            } else if (r->isVirtual != 1 && !r->enabledPhysicalRegister)
-                opd->forcedBaseRegister = r;
-            opd->assignedRegister = r;
-            opd->originalRegister = r;
+            } else if (registerEntry->isVirtual != 1 && !registerEntry->enabledPhysicalRegister)
+                opd->forcedBaseRegister = registerEntry;
+            opd->assignedRegister = registerEntry;
+            opd->originalRegister = registerEntry;
             if (full)
                 delete[] full;
         }
@@ -434,7 +434,7 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
     }
     if (*pos == 0) {
         char *tok = t->tokenTextAt(0, 0);
-        mNode *n;
+        mNode *macroNode;
         if (hasTrailingLabelColon(tok) && !t->isCommentToken(0)) {
             if (*nOut != 0) {
                 reportUserMessage("found a label on a continued line\n");
@@ -453,12 +453,12 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
             while (*p && *p != ':')
                 p++;
             *p = 0;
-            n = labels->appendNamedNode(buf);
-            if (!n) {
+            macroNode = labels->appendNamedNode(buf);
+            if (!macroNode) {
                 reportError("Processor::decodeLE() - couldn't create tail for label list\n");
                 return false;
             }
-            n->flags = mods;
+            macroNode->flags = mods;
             (*pos)++;
             if (getLineTokenCount(t) > 1) {
                 char *tok2 = t->tokenTextAt(1, 0);
@@ -472,11 +472,11 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                         *d = 0;
                     }
                     i = removeInstructionModifierGroups(buf);
-                    n->flags |= i;
+                    macroNode->flags |= i;
                     (*pos)++;
                 }
             }
-            if (!areInstructionModifiersAllowed(n->flags, decodeMode, true)) {
+            if (!areInstructionModifiersAllowed(macroNode->flags, decodeMode, true)) {
                 int mode = decodeMode;
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(mode));
@@ -515,7 +515,7 @@ done:
     return true;
 }
 
-DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyntax, int *count)
+DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool newSyntax, int *count)
 {
     mList labels;
     int nOut;
@@ -529,26 +529,26 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
     int exits = 0;
     int enters = 0;
     int maxLines = 0x1000;
-    p->proc.sourceBuildType = type;
-    p->proc.newSyntax = newSyntax;
+    program->proc.sourceBuildType = type;
+    program->proc.newSyntax = newSyntax;
     DecodedLine *blocks = 0;
 
     switch (type) {
     case 1:
-        p->proc.decodeMode = 1;
-        p->proc.preferExistingPhysicalRegisters = 0;
+        program->proc.decodeMode = 1;
+        program->proc.preferExistingPhysicalRegisters = 0;
         break;
     case 2:
-        p->proc.decodeMode = 3;
-        p->proc.preferExistingPhysicalRegisters = 1;
+        program->proc.decodeMode = 3;
+        program->proc.preferExistingPhysicalRegisters = 1;
         break;
     default:
         reportError("Processor::Build:: bad build type request\n");
         goto done;
     }
-    p->proc.savedDecodeMode = 0;
-    p->proc.rawLoopId = 1;
-    p->proc.insideRawLoop = 0;
+    program->proc.savedDecodeMode = 0;
+    program->proc.rawLoopId = 1;
+    program->proc.insideRawLoop = 0;
     blocks = new DecodedLine[0x1000];
     if (!blocks) {
         reportError("Processor::Build() new failed for decLine table\n");
@@ -566,14 +566,14 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
             goto done;
         }
         if (t->isRawMacroBlock) {
-            DecodedLine *b = &blocks[n];
-            b->decodeMode = 6;
+            DecodedLine *decodedLine = &blocks[n];
+            decodedLine->decodeMode = 6;
             char *s = dupString(t->lineText);
             if (!s) {
                 reportError("failed to dupe the pass thru text\n");
                 goto done;
             }
-            b->passThroughText = s;
+            decodedLine->passThroughText = s;
             n++;
             lineIdx++;
             continue;
@@ -585,7 +585,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 t->dumpSourceLine(-1);
                 goto done;
             }
-            if (!d->fn(p, t)) {
+            if (!d->fn(program, t)) {
                 reportUserMessage("a directive parser failed at line:\n");
                 t->dumpSourceLine(-1);
                 goto done;
@@ -601,7 +601,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 goto done;
             }
             int old = pos;
-            if (!p->proc.decodeLE(t, &pos, &labels, ins, &nOut)) {
+            if (!program->proc.decodeLE(t, &pos, &labels, ins, &nOut)) {
                 reportError("failed to build list of instructions for line\n");
                 goto done;
             }
@@ -644,15 +644,15 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 }
                 synth = true;
             }
-            if (!areInstructionModifiersAllowed(ins[i]->instructionModifierBits, p->proc.decodeMode, false)) {
+            if (!areInstructionModifiersAllowed(ins[i]->instructionModifierBits, program->proc.decodeMode, false)) {
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
-                              codeModeName(p->proc.decodeMode));
+                              codeModeName(program->proc.decodeMode));
                 ins[i]->leDump();
                 goto done;
             }
         }
-        b->decodeMode = p->proc.decodeMode;
-        b->decodeSubMode = p->proc.decodeSubMode;
+        b->decodeMode = program->proc.decodeMode;
+        b->decodeSubMode = program->proc.decodeSubMode;
         if (synth) {
             Instr *in = ins[0];
             b->instructions[0] = in;
@@ -719,8 +719,8 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 }
                 /* fall through */
             case 8:
-                if (p->proc.insideRawLoop)
-                    b->rawLoopId = p->proc.rawLoopId;
+                if (program->proc.insideRawLoop)
+                    b->rawLoopId = program->proc.rawLoopId;
                 break;
             case 10:
                 break;
@@ -730,18 +730,18 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 in->dumpOperandDiagnostics(false);
                 goto done;
             }
-        } else if (p->proc.decodeMode == 3) {
-            if (nOut != p->proc.instructionsPerRawLine) {
-                reportUserMessage("in RAW decode mode, there weren't %d instructions on line : \n", p->proc.instructionsPerRawLine);
+        } else if (program->proc.decodeMode == 3) {
+            if (nOut != program->proc.instructionsPerRawLine) {
+                reportUserMessage("in RAW decode mode, there weren't %d instructions on line : \n", program->proc.instructionsPerRawLine);
                 t->dumpSourceLine(-1);
                 goto done;
             }
-            if (p->proc.insideRawLoop)
-                b->rawLoopId = p->proc.rawLoopId;
-            for (int j = 0; j != p->proc.instructionsPerRawLine; j++)
+            if (program->proc.insideRawLoop)
+                b->rawLoopId = program->proc.rawLoopId;
+            for (int j = 0; j != program->proc.instructionsPerRawLine; j++)
                 b->instructions[j] = ins[j];
         } else {
-            if (p->proc.insideRawLoop) {
+            if (program->proc.insideRawLoop) {
                 reportError("Build() - was in loop mode during uta\n");
                 goto done;
             }
@@ -794,14 +794,14 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
             goto done;
         }
         reportWarning("gathering labels at end of code into the final namelist\n");
-        if (!p->proc.trailingLabels.transferNodesFrom(&labels)) {
+        if (!program->proc.trailingLabels.transferNodesFrom(&labels)) {
             reportError("failed to grab ending labels\n");
             goto done;
         }
-        for (mNode *nd = p->proc.trailingLabels.head; nd; nd = nd->next) {
-            if (nd->flags) {
+        for (mNode *macroNode = program->proc.trailingLabels.head; macroNode; macroNode = macroNode->next) {
+            if (macroNode->flags) {
                 reportUserMessage("can't attach [modifiers] to labels at the end of code\n");
-                reportUserMessage("Label '%s:' has '%s'\n", nd->name, formatInstructionModifiers(nd->flags));
+                reportUserMessage("Label '%s:' has '%s'\n", macroNode->name, formatInstructionModifiers(macroNode->flags));
                 goto done;
             }
         }
@@ -841,9 +841,9 @@ done:
         delete[] blocks;
         blocks = 0;
         *count = 0;
-    } else if (p->proc.visibilityScopes.nodeCount)
-        reportWarning("scope stack open (depth %d) at end of source\n", p->proc.visibilityScopes.nodeCount);
-    p->proc.visibilityScopes.clearNodes();
+    } else if (program->proc.visibilityScopes.nodeCount)
+        reportWarning("scope stack open (depth %d) at end of source\n", program->proc.visibilityScopes.nodeCount);
+    program->proc.visibilityScopes.clearNodes();
     return blocks;
 }
 

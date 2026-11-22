@@ -10,35 +10,35 @@ extern const char bindExtForcedBaseError[];
 extern const char bindExtVirtualRegError[];
 extern const char bindExtFindRegRefError[];
 
-bool bindExternals(Program *p)
+bool bindExternals(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        workTable *wt = s->getTable();
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        workTable *wt = stream->getTable();
         if (!wt) {
             reportError("no worktable!\n");
             exitAfterCleanup(-1);
         }
-        for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-            for (int i = 0; i != in->operandCount; i++) {
-                Operand *op = &in->operands[i];
-                RegPoolEntry *reg = op->assignedRegister;
+        for (Instr *instruction = wt->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+            for (int i = 0; i != instruction->operandCount; i++) {
+                Operand *operand = &instruction->operands[i];
+                RegPoolEntry *reg = operand->assignedRegister;
                 if (!reg)
                     continue;
-                regUse *ru = wt->registerUses.findByRegister(reg);
-                if (!ru) {
+                regUse *registerUse = wt->registerUses.findByRegister(reg);
+                if (!registerUse) {
                     reportError(bindExtFindRegRefError);
                     return false;
                 }
-                if (ru->isExternal() || wt->allocationMode == 3) {
+                if (registerUse->isExternal() || wt->allocationMode == 3) {
                     if (reg->isVirtual) {
                         reportError(bindExtVirtualRegError);
                         return false;
                     }
-                    if (op->forcedBaseRegister && op->forcedBaseRegister != reg) {
+                    if (operand->forcedBaseRegister && operand->forcedBaseRegister != reg) {
                         reportError(bindExtForcedBaseError);
                         return false;
                     }
-                    op->forcedBaseRegister = reg;
+                    operand->forcedBaseRegister = reg;
                 }
             }
         }

@@ -15,17 +15,17 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 
 
-bool resolveStreamBranches(Program *p)
+bool resolveStreamBranches(Program *program)
 {
     instStream *s;
-    for (s = p->streamHead; s; s = s->nextStream) {
+    for (s = program->streamHead; s; s = s->nextStream) {
         switch (s->endType) {
         case 1: {
             unsigned char bt = s->branchType;
             int headFlags = bt;
             if (!(unsigned char)headFlags || (unsigned char)(headFlags & 4)) {
                 if (s->nextStream) {
-                    if (!p->linkStreams(s, s->nextStream, 0)) {
+                    if (!program->linkStreams(s, s->nextStream, 0)) {
                         reportError("failed to link streams together\n");
                         return false;
                     }
@@ -46,12 +46,12 @@ bool resolveStreamBranches(Program *p)
                         reportError("failed to get branch target immediate\n");
                         return false;
                     }
-                    instStream *t = p->findStream(label);
+                    instStream *t = program->findStream(label);
                     if (!t) {
                         reportUserMessage("failed to find label '%s'\n", label);
                         return false;
                     }
-                    if (!p->linkStreams(s, t, type)) {
+                    if (!program->linkStreams(s, t, type)) {
                         reportError("failed to link streams together\n");
                         return false;
                     }
@@ -71,12 +71,12 @@ bool resolveStreamBranches(Program *p)
                                 *d++ = *r++;
                             *d = 0;
                             q = r;
-                            instStream *t = p->findStream(name);
+                            instStream *t = program->findStream(name);
                             if (!t) {
                                 reportUserMessage("branch-to-register tag, failed to find label '%s'\n", name);
                                 return false;
                             }
-                            if (!p->linkStreams(s, t, type)) {
+                            if (!program->linkStreams(s, t, type)) {
                                 reportError("failed to link streams together\n");
                                 return false;
                             }
@@ -107,7 +107,7 @@ bool resolveStreamBranches(Program *p)
                 reportUserMessage("fell off the bottom of code! .. last stream should either end in END or be a branch\n");
                 return false;
             }
-            if (!p->linkStreams(s, s->nextStream, 0)) {
+            if (!program->linkStreams(s, s->nextStream, 0)) {
                 reportError("failed to link streams together\n");
                 return false;
             }
@@ -121,12 +121,12 @@ bool resolveStreamBranches(Program *p)
     bool again;
     do {
         again = false;
-        for (s = p->streamHead; s; s = s->nextStream) {
+        for (s = program->streamHead; s; s = s->nextStream) {
             int btorMask = 1;
             int btor = (s->branchType >> 1) & btorMask;
             if ((unsigned char)btor) {
                 int changed = 0;
-                if (!fixupBtorBranch(p, s, &changed)) {
+                if (!fixupBtorBranch(program, s, &changed)) {
                     reportError("failed to fixup a branch-to-register instruction\n");
                     return false;
                 }
@@ -136,8 +136,8 @@ bool resolveStreamBranches(Program *p)
         }
     } while (again);
 
-    dumpProgramStreamsAndRegisters(p, 0);
-    for (s = p->streamHead; s; s = s->nextStream) {
+    dumpProgramStreamsAndRegisters(program, 0);
+    for (s = program->streamHead; s; s = s->nextStream) {
         Instr *br = s->getBranch();
         if (br && br->branchLabelTags) {
             delete[] br->branchLabelTags;
@@ -147,40 +147,40 @@ bool resolveStreamBranches(Program *p)
     return true;
 }
 
-bool fixupBtorBranch(Program *p, instStream *s, int *changed)
+bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
 {
     *changed = 0;
-    if (((s->branchType >> 1) & 1) == 0) {
+    if (((stream->branchType >> 1) & 1) == 0) {
         reportError("balFix:: not reg-target\n");
         return false;
     }
-    Instr *br = s->getBranch();
-    if (!br) {
+    Instr *instruction = stream->getBranch();
+    if (!instruction) {
         reportError("balFix-no branch!\n");
         return false;
     }
-    RegPoolEntry *reg = br->getBranchTargetRegister();
+    RegPoolEntry *reg = instruction->getBranchTargetRegister();
     if (!reg) {
         reportError("no target register input for btor\n");
-        br->leDump();
+        instruction->leDump();
         return false;
     }
-    br->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
     instStream *t;
-    for (t = p->streamHead; t; t = t->nextStream)
+    for (t = program->streamHead; t; t = t->nextStream)
         t->visitState = 0;
-    s->visitState = 1;
+    stream->visitState = 1;
     bool first = true;
     bool again;
     do {
         again = false;
-        for (t = p->streamHead; t; t = t->nextStream) {
+        for (t = program->streamHead; t; t = t->nextStream) {
             if (t->visitState != 1)
                 continue;
             workTable *wt = t->getTable();
             Instr *in;
             if (first) {
-                in = br->linearLink.previousInstruction;
+                in = instruction->linearLink.previousInstruction;
                 t->visitState = 0;
                 first = false;
             } else {
@@ -199,17 +199,17 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
                         reportUserMessage("no physical successor to a branch+link\n");
                         return false;
                     }
-                    if (!p->areLinkedBy(s, t->nextStream, 2)) {
-                        if (!p->linkStreams(s, t->nextStream, 2)) {
+                    if (!program->areLinkedBy(stream, t->nextStream, 2)) {
+                        if (!program->linkStreams(stream, t->nextStream, 2)) {
                             reportError("failed to fixup a branch to register\n");
                             return false;
                         }
                         (*changed)++;
                         again = true;
                     }
-                } else if (!br->branchLabelTags) {
+                } else if (!instruction->branchLabelTags) {
                     reportError("VCL has found a branch to register at :\n");
-                    br->dumpOperandDiagnostics(false);
+                    instruction->dumpOperandDiagnostics(false);
                     reportError("that's apparently set by:\n");
                     in->dumpOperandDiagnostics(false);
                     reportError("unfortunately vcl can't figure out where the branch should go..\n");

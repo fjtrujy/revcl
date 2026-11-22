@@ -2,31 +2,31 @@
 
 #include "backTrace_shared.h"
 
-static inline regUseSlot *registerPart(regUse *u, int part)
+static inline regUseSlot *registerPart(regUse *registerUse, int part)
 {
-    return &u->slots[part];
+    return &registerUse->slots[part];
 }
 
-bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int ofs, bool ext)
+bool linkMatchList(Program *program, instStream *t, RegPoolEntry *reg, int part, int ofs, bool ext)
 {
-    regUse *tr = t->backtraceRegisterUse;
-    if (!tr) {
+    regUse *registerUse = t->backtraceRegisterUse;
+    if (!registerUse) {
         reportError("no rfu ?\n");
         return false;
     }
-    for (instStream *s = p->matchedStreams; s; s = s->nextMatchedStream) {
+    for (instStream *s = program->matchedStreams; s; s = s->nextMatchedStream) {
         if (s->visitState != 3) {
             reportError("not end_match on the newmatchlist\n");
             return false;
         }
-        int minKey = buildMinimumPathKey(p, s);
+        int minKey = buildMinimumPathKey(program, s);
         if (minKey <= 0) {
             reportError("minimal path key was bad\n");
             return false;
         }
         int maxKey = -1;
-        if (p->trackMaximumPathLength) {
-            maxKey = getMaxPathKey(p, s);
+        if (program->trackMaximumPathLength) {
+            maxKey = getMaxPathKey(program, s);
             if (maxKey <= 0) {
                 reportError("error getting max path key\n");
                 return false;
@@ -46,21 +46,21 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
         bool extended = false;
         if (d > 0) {
             if (ext) {
-                if (!p->proc.stalls.addStall(registerPart(sr, part)->outputLocations.head,
-                                        registerPart(tr, part)->inputLocations.head, 0, d)) {
+                if (!program->proc.stalls.addStall(registerPart(sr, part)->outputLocations.head,
+                                        registerPart(registerUse, part)->inputLocations.head, 0, d)) {
                     reportError("failed to add an external stall\n");
                     return false;
                 }
             } else {
                 s->visitState = 2;
                 extended = true;
-                if (!extendBackTrace(p, s)) {
+                if (!extendBackTrace(program, s)) {
                     reportError("failed to extend this back\n");
                     return false;
                 }
             }
         }
-        for (ol_s *ol = tr->slots[part].inputLocations.head; ol; ol = ol->next) {
+        for (ol_s *location = registerUse->slots[part].inputLocations.head; location; location = location->next) {
             ol_s *last = sr->slots[part].findPreviousOutputAtPosition(0, true);
             ol_s *match = 0;
             if (ext)
@@ -70,14 +70,14 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                 int mx = s->maximumPathLength;
                 if (mx < mn) {
                     reportError("max_ilen<min_ilen for a non-blocking instruction match.. %d < %d and logmax is %d\n",
-                                  mx, mn, p->trackMaximumPathLength);
+                                  mx, mn, program->trackMaximumPathLength);
                     return false;
                 }
                 if (mn < 0) {
                     reportError("minimal length<0\n");
                     return false;
                 }
-                int pos = ol->instruction->scheduledCycle;
+                int pos = location->instruction->scheduledCycle;
                 if (pos < 0) {
                     reportError("instruction not inserted or emu'd??\n");
                     return false;
@@ -94,7 +94,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                         if (mode >= 2 && mode <= 4) {
                             reportWarning("multiple same-sequence output operands match to a fixed stream %s..setting hazard flags\n",
                                           t->streamName());
-                            tr->hazardMask |= 1 << part;
+                            registerUse->hazardMask |= 1 << part;
                             sr->sourcePathHazardMask |= 1 << part;
                             s->hazardFlag = 1;
                         } else {
@@ -106,7 +106,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                             reportWarning("carrying on.. fixed raw mode. carrying on..\n");
                             reportWarning("paths - min..\n");
                             reportWarning("well - setting hiBits and localH this time..\n");
-                            tr->hazardMask |= 1 << part;
+                            registerUse->hazardMask |= 1 << part;
                             sr->sourcePathHazardMask |= 1 << part;
                             s->hazardFlag = 1;
                         }
@@ -115,7 +115,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                 if (min_s != last) {
                     s->hazardFlag = 1;
                     sr->sourcePathHazardMask |= 1 << part;
-                    tr->hazardMask |= 1 << part;
+                    registerUse->hazardMask |= 1 << part;
                 }
                 if (min_s)
                     match = min_s;
@@ -127,7 +127,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
             if (match) {
                 markLocationExternallyUsed(match);
                 sr->externalOutputMask |= 1 << part;
-                if (!link_oParts(match, ol, minKey, maxKey)) {
+                if (!link_oParts(match, location, minKey, maxKey)) {
                     reportError("failed to link_oparts external\n");
                     match->dumpInstructionContext();
                     return false;

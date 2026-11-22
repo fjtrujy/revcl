@@ -14,34 +14,34 @@ int vuta1RegCost(Instr *in);
 
 bool optVuta(workTable *wt, wrangleCand *c)
 {
-    Instr *in = wt->moveListHead;
+    Instr *instruction = wt->moveListHead;
     Instr *best = 0;
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;
-    for (; in; in = in->nextMoveInstruction) {
-        int cost = vutaRegCost(in);
-        int base = in->schedulingStatistics.moveDistance;
-        int a = base - in->candidateAttemptCount + in->schedulingStatistics.forwardLatencyDepth * 32 + cost;
+    for (; instruction; instruction = instruction->nextMoveInstruction) {
+        int cost = vutaRegCost(instruction);
+        int base = instruction->schedulingStatistics.moveDistance;
+        int a = base - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardLatencyDepth * 32 + cost;
         if (a > bestA) {
             bestA = a;
-            bestB = in->schedulingStatistics.moveCount - in->candidateAttemptCount + in->schedulingStatistics.forwardDependencyHeight + cost;
-            best = in;
-            bestC = in->schedulingStatistics.reverseLatencyDepth;
+            bestB = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardDependencyHeight + cost;
+            best = instruction;
+            bestC = instruction->schedulingStatistics.reverseLatencyDepth;
         } else if (a == bestA) {
-            int e = in->schedulingStatistics.moveCount - in->candidateAttemptCount + in->schedulingStatistics.forwardDependencyHeight + cost;
+            int e = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardDependencyHeight + cost;
             if (e > bestB) {
                 bestB = e;
-                bestC = in->schedulingStatistics.reverseLatencyDepth;
-                best = in;
+                bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                best = instruction;
             } else if (e == bestB) {
-                int f = in->candidateBaseRow + in->candidateCostOffset;
+                int f = instruction->candidateBaseRow + instruction->candidateCostOffset;
                 if (f < bestD) {
                     bestD = f;
-                    bestC = in->schedulingStatistics.reverseLatencyDepth;
-                    best = in;
-                } else if (f == bestD && in->schedulingStatistics.reverseLatencyDepth > bestC) {
-                    bestC = in->schedulingStatistics.reverseLatencyDepth;
-                    best = in;
+                    bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                    best = instruction;
+                } else if (f == bestD && instruction->schedulingStatistics.reverseLatencyDepth > bestC) {
+                    bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                    best = instruction;
                 }
             }
         }
@@ -54,13 +54,13 @@ bool optVuta(workTable *wt, wrangleCand *c)
     return true;
 }
 
-int vutaRegCost(Instr *in)
+int vutaRegCost(Instr *instruction)
 {
     int cost = 0;
-    for (int i = 0; i != in->operandCount; i++) {
-        RegPoolEntry *r = in->operands[i].inRegOp2();
-        if (r) {
-            switch (r->registerIndex) {
+    for (int i = 0; i != instruction->operandCount; i++) {
+        RegPoolEntry *registerEntry = instruction->operands[i].inRegOp2();
+        if (registerEntry) {
+            switch (registerEntry->registerIndex) {
             case 55:
             case 56:
             case 59:

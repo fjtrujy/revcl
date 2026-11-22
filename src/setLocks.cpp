@@ -437,14 +437,14 @@ bool DoInsert(workTable *const wt, Instr *instruction, InstructionPosition *pos)
     }
     r = pos->loopRow;
     wtRow *row = &wt->rows[r];
-    InstructionPosition *s = &instruction->position;
+    InstructionPosition *instructionPosition = &instruction->position;
     b = pos->linearRow;
-    s->loopRow = r;
+    instructionPosition->loopRow = r;
     char a = pos->loopIteration;
-    s->loopIteration = a;
+    instructionPosition->loopIteration = a;
     p = pos->getPipe();
-    s->linearRow = b;
-    s->pipelineIndex = p;
+    instructionPosition->linearRow = b;
+    instructionPosition->pipelineIndex = p;
     row->entries[p].instruction = instruction;
     b = setLocks(instruction);
     if (!(char)b) {

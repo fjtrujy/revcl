@@ -14,10 +14,10 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         reportError("forceInsert - null in\n");
         return false;
     }
-    InstructionPosition *p = &in->position;
+    InstructionPosition *instructionPosition = &in->position;
     int row = pos->loopRow;
     int pipe = pos->pipelineIndex;
-    if (p->loopRow >= 0) {
+    if (instructionPosition->loopRow >= 0) {
         reportError("instruction already inserted\n");
         return false;
     }
@@ -43,32 +43,32 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         reportError("instruction already inserted or bad key\n");
         return false;
     }
-    p->linearRow = pos->linearRow;
-    p->loopRow = pos->loopRow;
-    p->loopIteration = pos->loopIteration;
-    p->pipelineIndex = pos->pipelineIndex;
+    instructionPosition->linearRow = pos->linearRow;
+    instructionPosition->loopRow = pos->loopRow;
+    instructionPosition->loopIteration = pos->loopIteration;
+    instructionPosition->pipelineIndex = pos->pipelineIndex;
     *slot = in;
     in->insertionSerial = nextInsertionSerial;
     nextInsertionSerial++;
     for (i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *reg = registerOperand(op, 1);
+        Operand *operand = &in->operands[i];
+        RegPoolEntry *reg = registerOperand(operand, 1);
         if (!reg)
             continue;
         for (int k = 0; k != reg->partCount; k++) {
-            if ((bool)((op->componentMask >> k) & 1)) {
-                OperandLock *lk = &op->parts[k];
-                if (!lk) {
+            if ((bool)((operand->componentMask >> k) & 1)) {
+                OperandLock *operandLock = &operand->parts[k];
+                if (!operandLock) {
                     reportError("failed to get lock \n");
                     return false;
                 }
-                RegisterPartLockList *ll = lk->ownerLockList;
-                if (!ll) {
+                RegisterPartLockList *registerPartLocks = operandLock->ownerLockList;
+                if (!registerPartLocks) {
                     reportError("lock had no lock list\n");
                     return false;
                 }
-                lk->setFrom(pos);
-                if (!ll->addInputLock(lk)) {
+                operandLock->setFrom(pos);
+                if (!registerPartLocks->addInputLock(operandLock)) {
                     reportError("failed to add input lock\n");
                     return false;
                 }

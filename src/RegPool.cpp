@@ -42,11 +42,11 @@ RegPool::RegPool()
 
 RegPool::~RegPool()
 {
-    RegPoolEntry* p = virtualHead;
-    while (p) {
-        RegPoolEntry* n = p->next;
-        delete p;
-        p = n;
+    RegPoolEntry* registerEntry = virtualHead;
+    while (registerEntry) {
+        RegPoolEntry* n = registerEntry->next;
+        delete registerEntry;
+        registerEntry = n;
     }
     virtualHead = virtualTail = 0;
     virtualCount = 0;
@@ -296,23 +296,23 @@ bool RegPool::cycleRegisters(bool flag)
 
 bool RegPool::clearVirtualRegisters()
 {
-    RegPoolEntry* p = virtualHead;
-    while (p) {
-        RegPoolEntry* n = p->next;
-        delete p;
-        p = n;
+    RegPoolEntry* registerEntry = virtualHead;
+    while (registerEntry) {
+        RegPoolEntry* n = registerEntry->next;
+        delete registerEntry;
+        registerEntry = n;
     }
     virtualHead = virtualTail = 0;
     virtualCount = 0;
     return true;
 }
 
-static inline RegPoolEntry* findVirtual(RegPoolEntry* p, const char* name)
+static inline RegPoolEntry* findVirtual(RegPoolEntry* registerEntry, const char* name)
 {
-    for (; p; p = p->next)
-        if (asciiCaseEqual(p->registerName(), name))
+    for (; registerEntry; registerEntry = registerEntry->next)
+        if (asciiCaseEqual(registerEntry->registerName(), name))
             break;
-    return p;
+    return registerEntry;
 }
 
 RegPoolEntry* RegPool::findOrCreateRegister(const char* name)
@@ -552,13 +552,13 @@ int RegPoolEntry::gatherInflight(ol_s** out)
     int n = 0;
     int i;
     for (i = 0; i != partCount; i++) {
-        rPart* s = getRP(i);
-        ol_s* c = &s->currentLocation;
-        if (c->cycleOffset)
-            out[n++] = c;
+        rPart* registerPart = getRP(i);
+        ol_s* location = &registerPart->currentLocation;
+        if (location->cycleOffset)
+            out[n++] = location;
         int j;
         ol_s* p;
-        for (j = 0, p = s->pendingLocations; j != 4; j++, p++)
+        for (j = 0, p = registerPart->pendingLocations; j != 4; j++, p++)
             if (p->cycleOffset)
                 out[n++] = p;
     }
@@ -569,8 +569,8 @@ int RegPool::gatherInflight(ol_s** out)
 {
     int n = 0;
     for (int i = 0; i != entryCount; i++) {
-        RegPoolEntry* e = &registerEntries[i];
-        int r = e->gatherInflight(out + n);
+        RegPoolEntry* registerEntry = &registerEntries[i];
+        int r = registerEntry->gatherInflight(out + n);
         if (r < 0)
             return -1;
         n += r;
