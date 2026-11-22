@@ -193,7 +193,7 @@ int iGroupLog::logTable(workTable *wt)
                             RegPoolEntry *r = registerOperand(op, 2);
                             if (r)
                                 for (int k = 0; k != r->partCount; k++)
-                                    for (ol_s *o = op->unk_2c[k].unk_54.func_08058370(); o; o = o->func_080583ac()) {
+                                    for (ol_s *o = op->unk_2c[k].unk_54.firstInternalLocation(); o; o = o->func_080583ac()) {
                                         Instr *t = o->unk_04;
                                         changed = changed || t->func_08055a88();
                                     }
@@ -206,7 +206,7 @@ int iGroupLog::logTable(workTable *wt)
                             RegPoolEntry *r = registerOperand(op, 1);
                             if (r)
                                 for (int k = 0; k != r->partCount; k++)
-                                    for (ol_s *o = op->unk_2c[k].unk_54.func_08058370(); o; o = o->func_080583ac())
+                                    for (ol_s *o = op->unk_2c[k].unk_54.firstInternalLocation(); o; o = o->func_080583ac())
                                         o->unk_04->unk_0e_0 = 1;
                         }
             } while (changed);

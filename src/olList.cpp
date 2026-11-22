@@ -5,11 +5,11 @@
 #include "ol_s_inline.h"
 #include "os.h"
 
-void olList::func_08057e9c()
+void olList::validateOperandLocations()
 {
     int n = 0;
-    ol_s *p = unk_00;
-    if (unk_04 != 0) {
+    ol_s *p = head;
+    if (count != 0) {
         for (; p; p = p->unk_00) {
             if (p->unk_04) {
                 p->unk_04->func_08054168();
@@ -21,17 +21,17 @@ void olList::func_08057e9c()
         reportError("opLocList - had zero count, but non empty head\n");
         abortAfterError();
     }
-    if (n != unk_04) {
+    if (n != count) {
         reportError("oploc list - bad list not nent\n");
         abortAfterError();
     }
 }
 
-void olList::func_08057f2c()
+void olList::dumpOperandLocations()
 {
     int n = 0;
-    ol_s *p = unk_00;
-    if (unk_04 != 0) {
+    ol_s *p = head;
+    if (count != 0) {
         for (; p; p = p->unk_00) {
             if (p->unk_04) {
                 p->unk_04->func_08054168();
@@ -42,7 +42,7 @@ void olList::func_08057f2c()
     } else if (p) {
         exitWithError("opLocList - had zero count, but non empty head\n");
     }
-    if (n != unk_04)
+    if (n != count)
         exitWithError("oploc list - bad list not nent\n");
 }
 
@@ -125,11 +125,11 @@ static inline ol_s *allocOL()
     return p;
 }
 
-ol_s *olList::func_080580fc(Instr *inst, int op, int slot, bool ext)
+ol_s *olList::addOperandLocation(Instr *inst, int op, int slot, bool ext)
 {
     ol_s *prev = 0;
     ol_s *p;
-    for (p = unk_00; p; p = p->unk_00) {
+    for (p = head; p; p = p->unk_00) {
         if (inst == p->unk_04 && op == p->unk_10 && slot == p->unk_11) {
             if (ext != p->isExt()) {
                 reportError("addOL: inst external state mismatch bExt=%d\n", ext);
@@ -146,16 +146,16 @@ ol_s *olList::func_080580fc(Instr *inst, int op, int slot, bool ext)
     if (prev)
         prev->unk_00 = p;
     else
-        unk_00 = p;
-    unk_04++;
+        head = p;
+    count++;
     return p;
 }
 
-ol_s *olList::func_0805826c(Instr *inst)
+ol_s *olList::addInstructionLocation(Instr *inst)
 {
     ol_s *prev = 0;
     ol_s *p;
-    for (p = unk_00; p; p = p->unk_00) {
+    for (p = head; p; p = p->unk_00) {
         if (inst == p->unk_04)
             return p;
         prev = p;
@@ -165,19 +165,19 @@ ol_s *olList::func_0805826c(Instr *inst)
     if (prev)
         prev->unk_00 = p;
     else
-        unk_00 = p;
-    unk_04++;
+        head = p;
+    count++;
     return p;
 }
 
-ol_s *olList::func_08058348(ol_s *ol, bool ext)
+ol_s *olList::copyOperandLocation(ol_s *ol, bool ext)
 {
-    return func_080580fc(ol->unk_04, ol->unk_10, ol->unk_11, ext);
+    return addOperandLocation(ol->unk_04, ol->unk_10, ol->unk_11, ext);
 }
 
-ol_s *olList::func_08058370()
+ol_s *olList::firstInternalLocation()
 {
-    ol_s *p = unk_00;
+    ol_s *p = head;
     if (p && p->isExt()) {
         p = p->unk_00;
         while (p && p->isExt())
@@ -194,9 +194,9 @@ ol_s *ol_s::func_080583ac()
     return p;
 }
 
-ol_s *olList::func_080583d8()
+ol_s *olList::firstExternalLocation()
 {
-    ol_s *p = unk_00;
+    ol_s *p = head;
     if (p && !p->isExt()) {
         p = p->unk_00;
         while (p && !p->isExt())
@@ -222,11 +222,11 @@ RegPoolEntry *func_08058440(ol_s *ol)
     return 0;
 }
 
-ol_s *olList::func_08058484(ol_s *src)
+ol_s *olList::insertExternalLocation(ol_s *src)
 {
     ol_s *prev = 0;
     ol_s *p;
-    for (p = unk_00; p; p = p->unk_00) {
+    for (p = head; p; p = p->unk_00) {
         if (src->unk_12 < p->unk_12)
             break;
         prev = p;
@@ -238,8 +238,8 @@ ol_s *olList::func_08058484(ol_s *src)
     if (prev)
         prev->unk_00 = n;
     else
-        unk_00 = n;
-    unk_04++;
+        head = n;
+    count++;
     return n;
 }
 

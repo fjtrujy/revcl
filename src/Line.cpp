@@ -3,60 +3,60 @@
 
 char *dupString(const char *s);
 
-static inline const char *lineTypeNameInl(int t)
+static inline const char *lineTypeNameInl(int kind)
 {
-    const char *s = "LOCTAG_BAD??";
-    switch (t) {
-    case 0: s = "NULL "; break;
-    case 1: s = "FILE "; break;
-    case 2: s = "MACRO"; break;
+    const char *name = "LOCTAG_BAD??";
+    switch (kind) {
+    case 0: name = "NULL "; break;
+    case 1: name = "FILE "; break;
+    case 2: name = "MACRO"; break;
     }
-    return s;
+    return name;
 }
 
 Line::Line()
 {
-    unk_00 = 0;
-    unk_04 = 0;
+    locationName = 0;
+    locationKind = 0;
 }
 
 Line::~Line()
 {
-    if (unk_00)
-        delete[] unk_00;
-    unk_00 = 0;
-    unk_04 = 0;
+    if (locationName)
+        delete[] locationName;
+    locationName = 0;
+    locationKind = 0;
 }
 
-bool Line::func_08051054(const char *s, int n)
+bool Line::setLocation(const char *name, int kind)
 {
-    if (unk_00)
-        delete[] unk_00;
-    unk_00 = 0;
-    unk_04 = 0;
-    unk_00 = dupString(s);
-    unk_04 = n;
+    if (locationName)
+        delete[] locationName;
+    locationName = 0;
+    locationKind = 0;
+    locationName = dupString(name);
+    locationKind = kind;
     return true;
 }
 
-void Line::func_0805109c()
+void Line::clearLocation()
 {
-    if (unk_00)
-        delete[] unk_00;
-    unk_00 = 0;
-    unk_04 = 0;
+    if (locationName)
+        delete[] locationName;
+    locationName = 0;
+    locationKind = 0;
 }
 
-void Line::func_080510cc()
+void Line::dumpLocation()
 {
-    if (unk_00) {
-        int t = unk_04;
-        reportMessage("[%s : '%s']", lineTypeNameInl(t), unk_00, t);
+    if (locationName) {
+        int kind = locationKind;
+        reportMessage("[%s : '%s']", lineTypeNameInl(kind), locationName, kind);
     } else
         reportMessage("[EMPTY_LOCTAG]");
 }
 
-const char *Line::typeName(int t)
+const char *Line::typeName(int kind)
 {
-    return lineTypeNameInl(t);
+    return lineTypeNameInl(kind);
 }

@@ -127,7 +127,7 @@ bool func_08051284(Program *prog, LocTag *t)
 
 bool func_080512a4(Program *prog, LocTag *t)
 {
-    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
+    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (!s) {
         reportError("failed to get global name\n");
         return 0;
@@ -145,7 +145,7 @@ bool func_08051308(Program *prog, LocTag *t)
 
 bool func_0805131c(Program *prog, LocTag *t)
 {
-    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
+    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (!s) {
         reportError("must specify target address for mpg mode!\n");
         return 0;
@@ -156,7 +156,7 @@ bool func_0805131c(Program *prog, LocTag *t)
 
 bool func_0805137c(Program *prog, LocTag *t)
 {
-    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
+    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (s)
         prog->proc.unk_04.func_0804b2d4(s);
     return 1;
@@ -172,7 +172,7 @@ bool func_080513cc(Program *prog, LocTag *t)
         reportWarning("hit a raw directive while already in a raw block\n");
     prog->proc.unk_3d = 3;
     prog->proc.unk_3e = 4;
-    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
+    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (s) {
         if (asciiCaseEqual(s, "reorder"))
             prog->proc.unk_3e = 3;
@@ -212,7 +212,7 @@ bool func_080514e8(Program *prog, LocTag *t)
     prog->proc.unk_3d = 3;
     prog->proc.unk_3e = 4;
     prog->proc.unk_3f = true;
-    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
+    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (s) {
         if (asciiCaseEqual(s, "reorder"))
             prog->proc.unk_3e = 3;
@@ -246,7 +246,7 @@ bool func_080515f0(Program *prog, LocTag *t)
 {
     int device = -1;
     int limit = -1;
-    char *cpu = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
+    char *cpu = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (!cpu) {
         reportError("failed to get token cpu (1) from .work directive\n");
         return 0;
@@ -267,12 +267,12 @@ bool func_080515f0(Program *prog, LocTag *t)
         reportError("work: target device not set defining a work area.. must be one of core,vu0 or vu1!\n");
         return 0;
     }
-    char *ea = t->func_08050f18(2) ? 0 : t->tokenTextAt(2, 0);
+    char *ea = t->isCommentToken(2) ? 0 : t->tokenTextAt(2, 0);
     if (!ea) {
         reportError("failed to get effective address token (2) from .work directive\n");
         return 0;
     }
-    char *sz = t->func_08050f18(3) ? 0 : t->tokenTextAt(3, 0);
+    char *sz = t->isCommentToken(3) ? 0 : t->tokenTextAt(3, 0);
     if (!sz) {
         reportError("failed to get size token (3) from .work directive\n");
         return 0;
@@ -338,7 +338,7 @@ bool func_08051878(Program *prog, LocTag *t)
 
 bool func_08051890(Program *prog, LocTag *t)
 {
-    char *name = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
+    char *name = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (name) {
         if (mstrlen(name) > 128) {
             reportUserMessage("unique name too long\n");
@@ -352,7 +352,7 @@ bool func_08051890(Program *prog, LocTag *t)
 
 bool func_08051908(Program *prog, LocTag *t)
 {
-    char *arg = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
+    char *arg = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (!arg) {
         reportUserMessage("must specify an argument to '.syntax', valid ones are 'new' or 'old'\n");
         return 0;
@@ -394,8 +394,8 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
         reportError("ExecRP_init_reg: passed a null pool\n");
         return false;
     }
-    for (; i < func_0805085c(t); i++) {
-        char *tok = t->func_08050f18(i) ? 0 : t->tokenTextAt(i, 0);
+    for (; i < getLineTokenCount(t); i++) {
+        char *tok = t->isCommentToken(i) ? 0 : t->tokenTextAt(i, 0);
         if (!tok)
             continue;
         int range = 0;
@@ -514,8 +514,8 @@ bool func_08051d6c(Program *prog, LocTag *t, int v)
     char buf[0x800];
     int left = 0x7ff;
     char *d = buf;
-    for (int i = 1; i < func_0805085c(t); i++) {
-        char *tok = t->func_08050f18(i) ? 0 : t->tokenTextAt(i, 0);
+    for (int i = 1; i < getLineTokenCount(t); i++) {
+        char *tok = t->isCommentToken(i) ? 0 : t->tokenTextAt(i, 0);
         if (!tok)
             continue;
         while (*tok) {

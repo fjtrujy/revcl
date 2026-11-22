@@ -164,7 +164,7 @@ bool regUseSlot::optReset()
 
 bool regUseSlot::addOutput(ol_s *ol)
 {
-    if (!unk_08.func_08058484(ol)) {
+    if (!unk_08.insertExternalLocation(ol)) {
         reportError("failed to add oploc to output list sort\n");
         return false;
     }
@@ -173,12 +173,12 @@ bool regUseSlot::addOutput(ol_s *ol)
 
 void regUseSlot::func_0805b814()
 {
-    unk_08.func_08057e9c();
+    unk_08.validateOperandLocations();
 }
 
 void regUseSlot::func_0805b824()
 {
-    unk_00.func_08057e9c();
+    unk_00.validateOperandLocations();
 }
 
 OperandLock *regUseSlot::func_0805b830()
@@ -250,7 +250,7 @@ ol_s *regUseSlot::func_0805ba2c(int pos, bool all)
     if (all)
         pos = 0xff;
     ol_s *prev = 0;
-    for (ol_s *p = unk_08.unk_00; p; p = p->unk_00) {
+    for (ol_s *p = unk_08.head; p; p = p->unk_00) {
         if (pos < p->unk_12)
             break;
         prev = p;

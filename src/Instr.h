@@ -73,27 +73,27 @@ public:
     int func_0807026c();
 };
 
-// List of ol_s nodes returned to a free pool (class name guessed).
+// Operand-location list: list ownership and count checked by its dump helpers.
 class olList {
 public:
-    ol_s *unk_00;   // head
-    int unk_04;
+    ol_s *head;
+    int count;
 
     olList()
     {
-        unk_00 = 0;
-        unk_04 = 0;
+        head = 0;
+        count = 0;
     }
     ~olList() { clear(); }
     bool clear();
-    void func_08057e9c();
-    void func_08057f2c();
-    ol_s *func_080580fc(Instr *inst, int op, int slot, bool ext);
-    ol_s *func_0805826c(Instr *inst);
-    ol_s *func_08058348(ol_s *ol, bool ext);
-    ol_s *func_08058370();
-    ol_s *func_080583d8();
-    ol_s *func_08058484(ol_s *src);
+    void validateOperandLocations();
+    void dumpOperandLocations();
+    ol_s *addOperandLocation(Instr *inst, int op, int slot, bool ext);
+    ol_s *addInstructionLocation(Instr *inst);
+    ol_s *copyOperandLocation(ol_s *ol, bool ext);
+    ol_s *firstInternalLocation();
+    ol_s *firstExternalLocation();
+    ol_s *insertExternalLocation(ol_s *src);
 };
 
 // Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).
@@ -759,8 +759,8 @@ public:
     Operand *getOp(int n)
     {
         if (n < 0) {
-            func_0804ad38("-ve operand passed to getOp!\n");
-            func_0804adf0(0);
+            reportError("-ve operand passed to getOp!\n");
+            exitAfterCleanup(0);
             return 0;
         }
         return n < operandCount ? &operands[n] : 0;

@@ -11,7 +11,7 @@ bool Instr::func_08052f84()
         op->unk_29 = 0;
         if (!(unk_1388 & 4))
             continue;
-        for (ol_s *ol = op->unk_2c[0].unk_54.unk_00; ol; ol = ol->unk_00) {
+        for (ol_s *ol = op->unk_2c[0].unk_54.head; ol; ol = ol->unk_00) {
             Instr *in = ol->unk_04;
             bool found = false;
             if (in->unk_13ce) {

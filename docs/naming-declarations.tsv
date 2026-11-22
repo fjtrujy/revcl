@@ -110,8 +110,6 @@ local_review	c	src/Instr.cpp	972	func_08055ae4	bool
 local_review	d	src/Instr.cpp	973	func_08055ae4	bool
 local_review	v	src/Instr.cpp	974	func_08055ae4	mValue *
 local_review	id	src/Instr.cpp	980	func_08055ae4	int
-local_review	s	src/Line.cpp	8	lineTypeNameInl	const char *
-local_review	t	src/Line.cpp	53	func_080510cc	int
 local_review	s	src/LocTag.cpp	210	func_08050eec	char *
 local_review	s	src/LocTag.cpp	225	func_08050f48	char *
 local_review	i	src/Operand.cpp	31	Operand	int
@@ -2312,10 +2310,6 @@ parameter_review	v	src/Instr.cpp	1116	func_08055fbc	short
 parameter_review	v	src/Instr.cpp	1121	func_08055fdc	short
 parameter_review	v	src/Instr.cpp	1126	func_08055ffc	short
 parameter_review	v	src/Instr.cpp	1131	func_0805601c	short
-parameter_review	t	src/Line.cpp	6	lineTypeNameInl	int
-parameter_review	n	src/Line.cpp	31	func_08051054	int
-parameter_review	s	src/Line.cpp	31	func_08051054	const char *
-parameter_review	t	src/Line.cpp	59	typeName	int
 parameter_review	t	src/LocTag.cpp	5	func_0805082c	LocTag *
 parameter_review	t	src/LocTag.cpp	10	func_0805085c	LocTag *
 parameter_review	i	src/LocTag.cpp	216	func_08050f18	int

@@ -34,12 +34,12 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
             }
             sl->unk_30 = 0;
             sl->unk_32 = 30000;
-            for (ol_s *ol = sl->unk_00.unk_00; ol; ol = ol->unk_00) {
+            for (ol_s *ol = sl->unk_00.head; ol; ol = ol->unk_00) {
                 Instr *in = ol->unk_04;
                 Operand *op = &in->operands[ol->unk_10];
                 OpSlot *part = op->getPart(ol->unk_11);
                 short best = 0;
-                ol_s *e = part->unk_54.unk_00;
+                ol_s *e = part->unk_54.head;
                 if (e) {
                     for (; e; e = e->unk_00) {
                         int key = e->unk_08;
@@ -81,7 +81,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     return 0;
                 }
             }
-            for (ol_s *ol = sl->unk_08.unk_00; ol; ol = ol->unk_00) {
+            for (ol_s *ol = sl->unk_08.head; ol; ol = ol->unk_00) {
                 Instr *in = ol->unk_04;
                 if (!in) {
                     reportError("not get visible output\n");
@@ -90,7 +90,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 short best = 0;
                 Operand *op = &in->operands[ol->unk_10];
                 olList *xl = &op->getPart(ol->unk_11)->unk_54;
-                ol_s *e = xl->func_080583d8();
+                ol_s *e = xl->firstExternalLocation();
                 if (!ol->isExtUsed() || e) {
                     if (!e || ol->isExtUsed()) {
                         for (; e; e = e->func_08058414()) {
@@ -132,7 +132,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     } else {
                         reportError("operand doesn't think there's any external users, but - there's an entry on it's ext list\n");
                         ol->func_08057fec();
-                        xl->func_08057e9c();
+                        xl->validateOperandLocations();
                         return 0;
                     }
                 } else {
@@ -143,7 +143,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
             }
             if (reg->unk_2c && !noExt) {
                 ol_s *ol;
-                for (ol = sl->unk_18.unk_00; ol; ol = ol->unk_00) {
+                for (ol = sl->unk_18.head; ol; ol = ol->unk_00) {
                     int key = ol->unk_08;
                     if (!key) {
                         reportError("can't have a null minkey for ext\n");
@@ -177,7 +177,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         sl->unk_30 = d;
                     }
                 }
-                for (ol = sl->unk_28.unk_00; ol; ol = ol->unk_00) {
+                for (ol = sl->unk_28.head; ol; ol = ol->unk_00) {
                     int key = ol->unk_08;
                     if (!key) {
                         reportError("can't have a null minkey for ext\n");

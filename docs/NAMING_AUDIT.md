@@ -5,8 +5,9 @@ Status: iterative semantic naming pass, 2026-11-22.
 This work inventories opaque identifiers and improves them **without changing**
 the verified VCL executable. It is deliberately separate from functional
 reverse-engineering: a plausible name does not prove a function or field's
-meaning, and a name-only change must not change instructions, symbols, object
-order or output bytes.
+meaning, and a name-only change must not change instruction behavior, object
+order or output bytes. The linker's symbol spellings may change when the
+historical stripped ELF remains byte-identical.
 
 ## Reproducible token inventory (C, no Python dependency)
 
@@ -25,7 +26,7 @@ try to infer C++ member ownership or judge whether abbreviations like `i`,
 
 | VCL candidate category | Distinct spellings/files | Notes |
 | --- | ---: | --- |
-| Address-named functions | 436 | Includes original ABI spellings intentionally preserved at definitions; 10 diagnostic helpers have readable call aliases |
+| Address-named functions | 436 | Original baseline before semantic function renames; see the progress report for remaining names |
 | Offset-named fields | 237 | Identical offsets recur in many unrelated classes |
 | Address-coded globals/other identifiers | 85 | Recover names from initialization and cross-references before modifying |
 | Numeric class names | 4 | Three have semantic typedefs in the first pass |
@@ -90,13 +91,14 @@ methods or ABI-facing types may affect byte matching.
   these instead of 201 occurrences of the address-coded type names.
 - `src/f080724f0.cpp` -> `src/tableRowAccess.cpp` and
   `src/f080843a0.cpp` -> `src/flowBlockQueries.cpp`.
-- Semantic aliases `abortAfterError`, `asciiCaseEqual`, `streamName`,
-  and `registerName` preserve their original historical linker symbols.
+- Recovered function names also include `abortAfterError`,
+  `asciiCaseEqual`, `streamName`, and `registerName`.
 
-The helper aliases and class typedefs are **not ABI renames**: the historical
-C++ mangled symbols remain as originally linked. Renaming those definitions
-would change the reference executable's symbol/relocation tables. The aliases
-allow readable source without breaking the byte-exact reproduction.
+These names are now used **directly in C++ declarations, definitions and
+callers**, without `#define` function aliases. A full historical GCC rebuild
+verified that changing the mangled names of these non-virtual functions does
+not alter the stripped ELF SHA-256. The opaque class names still have semantic
+typedefs because changing a class name can have different ABI consequences.
 
 ## Second accepted rename batch: parser and source units
 
@@ -107,11 +109,11 @@ allow readable source without breaking the byte-exact reproduction.
 - `LocTag` fields: `tokenCount`, `tokens`; `TokenEntry` fields:
   `textOffset`, `separator`, `inComment`. These follow the tokenizer's
   writes and token lookup; the structure layout and field types are unchanged.
-- Ten parser/line-entry methods now have descriptive **source-level aliases**:
+- Ten parser/line-entry methods now have descriptive **C++ names**:
   `initializeParser`, `buildProcessedLines`, `getParsedLineCount`,
   `getParsedLine`, `addLocationTag`, `decodeGaspLine`,
   `isAssignmentLine`, `tokenizeSourceLine`, `tokenTextAt`,
-  `dumpSourceLine`. Their original mangled symbols are preserved.
+  `dumpSourceLine`. These are direct function names, not preprocessor aliases.
 - `src/f08085aa8.cpp` -> `src/splitParserStream.cpp`: the unit turns flow
   blocks into streams and binds dependencies.
 - `src/cls08058718.cpp` -> `src/instructionPosition.cpp`: it implements
@@ -184,6 +186,49 @@ For `wrangleCore.cpp`, the special per-unit compiler flags were migrated in
 `config/vcl-link-order.cmake` was preserved. **The historical executable remains
 byte-identical** after this last file-renaming pass.
 
+## Post-merge parser and location naming
+
+The local parser refinement was reapplied on top of the merged naming PR
+without reverting its wider field and filename renames:
+
+- `Line` owns `locationName` and `locationKind` (file or macro), with semantic
+  methods `setLocation`, `clearLocation`, `dumpLocation`.
+- `LocTag` owns `lineText`, `sourceLineNumber`, `isRawMacroBlock`, `gaspDepth`
+  and `gaspStack`. `LocRef` entries hold `sourceLocation` and
+  `gaspLineNumber`. The parser's GASP location-stack writer and the line-dump
+  reader independently confirm these interpretations.
+- Five additional parser helpers now read `isLocTagValid`,
+  `getLineTokenCount`, `startsWithDirective`, `isCommentToken` and
+  `hasAssignmentMarker` at their call sites. The methods are now directly
+  renamed in declarations and definitions.
+
+The nine corresponding owner-qualified field review entries were removed from
+`naming-fields.tsv`, with already-resolved short Line declarations removed
+from the separate AST review queue. The generated progress report reflects
+the merged branch rather than the older local source snapshot.
+
+## Third focused batch: move records and operand-location lists
+
+The move-record free-list path in `getMove` / `addFreeMove` establishes five
+`moveRec` fields unambiguously: `nextFree`, `moveType`, `instruction`,
+`moveRegister`, and the four-entry `partLocks` array. The instruction and
+register pointers are checked against the cached move record before reuse.
+Their order, offsets and types are unchanged.
+
+The operand-location list's mutation paths establish its `head` and `count`:
+the add/insert functions update both, the clear function resets both, and the
+diagnostic visitors check the actual traversal length against `count`.
+Eight `olList` operations now have semantic C++ names:
+`validateOperandLocations`, `dumpOperandLocations`, `addOperandLocation`,
+`addInstructionLocation`, `copyOperandLocation`, `firstInternalLocation`,
+`firstExternalLocation`, and `insertExternalLocation`. The list node type
+`ol_s` remains distinct from the containing `olList`; its similarly named
+fields were not touched.
+
+These seven owner-qualified field declarations were removed from the field
+review queue. The updated progress report counts 40 direct function renames
+relative to the original 436 address-based function names.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
@@ -193,9 +238,10 @@ byte-identical** after this last file-renaming pass.
 3. Keep `config/vcl-link-order.cmake` in its recovered order whenever changing
    source filenames. Adjust `config/build.json` if a renamed file has special
    compiler flags; do not silently discard per-TU flags.
-4. Preserve original mangled names of ABI-visible functions, virtual methods,
-   classes and globals unless a byte-exact-compatible mechanism has been
-   verified. Source aliases can be staged before symbol-level changes.
+4. Prefer real, meaningful function names instead of `#define` aliases. Verify
+   the historical SHA after renaming. Be especially careful with virtual
+   methods, class names and exported ABI surfaces: they may affect output even
+   when non-virtual function renames have been proven byte-identical.
 5. Treat short parameters and locals as **manual review**: `i` for a short
    loop index may be fine, while `a` for a CPU descriptor or `p` for an
    instruction owner may obscure meaning.
@@ -207,9 +253,8 @@ byte-identical** after this last file-renaming pass.
 
 ## Next targets
 
-- Owner-qualified `LocTag` and `LocRef` fields, especially source text,
-  location stack and line numbers: inspect every use before renaming common
-  field spellings like `unk_00` across unrelated classes.
+- Remaining owner-qualified fields in types unrelated to `LocTag`/`LocRef`:
+  inspect their use before renaming common offsets such as `unk_00`.
 - `Instr`, `instStream`, `workTable`, `Program` and `Processor`: largest
   unresolved field clusters; investigate owner-qualified fields using the AST
   field inventory rather than guessing from offsets.

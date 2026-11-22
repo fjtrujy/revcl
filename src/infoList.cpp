@@ -273,7 +273,7 @@ void ubsNode::dump()
                       unk_08->registerName());
         for (int i = 0; i != unk_08->partCount; i++) {
             if ((unk_0c >> i) & 1) {
-                for (ol_s *p = ru->unk_20[i].unk_00.unk_00; p; p = p->unk_00) {
+                for (ol_s *p = ru->unk_20[i].unk_00.head; p; p = p->unk_00) {
                     Instr *inst = p->unk_04;
                     int bit = p->unk_11;
                     int opnd = p->unk_10;

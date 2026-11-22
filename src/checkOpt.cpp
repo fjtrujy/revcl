@@ -185,7 +185,7 @@ bool checkOpt3(Program *p)
                         OpSlot *slot = op->getPart(n);
                         if (!slot)
                             continue;
-                        ol_s *o = slot->unk_54.unk_00;
+                        ol_s *o = slot->unk_54.head;
                         bool seenExt = false;
                         int last = -1000;
                         for (; o; o = o->unk_00) {

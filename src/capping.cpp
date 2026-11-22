@@ -77,7 +77,7 @@ int func_0807aaf4(Program *p, instStream *s)
             for (int i = 0; i != in->operandCount; i++) {
                 op = &in->operands[i];
                 RegPoolEntry *reg = registerOperand(op, 2);
-                ol_s *live = op->unk_2c[0].unk_54.unk_00;
+                ol_s *live = op->unk_2c[0].unk_54.head;
                 if (!reg || op->unk_0b || !live)
                     continue;
                 RegPoolEntry *capReg = 0;

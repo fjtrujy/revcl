@@ -18,11 +18,11 @@ static inline bool fdep_LinkInline(Instr *pre, Instr *post)
         reportError("fdep_Link -passed a null ptr\n");
         return false;
     }
-    if (!pre->unk_13a8.func_0805826c(post)) {
+    if (!pre->unk_13a8.addInstructionLocation(post)) {
         reportError("failed to add post to the post list\n");
         return false;
     }
-    if (!post->unk_13a0.func_0805826c(pre)) {
+    if (!post->unk_13a0.addInstructionLocation(pre)) {
         reportError("failed to add pre to the pre list\n");
         return false;
     }
@@ -33,7 +33,7 @@ static inline bool fdep_LinkInline(Instr *pre, Instr *post)
 bool func_0806558c(Instr *i, int *row)
 {
     *row = 0;
-    for (ol_s *o = i->unk_13a0.unk_00; o; o = o->unk_00) {
+    for (ol_s *o = i->unk_13a0.head; o; o = o->unk_00) {
         Instr *in = o->unk_04;
         if (!in) {
             reportError("BuildCandidateList - in_f not set in ol\n");
@@ -55,7 +55,7 @@ bool func_0806558c(Instr *i, int *row)
 bool func_080655e8(Instr *i, int *row)
 {
     *row = 30000;
-    for (ol_s *o = i->unk_13a8.unk_00; o; o = o->unk_00) {
+    for (ol_s *o = i->unk_13a8.head; o; o = o->unk_00) {
         Instr *in = o->unk_04;
         if (!in) {
             reportError("BuildCandidateList - in_f not set in ol\n");
@@ -181,7 +181,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                         if (r->registerIndex == 48 || r->registerIndex == 49) {
                             for (int p = 0; p != r->partCount; p++)
                                 if ((op->unk_07 >> p) & 1)
-                                    for (ol_s *l = op->unk_2c[p].unk_54.unk_00; l; l = l->unk_00) {
+                                    for (ol_s *l = op->unk_2c[p].unk_54.head; l; l = l->unk_00) {
                                         Instr *x = l->unk_04;
                                         if (x)
                                             func_08065fd4(in, x);
@@ -212,18 +212,18 @@ finalize_ready:
             if ((in->unk_1412 >> p) & 1) {
                 Instr *w = last[p];
                 if (w)
-                    for (ol_s *l = in->unk_13a0.unk_00; l; l = l->unk_00) {
+                    for (ol_s *l = in->unk_13a0.head; l; l = l->unk_00) {
                         Instr *pre = l->unk_04;
                         if (pre->unk_13e4 < w->unk_13e4) {
                             w->unk_1410 = 1;
-                            w->unk_13a0.func_0805826c(pre);
+                            w->unk_13a0.addInstructionLocation(pre);
                         }
                     }
             }
         }
         in->func_08054008(false);
-        in->unk_13a0.func_08057e9c();
-        in->unk_13a8.func_08057e9c();
+        in->unk_13a0.validateOperandLocations();
+        in->unk_13a8.validateOperandLocations();
     }
     return true;
 }
@@ -271,11 +271,11 @@ bool fixupCloneFdeps(workTable *wt)
             exitAfterCleanup(-1);
         }
         in->unk_1410 = orig->unk_1410;
-        if (!copyCloneFdeps(in, orig->unk_13a0.unk_00, &in->unk_13a0)) {
+        if (!copyCloneFdeps(in, orig->unk_13a0.head, &in->unk_13a0)) {
             reportError("failed to fixup the pre fdep list\n");
             return false;
         }
-        if (!copyCloneFdeps(in, orig->unk_13a8.unk_00, &in->unk_13a8)) {
+        if (!copyCloneFdeps(in, orig->unk_13a8.head, &in->unk_13a8)) {
             reportError("failed to fix the post fdeps\n");
             return false;
         }
@@ -289,11 +289,11 @@ bool fdep_Link(Instr *pre, Instr *post)
         reportError("fdep_Link -passed a null ptr\n");
         return false;
     }
-    if (!pre->unk_13a8.func_0805826c(post)) {
+    if (!pre->unk_13a8.addInstructionLocation(post)) {
         reportError("failed to add post to the post list\n");
         return false;
     }
-    if (!post->unk_13a0.func_0805826c(pre)) {
+    if (!post->unk_13a0.addInstructionLocation(pre)) {
         reportError("failed to add pre to the pre list\n");
         return false;
     }
@@ -313,7 +313,7 @@ bool copyCloneFdeps(Instr *, ol_s *o, olList *dst)
             reportError("qInstruction - fdep list - clone image not set during rebuild\n");
             return false;
         }
-        if (!dst->func_0805826c(clone)) {
+        if (!dst->addInstructionLocation(clone)) {
             reportError("qInstruction - failed to add an OL to the fdep list from clone\n");
             return false;
         }
@@ -331,11 +331,11 @@ bool func_08065fd4(Instr *in, Instr *other)
         if (r) {
             for (int p = 0; p != r->partCount; p++)
                 if ((op->unk_07 >> p) & 1)
-                    for (ol_s *l = op->unk_2c[p].unk_54.unk_00; l; l = l->unk_00) {
+                    for (ol_s *l = op->unk_2c[p].unk_54.head; l; l = l->unk_00) {
                         Instr *x = l->unk_04;
                         if (x && x != in && x->unk_13e4 < in->unk_13e4) {
                             in->unk_1410 = 1;
-                            if (!in->unk_13a0.func_0805826c(x)) {
+                            if (!in->unk_13a0.addInstructionLocation(x)) {
                                 reportError("failed to add\n");
                                 exitAfterCleanup(-1);
                             }

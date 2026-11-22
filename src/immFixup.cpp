@@ -144,7 +144,7 @@ bool aaFixup(instStream *s)
         if (outReg != reg || opRawReg(instrRawOp(in, aaInOp(aa))) != outReg)
             continue;
         ol_s *ol;
-        for (ol = vis->func_08058370(); ol; ol = ol->func_080583ac()) {
+        for (ol = vis->firstInternalLocation(); ol; ol = ol->func_080583ac()) {
             Instr *vi = olInstr(ol);
             Operand *vop = func_0805802c(ol);
             if (!vi)
@@ -189,7 +189,7 @@ bool aaFixup(instStream *s)
             reportError("failed to get output operand for aa\n");
             exitAfterCleanup(-1);
         }
-        for (ol = opSlotUses0(out)->func_08058370(); ol; ol = ol->func_080583ac()) {
+        for (ol = opSlotUses0(out)->firstInternalLocation(); ol; ol = ol->func_080583ac()) {
             Instr *vi = olInstr(ol);
             Operand *vop = func_0805802c(ol);
             if (!vi || !vop) {
@@ -259,13 +259,13 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
         reportError("entered getSrcEpLid with -ve luid\n");
         return false;
     }
-    if (!oll->unk_04) {
+    if (!oll->count) {
         reportError("oll has no entries for getSrcEpLid\n");
         return false;
     }
     int nLocal = 0;
     ol_s *ol;
-    for (ol = oll->unk_00; ol; ol = ol->unk_00) {
+    for (ol = oll->head; ol; ol = ol->unk_00) {
         Instr *in = ol->unk_04;
         if (!in) {
             reportError("failed to get in from ol\n");
@@ -282,7 +282,7 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
         }
     }
     epSrc src[2];
-    for (ol = oll->unk_00; ol; ol = ol->unk_00) {
+    for (ol = oll->head; ol; ol = ol->unk_00) {
         Instr *in = ol->unk_04;
         if (!in) {
             reportError("failed to get in from ol\n");
@@ -300,7 +300,7 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
         }
         if (nLocal > 1) {
             reportError("nLocal got >1 in getSrcEpLid()\n");
-            oll->func_08057e9c();
+            oll->validateOperandLocations();
             return false;
         }
         src[nLocal].lid = in->unk_13d2;

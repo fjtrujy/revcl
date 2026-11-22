@@ -186,7 +186,7 @@ int tryPrune(Instr *in, bool raw)
         int cnt = 0;
         for (int s = 0; s != reg->partCount; s++) {
             if ((out->unk_07 >> s) & 1)
-            for (ol_s *ol = out->unk_2c[s].unk_54.unk_00; ol; ol = ol->unk_00) {
+            for (ol_s *ol = out->unk_2c[s].unk_54.head; ol; ol = ol->unk_00) {
                 Operand *src = func_0805802c(ol);
                 if (!src) {
                     reportError("failed to get an operand from an oploc\n");

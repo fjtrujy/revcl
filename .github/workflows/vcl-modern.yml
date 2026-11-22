@@ -12,6 +12,14 @@ permissions:
   contents: read
 
 jobs:
+  naming-progress:
+    name: Verify naming-progress snapshot
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify naming inventories and progress
+        run: sh scripts/ci/naming-progress.sh --check
+
   native:
     name: ${{ matrix.platform }} ${{ matrix.arch }} ${{ matrix.compiler }} + tests
     runs-on: ${{ matrix.runner }}

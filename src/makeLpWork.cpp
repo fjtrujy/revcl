@@ -48,7 +48,7 @@ bool makeLpWork(instStream *s, int maxSpread)
             RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 for (int j = 0; j != reg->partCount; j++) {
-                    ol_s *ol = op->unk_2c[j].unk_54.unk_00;
+                    ol_s *ol = op->unk_2c[j].unk_54.head;
                     if (ol) {
                         Instr *src = ol->unk_04;
                         Operand *o = func_0805802c(ol);
@@ -72,7 +72,7 @@ bool makeLpWork(instStream *s, int maxSpread)
             RegPoolEntry *reg = registerOperand(op, 2);
             if (reg) {
                 for (int j = 0; j != reg->partCount; j++) {
-                    for (ol_s *ol = op->unk_2c[j].unk_54.unk_00; ol; ol = ol->unk_00) {
+                    for (ol_s *ol = op->unk_2c[j].unk_54.head; ol; ol = ol->unk_00) {
                         Instr *dst = ol->unk_04;
                         Operand *o = func_0805802c(ol);
                         if (!dst || !o) {
@@ -108,7 +108,7 @@ bool makeLpWork(instStream *s, int maxSpread)
                 bool any = false;
                 for (int j = 0; j != reg->partCount; j++) {
                     if ((op->unk_07 >> j) & 1) {
-                        ol_s *ol = op->unk_2c[j].unk_54.unk_00;
+                        ol_s *ol = op->unk_2c[j].unk_54.head;
                         if (ol) {
                             Instr *src = ol->unk_04;
                             int d = in->unk_0c - src->unk_0c;

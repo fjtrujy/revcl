@@ -259,7 +259,7 @@ public:
     int ctime(int l)
     {
         if (l < unk_30 || l >= unk_34)
-            func_0804ae34("nop line is bad\n");
+            exitWithError("nop line is bad\n");
         return unk_2c[l].unk_0c;
     }
     void clearLinear()

@@ -53,8 +53,8 @@ bool Parser::initializeParser(char *buf, const char *name, bool gasp, bool cpp)
         return false;
     }
     gaspLocationDepth = 1;
-    gaspLocationStack[0].unk_04 = 0;
-    gaspLocationStack[0].unk_00 = lines;
+    gaspLocationStack[0].gaspLineNumber = 0;
+    gaspLocationStack[0].sourceLocation = lines;
     if (!buildProcessedLines(gasp, cpp)) {
         reportError("Parser: failed to build proc buffer\n");
         reset();
@@ -80,7 +80,7 @@ void Parser::reset()
     parsedLineCount = 0;
     while (locationTagCount) {
         locationTagCount--;
-        lines[locationTagCount].func_0805109c();
+        lines[locationTagCount].clearLocation();
     }
 }
 
@@ -160,7 +160,7 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
         if ((char)checkBlock && func_08050780(line, g_080b314c)) {
             char *q = next;
             t = &parsedLines[parsedLineCount++];
-            t->unk_04 = lineNo;
+            t->sourceLineNumber = lineNo;
             char rawHead = *next;
             for (;;) {
                 if (!rawHead)
@@ -193,9 +193,9 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
                 lineNo++;
             }
             *e = 0;
-            t->unk_0a = -1;
-            t->unk_00 = next;
-            t->unk_08 = 1;
+            t->gaspDepth = -1;
+            t->lineText = next;
+            t->isRawMacroBlock = 1;
             next = q;
             process = false;
         }
@@ -212,15 +212,15 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
                 s++;
             t = &parsedLines[parsedLineCount];
             if (gasp) {
-                t->unk_0a = gaspLocationDepth;
+                t->gaspDepth = gaspLocationDepth;
                 for (int i = 0; i != gaspLocationDepth; i++)
-                    t->unk_0c[i] = gaspLocationStack[i];
+                    t->gaspStack[i] = gaspLocationStack[i];
             } else {
-                t->unk_0a = -1;
+                t->gaspDepth = -1;
             }
-            t->unk_04 = lineNo;
+            t->sourceLineNumber = lineNo;
             parsedLineCount++;
-            t->unk_00 = out;
+            t->lineText = out;
             out = t->tokenizeSourceLine(&commentMode, line);
             if (!out) {
                 reportError("Parser: failed to tokenise line '%s'\n", line);
@@ -274,7 +274,7 @@ void Parser::Dump()
     reportMessage("parser::DumpLocTags..\n");
     for (int i = 0; i != locationTagCount; i++) {
         reportMessage("%4d : ", i);
-        lines[i].func_080510cc();
+        lines[i].dumpLocation();
         reportMessage("\n");
     }
 }
@@ -284,7 +284,7 @@ void Parser::DumpLocTags()
     reportMessage("parser::DumpLocTags..\n");
     for (int i = 0; i != locationTagCount; i++) {
         reportMessage("%4d : ", i);
-        lines[i].func_080510cc();
+        lines[i].dumpLocation();
         reportMessage("\n");
     }
 }
@@ -293,7 +293,7 @@ int Parser::addLocationTag(const char *name, int n)
 {
     int idx;
     for (int i = 0; i < locationTagCount; i++) {
-        if (lines[i].unk_04 == n && func_0804c03c(lines[i].unk_00, name)) {
+        if (lines[i].locationKind == n && func_0804c03c(lines[i].locationName, name)) {
             idx = i;
             goto found;
         }
@@ -306,7 +306,7 @@ found:
             return -1;
         }
         Line *l = &lines[locationTagCount];
-        if (!l->func_08051054(name, n)) {
+        if (!l->setLocation(name, n)) {
             reportError("failed to set up a loc tag!\n");
             return 0;
         }
@@ -318,7 +318,7 @@ found:
 int Parser::FindLocTag(const char *name, int n)
 {
     for (int i = 0; i < locationTagCount; i++)
-        if (lines[i].unk_04 == n && func_0804c03c(lines[i].unk_00, name))
+        if (lines[i].locationKind == n && func_0804c03c(lines[i].locationName, name))
             return i;
     return -1;
 }
@@ -384,7 +384,7 @@ bool Parser::decodeGaspLine(char *line)
                 reportError("failed to add loc tag for include directive\n");
                 return false;
             }
-            gaspLocationStack[depth - 1].unk_00 = &lines[idx];
+            gaspLocationStack[depth - 1].sourceLocation = &lines[idx];
         }
     }
     int isInclude = 0;
@@ -417,7 +417,7 @@ bool Parser::decodeGaspLine(char *line)
     }
     gaspLocationDepth = depth;
     for (int i = 0; i != gaspLocationDepth; i++)
-        gaspLocationStack[i].unk_04 = stack[i];
+        gaspLocationStack[i].gaspLineNumber = stack[i];
     return true;
 }
 
@@ -447,7 +447,7 @@ bool Parser::isAssignmentLine(int i)
     else
         t = &parsedLines[i];
     if (t)
-        return t->func_08050f48();
+        return t->hasAssignmentMarker();
     return false;
 }
 

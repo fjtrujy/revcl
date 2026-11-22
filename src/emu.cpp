@@ -143,13 +143,13 @@ bool func_080642ec(Program *p, instStream *s)
                     else if (ru->unk_15 != (unsigned char)o->unk_0b)
                         reportWarning("differing block modes for external input for %s..taking first encountered\n",
                                       reg->registerName());
-                    if (!ru->unk_20[k].unk_00.func_080580fc(i, op, k, false)) {
+                    if (!ru->unk_20[k].unk_00.addOperandLocation(i, op, k, false)) {
                         reportError("failed to add oploc user!\n");
                         return false;
                     }
                 }
                 if (((o->unk_07 >> k) & 1) && reg->unk_2c && isRegisterOperand(o, 2)) {
-                    if (!ru->unk_20[k].unk_20.func_080580fc(i, op, k, false)) {
+                    if (!ru->unk_20[k].unk_20.addOperandLocation(i, op, k, false)) {
                         reportError("failed to add a local setter for a thruput check\n");
                         reportError("register is %s\n", reg->registerName());
                         return false;
@@ -205,8 +205,8 @@ bool func_080642ec(Program *p, instStream *s)
                         return false;
                     }
                 }
-                if (slot->unk_08.unk_04 <= 0) {
-                    reportError("no or -ve outputs during out build..nOut=%d!\n", slot->unk_08.unk_04);
+                if (slot->unk_08.count <= 0) {
+                    reportError("no or -ve outputs during out build..nOut=%d!\n", slot->unk_08.count);
                     return false;
                 }
             }

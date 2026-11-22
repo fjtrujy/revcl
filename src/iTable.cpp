@@ -1127,7 +1127,7 @@ workTable *workTable::localClone()
             for (int k = 0; k != reg->partCount; k++) {
                 int bit = 1 << k;
                 if (mask & bit) {
-                ol_s *o = op->unk_2c[k].unk_54.unk_00;
+                ol_s *o = op->unk_2c[k].unk_54.head;
                 if (!o || o->unk_00) {
                     reportError("more or less than one oploc for non-extern input\n");
                     return 0;
