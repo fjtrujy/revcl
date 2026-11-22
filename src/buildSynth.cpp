@@ -36,11 +36,11 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
     stype = 0;
     for (int i = 0; i != count; i++) {
         DecodedLine *b = &blocks[i];
-        if (b->labels.func_0804b794()) {
+        if (b->labels.combinedFlags()) {
             reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
         }
-        b->labels.func_0804b1b0();
+        b->labels.clearNodes();
         Instr *in = b->instructions[0];
         if (!in)
             continue;

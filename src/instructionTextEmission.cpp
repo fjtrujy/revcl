@@ -22,9 +22,9 @@ char *func_0808750c(char *buf, Instr *in, bool upper, char *mods, bool b, int)
     bool comma = false;
     if (!mods)
         mods = "";
-    int len = formatIntoBuffer(buf, "%s%s", info->unk_04, mods);
+    int len = formatIntoBuffer(buf, "%s%s", info->mnemonic, mods);
     char *p = buf + len;
-    p = emitDestMask(p, (char)info->unk_0c, in->unk_138f);
+    p = emitDestMask(p, (char)info->destinationMaskMode, in->unk_138f);
     if (!p) {
         reportError("failed to emit inst mods\n");
         return 0;
@@ -61,15 +61,15 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
             reportError("can't reverse sense of a likely branch at the emit stage\n");
             return 0;
         }
-        info = func_0806bf8c(info->unk_34, false);
+        info = func_0806bf8c(info->reverseSenseMnemonic, false);
         if (!info) {
             reportError("failed to find sense reversing instruction\n");
             return 0;
         }
     }
-    int len = formatIntoBuffer(buf, "%s%s", info->unk_04, mods);
+    int len = formatIntoBuffer(buf, "%s%s", info->mnemonic, mods);
     char *p = buf + len;
-    p = emitDestMask(p, (char)info->unk_0c, in->unk_138f);
+    p = emitDestMask(p, (char)info->destinationMaskMode, in->unk_138f);
     if (!p) {
         reportError("failed to generate instruction mod string\n");
         return 0;

@@ -234,7 +234,7 @@ void dynDumpStats(Block *b)
         dep = in->unk_13f0.unk_04;
         reportInfo("[%3d]:%3d [%5d %5d %5d %5d ]%s dep=%2d ht=%2d  %s\n",
                       n, b->unk_38, e, s, in->unk_140c, in->unk_140e, mark,
-                      dep, ht, in->opcodeInfo->unk_04);
+                      dep, ht, in->opcodeInfo->mnemonic);
         n++;
     }
     reportInfo("dyDuumpStats - end\n");

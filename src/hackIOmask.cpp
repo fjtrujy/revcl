@@ -59,7 +59,7 @@ int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp)
     if (!mask)
         return 0;
     if ((ip->unk_04 == 1 || ip->unk_04 == 9) && (out->unk_04 == 1 || out->unk_04 == 9)) {
-        if (info->unk_20 == func_08087860)
+        if (info->decodeHook == func_08087860)
             return ((bits << 1) & 0xf) | ((mask & 8) >> 3);
         return bits;
     }

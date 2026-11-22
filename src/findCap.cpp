@@ -52,7 +52,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
             break;
         RegPoolEntry *r0 = outR(&in->operands[0]);
         if (!r0) {
-            const char *name = in->opcodeInfo ? in->opcodeInfo->unk_04 : "NO_BASE_INST";
+            const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
             reportError("couldn't get r0 for %s\n", name);
             return -1;
         }

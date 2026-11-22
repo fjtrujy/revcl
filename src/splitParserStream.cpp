@@ -56,7 +56,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
                         ((Instr *)in)->leDump(-1);
                         return false;
                     }
-                    if (!p->uniqueNamePrefixes.func_0804b234(buf) && !p->uniqueNamePrefixes.func_0804b2d4(buf)) {
+                    if (!p->uniqueNamePrefixes.findByExactName(buf) && !p->uniqueNamePrefixes.findOrAppendByExactName(buf)) {
                         reportError("failed to add tag name '%s' to the global tag list\n", buf);
                         return false;
                     }
@@ -99,7 +99,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
         }
         if (i && b[-1].decodeMode == 6)
             uid++;
-        if (b->labels.func_0804b794())
+        if (b->labels.combinedFlags())
             uid++;
         int f = b->rawLoopId;
         if ((short)f > 0) {
@@ -199,12 +199,12 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
         afterNHandler:;
         s->unk_2c0 = id;
         mList *labels = &b->labels;
-        if (!labels->unk_08) {
+        if (!labels->nodeCount) {
             int nameLength = mstrlen(getUniqueName(p));
             char *name = new char[nameLength + 128];
             if (name) {
                 formatIntoBuffer(name, "__v_%s_%d", getUniqueName(p), id);
-                if (!s->unk_110.func_0804b444(name)) {
+                if (!s->unk_110.appendNamedNode(name)) {
                     reportError("failed to creat add a default name node\n");
                     delete[] name;
                 }
@@ -212,10 +212,10 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
             } else {
                 goto labelError;
             }
-        } else if (!s->unk_110.func_0804b4d0(labels)) {
+        } else if (!s->unk_110.transferNodesFrom(labels)) {
             goto transferError;
         }
-        s->unk_2d4 |= s->unk_110.func_0804b7b4();
+        s->unk_2d4 |= s->unk_110.takeCombinedFlags();
         goto afterTError;
         transferError:
             reportError("failed to grab entries from in at top\n");

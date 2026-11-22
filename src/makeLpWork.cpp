@@ -221,7 +221,7 @@ bool lsqChain(workTable *wt)
             total += delta;
             const char *name = "NO_BASE_INST";
             if (in->opcodeInfo)
-                name = in->opcodeInfo->unk_04;
+                name = in->opcodeInfo->mnemonic;
             reportInfo("  %3d : %s\n", i, name);
         }
         iInfo *ii;

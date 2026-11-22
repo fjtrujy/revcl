@@ -307,7 +307,7 @@ bool epiRec::init(int size, const char *name)
         reportError("setup: failed to get iStream\n");
         exitAfterCleanup(-1);
     }
-    mNode *n = unk_14->unk_110.func_0804b2d4(name);
+    mNode *n = unk_14->unk_110.findOrAppendByExactName(name);
     if (!n) {
         reportError("failed to add a name to iStream\n");
         exitAfterCleanup(-1);
@@ -541,7 +541,7 @@ int func_08067e18(Program *p, instStream *s)
         reportError("failed to add after\n");
         exitAfterCleanup(-1);
     }
-    if (!enter->unk_110.func_0804b4d0(&s->unk_110)) {
+    if (!enter->unk_110.transferNodesFrom(&s->unk_110)) {
         reportError("failed to grab names from the source stream during epipro\n");
         exitAfterCleanup(-1);
     }

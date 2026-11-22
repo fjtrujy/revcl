@@ -17,9 +17,9 @@ Operand *getEA(Instr *i)
         reportError("no ii for getEA\n");
         exitAfterCleanup(-1);
     }
-    if ((ii->unk_18 & 7) == 4) {
+    if ((ii->kindAndFlags & 7) == 4) {
         if (ii->unk_1a >= i->operandCount) {
-            reportError("eaop is out of bounds for operands st=%d\n", ii->unk_19);
+            reportError("eaop is out of bounds for operands st=%d\n", ii->kindData);
             i->leDump();
             exitAfterCleanup(-1);
         }

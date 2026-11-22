@@ -59,7 +59,7 @@ bool instStream::reset()
 {
     unk_2b8 = 0;
     unk_2ba = 0;
-    unk_110.func_0804b1b0();
+    unk_110.clearNodes();
     unk_2c0 = -1;
     owningProgram = 0;
     unk_2ce = 0;
@@ -257,7 +257,7 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
     *p2 = 0;
     if (!buf)
         return 0;
-    if (!unk_110.unk_08) {
+    if (!unk_110.nodeCount) {
         reportError("iStream::Emit: stream with no name\n");
         return 0;
     }
@@ -270,10 +270,10 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
         reportInfo("skip target emit. .coz it's no longer visible\n");
         return buf;
     }
-    for (mNode *n = unk_110.unk_0c; n; n = n->unk_04) {
-        if (n->unk_14 && (isReferencedLabel(owningProgram, n->unk_14)
-                          || func_0806f4e8(owningProgram, n->unk_14) || n->unk_18))
-            buf += formatIntoBuffer(buf, "%s:\n", n->unk_14);
+    for (mNode *n = unk_110.head; n; n = n->next) {
+        if (n->name && (isReferencedLabel(owningProgram, n->name)
+                          || func_0806f4e8(owningProgram, n->name) || n->flags))
+            buf += formatIntoBuffer(buf, "%s:\n", n->name);
     }
     if (unk_124) {
         buf += formatIntoBuffer(buf, "\n%s\n", unk_124);
@@ -325,7 +325,7 @@ bool instStream::flowReset()
 
 const char *instStream::streamName()
 {
-    const char *candidateName = unk_110.func_0804b550();
+    const char *candidateName = unk_110.firstNodeName();
     const char *resolvedName = "UNNAMED_ISTREAM";
     if (candidateName)
         resolvedName = candidateName;
@@ -340,16 +340,16 @@ void instStream::dumpSynthetics()
 char *instStream::emitLabels(char *buf)
 {
     if (unk_2c8 >= 0) {
-        for (mNode *n = unk_110.unk_0c; n; n = n->unk_04) {
-            if (n->unk_14) {
+        for (mNode *n = unk_110.head; n; n = n->next) {
+            if (n->name) {
                 const char *p = "__v_";
-                const char *s = n->unk_14;
+                const char *s = n->name;
                 while (*p && *s && *p == *s) {
                     p++;
                     s++;
                 }
                 if (*p)
-                    buf += formatIntoBuffer(buf, "%-40s = %d\n", n->unk_14, unk_2c8);
+                    buf += formatIntoBuffer(buf, "%-40s = %d\n", n->name, unk_2c8);
             }
         }
     }
@@ -535,7 +535,7 @@ bool instStream::processCmdSynth(Instr *i)
         break;
     case 10:
         if (unk_2d6) {
-            const char *s = unk_110.func_0804b550();
+            const char *s = unk_110.firstNodeName();
             const char *n = "UNNAMED_ISTREAM";
             if (s)
                 n = s;

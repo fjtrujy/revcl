@@ -31,8 +31,8 @@ char *emitFileStart(Program *p, char *buf)
         buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
         buf += formatIntoBuffer(buf, "\t\tMPG\t%d,*\n", p->proc.unk_44);
     }
-    for (mNode *n = p->proc.unk_04.unk_0c; n; n = n->unk_04)
-        buf += formatIntoBuffer(buf, "\t\t.global\t%s\n", n->unk_14);
+    for (mNode *n = p->proc.unk_04.head; n; n = n->next)
+        buf += formatIntoBuffer(buf, "\t\t.global\t%s\n", n->name);
     if (p->proc.unk_18 && *p->proc.unk_18)
         buf += formatIntoBuffer(buf, "%s_CodeStart:\n", p->proc.unk_18);
     return buf;
@@ -44,9 +44,9 @@ char *emitFileEnd(Program *p, char *buf)
         buf += formatIntoBuffer(buf, "\t\t.align 4\n");
     if (p->proc.unk_18 && *p->proc.unk_18)
         buf += formatIntoBuffer(buf, "%s_CodeEnd:\n", p->proc.unk_18);
-    for (mNode *n = p->proc.unk_20.unk_0c; n; n = n->unk_04)
-        if (n->unk_14)
-            buf += formatIntoBuffer(buf, "%s:\n", n->unk_14);
+    for (mNode *n = p->proc.unk_20.head; n; n = n->next)
+        if (n->name)
+            buf += formatIntoBuffer(buf, "%s:\n", n->name);
     if (p->proc.unk_44 >= 0) {
         buf += formatIntoBuffer(buf, "\t.EndMPG\n");
         buf += formatIntoBuffer(buf, "\t.EndDmaData\n");
@@ -310,8 +310,8 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
     if (in->unk_1392 || !in->opcodeInfo)
         p += formatIntoBuffer(p, "nop%s", mods);
     else {
-        if (in->opcodeInfo->unk_38) {
-            p = in->opcodeInfo->unk_38(line, in, upper, mods, b, 0);
+        if (in->opcodeInfo->emitHook) {
+            p = in->opcodeInfo->emitHook(line, in, upper, mods, b, 0);
             if (!p) {
                 reportError("emit hook failed for an instruction\n");
                 return 0;

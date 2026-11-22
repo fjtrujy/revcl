@@ -5,17 +5,17 @@ extern const char iInfoPatchedAfterPatchError[];
 #include "Block.h"
 #include "os.h"
 
-unsigned char iInfo::func_0806ffb4()
+unsigned char iInfo::branchFlags()
 {
     if (kind() == 3)
-        return unk_19;
+        return kindData;
     return 0;
 }
 
 unsigned char iInfo::ramType()
 {
     if (kind() == 4) {
-        unsigned char t = unk_19;
+        unsigned char t = kindData;
         if ((unsigned char)(t - 1) <= 1)
             return t;
         reportError(iInfoLoadstoreRamtypeError);
@@ -24,21 +24,21 @@ unsigned char iInfo::ramType()
     return 0;
 }
 
-int iInfo::func_08070020()
+int iInfo::syntheticKind()
 {
     if (kind() == 2)
-        return unk_19;
+        return kindData;
     return 0;
 }
 
-bool iInfo::func_08070044()
+bool iInfo::isRawOnly()
 {
     return kind() == 0;
 }
 
-char iInfo::func_0807005c()
+char iInfo::isNop()
 {
-    return kind() == 0 && unk_19 == 0;
+    return kind() == 0 && kindData == 0;
 }
 
 void iInfo::func_08070080()
@@ -96,7 +96,7 @@ bool checkTable(iInfo *tab, int count)
         return false;
     }
     int i;
-    for (i = 0; tab->unk_04; i++, tab++) {
+    for (i = 0; tab->mnemonic; i++, tab++) {
         if (!tab->check()) {
             reportError("checkTable failed\n");
             return false;
@@ -111,31 +111,31 @@ bool checkTable(iInfo *tab, int count)
 
 int iInfo::func_080701f4()
 {
-    unsigned int v = kind() == 3 ? unk_19 : 0;
+    unsigned int v = kind() == 3 ? kindData : 0;
     return (v >> 1) & 1;
 }
 
 int iInfo::func_0807021c()
 {
-    unsigned int v = kind() == 3 ? unk_19 : 0;
+    unsigned int v = kind() == 3 ? kindData : 0;
     return (v >> 3) & 1;
 }
 
 int iInfo::func_08070244()
 {
-    unsigned int v = kind() == 3 ? unk_19 : 0;
+    unsigned int v = kind() == 3 ? kindData : 0;
     return (v >> 2) & 1;
 }
 
-int iInfo::func_0807026c()
+int iInfo::canPruneOperands()
 {
     int r = 0;
-    if (!(unk_18 & 0xf8)) {
-        int k2 = kind() == 2 ? unk_19 : 0;
+    if (!(kindAndFlags & 0xf8)) {
+        int k2 = kind() == 2 ? kindData : 0;
         if (!k2) {
             int rt;
             if (kind() == 4) {
-                unsigned char t = unk_19;
+                unsigned char t = kindData;
                 if ((unsigned char)(t - 1) <= 1)
                     rt = t;
                 else {
@@ -147,7 +147,7 @@ int iInfo::func_0807026c()
 none:
                 rt = 0;
             if (rt != 2) {
-                int k3 = kind() == 3 ? unk_19 : 0;
+                int k3 = kind() == 3 ? kindData : 0;
                 if (!k3)
                     r = 1;
             }

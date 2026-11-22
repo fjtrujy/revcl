@@ -1080,9 +1080,9 @@ local_review	i	src/iInfo.cpp	98	checkTable	int
 local_review	v	src/iInfo.cpp	114	func_080701f4	unsigned int
 local_review	v	src/iInfo.cpp	120	func_0807021c	unsigned int
 local_review	v	src/iInfo.cpp	126	func_08070244	unsigned int
-local_review	r	src/iInfo.cpp	132	func_0807026c	int
-local_review	rt	src/iInfo.cpp	136	func_0807026c	int
-local_review	t	src/iInfo.cpp	138	func_0807026c	unsigned char
+local_review	r	src/iInfo.cpp	132	canPruneOperands	int
+local_review	rt	src/iInfo.cpp	136	canPruneOperands	int
+local_review	t	src/iInfo.cpp	138	canPruneOperands	unsigned char
 local_review	r	src/iInfo.cpp	161	func_08070300	int
 local_review	f	src/iInfo.cpp	163	func_08070300	unsigned int
 local_review	p	src/iTable.cpp	63	dispose	Instr *
