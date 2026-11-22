@@ -647,6 +647,92 @@ The cumulative queue now contains **79** address-coded functions and **186**
 owner-qualified offset fields, down from 192 and 269 before this milestone.
 This measures naming coverage only, not binary reconstruction coverage.
 
+## Directive, scheduling, lock and compiler-global naming milestone
+
+This review deliberately groups the remaining high-confidence naming work into
+one larger PR after merged PR #8. It resolves **75 numeric function names**,
+**51 owner-qualified offset fields**, and **71 address-suffixed globals**
+(**197 tracked naming improvements**) without using function-name `#define`
+aliases. Fields retain their original order, storage types, and ABI offsets;
+the source translation-unit order is unchanged.
+
+### Directive dispatch and CLI/runtime helpers
+
+- The 28-entry directive dispatch table directly establishes the handlers for
+  `.vu`, `.mpg`, `.vsm` / `.raw`, `.endvsm` / `.endraw`, both loop delimiters,
+  `.init_vf`, `.init_vi`, register removal and initialization, `.name`,
+  `.syntax`, `.global`, `.unique`, alignment and end-bit options, visibility
+  scopes and `.vu_work_area`. Function names now reflect those concrete
+  effects. Shared handlers retain one shared C++ function name rather than
+  creating separate implementations.
+- The same pass identifies directive lookup, register-range handling,
+  visibility-scope push/pop, memory work-area initialization, the source-file
+  and descriptor readers, temporary-file creation, watchdog callbacks and
+  the expression/immediate value type formatter.
+- Descriptive `noop*` names are reserved for actual zero-effect helper
+  bodies. Methods that always accept/reject are named for that observable
+  behavior instead of hypothesizing an undocumented directive purpose.
+
+### Scheduler, allocator and instruction flow
+
+- Dependency-placement helpers expose earliest/latest dependency rows,
+  candidate refinement, allowed-pipeline checks, insertion constraints,
+  register-writer pulls, move queueing and move-list consistency. Both
+  scheduling modes remain separate, with direct names at declaration,
+  definition and call sites.
+- `workTable` fields identify selected optimizer, declared raw length,
+  register lock-list count, pending move count, last scheduled position,
+  logical instruction length and dual-pipeline instruction count.
+  `wrangleCand` holds its instruction, candidate row and candidate pipeline.
+  `instStream` identifies the reduction-direction switches and skip state,
+  while `Instr::pruningRestricted` follows the pruning checks.
+- The two `RegPool` virtual methods now directly name work-table assignment
+  and discarding disjoint external registers. They are renamed consistently
+  in the base class and every derived override; vtable layout and method
+  ordering are unchanged. `RegPool::poolKind`,
+  `RegPoolEntry::enabledPhysicalRegister` and
+  `Processor::vuDirectiveSeen` follow their respective construction,
+  registration and directive handling sites.
+
+### Backtrace cache, locks and ancillary records
+
+- The six `VisitCache` fields express record data, words/bits per record,
+  capacity, record count and whether recording began. Both the class methods
+  and inlined record helpers confirm those identities. `statCounts` now
+  names resource instruction counts; `iGroupNode` identifies its payload
+  and size; work-table entry objects identify their stored instruction.
+- Register lock lists now distinguish active references from total
+  references, inserted status, positions and consumer counts. The timing
+  fields identify earliest ready, full latency, earliest consumer-free and
+  latest consumer/ready cycles, with distinct adjusted loop-relative values.
+  Only counters supported by the corresponding `calcStats` computations
+  were named; less certain timing fields remain offset-named.
+- `Operand::reductionHazardMask`, `ol_s::cycleOffset`, and
+  `linkNode::includedInPathTraversal` are traced through their consumers.
+  A proposed lock field name `isInserted` collided with an existing C++
+  predicate; the final direct member name is `insertedIntoLockList`.
+
+### Global variable names and acceptance checks
+
+- Address-coded globals now identify active scheduling bounds, VU opcode and
+  register tables, processor state, diagnostic switches, compiler options,
+  preprocessing tools, parser keywords, literal/operator tables,
+  register-allocation grids, collapse state, scheduler watchdogs, current
+  optimizer, output name and temporary formatting buffers.
+- Renaming globals does not relocate or reorder their definitions. The
+  historical binary check accepts only byte-identical output, not merely a
+  successful compilation. The remaining 14 address-suffixed globals and four
+  numeric functions are deliberately held for later evidence-based review.
+
+Following the full modern build and historical RH9/i686 GCC 3.2 rebuild,
+the stripped historical VCL ELF remains **byte-for-byte identical**, SHA-256
+`83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
+Modern CTest (13 fixtures), historical `exact-sha256` and naming-inventory
+consistency are the acceptance gates for this change. The fixed-baseline
+inventory now has **4** address-named functions, **135** owner-qualified
+offset fields and **14** address-suffixed globals remaining. These metrics
+describe naming coverage, not how much of the executable has been matched.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
