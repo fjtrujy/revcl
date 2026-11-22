@@ -63,6 +63,9 @@ __pycache__/
 
 tmp/
 ongoing_work.json
-tools/rh9/
+# Historic RPMs/root filesystem are fetched and verified by CI; keep
+# the Dockerfile and pinned RPM SHA-256 manifest under version control.
+tools/rh9/rpms/
+tools/rh9/rootfs/
 
 .DS_Store
