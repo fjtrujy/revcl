@@ -416,13 +416,6 @@ opaque_field	unk_10	mNode
 opaque_field	unk_14	mNode
 opaque_field	unk_18	mNode
 opaque_field	unk_30	memRegPool
-opaque_field	unk_00	moveRec
-opaque_field	unk_04	moveRec
-opaque_field	unk_08	moveRec
-opaque_field	unk_0c	moveRec
-opaque_field	unk_10	moveRec
-opaque_field	unk_00	olList
-opaque_field	unk_04	olList
 opaque_field	unk_00	ol_s
 opaque_field	unk_04	ol_s
 opaque_field	unk_08	ol_s

@@ -205,6 +205,29 @@ The nine corresponding owner-qualified field review entries were removed from
 from the separate AST review queue. The generated progress report reflects
 the merged branch rather than the older local source snapshot.
 
+## Third focused batch: move records and operand-location lists
+
+The move-record free-list path in `getMove` / `addFreeMove` establishes five
+`moveRec` fields unambiguously: `nextFree`, `moveType`, `instruction`,
+`moveRegister`, and the four-entry `partLocks` array. The instruction and
+register pointers are checked against the cached move record before reuse.
+Their order, offsets and types are unchanged.
+
+The operand-location list's mutation paths establish its `head` and `count`:
+the add/insert functions update both, the clear function resets both, and the
+diagnostic visitors check the actual traversal length against `count`.
+Eight `olList` operations now have semantic source-level aliases:
+`validateOperandLocations`, `dumpOperandLocations`, `addOperandLocation`,
+`addInstructionLocation`, `copyOperandLocation`, `firstInternalLocation`,
+`firstExternalLocation`, and `insertExternalLocation`. The original C++
+function symbols are retained through header aliases. The list node type
+`ol_s` remains distinct from the containing `olList`; its similarly named
+fields were not touched.
+
+These seven owner-qualified field declarations were removed from the field
+review queue. The updated progress report counts 40 readable function aliases
+in all, without treating preserved ABI names as unresolved by definition.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
