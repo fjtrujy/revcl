@@ -42,14 +42,10 @@ jobs:
         run: cmake --preset historical
 
       - name: Compile, link and strip with historical GCC through CMake
-        run: cmake --build --preset historical
+        run: cmake --build --preset historical --parallel "$(sh scripts/ci/cpu-count.sh)"
 
       - name: Verify original ELF SHA-256 with CTest
-        run: ctest --preset historical
-
-      - name: Confirm generated ELF matches the pinned SHA-256
-        run: |
-          sha256sum -c tools/rh9/vcl.sha256
+        run: ctest --preset historical --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
 
       - name: Preserve native ELF artifacts on failure
         if: failure()

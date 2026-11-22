@@ -146,13 +146,14 @@ The RPM download cache is keyed to the SHA-256 manifest; cached RPMs are
 
 The separate [modern compiler workflow](../.github/workflows/vcl-modern.yml)
 builds and links the full 131-source reconstruction with modern GCC and
-Clang using native 64-bit architectures and C++98 language mode. It runs the
-Python unit tests (including CMake link-order/flag consistency), and all eleven
-self-contained VCL fixture cases **as individually reported CTest tests**.
+Clang using native 64-bit architectures and C++98 language mode. It runs
+**Python-free CMake/CTest checks** for project consistency, the command-line
+interface, and all eleven self-contained VCL fixture cases **as individually
+reported CTest tests**.
 The workflow builds **native Linux x86_64 and ARM64 ELF**
 executables with modern GCC and Clang using `linux-gcc` and
-`linux-clang` presets. The private repository checks Linux ARM64 in
-an ARM64 Ubuntu userland through QEMU on a regular GitHub runner.
+`linux-clang` presets. Linux ARM64 CI executes directly on the native
+GitHub-hosted `ubuntu-24.04-arm` runner, without Docker or QEMU.
 It also builds native **macOS arm64 and x86_64 Mach-O**
 executables using Apple Clang and `cmake --preset macos`, with identical
 unit/fixture coverage. All modern native 64-bit binaries are functionally
@@ -171,27 +172,23 @@ Modern 32-bit cross-builds have been removed: only the historical Docker
 toolchain reproduces the original 32-bit binary. Normal builds require a
 64-bit target and work without a preset using `cmake -S . -B build`.
 
-Local native Linux setup (with CMake 3.23+, GCC/Clang and Python):
+Local native Linux setup (with CMake 3.23+ and GCC/Clang; no Python required):
 
 ```sh
-python3 -m venv .venv
-.venv/bin/pip install -r scripts/requirements.txt
-cmake --preset linux-gcc -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
-cmake --build --preset linux-gcc
-ctest --preset linux-gcc
-cmake --preset linux-clang -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
-cmake --build --preset linux-clang
-ctest --preset linux-clang
+cmake --preset linux-gcc
+cmake --build --preset linux-gcc --parallel "$(sh scripts/ci/cpu-count.sh)"
+ctest --preset linux-gcc --parallel "$(sh scripts/ci/cpu-count.sh)"
+cmake --preset linux-clang
+cmake --build --preset linux-clang --parallel "$(sh scripts/ci/cpu-count.sh)"
+ctest --preset linux-clang --parallel "$(sh scripts/ci/cpu-count.sh)"
 ```
 
 Local native macOS setup (with CMake 3.23+ and the Xcode Command Line Tools):
 
 ```sh
-python3 -m venv .venv
-.venv/bin/pip install -r scripts/requirements.txt
-cmake --preset macos -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
-cmake --build --preset macos
-ctest --preset macos
+cmake --preset macos
+cmake --build --preset macos --parallel "$(sh scripts/ci/cpu-count.sh)"
+ctest --preset macos --parallel "$(sh scripts/ci/cpu-count.sh)"
 ```
 The 12th historical oracle case
 `archived_basic` additionally requires the external MASP preprocessor,
@@ -209,7 +206,8 @@ to `\n` escapes, a change independently verified to preserve the original
 ELF SHA-256.
 
 The CMake historical build has independently reproduced the exact original
-SHA-256 from all 131 translation units. The modern CMake builds run the
-separate unit and functional test suites. The old scorer is retained for
-historical reverse-engineering diagnostics and is not invoked by either
-new CMake workflow.
+SHA-256 from all 131 translation units. The modern CMake builds run native
+project, CLI and functional checks, without installing Python. Historical
+diagnostic Python tooling and its unit tests remain available to developers
+but are not part of the CMake or CI workflows. The old scorer is retained
+for optional reverse-engineering analysis.

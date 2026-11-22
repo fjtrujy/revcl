@@ -50,24 +50,21 @@ sudo apt-get install -y cmake rpm2cpio cpio curl ca-certificates
 bash scripts/ci/bootstrap_rh9.sh       # download + SHA-verify historical RPMs
 docker build --platform linux/386 -t revcl-rh9 tools/rh9
 cmake --preset historical
-cmake --build --preset historical
-ctest --preset historical              # exact SHA-256 verification
+cmake --build --preset historical --parallel "$(sh scripts/ci/cpu-count.sh)"
+ctest --preset historical --parallel "$(sh scripts/ci/cpu-count.sh)" # exact SHA
 ```
 
 For modern **native 64-bit Linux** (x86_64 or ARM64/aarch64), install
-`cmake`, `g++`, `clang`, `python3-venv`, and `python3-pip`, then:
+`cmake` and `g++` and/or `clang`, then:
 
 ```sh
-python3 -m venv .venv
-.venv/bin/pip install -r scripts/requirements.txt
+cmake --preset linux-gcc
+cmake --build --preset linux-gcc --parallel "$(sh scripts/ci/cpu-count.sh)"
+ctest --preset linux-gcc --parallel "$(sh scripts/ci/cpu-count.sh)"
 
-cmake --preset linux-gcc -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
-cmake --build --preset linux-gcc
-ctest --preset linux-gcc               # Python unit tests + 11 VCL fixtures
-
-cmake --preset linux-clang -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
-cmake --build --preset linux-clang
-ctest --preset linux-clang
+cmake --preset linux-clang
+cmake --build --preset linux-clang --parallel "$(sh scripts/ci/cpu-count.sh)"
+ctest --preset linux-clang --parallel "$(sh scripts/ci/cpu-count.sh)"
 ```
 
 To build without selecting a preset, CMake also defaults to the host's
@@ -75,24 +72,25 @@ native architecture:
 
 ```sh
 cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
+cmake --build build --parallel "$(sh scripts/ci/cpu-count.sh)"
+ctest --test-dir build --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
 ```
 
 The standard modern builds require a 64-bit target. The original 32-bit
 Linux executable is reproduced separately with the `historical` Docker
 toolchain; no modern 32-bit cross-build or multilib installation is needed.
+The `scripts/ci/cpu-count.sh` helper detects all available logical CPUs
+and is used for parallel compilation and CTest execution in CI. Linking
+the single VCL executable is still one linker invocation; parallel jobs
+cannot subdivide that inherently serial final step.
 
 For **native macOS** (no Docker required), install CMake and the Xcode
-Command Line Tools, then install the Python test dependencies:
+Command Line Tools:
 
 ```sh
-python3 -m venv .venv
-.venv/bin/pip install -r scripts/requirements.txt
-
-cmake --preset macos -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
-cmake --build --preset macos
-ctest --preset macos                    # Python unit tests + 11 VCL fixtures
+cmake --preset macos
+cmake --build --preset macos --parallel "$(sh scripts/ci/cpu-count.sh)"
+ctest --preset macos --parallel "$(sh scripts/ci/cpu-count.sh)"
 ./tmp/cmake/macos/vcl -h
 ```
 
@@ -145,11 +143,12 @@ The full reproducibility report and verification procedure are in
 The independent [modern compiler workflow](.github/workflows/vcl-modern.yml)
 builds all 131 C++ translation units with modern GCC and Clang for
 native 64-bit Linux x86_64/ARM64, and with Apple Clang for
-macOS arm64/Intel x86_64. For the private repository, Linux ARM64 CI uses
-an emulated ARM64 Linux userland on a standard GitHub runner. It
-produces runnable binaries and uses CTest to run the Python unit suite and
-all 11 standalone oracle fixture cases independently (including both
-expected invalid inputs). It does
+macOS arm64/Intel x86_64. Linux ARM64 CI uses GitHub's native
+`ubuntu-24.04-arm` runner, without Docker or QEMU. It
+produces runnable binaries and uses Python-free CTest checks for the
+project's link order/configuration, CLI version, and all 11 standalone
+oracle fixtures (including both expected invalid inputs). The fixtures
+verify the complete output with CMake's built-in SHA-256 support. It does
 **not** require the historical toolchain and intentionally does not require
 a SHA match from the modern compilers. Modern Linux binaries are available
 as GitHub Actions artifacts.
@@ -160,7 +159,9 @@ newlines inside quoted strings. They have been normalized to standard
 confirmed this does not change the original SHA-256.
 
 For optional reverse-engineering diagnostics, install the Python tooling
-separately; it is **not needed** for the historical CMake build:
+separately; it is **not used for compilation, linking, unit/functional
+CTest checks, or CI**. Python unit tests of these optional diagnostic
+tools are retained for manual developer use:
 
 ```sh
 python3 -m venv .venv
@@ -169,6 +170,7 @@ scripts/decomp status                  # full score and coverage
 scripts/decomp diff 0x08058dd8         # compare a function with the original
 scripts/decomp lab 0x08080460          # editable source / original ASM workbench
 scripts/decomp score --html            # regenerate tmp/progress.html
+python3 -m unittest discover -s tests/unit -q # optional decomp tool tests
 ```
 
 Open `tmp/progress.html` for the visual comparison of the original and the
