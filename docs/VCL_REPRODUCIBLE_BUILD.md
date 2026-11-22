@@ -8,9 +8,15 @@ binary**. Only its expected SHA-256 is recorded for verification.
 ## Build inputs
 
 - `src/`: 131 reconstructed translation units and associated headers.
-- `config/vcl-link-order.cmake`: validated original object/link order.
-- `config/build.json`: historical compilation flags and per-unit extensions.
-- `tools/rh9/vcl.ld`: linker script for the historical layout.
+- `config/vcl-link-order.cmake`: validated original object/link order;
+  this determines link input order, not the order of parallel compilation.
+- `config/build.json`: common historical C++ compiler flags and a compact
+  mapping of the ten per-unit extra flags still required for an exact match.
+- The pinned RH9 toolchain's **default linker script** is sufficient; the
+  previously included custom linker script was proven unnecessary.
+- The global `-O2 -frename-registers` flags remain unchanged. Ten per-unit
+  overrides were removed after isolated ELF SHA-256 experiments; the other
+  ten are still necessary for byte-exact reproduction.
 - `tools/rh9/rpms.sha256`: pinned original Red Hat toolchain and library RPMs.
 - `tools/rh9/Dockerfile`: a Docker environment built from those verified RPMs.
 - `scripts/cmake/`: wrappers that invoke the historical compiler and strip
@@ -41,6 +47,11 @@ without patching or replacing any bytes. The original ELF is neither bundled
 nor required during the build. The glibc i686 update matters: the original
 Red Hat base i386 library leads to mismatched imported-symbol sizes, whereas
 the verified i686 update reproduces them.
+
+The [magic number and historical build audit](MAGIC_NUMBERS_AND_BUILD_AUDIT.md)
+documents the experiments behind these simplifications, including why object
+filenames do not determine link order and which historical per-unit flags
+still change executable bytes.
 
 The historical process is independently repeated by
 [GitHub Actions](../.github/workflows/vcl-byte-exact.yml).
