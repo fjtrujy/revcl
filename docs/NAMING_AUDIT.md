@@ -260,17 +260,62 @@ Eight numeric function names have also been replaced with direct names:
 `refreshDecodedLineOperands`, `findDecodedLineByLabel`,
 `maximumDecodedLineFlowId`, and `decodeSourceLines`.
 
-The `iOpDesc` operand descriptor now exposes four independently verified
+The `iOpDesc` operand descriptor now exposes five independently verified
 fields: `operandKind` (zero terminates the descriptor array), `direction`
-(1=input, 2=output), `isImplicit`, and `patchedOutputIndexPlusOne` (the
-one-based output operand referenced by an implicit-input patch). The
-`iInfo::operandDescriptors` array is also named directly. The three remaining
+(1=input, 2=output), `isImplicit`, `outputLatency` (copied into the output
+operand's scheduling latency), and `patchedOutputIndexPlusOne` (the one-based
+output operand referenced by an implicit-input patch). The
+`iInfo::operandDescriptors` array is also named directly. The two remaining
 opaque `iOpDesc` bytes were intentionally left unresolved: their meanings
 are not yet proven by the current callers.
 
 This pass resolves 13 further owner-qualified fields and eight address-based
 function names, without source-level `#define` function aliases or changes
 to struct field order, field types, alignment, or the historical executable.
+
+## Opcode metadata and intrusive list naming
+
+The opcode lookup, parser, instruction emission, and EFU hook paths establish
+eight more fields on `iInfo`:
+
+| Original field | Recovered name | Evidence |
+| --- | --- | --- |
+| `unk_04` | `mnemonic` | Lookup-table terminator and text emitted for the instruction |
+| `unk_0c` | `destinationMaskMode` | Controls accepted `.xyzw` suffixes and emitted destination-mask formatting |
+| `unk_18` | `kindAndFlags` | Low three bits encode `kind()`; higher bits are also tested |
+| `unk_19` | `kindData` | Kind-dependent branch flags, synthetic kind, or load/store type |
+| `unk_1c` | `efuMaskType` | EFU hook selects fixed component masks from this value |
+| `unk_20` | `decodeHook` | Invoked by the instruction decoder with an `Instr *` |
+| `unk_34` | `reverseSenseMnemonic` | Selects the opposite branch sense during emission |
+| `unk_38` | `emitHook` | Emits the instruction through a per-opcode callback |
+
+Five of the type's numeric helper names now read `branchFlags`,
+`syntheticKind`, `isRawOnly`, `isNop`, and `canPruneOperands`. Their result
+conditions and callers establish these interpretations. Other metadata bytes
+and methods stay opaque where a semantic interpretation is not established;
+for example, `unk_1a` is interpreted with different indexing conventions in
+the branch and effective-address paths.
+
+The intrusive list implementation also now uses direct semantic names for
+`mList`'s `nodeSerial`, `nodeCount`, `head`, and `tail`. Its `mNode` links and
+contents are `next`, `previous`, `ownerList`, `data`, `name`, and `flags`.
+The generated serial is stored in `mNode::data` as a pointer-sized token;
+`mList::findByData` also searches this same field. The append/prepend/detach
+methods prove the link ownership and count invariants, while the node-name
+and flag readers establish the other fields.
+
+Fourteen `mList` methods were renamed directly (including `clearNodes`,
+`appendNamedNode`, `findByExactName`, `findByNameIgnoreCase`, `appendNode`,
+`detachNode`, `transferNodesFrom`, `combinedFlags`, and
+`takeCombinedFlags`), along with `mNode::clearNameAndOwner`.
+The traversal-only `mList::func_0804b534` remains numeric because the
+recovered body does no observable work; assigning a purpose to it without
+evidence would be misleading.
+
+This pass resolves **19 owner-qualified fields and 20 direct function names**.
+No C++ source-level function-name macros, layout changes, or algorithmic
+changes were introduced. The historical GCC build and the original stripped
+ELF SHA-256 remain byte-for-byte matched.
 
 ## Rules for future iterations
 
