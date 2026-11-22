@@ -946,6 +946,61 @@ count is unchanged. These are manual review metrics, not a claim that the
 original compiler's source is perfectly recovered. The separate VUC branch
 and original historical translation-unit ordering were not changed.
 
+## Support structures and remaining scoped names
+
+After merging the core-pipeline review (PR #12), the next pass extends
+function-scoped semantic naming into **75 VCL implementation files**. It
+replaces **449 short/generic parameter and local declarations** at **2,202
+referenced occurrences**, using Clang declaration identities rather than
+unqualified text replacement. The existing AST review queue shrinks by
+**207 parameters** and **242 locals** (449 total). This includes a second,
+focused pass on the major pipeline files, but the bulk of the work covers
+supporting utilities that had not received the same scrutiny.
+
+### Meaning established by source use
+
+- **Program and stream graph:** doBackTrace, pathKeys, linkList,
+  processActiveList, catStreams, tidy, and resolveStreamBranches
+  distinguish program, stream, link, registerUse, and workTable by the
+  objects they traverse and mutate. A stream-link list node is named
+  link, while its destination stream is stream; the distinct ownership
+  roles are not merged.
+- **Operand and instruction helpers:** olList, infoList, oDecode,
+  bindDependencies, regUse, and emuInst distinguish instruction,
+  operand, location, registerEntry, and registerUse. These names
+  follow instruction/operand ownership and typed register-use records,
+  without renaming any public ABI type or altering data layout.
+- **Output and string utilities:** lists and fileEmit now use
+  instruction for linked instruction nodes, and more specific
+  sourceCursor, destinationCursor, lineCursor, modifierSource,
+  modifierDestination, sourceEnd, and paddingIndex for copying and
+  formatting. These cursor roles come directly from which buffer is
+  read or written in each loop.
+- **Remaining optimizer and scheduling support:** findCap,
+  getNumOptimisers, optHDown, optVuta, optNormal2, regRefLiveRange,
+  wtQueue, RegPool, and prune use typed instruction, stream, register,
+  work-table and operand names where one unambiguous declaration can
+  be distinguished from the others.
+
+### Collision discipline and limits
+
+The pass changes individual VarDecl/ParmVarDecl identities and their
+DeclRefExpr uses, not every identical spelling in a file. It skips a
+candidate when the descriptive name is already used in the enclosing
+function, when two candidates would receive the same new name, or when
+the source/declaration mapping is ambiguous. The fixed review queue
+predates some method renames, so unique source-line/name/type matches
+were accepted only when they still refer to the same parsed declaration.
+
+This is **naming work only**: it introduces no function-name #define
+aliases, does not change translation-unit order, and leaves the 64
+unresolved owner-qualified fields alone rather than guessing their
+meaning from offsets. Short loop indices and other concise but clear
+names remain unchanged. The native 13-case CTest suite, historical
+RH9/i686 GCC 3.2 rebuild, and stripped exact-sha256 gate confirm
+preserved behavior. The reference SHA-256 remains
+83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
