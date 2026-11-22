@@ -54,22 +54,22 @@ bool cls0805bcc4::func_0805bcc4()
 bool cls0805bcc4::setOwner(int part, Instr *instr, int opnd)
 {
     if (!instr) {
-        func_0804ad38("setowner - passed null\n");
-        func_0804adf0(-1);
+        reportError("setowner - passed null\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (unk_24) {
-        func_0804ad38("owner already set for rlock set owner\n");
-        func_0804adf0(-1);
+        reportError("owner already set for rlock set owner\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (unk_2d) {
-        func_0804ad38("owner: type wasn't null when try to set\n");
+        reportError("owner: type wasn't null when try to set\n");
         return false;
     }
     if (unk_04) {
-        func_0804ad38("setowner - lock was already on list\n");
-        func_0804adf0(-1);
+        reportError("setowner - lock was already on list\n");
+        exitAfterCleanup(-1);
         return false;
     }
     unk_2d = 1;
@@ -82,23 +82,23 @@ bool cls0805bcc4::setOwner(int part, Instr *instr, int opnd)
 bool cls0805bcc4::setOwner(int part, regUse *rf)
 {
     if (!rf) {
-        func_0804ad38("setowner - passed null rf\n");
-        func_0804adf0(-1);
+        reportError("setowner - passed null rf\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (unk_24) {
-        func_0804ad38("owner already set for rlock set owner\n");
-        func_0804adf0(-1);
+        reportError("owner already set for rlock set owner\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (unk_2d) {
-        func_0804ad38("owner: type wasn't null when try to set\n");
-        func_0804adf0(-1);
+        reportError("owner: type wasn't null when try to set\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (unk_04) {
-        func_0804ad38("setowner - lock was already on list\n");
-        func_0804adf0(-1);
+        reportError("setowner - lock was already on list\n");
+        exitAfterCleanup(-1);
         return false;
     }
     unk_29 = 0;
@@ -141,7 +141,7 @@ Operand *cls0805bcc4::ownerOperand()
     if (unk_2d == 1) {
         int opnd = unk_29;
         Instr *instr = (Instr *)unk_24;
-        return &instr->unk_38[opnd];
+        return &instr->operands[opnd];
     }
     return 0;
 }
@@ -157,8 +157,8 @@ int cls0805bcc4::getPart()
 {
     if (unk_2d == 1 || unk_2d == 2)
         return unk_28;
-    func_0804ad38("failed to get part - lock incorrect oType\n");
-    func_0804adf0(-1);
+    reportError("failed to get part - lock incorrect oType\n");
+    exitAfterCleanup(-1);
     return -1;
 }
 
@@ -170,8 +170,8 @@ void cls0805bcc4::printOwner()
     case 1: {
         Instr *instr = unk_2d == 1 ? (Instr *)unk_24 : 0;
         if (!instr) {
-            func_0804ad38("type inst..  can't get it though!\n");
-            func_0804adf0(-1);
+            reportError("type inst..  can't get it though!\n");
+            exitAfterCleanup(-1);
         }
         instr->func_08054008(false);
         break;
@@ -179,36 +179,36 @@ void cls0805bcc4::printOwner()
     case 2: {
         regUse *rf = unk_2d == 2 ? (regUse *)unk_24 : 0;
         if (!rf) {
-            func_0804ad38("type regref..  can't get it though!\n");
-            func_0804adf0(-1);
+            reportError("type regref..  can't get it though!\n");
+            exitAfterCleanup(-1);
         }
         break;
     }
     default:
-        func_0804ad38("??????????? unkown lock\n");
-        func_0804adf0(-1);
+        reportError("??????????? unkown lock\n");
+        exitAfterCleanup(-1);
     }
 }
 
 cls0805bcc4 *cls0805bcc4::getParent()
 {
     if (unk_14 != 1) {
-        func_0804ad38("getParent - called on non input lock\n");
+        reportError("getParent - called on non input lock\n");
         print();
         return 0;
     }
     if (!unk_0c) {
-        func_0804ac7c("getParent: not set!\n");
+        reportWarning("getParent: not set!\n");
         print();
         return 0;
     }
     if (unk_0c->unk_14 != 2) {
-        func_0804ad38("parent was not output!\n");
-        func_0804ad38("we are:\n");
+        reportError("parent was not output!\n");
+        reportError("we are:\n");
         print();
-        func_0804ad38("parent is\n");
+        reportError("parent is\n");
         unk_0c->print();
-        func_0804adf0(-1);
+        exitAfterCleanup(-1);
     }
     return unk_0c;
 }
@@ -216,35 +216,35 @@ cls0805bcc4 *cls0805bcc4::getParent()
 bool cls0805bcc4::setInOut(cls0805bcc4 *olk)
 {
     if (!olk) {
-        func_0804ad38("setinout - passed null\n");
-        func_0804adf0(-1);
+        reportError("setinout - passed null\n");
+        exitAfterCleanup(-1);
     }
     if (olk->unk_14 != 2) {
-        func_0804ad38("setinout - olk wasn't output\n");
-        func_0804adf0(-1);
+        reportError("setinout - olk wasn't output\n");
+        exitAfterCleanup(-1);
     }
     if (!unk_24) {
-        func_0804ad38("owner not set for inout\n");
-        func_0804adf0(-1);
+        reportError("owner not set for inout\n");
+        exitAfterCleanup(-1);
     }
     if (unk_24 != olk->unk_24) {
-        func_0804ad38("setinout -- inst bad\n");
-        func_0804adf0(-1);
+        reportError("setinout -- inst bad\n");
+        exitAfterCleanup(-1);
     }
     if (unk_28 != olk->unk_28) {
-        func_0804ad38("set in out - part mismatched\n");
-        func_0804adf0(-1);
+        reportError("set in out - part mismatched\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (unk_1c) {
-        func_0804ad38("rlock - set inout - already set\n");
-        func_0804adf0(-1);
+        reportError("rlock - set inout - already set\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (unk_14 != 1) {
-        func_0804ad38("set inout on non input\n");
+        reportError("set inout on non input\n");
         print();
-        func_0804adf0(-1);
+        exitAfterCleanup(-1);
         return false;
     }
     unk_1c = olk;
@@ -325,7 +325,7 @@ void cls0805c244::checkCounts()
         n++;
     }
     if (unk_24 != unk_26 + n)
-        func_0804ad38("ERROR - nOutLocks != nToGo + nDone\n");
+        reportError("ERROR - nOutLocks != nToGo + nDone\n");
 }
 
 bool cls0805c244::reset()
@@ -409,51 +409,51 @@ static inline bool isOwnedBy(cls0805bcc4 *lk, cls0805c244 *ll)
 bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
 {
     if (!lk) {
-        func_0804ad38("Addoutputlock - null pointer\n");
+        reportError("Addoutputlock - null pointer\n");
         return false;
     }
     if (lk->unk_14 != 2) {
-        func_0804ad38("Addoutputlock - bad type\n");
+        reportError("Addoutputlock - bad type\n");
         return false;
     }
     if (lk->unk_2c) {
-        func_0804ad38("Addoutputlock - already inserted\n");
-        func_0804adf0(-1);
+        reportError("Addoutputlock - already inserted\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (!isOwnedBy(lk, this)) {
-        func_0804ad38("Addoutput lock - I don't own it\n");
-        func_0804adf0(-1);
+        reportError("Addoutput lock - I don't own it\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (lk->unk_0c) {
-        func_0804ad38("AddOutputLock: m_Link already set!\n");
-        func_0804adf0(-1);
+        reportError("AddOutputLock: m_Link already set!\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (lk->unk_22 != lk->unk_20) {
-        func_0804ad38("Addoutputlock - mRefCount!=m_RefCount\n");
-        func_0804adf0(-1);
+        reportError("Addoutputlock - mRefCount!=m_RefCount\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (lk->unk_08) {
-        func_0804ad38("AddOutputLock:: m_Next already set\n");
-        func_0804adf0(-1);
+        reportError("AddOutputLock:: m_Next already set\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (unk_26 <= 0) {
-        func_0804ad38("add output lock - count was already down to zero or less\n");
+        reportError("add output lock - count was already down to zero or less\n");
         checkCounts();
-        func_0804adf0(-1);
+        exitAfterCleanup(-1);
         return false;
     }
     unk_26--;
     lk->unk_08 = unk_1c;
     unk_1c = lk;
     if (!lk->calcStats(0)) {
-        func_0804ad38("AddOutputLock failed to calcStats\n");
+        reportError("AddOutputLock failed to calcStats\n");
         checkCounts();
-        func_0804adf0(-1);
+        exitAfterCleanup(-1);
     }
     lk->unk_2c = 1;
     lk->unk_10 = 0;
@@ -462,9 +462,9 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
         int rl = lk->unk_30;
         int crl = cur->unk_30;
         if ((short)rl == (short)crl && (short)rl >= 0) {
-            func_0804ad38("during a lock sort for output locks, two had the same rline..\n");
+            reportError("during a lock sort for output locks, two had the same rline..\n");
             checkCounts();
-            func_0804adf0(-1);
+            exitAfterCleanup(-1);
         }
         int line = lk->unk_32;
         int cline = cur->unk_32;
@@ -489,8 +489,8 @@ bool cls0805c244::addInputLock(cls0805bcc4 *in)
     in->unk_08 = out->unk_0c;
     out->unk_0c = in;
     if (!out->calcStats(0)) {
-        func_0804ad38("AddInputLock failed to calcStats\n");
-        func_0804adf0(-1);
+        reportError("AddInputLock failed to calcStats\n");
+        exitAfterCleanup(-1);
     }
     in->unk_2c = 1;
     return true;
@@ -503,8 +503,8 @@ bool cls0805c244::undoInputLock(cls0805bcc4 *in)
     out->unk_0c = in->unk_08;
     in->unk_08 = 0;
     if (!out->calcStats(0)) {
-        func_0804ad38("UndoInputLock failed to calcStats\n");
-        func_0804adf0(-1);
+        reportError("UndoInputLock failed to calcStats\n");
+        exitAfterCleanup(-1);
         return false;
     }
     in->unk_2c = 0;
@@ -518,9 +518,9 @@ bool cls0805c244::undoOutputLock(cls0805bcc4 *lk)
     unk_1c = lk->unk_08;
     lk->unk_08 = 0;
     if (!lk->calcStats(0)) {
-        func_0804ad38("UndoOutputLock failed to calcStats\n");
+        reportError("UndoOutputLock failed to calcStats\n");
         checkCounts();
-        func_0804adf0(-1);
+        exitAfterCleanup(-1);
         return false;
     }
     lk->unk_2c = 0;
@@ -531,8 +531,8 @@ bool cls0805c244::undoOutputLock(cls0805bcc4 *lk)
         cur = cur->unk_10;
     }
     if (!cur) {
-        func_0804ad38("couldn't find lock on the sorted list\n");
-        func_0804adf0(-1);
+        reportError("couldn't find lock on the sorted list\n");
+        exitAfterCleanup(-1);
     }
     if (prev)
         prev->unk_10 = lk->unk_10;
@@ -563,7 +563,7 @@ static inline Operand *lockOperand(cls0805bcc4 *lk)
     if (lk->unk_2d == 1) {
         int opnd = lk->unk_29;
         Instr *instr = (Instr *)lk->unk_24;
-        return &instr->unk_38[opnd];
+        return &instr->operands[opnd];
     }
     return 0;
 }
@@ -582,65 +582,65 @@ bool cls0805bcc4::isOk(int type, bool inserted)
 
     if (rf) {
         if (op) {
-            func_0804ad38("rLock::isOk() - both reg ref and op ok\n");
+            reportError("rLock::isOk() - both reg ref and op ok\n");
             ok = false;
         }
     } else if (!op) {
-        func_0804ad38("rLock::isOk() - neither op nor regref set\n");
+        reportError("rLock::isOk() - neither op nor regref set\n");
         ok = false;
     }
     if (type >= 0 && unk_14 != type) {
-        func_0804ad38("isOk - unexpected type for is ok\n");
+        reportError("isOk - unexpected type for is ok\n");
         ok = false;
     }
     if (isInserted(this) != inserted) {
-        func_0804ad38("isOK - insert state was unexpected!\n");
+        reportError("isOK - insert state was unexpected!\n");
         ok = false;
     }
     switch (unk_14) {
     case 1:
         if (!getParent()) {
-            func_0804ad38("input lock has no parent\n");
+            reportError("input lock has no parent\n");
             ok = false;
         }
         break;
     case 2: {
         if (!inserted && unk_20 != unk_22) {
-            func_0804ad38("output lock - ref count mismatch\n");
+            reportError("output lock - ref count mismatch\n");
             return false;
         }
         regUse *orf = unk_2d == 2 ? (regUse *)unk_24 : 0;
         if (orf && loopSize) {
             if (unk_18 > 1) {
-                func_0804ad38("external input had latency for loop\n");
+                reportError("external input had latency for loop\n");
                 ok = false;
             }
             if (unk_17 > 1) {
-                func_0804ad38("external input had thruput for loop\n");
+                reportError("external input had thruput for loop\n");
                 ok = false;
             }
         }
         if (loopSize) {
             if (unk_18 > loopSize && unk_15 && unk_20) {
-                func_0804ad38("latency bigger than loop!\n");
+                reportError("latency bigger than loop!\n");
                 ok = false;
             }
             if (unk_17 > loopSize) {
-                func_0804ad38("thruput bigger than loop!\n");
+                reportError("thruput bigger than loop!\n");
                 ok = false;
             }
         }
         break;
     }
     default:
-        func_0804ad38("rLock::isOk() - bad lock type\n");
+        reportError("rLock::isOk() - bad lock type\n");
         ok = false;
         break;
     }
     if (!ok) {
-        func_0804ad38("rLock::isOk - failed\n");
+        reportError("rLock::isOk - failed\n");
         print();
-        func_0804adf0(-1);
+        exitAfterCleanup(-1);
     }
     return ok;
 }
@@ -655,8 +655,8 @@ static inline bool ownsLock(cls0805c244 *list, cls0805bcc4 *lk)
 bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
 {
     if (!lk) {
-        func_0804ad38("rLockList::isOk  -passed a null lock\n");
-        func_0804adf0(-1);
+        reportError("rLockList::isOk  -passed a null lock\n");
+        exitAfterCleanup(-1);
     }
     bool ok = lk->isOk(type, inserted);
     if (lk->unk_14 == 0) {
@@ -666,28 +666,28 @@ bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
             if (p == parent)
                 break;
         if (!p) {
-            func_0804ad38("rLockList::isOk - parent is not on insert list\n");
+            reportError("rLockList::isOk - parent is not on insert list\n");
             ok = false;
         }
     }
     if (!ownsLock(this, lk)) {
-        func_0804ad38("isok - I don't own it\n");
-        func_0804adf0(-1);
+        reportError("isok - I don't own it\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (lk->unk_14 == 2) {
         if (unk_24 <= 0) {
-            func_0804ad38("isOk - output, but no outputs! - <=0 output locks!\n");
+            reportError("isOk - output, but no outputs! - <=0 output locks!\n");
             ok = false;
         }
         int lim = (inserted == false) - 1;
         if (unk_26 <= lim) {
-            func_0804ad38("isOk - output, but no outputs! - <=0 output locks to go!\n");
+            reportError("isOk - output, but no outputs! - <=0 output locks to go!\n");
             ok = false;
         }
     }
     if (!ok)
-        func_0804adf0(-1);
+        exitAfterCleanup(-1);
     return ok;
 }
 
@@ -771,12 +771,12 @@ bool cls0805bcc4::calcStats(Instr *skip)
         }
         if (unk_3e < unk_3a) {
             if (g_080de284) {
-                func_0804ad38("rLock::calcStats - rfUsed before result ready..rfu=%d rr=%d!\n", unk_3e, unk_3a);
+                reportError("rLock::calcStats - rfUsed before result ready..rfu=%d rr=%d!\n", unk_3e, unk_3a);
                 print();
                 return false;
             }
             if (minUse < unk_36)
-                func_0804ac7c("rLock::calcStats - stalls non fatal, but.. rfUsed_nolh before result write..rfu=%d rw=%d..this maybe important\n", minUse, unk_36);
+                reportWarning("rLock::calcStats - stalls non fatal, but.. rfUsed_nolh before result write..rfu=%d rw=%d..this maybe important\n", minUse, unk_36);
         }
     } else {
         if (isRegLock(this)) {
@@ -835,7 +835,7 @@ void cls0805bcc4::func_0805d020()
     resetStats();
 }
 
-void cls0805bcc4::setFrom(cls08058718 *r)
+void cls0805bcc4::setFrom(InstructionPosition *r)
 {
     int rline = r->unk_00;
     unk_32 = rline;
@@ -845,13 +845,13 @@ void cls0805bcc4::setFrom(cls08058718 *r)
     if (lsz) {
         if (unk_32 % lsz == unk_30)
             return;
-        func_0804ad38("rLock::setFrom: rline/loop mismatch %d vs %d (lsz%d)\n", unk_32, unk_30, lsz);
+        reportError("rLock::setFrom: rline/loop mismatch %d vs %d (lsz%d)\n", unk_32, unk_30, lsz);
     } else {
         if (unk_32 == unk_30)
             return;
-        func_0804ad38("setFrom rline/non-loop mismatch\n");
+        reportError("setFrom rline/non-loop mismatch\n");
     }
-    func_0804adf0(-1);
+    exitAfterCleanup(-1);
 }
 
 short cls0805bcc4::func_0805d0dc()
@@ -864,22 +864,22 @@ short cls0805bcc4::func_0805d0dc()
 bool cls0805c244::moveOutputLock(cls0805bcc4 *lk)
 {
     if (!lk) {
-        func_0804ad38("moveoutputlock - null pointer\n");
+        reportError("moveoutputlock - null pointer\n");
         return false;
     }
     if (lk->unk_14 != 2) {
-        func_0804ad38("moveoutputlock - bad type\n");
+        reportError("moveoutputlock - bad type\n");
         return false;
     }
     if (!lk->unk_2c) {
-        func_0804ad38("moveoutputlock - not already inserted\n");
-        func_0804adf0(-1);
+        reportError("moveoutputlock - not already inserted\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (!lk->calcStats(0)) {
-        func_0804ad38("moveoutputlock failed to set lUsed\n");
+        reportError("moveoutputlock failed to set lUsed\n");
         checkCounts();
-        func_0804adf0(-1);
+        exitAfterCleanup(-1);
     }
     cls0805bcc4 *cur = unk_20;
     cls0805bcc4 *prev = 0;
@@ -901,9 +901,9 @@ bool cls0805c244::moveOutputLock(cls0805bcc4 *lk)
         int rl = lk->unk_30;
         int crl = cur->unk_30;
         if ((short)rl == (short)crl) {
-            func_0804ad38("during a lock sort for output locks, two had the same rline..\n");
+            reportError("during a lock sort for output locks, two had the same rline..\n");
             checkCounts();
-            func_0804adf0(-1);
+            exitAfterCleanup(-1);
         }
         int line = lk->unk_32;
         int cline = cur->unk_32;
@@ -924,8 +924,8 @@ bool cls0805c244::moveOutputLock(cls0805bcc4 *lk)
 bool cls0805c244::moveInputLock(cls0805bcc4 *in)
 {
     if (!in->unk_0c->calcStats(0)) {
-        func_0804ad38("moveinputlock failed to calcStats\n");
-        func_0804adf0(-1);
+        reportError("moveinputlock failed to calcStats\n");
+        exitAfterCleanup(-1);
     }
     return true;
 }
@@ -940,17 +940,17 @@ static inline bool singleExtOutputMode()
 bool cls0805c244::addExtOutput(cls0805bcc4 *lk, bool flag)
 {
     if (lk->unk_16) {
-        func_0804ad38("lock is already external output\n");
+        reportError("lock is already external output\n");
         return false;
     }
     if (unk_2a > 3) {
-        func_0804ad38("too many extern outputs\n");
+        reportError("too many extern outputs\n");
         return false;
     }
     if (unk_2a && singleExtOutputMode()) {
         if (flag)
             return true;
-        func_0804ad38("more than one xo for rlock uta..count=%d\n", unk_2a);
+        reportError("more than one xo for rlock uta..count=%d\n", unk_2a);
         checkCounts();
         return false;
     }
@@ -978,8 +978,8 @@ Instr *cls0805c244::earliestExt()
                 if (ch->unk_19 != 2) {
                     Instr *in = ch->unk_2d == 1 ? (Instr *)ch->unk_24 : 0;
                     if (!in) {
-                        func_0804ad38("not get in for earliest ext\n");
-                        func_0804adf0(-1);
+                        reportError("not get in for earliest ext\n");
+                        exitAfterCleanup(-1);
                     }
                     if (in->unk_13e8.unk_00 < best) {
                         best = in->unk_1396;
@@ -1020,8 +1020,8 @@ cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part)
     for (; p; p = p->unk_08) {
         if (p->unk_04 == reg && p->unk_02 == part) {
             if (reg->func_0805a908(part) && reg->func_0805a908(part) != (VclPtrWord)p) {
-                func_0804ad38("rg points to rll, but rll list not it\n");
-                func_0804adf0(-1);
+                reportError("rg points to rll, but rll list not it\n");
+                exitAfterCleanup(-1);
             }
             return p;
         }
@@ -1051,13 +1051,13 @@ const char *cls0805bcc4::regName()
     RegPoolEntry *rg = ll->unk_04;
     if (!rg)
         return "RLL_HAS_NO_REG";
-    return rg->func_0805a8e0();
+    return rg->registerName();
 }
 
 bool cls0805c244::setRepReg(RegPoolEntry *rg)
 {
     if (unk_04 && rg != unk_04) {
-        func_0804ad38("can't set representative reg - it's already set\n");
+        reportError("can't set representative reg - it's already set\n");
         return false;
     }
     unk_04 = rg;

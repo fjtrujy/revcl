@@ -16,12 +16,12 @@ extern const char moveDetectNoRegError[];
 Instr *getMove(int type, int)
 {
     if (type == 0) {
-        func_0804ad38("can't get null move\n");
-        func_0804adf0(-1);
+        reportError("can't get null move\n");
+        exitAfterCleanup(-1);
     }
     if (type > 2) {
-        func_0804ad38("out of range for get move\n");
-        func_0804adf0(-1);
+        reportError("out of range for get move\n");
+        exitAfterCleanup(-1);
     }
 
     moveRec *mr = (moveRec *)g_080de714[type];
@@ -29,24 +29,24 @@ Instr *getMove(int type, int)
         g_080de714[type] = (VclPtrWord)mr->unk_00;
         Instr *in = mr->unk_08;
         if (!in) {
-            func_0804ad38("getFreeMove - inst not set\n");
-            func_0804adf0(-1);
+            reportError("getFreeMove - inst not set\n");
+            exitAfterCleanup(-1);
         }
         if (in->unk_1428 != (VclPtrWord)mr) {
-            func_0804ad38(moveRecMismatchError, in->unk_1428, mr);
-            func_0804adf0(-1);
+            reportError(moveRecMismatchError, in->unk_1428, mr);
+            exitAfterCleanup(-1);
         }
         if (!mr->unk_0c) {
-            func_0804ad38("getFreeMove: m_Reg not set\n");
-            func_0804adf0(-1);
+            reportError("getFreeMove: m_Reg not set\n");
+            exitAfterCleanup(-1);
         }
-        in->unk_38[0].unk_18 = mr->unk_0c;
+        in->operands[0].unk_18 = mr->unk_0c;
         mr->unk_0c->moveReset();
-        for (int i = 0; i != mr->unk_0c->unk_28; i++) {
-            cls0805c244 *l = &mr->unk_10[i];
+        for (int i = 0; i != mr->unk_0c->partCount; i++) {
+            RegisterPartLockList *l = &mr->unk_10[i];
             if (!l) {
-                func_0804ad38(moveRecNullRllError);
-                func_0804aeb0();
+                reportError(moveRecNullRllError);
+                abortAfterError();
             }
             l->unk_08 = 0;
             l->reset();
@@ -66,8 +66,8 @@ Instr *getMove(int type, int)
 
     mr = new moveRec(type);
     if (!mr) {
-        func_0804ad38("new : failed to get moveRec\n");
-        func_0804adf0(-1);
+        reportError("new : failed to get moveRec\n");
+        exitAfterCleanup(-1);
     }
     short opc = -1;
     RegPool *rp = 0;
@@ -78,18 +78,18 @@ Instr *getMove(int type, int)
         opc = 0xb4;
         rp = GetRP(9);
     } else {
-        func_0804ad38("bad move type\n");
-        func_0804adf0(-1);
+        reportError("bad move type\n");
+        exitAfterCleanup(-1);
     }
     iInfo *ii = func_0806bf74(opc);
     if (!ii) {
-        func_0804ad38("got here - no ii\n");
-        func_0804adf0(-1);
+        reportError("got here - no ii\n");
+        exitAfterCleanup(-1);
     }
     Instr *in = new Instr(ii);
     if (!in) {
-        func_0804ad38(moveRecNewInstrError);
-        func_0804adf0(-1);
+        reportError(moveRecNewInstrError);
+        exitAfterCleanup(-1);
     }
     int serial = g_080b33a8++;
     in->unk_13e0 = serial;
@@ -97,22 +97,22 @@ Instr *getMove(int type, int)
     in->unk_142e = 0;
     RegPoolEntry *reg = rp->getMoveReg(in);
     if (!reg) {
-        func_0804ad38("failed to get move reg\n");
-        func_0804adf0(-1);
+        reportError("failed to get move reg\n");
+        exitAfterCleanup(-1);
     }
     in->unk_1428 = (VclPtrWord)mr;
     Operand *op = in->getOp(0);
     if (!op) {
-        func_0804ad38("failed to get move output!\n");
-        func_0804adf0(1);
+        reportError("failed to get move output!\n");
+        exitAfterCleanup(1);
     }
     op->unk_18 = reg;
-    if (in->unk_138b != 2) {
-        func_0804ad38(moveRecSidefxError);
-        func_0804adf0(-1);
+    if (in->operandCount != 2) {
+        reportError(moveRecSidefxError);
+        exitAfterCleanup(-1);
     }
-    for (int i = 0; i != reg->unk_28; i++) {
-        cls0805c244 *l = &mr->unk_10[i];
+    for (int i = 0; i != reg->partCount; i++) {
+        RegisterPartLockList *l = &mr->unk_10[i];
         l->unk_08 = 0;
         l->reset();
         l->unk_29 = 0;
@@ -126,28 +126,28 @@ Instr *getMove(int type, int)
 bool addFreeMove(Instr *in)
 {
     if (!in) {
-        func_0804ad38("addFReeMove - null input\n");
-        func_0804adf0(-1);
+        reportError("addFReeMove - null input\n");
+        exitAfterCleanup(-1);
     }
     moveRec *mr = (moveRec *)in->unk_1428;
     if (!mr) {
-        func_0804ad38("not a move to free\n");
-        func_0804adf0(-1);
+        reportError("not a move to free\n");
+        exitAfterCleanup(-1);
     }
     RegPoolEntry *reg = mr->unk_0c;
     if (!reg) {
-        func_0804ad38("m_Reg not set in mr\n");
-        func_0804adf0(-1);
+        reportError("m_Reg not set in mr\n");
+        exitAfterCleanup(-1);
     }
     reg->moveReset();
-    for (int i = 0; i != reg->unk_28; i++) {
-        cls0805c244 *l = &mr->unk_10[i];
+    for (int i = 0; i != reg->partCount; i++) {
+        RegisterPartLockList *l = &mr->unk_10[i];
         l->unk_08 = 0;
         l->reset();
     }
     if (in != mr->unk_08) {
-        func_0804ad38("no instruction set in mr\n");
-        func_0804adf0(-1);
+        reportError("no instruction set in mr\n");
+        exitAfterCleanup(-1);
     }
     in->unk_24.unk_04 = 0;
     in->unk_24.unk_00 = 0;
@@ -157,12 +157,12 @@ bool addFreeMove(Instr *in)
     in->unk_13e8.func_080586e0();
     in->func_08054b84();
     if (!in->unk_142c) {
-        func_0804ad38(moveRecBaseMuidError);
+        reportError(moveRecBaseMuidError);
         return false;
     }
     iInfo *ii = func_0806bf74(in->unk_142c);
     in->unk_142e = 0;
-    in->unk_34 = ii;
+    in->opcodeInfo = ii;
     in->unk_138c = ii->unk_0e;
     in->unk_138d = ii->unk_10;
     mr->unk_00 = (moveRec *)g_080de714[mr->unk_04];
@@ -176,7 +176,7 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     mask = 0;
     if (!in)
         return false;
-    int id = func_0806c72c(in->unk_34);
+    int id = func_0806c72c(in->opcodeInfo);
     srcOp = -1;
     dstOp = -1;
     unsigned int v;
@@ -196,7 +196,7 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     case 0x44:
         if (in->func_08055828(1))
             return false;
-        if (in->unk_38[2].unk_18->unk_30 != 0)
+        if (in->operands[2].unk_18->unk_30 != 0)
             return false;
         opc = 0xb4;
     setOps:
@@ -205,14 +205,14 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
         break;
     case 0x6c:
     case 0x6f:
-        if (in->unk_38[2].unk_18->unk_30 != 32)
+        if (in->operands[2].unk_18->unk_30 != 32)
             return false;
         opc = 0xb2;
         goto setOps;
     case 0x6d:
     case 0x6e:
     case 0x70:
-        if (!in->unk_38[2].unk_1c.getUInt(&v))
+        if (!in->operands[2].unk_1c.getUInt(&v))
             return false;
         if (v)
             return false;
@@ -223,30 +223,30 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     default:
         return false;
     }
-    RegPoolEntry *s = in->unk_38[srcOp].unk_18;
-    RegPoolEntry *d = in->unk_38[dstOp].unk_18;
+    RegPoolEntry *s = in->operands[srcOp].unk_18;
+    RegPoolEntry *d = in->operands[dstOp].unk_18;
     if (!s || !d) {
-        func_0804ad38(moveDetectNoRegError);
-        func_0804adf0(-1);
+        reportError(moveDetectNoRegError);
+        exitAfterCleanup(-1);
         return false;
     }
-    if (s->unk_24 != d->unk_24) {
-        func_0804ad38("move detect - bad types\n");
-        func_0804adf0(-1);
+    if (s->registerClass != d->registerClass) {
+        reportError("move detect - bad types\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (opc < 0) {
-        func_0804ad38("bad uid for move detection\n");
-        func_0804adf0(-1);
+        reportError("bad uid for move detection\n");
+        exitAfterCleanup(-1);
         return false;
     }
-    if (in->unk_38[srcOp].unk_07 != in->unk_38[dstOp].unk_07) {
-        func_0804ad38("bad mod bits for a move\n");
-        func_0804adf0(-1);
+    if (in->operands[srcOp].unk_07 != in->operands[dstOp].unk_07) {
+        reportError("bad mod bits for a move\n");
+        exitAfterCleanup(-1);
     }
-    mask = in->unk_38[srcOp].unk_07;
+    mask = in->operands[srcOp].unk_07;
     if (!mask) {
-        func_0804ac7c("modbits 0 for move..avoiding\n");
+        reportWarning("modbits 0 for move..avoiding\n");
         return false;
     }
     return true;
@@ -259,8 +259,8 @@ bool resolveMovePipe(workTable *wt, Instr *mv, int pipe)
     else if (mv->unk_142c == 0xb4)
         mv->unk_142e = pipe ? 0xb5 : 0xb6;
     else {
-        func_0804ad38("resolve move: bad baseMuid\n");
-        func_0804adf0(-1);
+        reportError("resolve move: bad baseMuid\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (mv->unk_138c == 3)
@@ -270,7 +270,7 @@ bool resolveMovePipe(workTable *wt, Instr *mv, int pipe)
     else
         wt->unk_b8--;
     iInfo *ii = func_0806bf74(mv->unk_142e);
-    mv->unk_34 = ii;
+    mv->opcodeInfo = ii;
     mv->unk_138c = ii->unk_0e;
     mv->unk_138d = ii->unk_10;
     if (mv->unk_138c == 3)
@@ -292,7 +292,7 @@ int unresolveMove(Block *blk, Instr *mv)
     else
         blk->unk_b8--;
     mv->unk_142e = 0;
-    mv->unk_34 = ii;
+    mv->opcodeInfo = ii;
     mv->unk_138c = ii->unk_0e;
     mv->unk_138d = ii->unk_10;
     if (mv->unk_138c == 3)

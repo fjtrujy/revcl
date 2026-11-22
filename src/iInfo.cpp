@@ -18,8 +18,8 @@ unsigned char iInfo::ramType()
         unsigned char t = unk_19;
         if ((unsigned char)(t - 1) <= 1)
             return t;
-        func_0804ad38(iInfoLoadstoreRamtypeError);
-        func_0804adf0(-1);
+        reportError(iInfoLoadstoreRamtypeError);
+        exitAfterCleanup(-1);
     }
     return 0;
 }
@@ -59,30 +59,30 @@ bool iInfo::check()
     for (int i = 0; d->unk_00; i++, d++) {
         if (d->unk_06) {
             if (!d->unk_02) {
-                func_0804ad38("implicit web patch set on explicit operand\n");
+                reportError("implicit web patch set on explicit operand\n");
                 return false;
             }
             if (d->unk_01 != 1) {
-                func_0804ad38("iInfo: check - patch set on non-input (%d)\n", d->unk_00);
+                reportError("iInfo: check - patch set on non-input (%d)\n", d->unk_00);
                 return false;
             }
             if (unk_44[d->unk_06 - 1].unk_01 != 2) {
-                func_0804ad38("iInfo: check patch not point to output\n");
+                reportError("iInfo: check patch not point to output\n");
                 return false;
             }
             if (unk_44[d->unk_06 - 1].unk_02) {
-                func_0804ad38("implicit web patch links to implicit operand\n");
+                reportError("implicit web patch links to implicit operand\n");
                 return false;
             }
             if (d->unk_06 - 1 > i) {
-                func_0804ad38(iInfoPatchedAfterPatchError);
+                reportError(iInfoPatchedAfterPatchError);
                 return false;
             }
         }
         if (d->unk_02)
             noImplicitYet = false;
         else if (!noImplicitYet) {
-            func_0804ad38(iInfoExplicitAfterImplicitError);
+            reportError(iInfoExplicitAfterImplicitError);
             return false;
         }
     }
@@ -92,18 +92,18 @@ bool iInfo::check()
 bool checkTable(iInfo *tab, int count)
 {
     if (!tab) {
-        func_0804ad38("checkTable - passed a null table\n");
+        reportError("checkTable - passed a null table\n");
         return false;
     }
     int i;
     for (i = 0; tab->unk_04; i++, tab++) {
         if (!tab->check()) {
-            func_0804ad38("checkTable failed\n");
+            reportError("checkTable failed\n");
             return false;
         }
     }
     if (i != count) {
-        func_0804ad38("instruction count mismatch %d!=%d\n", i, count);
+        reportError("instruction count mismatch %d!=%d\n", i, count);
         return false;
     }
     return true;
@@ -139,8 +139,8 @@ int iInfo::func_0807026c()
                 if ((unsigned char)(t - 1) <= 1)
                     rt = t;
                 else {
-                    func_0804ad38(iInfoLoadstoreRamtypeError);
-                    func_0804adf0(-1);
+                    reportError(iInfoLoadstoreRamtypeError);
+                    exitAfterCleanup(-1);
                     goto none;
                 }
             } else

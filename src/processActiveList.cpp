@@ -1,3 +1,4 @@
+#include "os.h"
 
 #include "backTrace_shared.h"
 
@@ -8,19 +9,19 @@ bool processActiveList(Program *p)
         instStream *s = p->unk_e4;
         p->unk_e4 = s->unk_25c;
         if (s->unk_226 != 1) {
-            func_0804ad38("an inconsistency in the active list?\n");
+            reportError("an inconsistency in the active list?\n");
             return false;
         }
         if (s->unk_224 != 0) {
             s->unk_226 = 3;
             if (s->unk_254) {
-                func_0804ad38("new match is already set\n");
+                reportError("new match is already set\n");
                 return false;
             }
             s->unk_254 = p->unk_d8;
             p->unk_d8 = s;
             if (s->unk_250) {
-                func_0804ad38("new match is already set\n");
+                reportError("new match is already set\n");
                 return false;
             }
             s->unk_250 = p->unk_dc;
@@ -30,7 +31,7 @@ bool processActiveList(Program *p)
             if (head) {
                 s->unk_226 = 2;
                 if (!extendBackTrace(p, s)) {
-                    func_0804ad38("failed to extend back trace at %s\n", s->func_0806d674());
+                    reportError("failed to extend back trace at %s\n", s->streamName());
                     return false;
                 }
             } else {
@@ -45,7 +46,7 @@ bool extendBackTrace(Program *p, instStream *n)
 {
     int cnt = 0;
     if (n->unk_226 != 2 && n->unk_226 != 0) {
-        func_0804ad38("extend: called - but not visited or unvisited\n");
+        reportError("extend: called - but not visited or unvisited\n");
         return false;
     }
     linkNode *l;
@@ -65,30 +66,30 @@ bool extendBackTrace(Program *p, instStream *n)
         if ((char)branch) {
             instStream *prev = n->unk_10c;
             if (!prev) {
-                func_0804ad38("to register branch had no previous\n");
+                reportError("to register branch had no previous\n");
                 return false;
             }
             for (linkNode *b = prev->unk_134.unk_00; b; b = b->unk_08) {
                 instStream *d = b->unk_0c;
                 int type = b->unk_14;
                 if (!d) {
-                    func_0804ad38("no dest stream set for and link\n");
+                    reportError("no dest stream set for and link\n");
                     return false;
                 }
                 if (d->unk_226 == 2 && prev->unk_226 == 0) {
                     if (!addNewActive(p, prev, n)) {
-                        func_0804ad38("failed to add a new active node for predecessor in bal case\n");
+                        reportError("failed to add a new active node for predecessor in bal case\n");
                         return false;
                     }
                     if (p->unk_b5 && mergeTstores(p, prev->unk_238, n->unk_238) < 0) {
-                        func_0804ad38("failed to merge tstores\n");
+                        reportError("failed to merge tstores\n");
                         return false;
                     }
                     type = b->unk_14;
                 }
                 linkNode *back = d->unk_128.func_0806dff4(prev, type);
                 if (!back) {
-                    func_0804ad38("destination had no link back\n");
+                    reportError("destination had no link back\n");
                     return false;
                 }
                 back->unk_10 = 1;
@@ -97,17 +98,17 @@ bool extendBackTrace(Program *p, instStream *n)
         if (all || l->unk_10) {
             instStream *o = l->unk_0c;
             if (!o) {
-                func_0804ad38("can't get input stream for ir during trace\n");
+                reportError("can't get input stream for ir during trace\n");
                 return false;
             }
             if (p->unk_b5 && mergeTstores(p, o->unk_238, n->unk_238) < 0) {
-                func_0804ad38("failed to merge tstores\n");
+                reportError("failed to merge tstores\n");
                 return false;
             }
             switch (o->unk_226) {
             case 0:
                 if (!addNewActive(p, o, n)) {
-                    func_0804ad38("failedt to add a new active\n");
+                    reportError("failedt to add a new active\n");
                     return false;
                 }
                 break;
@@ -117,25 +118,25 @@ bool extendBackTrace(Program *p, instStream *n)
             case 4: {
                 int dmin = o->unk_240;
                 if (dmin < 0) {
-                    func_0804ad38("think I've already been here, but there's no distance to target\n");
+                    reportError("think I've already been here, but there's no distance to target\n");
                     return false;
                 }
                 int len = n->unk_240 + n->unk_22c;
                 if (len < dmin) {
                     o->unk_244 = n;
                     if (!recalcMinTraceLengths(p)) {
-                        func_0804ad38("failed to recalc trace lengths\n");
+                        reportError("failed to recalc trace lengths\n");
                         return false;
                     }
                     if (o->unk_240 != len) {
-                        func_0804ad38("after recalculating the minimal path lengths, got an unexpected result\n");
+                        reportError("after recalculating the minimal path lengths, got an unexpected result\n");
                         return false;
                     }
                 }
                 if (p->unk_b4) {
                     int dmax = o->unk_248;
                     if (dmax < 0) {
-                        func_0804ad38("think I've already been here, but there's no maximal distance to target\n");
+                        reportError("think I've already been here, but there's no maximal distance to target\n");
                         return false;
                     }
                     bool notOnPath = true;
@@ -150,11 +151,11 @@ bool extendBackTrace(Program *p, instStream *n)
                         if (len2 > dmax) {
                             o->unk_24c = n;
                             if (!recalcMaxTraceLengths(p)) {
-                                func_0804ad38("failed to recalc trace lengths\n");
+                                reportError("failed to recalc trace lengths\n");
                                 return false;
                             }
                             if (o->unk_248 != len2) {
-                                func_0804ad38("after recalculating the maximal path lengths, got an unexpected result\n");
+                                reportError("after recalculating the maximal path lengths, got an unexpected result\n");
                                 return false;
                             }
                         }
@@ -163,7 +164,7 @@ bool extendBackTrace(Program *p, instStream *n)
                 break;
             }
             default:
-                func_0804ad38("bad visit mode\n");
+                reportError("bad visit mode\n");
                 return false;
             }
         }
@@ -174,12 +175,12 @@ bool extendBackTrace(Program *p, instStream *n)
 bool addNewActive(Program *p, instStream *n, instStream *from)
 {
     if (n->unk_226) {
-        func_0804ad38("addNewActive called - but ist_n(%s) is not unvisited.ist_o is %s\n",
-                      n->func_0806d674(), from->func_0806d674());
+        reportError("addNewActive called - but ist_n(%s) is not unvisited.ist_o is %s\n",
+                      n->streamName(), from->streamName());
         return false;
     }
     if (n->unk_25c) {
-        func_0804ad38("can't add to active list\n");
+        reportError("can't add to active list\n");
         return false;
     }
     n->unk_25c = p->unk_e4;
@@ -196,15 +197,15 @@ bool addNewActive(Program *p, instStream *n, instStream *from)
 
 bool recalcMinTraceLengths(Program *p)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->unk_108) {
         if (!s->unk_226)
             continue;
         int len = 0;
         for (instStream *q = s->unk_244; q; q = q->unk_244)
             len += q->unk_22c;
         if (s->unk_240 < len) {
-            func_0804ad38("recalcPaths - code produced a longer path.. but should be tracking shortest ..path is %s nLen=%d, but old length was %d!\n",
-                          s->func_0806d674(), len, s->unk_240);
+            reportError("recalcPaths - code produced a longer path.. but should be tracking shortest ..path is %s nLen=%d, but old length was %d!\n",
+                          s->streamName(), len, s->unk_240);
             return false;
         }
         s->unk_240 = len;
@@ -214,15 +215,15 @@ bool recalcMinTraceLengths(Program *p)
 
 bool recalcMaxTraceLengths(Program *p)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->unk_108) {
         if (!s->unk_226)
             continue;
         int len = 0;
         for (instStream *q = s->unk_24c; q; q = q->unk_24c)
             len += q->unk_22c;
         if (s->unk_248 > len) {
-            func_0804ad38("recalcPaths - code produced a shorter maximal path.. but should be tracking longest ..path is %s nLen=%d, but old length was %d!\n",
-                          s->func_0806d674(), len, s->unk_248);
+            reportError("recalcPaths - code produced a shorter maximal path.. but should be tracking longest ..path is %s nLen=%d, but old length was %d!\n",
+                          s->streamName(), len, s->unk_248);
             return false;
         }
         s->unk_248 = len;

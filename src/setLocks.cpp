@@ -12,9 +12,9 @@ bool AddDone_Tail(Block *blk, Instr *n);
 bool UnlinkFromDone(Block *blk, Instr *n);
 bool AddToDo_Head(Block *blk, Instr *n);
 bool setRange(int start, int end, int lsz);
-int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
-int func_0807de00(workTable *wt, Instr *in, cls08058718 *pos);
-int func_0807e1f8(workTable *wt, Instr *in, cls08058718 *pos);
+int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos);
+int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos);
 int func_0804bf50(unsigned int x);
 extern bool stagger_080b33ac;
 
@@ -25,19 +25,19 @@ static inline void dumpLockInstruction(Instr *in)
 
 bool setLocks(Instr *in)
 {
-    for (int i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (int i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         RegPoolEntry *r = op->unk_18;
         if (!r)
             continue;
         if (isRegisterOperand(op, 2)) {
-            for (int p = 0; p != r->unk_28; p++) {
+            for (int p = 0; p != r->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
-                    cls0805c244 *ll = s->unk_04;
+                    RegisterPartLockList *ll = s->unk_04;
                     s->setFrom(&in->unk_13e8);
                     if (!ll->addOutputLock(s)) {
-                        func_0804ad38("oh no - add output lock failed %d.%d\n", i, p);
+                        reportError("oh no - add output lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
                         return false;
                     }
@@ -45,13 +45,13 @@ bool setLocks(Instr *in)
             }
         }
         if (isRegisterOperand(op, 1)) {
-            for (int p = 0; p != r->unk_28; p++) {
+            for (int p = 0; p != r->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
-                    cls0805c244 *ll = s->unk_04;
+                    RegisterPartLockList *ll = s->unk_04;
                     s->setFrom(&in->unk_13e8);
                     if (!ll->addInputLock(s)) {
-                        func_0804ad38("SetLocks: oh no - add input lock failed %d.%d\n", i, p);
+                        reportError("SetLocks: oh no - add input lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
                         return false;
                     }
@@ -64,13 +64,13 @@ bool setLocks(Instr *in)
 
 bool undoLocks(Instr *in)
 {
-    for (int i = in->unk_138b - 1; i >= 0; i--) {
-        Operand *op = &in->unk_38[i];
+    for (int i = in->operandCount - 1; i >= 0; i--) {
+        Operand *op = &in->operands[i];
         RegPoolEntry *r = op->unk_18;
         if (!r)
             continue;
         if (isRegisterOperand(op, 2)) {
-            for (int p = 0; p != r->unk_28; p++) {
+            for (int p = 0; p != r->partCount; p++) {
                 op->unk_2c[p].unk_52[0] = 0;
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
@@ -80,7 +80,7 @@ bool undoLocks(Instr *in)
             }
         }
         if (isRegisterOperand(op, 1)) {
-            for (int p = 0; p != r->unk_28; p++) {
+            for (int p = 0; p != r->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
                     if (!s->unk_04->undoInputLock(s))
@@ -94,20 +94,20 @@ bool undoLocks(Instr *in)
 
 int checkLocks(Instr *in, short *pos, int *minPos)
 {
-    cls0805bcc4 *saved[64];
+    OperandLock *saved[64];
     int ret = 0;
     int i;
     int n = 0;
 
-    for (i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         RegPoolEntry *r = isRegisterOperand(op, 1) ? op->unk_18 : 0;
         if (!r)
             continue;
-        for (int p = 0; p != r->unk_28; p++) {
+        for (int p = 0; p != r->partCount; p++) {
             if ((op->unk_07 >> p) & 1) {
                 OpSlot *s = &op->unk_2c[p];
-                cls0805c244 *ll = s->unk_04;
+                RegisterPartLockList *ll = s->unk_04;
                 if (*minPos < ll->unk_00) {
                     ret |= 0x80000;
                     *minPos = ll->unk_00;
@@ -116,7 +116,7 @@ int checkLocks(Instr *in, short *pos, int *minPos)
                 int rc = ll->checkInputLock(s, pos, minPos);
                 ret |= rc;
                 if (rc & 0x430) {
-                    cls0805bcc4 *par = s->getParent();
+                    OperandLock *par = s->getParent();
                     Operand *o = par->ownerOperand();
                     if (o) {
                         Instr *oi = par->ownerInstr();
@@ -127,29 +127,29 @@ int checkLocks(Instr *in, short *pos, int *minPos)
                         func_080737b8(oi);
                         oi->func_08054008(false);
                     } else
-                        func_0804ac7c("failed to get setting operand .. so it's a regref??\n");
+                        reportWarning("failed to get setting operand .. so it's a regref??\n");
                     *minPos = 30000;
                     goto done;
                 }
                 if (s->unk_1c) {
-                    cls0805bcc4 *par = s->getParent();
+                    OperandLock *par = s->getParent();
                     if (!par)
-                        func_0804adf0(0);
+                        exitAfterCleanup(0);
                     par->decRef();
                     saved[n++] = par;
                 }
             }
         }
     }
-    for (i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         RegPoolEntry *r = isRegisterOperand(op, 2) ? op->unk_18 : 0;
         if (!r)
             continue;
-        for (int p = 0; p != r->unk_28; p++) {
+        for (int p = 0; p != r->partCount; p++) {
             if ((op->unk_07 >> p) & 1) {
                 OpSlot *s = &op->unk_2c[p];
-                cls0805c244 *ll = op->unk_2c[p].unk_04;
+                RegisterPartLockList *ll = op->unk_2c[p].unk_04;
                 if (op->unk_2c[p].unk_50) {
                     int v = ll->func_0805c938(op->unk_2c[p].unk_50);
                     if (v > *minPos) {
@@ -162,19 +162,19 @@ int checkLocks(Instr *in, short *pos, int *minPos)
                 ret |= rc;
                 if (rc & 0x22000) {
                     if (!g_080b336c) {
-                        func_0804ad38("late extern, loop overrun, but no loop\n");
-                        func_0804aeb0();
+                        reportError("late extern, loop overrun, but no loop\n");
+                        abortAfterError();
                     }
                     int d = *pos + s->unk_18 - g_080b336c;
                     if (d > 0) {
                         ll->unk_00 = d;
                         Instr *e = ll->earliestExt();
                         if (!e) {
-                            func_0804ac7c("failed to get earliest in ret=%x\n", rc);
+                            reportWarning("failed to get earliest in ret=%x\n", rc);
                             ll->checkCounts();
-                            func_0804ad38("this instruction is\n");
+                            reportError("this instruction is\n");
                             in->leDump(i, p);
-                            func_0804aeb0();
+                            abortAfterError();
                         } else
                             func_080737b8(e);
                         *minPos = 30000;
@@ -192,32 +192,32 @@ done:
 
 int canMoveLocks(Instr *in, short *pos)
 {
-    cls0805bcc4 *saved[64];
+    OperandLock *saved[64];
     int ret = 0;
     int i;
     int n = 0;
 
-    for (i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         RegPoolEntry *r = registerOperand(op, 1);
         if (!r)
             continue;
-        for (int p = 0; p != r->unk_28; p++) {
+        for (int p = 0; p != r->partCount; p++) {
             if ((op->unk_07 >> p) & 1) {
-                cls0805bcc4 *par = op->unk_2c[p].getParent();
+                OperandLock *par = op->unk_2c[p].getParent();
                 if (!par->calcStats(in)) {
-                    func_0804ad38("failed to recalc stats ignoring instruction\n");
-                    func_0804aeb0();
+                    reportError("failed to recalc stats ignoring instruction\n");
+                    abortAfterError();
                 }
                 saved[n++] = par;
             }
         }
     }
-    for (i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         RegPoolEntry *r = registerOperand(op, 1);
         if (r) {
-            for (int p = 0; p != r->unk_28; p++) {
+            for (int p = 0; p != r->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
                     ret |= s->unk_04->canMoveInputLock(s, pos, (op->unk_07 >> p) & 1);
@@ -228,7 +228,7 @@ int canMoveLocks(Instr *in, short *pos)
         }
         r = registerOperand(op, 2);
         if (r) {
-            for (int p = 0; p != r->unk_28; p++) {
+            for (int p = 0; p != r->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
                     ret |= s->unk_04->canMoveOutputLock(s, pos, (op->unk_07 >> p) & 1);
@@ -241,50 +241,50 @@ int canMoveLocks(Instr *in, short *pos)
 done:
     while (n != 0) {
         if (!saved[--n]->calcStats(0)) {
-            func_0804ad38("failed to calc stats undoing move test\n");
-            func_0804aeb0();
+            reportError("failed to calc stats undoing move test\n");
+            abortAfterError();
         }
     }
     return ret;
 }
 
-bool moveLocks(Instr *const in, cls08058718 *pos)
+bool moveLocks(Instr *const in, InstructionPosition *pos)
 {
-    cls08058718 *d = &in->unk_13e8;
+    InstructionPosition *d = &in->unk_13e8;
     d->unk_00 = pos->unk_00;
     d->unk_04 = pos->unk_04;
     d->unk_03 = pos->unk_03;
     d->unk_02 = pos->unk_02;
-    for (int i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (int i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         RegPoolEntry *r = op->unk_18;
         if (!r)
             continue;
         if (isRegisterOperand(op, 2)) {
-            for (int p = 0; p != r->unk_28; p++) {
+            for (int p = 0; p != r->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
-                    cls0805c244 *ll = s->unk_04;
+                    RegisterPartLockList *ll = s->unk_04;
                     s->setFrom(&in->unk_13e8);
                     if (!ll->moveOutputLock(s)) {
-                        func_0804ad38("oh no - move output lock failed %d.%d\n", i, p);
+                        reportError("oh no - move output lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
-                        func_0804aeb0();
+                        abortAfterError();
                         return false;
                     }
                 }
             }
         }
         if (isRegisterOperand(op, 1)) {
-            for (int p = 0; p != r->unk_28; p++) {
+            for (int p = 0; p != r->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *s = &op->unk_2c[p];
-                    cls0805c244 *ll = s->unk_04;
+                    RegisterPartLockList *ll = s->unk_04;
                     s->setFrom(&in->unk_13e8);
                     if (!ll->moveInputLock(s)) {
-                        func_0804ad38("oh no - move input lock failed %d.%d\n", i, p);
+                        reportError("oh no - move input lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
-                        func_0804aeb0();
+                        abortAfterError();
                         return false;
                     }
                 }
@@ -297,17 +297,17 @@ bool moveLocks(Instr *const in, cls08058718 *pos)
 bool setPipeBits(Instr *in)
 {
     int i;
-    for (i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         if (op->unk_18)
             op->unk_18->unk_34 = 0;
     }
-    for (i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         RegPoolEntry *r = op->inputRegister();
         if (!r)
             continue;
-        for (int p = 0; p != r->unk_28; p++) {
+        for (int p = 0; p != r->partCount; p++) {
             if ((op->unk_07 >> p) & 1) {
                 OpSlot *s = &op->unk_2c[p];
                 s->unk_01 = 0;
@@ -316,7 +316,7 @@ bool setPipeBits(Instr *in)
                 if (!(((unsigned char)r->unk_34 >> p) & 1)) {
                     switch ((unsigned char)in->unk_138c) {
                     case 0:
-                        func_0804ad38("no physical pipe bits!\n");
+                        reportError("no physical pipe bits!\n");
                         return false;
                     case 1:
                         s->unk_01 = 1;
@@ -328,7 +328,7 @@ bool setPipeBits(Instr *in)
                         s->unk_02 = 1;
                         break;
                     default:
-                        func_0804ad38("unknown pipe request\n");
+                        reportError("unknown pipe request\n");
                         return false;
                     }
                 }
@@ -339,7 +339,7 @@ bool setPipeBits(Instr *in)
     return true;
 }
 
-int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos)
+int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
 {
     int row = pos->unk_00;
     int pipe = pos->unk_02;
@@ -393,8 +393,8 @@ int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos)
     int fr = 0;
     if (!in->unk_1410) {
         if (!func_0806558c(in, &fr)) {
-            func_0804ad38("check fdeps failed\n");
-            func_0804adf0(-1);
+            reportError("check fdeps failed\n");
+            exitAfterCleanup(-1);
             return 0x80000000;
         }
         if (fr < 0) {
@@ -419,11 +419,11 @@ int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos)
     return checkLocks(in, &pos->unk_00, minPos);
 }
 
-bool DoInsert(workTable *const wt, Instr *in, cls08058718 *pos)
+bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
 {
     short b = in->unk_142c;
     if (__builtin_expect(b != 0, 1) && !(b = in->unk_142e)) {
-        func_0804ad38("undo insert currmuid not set\n");
+        reportError("undo insert currmuid not set\n");
         return false;
     }
     short r = 0;
@@ -437,7 +437,7 @@ bool DoInsert(workTable *const wt, Instr *in, cls08058718 *pos)
     }
     r = pos->unk_04;
     wtRow *row = &wt->unk_2c[r];
-    cls08058718 *s = &in->unk_13e8;
+    InstructionPosition *s = &in->unk_13e8;
     b = pos->unk_00;
     s->unk_04 = r;
     char a = pos->unk_03;
@@ -448,7 +448,7 @@ bool DoInsert(workTable *const wt, Instr *in, cls08058718 *pos)
     row->unk_00[p].unk_00 = in;
     b = setLocks(in);
     if (!(char)b) {
-        func_0804ad38("DoInsert: failed to set locks in instruction insert\n");
+        reportError("DoInsert: failed to set locks in instruction insert\n");
         return false;
     }
     int zt;
@@ -457,13 +457,13 @@ bool DoInsert(workTable *const wt, Instr *in, cls08058718 *pos)
         wt->unk_40++;
         b = UnlinkFromToDo((Block *)wt, in);
         if (!(char)b) {
-            func_0804ad38("failed to unlink from to do list\n");
-            func_0804aeb0();
+            reportError("failed to unlink from to do list\n");
+            abortAfterError();
         }
         a = AddDone_Tail((Block *)wt, in);
         if (!a) {
-            func_0804ad38("failed to add to done\n");
-            func_0804aeb0();
+            reportError("failed to add to done\n");
+            abortAfterError();
         }
         zt = ((unsigned char)pos->unk_02 | (unsigned char)pos->unk_03);
         zt >>= 4;
@@ -478,32 +478,32 @@ bool UndoInsert(workTable *wt, Instr *in)
         wt->unk_84 = 0;
     if (in->unk_142c) {
         if (!in->unk_142e) {
-            func_0804ad38("undo insert currmuid not set\n");
+            reportError("undo insert currmuid not set\n");
             return false;
         }
         if (!unresolveMove((Block *)wt, in)) {
-            func_0804ad38("failed to unresolve move\n");
-            func_0804aeb0();
+            reportError("failed to unresolve move\n");
+            abortAfterError();
         }
     }
     if (!wt->takeOut(in)) {
-        func_0804ad38("failed to take out instruction!\n");
-        func_0804aeb0();
+        reportError("failed to take out instruction!\n");
+        abortAfterError();
     }
     if (!undoLocks(in)) {
-        func_0804ad38("UndoInsert:: undo locks - failed\n");
-        func_0804aeb0();
+        reportError("UndoInsert:: undo locks - failed\n");
+        abortAfterError();
         return false;
     }
     wt->unk_40--;
     in->unk_1396 = -1;
     if (!UnlinkFromDone((Block *)wt, in)) {
-        func_0804ad38("failed to unlink from done list\n");
-        func_0804aeb0();
+        reportError("failed to unlink from done list\n");
+        abortAfterError();
     }
     if (!AddToDo_Head((Block *)wt, in)) {
-        func_0804ad38("failed to relink to todo list\n");
-        func_0804aeb0();
+        reportError("failed to relink to todo list\n");
+        abortAfterError();
     }
     return true;
 }
@@ -527,7 +527,7 @@ bool reduceExtents(workTable *wt)
                 for (int i = 0; (op = in->getOp(i)) != 0; i++) {
                     RegPoolEntry *reg = registerOperand(op, 2);
                     if (reg) {
-                        for (int k = 0; k != reg->unk_28; k++) {
+                        for (int k = 0; k != reg->partCount; k++) {
                             if ((op->unk_07 >> k) & 1) {
                                 cnt++;
                                 OpSlot *s = &op->unk_2c[k];
@@ -544,7 +544,7 @@ bool reduceExtents(workTable *wt)
                 }
                 if (minEnd < 30000 && __builtin_expect(cnt >= 0, 1)) {
                     int t = minEnd;
-                    cls08058718 pos;
+                    InstructionPosition pos;
                     bool found = false;
                     for (; t > lo; t--) {
                         pos.func_0805874c(t);
@@ -555,16 +555,16 @@ bool reduceExtents(workTable *wt)
                     }
                     if (found) {
                         if (!wt->takeOut(in)) {
-                            func_0804ad38("failed to take out instruction\n");
-                            func_0804aeb0();
+                            reportError("failed to take out instruction\n");
+                            abortAfterError();
                         }
                         if (!moveLocks(in, &pos)) {
-                            func_0804ad38("failed to move !\n");
-                            func_0804aeb0();
+                            reportError("failed to move !\n");
+                            abortAfterError();
                         }
                         if (!wt->putIn(in)) {
-                            func_0804ad38("failed to put in back in\n");
-                            func_0804aeb0();
+                            reportError("failed to put in back in\n");
+                            abortAfterError();
                         }
                         moved++;
                     }
@@ -575,7 +575,7 @@ bool reduceExtents(workTable *wt)
     return true;
 }
 
-int drag(workTable *wt, Instr *in, cls08058718 *pos, int back, int depth)
+int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth)
 {
     if (!wt->unk_38)
         return 0;
@@ -590,10 +590,10 @@ int drag(workTable *wt, Instr *in, cls08058718 *pos, int back, int depth)
             RegPoolEntry *r = registerOperand(op, 1);
             if (!r)
                 continue;
-            for (int p = 0; p != r->unk_28; p++) {
+            for (int p = 0; p != r->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                 OpSlot *s = &op->unk_2c[p];
-                cls0805bcc4 *par = s->getParent();
+                OperandLock *par = s->getParent();
                 Instr *oi = par->ownerInstr();
                 if (!oi)
                     continue;
@@ -612,24 +612,24 @@ int drag(workTable *wt, Instr *in, cls08058718 *pos, int back, int depth)
                         maxPos = oi->unk_1430;
                     single = false;
                 }
-                cls08058718 *opos = &oi->unk_13e8;
+                InstructionPosition *opos = &oi->unk_13e8;
                 if (start <= opos->unk_00)
                     continue;
                 if (start > maxPos)
                     continue;
                 bool moved = false;
                 char pipe = opos->unk_02;
-                cls08058718 np;
+                InstructionPosition np;
                 np.func_0805878c(pipe);
                 np.func_0805874c(start);
                 if (depth <= 3) {
                     int b = back;
                     if (oi->unk_13d1)
                         b = wt->unk_38;
-                    cls08058718 tmp;
+                    InstructionPosition tmp;
                     n += drag(wt, oi, &np, b, depth + 1);
                 }
-                cls08058718 cur;
+                InstructionPosition cur;
                 cur.unk_00 = np.unk_00;
                 cur.unk_04 = np.unk_04;
                 cur.unk_03 = np.unk_03;
@@ -648,16 +648,16 @@ int drag(workTable *wt, Instr *in, cls08058718 *pos, int back, int depth)
                 }
                 if (moved) {
                     if (!wt->takeOut(oi)) {
-                        func_0804ad38("drag: failed to take in from table\n");
-                        func_0804aeb0();
+                        reportError("drag: failed to take in from table\n");
+                        abortAfterError();
                     }
                     if (!moveLocks(oi, &np)) {
-                        func_0804ad38("failed to move !\n");
-                        func_0804aeb0();
+                        reportError("failed to move !\n");
+                        abortAfterError();
                     }
                     if (!wt->putIn(oi)) {
-                        func_0804ad38("failed to put in dragged instruction\n");
-                        func_0804aeb0();
+                        reportError("failed to put in dragged instruction\n");
+                        abortAfterError();
                     }
                     n++;
                 }
@@ -669,27 +669,27 @@ int drag(workTable *wt, Instr *in, cls08058718 *pos, int back, int depth)
     return total;
 }
 
-cls0805c244 *workTable::getLockList(RegPoolEntry *reg, int part)
+RegisterPartLockList *workTable::getLockList(RegPoolEntry *reg, int part)
 {
-    cls0805c244 *ll = findLockList(unk_24, reg, part);
+    RegisterPartLockList *ll = findLockList(unk_24, reg, part);
     if (ll)
         return ll;
-    ll = new cls0805c244(unk_24);
+    ll = new RegisterPartLockList(unk_24);
     if (!ll) {
-        func_0804ad38("failed to get new locklist\n");
-        func_0804aeb0();
+        reportError("failed to get new locklist\n");
+        abortAfterError();
     }
     unk_20++;
     unk_24 = ll;
     if (!ll->setRepReg(reg)) {
-        func_0804ad38("failed to set representative reg\n");
+        reportError("failed to set representative reg\n");
         return 0;
     }
     ll->unk_02 = part;
     return ll;
 }
 
-int func_0807dc44(workTable *wt, Instr *in, cls08058718 *pos)
+int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
 {
     int row = pos->unk_00;
     int pipe = pos->unk_02;
@@ -719,8 +719,8 @@ int func_0807dc44(workTable *wt, Instr *in, cls08058718 *pos)
     if (!in->unk_1410) {
         int fr = 0;
         if (!func_0806558c(in, &fr)) {
-            func_0804ad38("check fdeps failed\n");
-            func_0804adf0(-1);
+            reportError("check fdeps failed\n");
+            exitAfterCleanup(-1);
             return 0x80000000;
         }
         if (fr < 0 || fr > row)
@@ -728,8 +728,8 @@ int func_0807dc44(workTable *wt, Instr *in, cls08058718 *pos)
     }
     int lr = 30000;
     if (!func_080655e8(in, &lr)) {
-        func_0804ad38("check fdeps failed\n");
-        func_0804adf0(-1);
+        reportError("check fdeps failed\n");
+        exitAfterCleanup(-1);
         return 0x80000000;
     }
     if (lr <= row)
@@ -743,22 +743,22 @@ int func_0807dc44(workTable *wt, Instr *in, cls08058718 *pos)
     return canMoveLocks(in, &pos->unk_00);
 }
 
-int func_0807de00(workTable *wt, Instr *in, cls08058718 *pos)
+int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
 {
     int row = in->unk_13e8.getRow() < 0 ? pos->getRow() : in->unk_13e8.getRow();
     if (row < 0) {
-        func_0804ad38("inst not inserted\n");
-        func_0804aeb0();
+        reportError("inst not inserted\n");
+        abortAfterError();
     }
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
         RegPoolEntry *reg = registerOperand(op, 1);
         if (!reg)
             continue;
-        for (int k = 0; k != reg->unk_28; k++) {
+        for (int k = 0; k != reg->partCount; k++) {
             if ((op->unk_07 >> k) & 1) {
                 OpSlot *s = &op->unk_2c[k];
-                cls0805bcc4 *par = s->getParent();
+                OperandLock *par = s->getParent();
                 int idx = reg->unk_30;
                 if (idx != 48 && idx != 49 && idx != 59)
                     continue;
@@ -770,8 +770,8 @@ int func_0807de00(workTable *wt, Instr *in, cls08058718 *pos)
                 if (t <= oiRow)
                     continue;
                 bool found = false;
-                cls08058718 trial;
-                cls08058718 dest;
+                InstructionPosition trial;
+                InstructionPosition dest;
                 dest.func_0805874c(t);
                 for (; oiRow < t; t--) {
                     trial.func_0805874c(t);
@@ -786,16 +786,16 @@ int func_0807de00(workTable *wt, Instr *in, cls08058718 *pos)
                 }
                 if (found) {
                     if (!wt->takeOut(oi)) {
-                        func_0804ad38("drag: failed to take in from table\n");
-                        func_0804aeb0();
+                        reportError("drag: failed to take in from table\n");
+                        abortAfterError();
                     }
                     if (!moveLocks(oi, &dest)) {
-                        func_0804ad38("failed to move !\n");
-                        func_0804aeb0();
+                        reportError("failed to move !\n");
+                        abortAfterError();
                     }
                     if (!wt->putIn(oi)) {
-                        func_0804ad38("failed to put in dragged instruction\n");
-                        func_0804aeb0();
+                        reportError("failed to put in dragged instruction\n");
+                        abortAfterError();
                     }
                 }
             }
@@ -804,7 +804,7 @@ int func_0807de00(workTable *wt, Instr *in, cls08058718 *pos)
     return 1;
 }
 
-int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards)
+int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards)
 {
     int result = 0;
     if (in->unk_138c == 3) {
@@ -831,22 +831,22 @@ int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards)
     return func_0807dc44(wt, in, pos);
 }
 
-int func_0807e1f8(workTable *wt, Instr *in, cls08058718 *pos)
+int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos)
 {
     int row = in->unk_13e8.getRow() < 0 ? pos->getRow() : in->unk_13e8.getRow();
     if (row < 0) {
-        func_0804ad38("inst not inserted\n");
-        func_0804aeb0();
+        reportError("inst not inserted\n");
+        abortAfterError();
     }
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
         RegPoolEntry *reg = registerOperand(op, 1);
         if (!reg)
             continue;
-        for (int k = 0; k != reg->unk_28; k++) {
+        for (int k = 0; k != reg->partCount; k++) {
             if ((op->unk_07 >> k) & 1) {
                 OpSlot *s = &op->unk_2c[k];
-                cls0805bcc4 *par = s->getParent();
+                OperandLock *par = s->getParent();
                 if (par->unk_22 != 0)
                     continue;
                 Instr *oi = par->ownerInstr();
@@ -859,8 +859,8 @@ int func_0807e1f8(workTable *wt, Instr *in, cls08058718 *pos)
                 if (t <= oiRow)
                     continue;
                 bool found = false;
-                cls08058718 trial;
-                cls08058718 dest;
+                InstructionPosition trial;
+                InstructionPosition dest;
                 dest.func_0805874c(t);
                 for (; oiRow < t; t--) {
                     trial.func_0805874c(t);
@@ -875,16 +875,16 @@ int func_0807e1f8(workTable *wt, Instr *in, cls08058718 *pos)
                 }
                 if (found) {
                     if (!wt->takeOut(oi)) {
-                        func_0804ad38("drag: failed to take in from table\n");
-                        func_0804aeb0();
+                        reportError("drag: failed to take in from table\n");
+                        abortAfterError();
                     }
                     if (!moveLocks(oi, &dest)) {
-                        func_0804ad38("failed to move !\n");
-                        func_0804aeb0();
+                        reportError("failed to move !\n");
+                        abortAfterError();
                     }
                     if (!wt->putIn(oi)) {
-                        func_0804ad38("failed to put in dragged instruction\n");
-                        func_0804aeb0();
+                        reportError("failed to put in dragged instruction\n");
+                        abortAfterError();
                     }
                 }
             }

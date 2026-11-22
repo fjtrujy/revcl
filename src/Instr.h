@@ -99,6 +99,13 @@ public:
 // Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).
 class cls0805c244;
 class cls08058718;
+class cls0805bcc4;
+
+// Descriptive source-level type aliases retain the original C++ class names
+// and mangled symbols required for the byte-exact historical ELF.
+typedef cls08058718 InstructionPosition;
+typedef cls0805bcc4 OperandLock;
+typedef cls0805c244 RegisterPartLockList;
 
 class cls0805bcc4 {
 public:
@@ -651,12 +658,12 @@ public:
     iLink unk_24;   // ToDo/Done list link
     Instr *unk_2c;  // next in Block move list
     cls_unk30 *unk_30;
-    iInfo *unk_34;  // opcode descriptor
-    Operand unk_38[12];
+    iInfo *opcodeInfo;  // opcode descriptor
+    Operand operands[12];
     unsigned char unk_1388;     // flags
     char unk_1389;
     bool unk_138a;
-    unsigned char unk_138b;     // operand count
+    unsigned char operandCount;     // operand count
     char unk_138c;
     unsigned char unk_138d;
     char unk_138e;
@@ -726,10 +733,10 @@ public:
     void func_0805f4e0();
     bool isValid()
     {
-        if (!unk_34)
+        if (!opcodeInfo)
             return false;
-        for (int i = 0; i != unk_138b; i++)
-            if (!unk_38[i].func_080563f8())
+        for (int i = 0; i != operandCount; i++)
+            if (!operands[i].func_080563f8())
                 return false;
         return true;
     }
@@ -756,7 +763,7 @@ public:
             func_0804adf0(0);
             return 0;
         }
-        return n < unk_138b ? &unk_38[n] : 0;
+        return n < operandCount ? &operands[n] : 0;
     }
     Instr *clone();
     int getRamBits();

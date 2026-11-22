@@ -27,9 +27,9 @@ struct Program {
     mList unk_88;       // names prefixed by doUnique
     bool unk_9c;        // ctor arg
     char unk_9d[3];
-    instStream *unk_a0; // all streams, chained via unk_108
-    instStream *unk_a4; // stream list tail
-    int unk_a8;         // stream count
+    instStream *streamHead; // all streams, chained via unk_108
+    instStream *streamTail; // stream list tail
+    int streamCount;         // stream count
     short unk_ac;       // flow UID count
     char unk_ae[2];
     instStream **unk_b0; // linear table indexed by stream id

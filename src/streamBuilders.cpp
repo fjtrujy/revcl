@@ -1,3 +1,4 @@
+#include "os.h"
 #include "instStream.h"
 #include "flowBlock.h"
 #include "Program.h"
@@ -12,16 +13,16 @@ char *dupString(const char *s);
 
 bool buildPassThru(Program *prog, instStream *s, flowBlock *blocks, int count)
 {
-    func_0804acb0("BLD_PASS\n");
+    reportInfo("BLD_PASS\n");
     if (count != 1) {
-        func_0804ad38("cnum isn't one for pass thru case.. it's %d\n", count);
+        reportError("cnum isn't one for pass thru case.. it's %d\n", count);
         return false;
     }
     s->unk_124 = blocks->unk_00;
     blocks->unk_00 = 0;
     workTable *uta = &s->unk_148;
     if (!uta->init(1, 0)) {
-        func_0804ad38("failed to init uta\n");
+        reportError("failed to init uta\n");
         return false;
     }
     uta->unk_10 = s;

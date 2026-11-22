@@ -10,7 +10,7 @@ static inline bool extendForEnd_inl(workTable *wt)
         int i = wt->unk_34++;
         wtRow *r = wt->func_080724f0(i);
         if (!r) {
-            func_0804ad38("failed to get ie for end patch\n");
+            reportError("failed to get ie for end patch\n");
             return false;
         }
         r->func_080721f8();
@@ -21,22 +21,22 @@ static inline bool extendForEnd_inl(workTable *wt)
 bool func_08062a88(Program *p)
 {
     instStream *s;
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->unk_108) {
         if (!s->unk_218) {
-            func_0804ad38("work table not set in %s\n", s->func_0806d674());
-            func_0804adf0(-1);
+            reportError("work table not set in %s\n", s->streamName());
+            exitAfterCleanup(-1);
         }
         workTable *wt = s->unk_218;
         switch (wt->unk_09) {
         case 1:
-            func_0804ad38("work table code mode is uta..%s\n", s->func_0806d674());
+            reportError("work table code mode is uta..%s\n", s->streamName());
             break;
         case 3:
         case 4:
             s->unk_21c = wt;
             break;
         default:
-            func_0804ad38("bad code mode for Tidy\n");
+            reportError("bad code mode for Tidy\n");
             return false;
         }
         s->unk_265 = 1;
@@ -53,14 +53,14 @@ bool func_08062a88(Program *p)
             n = n->unk_08;
         }
     }
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->unk_108) {
         if (!s->unk_265)
             continue;
         linkNode *n = s->unk_134.unk_00;
         while (n) {
             linkNode *next = n->unk_08;
             if (!p->unLinkStreams(s, n->unk_0c, n->unk_14)) {
-                func_0804ad38("failed disappear linkage\n");
+                reportError("failed disappear linkage\n");
                 return false;
             }
             n = next;
@@ -71,8 +71,8 @@ bool func_08062a88(Program *p)
         s->unk_2ce = 0;
         s->unk_2cd = 3;
         if (!s->unk_218) {
-            func_0804ad38("work table not set in %s\n", s->func_0806d674());
-            func_0804adf0(-1);
+            reportError("work table not set in %s\n", s->streamName());
+            exitAfterCleanup(-1);
         }
         workTable *wt = s->unk_218;
         if (wt->unk_09 == 4)
@@ -82,7 +82,7 @@ bool func_08062a88(Program *p)
         if (wt->getPhysicalLen() > 1 && wt->func_08073854())
             continue;
         if (!extendForEnd_inl(wt)) {
-            func_0804ad38("failed to extend for e\n");
+            reportError("failed to extend for e\n");
             return false;
         }
     }
@@ -95,7 +95,7 @@ bool extendForEnd(workTable *wt)
         int i = wt->unk_34++;
         wtRow *r = wt->func_080724f0(i);
         if (!r) {
-            func_0804ad38("failed to get ie for end patch\n");
+            reportError("failed to get ie for end patch\n");
             return false;
         }
         r->func_080721f8();

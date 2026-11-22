@@ -61,7 +61,7 @@ inline void xpNode::init()
 inline bool xpTree::clear()
 {
     if (!dispose(root)) {
-        func_0804ad38("failed to dispose xn\n");
+        reportError("failed to dispose xn\n");
         return false;
     }
     unk_08 = 0;
@@ -106,7 +106,7 @@ static inline bool xpNodeDecode(xpNode *n)
         return false;
     }
     if (!n->val.makeNumeric()) {
-        func_0804ad38("couldn't convert to arithmetic\n");
+        reportError("couldn't convert to arithmetic\n");
         return false;
     }
     return true;
@@ -124,7 +124,7 @@ bool xpNode::decode()
         return false;
     }
     if (!val.makeNumeric()) {
-        func_0804ad38("couldn't convert to arithmetic\n");
+        reportError("couldn't convert to arithmetic\n");
         return false;
     }
     return true;
@@ -159,7 +159,7 @@ bool xpTree::dispose(xpNode *n)
 bool xpTree::reset()
 {
     if (!dispose(root)) {
-        func_0804ad38("failed to dispose xn\n");
+        reportError("failed to dispose xn\n");
         return false;
     }
     unk_08 = 0;
@@ -242,7 +242,7 @@ void xpTree::dumpNode(xpNode *n)
         if (n->child[i])
             dumpNode(n->child[i]);
         else
-            func_0804ad38("null arg\n");
+            reportError("null arg\n");
     }
 }
 
@@ -366,7 +366,7 @@ bool xpTree::evalExp(const char *s)
     root->unk_03 = op->prec;
     root->unk_02 = op->type;
     if (!root->val.setString("=")) {
-        func_0804ad38("not set equ op\n");
+        reportError("not set equ op\n");
         return false;
     }
     cur = root;
@@ -374,20 +374,20 @@ bool xpTree::evalExp(const char *s)
     while (*p) {
         if (*p == '(') {
             if (cur->unk_00 == -1) {
-                func_0804ad38("too many open brackets!\n");
+                reportError("too many open brackets!\n");
                 goto fail;
             }
             cur->unk_00++;
             p++;
         } else if (*p == ')') {
             if (cur->unk_05 < cur->unk_04) {
-                func_0804ad38("unexpected close bracket\n");
+                reportError("unexpected close bracket\n");
                 return false;
             }
             while (cur && cur->unk_00 == 0)
                 cur = cur->parent;
             if (!cur) {
-                func_0804ad38("unbalanced brackets\n");
+                reportError("unbalanced brackets\n");
                 return false;
             }
             cur->unk_00--;
@@ -395,7 +395,7 @@ bool xpTree::evalExp(const char *s)
         } else {
             xpNode *n = new xpNode;
             if (!n) {
-                func_0804ad38("failed to get new xn .. bah\n");
+                reportError("failed to get new xn .. bah\n");
                 goto fail;
             }
             p = func_0804ec74(p, n, xpNodeIsFull(cur));
@@ -405,7 +405,7 @@ bool xpTree::evalExp(const char *s)
             }
             if (cur->unk_05 >= cur->unk_04) {
                 if (n->unk_04 <= 1) {
-                    func_0804ad38("evalExp: syntax error at : nArgs=%d\n", n->unk_04);
+                    reportError("evalExp: syntax error at : nArgs=%d\n", n->unk_04);
                     n->val.dump();
                     delete (xpNodeDel *)n;
                     goto fail;
@@ -487,8 +487,8 @@ bool xpTree::evaluate(mValue *out, unsigned int type)
         break;
     }
     case mValue::STRING:
-        func_0804ad38("asked to evaluate a tree as a literal!\n");
-        func_0804ad38("code this later\n");
+        reportError("asked to evaluate a tree as a literal!\n");
+        reportError("code this later\n");
         break;
     }
     return ok;
@@ -521,7 +521,7 @@ bool xpTree::rec_Eval(xpNode *n)
         return false;
     mValue *v = &n->val;
     if (!v->isValid()) {
-        func_0804ad38("rec_Eval::invalid xpValue\n");
+        reportError("rec_Eval::invalid xpValue\n");
         return false;
     }
     int i;
@@ -585,7 +585,7 @@ bool xpTree::rec_Eval(xpNode *n)
     }
 }
 
-bool func_0804bfcc(const char *a, const char *b);
+bool asciiCaseEqual(const char *a, const char *b);
 char *dupString(const char *s);
 
 xun *g_080bcda4;
@@ -616,20 +616,20 @@ inline xun::xun(InitTag) { next = 0; name = 0; }
 bool func_0804f75c(const char *s)
 {
     if (!s) {
-        func_0804ad38("passed a null string to add unknown\n");
+        reportError("passed a null string to add unknown\n");
         return false;
     }
     for (xun *p = g_080bcda4; p; p = p->next)
-        if (func_0804bfcc(p->name, s))
+        if (asciiCaseEqual(p->name, s))
             return true;
     xun *x = new xun(xun::INIT);
     if (!x) {
-        func_0804ad38("failed to new xun\n");
+        reportError("failed to new xun\n");
         return false;
     }
     x->name = dupString(s);
     if (!x->name) {
-        func_0804ad38("failed to dup string for xun\n");
+        reportError("failed to dup string for xun\n");
         delete (xunDel *)x;
         return false;
     }
@@ -686,7 +686,7 @@ void xpTree::func_0804f920(xpNode *n)
         if (!s)
             s = "<no_literal>";
         if (s && !func_0804f75c(s)) {
-            func_0804ad38("failed to add an unknown\n");
+            reportError("failed to add an unknown\n");
             g_080b3140 = -1;
             return;
         }

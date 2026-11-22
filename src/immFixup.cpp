@@ -22,7 +22,7 @@ static inline bool initStreamImm(instStream *s)
 {
     workTable *wt = s->getTable();
     if (!wt) {
-        func_0804ad38("Init_immFixup - failed to get work table\n");
+        reportError("Init_immFixup - failed to get work table\n");
         return false;
     }
     s->unk_2c2 = 0;
@@ -34,8 +34,8 @@ static inline bool initStreamImm(instStream *s)
 static inline void fixInst(Instr *in)
 {
     if (!func_08069e7c(in)) {
-        func_0804ad38("do_immFixup - failed for an inst\n");
-        func_0804adf0(-1);
+        reportError("do_immFixup - failed for an inst\n");
+        exitAfterCleanup(-1);
     }
 }
 
@@ -59,17 +59,17 @@ bool func_08069324(Program *p, bool init)
 {
     instStream *s;
     if (init) {
-        for (s = p->unk_a0; s; s = s->unk_108)
+        for (s = p->streamHead; s; s = s->unk_108)
             if (!initStreamImm(s))
                 return false;
-        for (s = p->unk_a0; s; s = s->unk_108)
+        for (s = p->streamHead; s; s = s->unk_108)
             if (!aaFixup(s))
                 return dumpFailed(s);
     } else {
-        for (s = p->unk_a0; s; s = s->unk_108)
+        for (s = p->streamHead; s; s = s->unk_108)
             if (!do_immFixup(s))
                 return false;
-        for (s = p->unk_a0; s; s = s->unk_108)
+        for (s = p->streamHead; s; s = s->unk_108)
             if (!initStreamImm(s))
                 return false;
     }
@@ -107,8 +107,8 @@ static inline Instr *regUseInstr(regUse *ru) { return ru->unk_1c; }
 static inline olList *regUseVisList0(regUse *ru) { return &ru->unk_20[0].unk_00; }
 static inline unsigned char regUseExtIn(regUse *ru) { return ru->unk_0c; }
 static inline unsigned char regUseExtOut(regUse *ru) { return ru->unk_0d; }
-static inline Operand *instrRawOp(Instr *in, unsigned char idx) { return &in->unk_38[idx]; }
-static inline Operand *instrRawOpS(Instr *in, signed char idx) { return &in->unk_38[idx]; }
+static inline Operand *instrRawOp(Instr *in, unsigned char idx) { return &in->operands[idx]; }
+static inline Operand *instrRawOpS(Instr *in, signed char idx) { return &in->operands[idx]; }
 static inline RegPoolEntry *opRawReg(Operand *op) { return op->unk_18; }
 static inline unsigned char opSlotMask(Operand *op) { return op->unk_07; }
 static inline mValue *opImmVal(Operand *op) { return &op->unk_1c; }
@@ -126,21 +126,21 @@ bool aaFixup(instStream *s)
 {
     workTable *wt = s->getTable();
     if (!wt) {
-        func_0804ad38("Init_immFixup - failed to get work table\n");
+        reportError("Init_immFixup - failed to get work table\n");
         return false;
     }
     for (regUse *ru = firstRegUse(wt); ru; ru = ru->unk_04) {
         RegPoolEntry *reg = regUseReg(ru);
         if (!reg) {
-            func_0804ad38("aaFixup - regref had no register\n");
-            func_0804adf0(-1);
+            reportError("aaFixup - regref had no register\n");
+            exitAfterCleanup(-1);
         }
         Instr *in = regUseInstr(ru);
         olList *vis = regUseVisList0(ru);
         aaDesc *aa = func_0806c768(in);
         if (!aa || !bit0(regUseExtIn(ru)) || !bit0(regUseExtOut(ru)) || ru->unk_18 != 1)
             continue;
-        RegPoolEntry *outReg = in->unk_38[aa->unk_06].unk_18;
+        RegPoolEntry *outReg = in->operands[aa->unk_06].unk_18;
         if (outReg != reg || opRawReg(instrRawOp(in, aaInOp(aa))) != outReg)
             continue;
         ol_s *ol;
@@ -156,7 +156,7 @@ bool aaFixup(instStream *s)
             aaUse *u = func_0806c7f8(vi);
             if (u && olOpIndex(ol) == aaUseOp(u) && opSlotMask(vop) == 1) {
                 if (hasAaData(vi)) {
-                    func_0804ad38("instruction already has aa data loaded .. mode before\n");
+                    reportError("instruction already has aa data loaded .. mode before\n");
                     vi->func_08054008(false);
                     immValid(instrAaImm(vi));
                     return false;
@@ -167,7 +167,7 @@ bool aaFixup(instStream *s)
                 mValue *v = instrAaImm(vi);
                 if (aa->unk_07 >= 0) {
                     if (!v->set(opImmVal(instrRawOpS(in, aaImmOp(aa))))) {
-                        func_0804ad38("failed to set xaaImm for before\n");
+                        reportError("failed to set xaaImm for before\n");
                         return false;
                     }
                 } else
@@ -176,30 +176,30 @@ bool aaFixup(instStream *s)
             continue;
             }
         bad1:
-            func_0804ad38("failed to get instruction for visible input\n");
-            func_0804adf0(-1);
+            reportError("failed to get instruction for visible input\n");
+            exitAfterCleanup(-1);
             goto cont;
         bad2:
-            func_0804ad38("failed to get instruction for visible input\n");
-            func_0804adf0(-1);
+            reportError("failed to get instruction for visible input\n");
+            exitAfterCleanup(-1);
             goto cont;
         }
         Operand *out = in->getOp(aaOutOp(aa));
         if (!out || !out->isOutput() || bit0Clear(opSlotMask(out))) {
-            func_0804ad38("failed to get output operand for aa\n");
-            func_0804adf0(-1);
+            reportError("failed to get output operand for aa\n");
+            exitAfterCleanup(-1);
         }
         for (ol = opSlotUses0(out)->func_08058370(); ol; ol = ol->func_080583ac()) {
             Instr *vi = olInstr(ol);
             Operand *vop = func_0805802c(ol);
             if (!vi || !vop) {
-                func_0804ad38("failed to get instruction for visible input.. mode after\n");
-                func_0804adf0(-1);
+                reportError("failed to get instruction for visible input.. mode after\n");
+                exitAfterCleanup(-1);
             }
             aaUse *u = func_0806c7f8(vi);
             if (u && olOpIndex(ol) == aaUseOp(u) && opSlotMask(vop) == 1) {
                 if (hasAaData(vi)) {
-                    func_0804ad38("instruction already has aa data loaded.. mode after\n");
+                    reportError("instruction already has aa data loaded.. mode after\n");
                     vi->func_08054008(false);
                     immValid(instrAaImm(vi));
                     return false;
@@ -210,7 +210,7 @@ bool aaFixup(instStream *s)
                 vi->unk_13d6 = u->unk_04;
                 if (aa->unk_07 >= 0) {
                     if (!v->set(opImmVal(instrRawOpS(in, aaImmOp(aa))))) {
-                        func_0804ad38("failed to set xaaImm after\n");
+                        reportError("failed to set xaaImm after\n");
                         return false;
                     }
                 } else
@@ -240,10 +240,10 @@ bool tidyTable(workTable *wt)
 
 bool tidyProgram(Program *p)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108)
+    for (instStream *s = p->streamHead; s; s = s->unk_108)
         if (!tidyStream(s)) {
-            func_0804ad38("failed to tidy a stream\n");
-            func_0804adf0(-1);
+            reportError("failed to tidy a stream\n");
+            exitAfterCleanup(-1);
         }
     return true;
 }
@@ -256,11 +256,11 @@ struct epSrc {
 bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
 {
     if (luid < 0) {
-        func_0804ad38("entered getSrcEpLid with -ve luid\n");
+        reportError("entered getSrcEpLid with -ve luid\n");
         return false;
     }
     if (!oll->unk_04) {
-        func_0804ad38("oll has no entries for getSrcEpLid\n");
+        reportError("oll has no entries for getSrcEpLid\n");
         return false;
     }
     int nLocal = 0;
@@ -268,12 +268,12 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
     for (ol = oll->unk_00; ol; ol = ol->unk_00) {
         Instr *in = ol->unk_04;
         if (!in) {
-            func_0804ad38("failed to get in from ol\n");
-            func_0804adf0(-1);
+            reportError("failed to get in from ol\n");
+            exitAfterCleanup(-1);
         }
         instStream *s = in->func_08054168();
         if (!s) {
-            func_0804ad38("getSrcEpLid- failed to get owner\n");
+            reportError("getSrcEpLid- failed to get owner\n");
             return false;
         }
         if (s->unk_2c2 != luid) {
@@ -285,21 +285,21 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
     for (ol = oll->unk_00; ol; ol = ol->unk_00) {
         Instr *in = ol->unk_04;
         if (!in) {
-            func_0804ad38("failed to get in from ol\n");
-            func_0804adf0(-1);
+            reportError("failed to get in from ol\n");
+            exitAfterCleanup(-1);
         }
         instStream *s = in->func_08054168();
         if (!s) {
-            func_0804ad38("getSrcEpLid- failed to get owner\n");
+            reportError("getSrcEpLid- failed to get owner\n");
             return false;
         }
         int type = s->unk_2c4;
         if (s->unk_2c2 != luid) {
-            func_0804ad38("getSrcEpLid() - rather unlikely\n");
+            reportError("getSrcEpLid() - rather unlikely\n");
             return false;
         }
         if (nLocal > 1) {
-            func_0804ad38("nLocal got >1 in getSrcEpLid()\n");
+            reportError("nLocal got >1 in getSrcEpLid()\n");
             oll->func_08057e9c();
             return false;
         }
@@ -308,16 +308,16 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
         nLocal++;
     }
     if (nLocal == 0) {
-        func_0804ad38("no valid eplids found for getSrc\n");
+        reportError("no valid eplids found for getSrc\n");
         return false;
     }
     if (nLocal == 2) {
         if (src[0].type == src[1].type) {
-            func_0804ad38("nLocal is 2 , but both setters from same type of construct\n");
+            reportError("nLocal is 2 , but both setters from same type of construct\n");
             return false;
         }
         if (epType == 2) {
-            func_0804ad38("nLocal is 2, but we are a prologue!\n");
+            reportError("nLocal is 2, but we are a prologue!\n");
             return false;
         }
         for (int i = 0; i != 2; i++) {
@@ -330,7 +330,7 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
                     src[i].lid--;
                     break;
                 default:
-                    func_0804ad38("epSrc: we are EPI, but not MAIN/PRO setter for n=2\n");
+                    reportError("epSrc: we are EPI, but not MAIN/PRO setter for n=2\n");
                     return false;
                 }
                 break;
@@ -342,17 +342,17 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
                     src[i].lid--;
                     break;
                 default:
-                    func_0804ad38("epSrc: we are MAIN, but not MAIN/PRO setter\n");
+                    reportError("epSrc: we are MAIN, but not MAIN/PRO setter\n");
                     return false;
                 }
                 break;
             default:
-                func_0804ad38("bad loop type found for n=2\n");
+                reportError("bad loop type found for n=2\n");
                 return false;
             }
         }
         if (src[0].lid != src[1].lid) {
-            func_0804ad38("lid mismatch for n=2\n");
+            reportError("lid mismatch for n=2\n");
             return false;
         }
     } else {
@@ -368,18 +368,18 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
             src[0].lid--;
             break;
         default:
-            func_0804ad38("bad ep type for n=1\n");
+            reportError("bad ep type for n=1\n");
             return false;
         }
         break;
     case 5:
         if (src[0].type != 2 && src[0].type != 5) {
-            func_0804ad38("bad ep type for n=1  %d\n", src[0].type);
+            reportError("bad ep type for n=1  %d\n", src[0].type);
             return false;
         }
         break;
     default:
-        func_0804ad38("mylm is bad for n=1\n");
+        reportError("mylm is bad for n=1\n");
         return false;
     }
     }
@@ -396,35 +396,35 @@ bool func_08069e7c(Instr *in)
 {
     instStream *s = in->func_08054168();
     if (!s) {
-        func_0804ad38("failed to get owner istream from inst during immediate fixup\n");
-        func_0804adf0(-1);
+        reportError("failed to get owner istream from inst during immediate fixup\n");
+        exitAfterCleanup(-1);
     }
     if (!in->unk_13d4)
         return true;
     Operand *op = in->getOp(in->unk_13d6);
     if (!op) {
-        func_0804ad38("failed to get opernad for imm fix\n");
-        func_0804adf0(-1);
+        reportError("failed to get opernad for imm fix\n");
+        exitAfterCleanup(-1);
     }
     if (!isCinput(op)) {
-        func_0804ad38("operand isn't cinput for in fix\n");
-        func_0804adf0(-1);
+        reportError("operand isn't cinput for in fix\n");
+        exitAfterCleanup(-1);
     }
     int ep;
     if (s->unk_2c2) {
         if (in->unk_13d2 < 0) {
-            func_0804ad38("loop, epID<0 for operand in im fixup aaDstMode=%d..epMode=%d\n",
+            reportError("loop, epID<0 for operand in im fixup aaDstMode=%d..epMode=%d\n",
                           in->unk_13d5, in->unk_13d2);
             in->func_08054008(false);
-            func_0804adf0(-1);
+            exitAfterCleanup(-1);
         }
         ep = in->unk_13d2;
     } else {
         if (in->unk_13d2 >= 0) {
-            func_0804ad38("nonloop, epID>=0 for operand in im fixup aaDstmode=%d..epMode=%d\n",
+            reportError("nonloop, epID>=0 for operand in im fixup aaDstmode=%d..epMode=%d\n",
                           in->unk_13d5, in->unk_13d2);
             in->func_08054008(false);
-            func_0804adf0(-1);
+            exitAfterCleanup(-1);
         }
         ep = 0;
     }
@@ -434,12 +434,12 @@ bool func_08069e7c(Instr *in)
     if (s->unk_2c2) {
         olList *oll = &op->unk_2c[0].unk_54;
         if (!getSrcEpLid(oll, s->unk_2c2, s->unk_2c4, &lid)) {
-            func_0804ad38("failed to determine actual loopid of setter.. we are:\n");
+            reportError("failed to determine actual loopid of setter.. we are:\n");
             in->leDump();
             if (in->func_08054168())
-                func_0804ad38("parent stream is : %s\n", in->func_08054168()->func_0806d674());
-            func_0804ad38("expected was %d\n", in->unk_13d2);
-            func_0804adf0(-1);
+                reportError("parent stream is : %s\n", in->func_08054168()->streamName());
+            reportError("expected was %d\n", in->unk_13d2);
+            exitAfterCleanup(-1);
         }
     } else
         lid = op->unk_27 ? -1 : 0;
@@ -460,24 +460,24 @@ bool func_08069e7c(Instr *in)
         mul = -1;
         break;
     case 3:
-        func_0804ad38("well - I'll code this one later\n");
-        func_0804adf0(-1);
+        reportError("well - I'll code this one later\n");
+        exitAfterCleanup(-1);
         return false;
     default:
-        func_0804ad38("bad opchar mode %d\n", in->unk_13d4);
-        func_0804adf0(-1);
+        reportError("bad opchar mode %d\n", in->unk_13d4);
+        exitAfterCleanup(-1);
         return false;
     }
     if (dir * mul < 0)
         diff = -diff;
-    int r = maddImmediate(&in->unk_38[in->unk_13d6], &in->unk_13d8, diff);
+    int r = maddImmediate(&in->operands[in->unk_13d6], &in->unk_13d8, diff);
     if (r < 0) {
-        func_0804ad38("failed to madd immediates\n");
+        reportError("failed to madd immediates\n");
         in->leDump(in->unk_13d6);
-        func_0804adf0(-1);
+        exitAfterCleanup(-1);
     }
     if (r == 1) {
-        func_0804ad38("ran out of bits for immfixup\n");
+        reportError("ran out of bits for immfixup\n");
         return false;
     }
     }
@@ -488,7 +488,7 @@ bool Init_immFixup(instStream *s)
 {
     workTable *wt = s->getTable();
     if (!wt) {
-        func_0804ad38("Init_immFixup - failed to get work table\n");
+        reportError("Init_immFixup - failed to get work table\n");
         return false;
     }
     s->unk_2c2 = 0;

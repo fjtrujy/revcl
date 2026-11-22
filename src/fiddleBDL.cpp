@@ -3,8 +3,8 @@
 #include "os.h"
 
 bool setRange(int start, int end, int lsz);
-bool moveLocks(Instr *i, cls08058718 *pos);
-int func_0807dc44(workTable *wt, Instr *i, cls08058718 *pos);
+bool moveLocks(Instr *i, InstructionPosition *pos);
+int func_0807dc44(workTable *wt, Instr *i, InstructionPosition *pos);
 
 static inline bool isRawMode(workTable *wt)
 {
@@ -34,7 +34,7 @@ bool fiddleBDL(workTable *wt)
     } else {
         int len = wt->unk_34 - wt->unk_30;
         if (len < wt->unk_44) {
-            func_0804ad38(fiddleSmallerError);
+            reportError(fiddleSmallerError);
             return false;
         }
         if (len == wt->unk_44)
@@ -52,25 +52,25 @@ bool fiddleBDL(workTable *wt)
             goto done;
         wtRow *last = wt->func_080724f0(wt->unk_34 - 1);
         if (!last) {
-            func_0804ad38(fiddleGetLastIeError);
+            reportError(fiddleGetLastIeError);
             return false;
         }
         if (last->func_08072304())
             goto done;
         wtRow *brow = wt->func_080724f0(wt->unk_34 - 2);
         if (!brow) {
-            func_0804ad38(fiddleGetBranchIeError);
+            reportError(fiddleGetBranchIeError);
             return false;
         }
         wtRow *prow = wt->func_080724f0(wt->unk_34 - 3);
         if (!prow) {
-            func_0804ad38(fiddleGetPrevIeError);
+            reportError(fiddleGetPrevIeError);
             return false;
         }
 
-        cls08058718 posP;
+        InstructionPosition posP;
         {
-            cls08058718 posB;
+            InstructionPosition posB;
             short row = wt->unk_34;
             row -= 3;
             posP.setRow(row);
@@ -79,7 +79,7 @@ bool fiddleBDL(workTable *wt)
             posB.setRow(row);
             bool ok = true;
             if (br != brow->unk_00[1].unk_00) {
-                func_0804ad38(fiddleBranchPosError);
+                reportError(fiddleBranchPosError);
                 return false;
             }
             Instr *prev = prow->unk_00[1].unk_00;
@@ -87,18 +87,18 @@ bool fiddleBDL(workTable *wt)
                 return true;
 
             if (prev && !wt->takeOut(prev)) {
-                func_0804ad38("failed to takeout in_p\n");
+                reportError("failed to takeout in_p\n");
                 return false;
             }
             if (func_0807dc44(wt, br, &posP))
                 ok = false;
             if (prev) {
                 if (!moveLocks(prev, &posP)) {
-                    func_0804ad38("failed to undo takeout\n");
+                    reportError("failed to undo takeout\n");
                     return false;
                 }
                 if (!wt->putIn(prev)) {
-                    func_0804ad38("failed to takeout in_p\n");
+                    reportError("failed to takeout in_p\n");
                     return false;
                 }
             }
@@ -107,7 +107,7 @@ bool fiddleBDL(workTable *wt)
 
             if (prev) {
                 if (!wt->takeOut(br)) {
-                    func_0804ad38("failed to takeout in_b\n");
+                    reportError("failed to takeout in_b\n");
                     return false;
                 }
                 if (func_0807dc44(wt, prev, &posB))
@@ -116,11 +116,11 @@ bool fiddleBDL(workTable *wt)
                 if ((short)m2)
                     ok = false;
                 if (!moveLocks(br, &posB)) {
-                    func_0804ad38("failed to undo branch\n");
+                    reportError("failed to undo branch\n");
                     return false;
                 }
                 if (!wt->putIn(br)) {
-                    func_0804ad38("failed to put branch back in\n");
+                    reportError("failed to put branch back in\n");
                     return false;
                 }
             }
@@ -128,29 +128,29 @@ bool fiddleBDL(workTable *wt)
                 goto success;
 
             if (!wt->takeOut(br)) {
-                func_0804ad38("failed to takeout in_b\n");
+                reportError("failed to takeout in_b\n");
                 return false;
             }
             if (prev && !wt->takeOut(prev)) {
-                func_0804ad38("failed to takeout in_p\n");
+                reportError("failed to takeout in_p\n");
                 return false;
             }
             if (!moveLocks(br, &posP)) {
-                func_0804ad38(fiddleMoveBranchError);
+                reportError(fiddleMoveBranchError);
                 return false;
             }
             if (prev) {
                 if (!moveLocks(prev, &posB)) {
-                    func_0804ad38(fiddleFailedPrevError);
+                    reportError(fiddleFailedPrevError);
                     return false;
                 }
                 if (!wt->putIn(prev)) {
-                    func_0804ad38("failed to put prev back in\n");
+                    reportError("failed to put prev back in\n");
                     return false;
                 }
             }
             if (!wt->putIn(br)) {
-                func_0804ad38("failed to put branch back in\n");
+                reportError("failed to put branch back in\n");
                 return false;
             }
             wt->unk_34--;

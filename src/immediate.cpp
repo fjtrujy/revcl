@@ -27,21 +27,21 @@ bool parseImmediate(const char *s, unsigned char type, mValue *v)
     }
     xpTree tree;
     if (!tree.evalExp(s)) {
-        func_0804ad38(parseImmediateError, s);
+        reportError(parseImmediateError, s);
     } else {
         int n = tree.func_0804f8f0();
         if (n < 0) {
-            func_0804ac7c(parseImmediateWarn, s);
+            reportWarning(parseImmediateWarn, s);
         } else {
             if (n != 0) {
                 if (!v->setString(s)) {
-                    func_0804ad38("failed to set literal\n");
+                    reportError("failed to set literal\n");
                     return false;
                 }
             } else {
                 v->dump();
                 if (!tree.evaluate(v, t)) {
-                    func_0804ad38(evalImmediateError, s, func_0804ca58(t));
+                    reportError(evalImmediateError, s, func_0804ca58(t));
                     goto fail;
                 }
             }
@@ -57,11 +57,11 @@ fail:
 int maddImmediate(Operand *const op, mValue *v, int n)
 {
     if (!op->unk_1c.isValid()) {
-        func_0804ad38("madd immediate- ximm invalid\n");
+        reportError("madd immediate- ximm invalid\n");
         return -1;
     }
     if (!v->isValid()) {
-        func_0804ad38(maddImmediateInputError);
+        reportError(maddImmediateInputError);
         return 0;
     }
     int r = 0;
@@ -69,7 +69,7 @@ int maddImmediate(Operand *const op, mValue *v, int n)
         int a = 0;
         int b = 0;
         if (!op->unk_1c.getInt(&a) || !v->getInt(&b)) {
-            func_0804ad38("failed to get integer values\n");
+            reportError("failed to get integer values\n");
             return -1;
         }
         op->unk_1c.setInt(a + b * n);
@@ -77,11 +77,11 @@ int maddImmediate(Operand *const op, mValue *v, int n)
         char *x = op->unk_1c.asChars();
         char *y = v->asChars();
         if (!x || !y) {
-            func_0804ad38("failed to get chars\n");
+            reportError("failed to get chars\n");
             return -1;
         }
         char buf[1024];
-        func_0804adbc(buf, "(%s)+((%s)*%d)", x, y, n);
+        formatIntoBuffer(buf, "(%s)+((%s)*%d)", x, y, n);
         op->unk_1c.setString(buf);
         r = 2;
     }

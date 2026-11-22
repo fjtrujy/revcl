@@ -38,8 +38,8 @@ inline bool RegWeb::AddiInstr(Instr *in)
 {
     if (!in)
         return false;
-    for (int i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (int i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         RegPoolEntry *vrg = op->unk_18;
         if (!vrg || !op->isForwardable())
             continue;
@@ -54,7 +54,7 @@ inline bool RegWeb::AddiInstr(Instr *in)
         }
         w->unk_14 |= op->unk_07;
         if (op->unk_0d && op->unk_09 == 1) {
-            if (!merge(w, in->unk_38[op->unk_0d - 1].GetWeb())) {
+            if (!merge(w, in->operands[op->unk_0d - 1].GetWeb())) {
                 func_0804ad38("failed to merge web for implicit web patch\n");
                 return false;
             }
@@ -67,7 +67,7 @@ inline bool RegWeb::AddiInstr(Instr *in)
             }
             if (!setfMap(w, fb)) {
                 func_0804ad38("setfMap failed when binding to base for basereg %s, reg %s\n",
-                              fb->func_0805a8e0(), vrg->func_0805a8e0());
+                              fb->registerName(), vrg->registerName());
                 return false;
             }
             if (!vrg->unk_14 && vrg != fb) {
@@ -76,7 +76,7 @@ inline bool RegWeb::AddiInstr(Instr *in)
             }
         }
         if (isRegisterOperand(op, 1)) {
-            for (int j = 0; j != vrg->unk_28; j++) {
+            for (int j = 0; j != vrg->partCount; j++) {
                 bool used = (op->unk_07 >> j) & 1;
                 if (!used)
                     continue;
@@ -213,7 +213,7 @@ inline RegWeb *RegPoolEntry::GetWeb()
     while (w->unk_0c) {
         if (w->unk_10) {
             func_0804ad38(" INTERNAL Register::GetWeb found non terminal count not at end!! for '%s' count=%d\n",
-                          func_0805a8e0(), w->unk_10);
+                          registerName(), w->unk_10);
             func_0804adf0(-1);
         }
         w = w->unk_0c;
@@ -259,7 +259,7 @@ inline bool GatherWeb()
             }
             if (r->unk_2b4) {
                 if (!RegWeb::merge(r->unk_2b4, w)) {
-                    func_0804ad38("during mapped merge..failed for %s\n", r->func_0805a8e0());
+                    func_0804ad38("during mapped merge..failed for %s\n", r->registerName());
                     return false;
                 }
             } else
@@ -287,7 +287,7 @@ inline bool GatherWeb()
                     func_0804ad38("Gather: register had no pool\n");
                     return false;
                 }
-                func_0804adbc(name, "%s__%d", r->func_0805a8e0(), r->unk_10);
+                func_0804adbc(name, "%s__%d", r->registerName(), r->unk_10);
                 w->unk_00 = pool->func_08059a5c(name);
                 if (!w->unk_00) {
                     func_0804ad38("GatherWeb: failed to get '%s' from %s\n", name, pool->unk_2c);
@@ -317,7 +317,7 @@ inline bool RegWeb::PatchOperand(Operand *op)
         op->unk_18 = r;
         if (op->unk_10 && op->unk_10 != r) {
             func_0804ad38("not forcing to a base reg after all - in PatchOperands %s isn't %s\n",
-                          op->unk_10->func_0805a8e0(), r->func_0805a8e0());
+                          op->unk_10->registerName(), r->registerName());
             int have = op->unk_18->unk_14;
             int want = op->unk_10->unk_14;
             func_0804ad38("have %d %d\n", want, have);
@@ -331,8 +331,8 @@ inline bool RegWeb::PatchInstr(Instr *in)
 {
     if (!in)
         return true;
-    for (int i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (int i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         if (!PatchOperand(op))
             return false;
     }
@@ -385,7 +385,7 @@ inline bool RegWeb::setfMap(RegWeb *w, RegPoolEntry *r)
         if (w->unk_08 != r) {
             func_0804ad38("regweb:: set map - can't map to different base registers..\n");
             func_0804ad38("regweb:: try to map both %s and %s\n",
-                          w->unk_08->func_0805a8e0(), r->func_0805a8e0());
+                          w->unk_08->registerName(), r->registerName());
             return false;
         }
     } else
@@ -401,9 +401,9 @@ inline bool buildRegWebs(Program *p)
         return false;
     }
     instStream *s;
-    for (s = p->unk_a0; s; s = s->unk_108)
+    for (s = p->streamHead; s; s = s->unk_108)
         RegWeb::ClearWebs(s->getWorkTable());
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->unk_108) {
         if (!RegWeb::AddiTable(s->getWorkTable())) {
             func_0804ad38("flow: AddIStream failed for %s\n", s->func_0806d674());
             return false;
@@ -413,7 +413,7 @@ inline bool buildRegWebs(Program *p)
         func_0804ad38("flow::GatherWeb() failed\n");
         return false;
     }
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->unk_108) {
         if (!RegWeb::PatchITable(s->getWorkTable())) {
             func_0804ad38("flow: failed to patch ist %s\n", s->func_0806d674());
             return false;
@@ -425,8 +425,8 @@ inline bool buildRegWebs(Program *p)
 inline bool RegWeb::ClearWebs(workTable *t)
 {
     for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00)
-        for (int i = 0; i != in->unk_138b; i++)
-            in->unk_38[i].unk_00 = 0;
+        for (int i = 0; i != in->operandCount; i++)
+            in->operands[i].unk_00 = 0;
     return true;
 }
 

@@ -120,7 +120,7 @@ int func_08052100(const char *s)
         if (!bit)
             return mask;
         if (mask & bit) {
-            func_0804ac7c("VUSTR:: badly formed mod bits string!\n");
+            reportWarning("VUSTR:: badly formed mod bits string!\n");
             return -1;
         }
         mask |= bit;
@@ -177,7 +177,7 @@ int func_080521f0(char *s)
                     mods |= m;
                     src = p + 1;
                 } else {
-                    func_0804ac7c("possibly misformed instruction modifier detected\n");
+                    reportWarning("possibly misformed instruction modifier detected\n");
                     *dst++ = *src++;
                 }
             }
@@ -198,7 +198,7 @@ bool func_080522c4(int mods, unsigned char mode, bool flag)
         allowed = 13;
         break;
     default:
-        func_0804ac7c("bad mode to ask about mods\n");
+        reportWarning("bad mode to ask about mods\n");
         break;
     }
     return (~allowed & mods) == 0;

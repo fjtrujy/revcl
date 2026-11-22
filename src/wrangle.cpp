@@ -25,14 +25,14 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f);
 bool findInsertPositionMode0(workTable *wt, Instr *in, int *row, int *pipe);
 bool buildCandidateList2(workTable *wt);
 bool func_0808158c(workTable *wt, wrangleCand *c);
-int checkInsert(workTable *wt, Instr *in, cls08058718 *pos, int *minPos);
+int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos);
 bool buildCandidateList(workTable *wt);
 bool func_080803dc(workTable *wt, wrangleCand *c);
-bool DoInsert(workTable *wt, Instr *in, cls08058718 *pos);
+bool DoInsert(workTable *wt, Instr *in, InstructionPosition *pos);
 bool UndoInsert(workTable *wt, Instr *in);
-int drag(workTable *wt, Instr *in, cls08058718 *pos, int back, int depth);
-int func_0807de00(workTable *wt, Instr *in, cls08058718 *pos);
-int func_0807e1f8(workTable *wt, Instr *in, cls08058718 *pos);
+int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth);
+int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos);
+int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos);
 int getMove(Block *blk, Instr *in, int now);
 bool undoMovesTo(Block *blk, Instr *stop);
 bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
@@ -43,8 +43,8 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
 {
     g_080de288 = 0;
     if (wt->unk_09 != 2) {
-        func_0804ad38("can't wrangle a non MID table\n");
-        func_0804aeb0();
+        reportError("can't wrangle a non MID table\n");
+        abortAfterError();
     }
     g_080de74c = 0;
     wt->unk_ad = 0;
@@ -60,15 +60,15 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
     for (Instr *in = wt->unk_94.unk_00; in; in = in->unk_24.unk_00) {
         adjustMoveCount((Block *)wt, in, 1);
         if (!in->func_080558f4()) {
-            func_0804ad38("failed to set loop sfx type\n");
-            func_0804aeb0();
+            reportError("failed to set loop sfx type\n");
+            abortAfterError();
         }
     }
     if (wt->unk_38) {
         int row = wt->unk_30;
         if (row != 0 || wt->unk_34 != wt->unk_38) {
             row = false;
-            func_0804ad38("wrangle : loop not set up in correctly [%d,%d) vs %d\n",
+            reportError("wrangle : loop not set up in correctly [%d,%d) vs %d\n",
                           wt->unk_30, wt->unk_34, wt->unk_38);
             return false;
         }
@@ -76,12 +76,12 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
         int row = wt->unk_30;
         if (row != 0 || wt->unk_34 >= 0) {
             row = false;
-            func_0804ad38("wrangle - non loop set up correctly [%d,%d)\n", wt->unk_30, wt->unk_34);
+            reportError("wrangle - non loop set up correctly [%d,%d)\n", wt->unk_30, wt->unk_34);
             return false;
         }
     }
     if (!f) {
-        func_0804ad38("Wrangle: passed a bad func\n");
+        reportError("Wrangle: passed a bad func\n");
         return false;
     }
     g_080de72c = 0;
@@ -92,12 +92,12 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
     if (g_080de750 < timeout_080b3010)
         g_080de750 = timeout_080b3010;
     if (!setWatchdog((char *)&g_080de754, g_080de750)) {
-        func_0804ad38("failed to set OS_setWatchdog\n");
+        reportError("failed to set OS_setWatchdog\n");
         return false;
     }
     bool r = wrangleMode1Worker(wt, f);
     if (!clearWatchdog()) {
-        func_0804ad38("failed to clear watchdog timer\n");
+        reportError("failed to clear watchdog timer\n");
         return false;
     }
     return r;
@@ -105,10 +105,10 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
 
 bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
 {
-    cls08058718 pos;
+    InstructionPosition pos;
     for (;;) {
         if (g_080de754) {
-            func_0804ac7c("time out..\n");
+            reportWarning("time out..\n");
             return false;
         }
         bool bFaulted = false;
@@ -120,8 +120,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
         g_080de72c = 0;
         pending = 0;
         if (!buildCandidateList(wt)) {
-            func_0804ad38("Wrangle: failed to build candidate list!\n");
-            func_0804aeb0();
+            reportError("Wrangle: failed to build candidate list!\n");
+            abortAfterError();
         }
         wtInstrList *done = &wt->unk_a0;
         if (done->last())
@@ -135,8 +135,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 if (!wt->unk_38) {
                     int sz = wt->getCurrentDoneSize();
                     if (sz < 0) {
-                        func_0804ad38("error getting current done size\n");
-                        func_0804aeb0();
+                        reportError("error getting current done size\n");
+                        abortAfterError();
                         return false;
                     }
                     wt->unk_34 = sz;
@@ -147,7 +147,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     int minSfx2 = 0;
                     int minSfx1 = 0;
                     if (!wt->getCurrentLidStats(&maxLid, &maxBranchLid, &minSfx1, &minSfx2)) {
-                        func_0804ad38("failed to lid stats ?\n");
+                        reportError("failed to lid stats ?\n");
                         return false;
                     }
                     bool b2 = minSfx2 >= 0 && minSfx2 < maxBranchLid;
@@ -175,20 +175,20 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                                 }
                                 break;
                             default:
-                                func_0804ad38("bad case in sfx type\n");
-                                func_0804aeb0();
+                                reportError("bad case in sfx type\n");
+                                abortAfterError();
                             }
                         }
                         if (!g_080de72c) {
-                            func_0804ad38("no fInst set after unwinding from bad side effects\n");
-                            func_0804aeb0();
+                            reportError("no fInst set after unwinding from bad side effects\n");
+                            abortAfterError();
                         }
                         goto faulted;
                     }
                 }
                 if (!wt->changeMode(3)) {
-                    func_0804ad38("failed to change code mode to raw\n");
-                    func_0804aeb0();
+                    reportError("failed to change code mode to raw\n");
+                    abortAfterError();
                 }
                 return true;
             } else {
@@ -230,8 +230,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     goto faulted;
                 }
                 if (!resolveMovePipe(wt, c.unk_00, pipe)) {
-                    func_0804ad38("failed to set up a move to a pipe\n");
-                    func_0804aeb0();
+                    reportError("failed to set up a move to a pipe\n");
+                    abortAfterError();
                 }
             }
             if (!func_080803dc(wt, &c)) {
@@ -240,14 +240,14 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     goto faulted;
             }
             if (!c.unk_00)
-                func_0804adf0(-1);
+                exitAfterCleanup(-1);
             pos.func_0805874c(c.unk_04);
             pos.func_0805878c(c.unk_06);
             int minPos = c.unk_04;
             g_080de72c = 0;
             if (!wt->lockLine(&pos)) {
-                func_0804ad38("failed to lock a line\n");
-                func_0804aeb0();
+                reportError("failed to lock a line\n");
+                abortAfterError();
             }
             if (wt->unk_38) {
                 Instr *in = c.unk_00;
@@ -260,8 +260,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 func_0807e1f8(wt, c.unk_00, &pos);
             }
             if (!wt->unlockLine(&pos)) {
-                func_0804ad38("failed to unlock a line\n");
-                func_0804aeb0();
+                reportError("failed to unlock a line\n");
+                abortAfterError();
             }
             g_080de72c = 0;
             ret = checkInsert(wt, c.unk_00, &pos, &minPos);
@@ -279,17 +279,17 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             int z2;
             if (ret & 0x100) {
                 if (!wt->lockLine(&pos)) {
-                    func_0804ad38("failed to lock line again\n");
-                    func_0804aeb0();
+                    reportError("failed to lock line again\n");
+                    abortAfterError();
                 }
                 int n = drag(wt, c.unk_00, &pos, wt->unk_38, 4);
                 if (!wt->unlockLine(&pos)) {
-                    func_0804ad38("failed to unlock line again\n");
-                    func_0804aeb0();
+                    reportError("failed to unlock line again\n");
+                    abortAfterError();
                 }
                 if (n < 0) {
-                    func_0804ad38("failed to drag setters\n");
-                    func_0804aeb0();
+                    reportError("failed to drag setters\n");
+                    abortAfterError();
                 }
                 if (n)
                     ret = checkInsert(wt, c.unk_00, &pos, &minPos);
@@ -314,44 +314,44 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             if (z2) *ps = 0;
             if (c.unk_00->unk_142c && !wt->unk_38) {
                 if (!resolveMovePipe(wt, c.unk_00, c.unk_06)) {
-                    func_0804ad38("failed to assign a move to a pipe\n");
-                    func_0804aeb0();
+                    reportError("failed to assign a move to a pipe\n");
+                    abortAfterError();
                 }
             }
             if (!DoInsert(wt, c.unk_00, &pos)) {
-                func_0804ad38("was ok to insert..but failed!\n");
+                reportError("was ok to insert..but failed!\n");
                 wt->dump();
-                func_0804aeb0();
+                abortAfterError();
             } else
                 inserted = true;
             if (!inserted) {
-                func_0804ad38("got here - but inserted not set bFaulted=%d ret=%x\n", bFaulted, ret);
-                func_0804aeb0();
+                reportError("got here - but inserted not set bFaulted=%d ret=%x\n", bFaulted, ret);
+                abortAfterError();
             }
         check_pending:
             if (pending) {
                 if (bFaulted) {
-                    func_0804ad38("bFaulted is set with a pending move candidate\n");
-                    func_0804aeb0();
+                    reportError("bFaulted is set with a pending move candidate\n");
+                    abortAfterError();
                 }
                 c = mor;
                 if (!c.unk_00) {
-                    func_0804ad38("no instruction set in mOR\n");
-                    func_0804aeb0();
+                    reportError("no instruction set in mOR\n");
+                    abortAfterError();
                 }
                 int r = getMove((Block *)wt, c.unk_00, c.unk_04);
                 switch (r) {
                 case 0:
                     if (g_080de72c) {
-                        func_0804ac7c("but fInst is now set after making a move.. - so clearing it\n");
+                        reportWarning("but fInst is now set after making a move.. - so clearing it\n");
                         g_080de72c = 0;
                     }
                     break;
                 case -1:
                 default:
-                    func_0804ad38("oh no genmove failed .. return code %d!\n", r);
+                    reportError("oh no genmove failed .. return code %d!\n", r);
                     wt->dump();
-                    func_0804aeb0();
+                    abortAfterError();
                     break;
                 case 1:
                     if (wt->unk_ad && !wt->unk_ac) {
@@ -364,8 +364,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 case 3:
                     break;
                 case 4:
-                    func_0804ad38("a move isn't needed after all\n");
-                    func_0804aeb0();
+                    reportError("a move isn't needed after all\n");
+                    abortAfterError();
                     break;
                 }
                 if (r)
@@ -388,20 +388,20 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 Instr *in = tail->last();
                 in->func_08054214();
                 if (!UndoInsert(wt, in)) {
-                    func_0804ad38("in finst track..undoinsert failed\n");
-                    func_0804aeb0();
+                    reportError("in finst track..undoinsert failed\n");
+                    abortAfterError();
                     return false;
                 }
                 if (in->unk_1428 && !undoMovesTo((Block *)wt, in)) {
-                    func_0804ad38("failed to undo move\n");
-                    func_0804aeb0();
+                    reportError("failed to undo move\n");
+                    abortAfterError();
                 }
             }
             while (wt->unk_a0.unk_00) {
                 Instr *in = wt->unk_a0.last();
                 if (!UndoInsert(wt, in)) {
-                    func_0804ad38("undo insert: failed to remove done list tail\n");
-                    func_0804aeb0();
+                    reportError("undo insert: failed to remove done list tail\n");
+                    abortAfterError();
                     return false;
                 }
                 in->unk_141c++;
@@ -410,8 +410,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 in->func_08054214();
                 if (in->unk_1428) {
                     if (!undoMovesTo((Block *)wt, in)) {
-                        func_0804ad38("failed to undo move\n");
-                        func_0804aeb0();
+                        reportError("failed to undo move\n");
+                        abortAfterError();
                     }
                     in = 0;
                 }
@@ -421,8 +421,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     if (wt->unk_38 && in->unk_141a > wt->unk_38 * 16) {
                         if (in->unk_1428) {
                             if (!undoMovesTo((Block *)wt, in)) {
-                                func_0804ad38("failed to undo move\n");
-                                func_0804aeb0();
+                                reportError("failed to undo move\n");
+                                abortAfterError();
                             }
                             in = 0;
                         }
@@ -442,7 +442,7 @@ bool buildCandidateList(workTable *wt)
     in = wt->unk_94.unk_00;
     wt->unk_4c = 0;
     wt->unk_50 = 0;
-    cls08058718 pos;
+    InstructionPosition pos;
     int earliest;
     int pipe = 0;
     int row = 0;
@@ -456,8 +456,8 @@ bool buildCandidateList(workTable *wt)
         int minRow = m;
         earliest = 0;
         if (!func_0806558c(in, &earliest)) {
-            func_0804ad38("failed check cand\n");
-            func_0804aeb0();
+            reportError("failed check cand\n");
+            abortAfterError();
         }
         if (earliest < 0) {
             in->func_08054008(false);
@@ -469,15 +469,15 @@ bool buildCandidateList(workTable *wt)
             if (g_080b336c) {
                 minRow = g_080b336c - 2;
                 if (minRow < 0) {
-                    func_0804ad38("branch at bad pos for loop\n");
-                    func_0804aeb0();
+                    reportError("branch at bad pos for loop\n");
+                    abortAfterError();
                 }
             } else {
                 if (wt->unk_94.unk_08 > 1)
                     continue;
                 int d = wt->getCurrentDoneSize();
                 if (d < 0) {
-                    func_0804ad38("failed to get current done size\n");
+                    reportError("failed to get current done size\n");
                     return false;
                 }
                 d -= 2;
@@ -487,19 +487,19 @@ bool buildCandidateList(workTable *wt)
                     minRow = 0;
             }
         }
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *r = op->unk_18;
             if (!r)
                 continue;
-            for (int j = 0; j != r->unk_28; j++) {
+            for (int j = 0; j != r->partCount; j++) {
                 if ((op->unk_07 >> j) & 1) {
                     if (isRegisterOperand(op, 1)) {
                         OpSlot *s = &op->unk_2c[j];
-                        cls0805bcc4 *p = s->getParent();
+                        OperandLock *p = s->getParent();
                         if (!p) {
-                            func_0804ad38("input had no link\n");
-                            func_0804aeb0();
+                            reportError("input had no link\n");
+                            abortAfterError();
                             return false;
                         }
                         if (!p->unk_2c)
@@ -542,7 +542,7 @@ bool buildCandidateList(workTable *wt)
         if (findInsertPosition(wt, in, &row, &pipe)) {
             in->unk_141e = row;
             if (!func_0807f2c4((Block *)wt, in)) {
-                func_0804ad38("failed to add candidate\n");
+                reportError("failed to add candidate\n");
                 return false;
             }
         }
@@ -580,7 +580,7 @@ bool findInsertPosition(workTable *wt, Instr *in, int *row, int *pipe)
     bool both = false;
     if (in->unk_138c == 3)
         both = true;
-    cls08058718 pos;
+    InstructionPosition pos;
     if (both) {
         int p;
         int best;
@@ -604,8 +604,8 @@ bool findInsertPosition(workTable *wt, Instr *in, int *row, int *pipe)
             if (best >= 30000)
                 return false;
             if (best == *row) {
-                func_0804ad38("min_nl was nl and all failed .. %d->%d\n", best, best);
-                func_0804aeb0();
+                reportError("min_nl was nl and all failed .. %d->%d\n", best, best);
+                abortAfterError();
             }
             *row = best;
             *pipe = 0;

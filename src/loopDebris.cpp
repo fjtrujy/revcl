@@ -47,7 +47,7 @@ bool loopDebris::init(const char *baseName, int a, bool flag)
 {
     char buf[4096];
     if (!baseName) {
-        func_0804ad38("loopDebris:: init - no base name set!\n");
+        reportError("loopDebris:: init - no base name set!\n");
         return false;
     }
     unk_10 = flag;
@@ -58,9 +58,9 @@ bool loopDebris::init(const char *baseName, int a, bool flag)
     m_nEpi = 0;
     unk_14 = a;
     m_baseName = baseName;
-    func_0804adbc(buf, "%s_ENTRY_POINT", baseName);
+    formatIntoBuffer(buf, "%s_ENTRY_POINT", baseName);
     m_entryName = dupString(buf);
-    func_0804adbc(buf, "%s_EXIT_POINT", baseName);
+    formatIntoBuffer(buf, "%s_EXIT_POINT", baseName);
     m_exitName = dupString(buf);
     return true;
 }
@@ -69,8 +69,8 @@ void loopDebris::func_0806770c()
 {
     int i;
     if (!m_entryName) {
-        func_0804ad38("LoopDebris - no entry name\n");
-        func_0804adf0(-1);
+        reportError("LoopDebris - no entry name\n");
+        exitAfterCleanup(-1);
     }
     for (i = 0; i != m_nPro; i++)
         ;
@@ -82,7 +82,7 @@ instStream *loopDebris::getEnterStream()
 {
     epiRec *r = &m_enter;
     if (!r) {
-        func_0804ad38("failed to get enter epirec\n");
+        reportError("failed to get enter epirec\n");
         return 0;
     }
     return r->unk_14;
@@ -92,7 +92,7 @@ instStream *loopDebris::getExitStream()
 {
     epiRec *r = &m_exit;
     if (!r) {
-        func_0804ad38("failed to get exit epirec\n");
+        reportError("failed to get exit epirec\n");
         return 0;
     }
     return r->unk_14;
@@ -102,7 +102,7 @@ instStream *loopDebris::getMainStream()
 {
     epiRec *r = &m_main;
     if (!r) {
-        func_0804ad38("failed to get main epirec\n");
+        reportError("failed to get main epirec\n");
         return 0;
     }
     return r->unk_14;
@@ -112,7 +112,7 @@ instStream *loopDebris::getProStream(int i)
 {
     epiRec *r = ld_getProRec_inl(this, i);
     if (!r) {
-        func_0804ad38("failed to get pro epirec\n");
+        reportError("failed to get pro epirec\n");
         return 0;
     }
     return r->unk_14;
@@ -122,7 +122,7 @@ instStream *loopDebris::getEpiStream(int i)
 {
     epiRec *r = ld_getEpiRec_inl(this, i);
     if (!r) {
-        func_0804ad38("failed to get pro epirec\n");
+        reportError("failed to get pro epirec\n");
         return 0;
     }
     return r->unk_14;
@@ -141,11 +141,11 @@ epiRec *loopDebris::allocPro(int size)
         const char *name = "NOTSET";
         if (m_baseName)
             name = m_baseName;
-        func_0804adbc(buf, "%s_PRO%d", name, m_nPro);
+        formatIntoBuffer(buf, "%s_PRO%d", name, m_nPro);
         r = &m_pro[m_nPro];
         r->reset();
         if (!r->init(size, buf)) {
-            func_0804ad38("failed to init for pro\n");
+            reportError("failed to init for pro\n");
             return 0;
         }
         r->unk_14->unk_2c4 = 2;
@@ -158,7 +158,7 @@ epiRec *loopDebris::allocPro(int size)
         }
         m_nPro++;
     } else
-        func_0804ad38("allocPro: overrun\n");
+        reportError("allocPro: overrun\n");
     return r;
 }
 
@@ -170,11 +170,11 @@ epiRec *loopDebris::allocEpi(int size)
         const char *name = "NOTSET";
         if (m_baseName)
             name = m_baseName;
-        func_0804adbc(buf, "%s_EPI%d", name, m_nEpi);
+        formatIntoBuffer(buf, "%s_EPI%d", name, m_nEpi);
         r = &m_epi[m_nEpi];
         r->reset();
         if (!r->init(size, buf)) {
-            func_0804ad38("failed to init for epi\n");
+            reportError("failed to init for epi\n");
             return 0;
         }
         r->unk_14->unk_2c4 = 3;
@@ -187,7 +187,7 @@ epiRec *loopDebris::allocEpi(int size)
         }
         m_nEpi++;
     } else
-        func_0804ad38("getEpi: overrun\n");
+        reportError("getEpi: overrun\n");
     return r;
 }
 
@@ -198,9 +198,9 @@ epiRec *loopDebris::allocMain(int size)
     const char *name = "NOTSET";
     if (m_baseName)
         name = m_baseName;
-    func_0804adbc(buf, "%s_MAIN_LOOP", name);
+    formatIntoBuffer(buf, "%s_MAIN_LOOP", name);
     if (!m_main.init(size, buf)) {
-        func_0804ad38("failed to init for epi\n");
+        reportError("failed to init for epi\n");
         return 0;
     }
     m_main.unk_14->unk_2c4 = 5;
@@ -213,7 +213,7 @@ epiRec *loopDebris::allocEnter(int size)
 {
     m_enter.reset();
     if (!m_enter.init(size, m_entryName)) {
-        func_0804ad38("failed to init for epi\n");
+        reportError("failed to init for epi\n");
         return 0;
     }
     m_enter.unk_14->unk_2c4 = 4;
@@ -226,7 +226,7 @@ epiRec *loopDebris::allocExit(int size)
 {
     m_exit.reset();
     if (!m_exit.init(size, m_exitName)) {
-        func_0804ad38("failed to init for epi\n");
+        reportError("failed to init for epi\n");
         return 0;
     }
     m_exit.unk_14->unk_2c4 = 1;
@@ -286,7 +286,7 @@ static inline instStream *checkedProStream(loopDebris *ld, int i)
 {
     epiRec *r = ld_getProRec_inl(ld, i);
     if (!r) {
-        func_0804ad38("failed to get pro epirec\n");
+        reportError("failed to get pro epirec\n");
         return 0;
     }
     return r->unk_14;
@@ -304,18 +304,18 @@ bool epiRec::init(int size, const char *name)
     reset();
     unk_14 = new instStream;
     if (!unk_14) {
-        func_0804ad38("setup: failed to get iStream\n");
-        func_0804adf0(-1);
+        reportError("setup: failed to get iStream\n");
+        exitAfterCleanup(-1);
     }
     mNode *n = unk_14->unk_110.func_0804b2d4(name);
     if (!n) {
-        func_0804ad38("failed to add a name to iStream\n");
-        func_0804adf0(-1);
+        reportError("failed to add a name to iStream\n");
+        exitAfterCleanup(-1);
     }
     workTable *wt = &unk_14->unk_148;
     if (!wt->init(3, size)) {
-        func_0804ad38("failed to init it_pro for size %d\n", size);
-        func_0804adf0(-1);
+        reportError("failed to init it_pro for size %d\n", size);
+        exitAfterCleanup(-1);
     }
     instStream *s = unk_14;
     int serial = g_streamSerial;
@@ -334,58 +334,58 @@ const char *epiRec::getName()
 {
     if (!unk_14)
         return "!UNNAMED!";
-    return unk_14->func_0806d674();
+    return unk_14->streamName();
 }
 
 int func_08067e18(Program *p, instStream *s)
 {
     workTable *wt = s->getTable();
     if (!wt->func_080741b4()) {
-        func_0804ad38("BuildEP - loopsize not set in input stream\n");
+        reportError("BuildEP - loopsize not set in input stream\n");
         return -1;
     }
     if (wt->unk_09 != 3) {
-        func_0804ad38("intput table is not vsm\n");
+        reportError("intput table is not vsm\n");
         return -1;
     }
     int i;
     loopDebris ld;
     char buf[4096];
-    func_0804adbc(buf, "EXPL_%s_%s_", getUniqueName(p), s->func_0806d674());
+    formatIntoBuffer(buf, "EXPL_%s_%s_", getUniqueName(p), s->streamName());
     if (!explodeLoop(s, &ld, buf)) {
-        func_0804ad38("BuildEPSTreams - failed to explode %s\n", s->func_0806d674());
-        func_0804adf0(-1);
+        reportError("BuildEPSTreams - failed to explode %s\n", s->streamName());
+        exitAfterCleanup(-1);
     }
     instStream *enter = ld.m_enter.unk_14;
     if (!enter) {
-        func_0804ad38("no entry istream\n");
-        func_0804adf0(-1);
+        reportError("no entry istream\n");
+        exitAfterCleanup(-1);
     }
     instStream *exit = ld.m_exit.unk_14;
     if (!exit) {
-        func_0804ad38("had no exit istream\n");
-        func_0804adf0(-1);
+        reportError("had no exit istream\n");
+        exitAfterCleanup(-1);
     }
     instStream *fall = s->unk_134.getStream(0);
     if (!fall) {
-        func_0804ad38("epipro:failed to get default output stream\n");
+        reportError("epipro:failed to get default output stream\n");
         return -1;
     }
     if (fall != s->unk_108) {
-        func_0804ad38("exit stream not same as loopback successor\n");
+        reportError("exit stream not same as loopback successor\n");
         return -1;
     }
     if (!p->unlinkStreams(s, s, 1)) {
-        func_0804ad38("failed to unlink original loopback\n");
+        reportError("failed to unlink original loopback\n");
         return -1;
     }
     if (!p->unlinkStreams(s, fall, 0)) {
-        func_0804ad38("failed to unlink original to exit\n");
+        reportError("failed to unlink original to exit\n");
         return -1;
     }
     if (!p->retarget(s, enter)) {
-        func_0804ad38("failed to retarget!\n");
-        func_0804adf0(-1);
+        reportError("failed to retarget!\n");
+        exitAfterCleanup(-1);
     }
 
     instStream *prev = enter;
@@ -394,17 +394,17 @@ int func_08067e18(Program *p, instStream *s)
     for (i = 0; i != (d = &ld)->getNumPro(); i++) {
         epiRec *pr = proRecord(d, i, ld.getNumPro());
         if (!pr) {
-            func_0804ad38("failed to get prologue\n");
+            reportError("failed to get prologue\n");
             return -1;
         }
         instStream *ps = pr->unk_14;
         if (!ps) {
-            func_0804ad38("failed to get stream for prologue\n");
+            reportError("failed to get stream for prologue\n");
             return -1;
         }
         if (prev) {
             if (!p->linkStreams(prev, ps, 0)) {
-                func_0804ad38("failed to link enter to first prologue\n");
+                reportError("failed to link enter to first prologue\n");
                 return -1;
             }
             prev = 0;
@@ -412,21 +412,21 @@ int func_08067e18(Program *p, instStream *s)
         if (pr->unk_1c) {
             epiRec *er = ld_findEpi_inl(&ld, pr->unk_0c + 1);
             if (!er) {
-                func_0804ad38("failed to find epilogue\n");
+                reportError("failed to find epilogue\n");
                 return -1;
             }
             instStream *es = er->unk_14;
             if (!es) {
-                func_0804ad38("failed to find epi for a prologue\n");
+                reportError("failed to find epi for a prologue\n");
                 return -1;
             }
             if (!p->linkStreams(ps, es, 1)) {
-                func_0804ad38("failed to link prologue to epilogue\n");
+                reportError("failed to link prologue to epilogue\n");
                 return -1;
             }
         } else if (i != ld.getNumPro() - 1) {
-            func_0804ad38("not last prologue, but no conditional\n");
-            func_0804adf0(-1);
+            reportError("not last prologue, but no conditional\n");
+            exitAfterCleanup(-1);
         }
         instStream *next;
         if (i == ld.getNumPro() - 1) {
@@ -435,26 +435,26 @@ int func_08067e18(Program *p, instStream *s)
             next = checkedProStream(&ld, i + 1);
         }
         if (!next) {
-            func_0804ad38("failed to get next stream for a prologue\n");
+            reportError("failed to get next stream for a prologue\n");
             return -1;
         }
         if (!p->linkStreams(ps, next, 0)) {
-            func_0804ad38("failed to link prologue to fall through\n");
+            reportError("failed to link prologue to fall through\n");
             return -1;
         }
     }
 
     instStream *main = ld.m_main.unk_14;
     if (!main) {
-        func_0804ad38("not find new main!\n");
+        reportError("not find new main!\n");
         return -1;
     }
     if (prev && !p->linkStreams(prev, main, 0)) {
-        func_0804ad38("failed to link enter to main\n");
+        reportError("failed to link enter to main\n");
         return -1;
     }
     if (!p->linkStreams(main, main, 1)) {
-        func_0804ad38("failed to link loop to itself\n");
+        reportError("failed to link loop to itself\n");
         return -1;
     }
 
@@ -462,88 +462,88 @@ int func_08067e18(Program *p, instStream *s)
     if (ld.getNumEpi()) {
         epiRec *e0 = ld_getEpiRec_inl(&ld, 0);
         if (!e0) {
-            func_0804ad38("failed to get epi0\n");
+            reportError("failed to get epi0\n");
             return -1;
         }
         succ = e0->unk_14;
     }
     if (!succ) {
-        func_0804ad38("no stream for epi0\n");
+        reportError("no stream for epi0\n");
         return -1;
     }
     if (!p->linkStreams(main, succ, 0)) {
-        func_0804ad38("failed to link main stream to successor\n");
+        reportError("failed to link main stream to successor\n");
         return -1;
     }
 
     for (i = 0; i != ld.getNumEpi(); i++) {
         r = ld_getEpiRec_inl(&ld, i);
         if (!r) {
-            func_0804ad38("failed to get epi \n");
+            reportError("failed to get epi \n");
             return -1;
         }
         instStream *es = r->unk_14;
         if (!es) {
-            func_0804ad38("failed to get istream epi\n");
+            reportError("failed to get istream epi\n");
             return -1;
         }
         int type = 0;
         if (r->unk_1c) {
             if (!r->unk_1c->changeBranchImmediate(ld.m_exitName)) {
-                func_0804ad38("failed to change immediate\n");
-                func_0804adf0(-1);
+                reportError("failed to change immediate\n");
+                exitAfterCleanup(-1);
             }
             type = 1;
         }
         if (!p->linkStreams(es, exit, type)) {
-            func_0804ad38("failed to link xref from epi to exit\n");
-            func_0804adf0(-1);
+            reportError("failed to link xref from epi to exit\n");
+            exitAfterCleanup(-1);
         }
     }
     if (!p->linkStreams(exit, fall, 0)) {
-        func_0804ad38("failed to link exit to old fall\n");
+        reportError("failed to link exit to old fall\n");
         return -1;
     }
 
     instStream *last = s->unk_10c;
     if (!p->removeStream(s)) {
-        func_0804ad38("failed to unlink istream\n");
-        func_0804adf0(-1);
+        reportError("failed to unlink istream\n");
+        exitAfterCleanup(-1);
     }
     if (!p->insertStreamAfter(last, enter)) {
-        func_0804ad38("failed to add enter after initial  prev\n");
-        func_0804adf0(-1);
+        reportError("failed to add enter after initial  prev\n");
+        exitAfterCleanup(-1);
     }
 
     last = enter;
     for (i = 0; i != ld.getNumPro(); i++) {
         r = ld_getProRec_inl(&ld, i);
         if (!p->insertStreamAfter(last, r->unk_14)) {
-            func_0804ad38("failed to add after\n");
-            func_0804adf0(-1);
+            reportError("failed to add after\n");
+            exitAfterCleanup(-1);
         }
         last = r->unk_14;
     }
     if (!p->insertStreamAfter(last, main)) {
-        func_0804ad38("failed to add after\n");
-        func_0804adf0(-1);
+        reportError("failed to add after\n");
+        exitAfterCleanup(-1);
     }
     last = main;
     for (i = 0; i != ld.getNumEpi(); i++) {
         r = ld_getEpiRec_inl(&ld, i);
         if (!p->insertStreamAfter(last, r->unk_14)) {
-            func_0804ad38("failed to add after\n");
-            func_0804adf0(-1);
+            reportError("failed to add after\n");
+            exitAfterCleanup(-1);
         }
         last = r->unk_14;
     }
     if (!p->insertStreamAfter(last, exit)) {
-        func_0804ad38("failed to add after\n");
-        func_0804adf0(-1);
+        reportError("failed to add after\n");
+        exitAfterCleanup(-1);
     }
     if (!enter->unk_110.func_0804b4d0(&s->unk_110)) {
-        func_0804ad38("failed to grab names from the source stream during epipro\n");
-        func_0804adf0(-1);
+        reportError("failed to grab names from the source stream during epipro\n");
+        exitAfterCleanup(-1);
     }
     return ld.getNumPro() + ld.getNumEpi() + 3;
 }
@@ -552,7 +552,7 @@ static inline void initDebris(loopDebris *ld, const char *baseName, int a, bool 
 {
     char buf[4096];
     if (!baseName) {
-        func_0804ad38("loopDebris:: init - no base name set!\n");
+        reportError("loopDebris:: init - no base name set!\n");
         return;
     }
     ld->m_entryName = 0;
@@ -563,9 +563,9 @@ static inline void initDebris(loopDebris *ld, const char *baseName, int a, bool 
     ld->m_nEpi = 0;
     ld->unk_14 = a;
     ld->m_baseName = baseName;
-    func_0804adbc(buf, "%s_ENTRY_POINT", baseName);
+    formatIntoBuffer(buf, "%s_ENTRY_POINT", baseName);
     ld->m_entryName = dupString(buf);
-    func_0804adbc(buf, "%s_EXIT_POINT", baseName);
+    formatIntoBuffer(buf, "%s_EXIT_POINT", baseName);
     ld->m_exitName = dupString(buf);
 }
 
@@ -575,7 +575,7 @@ static inline const char *recName(epiRec *e)
     if (!name)
         name = (VclPtrWord)"!UNNAMED!";
     else
-        name = (VclPtrWord)((instStream *)name)->func_0806d674();
+        name = (VclPtrWord)((instStream *)name)->streamName();
     return (const char *)name;
 }
 
@@ -587,18 +587,18 @@ static inline epiRec &mainRec(loopDebris *ld)
 bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
 {
     if (!baseName) {
-        func_0804ad38("ExplodeLoop - basename not set\n");
-        func_0804adf0(-1);
+        reportError("ExplodeLoop - basename not set\n");
+        exitAfterCleanup(-1);
     }
     g_streamSerial++;
     workTable *wt = s->getTable();
     if (!wt->func_080741b4()) {
-        func_0804ad38("work table is not looping!\n");
+        reportError("work table is not looping!\n");
         return false;
     }
     int count = s->unk_270;
     if (count <= 0 || (count = s->unk_274) < 0) {
-        func_0804ad38("ExplodeLoop - called - but - known min/ known safe is bad (%d,%d)\n",
+        reportError("ExplodeLoop - called - but - known min/ known safe is bad (%d,%d)\n",
                       s->unk_270, s->unk_274);
         return false;
     }
@@ -609,7 +609,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     initDebris(ld, baseName, (unsigned char)wt->unk_08, userFixed);
     Instr *cond = wt->func_08073060();
     if (mlid < 0 || clid < 0 || clid > mlid || !cond) {
-        func_0804ad38("iTable::BuildEPStreams - well - mlid or clid or no conditional ? something was wrong [clid=%d mlid=%d] %x\n",
+        reportError("iTable::BuildEPStreams - well - mlid or clid or no conditional ? something was wrong [clid=%d mlid=%d] %x\n",
                       clid, mlid, cond);
         wt->dump();
         return false;
@@ -617,11 +617,11 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     ld->unk_00 = wt;
     epiRec *r = ld->allocEnter(0);
     if (!r) {
-        func_0804ad38("failed to get enter part\n");
+        reportError("failed to get enter part\n");
         return false;
     }
     if (!r->unk_18->prepRawTable()) {
-        func_0804ad38("failed to prep enter table\n");
+        reportError("failed to prep enter table\n");
         return false;
     }
 
@@ -635,17 +635,17 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         if (!pro) {
             pro = ld->allocPro(lsz * (last - i + 1));
             if (!pro) {
-                func_0804ad38("failed to get pro\n");
-                func_0804adf0(-1);
+                reportError("failed to get pro\n");
+                exitAfterCleanup(-1);
             }
         }
         if (!cloneAppend(wt, pro->unk_18, i, 0, i >= last, true, false)) {
-            func_0804ad38("failed to clone/append main table to prologue table\n");
-            func_0804adf0(-1);
+            reportError("failed to clone/append main table to prologue table\n");
+            exitAfterCleanup(-1);
         }
         if (i == last || i == mlid - 1) {
             if (!pro->unk_18->prepRawTable()) {
-                func_0804ad38("failed to prep pro table!\n");
+                reportError("failed to prep pro table!\n");
                 return false;
             }
             pro->unk_08 = 0;
@@ -667,15 +667,15 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
 
     epiRec *m = ld->allocMain(lsz);
     if (!m) {
-        func_0804ad38("failed to get main part\n");
-        func_0804adf0(-1);
+        reportError("failed to get main part\n");
+        exitAfterCleanup(-1);
     }
     if (!cloneAppend(wt, m->unk_18, mlid, 0, true, true, true)) {
-        func_0804ad38("failed to clone/append main table to loop table\n");
-        func_0804adf0(-1);
+        reportError("failed to clone/append main table to loop table\n");
+        exitAfterCleanup(-1);
     }
     if (!m->unk_18->prepRawTable()) {
-        func_0804ad38("failed to prep main table!\n");
+        reportError("failed to prep main table!\n");
         return false;
     }
     m->unk_08 = 0;
@@ -688,8 +688,8 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     m->unk_14->func_0806dc9c(s);
     m->unk_1c = m->unk_18->func_08073060();
     if (!m->unk_1c) {
-        func_0804ad38("mainloop had no conditional\n");
-        func_0804adf0(-1);
+        reportError("mainloop had no conditional\n");
+        exitAfterCleanup(-1);
     }
 
     int n = lsz * (mlid - clid);
@@ -697,8 +697,8 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         for (int j = ld->m_nPro - 1; j >= 0; j--) {
             epiRec *p = ld_getProRec_inl(ld, j);
             if (!p) {
-                func_0804ad38("failed to get pro %d\n", j);
-                func_0804adf0(-1);
+                reportError("failed to get pro %d\n", j);
+                exitAfterCleanup(-1);
             }
             epiRec *e = ld->allocEpi(n);
             e->unk_08 = p->unk_0c + 1;
@@ -706,7 +706,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
             int lid = e->unk_08;
             for (int k = clid + 1; k <= mlid; k++, lid++) {
                 if (!cloneAppend(wt, e->unk_18, lid, lid - proBase + 1, false, true, false)) {
-                    func_0804ad38("failed to attach to epi sequence!\n");
+                    reportError("failed to attach to epi sequence!\n");
                     return false;
                 }
             }
@@ -718,24 +718,24 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         epiRec *p = ld_getProRec_inl(ld, i);
         epiRec *next = (i == ld->m_nPro - 1) ? &mainRec(ld) : ld_getProRec_inl(ld, i + 1);
         if (!next) {
-            func_0804ad38("failed to get next\n");
-            func_0804adf0(-1);
+            reportError("failed to get next\n");
+            exitAfterCleanup(-1);
         }
         instStream *nextStream = next->unk_14;
         instStream *proStream = p->unk_14;
         if (!proStream || !nextStream) {
-            func_0804ad38("no istream set for prologue or next\n");
-            func_0804adf0(-1);
+            reportError("no istream set for prologue or next\n");
+            exitAfterCleanup(-1);
         }
         Instr *br = p->unk_1c;
         if (br) {
             epiRec *e = ld_findEpi_inl(ld, p->unk_0c + 1);
             if (!e) {
-                func_0804ad38("failed to find epilogue\n");
-                func_0804adf0(-1);
+                reportError("failed to find epilogue\n");
+                exitAfterCleanup(-1);
             }
             if (!br->changeBranchImmediate(recName(e))) {
-                func_0804ad38("failed to change immediate field of main branch\n");
+                reportError("failed to change immediate field of main branch\n");
                 return false;
             }
         }
@@ -744,40 +744,40 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     epiRec *mr = &ld->m_main;
     Instr *mc = mr->unk_1c;
     if (!mc) {
-        func_0804ad38("main had no conditional\n");
-        func_0804adf0(-1);
+        reportError("main had no conditional\n");
+        exitAfterCleanup(-1);
     }
     if (!mc->changeBranchImmediate(recName(mr))) {
-        func_0804ad38("failed to change conditional target\n");
-        func_0804adf0(-1);
+        reportError("failed to change conditional target\n");
+        exitAfterCleanup(-1);
     }
 
     int nEpi = ld->m_nEpi;
     for (int i = 0; i != nEpi; i++) {
         epiRec *e = ld_getEpiRec_inl(ld, i);
         if (!e) {
-            func_0804ad38("failed to get epi\n");
-            func_0804adf0(-1);
+            reportError("failed to get epi\n");
+            exitAfterCleanup(-1);
         }
         instStream *ist = e->unk_14;
         if (!ist) {
-            func_0804ad38("failed to get ist\n");
-            func_0804adf0(-1);
+            reportError("failed to get ist\n");
+            exitAfterCleanup(-1);
         }
         workTable *t = e->unk_18;
         if (!t) {
-            func_0804ad38("no itable for e\n");
-            func_0804adf0(-1);
+            reportError("no itable for e\n");
+            exitAfterCleanup(-1);
         }
         if (i != nEpi - 1) {
             ist->unk_2ce = 1;
             Instr *b = new Instr(func_0806bf8c("b", false));
             if (!b) {
-                func_0804ad38("failed to get branch\n");
+                reportError("failed to get branch\n");
                 return false;
             }
             if (!b->changeBranchImmediate("UNRESOLVED")) {
-                func_0804ad38("failed to change immediate\n");
+                reportError("failed to change immediate\n");
                 return false;
             }
             b->unk_13e8.unk_03 = 0;
@@ -786,24 +786,24 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
             e->unk_1c = b;
             wtRow *row = t->func_080724f0(t->func_080741c0() - 2);
             if (!row) {
-                func_0804ad38("failed to get ie for branch insert\n");
+                reportError("failed to get ie for branch insert\n");
                 return false;
             }
             row->unk_00[1].unk_00 = b;
         }
         if (!e->unk_18->prepRawTable()) {
-            func_0804ad38("failed to prep epi table!\n");
+            reportError("failed to prep epi table!\n");
             return false;
         }
     }
 
     epiRec *x = ld->allocExit(0);
     if (!x) {
-        func_0804ad38("failed to get exit part\n");
+        reportError("failed to get exit part\n");
         return false;
     }
     if (!x->unk_18->prepRawTable()) {
-        func_0804ad38("failed to prep exit table\n");
+        reportError("failed to prep exit table\n");
         return false;
     }
     return true;

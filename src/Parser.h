@@ -3,6 +3,18 @@
 
 #include "Line.h"
 
+// Source-level names; retain the recovered historical C++ mangled symbols.
+#define initializeParser func_0804fb94
+#define buildProcessedLines func_0804fd80
+#define getParsedLineCount func_0805017c
+#define getParsedLine func_0805018c
+#define addLocationTag func_0805030c
+#define decodeGaspLine func_0805041c
+#define isAssignmentLine func_08050738
+#define tokenizeSourceLine func_0805086c
+#define tokenTextAt func_08050be4
+#define dumpSourceLine func_08050c40
+
 // Loctag stack entry (8 bytes); layout from Parser::func_0804fb94.
 struct LocRef {
     Line *unk_00;
@@ -11,9 +23,9 @@ struct LocRef {
 
 // Token entry of a lineEntry, 4 bytes.
 struct TokenEntry {
-    unsigned short unk_00;  // offset of token text from LocTag::unk_00
-    char unk_02;            // separator after token: 0 = space, 1 = comma, 2 = end of line
-    bool unk_03;            // token started inside a comment
+    unsigned short textOffset; // offset of token text within LocTag's line data
+    char separator;            // 0 = space, 1 = comma, 2 = end of line
+    bool inComment;            // token started inside a comment
 };
 
 // Line table entry (probably "lineEntry", see Tokenise error string), sizeof 0x3b0.
@@ -24,26 +36,26 @@ public:
     char unk_08;            // 1 = raw macro block
     short unk_0a;           // loctag depth, -1 = none
     LocRef unk_0c[16];
-    int unk_8c;             // token count
-    TokenEntry unk_090[200];
+    int tokenCount;
+    TokenEntry tokens[200];
 
-    LocTag() { unk_00 = 0; unk_8c = 0; unk_08 = 0; unk_0a = 0; }
+    LocTag() { unk_00 = 0; tokenCount = 0; unk_08 = 0; unk_0a = 0; }
     ~LocTag() {}
-    char *func_0805086c(int *commentMode, char *in);
-    void func_08050c40(int);
-    char *func_08050be4(int i, char *type);
-    char *func_08050be4(int i) { return func_08050be4(i, 0); }
+    char *tokenizeSourceLine(int *commentMode, char *input);
+    void dumpSourceLine(int highlightedToken);
+    char *tokenTextAt(int tokenIndex, char *separatorOut);
+    char *tokenTextAt(int tokenIndex) { return tokenTextAt(tokenIndex, 0); }
     bool func_08050eec();
     bool func_08050f18(int i);
     bool func_08050f48();
     bool func_08050f7c(int i);
 
     bool isValid() {
-        return (unk_00 && unk_8c) || (!unk_00 && !unk_8c);
+        return (unk_00 && tokenCount) || (!unk_00 && !tokenCount);
     }
-    bool inComment(int i) {
-        if (i >= 0 && i < unk_8c) {
-            if (unk_090[i].unk_03)
+    bool inComment(int tokenIndex) {
+        if (tokenIndex >= 0 && tokenIndex < tokenCount) {
+            if (tokens[tokenIndex].inComment)
                 return true;
             return false;
         }
@@ -56,28 +68,28 @@ class Parser {
 public:
     Parser();
     ~Parser();
-    bool func_0804fb94(char *buf, const char *name, bool gasp, bool cpp);
+    bool initializeParser(char *buf, const char *name, bool gasp, bool cpp);
     void reset();
-    bool func_0804fd80(bool gasp, bool cpp);
-    int func_0805017c();
-    LocTag *func_0805018c(int i);
+    bool buildProcessedLines(bool gasp, bool cpp);
+    int getParsedLineCount();
+    LocTag *getParsedLine(int i);
     void Dump();
     void DumpLocTags();
-    int func_0805030c(const char *name, int n);
+    int addLocationTag(const char *name, int n);
     int FindLocTag(const char *name, int n);
-    bool func_0805041c(char *line);
-    bool func_08050738(int i);
+    bool decodeGaspLine(char *line);
+    bool isAssignmentLine(int i);
 
     Line lines[0x2000];
-    int unk_10000;          // line count
-    char *unk_10004;        // name of last ".include" seen (loctag kind 1)
-    char *unk_10008;        // name of last macro label seen (loctag kind 2)
-    LocRef unk_1000c[16];
-    int unk_1008c;
-    char *unk_10090;        // raw buffer
-    char *unk_10094;
-    int unk_10098;
-    LocTag *unk_1009c;
+    int locationTagCount;        // unique source locations in lines[]
+    char *pendingIncludeName;    // last ".include" name (location kind 1)
+    char *pendingMacroName;      // last macro label (location kind 2)
+    LocRef gaspLocationStack[16];
+    int gaspLocationDepth;
+    char *rawBuffer;
+    char *processedBuffer;
+    int parsedLineCount;
+    LocTag *parsedLines;
 };
 
 bool func_080506e0(const char *s);

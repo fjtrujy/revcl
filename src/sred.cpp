@@ -3,10 +3,10 @@
 #include "Instr.h"
 
 bool setRange(int start, int end, int lsz);
-bool moveLocks(Instr *i, cls08058718 *pos);
+bool moveLocks(Instr *i, InstructionPosition *pos);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
 int latestInsert(workTable *wt, Instr *in, bool *found);
-int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
+int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 int func_0804bf50(unsigned int x);
 RegPoolEntry *getZeroReg(unsigned int type);
 
@@ -50,7 +50,7 @@ extern const char sredBadlyPlacedError[];
 
 bool sredInstr(workTable *wt, Instr *in, bool up)
 {
-    cls08058718 pos;
+    InstructionPosition pos;
     int iline = in->unk_13e8.unk_04;
     bool found = false;
     int step;
@@ -61,10 +61,10 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
         tline = earliestInsert(wt, in, &found);
         if (tline > iline) {
             short mfs = in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2;
-            func_0804ad38(sredEarliestAfterError,
+            reportError(sredEarliestAfterError,
                           tline, iline, mfs);
             in->func_08054008(false);
-            func_0804ad38("iline=%d tline=%d\n", iline, tline);
+            reportError("iline=%d tline=%d\n", iline, tline);
             return false;
         }
         step = 1;
@@ -72,7 +72,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
     } else {
         tline = latestInsert(wt, in, &found);
         if (tline < iline) {
-            func_0804ad38(sredLatestBeforeError, tline, iline);
+            reportError(sredLatestBeforeError, tline, iline);
             dumpSredInstruction(in);
             return false;
         }
@@ -98,7 +98,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
 
 move:
     if (!wt->takeOut(in) || !moveLocks(in, &pos) || !wt->putIn(in)) {
-        func_0804ad38(sredMoveInstError);
+        reportError(sredMoveInstError);
         return false;
     }
     return true;
@@ -113,7 +113,7 @@ bool sredTable(workTable *wt)
     if (i != n) {
         i = n = wt->unk_38;
         if (i) {
-            func_0804ad38("can't do modular reduction\n");
+            reportError("can't do modular reduction\n");
             return false;
         }
         setRange(wt->unk_30, wt->unk_34, 0);
@@ -125,11 +125,11 @@ bool sredTable(workTable *wt)
                 Instr *in = wt->func_080724f0(i)->onlyEntry();
                 if (in) {
                     if (in->unk_13e8.unk_04 != i) {
-                        func_0804ad38(sredBadlyPlacedError);
+                        reportError(sredBadlyPlacedError);
                         return false;
                     }
                     if (!sredInstr(wt, in, true)) {
-                        func_0804ad38("failed to sred a line\n");
+                        reportError("failed to sred a line\n");
                         return false;
                     }
                 }
@@ -142,11 +142,11 @@ bool sredTable(workTable *wt)
                 Instr *in = wt->func_080724f0(i)->onlyEntry();
                 if (in && !atEarliest(wt, in)) {
                     if (in->unk_13e8.unk_04 != i) {
-                        func_0804ad38(sredBadlyPlacedError);
+                        reportError(sredBadlyPlacedError);
                         return false;
                     }
                     if (!sredInstr(wt, in, false)) {
-                        func_0804ad38("failed to sred a line\n");
+                        reportError("failed to sred a line\n");
                         return false;
                     }
                 }

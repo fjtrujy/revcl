@@ -1,3 +1,4 @@
+#include "os.h"
 #include "instStream.h"
 #include "flowBlock.h"
 #include "Program.h"
@@ -17,7 +18,7 @@ static inline void dumpEmitInstruction(Instr *in)
 
 bool func_08087860(void *, Instr *in)
 {
-    Operand *op = &in->unk_38[1];
+    Operand *op = &in->operands[1];
     op->unk_07 = (((op->unk_07 & 8) >> 3) | (op->unk_07 << 1)) & 0xf;
     return 1;
 }
@@ -25,7 +26,7 @@ bool func_08087860(void *, Instr *in)
 bool efu_Hook(void *p, Instr *in)
 {
     iInfo *info = (iInfo *)p;
-    Operand *op = &in->unk_38[1];
+    Operand *op = &in->operands[1];
     switch (info->unk_1c) {
     case 1: break;
     case 2: op->unk_07 = 3; break;
@@ -33,45 +34,45 @@ bool efu_Hook(void *p, Instr *in)
     case 4: op->unk_07 = 7; break;
     case 5: op->unk_07 = 15; break;
     default:
-        func_0804ad38("unknown EFU mod bits type during efu_Hook at build\n");
+        reportError("unknown EFU mod bits type during efu_Hook at build\n");
         return 0;
     }
     return 1;
 }
 
-bool func_0804bfcc(const char *a, const char *b);
+bool asciiCaseEqual(const char *a, const char *b);
 
 bool wr2w_Hook(void *p, Instr *in)
 {
     iInfo *info = (iInfo *)p;
     iInfo *n;
-    if (func_0804bfcc(info->unk_04, "ilwr"))
+    if (asciiCaseEqual(info->unk_04, "ilwr"))
         n = func_0806bf8c("ilw", false);
-    else if (func_0804bfcc(info->unk_04, "iswr"))
+    else if (asciiCaseEqual(info->unk_04, "iswr"))
         n = func_0806bf8c("isw", false);
     else {
-        func_0804ad38("wr2w_Hook - couldn't find instruction '%s'\n", info->unk_04);
+        reportError("wr2w_Hook - couldn't find instruction '%s'\n", info->unk_04);
         return 0;
     }
     if (!n) {
-        func_0804ad38("wr2w_Hook - failed to find extended instruction\n");
+        reportError("wr2w_Hook - failed to find extended instruction\n");
         return 0;
     }
-    in->unk_34 = n;
-    in->unk_38[1].unk_04 = 0x1f;
-    in->unk_38[1].unk_1c.setInt(0);
+    in->opcodeInfo = n;
+    in->operands[1].unk_04 = 0x1f;
+    in->operands[1].unk_1c.setInt(0);
     return 1;
 }
 
 char *emitClip(char *buf, Instr *in, bool upper, char *mods, bool b, int)
 {
     bool comma = false;
-    int len = func_0804adbc(buf, "clipw%s.xyz", mods);
+    int len = formatIntoBuffer(buf, "clipw%s.xyz", mods);
     char *p = buf + len;
     for (int n = p - buf; n < 14; n++)
         *p++ = ' ';
-    for (int i = 0; i != in->unk_138b; i++) {
-        Operand *op = &in->unk_38[i];
+    for (int i = 0; i != in->operandCount; i++) {
+        Operand *op = &in->operands[i];
         if (op->unk_08)
             continue;
         if (comma)
@@ -79,9 +80,9 @@ char *emitClip(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         comma = true;
         p = op->Emit(p, upper, b);
         if (!p) {
-            func_0804ad38("failed to emit operand\n");
+            reportError("failed to emit operand\n");
             op->func_0805665c(0);
-            func_0804ad38("from\n");
+            reportError("from\n");
             dumpEmitInstruction(in);
             return 0;
         }
@@ -95,75 +96,75 @@ char *vmove_Emit(char *buf, Instr *in, bool upper, char *mods, bool b, int)
     if (!in)
         return 0;
     if (!in->unk_142c) {
-        func_0804ad38("baseMuid not set in vmove_Emit\n");
+        reportError("baseMuid not set in vmove_Emit\n");
         return 0;
     }
     if (!in->unk_142e) {
-        func_0804ad38("trying to emit an abstract move\n");
+        reportError("trying to emit an abstract move\n");
         return 0;
     }
     p = buf;
     switch (in->unk_142e) {
     case 0xb3:
-        p += func_0804adbc(buf, "iaddiu");
+        p += formatIntoBuffer(buf, "iaddiu");
         for (int n = p - buf; n < 14; n++)
             *p++ = ' ';
-        p = in->unk_38[0].Emit(p, upper, b);
+        p = in->operands[0].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
-        p = in->unk_38[1].Emit(p, upper, b);
+        p = in->operands[1].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
         *p++ = '0';
         break;
     case 0xb5:
-        p += func_0804adbc(buf, "%s%s", "move", mods);
+        p += formatIntoBuffer(buf, "%s%s", "move", mods);
         p = emitDestMask(p, 1, in->unk_138f);
         if (!p) {
-            func_0804ad38("failed to emit inst mods for lvfmove\n");
+            reportError("failed to emit inst mods for lvfmove\n");
             return 0;
         }
         for (int n = p - buf; n < 14; n++)
             *p++ = ' ';
-        p = in->unk_38[0].Emit(p, upper, b);
+        p = in->operands[0].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
-        p = in->unk_38[1].Emit(p, upper, b);
+        p = in->operands[1].Emit(p, upper, b);
         if (!p)
             goto fail;
         break;
     case 0xb6:
-        p += func_0804adbc(buf, "%s%s", "max", mods);
+        p += formatIntoBuffer(buf, "%s%s", "max", mods);
         p = emitDestMask(p, 1, in->unk_138f);
         if (!p) {
-            func_0804ad38("failed to emit inst mods for lvfmove\n");
+            reportError("failed to emit inst mods for lvfmove\n");
             return 0;
         }
         for (int n = p - buf; n < 14; n++)
             *p++ = ' ';
-        p = in->unk_38[0].Emit(p, upper, b);
+        p = in->operands[0].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
-        p = in->unk_38[1].Emit(p, upper, b);
+        p = in->operands[1].Emit(p, upper, b);
         if (!p)
             goto fail;
         *p++ = ',';
-        p = in->unk_38[1].Emit(p, upper, b);
+        p = in->operands[1].Emit(p, upper, b);
         if (!p)
             goto fail;
         break;
     default:
-        func_0804ad38("unknown vmove output requested\n");
+        reportError("unknown vmove output requested\n");
         return 0;
     }
     *p = 0;
     goto done;
 fail:
-    func_0804ad38("failed to emit operand 0\n");
+    reportError("failed to emit operand 0\n");
     return 0;
 done:
     return p;
@@ -177,40 +178,40 @@ bool semSynth(void *p, Instr *in)
     const char *s = info->unk_04;
     while (*s)
         *d++ = *s++;
-    if (in->unk_38[0].unk_04 == 9) {
+    if (in->operands[0].unk_04 == 9) {
         if (d[-1] != 'a' && d[-1] != 'A') {
             *d++ = 'a';
-            in->unk_38[0].unk_0a = 1;
+            in->operands[0].unk_0a = 1;
         }
     } else
-        in->unk_38[0].unk_0a = 4;
-    char k = in->unk_38[2].unk_04;
+        in->operands[0].unk_0a = 4;
+    char k = in->operands[2].unk_04;
     if (k == 4) {
-        in->unk_38[2].unk_0b = 1;
+        in->operands[2].unk_0b = 1;
         *d++ = 'i';
     }
     if (k == 7) {
         *d++ = 'q';
-        in->unk_38[2].unk_0b = 0;
+        in->operands[2].unk_0b = 0;
     }
     if (k == 3) {
-        unsigned char m = in->unk_38[2].unk_07;
+        unsigned char m = in->operands[2].unk_07;
         int n = 0;
         if (m == 1) { *d++ = 'x'; n++; }
         if (m == 2) { *d++ = 'y'; n++; }
         if (m == 4) { *d++ = 'z'; n++; }
         if (m == 8) { *d++ = 'w'; n++; }
         if (n != 1) {
-            func_0804ad38("semSynth - bad FL1 bits\n");
+            reportError("semSynth - bad FL1 bits\n");
             return 0;
         }
     }
     *d = 0;
     iInfo *ni = func_0806bf8c(name, false);
     if (!ni) {
-        func_0804ad38("failed to find derived instruction type '%s'\n", name);
+        reportError("failed to find derived instruction type '%s'\n", name);
         return 0;
     }
-    in->unk_34 = ni;
+    in->opcodeInfo = ni;
     return 1;
 }

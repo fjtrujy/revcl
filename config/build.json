@@ -15,7 +15,7 @@
         "-fno-weak"
       ]
     },
-    "src/f0808061c.cpp": {
+    "src/wrangleCore.cpp": {
       "flags": [
         "-O2",
         "-frename-registers",

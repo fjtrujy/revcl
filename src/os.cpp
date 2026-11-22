@@ -28,7 +28,7 @@ int func_0804aaa8()
 
 bool OS_Init()
 {
-    func_0804acb0("OS_Init(Linux)\n");
+    reportInfo("OS_Init(Linux)\n");
     osTime_080bbd8c = time(0);
     return true;
 }
@@ -41,7 +41,7 @@ static inline void resetWatchdogSignal()
 bool setWatchdog(char *flag, unsigned int seconds)
 {
     if (!flag) {
-        func_0804ad38("setWatchdog - passed null ptr\n");
+        reportError("setWatchdog - passed null ptr\n");
         return false;
     }
     alarm(0);
@@ -67,22 +67,22 @@ int func_0804ab6c(const char *name, char *pathOut)
     int fd = -1;
 
     if (!pathOut) {
-        func_0804ad38("OS_mkTemp - passed null output ptr\n");
+        reportError("OS_mkTemp - passed null output ptr\n");
         return -1;
     }
     if (!name) {
-        func_0804ad38("OS_mkTemp - passed null input base name\n");
+        reportError("OS_mkTemp - passed null input base name\n");
         *pathOut = 0;
         return -1;
     }
     if (strlen(name) > 1023) {
-        func_0804ad38("os_mkTemp : an unlikely error has occured\n");
+        reportError("os_mkTemp : an unlikely error has occured\n");
         return -1;
     }
     sprintf(buf, "/tmp/%s.XXXXXX", name);
     fd = mkstemp(buf);
     if (fd < 0) {
-        func_0804ad38("failed to make temp in file\n");
+        reportError("failed to make temp in file\n");
         *pathOut = 0;
         return -1;
     }
@@ -92,7 +92,7 @@ int func_0804ab6c(const char *name, char *pathOut)
 
 int OS_End()
 {
-    func_0804acb0("OS_End(Linux)\n");
+    reportInfo("OS_End(Linux)\n");
     return 1;
 }
 

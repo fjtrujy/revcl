@@ -6,7 +6,7 @@
 int expandRaw(workTable *wt)
 {
     if (wt->unk_09 != 5) {
-        func_0804ad38("expand raw - table not raw!\n");
+        reportError("expand raw - table not raw!\n");
         return 0;
     }
     return wt->changeMode(3);
@@ -14,18 +14,18 @@ int expandRaw(workTable *wt)
 
 bool expandRawTables(Program *p)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->unk_108) {
         if (!s->unk_218) {
-            func_0804ad38("work table not set in %s\n", s->func_0806d674());
-            func_0804adf0(-1);
+            reportError("work table not set in %s\n", s->streamName());
+            exitAfterCleanup(-1);
         }
         workTable *wt = s->unk_218;
         if (wt->codeMode() == 3) {
-            func_0804ad38("hit a raw table during expraw\n");
+            reportError("hit a raw table during expraw\n");
             return false;
         }
         if (wt->codeMode() == 5 && !wt->changeMode(3)) {
-            func_0804ad38("processor failed to expand raw table\n");
+            reportError("processor failed to expand raw table\n");
             return false;
         }
     }

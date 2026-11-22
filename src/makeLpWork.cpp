@@ -25,11 +25,11 @@ bool makeLpWork(instStream *s, int maxSpread)
 {
     workTable *wt = s->unk_218;
     if (!wt) {
-        func_0804ad38(lpWorkNoTableError);
+        reportError(lpWorkNoTableError);
         return false;
     }
     if (s->unk_220) {
-        func_0804ad38(lpWorkSavedTableError);
+        reportError(lpWorkSavedTableError);
         return false;
     }
     s->unk_220 = wt;
@@ -37,23 +37,23 @@ bool makeLpWork(instStream *s, int maxSpread)
     workTable *nt = wt->localClone();
     s->unk_218 = nt;
     if (!nt) {
-        func_0804ad38(lpWorkCloneTableError);
+        reportError(lpWorkCloneTableError);
         return false;
     }
     Instr *in;
     for (in = nt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
         int latest = 0;
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
-                for (int j = 0; j != reg->unk_28; j++) {
+                for (int j = 0; j != reg->partCount; j++) {
                     ol_s *ol = op->unk_2c[j].unk_54.unk_00;
                     if (ol) {
                         Instr *src = ol->unk_04;
                         Operand *o = func_0805802c(ol);
                         if (!src || !o) {
-                            func_0804ad38("in_s not set\n");
+                            reportError("in_s not set\n");
                             return false;
                         }
                         int v = src->unk_0c + o->unk_0a + op->unk_29;
@@ -67,16 +67,16 @@ bool makeLpWork(instStream *s, int maxSpread)
     }
     for (in = nt->unk_88.unk_04; in; in = in->unk_1c.unk_04) {
         int earliest = 30000;
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *reg = registerOperand(op, 2);
             if (reg) {
-                for (int j = 0; j != reg->unk_28; j++) {
+                for (int j = 0; j != reg->partCount; j++) {
                     for (ol_s *ol = op->unk_2c[j].unk_54.unk_00; ol; ol = ol->unk_00) {
                         Instr *dst = ol->unk_04;
                         Operand *o = func_0805802c(ol);
                         if (!dst || !o) {
-                            func_0804ad38("in_s not set\n");
+                            reportError("in_s not set\n");
                             return false;
                         }
                         int v = dst->unk_0c - op->unk_0a - o->unk_29;
@@ -88,7 +88,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         }
         if (earliest != 30000) {
             if (earliest < in->unk_0c) {
-                func_0804ad38(lpWorkHtNewError);
+                reportError(lpWorkHtNewError);
                 return false;
             }
             in->unk_0c = earliest;
@@ -99,14 +99,14 @@ bool makeLpWork(instStream *s, int maxSpread)
         int lo = 30000;
         int hi = 0;
         char *p = buf;
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
-                p += func_0804adbc(p, " %s: ", reg->func_0805a8e0());
+                p += formatIntoBuffer(p, " %s: ", reg->registerName());
                 int rlo = 30000, rhi = 0;
                 bool any = false;
-                for (int j = 0; j != reg->unk_28; j++) {
+                for (int j = 0; j != reg->partCount; j++) {
                     if ((op->unk_07 >> j) & 1) {
                         ol_s *ol = op->unk_2c[j].unk_54.unk_00;
                         if (ol) {
@@ -117,16 +117,16 @@ bool makeLpWork(instStream *s, int maxSpread)
                                 rlo = d;
                             if (d > rhi)
                                 rhi = d;
-                            p += func_0804adbc(p, "%3d ", d);
+                            p += formatIntoBuffer(p, "%3d ", d);
                         } else
-                            p += func_0804adbc(p, "xxx ");
+                            p += formatIntoBuffer(p, "xxx ");
                     } else
-                        p += func_0804adbc(p, "... ");
+                        p += formatIntoBuffer(p, "... ");
                 }
                 if (any) {
-                    p += func_0804adbc(p, "[%d %d] (%d) ", rlo, rhi, rhi - rlo);
+                    p += formatIntoBuffer(p, "[%d %d] (%d) ", rlo, rhi, rhi - rlo);
                     if (rhi - rlo > maxSpread)
-                        p += func_0804adbc(p, "!!!");
+                        p += formatIntoBuffer(p, "!!!");
                     if (rlo < lo)
                         lo = rlo;
                     if (rhi > hi)
@@ -134,9 +134,9 @@ bool makeLpWork(instStream *s, int maxSpread)
                 }
             }
         }
-        p += func_0804adbc(p, "    -> %d %d (%d)", lo, hi, hi - lo);
+        p += formatIntoBuffer(p, "    -> %d %d (%d)", lo, hi, hi - lo);
         if (lo > maxSpread)
-            p += func_0804adbc(p, " ****");
+            p += formatIntoBuffer(p, " ****");
         p[10] = 0;
     }
     return true;
@@ -145,12 +145,12 @@ bool makeLpWork(instStream *s, int maxSpread)
 bool disposeLpWork(instStream *s)
 {
     if (s->unk_218 == 0) {
-        func_0804ad38(lpWorkDisposeNoTableError);
+        reportError(lpWorkDisposeNoTableError);
         return false;
     }
     delete s->unk_218;
     if (s->unk_220 == 0) {
-        func_0804ad38(lpWorkDisposeNoSavedError);
+        reportError(lpWorkDisposeNoSavedError);
         return false;
     }
     s->unk_218 = s->unk_220;
@@ -168,15 +168,15 @@ bool modLsqq(Instr *in, int imm);
 
 bool lsqChain(workTable *wt)
 {
-    func_0804ad38(lsqChainHopeError);
-    func_0804aeb0();
+    reportError(lsqChainHopeError);
+    abortAfterError();
     for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
-        if (reg->unk_24 != 8)
+        if (reg->registerClass != 8)
             continue;
         Instr *list[1024];
         Instr *in = wt->unk_88.unk_00;
-        func_0804acb0("lsqi- scan %s\n", reg->func_0805a8e0());
+        reportInfo("lsqi- scan %s\n", reg->registerName());
         int n = 0;
         bool bad = false;
         bool ok = true;
@@ -195,11 +195,11 @@ bool lsqChain(workTable *wt)
         }
         if (!ok || n <= 1)
             continue;
-        func_0804acb0("lsChain for %s\n", reg->func_0805a8e0());
-        Operand *src = &list[0]->unk_38[1];
+        reportInfo("lsChain for %s\n", reg->registerName());
+        Operand *src = &list[0]->operands[1];
         if (src->unk_27 != 1) {
-            func_0804ad38("this isn't externally set!\n");
-            func_0804aeb0();
+            reportError("this isn't externally set!\n");
+            abortAfterError();
         }
         int total = 0;
         for (int i = 0; i != n; i++) {
@@ -217,12 +217,12 @@ bool lsqChain(workTable *wt)
                 break;
             }
             if (!modLsqq(in, total))
-                func_0804ad38("mod instruction\n");
+                reportError("mod instruction\n");
             total += delta;
             const char *name = "NO_BASE_INST";
-            if (in->unk_34)
-                name = in->unk_34->unk_04;
-            func_0804acb0("  %3d : %s\n", i, name);
+            if (in->opcodeInfo)
+                name = in->opcodeInfo->unk_04;
+            reportInfo("  %3d : %s\n", i, name);
         }
         iInfo *ii;
         if (total < 0) {
@@ -232,32 +232,32 @@ bool lsqChain(workTable *wt)
             ii = func_0806bf74(0x6e);
         Instr *ni = new Instr(ii);
         if (!ni) {
-            func_0804ad38(lsqChainNewInstrError);
+            reportError(lsqChainNewInstrError);
             return false;
         }
-        ni->unk_38[0].unk_18 = reg;
-        ni->unk_38[0].unk_27 = 1;
-        ni->unk_38[0].unk_07 = 1;
-        ni->unk_38[1].unk_18 = reg;
-        ni->unk_38[1].unk_27 = 1;
-        ni->unk_38[1].unk_07 = 1;
-        ni->unk_38[2].unk_1c.setInt(total);
+        ni->operands[0].unk_18 = reg;
+        ni->operands[0].unk_27 = 1;
+        ni->operands[0].unk_07 = 1;
+        ni->operands[1].unk_18 = reg;
+        ni->operands[1].unk_27 = 1;
+        ni->operands[1].unk_07 = 1;
+        ni->operands[2].unk_1c.setInt(total);
         if (!wt->logAddLinear_After(list[n - 1], ni)) {
-            func_0804ad38(lsqChainAddError);
+            reportError(lsqChainAddError);
             return false;
         }
         for (Instr *in = ni->unk_1c.unk_00; in; in = in->unk_1c.unk_00) {
-            for (int k = 0; k != in->unk_138b; k++) {
-                Operand *op = &in->unk_38[k];
+            for (int k = 0; k != in->operandCount; k++) {
+                Operand *op = &in->operands[k];
                 if (op->unk_18 != reg)
                     continue;
                 if (!isRegisterOperand(op, 1)) {
-                    func_0804ad38(lsqChainNotInputError);
+                    reportError(lsqChainNotInputError);
                     return false;
                 }
                 op->unk_2c[0].unk_54.clear();
                 if (!link_oParts(ni, 0, 0, in, k, 0)) {
-                    func_0804ad38(lsqChainLinkError);
+                    reportError(lsqChainLinkError);
                     return false;
                 }
             }
@@ -268,7 +268,7 @@ bool lsqChain(workTable *wt)
 
 bool splitStreams()
 {
-    func_0804ad38("split streams called\n");
+    reportError("split streams called\n");
     return false;
 }
 
@@ -283,28 +283,28 @@ bool modLsqq(Instr *in, int imm)
         ii = func_0806bf74(0xa0);
         break;
     default:
-        func_0804ad38("mod_lsqq: ?\n");
-        func_0804aeb0();
+        reportError("mod_lsqq: ?\n");
+        abortAfterError();
         return false;
     }
-    in->unk_34 = ii;
-    in->unk_38[2].unk_2c[0].func_080560e8();
-    in->unk_38[1].unk_2c[0].func_080560e8();
-    in->unk_138b = 2;
-    in->unk_38[1].unk_27 = 1;
-    Operand *op = &in->unk_38[1];
+    in->opcodeInfo = ii;
+    in->operands[2].unk_2c[0].func_080560e8();
+    in->operands[1].unk_2c[0].func_080560e8();
+    in->operandCount = 2;
+    in->operands[1].unk_27 = 1;
+    Operand *op = &in->operands[1];
     iOpDesc *d = &ii->unk_44[1];
     op->unk_04 = d->unk_00;
     op->unk_08 = d->unk_02 != 0;
     op->unk_05 = d->unk_05;
     op->unk_0d = d->unk_06;
     if (op->unk_04 != 0x1d) {
-        func_0804ad38("modded lqsq isn't ea_imm_reg\n");
-        func_0804aeb0();
+        reportError("modded lqsq isn't ea_imm_reg\n");
+        abortAfterError();
         return false;
     }
     if (!op->unk_1c.setInt(imm)) {
-        func_0804ad38("failed to set new immediate\n");
+        reportError("failed to set new immediate\n");
         return false;
     }
     return true;

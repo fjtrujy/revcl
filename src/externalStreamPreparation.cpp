@@ -20,17 +20,17 @@ void splitCtime(workTable *wt, int l, int m);
 bool func_0807aee4(Program *p)
 {
     instStream *s;
-    for (s = p->unk_a0; s; s = s->unk_108)
+    for (s = p->streamHead; s; s = s->unk_108)
         s->unk_2dc = s->func_0806d9a0() ? 0 : 1;
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->unk_108) {
         if (s->unk_2dc)
             continue;
         if (!prepExtInfo(p, s, 0)) {
-            func_0804ad38("failed to prep external info for stream %s\n", s->func_0806d674());
+            reportError("failed to prep external info for stream %s\n", s->streamName());
             return false;
         }
         if (!removeNops(p, s)) {
-            func_0804ad38("failed to sred a table from %s\n", s->func_0806d674());
+            reportError("failed to sred a table from %s\n", s->streamName());
             return false;
         }
         s->unk_2dc = 1;
@@ -41,33 +41,33 @@ bool func_0807aee4(Program *p)
 bool removeNops(Program *p, instStream *s)
 {
     if (!s->unk_218) {
-        func_0804ad38("work table not set in %s\n", s->func_0806d674());
-        func_0804adf0(-1);
+        reportError("work table not set in %s\n", s->streamName());
+        exitAfterCleanup(-1);
     }
     workTable *wt = s->unk_218;
     if (!wt) {
-        func_0804ad38("no work table \n");
+        reportError("no work table \n");
         return false;
     }
     int len = wt->func_080741c0() - wt->func_0807411c();
     if (len == 0)
         return true;
     if (wt->unk_44 < 0) {
-        func_0804ad38("the minimal length is -ve for ext\n");
+        reportError("the minimal length is -ve for ext\n");
         return false;
     }
     if (len < wt->unk_44) {
-        func_0804ad38("table is lready too short (%d<%d)\n", len, wt->unk_44);
+        reportError("table is lready too short (%d<%d)\n", len, wt->unk_44);
         return false;
     }
     RegPool *hw = GetRP(10);
     if (!hw) {
-        func_0804ad38("failed to get hw register pool - maybe this isn't vpu?\n");
+        reportError("failed to get hw register pool - maybe this isn't vpu?\n");
         return false;
     }
     func_0807bb84(wt);
     if (!func_0806c0f8(p)) {
-        func_0804ad38("failed to reset for emu\n");
+        reportError("failed to reset for emu\n");
         return false;
     }
     bool lastOk = true;
@@ -83,14 +83,14 @@ bool removeNops(Program *p, instStream *s)
     for (int rl = wt->func_0807411c(); rl != wt->func_080741c0(); rl++) {
         wtRow *row = (wtRow *)((cls_unk30 *)wt)->getIE_ck(rl);
         if (row->unk_08) {
-            func_0804ad38("skip already set for line\n");
+            reportError("skip already set for line\n");
             return false;
         }
         if (!row->func_08072304()) {
             int tNow = row->unk_0c;
             int n = p->proc.gatherInflight(inflight);
             if (n < 0) {
-                func_0804ad38("error gathering inflight data\n");
+                reportError("error gathering inflight data\n");
                 return false;
             }
             int m = wt->func_080741c0();
@@ -105,12 +105,12 @@ bool removeNops(Program *p, instStream *s)
                 if (reg->unk_2c) {
                     int tv = in->unk_13cf;
                     if (tv <= 6)
-                        func_0804ae34("bad throught value in register\n");
+                        exitWithError("bad throught value in register\n");
                     int thr = lat;
                     if (reg->unk_30 == 0x34)
                         thr--;
                     else if (reg->unk_30 != 0x32)
-                        func_0804ae34("non p-q has throughput?\n");
+                        exitWithError("non p-q has throughput?\n");
                     int l = rl + 1;
                     wtRow *r = row;
                     while (r++, l < wt->func_080741c0()) {
@@ -119,7 +119,7 @@ bool removeNops(Program *p, instStream *s)
                             break;
                         if (r->func_080723ec(reg, 0xff)) {
                             if (t != tNow + thr) {
-                                func_0804ad38("unexpected thruput stall detected\n");
+                                reportError("unexpected thruput stall detected\n");
                                 return false;
                             }
                             if (l < m)
@@ -135,11 +135,11 @@ bool removeNops(Program *p, instStream *s)
                         int ul = ui->unk_13e8.unk_00;
                         int tu = wt->ctime(ul);
                         if (tu <= tNow) {
-                            func_0804ad38("user is before now .. tUser=%d tNow = %d\n", tu, tNow);
+                            reportError("user is before now .. tUser=%d tNow = %d\n", tu, tNow);
                             return false;
                         }
                         if (tNow + lat > tu) {
-                            func_0804ad38("found an unexpected stall\n");
+                            reportError("found an unexpected stall\n");
                             return false;
                         }
                         if (tNow + lat == tu && ul < m)
@@ -176,8 +176,8 @@ bool removeNops(Program *p, instStream *s)
                         Instr *in = r->getEntry(pp);
                         if (!in)
                             continue;
-                        for (int i = 0; i != in->unk_138b; i++) {
-                            Operand *o = &in->unk_38[i];
+                        for (int i = 0; i != in->operandCount; i++) {
+                            Operand *o = &in->operands[i];
                             RegPoolEntry *w = registerOperand(o, 2);
                             if (o->unk_28)
                                 ok = false;
@@ -231,7 +231,7 @@ bool removeNops(Program *p, instStream *s)
                             wtRow *r = (wtRow *)((cls_unk30 *)wt)->getIE_ck(l);
                             int dist = last - row->unk_0c;
                             if (dist < 0)
-                                func_0804ae34("distance to end appears to be less than zero\n");
+                                exitWithError("distance to end appears to be less than zero\n");
                             for (int pp = 0; pp != 2; pp++) {
                                 Instr *in = GetI((Instr **)r, pp);
                                 if (in) {
@@ -266,21 +266,21 @@ bool removeNops(Program *p, instStream *s)
         }
         int d = emuInst(p, row, rl, false, false);
         if (d < 0) {
-            func_0804ad38("failed to emu an ientry\n");
+            reportError("failed to emu an ientry\n");
             return false;
         }
         curTick += d;
         if (curTick != row->unk_0c + 1) {
-            func_0804ad38("unexpected time !.. currTick=%d cTime=%d\n", curTick, row->unk_0c);
+            reportError("unexpected time !.. currTick=%d cTime=%d\n", curTick, row->unk_0c);
             return false;
         }
         if (curTick != p->unk_80) {
-            func_0804ad38("currTick doesn't match cpu\n");
+            reportError("currTick doesn't match cpu\n");
             return false;
         }
     }
     if (wt->func_08072eec() != p->unk_80) {
-        func_0804ad38("at end of table logical len not correct\n");
+        reportError("at end of table logical len not correct\n");
         return false;
     }
     return true;
@@ -294,7 +294,7 @@ void func_0807bb84(workTable *wt)
         for (int p = 0; p != 2; p++) {
             Instr *in = GetI((Instr **)row, p);
             if (in && in->unk_1394 != rel)
-                func_0804ae34("l=%d exec time mismatch in instruction %d!=%d\n",
+                exitWithError("l=%d exec time mismatch in instruction %d!=%d\n",
                               l, in->unk_1394, rel);
         }
         short *time = &row->unk_0c;
@@ -305,9 +305,9 @@ void func_0807bb84(workTable *wt)
 void splitCtime(workTable *wt, int l, int m)
 {
     if (l < wt->unk_30 || l >= wt->unk_34)
-        func_0804ae34("nop line is bad\n");
+        exitWithError("nop line is bad\n");
     if (m <= l)
-        func_0804ae34("m<l for splitCtime()\n");
+        exitWithError("m<l for splitCtime()\n");
     if (m > wt->unk_34)
         m = wt->unk_34;
     wtRow *row = &wt->unk_2c[l];
@@ -318,7 +318,7 @@ void splitCtime(workTable *wt, int l, int m)
 int getCtime(workTable *wt, int l)
 {
     if (l < wt->unk_30 || l >= wt->unk_34)
-        func_0804ae34("nop line is bad\n");
+        exitWithError("nop line is bad\n");
     return wt->unk_2c[l].unk_0c;
 }
 

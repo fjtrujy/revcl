@@ -1,3 +1,4 @@
+#include "os.h"
 #include "lock_shared.h"
 
 cls0805e2e4::cls0805e2e4()
@@ -85,7 +86,7 @@ const char *stallReasonStr(short why)
         s = "branch instruction dependency chain height";
         break;
     case 9:
-        func_0804adbc(g_080de2a0, "issue pressure on %s", func_0806c6a0((char)((why & 0xff00) >> 8)));
+        formatIntoBuffer(g_080de2a0, "issue pressure on %s", func_0806c6a0((char)((why & 0xff00) >> 8)));
         s = g_080de2a0;
         break;
     case 10:
@@ -114,7 +115,7 @@ bool instStream::gatherStats()
     unk_2ba = 0;
     workTable *wt = getTable();
     if (!wt) {
-        func_0804ad38("failed to gather stats - no get work table\n");
+        reportError("failed to gather stats - no get work table\n");
         return false;
     }
 
@@ -136,27 +137,27 @@ bool instStream::gatherStats()
             logged = 1;
         }
         if ((unsigned char)logged == 0) {
-            func_0804ad38("failed to log\n");
+            reportError("failed to log\n");
             return false;
         }
     }
 
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
             if (r) {
-                for (int p = 0; p != r->unk_28; p++) {
+                for (int p = 0; p != r->partCount; p++) {
                     if ((op->unk_07 >> p) & 1) {
                         for (ol_s *ol = op->unk_2c[p].unk_54.unk_00; ol; ol = ol->unk_00) {
                             if (!ol->unk_04) {
-                                func_0804ad38("failed to get setting instruction!\n");
+                                reportError("failed to get setting instruction!\n");
                                 return false;
                             }
                             if (iOwn(ol->unk_04)) {
                                 Operand *so = func_0805802c(ol);
                                 if (!so) {
-                                    func_0804ad38("failed to get setting operand for instruction\n");
+                                    reportError("failed to get setting operand for instruction\n");
                                     return false;
                                 }
                                 int l = so->unk_0a + op->unk_29;
@@ -171,18 +172,18 @@ bool instStream::gatherStats()
     }
 
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *r;
             if (isRegisterOperand(op, 1) && op->unk_2b != 2)
                 r = op->unk_18;
             else
                 r = 0;
             if (r) {
-                for (int p = 0; p != r->unk_28; p++) {
+                for (int p = 0; p != r->partCount; p++) {
                     if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
                         if (op->unk_2c[p].unk_54.unk_04 != 1) {
-                            func_0804ad38("found ol with!=1 entries\n");
+                            reportError("found ol with!=1 entries\n");
                             return false;
                         }
                         Instr *src = op->unk_2c[p].unk_54.unk_00->unk_04;
@@ -200,14 +201,14 @@ bool instStream::gatherStats()
     }
 
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
             if (r) {
-                for (int p = 0; p != r->unk_28; p++) {
+                for (int p = 0; p != r->partCount; p++) {
                     if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
                         if (op->unk_2c[p].unk_54.unk_04 != 1) {
-                            func_0804ad38("found ol with!=1 entries\n");
+                            reportError("found ol with!=1 entries\n");
                             return false;
                         }
                         Instr *src = op->unk_2c[p].unk_54.unk_00->unk_04;
@@ -223,18 +224,18 @@ bool instStream::gatherStats()
 
     wtInstrList *lst = &wt->unk_88;
     for (in = lst->unk_04; in; in = in->unk_1c.unk_04) {
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *r;
             if (isRegisterOperand(op, 1) && op->unk_2b != 2)
                 r = op->unk_18;
             else
                 r = 0;
             if (r) {
-                for (int p = 0; p != r->unk_28; p++) {
+                for (int p = 0; p != r->partCount; p++) {
                     if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
                         if (op->unk_2c[p].unk_54.unk_04 != 1) {
-                            func_0804ad38("found ol with!=1 entries\n");
+                            reportError("found ol with!=1 entries\n");
                             return false;
                         }
                         Instr *src = op->unk_2c[p].unk_54.unk_00->unk_04;
@@ -287,11 +288,11 @@ bool instStream::gatherStats()
 
     int maxIssue = 0;
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *r = registerOperand(op, 2);
             if (r) {
-                for (int p = 0; p != r->unk_28; p++) {
+                for (int p = 0; p != r->partCount; p++) {
                     int nBoth = 0;
                     int n1 = 0;
                     int nOther = 0;
@@ -354,10 +355,10 @@ bool instStream::gatherStats()
     for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
         RegPoolEntry *r = ru->unk_08;
         if (!r) {
-            func_0804ad38("regref had no reg\n");
+            reportError("regref had no reg\n");
             return false;
         }
-        for (int p = 0; p != r->unk_28; p++) {
+        for (int p = 0; p != r->partCount; p++) {
             if ((ru->unk_0f >> p) & 1) {
                 regUseSlot *s = &ru->unk_20[p];
                 int h = s->unk_34[0];
@@ -380,8 +381,8 @@ bool instStream::gatherStats()
     }
     for (int i = 0; i != 9; i++) {
         if (i < 0 || i > 8) {
-            func_0804ad38("bad stat\n");
-            func_0804adf0(-1);
+            reportError("bad stat\n");
+            exitAfterCleanup(-1);
         }
         int n = (sc->unk_00[i] + 1) >> 1;
         if (n > best) {
@@ -457,8 +458,8 @@ int instStream::getOrGuessDepLength()
 {
     workTable *wt = getTable();
     if (!wt) {
-        func_0804ad38("getOrGuess - no work table\n");
-        func_0804adf0(-1);
+        reportError("getOrGuess - no work table\n");
+        exitAfterCleanup(-1);
     }
     int len = 0;
     switch (wt->unk_09) {
@@ -476,8 +477,8 @@ int instStream::func_0805f354()
 {
     workTable *wt = getTable();
     if (!wt) {
-        func_0804ad38("getOrGuess - no work table\n");
-        func_0804adf0(-1);
+        reportError("getOrGuess - no work table\n");
+        exitAfterCleanup(-1);
     }
     int len = 0;
     switch (wt->unk_09) {
@@ -495,8 +496,8 @@ int instStream::getOrGuessLogicalLength()
     if (!wt)
         wt = getWorkTable();
     if (!wt) {
-        func_0804ad38("getOrGuess - no work table\n");
-        func_0804adf0(-1);
+        reportError("getOrGuess - no work table\n");
+        exitAfterCleanup(-1);
     }
     return wt->getLogicalLen();
 }
@@ -522,8 +523,8 @@ bool statCounts::add(Instr *in)
 int statCounts::get(int i)
 {
     if (i < 0 || i > 8) {
-        func_0804ad38("bad stat\n");
-        func_0804adf0(-1);
+        reportError("bad stat\n");
+        exitAfterCleanup(-1);
     }
     return (unk_00[i] + 1) >> 1;
 }

@@ -18,12 +18,12 @@ void olList::func_08057e9c()
             n++;
         }
     } else if (p) {
-        func_0804ad38("opLocList - had zero count, but non empty head\n");
-        func_0804aeb0();
+        reportError("opLocList - had zero count, but non empty head\n");
+        abortAfterError();
     }
     if (n != unk_04) {
-        func_0804ad38("oploc list - bad list not nent\n");
-        func_0804aeb0();
+        reportError("oploc list - bad list not nent\n");
+        abortAfterError();
     }
 }
 
@@ -40,10 +40,10 @@ void olList::func_08057f2c()
             n++;
         }
     } else if (p) {
-        func_0804ae34("opLocList - had zero count, but non empty head\n");
+        exitWithError("opLocList - had zero count, but non empty head\n");
     }
     if (n != unk_04)
-        func_0804ae34("oploc list - bad list not nent\n");
+        exitWithError("oploc list - bad list not nent\n");
 }
 
 void ol_s::func_08057fbc()
@@ -65,7 +65,7 @@ void ol_s::func_08057fec()
 Operand *func_0805802c(ol_s *ol)
 {
     if (ol->unk_04)
-        return &ol->unk_04->unk_38[ol->unk_10];
+        return &ol->unk_04->operands[ol->unk_10];
     return 0;
 }
 
@@ -132,11 +132,11 @@ ol_s *olList::func_080580fc(Instr *inst, int op, int slot, bool ext)
     for (p = unk_00; p; p = p->unk_00) {
         if (inst == p->unk_04 && op == p->unk_10 && slot == p->unk_11) {
             if (ext != p->isExt()) {
-                func_0804ad38("addOL: inst external state mismatch bExt=%d\n", ext);
+                reportError("addOL: inst external state mismatch bExt=%d\n", ext);
                 p->func_08057fbc();
-                func_0804aeb0();
+                abortAfterError();
             }
-            func_0804ae34("matched oploc\n");
+            exitWithError("matched oploc\n");
             return p;
         }
         prev = p;
@@ -215,10 +215,10 @@ ol_s *ol_s::func_08058414()
 
 RegPoolEntry *func_08058440(ol_s *ol)
 {
-    Operand *op = ol->unk_04 ? &ol->unk_04->unk_38[ol->unk_10] : 0;
+    Operand *op = ol->unk_04 ? &ol->unk_04->operands[ol->unk_10] : 0;
     if (op)
         return op->unk_18;
-    func_0804ae34("no register!\n");
+    exitWithError("no register!\n");
     return 0;
 }
 

@@ -37,7 +37,7 @@ bool pushImmediate(ol_s *ol)
         int immOp = -1;
         int opc = 0;
         if (!immCalc(in, &srcOp, &immOp, &val, &opc)) {
-            func_0804ad38("imm_calc failed during push\n");
+            reportError("imm_calc failed during push\n");
             return false;
         }
         int nopc = opc;
@@ -47,10 +47,10 @@ bool pushImmediate(ol_s *ol)
             nopc = 0x6e;
         if (opc != nopc) {
             val = -val;
-            in->unk_34 = func_0806bf74(nopc);
+            in->opcodeInfo = func_0806bf74(nopc);
         }
-        if (!in->unk_38[immOp].unk_1c.setInt(val)) {
-            func_0804ad38("failed to set new immediate value\n");
+        if (!in->operands[immOp].unk_1c.setInt(val)) {
+            reportError("failed to set new immediate value\n");
             return false;
         }
     }
@@ -61,16 +61,16 @@ bool func_0806a74c(Program *p)
 {
     bool changed = false;
     instStream *s;
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->unk_108) {
         workTable *t = s->getTable();
         for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
             if (__builtin_expect(in->func_08055ac4() != 0x6d, 1))
                 continue;
-            mValue *v = &in->unk_38[2].unk_1c;
+            mValue *v = &in->operands[2].unk_1c;
             if (v->type != mValue::STRING) {
                 int val = 0;
                 if (!v->getInt(&val)) {
-                    func_0804ad38("failed to get immediate value for an iaddi\n");
+                    reportError("failed to get immediate value for an iaddi\n");
                     return false;
                 }
                 int opc;
@@ -79,13 +79,13 @@ bool func_0806a74c(Program *p)
                     opc = 0x70;
                 } else
                     opc = 0x6e;
-                in->unk_34 = func_0806bf74(opc);
-                if (!in->unk_34) {
-                    func_0804ad38("couldn't find replacement instruction\n");
+                in->opcodeInfo = func_0806bf74(opc);
+                if (!in->opcodeInfo) {
+                    reportError("couldn't find replacement instruction\n");
                     return false;
                 }
                 if (!v->setInt(val)) {
-                    func_0804ad38("failed to set new val\n");
+                    reportError("failed to set new val\n");
                     return false;
                 }
             }
@@ -93,18 +93,18 @@ bool func_0806a74c(Program *p)
     }
     do {
         changed = false;
-        for (s = p->unk_a0; s; s = s->unk_108) {
+        for (s = p->streamHead; s; s = s->unk_108) {
             workTable *t = s->getTable();
             for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
                 int k = func_0806aa54(in);
                 if (k == -2) {
-                    func_0804ad38("an immediate is wrong someplace\n");
+                    reportError("an immediate is wrong someplace\n");
                     return false;
                 }
                 if (k < 0)
                     continue;
                 bool ok = true;
-                ol_s *list = in->unk_38[k].unk_2c[0].unk_54.unk_00;
+                ol_s *list = in->operands[k].unk_2c[0].unk_54.unk_00;
                 for (ol_s *ol = list; ol && ok; ol = ol->unk_00) {
                     Instr *user = ol->unk_04;
                     Operand *op = func_0805802c(ol);
@@ -134,7 +134,7 @@ bool func_0806a74c(Program *p)
                 }
                 if (ok) {
                     if (!pushImmediate(list)) {
-                        func_0804ad38("failed to push an immediate into a register\n");
+                        reportError("failed to push an immediate into a register\n");
                         return false;
                     }
                     g_080de6b0->setInt(0);
@@ -166,14 +166,14 @@ int func_0806aa54(Instr *in)
         bits = 15;
         idx = 0;
         isSigned = false;
-        g_080de6ac = in->unk_38[1].unk_18;
-        g_080de6b0 = &in->unk_38[2].unk_1c;
+        g_080de6ac = in->operands[1].unk_18;
+        g_080de6b0 = &in->operands[2].unk_1c;
         break;
     case 0x70:
         bits = 15;
         isSigned = false;
-        g_080de6ac = in->unk_38[1].unk_18;
-        g_080de6b0 = &in->unk_38[2].unk_1c;
+        g_080de6ac = in->operands[1].unk_18;
+        g_080de6b0 = &in->operands[2].unk_1c;
         idx = 0;
         neg = true;
         break;
@@ -183,18 +183,18 @@ int func_0806aa54(Instr *in)
     if (isStringValue(g_080de6b0))
         return -1;
     if (!g_080de6b0->getInt(&val)) {
-        func_0804ad38("failed to get immediate value\n");
+        reportError("failed to get immediate value\n");
         return -2;
     }
     if (val == 0)
         return -1;
     if (isSigned) {
         if (!(char)fitsSigned(val, bits)) {
-            func_0804ac7c("immediate %d doesn't fit as signed value in %d bits - skipping\n", val, bits);
+            reportWarning("immediate %d doesn't fit as signed value in %d bits - skipping\n", val, bits);
             return -1;
         }
     } else if (!fitsUnsigned(val, bits)) {
-        func_0804ac7c("immediate %d doesn't fit as unsigned value in %d bits - skipping\n", val, bits);
+        reportWarning("immediate %d doesn't fit as unsigned value in %d bits - skipping\n", val, bits);
         return -1;
     }
     g_080de6b4 = neg ? -val : val;
@@ -237,12 +237,12 @@ bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc)
     default:
         return false;
     }
-    mValue *v = &in->unk_38[*immOp].unk_1c;
+    mValue *v = &in->operands[*immOp].unk_1c;
     if (isStringValue(v))
         return false;
     int x = 0;
     if (!v->getInt(&x)) {
-        func_0804ad38("failed to get immediate value\n");
+        reportError("failed to get immediate value\n");
         return false;
     }
     x = sub ? x - g_080de6b4 : x + g_080de6b4;

@@ -10,11 +10,11 @@
 bool UnlinkFromToDo(Block *blk, Instr *n)
 {
     if (!n) {
-        func_0804ad38("UnlinkFromToDo - passed a null pointer\n");
+        reportError("UnlinkFromToDo - passed a null pointer\n");
         return false;
     }
     if (!blk->unk_94.unk_08) {
-        func_0804ad38("UnlinkFromToDo asked to unlink - but zero count\n");
+        reportError("UnlinkFromToDo asked to unlink - but zero count\n");
         return false;
     }
     if (n->unk_24.unk_00)
@@ -22,7 +22,7 @@ bool UnlinkFromToDo(Block *blk, Instr *n)
     else if (n == blk->unk_94.unk_04)
         blk->unk_94.unk_04 = n->unk_24.unk_04;
     else {
-        func_0804ad38("UnlinkFromToDono next.. but not tail!\n");
+        reportError("UnlinkFromToDono next.. but not tail!\n");
         return false;
     }
     if (n->unk_24.unk_04)
@@ -30,7 +30,7 @@ bool UnlinkFromToDo(Block *blk, Instr *n)
     else if (n == blk->unk_94.unk_00)
         blk->unk_94.unk_00 = n->unk_24.unk_00;
     else {
-        func_0804ad38("UnlinkFromToDono next.. but not tail!\n");
+        reportError("UnlinkFromToDono next.. but not tail!\n");
         return false;
     }
     blk->unk_94.unk_08--;
@@ -42,11 +42,11 @@ bool UnlinkFromToDo(Block *blk, Instr *n)
 bool UnlinkFromDone(Block *blk, Instr *n)
 {
     if (!n) {
-        func_0804ad38("UnlinkFromDone - passed a null pointer\n");
+        reportError("UnlinkFromDone - passed a null pointer\n");
         return false;
     }
     if (!blk->unk_a0.unk_08) {
-        func_0804ad38("UnlinkFromDone asked to unlink - but zero count\n");
+        reportError("UnlinkFromDone asked to unlink - but zero count\n");
         return false;
     }
     if (n->unk_24.unk_00)
@@ -54,7 +54,7 @@ bool UnlinkFromDone(Block *blk, Instr *n)
     else if (n == blk->unk_a0.unk_04)
         blk->unk_a0.unk_04 = n->unk_24.unk_04;
     else {
-        func_0804ad38("UnlinkFromDoneno next.. but not tail!\n");
+        reportError("UnlinkFromDoneno next.. but not tail!\n");
         return false;
     }
     if (n->unk_24.unk_04)
@@ -62,7 +62,7 @@ bool UnlinkFromDone(Block *blk, Instr *n)
     else if (n == blk->unk_a0.unk_00)
         blk->unk_a0.unk_00 = n->unk_24.unk_00;
     else {
-        func_0804ad38("UnlinkFromDoneno next.. but not tail!\n");
+        reportError("UnlinkFromDoneno next.. but not tail!\n");
         return false;
     }
     blk->unk_a0.unk_08--;
@@ -74,11 +74,11 @@ bool UnlinkFromDone(Block *blk, Instr *n)
 bool UnlinkFromLinear(Block *blk, Instr *n)
 {
     if (!n) {
-        func_0804ad38("UnlinkFromLinear - passed a null pointer\n");
+        reportError("UnlinkFromLinear - passed a null pointer\n");
         return false;
     }
     if (!blk->unk_88.unk_08) {
-        func_0804ad38("UnlinkFromLinear asked to unlink - but zero count\n");
+        reportError("UnlinkFromLinear asked to unlink - but zero count\n");
         return false;
     }
     if (n->unk_1c.unk_00)
@@ -86,7 +86,7 @@ bool UnlinkFromLinear(Block *blk, Instr *n)
     else if (n == blk->unk_88.unk_04)
         blk->unk_88.unk_04 = n->unk_1c.unk_04;
     else {
-        func_0804ad38("UnlinkFromLinearno next.. but not tail!\n");
+        reportError("UnlinkFromLinearno next.. but not tail!\n");
         return false;
     }
     if (n->unk_1c.unk_04)
@@ -94,7 +94,7 @@ bool UnlinkFromLinear(Block *blk, Instr *n)
     else if (n == blk->unk_88.unk_00)
         blk->unk_88.unk_00 = n->unk_1c.unk_00;
     else {
-        func_0804ad38("UnlinkFromLinearno next.. but not tail!\n");
+        reportError("UnlinkFromLinearno next.. but not tail!\n");
         return false;
     }
     blk->unk_88.unk_08--;
@@ -106,22 +106,22 @@ bool UnlinkFromLinear(Block *blk, Instr *n)
 bool AddToDo_Head(Block *blk, Instr *n)
 {
     if (!n) {
-        func_0804ad38("AddToDo_Head - passed a null pointer\n");
+        reportError("AddToDo_Head - passed a null pointer\n");
         return false;
     }
     if (n->unk_24.unk_04 || n->unk_24.unk_00) {
-        func_0804ad38("AddToDo_Head - node already appears linked\n");
+        reportError("AddToDo_Head - node already appears linked\n");
         return false;
     }
     if (blk->unk_94.unk_00) {
         if (!blk->unk_94.unk_04) {
-            func_0804ad38("AddToDo_Headlist had no first, but last set!\n");
-            func_0804adf0(-1);
+            reportError("AddToDo_Headlist had no first, but last set!\n");
+            exitAfterCleanup(-1);
             return false;
         }
         if (!blk->unk_94.unk_08) {
-            func_0804ad38("AddToDo_Headlist had no head or tail, but count not zero\n");
-            func_0804adf0(-1);
+            reportError("AddToDo_Headlist had no head or tail, but count not zero\n");
+            exitAfterCleanup(-1);
             return false;
         }
         n->unk_24.unk_00 = blk->unk_94.unk_00;
@@ -129,7 +129,7 @@ bool AddToDo_Head(Block *blk, Instr *n)
         blk->unk_94.unk_00 = n;
     } else {
         if (blk->unk_94.unk_08) {
-            func_0804ad38("AddToDo_Headno list head but count not zero\n");
+            reportError("AddToDo_Headno list head but count not zero\n");
             return false;
         }
         blk->unk_94.unk_04 = n;
@@ -142,22 +142,22 @@ bool AddToDo_Head(Block *blk, Instr *n)
 bool AddDone_Head(Block *blk, Instr *n)
 {
     if (!n) {
-        func_0804ad38("AddDone_Head - passed a null pointer\n");
+        reportError("AddDone_Head - passed a null pointer\n");
         return false;
     }
     if (n->unk_24.unk_04 || n->unk_24.unk_00) {
-        func_0804ad38("AddDone_Head - node already appears linked\n");
+        reportError("AddDone_Head - node already appears linked\n");
         return false;
     }
     if (blk->unk_a0.unk_00) {
         if (!blk->unk_a0.unk_04) {
-            func_0804ad38("AddDone_Headlist had no first, but last set!\n");
-            func_0804adf0(-1);
+            reportError("AddDone_Headlist had no first, but last set!\n");
+            exitAfterCleanup(-1);
             return false;
         }
         if (!blk->unk_a0.unk_08) {
-            func_0804ad38("AddDone_Headlist had no head or tail, but count not zero\n");
-            func_0804adf0(-1);
+            reportError("AddDone_Headlist had no head or tail, but count not zero\n");
+            exitAfterCleanup(-1);
             return false;
         }
         n->unk_24.unk_00 = blk->unk_a0.unk_00;
@@ -165,7 +165,7 @@ bool AddDone_Head(Block *blk, Instr *n)
         blk->unk_a0.unk_00 = n;
     } else {
         if (blk->unk_a0.unk_08) {
-            func_0804ad38("AddDone_Headno list head but count not zero\n");
+            reportError("AddDone_Headno list head but count not zero\n");
             return false;
         }
         blk->unk_a0.unk_04 = n;
@@ -178,22 +178,22 @@ bool AddDone_Head(Block *blk, Instr *n)
 bool AddLinear_Head(Block *blk, Instr *n)
 {
     if (!n) {
-        func_0804ad38("AddLinear_Head - passed a null pointer\n");
+        reportError("AddLinear_Head - passed a null pointer\n");
         return false;
     }
     if (n->unk_1c.unk_04 || n->unk_1c.unk_00) {
-        func_0804ad38("AddLinear_Head - node already appears linked\n");
+        reportError("AddLinear_Head - node already appears linked\n");
         return false;
     }
     if (blk->unk_88.unk_00) {
         if (!blk->unk_88.unk_04) {
-            func_0804ad38("AddLinear_Headlist had no first, but last set!\n");
-            func_0804adf0(-1);
+            reportError("AddLinear_Headlist had no first, but last set!\n");
+            exitAfterCleanup(-1);
             return false;
         }
         if (!blk->unk_88.unk_08) {
-            func_0804ad38("AddLinear_Headlist had no head or tail, but count not zero\n");
-            func_0804adf0(-1);
+            reportError("AddLinear_Headlist had no head or tail, but count not zero\n");
+            exitAfterCleanup(-1);
             return false;
         }
         n->unk_1c.unk_00 = blk->unk_88.unk_00;
@@ -201,7 +201,7 @@ bool AddLinear_Head(Block *blk, Instr *n)
         blk->unk_88.unk_00 = n;
     } else {
         if (blk->unk_88.unk_08) {
-            func_0804ad38("AddLinear_Headno list head but count not zero\n");
+            reportError("AddLinear_Headno list head but count not zero\n");
             return false;
         }
         blk->unk_88.unk_04 = n;
@@ -214,22 +214,22 @@ bool AddLinear_Head(Block *blk, Instr *n)
 bool AddToDo_Tail(Block *blk, Instr *n)
 {
     if (!n) {
-        func_0804ad38("AddToDo_Tail - passed a null pointer\n");
+        reportError("AddToDo_Tail - passed a null pointer\n");
         return false;
     }
     if (n->unk_24.unk_04 || n->unk_24.unk_00) {
-        func_0804ad38("AddToDo_Tail - node already appears linked\n");
+        reportError("AddToDo_Tail - node already appears linked\n");
         return false;
     }
     if (blk->unk_94.unk_00) {
         if (!blk->unk_94.unk_04) {
-            func_0804ad38("AddToDo_Taillist had no first, but last set!\n");
-            func_0804adf0(-1);
+            reportError("AddToDo_Taillist had no first, but last set!\n");
+            exitAfterCleanup(-1);
             return false;
         }
         if (!blk->unk_94.unk_08) {
-            func_0804ad38("AddToDo_Taillist had no head or tail, but count not zero\n");
-            func_0804adf0(-1);
+            reportError("AddToDo_Taillist had no head or tail, but count not zero\n");
+            exitAfterCleanup(-1);
             return false;
         }
         n->unk_24.unk_04 = blk->unk_94.unk_04;
@@ -237,7 +237,7 @@ bool AddToDo_Tail(Block *blk, Instr *n)
         blk->unk_94.unk_04 = n;
     } else {
         if (blk->unk_94.unk_08) {
-            func_0804ad38("AddToDo_Tailno list head but count not zero\n");
+            reportError("AddToDo_Tailno list head but count not zero\n");
             return false;
         }
         blk->unk_94.unk_04 = n;
@@ -250,22 +250,22 @@ bool AddToDo_Tail(Block *blk, Instr *n)
 bool AddDone_Tail(Block *blk, Instr *n)
 {
     if (!n) {
-        func_0804ad38("AddDone_Tail - passed a null pointer\n");
+        reportError("AddDone_Tail - passed a null pointer\n");
         return false;
     }
     if (n->unk_24.unk_04 || n->unk_24.unk_00) {
-        func_0804ad38("AddDone_Tail - node already appears linked\n");
+        reportError("AddDone_Tail - node already appears linked\n");
         return false;
     }
     if (blk->unk_a0.unk_00) {
         if (!blk->unk_a0.unk_04) {
-            func_0804ad38("AddDone_Taillist had no first, but last set!\n");
-            func_0804adf0(-1);
+            reportError("AddDone_Taillist had no first, but last set!\n");
+            exitAfterCleanup(-1);
             return false;
         }
         if (!blk->unk_a0.unk_08) {
-            func_0804ad38("AddDone_Taillist had no head or tail, but count not zero\n");
-            func_0804adf0(-1);
+            reportError("AddDone_Taillist had no head or tail, but count not zero\n");
+            exitAfterCleanup(-1);
             return false;
         }
         n->unk_24.unk_04 = blk->unk_a0.unk_04;
@@ -273,7 +273,7 @@ bool AddDone_Tail(Block *blk, Instr *n)
         blk->unk_a0.unk_04 = n;
     } else {
         if (blk->unk_a0.unk_08) {
-            func_0804ad38("AddDone_Tailno list head but count not zero\n");
+            reportError("AddDone_Tailno list head but count not zero\n");
             return false;
         }
         blk->unk_a0.unk_04 = n;
@@ -286,22 +286,22 @@ bool AddDone_Tail(Block *blk, Instr *n)
 bool AddLinear_Tail(Block *blk, Instr *n)
 {
     if (!n) {
-        func_0804ad38("AddLinear_Tail - passed a null pointer\n");
+        reportError("AddLinear_Tail - passed a null pointer\n");
         return false;
     }
     if (n->unk_1c.unk_04 || n->unk_1c.unk_00) {
-        func_0804ad38("AddLinear_Tail - node already appears linked\n");
+        reportError("AddLinear_Tail - node already appears linked\n");
         return false;
     }
     if (blk->unk_88.unk_00) {
         if (!blk->unk_88.unk_04) {
-            func_0804ad38("AddLinear_Taillist had no first, but last set!\n");
-            func_0804adf0(-1);
+            reportError("AddLinear_Taillist had no first, but last set!\n");
+            exitAfterCleanup(-1);
             return false;
         }
         if (!blk->unk_88.unk_08) {
-            func_0804ad38("AddLinear_Taillist had no head or tail, but count not zero\n");
-            func_0804adf0(-1);
+            reportError("AddLinear_Taillist had no head or tail, but count not zero\n");
+            exitAfterCleanup(-1);
             return false;
         }
         n->unk_1c.unk_04 = blk->unk_88.unk_04;
@@ -309,7 +309,7 @@ bool AddLinear_Tail(Block *blk, Instr *n)
         blk->unk_88.unk_04 = n;
     } else {
         if (blk->unk_88.unk_08) {
-            func_0804ad38("AddLinear_Tailno list head but count not zero\n");
+            reportError("AddLinear_Tailno list head but count not zero\n");
             return false;
         }
         blk->unk_88.unk_04 = n;
@@ -322,11 +322,11 @@ bool AddLinear_Tail(Block *blk, Instr *n)
 bool AddLinear_After(Block *blk, Instr *after, Instr *n)
 {
     if (!n) {
-        func_0804ad38("AddLinear_After - passed a null in_a pointer\n");
+        reportError("AddLinear_After - passed a null in_a pointer\n");
         return false;
     }
     if (n->unk_1c.unk_04 || n->unk_1c.unk_00) {
-        func_0804ad38("AddLinear_After - node already appears linked\n");
+        reportError("AddLinear_After - node already appears linked\n");
         return false;
     }
     if (after) {
@@ -387,23 +387,23 @@ bool func_0804bf9c(char c)
     return ch != 0;
 }
 
-bool func_0804bfcc(const char *a, const char *b)
+bool asciiCaseEqual(const char *left, const char *right)
 {
-    if (!a || !b)
+    if (!left || !right)
         return false;
-    while (*a && *b) {
-        char ca = *a;
-        char cb = *b;
+    while (*left && *right) {
+        char ca = *left;
+        char cb = *right;
         if (ca >= 'a' && ca <= 'z')
             ca -= 32;
         if (cb >= 'a' && cb <= 'z')
             cb -= 32;
         if (cb != ca)
             return false;
-        a++;
-        b++;
+        left++;
+        right++;
     }
-    if (*a || *b)
+    if (*left || *right)
         return false;
     return true;
 }
@@ -453,7 +453,7 @@ void func_0804c0c8(char *s)
 char *dupString(const char *s)
 {
     if (!s) {
-        func_0804ad38("dupString: passed null ptr\n");
+        reportError("dupString: passed null ptr\n");
         return 0;
     }
     const char *e = s;
@@ -461,9 +461,9 @@ char *dupString(const char *s)
         e++;
     char *d = new char[e - s + 1];
     if (!d) {
-        func_0804ad38("dupString: new failed to get ram\n");
-        func_0804ad38("aborting.. sorry\n");
-        func_0804adf0(-1);
+        reportError("dupString: new failed to get ram\n");
+        reportError("aborting.. sorry\n");
+        exitAfterCleanup(-1);
     }
     char *q = d;
     while (*s)
@@ -475,7 +475,7 @@ char *dupString(const char *s)
 char *dupLabelString(const char *s)
 {
     if (!s) {
-        func_0804ad38("dupLabelString: null ptr input\n");
+        reportError("dupLabelString: null ptr input\n");
         return 0;
     }
     const char *e = s;
@@ -483,7 +483,7 @@ char *dupLabelString(const char *s)
         e++;
     char *d = new char[e - s + 1];
     if (!d) {
-        func_0804ad38("dupLabelString: failed to get ram input\n");
+        reportError("dupLabelString: failed to get ram input\n");
         return 0;
     }
     char *q = d;
@@ -496,12 +496,12 @@ char *dupLabelString(const char *s)
 void func_0804c220(char *p, int n)
 {
     if (!p) {
-        func_0804ad38("asked to zero memory location 0\n");
-        func_0804adf0(-1);
+        reportError("asked to zero memory location 0\n");
+        exitAfterCleanup(-1);
     }
     if (n < 0) {
-        func_0804ad38("asked to zero -ve size\n");
-        func_0804adf0(-1);
+        reportError("asked to zero -ve size\n");
+        exitAfterCleanup(-1);
     }
     char *q = p;
     for (; n; n--)
@@ -511,8 +511,8 @@ void func_0804c220(char *p, int n)
 int mstrlen(const char *s)
 {
     if (!s) {
-        func_0804ad38("mstrlen passed null ptr\n");
-        func_0804adf0(-1);
+        reportError("mstrlen passed null ptr\n");
+        exitAfterCleanup(-1);
     }
     const char *e = s;
     while (*e)
@@ -523,12 +523,12 @@ int mstrlen(const char *s)
 char *mstrcpy(char *dst, const char *src)
 {
     if (!dst) {
-        func_0804ad38("mstrcpy passed null dst ptr\n");
-        func_0804adf0(-1);
+        reportError("mstrcpy passed null dst ptr\n");
+        exitAfterCleanup(-1);
     }
     if (!src) {
-        func_0804ad38("mstrcpy passed null src ptr\n");
-        func_0804adf0(-1);
+        reportError("mstrcpy passed null src ptr\n");
+        exitAfterCleanup(-1);
     }
     const char *s = src;
     char *d = dst;
@@ -541,7 +541,7 @@ char *mstrcpy(char *dst, const char *src)
 char *mprefix_del(const char *a, const char *b)
 {
     if (!a || !b) {
-        func_0804ad38("mprefix_del - not str\n");
+        reportError("mprefix_del - not str\n");
         return 0;
     }
     const char *e = a;
@@ -549,8 +549,8 @@ char *mprefix_del(const char *a, const char *b)
         e++;
     int la = e - a;
     if (!b) {
-        func_0804ad38("mstrlen passed null ptr\n");
-        func_0804adf0(-1);
+        reportError("mstrlen passed null ptr\n");
+        exitAfterCleanup(-1);
     }
     e = b;
     while (*e)
@@ -559,7 +559,7 @@ char *mprefix_del(const char *a, const char *b)
     const char *s = a;
     char *p = r;
     if (!r) {
-        func_0804ad38("failed to get a string\n");
+        reportError("failed to get a string\n");
         return 0;
     }
     while (*s)

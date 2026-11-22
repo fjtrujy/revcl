@@ -1,9 +1,10 @@
+#include "os.h"
 #include "RegPool_shared.h"
 
 bool rPart::flushPending()
 {
     if (unk_3e) {
-        func_0804ad38("rPart::flushPending - issueLock was set (%d)\n", unk_3e);
+        reportError("rPart::flushPending - issueLock was set (%d)\n", unk_3e);
         return false;
     }
     for (int i = 0; i != 4; i++)
@@ -55,7 +56,7 @@ bool rPart::cycle(bool flag)
             p->unk_12 = v > 255 ? 255 : v;
             if (v == 0) {
                 if (++n > 1) {
-                    func_0804ad38("WARNING !! CYCLE wrote thru more than once!\n");
+                    reportError("WARNING !! CYCLE wrote thru more than once!\n");
                     return false;
                 }
                 cur->func_08058054(p);
@@ -153,7 +154,7 @@ void rPart::func_0805a4e4()
 
 bool RegPoolEntry::func_0805a4f4(bool flag)
 {
-    for (int i = 0; i != unk_28; i++)
+    for (int i = 0; i != partCount; i++)
         if (!unk_44[i].cycle(flag))
             return false;
     return true;
@@ -163,8 +164,8 @@ RegPoolEntry::RegPoolEntry()
 {
     unk_0c = 0;
     next = 0;
-    unk_24 = 0;
-    unk_28 = 0;
+    registerClass = 0;
+    partCount = 0;
     unk_15 = false;
     unk_20 = 0;
     unk_30 = 0;
@@ -193,12 +194,12 @@ mNode* RegPoolEntry::func_0805a8a4(const char* name)
     return unk_2b8.func_0804b444(name);
 }
 
-const char* RegPoolEntry::func_0805a8e0()
+const char* RegPoolEntry::registerName()
 {
-    const char* s = unk_2b8.func_0804b550();
-    if (!s)
-        s = "UNNAMED_REGISTER!";
-    return s;
+    const char* name = unk_2b8.func_0804b550();
+    if (!name)
+        name = "UNNAMED_REGISTER!";
+    return name;
 }
 
 VclPtrWord RegPoolEntry::func_0805a908(int i)
@@ -231,14 +232,14 @@ ol_s* rPart::func_0805a968(int i)
 void RegPoolEntry::moveReset()
 {
     if (!unk_20) {
-        func_0804ad38("rg..movereset called - but not move\n");
-        func_0804adf0(-1);
+        reportError("rg..movereset called - but not move\n");
+        exitAfterCleanup(-1);
     }
     unk_3c = -1;
     unk_15 = false;
     unk_2b4 = 0;
     unk_10 = 0;
-    for (int i = 0; i != unk_28; i++)
+    for (int i = 0; i != partCount; i++)
         unk_44[i].unk_48 = 0;
 }
 
@@ -250,7 +251,7 @@ bool RegPoolEntry::optReset()
 
 bool RegPoolEntry::func_0805aa00()
 {
-    for (int i = 0; i != unk_28; i++) {
+    for (int i = 0; i != partCount; i++) {
         if (unk_44[i].unk_48)
             ((char*)unk_44[i].unk_48)[3] = 0;
     }
@@ -268,9 +269,9 @@ char* RegPoolEntry::maskName(int mask)
     const char* name = unk_2b8.func_0804b550();
     if (!name)
         name = "UNNAMED_REGISTER!";
-    char* p = buf + func_0804adbc(buf, "%s", name);
-    if (unk_28 > 1)
-        p += func_0804adbc(p, "%s", func_080520d4(mask));
+    char* p = buf + formatIntoBuffer(buf, "%s", name);
+    if (partCount > 1)
+        p += formatIntoBuffer(p, "%s", func_080520d4(mask));
     *p = 0;
     regNameBufPos = p - regNameBuf + 1;
     return buf;
@@ -279,6 +280,6 @@ char* RegPoolEntry::maskName(int mask)
 int RegPoolEntry::regIndex()
 {
     if (!unk_04)
-        func_0804ad38("no reg pool set for register\n");
+        reportError("no reg pool set for register\n");
     return unk_04->regIndex(unk_30);
 }

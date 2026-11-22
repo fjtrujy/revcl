@@ -5,11 +5,11 @@
 class Program;
 
 int setRangeFrom(workTable *t);
-bool moveLocks(Instr *i, cls08058718 *pos);
-int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
+bool moveLocks(Instr *i, InstructionPosition *pos);
+int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 void func_0806ed78(Program *p, int a);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
-int func_0807dc44(workTable *wt, Instr *i, cls08058718 *pos);
+int func_0807dc44(workTable *wt, Instr *i, InstructionPosition *pos);
 bool setRange(int start, int end, int lsz);
 int pullUp(workTable *wt);
 int dragDown(workTable *wt);
@@ -46,7 +46,7 @@ bool func_0807e740(Program *p, workTable *wt, unsigned char up, unsigned char do
         if (up) {
             int r = pullUp(wt);
             if (r < 0) {
-                func_0804ad38("failed to pull up\n");
+                reportError("failed to pull up\n");
                 dumpLinearReduce(p);
                 return false;
             }
@@ -56,7 +56,7 @@ bool func_0807e740(Program *p, workTable *wt, unsigned char up, unsigned char do
         if (down) {
             int r = dragDown(wt);
             if (r < 0) {
-                func_0804ad38("failed drag down\n");
+                reportError("failed drag down\n");
                 return false;
             }
             if (r)
@@ -68,24 +68,24 @@ bool func_0807e740(Program *p, workTable *wt, unsigned char up, unsigned char do
 
 bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl)
 {
-    cls08058718 pos;
+    InstructionPosition pos;
     bool found = false;
     bool upwards;
 
     if (dl == -1) {
         if (s_test < e_test) {
-            func_0804ad38("do_localMove - s_test<e_test\n");
+            reportError("do_localMove - s_test<e_test\n");
             return false;
         }
         upwards = true;
     } else if (dl == 1) {
         if (s_test > e_test) {
-            func_0804ad38("do_localMove + s_test>e_test\n");
+            reportError("do_localMove + s_test>e_test\n");
             return false;
         }
         upwards = false;
     } else {
-        func_0804ad38("bad dl for doLocalMove\t .. %d\n", dl);
+        reportError("bad dl for doLocalMove\t .. %d\n", dl);
         return false;
     }
 
@@ -100,15 +100,15 @@ bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl)
     if (found) {
         if (!wt->takeOut(in)) {
             extern const char linearReduceTakeOutError[];
-            func_0804ad38(linearReduceTakeOutError);
+            reportError(linearReduceTakeOutError);
             return false;
         }
         if (!moveLocks(in, &pos)) {
-            func_0804ad38("failed to move !\n");
+            reportError("failed to move !\n");
             return false;
         }
         if (!wt->putIn(in)) {
-            func_0804ad38("failed to put in back in\n");
+            reportError("failed to put in back in\n");
             return false;
         }
     }

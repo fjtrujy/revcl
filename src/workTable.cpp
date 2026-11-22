@@ -32,11 +32,11 @@ int regUseList::func_0805b494(int regClass)
     for (ru = head; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
         if (!reg) {
-            func_0804ad38("found reg ref with no reg!\n");
-            func_0804adf0(-1);
+            reportError("found reg ref with no reg!\n");
+            exitAfterCleanup(-1);
             return 0;
         }
-        if (reg->unk_24 == regClass)
+        if (reg->registerClass == regClass)
             n++;
     }
     if (n == 0)
@@ -53,18 +53,18 @@ void regUse::func_0805b51c()
     RegPoolEntry *reg = unk_08;
     int i;
     int j = 0;
-    if (reg->unk_28 != 0)
+    if (reg->partCount != 0)
         do
             j++;
-        while (j != reg->unk_28);
-    for (i = 0; i != reg->unk_28; i++) {
+        while (j != reg->partCount);
+    for (i = 0; i != reg->partCount; i++) {
         if (unk_20[i].unk_34[0] && !((unk_0f >> i) & 1)) {
-            func_0804ad38(thruSumOobError,
-                          reg->func_0805a8e0(), i);
-            func_0804adf0(-1);
+            reportError(thruSumOobError,
+                          reg->registerName(), i);
+            exitAfterCleanup(-1);
         }
     }
-    for (i = 0; i != reg->unk_28; i++) {
+    for (i = 0; i != reg->partCount; i++) {
         if (unk_20[i].unk_10.count)
             unk_20[i].unk_10.dump();
     }
@@ -81,8 +81,8 @@ regUse *regUseList::firstReal()
     for (p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         if (!reg) {
-            func_0804ad38("regref has no register!\n");
-            func_0804adf0(-1);
+            reportError("regref has no register!\n");
+            exitAfterCleanup(-1);
         }
         if (!reg->unk_14)
             break;
@@ -96,8 +96,8 @@ regUse *regUse::nextReal()
     for (p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         if (!reg) {
-            func_0804ad38("regref has no register!\n");
-            func_0804adf0(-1);
+            reportError("regref has no register!\n");
+            exitAfterCleanup(-1);
         }
         if (!reg->unk_14)
             break;
@@ -111,8 +111,8 @@ regUse *regUseList::firstVirtual()
     for (p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         if (!reg) {
-            func_0804ad38("regref has no register!\n");
-            func_0804adf0(-1);
+            reportError("regref has no register!\n");
+            exitAfterCleanup(-1);
         }
         if (reg->unk_14)
             break;
@@ -126,8 +126,8 @@ regUse *regUse::nextVirtual()
     for (p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         if (!reg) {
-            func_0804ad38("regref has no register!\n");
-            func_0804adf0(-1);
+            reportError("regref has no register!\n");
+            exitAfterCleanup(-1);
         }
         if (reg->unk_14)
             break;
@@ -165,7 +165,7 @@ bool regUseSlot::optReset()
 bool regUseSlot::addOutput(ol_s *ol)
 {
     if (!unk_08.func_08058484(ol)) {
-        func_0804ad38("failed to add oploc to output list sort\n");
+        reportError("failed to add oploc to output list sort\n");
         return false;
     }
     return true;
@@ -181,7 +181,7 @@ void regUseSlot::func_0805b824()
     unk_00.func_08057e9c();
 }
 
-cls0805bcc4 *regUseSlot::func_0805b830()
+OperandLock *regUseSlot::func_0805b830()
 {
     return &unk_5c;
 }
@@ -190,12 +190,12 @@ regUse *regUse::Clone()
 {
     RegPoolEntry *reg = unk_08;
     if (!reg) {
-        func_0804ad38("regref::Clone - input had no register\n");
+        reportError("regref::Clone - input had no register\n");
         return 0;
     }
     regUse *n = new regUse(reg);
     if (!n) {
-        func_0804ad38("failed to get new regref in clone\n");
+        reportError("failed to get new regref in clone\n");
         return 0;
     }
     n->unk_18 = unk_18;
@@ -212,7 +212,7 @@ regUse *regUse::Clone()
     n->unk_16 = unk_16;
     n->unk_11 = unk_11;
     n->unk_15 = unk_15;
-    for (int i = 0; i != reg->unk_28; i++) {
+    for (int i = 0; i != reg->partCount; i++) {
         n->unk_20[i].unk_34[0] = unk_20[i].unk_34[0];
         n->unk_20[i].unk_34[1] = unk_20[i].unk_34[1];
         n->unk_20[i].unk_34[3] = unk_20[i].unk_34[3];
@@ -242,7 +242,7 @@ const char *regUse::regName()
 {
     if (!unk_08)
         return "REGREG_NOREG";
-    return unk_08->func_0805a8e0();
+    return unk_08->registerName();
 }
 
 ol_s *regUseSlot::func_0805ba2c(int pos, bool all)
@@ -263,7 +263,7 @@ int regUseList::func_0805ba64(int regClass)
     int n = 0;
     for (regUse *p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
-        if (reg->unk_24 != regClass || reg == reg->unk_04->unk_10)
+        if (reg->registerClass != regClass || reg == reg->unk_04->unk_10)
             continue;
         if (~p->unk_0e & p->unk_10)
             n++;
@@ -279,7 +279,7 @@ void regUseList::func_0805bab0()
         for (int i = 0; i != 12; i++) {
             RegPool *rp = GetRP(i);
             if (rp && rp->unk_18) {
-                func_0804acb0("%s\n", rp->unk_2c);
+                reportInfo("%s\n", rp->unk_2c);
                 func_0805bb10(i);
             }
         }
@@ -301,15 +301,15 @@ void regUseList::func_0805bb10(int regClass)
         RegPoolEntry *phys = reg->unk_18;
         const char *alloc = "UNALLOCATED";
         if (phys)
-            alloc = phys->func_0805a8e0();
+            alloc = phys->registerName();
         if (!isVirtualRegister(reg))
-            alloc = reg->func_0805a8e0();
+            alloc = reg->registerName();
         int mask = p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d | p->unk_10;
-        if (reg->unk_24 == regClass && reg != reg->unk_04->unk_10 && p->isExternal()) {
+        if (reg->registerClass == regClass && reg != reg->unk_04->unk_10 && p->isExternal()) {
             const char *thr = "";
             if (p->unk_10 & ~(p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d))
                 thr = "-THR";
-            func_0804acb0(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc, thr);
+            reportInfo(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc, thr);
         }
     }
     for (p = unk_04; p; p = p->unk_04) {
@@ -317,11 +317,11 @@ void regUseList::func_0805bb10(int regClass)
         RegPoolEntry *phys = reg->unk_18;
         const char *alloc = "UNALLOCATED";
         if (phys)
-            alloc = phys->func_0805a8e0();
+            alloc = phys->registerName();
         if (!isVirtualRegister(reg))
-            alloc = reg->func_0805a8e0();
+            alloc = reg->registerName();
         int mask = p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d | p->unk_10;
-        if (reg->unk_24 == regClass && reg != reg->unk_04->unk_10 && !p->isExternal())
-            func_0804acb0(" LOCAL : %20s - %s\n", reg->maskName(mask), alloc);
+        if (reg->registerClass == regClass && reg != reg->unk_04->unk_10 && !p->isExternal())
+            reportInfo(" LOCAL : %20s - %s\n", reg->maskName(mask), alloc);
     }
 }

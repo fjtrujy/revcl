@@ -9,7 +9,7 @@ extern bool noAlign_080b3016;
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 
-bool func_0804bfcc(const char *a, const char *b);
+bool asciiCaseEqual(const char *a, const char *b);
 RegPool *GetRP(unsigned t);
 bool func_080519f8(LocTag *t, RegPool *pool, bool b);
 bool func_08051d6c(Program *prog, LocTag *t, int v);
@@ -95,7 +95,7 @@ bool func_080511cc(Program *prog, LocTag *t)
 inline bool ExecRP_init_reg_all(RegPool *pool)
 {
     if (!pool) {
-        func_0804ad38("ExecRP_init_reg_all: passed a null pool\n");
+        reportError("ExecRP_init_reg_all: passed a null pool\n");
         return false;
     }
     return pool->func_08059c00();
@@ -114,22 +114,22 @@ bool func_08051228(Program *prog, LocTag *t)
 bool func_08051264(Program *prog, LocTag *t)
 {
     noAlign_080b3016 = true;
-    func_0804acb0("dh_align_disable() - disabling .align emit\n");
+    reportInfo("dh_align_disable() - disabling .align emit\n");
     return 1;
 }
 
 bool func_08051284(Program *prog, LocTag *t)
 {
     noAlign_080b3016 = true;
-    func_0804acb0("dh_no_ebits() - disabling [e]bit emit\n");
+    reportInfo("dh_no_ebits() - disabling [e]bit emit\n");
     return 1;
 }
 
 bool func_080512a4(Program *prog, LocTag *t)
 {
-    char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
     if (!s) {
-        func_0804ad38("failed to get global name\n");
+        reportError("failed to get global name\n");
         return 0;
     } else {
         prog->proc.unk_18 = dupString(s);
@@ -145,18 +145,18 @@ bool func_08051308(Program *prog, LocTag *t)
 
 bool func_0805131c(Program *prog, LocTag *t)
 {
-    char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
     if (!s) {
-        func_0804ad38("must specify target address for mpg mode!\n");
+        reportError("must specify target address for mpg mode!\n");
         return 0;
     }
-    prog->proc.unk_44 = func_0804add4(s);
+    prog->proc.unk_44 = parseInteger(s);
     return 1;
 }
 
 bool func_0805137c(Program *prog, LocTag *t)
 {
-    char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
     if (s)
         prog->proc.unk_04.func_0804b2d4(s);
     return 1;
@@ -165,21 +165,21 @@ bool func_0805137c(Program *prog, LocTag *t)
 bool func_080513cc(Program *prog, LocTag *t)
 {
     if (prog->proc.unk_3f) {
-        func_0804ad84("hit a raw directive in a rawloop block\n");
+        reportUserMessage("hit a raw directive in a rawloop block\n");
         return 0;
     }
     if (prog->proc.unk_3d == 3)
-        func_0804ac7c("hit a raw directive while already in a raw block\n");
+        reportWarning("hit a raw directive while already in a raw block\n");
     prog->proc.unk_3d = 3;
     prog->proc.unk_3e = 4;
-    char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
     if (s) {
-        if (func_0804bfcc(s, "reorder"))
+        if (asciiCaseEqual(s, "reorder"))
             prog->proc.unk_3e = 3;
-        else if (func_0804bfcc(s, "noreorder"))
+        else if (asciiCaseEqual(s, "noreorder"))
             prog->proc.unk_3e = 4;
         else {
-            func_0804ad84("bad option '%s' to raw directive\n", s);
+            reportUserMessage("bad option '%s' to raw directive\n", s);
             return 0;
         }
     }
@@ -189,11 +189,11 @@ bool func_080513cc(Program *prog, LocTag *t)
 bool func_080514a0(Program *prog, LocTag *t)
 {
     if (prog->proc.unk_3d == 1) {
-        func_0804ac7c("hit an endraw directive while not in raw mode\n");
+        reportWarning("hit an endraw directive while not in raw mode\n");
         return 0;
     }
     if (prog->proc.unk_3f) {
-        func_0804ad84("hit an endraw directive inside a rawloop\n");
+        reportUserMessage("hit an endraw directive inside a rawloop\n");
         return 0;
     }
     prog->proc.unk_3d = 1;
@@ -204,7 +204,7 @@ bool func_080514a0(Program *prog, LocTag *t)
 bool func_080514e8(Program *prog, LocTag *t)
 {
     if (prog->proc.unk_3f) {
-        func_0804ad84("encountered a .rawloop directive, while already in loop mode\n");
+        reportUserMessage("encountered a .rawloop directive, while already in loop mode\n");
         return 0;
     }
     prog->proc.unk_40++;
@@ -212,14 +212,14 @@ bool func_080514e8(Program *prog, LocTag *t)
     prog->proc.unk_3d = 3;
     prog->proc.unk_3e = 4;
     prog->proc.unk_3f = true;
-    char *s = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    char *s = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
     if (s) {
-        if (func_0804bfcc(s, "reorder"))
+        if (asciiCaseEqual(s, "reorder"))
             prog->proc.unk_3e = 3;
-        else if (func_0804bfcc(s, "noreorder"))
+        else if (asciiCaseEqual(s, "noreorder"))
             prog->proc.unk_3e = 4;
         else {
-            func_0804ad84("bad option '%s' to raw loop directive\n", s);
+            reportUserMessage("bad option '%s' to raw loop directive\n", s);
             return 0;
         }
     }
@@ -229,11 +229,11 @@ bool func_080514e8(Program *prog, LocTag *t)
 bool func_080515a0(Program *prog, LocTag *t)
 {
     if (!prog->proc.unk_3f) {
-        func_0804ad84("reached an .endloop directive but when wasn't in loop mode\n");
+        reportUserMessage("reached an .endloop directive but when wasn't in loop mode\n");
         return 0;
     }
     if (prog->proc.unk_3d != 3) {
-        func_0804ad84("hit end raw directive, but wasn't in VSM mode..(mode is %d)?\n", prog->proc.unk_3d);
+        reportUserMessage("hit end raw directive, but wasn't in VSM mode..(mode is %d)?\n", prog->proc.unk_3d);
         return 0;
     }
     prog->proc.unk_3d = prog->proc.unk_62;
@@ -246,68 +246,68 @@ bool func_080515f0(Program *prog, LocTag *t)
 {
     int device = -1;
     int limit = -1;
-    char *cpu = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    char *cpu = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
     if (!cpu) {
-        func_0804ad38("failed to get token cpu (1) from .work directive\n");
+        reportError("failed to get token cpu (1) from .work directive\n");
         return 0;
     }
-    if (func_0804bfcc(cpu, "core")) {
-        func_0804ad38("work: core cpu work area.. not yet\n");
+    if (asciiCaseEqual(cpu, "core")) {
+        reportError("work: core cpu work area.. not yet\n");
         return 0;
     }
-    if (func_0804bfcc(cpu, "vu0")) {
+    if (asciiCaseEqual(cpu, "vu0")) {
         device = 1;
         limit = 0x100;
     }
-    if (func_0804bfcc(cpu, "vu1")) {
+    if (asciiCaseEqual(cpu, "vu1")) {
         device = 2;
         limit = 0x400;
     }
     if (limit < 0) {
-        func_0804ad38("work: target device not set defining a work area.. must be one of core,vu0 or vu1!\n");
+        reportError("work: target device not set defining a work area.. must be one of core,vu0 or vu1!\n");
         return 0;
     }
-    char *ea = t->func_08050f18(2) ? 0 : t->func_08050be4(2, 0);
+    char *ea = t->func_08050f18(2) ? 0 : t->tokenTextAt(2, 0);
     if (!ea) {
-        func_0804ad38("failed to get effective address token (2) from .work directive\n");
+        reportError("failed to get effective address token (2) from .work directive\n");
         return 0;
     }
-    char *sz = t->func_08050f18(3) ? 0 : t->func_08050be4(3, 0);
+    char *sz = t->func_08050f18(3) ? 0 : t->tokenTextAt(3, 0);
     if (!sz) {
-        func_0804ad38("failed to get size token (3) from .work directive\n");
+        reportError("failed to get size token (3) from .work directive\n");
         return 0;
     }
-    int addr = func_0804add4(ea);
-    int size = func_0804add4(sz);
+    int addr = parseInteger(ea);
+    int size = parseInteger(sz);
     if (size <= 0) {
-        func_0804ad38("size is <=0 for a work area\n");
+        reportError("size is <=0 for a work area\n");
         return 0;
     }
     if (addr < 0) {
-        func_0804ad38("ea is negative for a work area\n");
+        reportError("ea is negative for a work area\n");
         return 0;
     }
     if (addr + size > limit) {
-        func_0804ad38("work area overruns size of device\n");
+        reportError("work area overruns size of device\n");
         return 0;
     }
     RegPool *pool = GetRP(11);
     if (!pool) {
-        func_0804ad38("init work area - failed to get vu mem pool\n");
+        reportError("init work area - failed to get vu mem pool\n");
         return 0;
     }
     if (!func_08088f20(pool, ea, size)) {
-        func_0804ad38("failed to init the mem area!\n");
+        reportError("failed to init the mem area!\n");
         return 0;
     }
-    func_0804ac7c("work_area: created work area for device %d - [%4d:%-4d]\n", device, addr, size);
+    reportWarning("work_area: created work area for device %d - [%4d:%-4d]\n", device, addr, size);
     return 1;
 }
 
 inline bool ExecRP_skip_directive(LocTag *t)
 {
-    func_0804ac7c("skipping directive:\n");
-    t->func_08050c40(-1);
+    reportWarning("skipping directive:\n");
+    t->dumpSourceLine(-1);
     return true;
 }
 
@@ -338,10 +338,10 @@ bool func_08051878(Program *prog, LocTag *t)
 
 bool func_08051890(Program *prog, LocTag *t)
 {
-    char *name = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    char *name = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
     if (name) {
         if (mstrlen(name) > 128) {
-            func_0804ad84("unique name too long\n");
+            reportUserMessage("unique name too long\n");
             return 0;
         }
         prog->proc.setUniqueName(name);
@@ -352,26 +352,26 @@ bool func_08051890(Program *prog, LocTag *t)
 
 bool func_08051908(Program *prog, LocTag *t)
 {
-    char *arg = t->func_08050f18(1) ? 0 : t->func_08050be4(1, 0);
+    char *arg = t->func_08050f18(1) ? 0 : t->tokenTextAt(1, 0);
     if (!arg) {
-        func_0804ad84("must specify an argument to '.syntax', valid ones are 'new' or 'old'\n");
+        reportUserMessage("must specify an argument to '.syntax', valid ones are 'new' or 'old'\n");
         return 0;
     }
-    if (func_0804bfcc(arg, "new")) {
+    if (asciiCaseEqual(arg, "new")) {
         prog->proc.unk_00 = true;
         return 1;
     }
-    if (func_0804bfcc(arg, "old")) {
+    if (asciiCaseEqual(arg, "old")) {
         prog->proc.unk_00 = false;
         return 1;
     }
-    func_0804ad84("invalid argument to .syntax, options are 'new' or 'old'\n");
+    reportUserMessage("invalid argument to .syntax, options are 'new' or 'old'\n");
     return 0;
 }
 
 inline char *ExecRP_directive_name(LocTag *t)
 {
-    return t->func_08050be4(0, 0);
+    return t->tokenTextAt(0, 0);
 }
 
 Directive *func_080519a0(LocTag *t)
@@ -381,7 +381,7 @@ Directive *func_080519a0(LocTag *t)
     char *name = ExecRP_directive_name(t);
     Directive *d = directives_080b3160;
     for (int i = 0; i != 28; i++, d++)
-        if (func_0804bfcc(name, d->name))
+        if (asciiCaseEqual(name, d->name))
             return d;
     return 0;
 }
@@ -391,11 +391,11 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
     char buf[2][0x800];
     int i = 1;
     if (!pool) {
-        func_0804ad38("ExecRP_init_reg: passed a null pool\n");
+        reportError("ExecRP_init_reg: passed a null pool\n");
         return false;
     }
     for (; i < func_0805085c(t); i++) {
-        char *tok = t->func_08050f18(i) ? 0 : t->func_08050be4(i, 0);
+        char *tok = t->func_08050f18(i) ? 0 : t->tokenTextAt(i, 0);
         if (!tok)
             continue;
         int range = 0;
@@ -403,7 +403,7 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
         for (char *s = tok; *s; s++) {
             if (*s == '-') {
                 if (range) {
-                    func_0804ad84("too many '-' chars in %s\n", tok);
+                    reportUserMessage("too many '-' chars in %s\n", tok);
                     return false;
                 }
                 range = 1;
@@ -418,15 +418,15 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
         for (j = 0; j <= range; j++) {
             RegPoolEntry *r = pool->func_08059418(buf[j]);
             if (!r) {
-                func_0804ad38("not find %s\n", tok);
+                reportError("not find %s\n", tok);
                 return false;
             }
             if (!r->unk_15) {
-                func_0804ad38("init_reg: %s is not allocable\n", r->func_0805a8e0());
+                reportError("init_reg: %s is not allocable\n", r->registerName());
                 return false;
             }
             if (r->unk_14) {
-                func_0804ad38("init_reg: reg is virtual! %s\n", r->func_0805a8e0());
+                reportError("init_reg: reg is virtual! %s\n", r->registerName());
                 return false;
             }
             if (j == 0)
@@ -435,7 +435,7 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
                 last = r->unk_30;
         }
         if (last < first) {
-            func_0804ac7c("range %s decreasing\n", tok);
+            reportWarning("range %s decreasing\n", tok);
             int tmp = last;
             last = first;
             first = tmp;
@@ -443,15 +443,15 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
         for (j = first; j <= last; j++) {
             RegPoolEntry *r = pool->func_080593e0(j);
             if (!r) {
-                func_0804ad38("not find %s\n", tok);
+                reportError("not find %s\n", tok);
                 return false;
             }
             if (!r->unk_15) {
-                func_0804ad38("init_reg: %s is not allocable\n", r->func_0805a8e0());
+                reportError("init_reg: %s is not allocable\n", r->registerName());
                 return false;
             }
             if (r->unk_14) {
-                func_0804ad38("init_reg: reg is virtual! %s\n", r->func_0805a8e0());
+                reportError("init_reg: reg is virtual! %s\n", r->registerName());
                 return false;
             }
             r->unk_16 = flag;
@@ -483,7 +483,7 @@ int func_08051c90(Program *prog, LocTag *t)
 int func_08051cb0(LocTag *t, RegPool *pool)
 {
     if (!pool) {
-        func_0804ad38("ExecRP_init_reg_all: passed a null pool\n");
+        reportError("ExecRP_init_reg_all: passed a null pool\n");
         return 0;
     }
     return pool->func_08059c00();
@@ -515,13 +515,13 @@ bool func_08051d6c(Program *prog, LocTag *t, int v)
     int left = 0x7ff;
     char *d = buf;
     for (int i = 1; i < func_0805085c(t); i++) {
-        char *tok = t->func_08050f18(i) ? 0 : t->func_08050be4(i, 0);
+        char *tok = t->func_08050f18(i) ? 0 : t->tokenTextAt(i, 0);
         if (!tok)
             continue;
         while (*tok) {
             *d++ = *tok++;
             if (--left == 0) {
-                func_0804ad38("ran out of local space for visible list\n");
+                reportError("ran out of local space for visible list\n");
                 return false;
             }
         }
@@ -530,7 +530,7 @@ bool func_08051d6c(Program *prog, LocTag *t, int v)
     *d = 0;
     mNode *n = prog->proc.unk_4c.func_0804b444(buf);
     if (!n) {
-        func_0804ad38("failed to process  a visibility directive\n");
+        reportError("failed to process  a visibility directive\n");
         return false;
     }
     n->unk_18 = v;
@@ -539,14 +539,14 @@ bool func_08051d6c(Program *prog, LocTag *t, int v)
 
 inline void ExecRP_show_line(LocTag *t)
 {
-    t->func_08050c40(-1);
+    t->dumpSourceLine(-1);
 }
 
 bool func_08051e34(Program *prog, LocTag *t, int v)
 {
     mNode *n = prog->proc.unk_4c.unk_10;
     if (!n) {
-        func_0804ac7c("closing visibility directive and no tail at:\n");
+        reportWarning("closing visibility directive and no tail at:\n");
         int saved = errorOccurred;
         errorOccurred = !quiet_080bbd98;
         ExecRP_show_line(t);
@@ -554,7 +554,7 @@ bool func_08051e34(Program *prog, LocTag *t, int v)
         return true;
     }
     if (n->unk_18 != v) {
-        func_0804ad84("mode mismatch closing a visibility scope\n");
+        reportUserMessage("mode mismatch closing a visibility scope\n");
         int saved = errorOccurred;
         errorOccurred = !quiet_080bbd98;
         ExecRP_show_line(t);
@@ -562,7 +562,7 @@ bool func_08051e34(Program *prog, LocTag *t, int v)
         return false;
     }
     if (!prog->proc.unk_4c.func_0804b3e8(n)) {
-        func_0804ad38("failed to remove tail node\n");
+        reportError("failed to remove tail node\n");
         return false;
     }
     delete n;

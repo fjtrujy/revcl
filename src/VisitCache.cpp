@@ -20,7 +20,7 @@ static inline bool vc_extend_inl(VisitCache *vc, int rows)
 {
     unsigned *p = (unsigned *)realloc(vc->unk_00, rows * vc->unk_04 * sizeof(unsigned));
     if (!p) {
-        func_0804ad38("VisitCache::Extend.. failed to realloc\n");
+        reportError("VisitCache::Extend.. failed to realloc\n");
         vc_release_inl(vc);
         return false;
     }
@@ -50,7 +50,7 @@ bool VisitCache::init(int nbits)
     unk_08 = nbits;
     unk_04 = (nbits + 31) / 32;
     if (!vc_extend_inl(this, 512)) {
-        func_0804ad38("VisitCache:: init failed\n");
+        reportError("VisitCache:: init failed\n");
         vc_release_inl(this);
         return false;
     }
@@ -73,7 +73,7 @@ bool VisitCache::Extend(int rows)
 {
     unsigned *p = (unsigned *)realloc(unk_00, rows * unk_04 * sizeof(unsigned));
     if (!p) {
-        func_0804ad38("VisitCache::Extend.. failed to realloc\n");
+        reportError("VisitCache::Extend.. failed to realloc\n");
         vc_release_inl(this);
         return false;
     }
@@ -86,12 +86,12 @@ bool VisitCache::startRecord()
 {
     if (unk_10 >= unk_0c - 1) {
         if (!Extend(unk_0c + 512)) {
-            func_0804ad38("startRecord - failed to extend\n");
+            reportError("startRecord - failed to extend\n");
             return false;
         }
     }
     if (!unk_00) {
-        func_0804ad38("VisitCache:: startRecord - null table pointer\n");
+        reportError("VisitCache:: startRecord - null table pointer\n");
         return false;
     }
     unsigned *row = unk_00 + unk_10 * unk_04;
@@ -135,16 +135,16 @@ bool VisitCache::testBit(int rec, int bit)
 
 void VisitCache::Dump()
 {
-    func_0804acb0("VisitCache::Dump()\n");
+    reportInfo("VisitCache::Dump()\n");
     unsigned *row = unk_00;
     for (int i = 0; i != unk_10; i++) {
-        func_0804ac50(" [%3d] ", i);
+        reportMessage(" [%3d] ", i);
         for (int j = 0; j != unk_04; j++)
-            func_0804ac50(" %08x", row[j]);
-        func_0804ac50("\n");
+            reportMessage(" %08x", row[j]);
+        reportMessage("\n");
         row += unk_04;
     }
-    func_0804acb0("VisitCache:: %d records\n", unk_10);
+    reportInfo("VisitCache:: %d records\n", unk_10);
 }
 
 static inline bool testPathBit(VisitCache *vc, int rec, int bit)
@@ -155,10 +155,10 @@ static inline bool testPathBit(VisitCache *vc, int rec, int bit)
 
 void dumpPathKey(Program *p, int key)
 {
-    func_0804acb0("dumping path key '%d'\n", key);
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    reportInfo("dumping path key '%d'\n", key);
+    for (instStream *s = p->streamHead; s; s = s->unk_108) {
         if (testPathBit(&p->unk_bc, key, s->unk_2c0))
-            func_0804acb0("    %d: %s\n", s->func_0806d674());
+            reportInfo("    %d: %s\n", s->streamName());
     }
-    func_0804acb0(" done dumping path key '%d'\n", key);
+    reportInfo(" done dumping path key '%d'\n", key);
 }

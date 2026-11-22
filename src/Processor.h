@@ -18,14 +18,14 @@ struct PoolDef {            // array ends at type == 0
     const char *prefix;     // register prefix ("vf", "vi", "hw")
     const char *name;
     int cls;                // register class, index into g_080de6e0
-    int unk_10;
+    int virtualRegisterParts; // 0 forbids virtual registers; otherwise parts per virtual register
     const char *zeroReg;
     const char *extReg;
 };
 
 struct CpuDef {
     const char *name;
-    int unk_04;             // instructions per raw line
+    int instructionsPerRawLine;
     PoolDef *pools;         // strap table
     void *devtab;
     iInfo *iinfos;          // itable
@@ -63,8 +63,8 @@ public:
     const char *unk_18;    // global name (dupString)
     const char *unk_1c;    // name, default "Nameless"
     mList unk_20;
-    char *unk_34;          // unique name (dupString), default "FLOW"
-    int unk_38;
+    char *uniqueName;          // unique name (dupString), default "FLOW"
+    int instructionsPerRawLine;
     char unk_3c;
     char unk_3d;           // mode: 1 normal, 3 raw (VSM)
     char unk_3e;           // 3 reorder, 4 noreorder

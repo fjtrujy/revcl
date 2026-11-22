@@ -39,13 +39,15 @@ class Instr;
 class RegWeb;
 class instStream;
 class workTable;
+// Preserve the historical C++ symbol while exposing its semantic meaning.
+#define registerName func_0805a8e0
 
 struct RegPoolEntry {
     short unk_00;       // min row (getMove)
     short unk_02;       // max row (getMove)
     RegPool *unk_04;    // owning pool
     RegPoolEntry* next;
-    const char* func_0805a8e0();
+    const char* registerName();
     RegPoolEntry();
     void func_0805a300();
     void func_0805a348();
@@ -60,7 +62,7 @@ struct RegPoolEntry {
     int gatherInflight(ol_s** out);
     bool isClass(int cls)
     {
-        if (unk_24 == cls)
+        if (registerClass == cls)
             return true;
         return false;
     }
@@ -70,9 +72,9 @@ struct RegPoolEntry {
     void moveReset();
     rPart* getRP(int i)
     {
-        if (i < 0 || i >= unk_28) {
+        if (i < 0 || i >= partCount) {
             func_0804ad38("getRP - asked to get out of range part %s.%d / %d\n",
-                          func_0805a8e0(), i, unk_28);
+                          registerName(), i, partCount);
             func_0804adf0(-1);
         }
         return &unk_44[i];
@@ -88,8 +90,8 @@ struct RegPoolEntry {
     char unk_1c;        // nonblockid
     char unk_1d[3];
     Instr* unk_20;      // move instruction
-    int unk_24;         // register class
-    int unk_28;         // slot count (nparts)
+    int registerClass;         // register class
+    int partCount;         // slot count (nparts)
     bool unk_2c;
     char unk_2d[3];
     int unk_30;         // register index
@@ -113,7 +115,7 @@ public:
     virtual bool assignExt(instStream *s) = 0;                        // slot 2
     virtual bool func_08088e6c(instStream *s, RegPoolEntry *reg) = 0; // slot 3
     virtual bool func_08088e54(workTable *t) = 0;                     // slot 4
-    bool Init(VclPtrWord a, const char* name, int cls, int b);
+    bool Init(VclPtrWord registerPrefix, const char* name, int cls, int virtualRegisterParts);
     void Dump();
     RegPoolEntry* func_080593e0(int index);
     RegPoolEntry* func_08059418(const char* name);
@@ -158,10 +160,10 @@ public:
 
 struct RegDesc {
     const char* names[4];   // aliases; names[0] == 0 ends the table
-    unsigned char unk_10;   // allocable
-    unsigned char unk_11;   // register class
-    unsigned char unk_12;   // nparts
-    char unk_13;            // nonblockid
+    unsigned char allocatable;
+    unsigned char registerClass;
+    unsigned char partCount;
+    char nonBlockId;
     unsigned char unk_14;
 };
 

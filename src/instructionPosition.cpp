@@ -1,3 +1,4 @@
+#include "os.h"
 #include "Instr.h"
 #include "tPairList.h"
 #include "workTable.h"
@@ -66,15 +67,15 @@ bool setRange(int start, int end, int lsz);
 int setRangeFrom(workTable *t)
 {
     if (!t) {
-        func_0804ad38("setRangeFrom - null ptr\n");
+        reportError("setRangeFrom - null ptr\n");
         return 0;
     }
     if (!t->unk_2c) {
-        func_0804ad38("setRangeFrom - can't set range .. there's no table\n");
+        reportError("setRangeFrom - can't set range .. there's no table\n");
         return 0;
     }
     if (t->codeMode() != 3 && t->codeMode() != 2 && t->codeMode() != 5) {
-        func_0804ad38("can't set range from a non raw/raw_preexp/mid table\n");
+        reportError("can't set range from a non raw/raw_preexp/mid table\n");
         return 0;
     }
     return setRange(t->func_0807411c(), t->func_080741c0(), t->func_080741b4());
@@ -83,29 +84,29 @@ int setRangeFrom(workTable *t)
 bool setRange(int start, int end, int lsz)
 {
     if (lsz < 0) {
-        func_0804ad38("-ve l\n");
-        func_0804adf0(-1);
+        reportError("-ve l\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (start < 0 && end >= 0) {
-        func_0804ad38("bad range, 1\n");
-        func_0804adf0(-1);
+        reportError("bad range, 1\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (start < 0) {
-        func_0804ad38("bad range, 1\n");
-        func_0804adf0(-1);
+        reportError("bad range, 1\n");
+        exitAfterCleanup(-1);
         return false;
     }
     if (end >= 0) {
         if (lsz > 0 && end - start != lsz) {
-            func_0804ad38("start/end not match lsz\n");
-            func_0804adf0(-1);
+            reportError("start/end not match lsz\n");
+            exitAfterCleanup(-1);
             return false;
         }
     } else if (lsz != 0) {
-        func_0804ad38("lsz set - but e<0\n");
-        func_0804adf0(-1);
+        reportError("lsz set - but e<0\n");
+        exitAfterCleanup(-1);
         return false;
     }
     g_080b3370 = start;

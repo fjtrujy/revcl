@@ -68,13 +68,13 @@ void wtRow::func_0807222c(int)
 Instr *wtRow::getEntry(int p)
 {
     if (p < 0) {
-        func_0804ad38("iEntry::GetI() - p<0\n");
-        func_0804adf0(-1);
+        reportError("iEntry::GetI() - p<0\n");
+        exitAfterCleanup(-1);
         return 0;
     }
     if (p >= 2) {
-        func_0804ad38(wtRowGetIPMaxError);
-        func_0804adf0(-1);
+        reportError(wtRowGetIPMaxError);
+        exitAfterCleanup(-1);
         return 0;
     }
     return unk_00[p].unk_00;
@@ -83,13 +83,13 @@ Instr *wtRow::getEntry(int p)
 Instr *GetI(Instr **ie, int p)
 {
     if (p < 0) {
-        func_0804ad38("iEntry::GetI() - p<0\n");
-        func_0804adf0(-1);
+        reportError("iEntry::GetI() - p<0\n");
+        exitAfterCleanup(-1);
         return 0;
     }
     if (p >= 2) {
-        func_0804ad38(wtRowGetIPMaxError);
-        func_0804adf0(-1);
+        reportError(wtRowGetIPMaxError);
+        exitAfterCleanup(-1);
         return 0;
     }
     Instr *in = ie[p];
@@ -136,13 +136,13 @@ void wtRow::func_08072364()
 bool wtRow::addStall(int type, int len)
 {
     if (len <= 0) {
-        func_0804ad38(wtRowAddStallLenError);
+        reportError(wtRowAddStallLenError);
         return 0;
     }
     if (len > 255)
-        func_0804ac7c("truncating stall length..\n");
+        reportWarning("truncating stall length..\n");
     if (type < 0 || type > 2) {
-        func_0804ad38("bad stall type\n");
+        reportError("bad stall type\n");
         return 0;
     }
     unk_0a |= 1 << type;
@@ -182,9 +182,9 @@ unsigned int wtRow::func_08072494()
     Instr *in = GetI(&unk_00[0].unk_00, 1);
     unsigned int m = 0;
     if (in) {
-        for (int i = 0; i != in->unk_138b; i++) {
-            if (in->unk_38[i].unk_29) {
-                unsigned int a = (unsigned short)in->unk_38[i].unk_18->unk_44[0].unk_3c;
+        for (int i = 0; i != in->operandCount; i++) {
+            if (in->operands[i].unk_29) {
+                unsigned int a = (unsigned short)in->operands[i].unk_18->unk_44[0].unk_3c;
                 if (!m || a < m)
                     m = a;
             }

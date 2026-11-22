@@ -13,7 +13,7 @@ void func_0807f308(Block *blk)
     for (Instr *in = blk->unk_4c; in; in = in->unk_2c, n++)
         in->func_08054008(false);
     if (n != blk->unk_50) {
-        func_0804ad38("oh no! consistency\n");
-        func_0804aeb0();
+        reportError("oh no! consistency\n");
+        abortAfterError();
     }
 }

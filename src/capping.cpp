@@ -19,21 +19,21 @@ int func_0807aa28(Program *p)
 {
     int total = 0;
     instStream *s;
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->unk_108) {
         s->unk_2dc = 0;
         if (!s->func_0806d9a0())
             s->unk_2dc = 1;
     }
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->unk_108) {
         if (s->unk_2dc)
             continue;
         if (!prepExtInfo(p, s, 0)) {
-            func_0804ad38("failed to prep external info for stream %s\n", s->func_0806d674());
+            reportError("failed to prep external info for stream %s\n", s->streamName());
             return -1;
         }
         int n = func_0807aaf4(p, s);
         if (n < 0) {
-            func_0804ad38("failed to sred a table from %s\n", s->func_0806d674());
+            reportError("failed to sred a table from %s\n", s->streamName());
             return -1;
         }
         s->unk_2dc = 1;
@@ -46,23 +46,23 @@ int func_0807aaf4(Program *p, instStream *s)
 {
     int added = 0;
     if (!s->unk_218) {
-        func_0804ad38("work table not set in %s\n", s->func_0806d674());
-        func_0804adf0(-1);
+        reportError("work table not set in %s\n", s->streamName());
+        exitAfterCleanup(-1);
     }
     workTable *wt = s->unk_218;
     if (!wt) {
-        func_0804ad38("no work table \n");
+        reportError("no work table \n");
         return -1;
     }
     int len = wt->func_080741c0() - wt->func_0807411c();
     if (len == 0)
         return 0;
     if (wt->unk_44 < 0) {
-        func_0804ad38("the minimal length is -ve for ext\n");
+        reportError("the minimal length is -ve for ext\n");
         return -1;
     }
     if (len < wt->unk_44) {
-        func_0804ad38("table is lready too short (%d<%d)\n", len, wt->unk_44);
+        reportError("table is lready too short (%d<%d)\n", len, wt->unk_44);
         return -1;
     }
     func_0807bb84(wt);
@@ -74,8 +74,8 @@ int func_0807aaf4(Program *p, instStream *s)
             if (!in)
                 continue;
             Operand *op;
-            for (int i = 0; i != in->unk_138b; i++) {
-                op = &in->unk_38[i];
+            for (int i = 0; i != in->operandCount; i++) {
+                op = &in->operands[i];
                 RegPoolEntry *reg = registerOperand(op, 2);
                 ol_s *live = op->unk_2c[0].unk_54.unk_00;
                 if (!reg || op->unk_0b || !live)
@@ -84,7 +84,7 @@ int func_0807aaf4(Program *p, instStream *s)
                 int capMask = 0;
                 int bits = findCap(wt, in, i, &capReg, &capMask);
                 if (bits < 0) {
-                    func_0804ad38("cancap failed\n");
+                    reportError("cancap failed\n");
                     return -1;
                 }
                 if (!bits)
@@ -122,7 +122,7 @@ int func_0807aaf4(Program *p, instStream *s)
                     continue;
                 if (bestCount < need) {
                     if (!doCap(bestLine, bestPipe, bestMask)) {
-                        func_0804ad38("failed to add cap instruction\n");
+                        reportError("failed to add cap instruction\n");
                         return -1;
                     }
                     added++;
@@ -131,7 +131,7 @@ int func_0807aaf4(Program *p, instStream *s)
         }
     }
     if (added && !wt->relinkRawIt()) {
-        func_0804ad38("failed to relink table after adding cap instruction\n");
+        reportError("failed to relink table after adding cap instruction\n");
         return 0;
     }
     return added;

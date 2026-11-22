@@ -11,48 +11,48 @@ const char *getOptimiserName(int id);
 char *emitFileStart(Program *p, char *buf)
 {
     if ((!p->proc.unk_00 || p->proc.unk_63) && p->proc.unk_44 < 0)
-        buf += func_0804adbc(buf, "\t\t.vu\n");
+        buf += formatIntoBuffer(buf, "\t\t.vu\n");
     if (!noAlign_080b3016)
-        buf += func_0804adbc(buf, "\t\t.align 4\n");
+        buf += formatIntoBuffer(buf, "\t\t.align 4\n");
     if (p->proc.unk_18 && *p->proc.unk_18) {
-        buf += func_0804adbc(buf, "\t\t.global\t%s_CodeStart\n", p->proc.unk_18);
-        buf += func_0804adbc(buf, "\t\t.global\t%s_CodeEnd\n", p->proc.unk_18);
+        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeStart\n", p->proc.unk_18);
+        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeEnd\n", p->proc.unk_18);
     }
     if (p->proc.unk_44 >= 0) {
         if (p->proc.unk_18 && *p->proc.unk_18) {
-            buf += func_0804adbc(buf, "\t\t.global\t%s_DmaTag\n", p->proc.unk_18);
-            buf += func_0804adbc(buf, "\t\t.global\t%s_DmaEnd\n", p->proc.unk_18);
-            buf += func_0804adbc(buf, "\n");
-            buf += func_0804adbc(buf, "%s_DmaTag:\n", p->proc.unk_18);
+            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaTag\n", p->proc.unk_18);
+            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaEnd\n", p->proc.unk_18);
+            buf += formatIntoBuffer(buf, "\n");
+            buf += formatIntoBuffer(buf, "%s_DmaTag:\n", p->proc.unk_18);
         }
-        buf += func_0804adbc(buf, "\t\tDMAret\t*\n");
-        buf += func_0804adbc(buf, "\t\tvifnop\t\n");
-        buf += func_0804adbc(buf, "\t\tvifnop\t\n");
-        buf += func_0804adbc(buf, "\t\tvifnop\t\n");
-        buf += func_0804adbc(buf, "\t\tMPG\t%d,*\n", p->proc.unk_44);
+        buf += formatIntoBuffer(buf, "\t\tDMAret\t*\n");
+        buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
+        buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
+        buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
+        buf += formatIntoBuffer(buf, "\t\tMPG\t%d,*\n", p->proc.unk_44);
     }
     for (mNode *n = p->proc.unk_04.unk_0c; n; n = n->unk_04)
-        buf += func_0804adbc(buf, "\t\t.global\t%s\n", n->unk_14);
+        buf += formatIntoBuffer(buf, "\t\t.global\t%s\n", n->unk_14);
     if (p->proc.unk_18 && *p->proc.unk_18)
-        buf += func_0804adbc(buf, "%s_CodeStart:\n", p->proc.unk_18);
+        buf += formatIntoBuffer(buf, "%s_CodeStart:\n", p->proc.unk_18);
     return buf;
 }
 
 char *emitFileEnd(Program *p, char *buf)
 {
     if (!noAlign_080b3016)
-        buf += func_0804adbc(buf, "\t\t.align 4\n");
+        buf += formatIntoBuffer(buf, "\t\t.align 4\n");
     if (p->proc.unk_18 && *p->proc.unk_18)
-        buf += func_0804adbc(buf, "%s_CodeEnd:\n", p->proc.unk_18);
+        buf += formatIntoBuffer(buf, "%s_CodeEnd:\n", p->proc.unk_18);
     for (mNode *n = p->proc.unk_20.unk_0c; n; n = n->unk_04)
         if (n->unk_14)
-            buf += func_0804adbc(buf, "%s:\n", n->unk_14);
+            buf += formatIntoBuffer(buf, "%s:\n", n->unk_14);
     if (p->proc.unk_44 >= 0) {
-        buf += func_0804adbc(buf, "\t.EndMPG\n");
-        buf += func_0804adbc(buf, "\t.EndDmaData\n");
+        buf += formatIntoBuffer(buf, "\t.EndMPG\n");
+        buf += formatIntoBuffer(buf, "\t.EndDmaData\n");
     }
     if (p->proc.unk_18 && *p->proc.unk_18 && p->proc.unk_44 >= 0)
-        buf += func_0804adbc(buf, "%s_DmaEnd:\n", p->proc.unk_18);
+        buf += formatIntoBuffer(buf, "%s_DmaEnd:\n", p->proc.unk_18);
     return buf;
 }
 
@@ -73,12 +73,12 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
     char done = 0;
     int len = unk_34 - unk_30;
     if (len < 0) {
-        func_0804ad38("iTable::emit - not done!\n");
+        reportError("iTable::emit - not done!\n");
         return 0;
     }
     instStream *owner = unk_10;
     if (!owner) {
-        func_0804ad38("during emit - owner not set\n");
+        reportError("during emit - owner not set\n");
         return 0;
     }
     int nulls = 0;
@@ -123,31 +123,31 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             top = 0;
             buf = blank.emit(buf, f, false, false);
             if (!buf) {
-                func_0804ad38("failed to emit null ie for synth instruction!\n");
+                reportError("failed to emit null ie for synth instruction!\n");
                 return 0;
             }
         }
     } else {
         instStream *s = unk_10;
         if (s) {
-            buf += func_0804adbc(buf, "; ");
+            buf += formatIntoBuffer(buf, "; ");
             if (s->unk_140)
-                buf += func_0804adbc(buf, "_LPOPT_");
+                buf += formatIntoBuffer(buf, "_LPOPT_");
             else
-                buf += func_0804adbc(buf, "_LNOPT_");
-            buf += func_0804adbc(buf, "w=[ ");
+                buf += formatIntoBuffer(buf, "_LNOPT_");
+            buf += formatIntoBuffer(buf, "w=[ ");
             if (s->unk_144) {
                 for (int i = 0; i != getNumOptimisers(); i++) {
                     int bit = 1 << i;
                     if (s->unk_144 & bit)
-                        buf += func_0804adbc(buf, "%s ", getOptimiserName(i));
+                        buf += formatIntoBuffer(buf, "%s ", getOptimiserName(i));
                 }
             }
-            buf += func_0804adbc(buf, "] %d [%d %d] %d   [%s]\n",
-                                 *p1, unk_74, unk_76, *p2, s->func_0806d674());
+            buf += formatIntoBuffer(buf, "] %d [%d %d] %d   [%s]\n",
+                                 *p1, unk_74, unk_76, *p2, s->streamName());
         }
         if (len < nulls) {
-            func_0804ad38("iTable: not fall. and too small a table\n");
+            reportError("iTable: not fall. and too small a table\n");
             s->dump(0);
             goto fail;
         }
@@ -179,7 +179,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             case 0:
                 buf = r->emit(buf, f, false, true);
                 if (!buf) {
-                    func_0804ad38("failed to emit instruction!\n");
+                    reportError("failed to emit instruction!\n");
                     dumpFailedRow(r);
                     return 0;
                 }
@@ -188,14 +188,14 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 *buf++ = ';';
                 buf = r->emit(buf, f, true, true);
                 if (!buf) {
-                    func_0804ad38("failed to emit instruction!\n");
+                    reportError("failed to emit instruction!\n");
                     dumpFailedRow(r);
                     return 0;
                 }
                 *buf++ = ' ';
                 buf = r->emit(buf, f, false, true);
                 if (!buf) {
-                    func_0804ad38("failed to emit instruction!\n");
+                    reportError("failed to emit instruction!\n");
                     dumpFailedRow(r);
                     return 0;
                 }
@@ -204,7 +204,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             case 2:
                 buf = r->emit(buf, f, true, true);
                 if (!buf) {
-                    func_0804ad38("failed to emit instruction!\n");
+                    reportError("failed to emit instruction!\n");
                     r->func_0807222c(-1);
                     goto fail;
                 }
@@ -213,7 +213,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         }
     }
     if (isEnd && !done) {
-        func_0804ac7c("did not emit end insn\n");
+        reportWarning("did not emit end insn\n");
         return 0;
     }
     return buf;
@@ -230,17 +230,17 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b);
 char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
 {
     if (!buf) {
-        func_0804ad38("iEntry::emit - null pointer!\n");
+        reportError("iEntry::emit - null pointer!\n");
         return 0;
     }
     if (unk_08) {
         if (func_08072304()) {
-            func_0804ad38("can't skip a non-empty ie\n");
+            reportError("can't skip a non-empty ie\n");
             return 0;
         }
         return buf;
     }
-    buf += func_0804adbc(buf, "         ");
+    buf += formatIntoBuffer(buf, "         ");
     int i;
     for (i = 0; i != 2; i++)
         if (unk_00[i].unk_00)
@@ -252,29 +252,29 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
         else
             buf = emitInstr(unk_00[i].unk_00, buf, false, flags, upper);
         if (!buf) {
-            func_0804ad38("failed to emit upper for pipe %d ie\n", i);
+            reportError("failed to emit upper for pipe %d ie\n", i);
             return 0;
         }
         flags = 0;
         if (i != 1)
-            buf += func_0804adbc(buf, "         ");
+            buf += formatIntoBuffer(buf, "         ");
     }
     if (unk_09) {
-        buf += func_0804adbc(buf, "       ;\tSTALL");
+        buf += formatIntoBuffer(buf, "       ;\tSTALL");
         bool any = false;
         for (int k = 0; k != 3; k++) {
             int bit = (unk_0a >> k) & 1;
             if (bit) {
-                buf += func_0804adbc(buf, "_%s", stallNames_080b3244[k]);
+                buf += formatIntoBuffer(buf, "_%s", stallNames_080b3244[k]);
                 any = true;
             }
         }
         if (!any)
-            func_0804ac7c("reported a stall.. but dunno what type\n");
+            reportWarning("reported a stall.. but dunno what type\n");
         int stall = unk_09;
-        buf += func_0804adbc(buf, " ?%d", stall);
+        buf += formatIntoBuffer(buf, " ?%d", stall);
     }
-    return buf + func_0804adbc(buf, "\n");
+    return buf + formatIntoBuffer(buf, "\n");
 }
 
 char *emitNop(char *buf, int flags, int *len)
@@ -289,11 +289,11 @@ char *emitNop(char *buf, int flags, int *len)
     while (*s)
         *d++ = *s++;
     *d = 0;
-    p += func_0804adbc(p, "NOP%s", mods);
+    p += formatIntoBuffer(p, "NOP%s", mods);
     for (int n = p - line; n < 50; n++)
         *p++ = ' ';
     *p = 0;
-    buf += func_0804adbc(buf, "%s", line);
+    buf += formatIntoBuffer(buf, "%s", line);
     return buf;
 }
 
@@ -307,19 +307,19 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
     while (*s)
         *d++ = *s++;
     *d = 0;
-    if (in->unk_1392 || !in->unk_34)
-        p += func_0804adbc(p, "nop%s", mods);
+    if (in->unk_1392 || !in->opcodeInfo)
+        p += formatIntoBuffer(p, "nop%s", mods);
     else {
-        if (in->unk_34->unk_38) {
-            p = in->unk_34->unk_38(line, in, upper, mods, b, 0);
+        if (in->opcodeInfo->unk_38) {
+            p = in->opcodeInfo->unk_38(line, in, upper, mods, b, 0);
             if (!p) {
-                func_0804ad38("emit hook failed for an instruction\n");
+                reportError("emit hook failed for an instruction\n");
                 return 0;
             }
         } else {
             p = func_0808750c(line, in, upper, mods, b, 0);
             if (!p) {
-                func_0804ad38("generic emit hook failed for an instruction\n");
+                reportError("generic emit hook failed for an instruction\n");
                 return 0;
             }
         }
@@ -327,7 +327,7 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
     for (int n = p - line; n < 50; n++)
         *p++ = ' ';
     *p = 0;
-    return buf + func_0804adbc(buf, "%s", line);
+    return buf + formatIntoBuffer(buf, "%s", line);
 }
 
 char *emitDestMask(char *p, int mdBits, unsigned char mods)
@@ -340,22 +340,22 @@ char *emitDestMask(char *p, int mdBits, unsigned char mods)
             break;
         case 2:
             if (mods != 7) {
-                func_0804ad38("not just one mod bit for MD_XYZ..bits are %x\n", mods);
+                reportError("not just one mod bit for MD_XYZ..bits are %x\n", mods);
                 return 0;
             }
             break;
         case 3:
             if (func_0804bf50(mods) != 1) {
-                func_0804ad38("not just one mod bit for MD_ONE\n");
+                reportError("not just one mod bit for MD_ONE\n");
                 return 0;
             }
             break;
         default:
-            func_0804ad38("unknown md_bits for vpu target \n");
+            reportError("unknown md_bits for vpu target \n");
             return 0;
         }
         if (!mods) {
-            func_0804ad38("modBits is null for case MD_ANY.. which should be ok, but ee-dvp-as doesn't assemble it\n");
+            reportError("modBits is null for case MD_ANY.. which should be ok, but ee-dvp-as doesn't assemble it\n");
             return 0;
         }
         if (mods != 15) {

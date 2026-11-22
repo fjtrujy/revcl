@@ -22,18 +22,18 @@ workTable *makeForceTable(Program *p, instStream *s)
     int mode = wt->unk_09;
     if ((unsigned char)mode != 3) {
         const char *modeName = codeModeName(mode);
-        func_0804ad38("it_old is not raw mode - %s\n", modeName);
+        reportError("it_old is not raw mode - %s\n", modeName);
         return 0;
     }
     workTable *nt = prepUta(p, s, 0, 0);
     if (!nt) {
-        func_0804ad38("failed to make a lock table for makeForceTable\n");
+        reportError("failed to make a lock table for makeForceTable\n");
         return 0;
     }
     mode = nt->unk_09;
     if ((unsigned char)mode != 2) {
         const char *modeName = codeModeName(mode);
-        func_0804ad38("it_new is not raw mode .. %s\n", modeName);
+        reportError("it_new is not raw mode .. %s\n", modeName);
         return 0;
     }
     int start = wt->func_0807411c();
@@ -41,14 +41,14 @@ workTable *makeForceTable(Program *p, instStream *s)
     nt->setRange(start, end);
     for (Instr *in = nt->unk_94.unk_00; in; in = nt->unk_94.unk_00) {
         Instr *clone = in->unk_08;
-        cls08058718 pos;
-        cls08058718 *r = &clone->unk_13e8;
+        InstructionPosition pos;
+        InstructionPosition *r = &clone->unk_13e8;
         pos.unk_00 = r->unk_00;
         pos.unk_04 = r->unk_04;
         pos.unk_03 = r->unk_03;
         pos.unk_02 = r->unk_02;
         if (!nt->forceInsert(in, &pos)) {
-            func_0804ad38("failed to force an insert into table\n");
+            reportError("failed to force an insert into table\n");
             delete nt;
             return 0;
         }

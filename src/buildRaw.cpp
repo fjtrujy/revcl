@@ -1,3 +1,4 @@
+#include "os.h"
 #include "instStream.h"
 #include "flowBlock.h"
 #include "Program.h"
@@ -19,16 +20,16 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
 {
     workTable *t = &s->unk_148;
     if (!t) {
-        func_0804ad38("build: failed to get input table from ist\n");
+        reportError("build: failed to get input table from ist\n");
         return false;
     }
     if (!t->init(5, count)) {
-        func_0804ad38("failed to init raw table for '%s' with %d entries\n", s->func_0806d674(), count);
+        reportError("failed to init raw table for '%s' with %d entries\n", s->streamName(), count);
         return false;
     }
     t->unk_10 = s;
     if (!t->func_08073774(loopMode)) {
-        func_0804ad38("failed to set sub mode\n");
+        reportError("failed to set sub mode\n");
         return false;
     }
     int i = 0;
@@ -40,14 +41,14 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
     for (; i != count; i++) {
         flowBlock *b = &blocks[i];
         if (b->unk_14.func_0804b794()) {
-            func_0804ad38("started to build the stream.. but there was a label decorated with debug info in the way!\n");
+            reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
         }
         b->unk_14.func_0804b1b0();
         Instr *in = b->unk_0c[0];
         if (in && in->unk_13cd) {
             if (!s->processCmdSynth(in)) {
-                func_0804ad84("failed to process an instruction\n");
+                reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
                 errorOccurred = !quiet_080bbd98;
                 in->func_08054008(false);
@@ -57,7 +58,7 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
         }
         wtRow *row = t->func_080724f0(rows);
         if (!row) {
-            func_0804ad38("failed to get ied\n");
+            reportError("failed to get ied\n");
             return false;
         }
         row->func_080721f8();
@@ -68,39 +69,39 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
             if (!in)
                 continue;
             if (in->unk_13cd) {
-                func_0804ad38("encountered a synth instruction in raw mode\n");
+                reportError("encountered a synth instruction in raw mode\n");
                 return false;
             }
             b->unk_0c[j] = 0;
             if (!t->logAddLinear_Tail(in)) {
-                func_0804ad38("failed to attach instruction to the linear list for synth\n");
+                reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
             }
             short lid = in->unk_1420;
             if (lid < 0) {
-                func_0804ad38("-ve parseLid set\n");
+                reportError("-ve parseLid set\n");
                 return false;
             }
             if (lid) {
                 if (in->func_08054138()) {
-                    func_0804ad84("loopid set on a nop\n");
+                    reportUserMessage("loopid set on a nop\n");
                     in->leDump();
                     return false;
                 }
                 if (!looped && valid) {
-                    func_0804ad84("flow::build - hit a looped vsm instruction - but others before it weren't..%d valid \n", valid);
+                    reportUserMessage("flow::build - hit a looped vsm instruction - but others before it weren't..%d valid \n", valid);
                     in->leDump();
                     return false;
                 }
                 looped = true;
             } else if (looped && !in->func_08054138()) {
-                func_0804ad38("flow::build - parse id wasn't set for a supposedly looped instruction.type\n");
+                reportError("flow::build - parse id wasn't set for a supposedly looped instruction.type\n");
                 in->leDump();
                 return false;
             }
             if (in->getBranchType()) {
                 if (branchRow != -1) {
-                    func_0804ad38("found more than one branch..in what should be continuous sequence\n");
+                    reportError("found more than one branch..in what should be continuous sequence\n");
                     return false;
                 }
                 branchType = in->getBranchType();
@@ -114,7 +115,7 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
         }
         if (n) {
             if (checkDispatchEntry(&row->unk_00[0].unk_00)) {
-                func_0804ad84("invalid instruction combination\n");
+                reportUserMessage("invalid instruction combination\n");
                 int saved = errorOccurred;
                 errorOccurred = !quiet_080bbd98;
                 dumpRow(row);
@@ -129,17 +130,17 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
         int d = rows - branchRow - 1;
         if (d <= 0) {
             if (looped) {
-                func_0804ad38("in raw_loop mode, vcl expects you to set the branch delay slot!\n");
+                reportError("in raw_loop mode, vcl expects you to set the branch delay slot!\n");
                 branch->leDump();
                 return false;
             }
-            func_0804ad84("found a raw sequence without a bdl slot instruction.. this could be because mode\n");
-            func_0804ad84("flips to UTA , or it could be the bdl slot instruction is also a branch target\n");
-            func_0804ad84("for now -this is an error\n");
+            reportUserMessage("found a raw sequence without a bdl slot instruction.. this could be because mode\n");
+            reportUserMessage("flips to UTA , or it could be the bdl slot instruction is also a branch target\n");
+            reportUserMessage("for now -this is an error\n");
             return false;
         }
         if (d > 1) {
-            func_0804ad38("stray branch instruction found in sequence\n");
+            reportError("stray branch instruction found in sequence\n");
             branch->leDump();
             return false;
         }
@@ -153,7 +154,7 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
     for (i = 0; i != rows; i++) {
         wtRow *row = t->func_080724f0(i);
         if (!row) {
-            func_0804ad38("failed to get ie from table\n");
+            reportError("failed to get ie from table\n");
             return false;
         }
         for (int j = 0; j != 2; j++) {
@@ -176,11 +177,11 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
         }
     }
     if (looped && !maxLid) {
-        func_0804ad84("max loop id 0 in loop\n");
+        reportUserMessage("max loop id 0 in loop\n");
         return false;
     }
     if (maxLid && !looped) {
-        func_0804ad84("max lid not zero and not in a loop\n");
+        reportUserMessage("max lid not zero and not in a loop\n");
         return false;
     }
     t->unk_3c = maxLid;

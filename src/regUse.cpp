@@ -1,3 +1,4 @@
+#include "os.h"
 extern const char regUseNewFailedError[];
 #include "RegPool_shared.h"
 
@@ -77,14 +78,14 @@ bool regUseList::clear()
 regUse *regUseList::AddNewRegRef(RegPoolEntry *reg)
 {
     if (find(reg)) {
-        func_0804ad38("addnewregref - already have rg\n");
-        func_0804adf0(-1);
+        reportError("addnewregref - already have rg\n");
+        exitAfterCleanup(-1);
         return 0;
     }
     regUse *ru = new regUse(reg);
     if (!ru) {
-        func_0804ad38(regUseNewFailedError);
-        func_0804adf0(-1);
+        reportError(regUseNewFailedError);
+        exitAfterCleanup(-1);
         return 0;
     }
     ru->unk_00 = 0;
