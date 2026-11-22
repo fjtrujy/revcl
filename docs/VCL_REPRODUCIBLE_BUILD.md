@@ -151,17 +151,37 @@ unit tests (including CMake link-order/flag consistency), and runs all eleven
 self-contained VCL fixture cases **as individually reported CTest tests**.
 Its Ubuntu Linux setup uses `cmake --preset gcc` or `cmake --preset clang`,
 followed by `cmake --build --preset ...` and `ctest --preset ...`.
-The same workflow also builds native **macOS arm64 and x86_64 Mach-O**
+The same workflow additionally builds **native Linux x86_64 and ARM64 ELF**
+executables with modern GCC and Clang using `linux-gcc` and
+`linux-clang` presets. The private repository checks Linux ARM64 in
+an ARM64 Ubuntu userland through QEMU on a regular GitHub runner.
+It also builds native **macOS arm64 and x86_64 Mach-O**
 executables using Apple Clang and `cmake --preset macos`, with identical
-unit/fixture coverage. These native 64-bit binaries are functionally
+unit/fixture coverage. All modern native 64-bit binaries are functionally
 tested, but are not expected to match the SHA of Sony's 32-bit Linux ELF.
 The eleven standalone fixture outputs are verified against frozen SHA-256
 hashes of the generated VU text in
 `tests/oracle/expected_stdout_sha256.json`, so the same input must produce
 identical text and exit status on Linux and both macOS architectures.
-The legacy pointer-sized values and the i386 `Block`/`workTable` overlay
-are adapted for the 64-bit macOS ABI with compile-time offset checks;
-the historical i386 layout and original compiler output remain unchanged.
+Portable `intptr_t`/`uintptr_t` types replace the original i386
+integer-sized pointer handles across every platform. The historical
+`Block` pointer view now inherits `workTable` rather than maintaining
+its own ABI-specific field offsets. Neither requires platform-specific
+`#ifdef` branches. The original GCC 3.2.2 compilation still produces
+the same SHA-256, verified independently by the historical CTest job.
+
+Local native Linux setup (with CMake 3.23+, GCC/Clang and Python):
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/requirements.txt
+cmake --preset linux-gcc -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --build --preset linux-gcc
+ctest --preset linux-gcc
+cmake --preset linux-clang -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --build --preset linux-clang
+ctest --preset linux-clang
+```
 
 Local native macOS setup (with CMake 3.23+ and the Xcode Command Line Tools):
 

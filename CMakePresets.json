@@ -7,13 +7,27 @@
       "displayName": "Modern GCC (Linux i386)",
       "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/tmp/cmake/gcc",
-      "cacheVariables": {"CMAKE_CXX_COMPILER": "g++"}
+      "cacheVariables": {"CMAKE_CXX_COMPILER": "g++", "REVCL_MODERN_32BIT": "ON"}
     },
     {
       "name": "clang",
       "displayName": "Modern Clang (Linux i386)",
       "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/tmp/cmake/clang",
+      "cacheVariables": {"CMAKE_CXX_COMPILER": "clang++", "REVCL_MODERN_32BIT": "ON"}
+    },
+    {
+      "name": "linux-gcc",
+      "displayName": "Native Linux (GCC, x86_64 or ARM64)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/tmp/cmake/linux-gcc",
+      "cacheVariables": {"CMAKE_CXX_COMPILER": "g++"}
+    },
+    {
+      "name": "linux-clang",
+      "displayName": "Native Linux (Clang, x86_64 or ARM64)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/tmp/cmake/linux-clang",
       "cacheVariables": {"CMAKE_CXX_COMPILER": "clang++"}
     },
     {
@@ -21,7 +35,7 @@
       "displayName": "Native macOS (Apple Clang, arm64 or x86_64)",
       "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/tmp/cmake/macos",
-      "cacheVariables": {"REVCL_NATIVE_MACOS": "ON"}
+      "cacheVariables": {}
     },
     {
       "name": "historical",
@@ -36,12 +50,16 @@
   ],
   "buildPresets": [
     {"name":"macos","configurePreset":"macos","jobs":2},
+    {"name":"linux-gcc","configurePreset":"linux-gcc","jobs":2},
+    {"name":"linux-clang","configurePreset":"linux-clang","jobs":2},
     {"name":"gcc","configurePreset":"gcc","jobs":2},
     {"name":"clang","configurePreset":"clang","jobs":2},
     {"name":"historical","configurePreset":"historical","jobs":2}
   ],
   "testPresets": [
     {"name":"macos","configurePreset":"macos","output":{"outputOnFailure":true}},
+    {"name":"linux-gcc","configurePreset":"linux-gcc","output":{"outputOnFailure":true}},
+    {"name":"linux-clang","configurePreset":"linux-clang","output":{"outputOnFailure":true}},
     {"name":"gcc","configurePreset":"gcc","output":{"outputOnFailure":true}},
     {"name":"clang","configurePreset":"clang","output":{"outputOnFailure":true}},
     {"name":"historical","configurePreset":"historical","output":{"outputOnFailure":true}}
