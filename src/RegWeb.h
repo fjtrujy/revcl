@@ -33,7 +33,7 @@ public:
     static bool clearTableRegisterWebs(ScheduleTable *scheduleTable);
 };
 
-extern RegWeb regWebs[0x4000];
+extern RegWeb regWebs[VCL_REGISTER_WEB_CAPACITY];
 extern int regWebUsed;
 extern int regWebCount;
 

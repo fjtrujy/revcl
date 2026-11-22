@@ -13,7 +13,7 @@ int countSetBits(unsigned int x);
 RegisterEntry *getPoolZeroRegister(unsigned int type);
 
 
-static inline bool isOut(Operand *operand) { return operand->direction == 2; }
+static inline bool isOut(Operand *operand) { return operand->direction == VCL_OPERAND_WRITE; }
 static inline RegisterEntry *outR(Operand *operand)
 {
     if (isOut(operand))

@@ -72,7 +72,7 @@ bool removeNops(Program *program, InstructionStream *stream)
     }
     bool lastOk = true;
     if (!stream->branchType) {
-        if (stream->endType != 1)
+        if (stream->endType != VCL_STREAM_END_NULL)
             lastOk = false;
     } else {
         lastOk = false;
@@ -251,7 +251,7 @@ bool removeNops(Program *program, InstructionStream *stream)
                             int last = table->getRawOrSyntheticLogicalLength() - 1;
                             if (last < table->externalMinimumLength)
                                 canRemoveInstruction = false;
-                            if (stream->endType != 1 && last <= 1)
+                            if (stream->endType != VCL_STREAM_END_NULL && last <= 1)
                                 canRemoveInstruction = false;
                         }
                         if (canRemoveInstruction) {

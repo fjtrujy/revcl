@@ -5,7 +5,7 @@
 
 int expandRaw(ScheduleTable *scheduleTable)
 {
-    if (scheduleTable->codeModeValue != 5) {
+    if (scheduleTable->codeModeValue != VCL_CODE_RAW_PREEXPANDED) {
         reportError("expand raw - table not raw!\n");
         return 0;
     }
@@ -20,11 +20,11 @@ bool expandRawTables(Program *program)
             exitAfterCleanup(-1);
         }
         ScheduleTable *scheduleTable = stream->workTablePtr;
-        if (scheduleTable->codeMode() == 3) {
+        if (scheduleTable->codeMode() == VCL_CODE_RAW) {
             reportError("hit a raw table during expraw\n");
             return false;
         }
-        if (scheduleTable->codeMode() == 5 && !scheduleTable->changeMode(3)) {
+        if (scheduleTable->codeMode() == VCL_CODE_RAW_PREEXPANDED && !scheduleTable->changeMode(3)) {
             reportError("processor failed to expand raw table\n");
             return false;
         }

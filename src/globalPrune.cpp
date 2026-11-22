@@ -14,7 +14,7 @@ bool globalPrune(Program *program)
 {
     InstructionStream *currentStream;
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
-        if (currentStream->startType == 2) {
+        if (currentStream->startType == VCL_STREAM_START_ENTRY) {
             currentStream->reachableFromEntry = 1;
             currentStream->visitState = 1;
         } else {

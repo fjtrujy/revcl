@@ -49,7 +49,7 @@ bool ScheduleTable::doPostOpt(int rawMode)
             reportError("bad table start/end\n");
             return false;
         }
-        if (codeModeValue != 3) {
+        if (codeModeValue != VCL_CODE_RAW) {
             reportError("not mid-code mode for doPostOpt\n");
             return false;
         }
@@ -260,7 +260,7 @@ bool ScheduleTable::doPostOpt(int rawMode)
 
 static inline bool isRawTable(ScheduleTable *scheduleTable)
 {
-    return scheduleTable->codeModeValue == 3;
+    return scheduleTable->codeModeValue == VCL_CODE_RAW;
 }
 
 bool InstructionStream::setOptTable(ScheduleTable *scheduleTable)

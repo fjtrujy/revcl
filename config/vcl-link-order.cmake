@@ -1,5 +1,6 @@
-# Recovered original VCL compilation/link order. DO NOT sort.
-# Reordering changes the original ELF SHA-256.
+# Recovered VCL object-file link order. Compilation itself can run in parallel.
+# The linker consumes objects in this order; sorting or swapping changes the
+# stripped historical ELF SHA-256, even with the default RH9 linker script.
 set(VCL_SOURCES
   src/main.cpp
   src/preprocess.cpp

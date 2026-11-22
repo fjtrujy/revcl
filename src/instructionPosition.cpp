@@ -74,7 +74,7 @@ int setRangeFrom(ScheduleTable *scheduleTable)
         reportError("setRangeFrom - can't set range .. there's no table\n");
         return 0;
     }
-    if (scheduleTable->codeMode() != 3 && scheduleTable->codeMode() != 2 && scheduleTable->codeMode() != 5) {
+    if (scheduleTable->codeMode() != VCL_CODE_RAW && scheduleTable->codeMode() != VCL_CODE_MID && scheduleTable->codeMode() != VCL_CODE_RAW_PREEXPANDED) {
         reportError("can't set range from a non raw/raw_preexp/mid table\n");
         return 0;
     }

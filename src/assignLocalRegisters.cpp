@@ -49,7 +49,7 @@ bool assignLocalRegisters(Program *program, ScheduleTable *table)
             instruction->dumpOperandDiagnostics(false);
         exitAfterCleanup(-1);
     }
-    if (table->allocationMode != 2) {
+    if (table->allocationMode != VCL_ALLOC_X) {
         reportError(assignLocalExternalError);
         exitAfterCleanup(-1);
     }
@@ -75,7 +75,7 @@ bool assignLocalRegisters(Program *program, ScheduleTable *table)
             return false;
         }
     }
-    table->allocationMode = 3;
+    table->allocationMode = VCL_ALLOC_DONE;
     return true;
 }
 

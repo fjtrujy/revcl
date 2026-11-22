@@ -94,7 +94,7 @@ Instr::Instr(OpcodeDescriptor *info)
         operand->pairedOperandIndexPlusOne = descriptor->patchedOutputIndexPlusOne;
         if (operand->pairedOperandIndexPlusOne)
             operands[operand->pairedOperandIndexPlusOne - 1].pairedOperandIndexPlusOne = operandIndex + 1;
-        if (descriptor->direction == 2)
+        if (descriptor->direction == VCL_OPERAND_WRITE)
             operand->outputLatency = descriptor->outputLatency;
         else
             operand->outputLatency = 0;
@@ -500,7 +500,7 @@ bool Instr::changeBranchImmediate(const char *immediateText)
         exitAfterCleanup(-1);
     }
     Operand *operand = &operands[targetOperandSelector - 1];
-    if (operand->operandKind != 0x1b) {
+    if (operand->operandKind != VCL_OP_IMM) {
         reportError("changeBranchImmediate::target operand isn't immediate!\n");
         exitAfterCleanup(-1);
     }
@@ -734,7 +734,7 @@ bool Instr::hasRawTableOrImmediateToken()
     if (optimizedInstructionImageWord)
         return true;
     if (ownerTable)
-        return ownerTable->codeModeValue == 3;
+        return ownerTable->codeModeValue == VCL_CODE_RAW;
     return false;
 }
 
@@ -757,7 +757,7 @@ char *Instr::getBranchTargetImmediate()
         reportError("alleged branch target immediate wasn't an input\n");
         exitAfterCleanup(-1);
     }
-    if (operand->operandKind == 0x1b)
+    if (operand->operandKind == VCL_OP_IMM)
         return operand->immediateValue.getString();
     return 0;
 }
@@ -781,7 +781,7 @@ RegisterEntry *Instr::getBranchTargetRegister()
         reportError("alleged branch target register wasn't an input\n");
         exitAfterCleanup(-1);
     }
-    if (operand->operandKind == 0x1b)
+    if (operand->operandKind == VCL_OP_IMM)
         return 0;
     RegisterEntry *registerEntry = operand->assignedRegister;
     if (!registerEntry) {
@@ -913,9 +913,21 @@ static inline bool isLiteral(TypedValue *value)
 
 bool Instr::expandVirtualStatOperand()
 {
+    // Indices 55..58 refer to STAT_ALU/STAT_DIV and their shadow registers
+    // in regDescTable.h, not arbitrary positions in an instruction.
+    enum {
+        VCL_STAT_ALU_REGISTER = 55,
+        VCL_STAT_DIV_REGISTER = 56,
+        VCL_STAT_ALU_SHADOW_REGISTER = 57,
+        VCL_STAT_DIV_SHADOW_REGISTER = 58,
+        VCL_STAT_ALU_INPUT_BITS = 0x0f,
+        VCL_STAT_DIV_INPUT_BITS = 0x30,
+        VCL_STAT_ALU_SHADOW_BITS = 0x0c00,
+        VCL_STAT_DIV_SHADOW_BITS = 0x03c0
+    };
     for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
         Operand *operand = &operands[operandIndex];
-        if (operand->operandKind < 22 || operand->operandKind > 25)
+        if (operand->operandKind < VCL_OP_V_STAT_DIV || operand->operandKind > VCL_OP_V_STAT_SET)
             continue;
         if (operandIndex != operandCount - 1) {
             reportError("virtual stat operand not final\n");
@@ -923,47 +935,47 @@ bool Instr::expandVirtualStatOperand()
         }
         operandCount--;
         switch (operand->operandKind) {
-        case 23:
+        case VCL_OP_V_STAT_ALU:
             operand->isImplicit = 1;
-            operand->operandKind = 21;
-            operand->direction = 2;
-            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(55);
-            operand->componentMask = 1;
+            operand->operandKind = VCL_OP_V_STAT_ALU_REGISTER;
+            operand->direction = VCL_OPERAND_WRITE;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_ALU_REGISTER);
+            operand->componentMask = VCL_COMPONENT_X;
             operand->outputLatency = 4;
             operand->externalBlockModeFlag = 0;
             operand->operandIndex = operandCount++;
             operand = &operands[operandIndex + 1];
             operand->isImplicit = 1;
-            operand->operandKind = 18;
-            operand->direction = 1;
-            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(57);
-            operand->componentMask = 1;
+            operand->operandKind = VCL_OP_V_STAT_ALU_SHADOW;
+            operand->direction = VCL_OPERAND_READ;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_ALU_SHADOW_REGISTER);
+            operand->componentMask = VCL_COMPONENT_X;
             operand->outputLatency = -1;
             operand->externalBlockModeFlag = 1;
             operand->operandIndex = operandCount++;
             break;
-        case 22:
+        case VCL_OP_V_STAT_DIV:
             operand->isImplicit = 1;
-            operand->operandKind = 20;
-            operand->direction = 2;
-            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(56);
-            operand->componentMask = 1;
+            operand->operandKind = VCL_OP_V_STAT_DIV_REGISTER;
+            operand->direction = VCL_OPERAND_WRITE;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_DIV_REGISTER);
+            operand->componentMask = VCL_COMPONENT_X;
             operand->outputLatency = operands[0].outputLatency;
             operand->externalBlockModeFlag = 0;
             operand->operandIndex = operandCount;
             operand = &operands[operandIndex + 1];
             operandCount++;
             operand->isImplicit = 1;
-            operand->operandKind = 19;
-            operand->direction = 1;
-            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(58);
-            operand->componentMask = 1;
+            operand->operandKind = VCL_OP_V_STAT_DIV_SHADOW;
+            operand->direction = VCL_OPERAND_READ;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_DIV_SHADOW_REGISTER);
+            operand->componentMask = VCL_COMPONENT_X;
             operand->outputLatency = -1;
             operand->externalBlockModeFlag = 1;
             operand->operandIndex = operandCount++;
             break;
-        case 24: {
-            if (operands[operandIndex - 1].operandKind != 27) {
+        case VCL_OP_V_STAT_TST: {
+            if (operands[operandIndex - 1].operandKind != VCL_OP_IMM) {
                 reportError("not immediate predecessor in fs test\n");
                 return false;
             }
@@ -989,10 +1001,10 @@ bool Instr::expandVirtualStatOperand()
                 case 146:
                     bits = imm;
                 test:
-                    aluStatusInputNeeded = (bits & 0xf) != 0;
-                    divisionStatusInputNeeded = (bits & 0x30) != 0;
-                    aluStatusShadowNeeded = (bits & 0xc00) != 0;
-                    divisionStatusShadowNeeded = (bits & 0x3c0) != 0;
+                    aluStatusInputNeeded = (bits & VCL_STAT_ALU_INPUT_BITS) != 0;
+                    divisionStatusInputNeeded = (bits & VCL_STAT_DIV_INPUT_BITS) != 0;
+                    aluStatusShadowNeeded = (bits & VCL_STAT_ALU_SHADOW_BITS) != 0;
+                    divisionStatusShadowNeeded = (bits & VCL_STAT_DIV_SHADOW_BITS) != 0;
                     break;
                 default:
                     reportError("bad fsop \n");
@@ -1006,10 +1018,10 @@ bool Instr::expandVirtualStatOperand()
             divisionStatusInputNeeded = divisionStatusInputNeeded | divisionStatusShadowNeeded;
             if (aluStatusInputNeeded) {
                 operand->isImplicit = 1;
-                operand->operandKind = 21;
-                operand->direction = 1;
-                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(55);
-                operand->componentMask = 1;
+                operand->operandKind = VCL_OP_V_STAT_ALU_REGISTER;
+                operand->direction = VCL_OPERAND_READ;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_ALU_REGISTER);
+                operand->componentMask = VCL_COMPONENT_X;
                 operand->outputLatency = -1;
                 operand->externalBlockModeFlag = 0;
                 operand->operandIndex = operandCount;
@@ -1018,10 +1030,10 @@ bool Instr::expandVirtualStatOperand()
             }
             if (divisionStatusInputNeeded) {
                 operand->isImplicit = 1;
-                operand->operandKind = 20;
-                operand->direction = 1;
-                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(56);
-                operand->componentMask = 1;
+                operand->operandKind = VCL_OP_V_STAT_DIV_REGISTER;
+                operand->direction = VCL_OPERAND_READ;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_DIV_REGISTER);
+                operand->componentMask = VCL_COMPONENT_X;
                 operand->outputLatency = -1;
                 operand->externalBlockModeFlag = 0;
                 operand->operandIndex = operandCount;
@@ -1030,20 +1042,20 @@ bool Instr::expandVirtualStatOperand()
             }
             if (aluStatusShadowNeeded) {
                 operand->isImplicit = 1;
-                operand->operandKind = 18;
-                operand->direction = 1;
-                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(57);
-                operand->componentMask = 1;
+                operand->operandKind = VCL_OP_V_STAT_ALU_SHADOW;
+                operand->direction = VCL_OPERAND_READ;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_ALU_SHADOW_REGISTER);
+                operand->componentMask = VCL_COMPONENT_X;
                 operand->outputLatency = -1;
                 operand->externalBlockModeFlag = 1;
                 operand->operandIndex = operandCount;
                 operand++;
                 operandCount++;
                 operand->isImplicit = 1;
-                operand->operandKind = 18;
-                operand->direction = 2;
-                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(57);
-                operand->componentMask = 1;
+                operand->operandKind = VCL_OP_V_STAT_ALU_SHADOW;
+                operand->direction = VCL_OPERAND_WRITE;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_ALU_SHADOW_REGISTER);
+                operand->componentMask = VCL_COMPONENT_X;
                 operand->outputLatency = 1;
                 operand->externalBlockModeFlag = 1;
                 operand->operandIndex = operandCount;
@@ -1052,42 +1064,42 @@ bool Instr::expandVirtualStatOperand()
             }
             if (divisionStatusShadowNeeded) {
                 operand->isImplicit = 1;
-                operand->operandKind = 19;
-                operand->direction = 1;
-                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(58);
-                operand->componentMask = 1;
+                operand->operandKind = VCL_OP_V_STAT_DIV_SHADOW;
+                operand->direction = VCL_OPERAND_READ;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_DIV_SHADOW_REGISTER);
+                operand->componentMask = VCL_COMPONENT_X;
                 operand->outputLatency = -1;
                 operand->externalBlockModeFlag = 1;
                 operand->operandIndex = operandCount;
                 operand++;
                 operandCount++;
                 operand->isImplicit = 1;
-                operand->operandKind = 19;
-                operand->direction = 2;
-                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(58);
-                operand->componentMask = 1;
+                operand->operandKind = VCL_OP_V_STAT_DIV_SHADOW;
+                operand->direction = VCL_OPERAND_WRITE;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_DIV_SHADOW_REGISTER);
+                operand->componentMask = VCL_COMPONENT_X;
                 operand->outputLatency = 1;
                 operand->externalBlockModeFlag = 1;
                 operand->operandIndex = operandCount++;
             }
             break;
         }
-        case 25:
+        case VCL_OP_V_STAT_SET:
             operand->isImplicit = 1;
-            operand->operandKind = 18;
-            operand->direction = 2;
-            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(57);
-            operand->componentMask = 1;
+            operand->operandKind = VCL_OP_V_STAT_ALU_SHADOW;
+            operand->direction = VCL_OPERAND_WRITE;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_ALU_SHADOW_REGISTER);
+            operand->componentMask = VCL_COMPONENT_X;
             operand->outputLatency = 1;
             operand->externalBlockModeFlag = 1;
             operand->operandIndex = operandCount;
             operand = &operands[operandIndex + 1];
             operandCount++;
             operand->isImplicit = 1;
-            operand->operandKind = 19;
-            operand->direction = 2;
-            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(58);
-            operand->componentMask = 1;
+            operand->operandKind = VCL_OP_V_STAT_DIV_SHADOW;
+            operand->direction = VCL_OPERAND_WRITE;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(VCL_STAT_DIV_SHADOW_REGISTER);
+            operand->componentMask = VCL_COMPONENT_X;
             operand->outputLatency = 1;
             operand->externalBlockModeFlag = 1;
             operand->operandIndex = operandCount++;

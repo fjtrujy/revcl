@@ -21,7 +21,7 @@ bool initializeRegisterBacktraceLocation(InstructionStream *stream, RegisterEntr
     stream->nextResolvedStream = 0;
     stream->backtraceRegisterUse = registerUse;
     if (registerUse && ((registerUse->outputMask >> part) & 1)) {
-        if (scheduleTable->codeMode() == 1 || scheduleTable->codeMode() == 4) {
+        if (scheduleTable->codeMode() == VCL_CODE_UTA || scheduleTable->codeMode() == VCL_CODE_SYNTHETIC) {
             stream->outputLocationCount = 1;
             stream->earliestOutputLocation = 0;
             stream->latestOutputLocation = 0;

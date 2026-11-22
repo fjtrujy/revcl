@@ -69,7 +69,7 @@ bool initializeStreamBacktrace(InstructionStream *initialStream, int streamCount
         reportError("minimal length > dep length for %s (%d > %d)\n", initialStream->streamName(), len, initialStream->backtraceDependencyLength);
         return false;
     }
-    if (initialStream->endType == 2)
+    if (initialStream->endType == VCL_STREAM_END_CONTINUE)
         initialStream->backtraceDependencyLength += 1000;
     if (initialStream->traceStore) {
         reportError("m_tStore is already set !\n");

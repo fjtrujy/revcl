@@ -20,7 +20,7 @@ bool resolveStreamBranches(Program *program)
     InstructionStream *currentStream;
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         switch (currentStream->endType) {
-        case 1: {
+        case VCL_STREAM_END_NULL: {
             unsigned char branchType = currentStream->branchType;
             int headFlags = branchType;
             if (!(unsigned char)headFlags || (unsigned char)(headFlags & 4)) {
@@ -86,19 +86,19 @@ bool resolveStreamBranches(Program *program)
             }
             break;
         }
-        case 4:
+        case VCL_STREAM_END_MACRO:
             if (!currentStream->endDirectiveText) {
                 reportError("no macro set in end_macro\n");
                 return false;
             }
             /* fall through */
-        case 3:
+        case VCL_STREAM_END_FINAL:
             if (currentStream->branchType) {
                 reportError("branchtype not null for end / cont\n");
                 return false;
             }
             break;
-        case 2:
+        case VCL_STREAM_END_CONTINUE:
             if (currentStream->branchType) {
                 reportError("branchtype not null for end / cont\n");
                 return false;

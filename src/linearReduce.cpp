@@ -17,7 +17,7 @@ int dragDown(ScheduleTable *wt);
 static inline bool isPipeMode(ScheduleTable *scheduleTable)
 {
     int mode = scheduleTable->codeModeValue - 3;
-    return !mode && (scheduleTable->rawSchedulingMode == 1 || scheduleTable->rawSchedulingMode == 3);
+    return !mode && (scheduleTable->rawSchedulingMode == VCL_RAW_COMPILER_FREE || scheduleTable->rawSchedulingMode == VCL_RAW_USER_FREE);
 }
 
 static inline void dumpLinearReduce(Program *program)

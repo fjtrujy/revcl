@@ -1,6 +1,6 @@
 #pragma implementation "RegWeb_inline.h"
 #include "RegWeb_inline.h"
 
-RegWeb regWebs[0x4000];
+RegWeb regWebs[VCL_REGISTER_WEB_CAPACITY];
 int regWebUsed;
 int regWebCount;

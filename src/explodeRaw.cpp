@@ -25,7 +25,7 @@ bool explodeRaw(Program *program)
         }
         if (!scheduleTable->getLoopSize())
             continue;
-        if (scheduleTable->codeModeValue != 3) {
+        if (scheduleTable->codeModeValue != VCL_CODE_RAW) {
             reportError("explodeRaw: a non raw stream has a loop size set\n");
             return false;
         }

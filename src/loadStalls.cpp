@@ -20,7 +20,7 @@ bool loadStalls(Program *program)
             reportError("instruction has no owner!\n");
             return 0;
         }
-        if (owner->codeModeValue != 3) {
+        if (owner->codeModeValue != VCL_CODE_RAW) {
             reportError("bad code mode for stall\n");
             return 0;
         }

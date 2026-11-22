@@ -23,7 +23,7 @@ ScheduleTable *prepUta(Program *program, InstructionStream *stream, int loopSize
             reportError("prepLockTable: can't loop, but loop size requested\n");
             return 0;
         }
-        if (scheduleTable->codeModeValue == 3) {
+        if (scheduleTable->codeModeValue == VCL_CODE_RAW) {
             reportError("prepLockTable: loopSize requested, but mode is RAW\n");
             return 0;
         }

@@ -8,14 +8,14 @@ int checkInstructionPlacementConstraints(ScheduleTable *wt, Instr *i, Instructio
 
 static inline bool isRawMode(ScheduleTable *scheduleTable)
 {
-    if (scheduleTable->codeMode() == 3)
+    if (scheduleTable->codeMode() == VCL_CODE_RAW)
         return true;
     return false;
 }
 
 static inline bool noReduce(ScheduleTable *scheduleTable)
 {
-    return isRawMode(scheduleTable) && (scheduleTable->rawSchedulingMode == 2 || scheduleTable->rawSchedulingMode == 4);
+    return isRawMode(scheduleTable) && (scheduleTable->rawSchedulingMode == VCL_RAW_COMPILER_FIXED || scheduleTable->rawSchedulingMode == VCL_RAW_USER_FIXED);
 }
 
 extern const char fiddleBranchPosError[];

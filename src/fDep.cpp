@@ -24,7 +24,7 @@ Operand *getEA(Instr *instruction)
             exitAfterCleanup(-1);
         }
         Operand *operand = &instruction->operands[instructionInfo->branchTargetOperandSelector];
-        if (operand->direction != 1) {
+        if (operand->direction != VCL_OPERAND_READ) {
             reportError("effective address specifier isn't an input\n");
             exitAfterCleanup(-1);
         }
@@ -68,7 +68,7 @@ bool sameEA(Instr *instruction, Instr *secondInstruction)
     if (r1) {
         if (ea1->componentMask != ea2->componentMask)
             return false;
-        if (ea1->componentMask != 1) {
+        if (ea1->componentMask != VCL_COMPONENT_X) {
             reportError("mod bits not 1 for an effective address specifier\n");
             exitAfterCleanup(-1);
         }

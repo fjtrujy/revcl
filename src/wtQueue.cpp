@@ -199,7 +199,7 @@ bool ScheduleTable::queueInstruction(Instr *instruction)
         }
         if (isRegisterOperand(destinationOperand, 1)) {
             if (isAAOperand(destinationOperand))
-                destinationOperand->direction = 3;
+                destinationOperand->direction = VCL_OPERAND_READ_WRITE;
         }
         if (isRegisterOperand(destinationOperand, 1)) {
             if (activeLoopSize && isVuRegister(registerEntry) && destinationOperand->operandStatus != 2)

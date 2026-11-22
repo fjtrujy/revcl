@@ -342,7 +342,7 @@ bool prepareRawAndSyntheticStreams(Program *program, int smart)
                               currentStream->streamName(), currentStream->getAllocMode());
                 return false;
             }
-            currentOptimizationTable->allocationMode = 3;
+            currentOptimizationTable->allocationMode = VCL_ALLOC_DONE;
         }
     }
     return true;

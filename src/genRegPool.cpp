@@ -93,7 +93,7 @@ bool assignExtRegisters(Program *program)
                 }
             }
         }
-        scheduleTable->allocationMode = 2;
+        scheduleTable->allocationMode = VCL_ALLOC_X;
     }
     if (!resetProgramAllocationsForSecondPass(program)) {
         reportError("failed to clean up after global alloc\n");

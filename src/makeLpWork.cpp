@@ -237,10 +237,10 @@ bool lsqChain(ScheduleTable *table)
         }
         newInstruction->operands[0].assignedRegister = registerEntry;
         newInstruction->operands[0].externalPartMask = 1;
-        newInstruction->operands[0].componentMask = 1;
+        newInstruction->operands[0].componentMask = VCL_COMPONENT_X;
         newInstruction->operands[1].assignedRegister = registerEntry;
         newInstruction->operands[1].externalPartMask = 1;
-        newInstruction->operands[1].componentMask = 1;
+        newInstruction->operands[1].componentMask = VCL_COMPONENT_X;
         newInstruction->operands[2].immediateValue.setInt(total);
         if (!table->logAddLinear_After(list[chainedInstructionCount - 1], newInstruction)) {
             reportError(lsqChainAddError);
@@ -298,7 +298,7 @@ bool modLsqq(Instr *instruction, int imm)
     operand->isImplicit = descriptor->isImplicit != 0;
     operand->immediateDataType = descriptor->immediateDataType;
     operand->pairedOperandIndexPlusOne = descriptor->patchedOutputIndexPlusOne;
-    if (operand->operandKind != 0x1d) {
+    if (operand->operandKind != VCL_OP_V_EA_IMM) {
         reportError("modded lqsq isn't ea_imm_reg\n");
         abortAfterError();
         return false;

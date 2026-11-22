@@ -62,11 +62,11 @@ bool OpcodeDescriptor::check()
                 reportError("implicit web patch set on explicit operand\n");
                 return false;
             }
-            if (operandDescriptor->direction != 1) {
+            if (operandDescriptor->direction != VCL_OPERAND_READ) {
                 reportError("iInfo: check - patch set on non-input (%d)\n", operandDescriptor->operandKind);
                 return false;
             }
-            if (operandDescriptors[operandDescriptor->patchedOutputIndexPlusOne - 1].direction != 2) {
+            if (operandDescriptors[operandDescriptor->patchedOutputIndexPlusOne - 1].direction != VCL_OPERAND_WRITE) {
                 reportError("iInfo: check patch not point to output\n");
                 return false;
             }

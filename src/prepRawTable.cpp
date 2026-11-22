@@ -43,7 +43,7 @@ bool ScheduleTable::prepRawTable()
         return 0;
     }
     if (tlen == 0)
-        rawSchedulingMode = 1;
+        rawSchedulingMode = VCL_RAW_COMPILER_FREE;
     for (int rowIndex = 0; rowIndex < rangeEnd; rowIndex++) {
         ScheduleRow *workRow = (ScheduleRow *)((InstructionOwnerTableView *)this)->getIE_ck(rowIndex);
         if (!workRow) {

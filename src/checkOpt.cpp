@@ -86,7 +86,7 @@ bool checkOpt3(Program *program)
                 }
             }
         }
-        if (scheduleTable->codeModeValue == 3) {
+        if (scheduleTable->codeModeValue == VCL_CODE_RAW) {
             int start = scheduleTable->getRangeStart();
             int end = scheduleTable->getRangeEnd();
             if (start < 0 || end < start) {
@@ -210,7 +210,7 @@ bool checkOpt3(Program *program)
                                     reportError("internal oploc but instruction not from this stream\n");
                                     return false;
                                 }
-                                if (scheduleTable->codeModeValue == 3) {
+                                if (scheduleTable->codeModeValue == VCL_CODE_RAW) {
                                     if (__builtin_expect(locationInstruction->position.getRow() < last, 0)) {
                                         reportError("local oplocs  aren't in order\n");
                                         return false;

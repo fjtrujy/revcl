@@ -12,12 +12,12 @@ RegisterEntry *getPoolZeroRegister(unsigned int type);
 
 static inline bool isRawTable(ScheduleTable *scheduleTable)
 {
-    return scheduleTable->codeModeValue == 3;
+    return scheduleTable->codeModeValue == VCL_CODE_RAW;
 }
 
 static inline bool isPipeMode(ScheduleTable *scheduleTable)
 {
-    return isRawTable(scheduleTable) && (scheduleTable->rawSchedulingMode == 1 || scheduleTable->rawSchedulingMode == 3);
+    return isRawTable(scheduleTable) && (scheduleTable->rawSchedulingMode == VCL_RAW_COMPILER_FREE || scheduleTable->rawSchedulingMode == VCL_RAW_USER_FREE);
 }
 
 inline bool atEarliest(ScheduleTable *scheduleTable, Instr *instruction)

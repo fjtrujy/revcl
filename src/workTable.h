@@ -122,13 +122,13 @@ struct InstructionList {
 inline const char *codeModeStr(int mode)
 {
     switch (mode) {
-    case 0: return "CODE_MODE_BAD";
-    case 1: return "CODE_MODE_UTA";
-    case 2: return "CODE_MODE_MID";
-    case 3: return "CODE_MODE_RAW";
-    case 4: return "CODE_MODE_SYNTH";
-    case 5: return "CODE_MODE_RAW_PREEXP";
-    case 6: return "CODE_MODE_PASS_THRU";
+    case VCL_CODE_INVALID: return "CODE_MODE_BAD";
+    case VCL_CODE_UTA: return "CODE_MODE_UTA";
+    case VCL_CODE_MID: return "CODE_MODE_MID";
+    case VCL_CODE_RAW: return "CODE_MODE_RAW";
+    case VCL_CODE_SYNTHETIC: return "CODE_MODE_SYNTH";
+    case VCL_CODE_RAW_PREEXPANDED: return "CODE_MODE_RAW_PREEXP";
+    case VCL_CODE_PASSTHROUGH: return "CODE_MODE_PASS_THRU";
     }
     return "CODE_MODE_????";
 }
@@ -141,7 +141,7 @@ public:
     char allocationMode;
     unsigned char codeModeValue;
     unsigned char rawSchedulingMode;
-    bool isAbstract() { return codeModeValue == 1; }
+    bool isAbstract() { return codeModeValue == VCL_CODE_UTA; }
     unsigned char codeMode() { return codeModeValue; }
     char postOptimizationPrepared;
     int declaredRawLength;

@@ -82,6 +82,9 @@ The original linked and stripped ELF is 482,736 bytes. Reproducibility is
 verified directly by `cmake/VerifySha.cmake`; the SHA value is stored in
 `tools/rh9/vcl.sha256`. No post-link binary patching is performed. See
 [historical reproducible build details](docs/VCL_REPRODUCIBLE_BUILD.md).
+The [magic-number and build-configuration audit](docs/MAGIC_NUMBERS_AND_BUILD_AUDIT.md)
+documents recovered enum domains, the ten still-required per-unit compiler
+options, and why the recovered linker input order remains explicit.
 
 ## Development
 
