@@ -1,8 +1,9 @@
+#include "os.h"
 #include "lock_shared.h"
 
 bool g_080de288;
 
-static inline bool canWrapInputLock(cls0805bcc4 *in)
+static inline bool canWrapInputLock(OperandLock *in)
 {
     return in->unk_19 == 1;
 }
@@ -20,24 +21,24 @@ static inline void wrapInputRange(int &s, int &e)
     }
 }
 
-int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
+int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
 {
-    cls0805bcc4 *lk = unk_1c;
+    OperandLock *lk = unk_1c;
     int ret;
     int lsz = g_080b336c;
     ret = 0;
-    int p = ((cls08058718 *)pos)->unk_00;
+    int p = ((InstructionPosition *)pos)->unk_00;
 
     in->unk_1a = 0;
     if (in->unk_19 == 2) {
-        func_0804ad38("CheckInputLock::aa input\n");
-        func_0804aeb0();
+        reportError("CheckInputLock::aa input\n");
+        abortAfterError();
         return 0;
     }
     if (unk_29)
         return 0;
 
-    cls0805bcc4 *par = in->getParent();
+    OperandLock *par = in->getParent();
     int lo = par->unk_36;
     int hi = par->unk_4e;
 
@@ -53,8 +54,8 @@ int cls0805c244::checkInputLock(cls0805bcc4 *in, short *pos, int *minPos)
             if (unk_0c[0])
                 room -= unk_0c[0]->unk_18;
             else {
-                func_0804ad38("no ext output set. but .. not const for loop\n");
-                func_0804adf0(-1);
+                reportError("no ext output set. but .. not const for loop\n");
+                exitAfterCleanup(-1);
             }
             if (span > room) {
                 int need;
@@ -139,13 +140,13 @@ static inline void nextLoopPosition(int v, int row, int n, int &next)
     }
 }
 
-int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
+int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
 {
     int lsz = g_080b336c;
     int ret = checkOverlap(out, pos, minPos);
     if (isRegLock(out))
         return 0;
-    int p = ((cls08058718 *)pos)->unk_00;
+    int p = ((InstructionPosition *)pos)->unk_00;
     int first;
     if (out->unk_15)
         first = p + 1;
@@ -158,7 +159,7 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
             *minPos = 30000;
             return ret | 0x800;
         }
-        for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
+        for (OperandLock *lk = unk_1c; lk; lk = lk->unk_08) {
             if (first <= lk->unk_4e) {
                 int v = lk->unk_4e - (first - p) + 1;
                 if (*minPos < v)
@@ -193,7 +194,7 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
     }
 
     if (lsz && unk_28) {
-        cls0805bcc4 *h = unk_20;
+        OperandLock *h = unk_20;
         if (h->unk_22) {
             *minPos = 30000;
             return ret | 4;
@@ -224,12 +225,12 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
             ext = true;
     }
 
-    int sz = ((cls08058718 *)pos)->unk_04;
+    int sz = ((InstructionPosition *)pos)->unk_04;
     int s = sz + (first - p);
     int e = sz + (lim - p);
     wrapRangeLocal(s, e);
 
-    for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
+    for (OperandLock *lk = unk_1c; lk; lk = lk->unk_08) {
         if (ext && lk->unk_2d == 2)
             continue;
         int ls = lk->unk_34;
@@ -247,7 +248,7 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
         } else if (lockRangesOverlap(s, e, ls, le)) {
             first -= p;
             int v = lk->unk_4e - first + 1;
-            nextLoopPosition(v, ((cls08058718 *)pos)->unk_00, g_080b336c, he);
+            nextLoopPosition(v, ((InstructionPosition *)pos)->unk_00, g_080b336c, he);
             if (*minPos < he)
                 *minPos = he;
             return ret | 2;
@@ -256,7 +257,7 @@ int cls0805c244::checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos)
     return ret;
 }
 
-int cls0805c244::checkOverlap(cls0805bcc4 *out, short *pos, int *minPos)
+int cls0805c244::checkOverlap(OperandLock *out, short *pos, int *minPos)
 {
     int ret = 0;
     if (out->unk_17 <= 1)
@@ -264,7 +265,7 @@ int cls0805c244::checkOverlap(cls0805bcc4 *out, short *pos, int *minPos)
 
     int s = pos[2];
     int e = s + out->unk_17 - 1;
-    for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
+    for (OperandLock *lk = unk_1c; lk; lk = lk->unk_08) {
         if (lk == out)
             continue;
         int os = lk->unk_30;
@@ -273,7 +274,7 @@ int cls0805c244::checkOverlap(cls0805bcc4 *out, short *pos, int *minPos)
             continue;
         if (lockRangesOverlap(s, e, os, oe - 1)) {
             ret |= 1;
-            int p = ((cls08058718 *)pos)->unk_00;
+            int p = ((InstructionPosition *)pos)->unk_00;
             int v;
             if (!g_080b336c)
                 v = oe;

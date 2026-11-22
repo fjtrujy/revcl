@@ -1,6 +1,7 @@
+#include "os.h"
 #include "lock_shared.h"
 
-bool cls0805c244::catLocks(cls0805bcc4 *a, cls0805bcc4 *b, int *s, int *e, int *end)
+bool cls0805c244::catLocks(OperandLock *a, OperandLock *b, int *s, int *e, int *end)
 {
     bool found = false;
     int lsz = g_080b336c;
@@ -26,40 +27,40 @@ bool cls0805c244::catLocks(cls0805bcc4 *a, cls0805bcc4 *b, int *s, int *e, int *
     return true;
 }
 
-static inline bool isAAInputLock(cls0805bcc4 *in)
+static inline bool isAAInputLock(OperandLock *in)
 {
     return in->unk_19 == 2;
 }
 
-static inline bool sameLockOwner(cls0805bcc4 *a, cls0805bcc4 *b)
+static inline bool sameLockOwner(OperandLock *a, OperandLock *b)
 {
     return a->unk_24 == b->unk_24;
 }
 
-int cls0805c244::canMoveInputLock(cls0805bcc4 *in, short *pos, int slotBit)
+int cls0805c244::canMoveInputLock(OperandLock *in, short *pos, int slotBit)
 {
     int p = *pos;
-    cls0805bcc4 *lk = unk_1c;
+    OperandLock *lk = unk_1c;
     int lsz = g_080b336c;
     if (unk_29)
         return 0;
     if (isAAInputLock(in)) {
-        func_0804ad38("canMoveInputLock - aa input\n");
-        func_0804aeb0();
+        reportError("canMoveInputLock - aa input\n");
+        abortAfterError();
         return 0;
     } else {
-        cls0805bcc4 *par = in->getParent();
+        OperandLock *par = in->getParent();
         bool cat = false;
         int s, e, end;
         if (lsz && isRegLock(par)) {
-            cls0805bcc4 *x = unk_0c[0];
+            OperandLock *x = unk_0c[0];
             if (x->unk_2c) {
                 if (sameLockOwner(in, x))
                     return 0;
                 p += lsz;
                 if (!catLocks(par, x, &s, &e, &end)) {
-                    func_0804ad38("failed to concatenate reg ref with xo\n");
-                    func_0804adf0(-1);
+                    reportError("failed to concatenate reg ref with xo\n");
+                    exitAfterCleanup(-1);
                 }
                 cat = true;
                 par = x;
@@ -82,11 +83,11 @@ int cls0805c244::canMoveInputLock(cls0805bcc4 *in, short *pos, int slotBit)
             }
         } else if (lsz && unk_28 && par->unk_16) {
             if (!catLocks(unk_20, par, &s, &e, &end)) {
-                func_0804ad38("case B failed to cat xo\n");
+                reportError("case B failed to cat xo\n");
                 checkCounts();
-                func_0804ad38("we are :\n");
+                reportError("we are :\n");
                 in->print();
-                func_0804adf0(-1);
+                exitAfterCleanup(-1);
             }
             cat = true;
         } else {
@@ -125,12 +126,12 @@ int cls0805c244::canMoveInputLock(cls0805bcc4 *in, short *pos, int slotBit)
     return 0;
 }
 
-int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int slotBit)
+int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
 {
     int ret;
     int lsz = g_080b336c;
-    int p = ((cls08058718 *)pos)->unk_00;
-    int sz = ((cls08058718 *)pos)->unk_04;
+    int p = ((InstructionPosition *)pos)->unk_00;
+    int sz = ((InstructionPosition *)pos)->unk_04;
     int mp = p;
     ret = checkOverlap(out, pos, &mp);
     if (ret)
@@ -166,14 +167,14 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int slotBit)
 
     bool ext = false;
     if (out->unk_16) {
-        for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
+        for (OperandLock *lk = unk_1c; lk; lk = lk->unk_08) {
             if (lk == out)
                 continue;
             if (first <= lk->unk_4e)
                 return 0x1000;
         }
         if (lsz && unk_28) {
-            cls0805bcc4 *h = unk_20;
+            OperandLock *h = unk_20;
             ext = true;
             if (h->unk_2e) {
                 int hs = h->unk_36 + lsz;
@@ -185,7 +186,7 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int slotBit)
             }
         }
     } else if (lsz && unk_28) {
-        cls0805bcc4 *h = unk_20;
+        OperandLock *h = unk_20;
         if (h->unk_2e) {
             if (first < h->unk_4e)
                 return 0x4000;
@@ -198,7 +199,7 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int slotBit)
     int s = sz - p + first;
     int e = sz - p + lim;
     wrapRangeLocal(s, e);
-    for (cls0805bcc4 *lk = unk_1c; lk; lk = lk->unk_08) {
+    for (OperandLock *lk = unk_1c; lk; lk = lk->unk_08) {
         if (lk == out)
             continue;
         if (ext && lk->unk_2d == 2)
@@ -212,10 +213,10 @@ int cls0805c244::canMoveOutputLock(cls0805bcc4 *out, short *pos, int slotBit)
     if (ret)
         return ret;
     if (unk_2a && !lsz && !out->unk_15) {
-        cls0805bcc4 *x = unk_0c[0];
+        OperandLock *x = unk_0c[0];
         if (!x) {
-            func_0804ad38("external lock not set \n");
-            func_0804aeb0();
+            reportError("external lock not set \n");
+            abortAfterError();
         }
         if (x->unk_2c) {
             if (out->unk_32 == p)

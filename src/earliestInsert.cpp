@@ -17,10 +17,10 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
         RegPoolEntry *reg = registerOperand(op, 1);
         if (reg) {
-            for (int p = 0; p != reg->unk_28; p++) {
+            for (int p = 0; p != reg->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *slot = &op->unk_2c[p];
-                    cls0805bcc4 *par = slot->getParent();
+                    OperandLock *par = slot->getParent();
                     if (slot->unk_19 != 2) {
                         int s = par->unk_32;
                         if ((short)s >= 0) {
@@ -31,9 +31,9 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                                     thru = t;
                             }
                             if (t > iline) {
-                                func_0804ad38("ln>iline.. \n");
+                                reportError("ln>iline.. \n");
                                 slot->print();
-                                func_0804adf0(-1);
+                                exitAfterCleanup(-1);
                             }
                         }
                     }
@@ -42,30 +42,30 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
         }
         reg = registerOperand(op, 2);
         if (reg && reg->unk_2c) {
-            for (int p = 0; p != reg->unk_28; p++) {
+            for (int p = 0; p != reg->partCount; p++) {
                 if ((op->unk_07 >> p) & 1) {
                     OpSlot *slot = &op->unk_2c[p];
-                    cls0805bcc4 *lk = slot->unk_04->unk_20;
+                    OperandLock *lk = slot->unk_04->unk_20;
                     while (lk && lk != slot) {
                         int s = lk->unk_32;
                         if (s > iline) {
-                            func_0804ad38("sorted list corrupted?\n");
-                            func_0804adf0(-1);
+                            reportError("sorted list corrupted?\n");
+                            exitAfterCleanup(-1);
                         }
                         if (s >= 0) {
                             int t = s + lk->unk_17;
                             if (t >= line)
                                 line = thru = t;
                             if (t > iline) {
-                                func_0804ad38("ln>iline for thru case\n");
-                                func_0804adf0(-1);
+                                reportError("ln>iline for thru case\n");
+                                exitAfterCleanup(-1);
                             }
                         }
                         lk = lk->unk_10;
                     }
                     if (!lk) {
-                        func_0804ad38("sorted lock not  on list for get earliest!\n");
-                        func_0804adf0(-1);
+                        reportError("sorted lock not  on list for get earliest!\n");
+                        exitAfterCleanup(-1);
                     }
                 }
             }

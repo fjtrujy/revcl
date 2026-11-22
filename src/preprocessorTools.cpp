@@ -7,7 +7,7 @@
 
 #include "os.h"
 
-int func_0804ad84(const char *fmt, ...);
+int reportUserMessage(const char *fmt, ...);
 bool symbolic_080b300c = false;
 bool flag_080b300d = false;
 bool noLoops_080b300e = false;
@@ -99,23 +99,23 @@ char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
     bool ok = false;
     Tool *t = &tools_080b301c[tool];
 
-    func_0804acb0("..processing with %s\n", t->name);
+    reportInfo("..processing with %s\n", t->name);
     inPath[0] = 0;
     outPath[0] = 0;
 
     if (!buf) {
-        func_0804ad38("null data passed to doGasp\n");
+        reportError("null data passed to doGasp\n");
     } else {
         int n = strlen(buf);
         if (n == 0) {
-            func_0804ad38("in buffer is null length\n");
+            reportError("in buffer is null length\n");
         } else {
             sprintf(inName, "vcli_%s", t->name);
             fdIn = func_0804ab6c(inName, inPath);
             if (fdIn < 0) {
-                func_0804ad38("failed to make temp in file\n");
+                reportError("failed to make temp in file\n");
             } else if (write(fdIn, buf, n) != n) {
-                func_0804ad38("failed to write data to temp file\n");
+                reportError("failed to write data to temp file\n");
             } else {
                 close(fdIn);
                 *len = 0;
@@ -125,7 +125,7 @@ char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
                 sprintf(outName, "vclo_%s", t->name);
                 fdOut = func_0804ab6c(outName, outPath);
                 if (fdOut < 0) {
-                    func_0804ad38("failed to make tmp outfile\n");
+                    reportError("failed to make tmp outfile\n");
                 } else {
                     close(fdOut);
                     fdOut = -1;
@@ -136,11 +136,11 @@ char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
                     sprintf(p, "%s > %s\n", inPath, outPath);
                     int rc = system(cmd);
                     if (rc) {
-                        func_0804ad38("system returned %d\n", rc);
+                        reportError("system returned %d\n", rc);
                     } else {
                         result = func_0804aef0(outPath, len, true);
                         if (!result)
-                            func_0804ad38("failed to read tmp out file\n");
+                            reportError("failed to read tmp out file\n");
                         ok = true;
                     }
                 }
@@ -154,9 +154,9 @@ char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
         close(fdOut);
     if (!keepTemps) {
         if (inPath[0] && unlink(inPath))
-            func_0804ac7c("failed to unlink temporary gasp input file %s\n", inPath);
+            reportWarning("failed to unlink temporary gasp input file %s\n", inPath);
         if (outPath[0] && unlink(outPath))
-            func_0804ac7c("failed to unlink temporary gasp output file %s\n", outPath);
+            reportWarning("failed to unlink temporary gasp output file %s\n", outPath);
     }
     if (!ok) {
         if (result)

@@ -13,7 +13,7 @@ char gatheredToken[1024];
 
 int gatherTokens(LocTag *t, int i, bool stopAtOpcode);
 int func_0804bf50(unsigned int x);
-bool func_0804bfcc(const char *a, const char *b);
+bool asciiCaseEqual(const char *a, const char *b);
 char *dupString(const char *s);
 int mstrlen(const char *s);
 bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax);
@@ -50,15 +50,15 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     bool hasMods;
 
     if (!t) {
-        func_0804ad38("getNextInstruction - passed null pointer\n");
+        reportError("getNextInstruction - passed null pointer\n");
         goto fail;
     }
     if (t->func_08050f18(cur)) {
-        func_0804ad38("getNextInstruction - tried to parse a comment\n");
+        reportError("getNextInstruction - tried to parse a comment\n");
         goto fail;
     }
     {
-        char *s = t->func_08050be4(cur);
+        char *s = t->tokenTextAt(cur);
         char *d = buf;
         p = d;
         for (; *s && copyCount < 0x800; copyCount++)
@@ -78,9 +78,9 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         if (*p == '+')
             loopid = 0x1024;
         else {
-            loopid = func_0804add4(p);
+            loopid = parseInteger(p);
             if (loopid > 32) {
-                func_0804ad84("unlinkely large loopid set with instruction\n");
+                reportUserMessage("unlinkely large loopid set with instruction\n");
                 goto fail;
             }
         }
@@ -88,13 +88,13 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     }
     info = func_0806bf8c(p, unk_00);
     if (!info) {
-        func_0804ad84("vcl can't find instruction '%s'\n", p);
+        reportUserMessage("vcl can't find instruction '%s'\n", p);
         goto fail;
     }
     cur++;
     in = new Instr(info);
     if (loopid < 0) {
-        func_0804ad84("parsed loop id is <0\n");
+        reportUserMessage("parsed loop id is <0\n");
         goto fail;
     }
     in->unk_1420 = loopid;
@@ -107,7 +107,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         hasMods = func_08051f08(suffix, &mask, &bad);
     }
     if (bad) {
-        func_0804ad84("instruction has bad .modifier bits\n");
+        reportUserMessage("instruction has bad .modifier bits\n");
         goto fail;
     }
     switch ((char)info->unk_0c) {
@@ -117,7 +117,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         if (hasMods) {
             in->unk_138f = mask;
             if (!in->unk_138f) {
-                func_0804ad84("getNextInstruction: instruction had zero mod bits\n");
+                reportUserMessage("getNextInstruction: instruction had zero mod bits\n");
                 goto fail;
             }
             forcedMods = true;
@@ -127,7 +127,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         break;
     case 2:
         if (hasMods && mask != 7) {
-            func_0804ad84("getNextInstruction: XYZ instruction had bad mod bits\n");
+            reportUserMessage("getNextInstruction: XYZ instruction had bad mod bits\n");
             goto fail;
         }
         forcedMods = true;
@@ -136,7 +136,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     case 3:
         if (hasMods) {
             if (in->unk_13ce == 1 && func_0804bf50(mask) != 1) {
-                func_0804ad84("getNextInstruction: MD_ONE instruction had bad mod bits. more than one?\n");
+                reportUserMessage("getNextInstruction: MD_ONE instruction had bad mod bits. more than one?\n");
                 goto fail;
             }
             explicitMods = true;
@@ -144,7 +144,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         }
         break;
     default:
-        func_0804ad38("processor: decode le - bad insn type\n");
+        reportError("processor: decode le - bad insn type\n");
         goto fail;
     }
     op.unk_1000[0] = 0;
@@ -154,33 +154,33 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     op.unk_2000 = 0;
     op.unk_2008 = 0;
     op.unk_200c = 0;
-    for (i = 0; i != in->unk_138b; i++) {
-        Operand *opd = &in->unk_38[i];
+    for (i = 0; i != in->operandCount; i++) {
+        Operand *opd = &in->operands[i];
         int next = cur;
         if (opd->unk_08) {
             if (!buildImplicitOperand(opd->unk_04, &op, unk_00)) {
-                func_0804ad38("getNextInstruction: failed to build implicit operand\n");
+                reportError("getNextInstruction: failed to build implicit operand\n");
                 goto fail;
             }
             if (opd->unk_0d) {
                 if (opd->unk_09 != 1) {
-                    func_0804ad38("implicit web patch set for non-output\n");
+                    reportError("implicit web patch set for non-output\n");
                     goto fail;
                 }
-                Operand *src = &in->unk_38[opd->unk_0d - 1];
+                Operand *src = &in->operands[opd->unk_0d - 1];
                 if (src->unk_09 != 2) {
-                    func_0804ad38("implicit web patched operand not input\n");
+                    reportError("implicit web patched operand not input\n");
                     goto fail;
                 }
                 if (!src->unk_18) {
-                    func_0804ad38("no register found for implicit patch\n");
+                    reportError("no register found for implicit patch\n");
                     goto fail;
                 }
-                func_0804adbc(op.name, "%s", src->unk_18->func_0805a8e0());
+                formatIntoBuffer(op.name, "%s", src->unk_18->registerName());
             }
         } else {
             bool last = false;
-            if (i == in->unk_138b - 1 || opd[1].unk_08)
+            if (i == in->operandCount - 1 || opd[1].unk_08)
                 last = true;
             opd->unk_24 = cur;
             next = gatherTokens(t, cur, last);
@@ -192,19 +192,19 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             }
             opd->unk_25 = next;
             if (!oDecodeToken(opd->unk_04, gatheredToken, &op, unk_00)) {
-                func_0804ad84("failed to decode operand\n");
+                reportUserMessage("failed to decode operand\n");
                 goto fail;
             }
         }
         if (op.unk_1800[0]) {
             if (in->unk_139c) {
-                func_0804ad84("more than one tagged operand associated with instruction at operand %d\n", i);
+                reportUserMessage("more than one tagged operand associated with instruction at operand %d\n", i);
                 goto fail;
             }
             in->unk_139c = dupString(op.unk_1800);
         }
         if (op.unk_1000[0] && !parseImmediate(op.unk_1000, opd->unk_05, &opd->unk_1c)) {
-            func_0804ad38("failed to decode an immediate\n");
+            reportError("failed to decode an immediate\n");
             goto fail;
         }
         opd->unk_0c = op.unk_2004;
@@ -212,13 +212,13 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         if (opd->unk_04 == 35 || opd->unk_04 == 42 || opd->unk_04 == 1 || opd->unk_04 == 9) {
             if (forcedMods) {
                 if (opd->unk_07 != in->unk_138f && opd->unk_07 != 15)
-                    func_0804ac7c("getNextInstruction: forced mod bits!\n");
+                    reportWarning("getNextInstruction: forced mod bits!\n");
                 opd->unk_07 = in->unk_138f;
             } else if (opBits < 0) {
                 opBits = opd->unk_07;
                 in->unk_138f = opBits;
             } else if (opd->unk_07 != opBits) {
-                func_0804ad38("oDecode: bad mod bits in instruction.. not match opBitsStore (%x vs %x) op=%d?\n",
+                reportError("oDecode: bad mod bits in instruction.. not match opBitsStore (%x vs %x) op=%d?\n",
                               opd->unk_07, opBits, i);
                 goto fail;
             }
@@ -227,18 +227,18 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             if (explicitMods) {
                 if (opd->unk_0c) {
                     if (opd->unk_0c != in->unk_138f) {
-                        func_0804ad38("ea/reg or imm(ea)reg has differing mod bits\n");
+                        reportError("ea/reg or imm(ea)reg has differing mod bits\n");
                         goto fail;
                     }
                 } else
                     opd->unk_0c = in->unk_138f;
             } else {
                 if (!opd->unk_0c) {
-                    func_0804ad38("have to set modbits for ea/reg or imm(ea)reg somewhere\n");
+                    reportError("have to set modbits for ea/reg or imm(ea)reg somewhere\n");
                     goto fail;
                 }
                 if (info->unk_0c == 3 && func_0804bf50(opd->unk_0c) != 1) {
-                    func_0804ad38("only one mod field allowed (one of x,y,z, or w)\n");
+                    reportError("only one mod field allowed (one of x,y,z, or w)\n");
                     goto fail;
                 }
                 in->unk_138f = opd->unk_0c;
@@ -249,14 +249,14 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             if (opd->unk_04 == 38) {
                 if (op.unk_2008 == 1) {
                     if (i != 2) {
-                        func_0804ad84("a scalar can only be the third operand in generic instruction\n");
+                        reportUserMessage("a scalar can only be the third operand in generic instruction\n");
                         goto fail;
                     }
-                    if (func_0804bfcc(op.name, "i")) {
+                    if (asciiCaseEqual(op.name, "i")) {
                         cls = 10;
                         opd->unk_04 = 4;
                     }
-                    if (func_0804bfcc(op.name, "q")) {
+                    if (asciiCaseEqual(op.name, "q")) {
                         cls = 10;
                         opd->unk_04 = 7;
                     }
@@ -266,12 +266,12 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     }
                 } else if (op.unk_2008 == 2) {
                     if (i == 0) {
-                        if (func_0804bfcc(op.name, "acc")) {
+                        if (asciiCaseEqual(op.name, "acc")) {
                             cls = 10;
                             opd->unk_04 = 9;
                         }
-                    } else if (func_0804bfcc(op.name, "acc")) {
-                        func_0804ad84("ACC can only be first vector operand\n");
+                    } else if (asciiCaseEqual(op.name, "acc")) {
+                        reportUserMessage("ACC can only be first vector operand\n");
                         goto fail;
                     }
                     if (cls < 0) {
@@ -280,26 +280,26 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     }
                     opd->unk_07 = in->unk_138f;
                     if (!unk_00) {
-                        func_0804ad38("new syntax off while parsing a tbd instruction\n");
+                        reportError("new syntax off while parsing a tbd instruction\n");
                         goto fail;
                     }
                 } else {
-                    func_0804ad84("couldn't determine operand type for generic instruction\n");
+                    reportUserMessage("couldn't determine operand type for generic instruction\n");
                     goto fail;
                 }
             } else
                 cls = func_08057a34(opd->unk_04);
             RegPool *pool = GetRP(cls);
             if (!pool) {
-                func_0804ad38("oDecode: not find expected register ! regtype= '%d' operand = %d\n", cls, i);
+                reportError("oDecode: not find expected register ! regtype= '%d' operand = %d\n", cls, i);
                 goto fail;
             }
             s = nameBuf;
-            if (pool->unk_18 && unk_4c.unk_10 && !pool->func_08059418(op.name) && op.name[0] != '_') {
+            if (pool->virtualPartCount && unk_4c.unk_10 && !pool->func_08059418(op.name) && op.name[0] != '_') {
                 for (mNode *n = unk_4c.unk_10; n; n = n->unk_08) {
                     char *np = n->unk_14;
                     if (!np) {
-                        func_0804ad38("null name in parsep\n");
+                        reportError("null name in parsep\n");
                         goto fail;
                     }
                     bool found = false;
@@ -320,16 +320,16 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                         }
                     }
                     if ((found && n->unk_18 == 0) || (!found && n->unk_18 == 1)) {
-                        s += func_0804adbc(s, "%d", (int)(VclPtrWord)n->unk_10);
+                        s += formatIntoBuffer(s, "%d", (int)(VclPtrWord)n->unk_10);
                         break;
                     }
                 }
             }
-            func_0804adbc(s, "%s", op.name);
+            formatIntoBuffer(s, "%s", op.name);
             char *full = dupString(nameBuf);
             RegPoolEntry *r = pool->func_08059944(full);
             if (!r) {
-                func_0804ad84("oDecode: not find register '%s' from %s\n", full, pool->unk_2c);
+                reportUserMessage("oDecode: not find register '%s' from %s\n", full, pool->poolName);
                 goto fail;
             }
             if (op.unk_200c) {
@@ -337,45 +337,45 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 if (op.unk_800[0]) {
                     base = pool->func_08059418(op.unk_800);
                     if (!base) {
-                        func_0804ad84("request to bing non-base register\n");
+                        reportUserMessage("request to bing non-base register\n");
                         goto fail;
                     }
-                    if (r->unk_18 && r->unk_18 != base)
-                        func_0804ac7c("changing binding for %s from %s to %s\n",
-                                      r->func_0805a8e0(), r->unk_18->func_0805a8e0(),
-                                      base->func_0805a8e0());
-                } else if (r->unk_18)
-                    base = r->unk_18;
-                else if (r->unk_14 != 1)
+                    if (r->assignedPhysicalRegister && r->assignedPhysicalRegister != base)
+                        reportWarning("changing binding for %s from %s to %s\n",
+                                      r->registerName(), r->assignedPhysicalRegister->registerName(),
+                                      base->registerName());
+                } else if (r->assignedPhysicalRegister)
+                    base = r->assignedPhysicalRegister;
+                else if (r->isVirtual != 1)
                     base = r;
                 if (!base) {
-                    func_0804ad84(" can't figure out which base register to map %s to\n",
-                                  r->func_0805a8e0());
+                    reportUserMessage(" can't figure out which base register to map %s to\n",
+                                  r->registerName());
                     goto fail;
                 }
-                if (base->unk_14 == 1) {
-                    func_0804ad38("what I thought was a base register isn't (%s maps to %s?)\n",
-                                  base->func_0805a8e0(), r->func_0805a8e0());
+                if (base->isVirtual == 1) {
+                    reportError("what I thought was a base register isn't (%s maps to %s?)\n",
+                                  base->registerName(), r->registerName());
                     goto fail;
                 }
-                r->unk_18 = base;
+                r->assignedPhysicalRegister = base;
                 opd->unk_10 = base;
             } else if (op.unk_800[0]) {
                 RegPoolEntry *base = pool->func_08059418(op.unk_800);
                 if (!base) {
-                    func_0804ad84("failed to find base map reg '%s'\n", op.unk_800);
+                    reportUserMessage("failed to find base map reg '%s'\n", op.unk_800);
                     goto fail;
                 }
-                if (r->unk_14 != 1 && base != r) {
-                    func_0804ad84("base registers not the same\n");
+                if (r->isVirtual != 1 && base != r) {
+                    reportUserMessage("base registers not the same\n");
                     goto fail;
                 }
                 opd->unk_10 = base;
             } else if (unk_65) {
                 RegPoolEntry *e = pool->func_08059418(op.name);
-                if (e && e != e->unk_04->unk_10)
+                if (e && e != e->ownerPool->zeroRegister)
                     opd->unk_10 = e;
-            } else if (r->unk_14 != 1 && !r->unk_16)
+            } else if (r->isVirtual != 1 && !r->unk_16)
                 opd->unk_10 = r;
             opd->unk_18 = r;
             opd->unk_14 = r;
@@ -385,19 +385,19 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         cur = next;
     }
     if (!in->func_08053fac()) {
-        func_0804ad38("oDecode: sanity check failed\n");
+        reportError("oDecode: sanity check failed\n");
         goto fail;
     }
     if (info->unk_20 && !info->unk_20(info, in)) {
-        func_0804ad38("oDecode:: iBuildHook failed to patch instruction\n");
+        reportError("oDecode:: iBuildHook failed to patch instruction\n");
         goto fail;
     }
     if (!in->func_08055ae4()) {
-        func_0804ad38("failed to patch status register dependency\n");
+        reportError("failed to patch status register dependency\n");
         goto fail;
     }
     if (in->func_080532d8() < 0) {
-        func_0804ad38("failed to normalise instruction\n");
+        reportError("failed to normalise instruction\n");
         goto fail;
     }
     ok = true;
@@ -407,15 +407,15 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
 fail:
     if (!ok) {
         if (in) {
-            func_0804ad84("couldn't decode instruction .. problem is at:\n");
-            t->func_08050c40(cur);
+            reportUserMessage("couldn't decode instruction .. problem is at:\n");
+            t->dumpSourceLine(cur);
             if (in->func_080552a8(unk_00, fmtBuf, g_080b34dc))
-                func_0804ad84("expected format is: %s\n", fmtBuf);
+                reportUserMessage("expected format is: %s\n", fmtBuf);
             delete in;
             in = 0;
         } else if (t) {
-            func_0804ad84("found a syntax error at :\n");
-            t->func_08050c40(cur);
+            reportUserMessage("found a syntax error at :\n");
+            t->dumpSourceLine(cur);
         }
     } else
         *pos = cur;
@@ -429,15 +429,15 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
     int i;
 
     if (!t) {
-        func_0804ad38("decodeLE: passed a null pointer\n");
+        reportError("decodeLE: passed a null pointer\n");
         return false;
     }
     if (*pos == 0) {
-        char *tok = t->func_08050be4(0, 0);
+        char *tok = t->tokenTextAt(0, 0);
         mNode *n;
         if (func_080506e0(tok) && !t->func_08050f18(0)) {
             if (*nOut != 0) {
-                func_0804ad84("found a label on a continued line\n");
+                reportUserMessage("found a label on a continued line\n");
                 return false;
             }
             {
@@ -455,13 +455,13 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
             *p = 0;
             n = labels->func_0804b444(buf);
             if (!n) {
-                func_0804ad38("Processor::decodeLE() - couldn't create tail for label list\n");
+                reportError("Processor::decodeLE() - couldn't create tail for label list\n");
                 return false;
             }
             n->unk_18 = mods;
             (*pos)++;
             if (func_0805085c(t) > 1) {
-                char *tok2 = t->func_08050be4(1, 0);
+                char *tok2 = t->tokenTextAt(1, 0);
                 if (*tok2 == '[') {
                     {
                         s = tok2;
@@ -478,9 +478,9 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
             }
             if (!func_080522c4(n->unk_18, unk_3d, true)) {
                 int mode = unk_3d;
-                func_0804ad84("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
+                reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(mode));
-                t->func_08050c40(-1);
+                t->dumpSourceLine(-1);
                 goto fail;
             }
         }
@@ -495,8 +495,8 @@ next:
                 goto done;
             }
             if (*nOut > 1) {
-                func_0804ad84("too many instructions on a line!\n");
-                t->func_08050c40(-1);
+                reportUserMessage("too many instructions on a line!\n");
+                t->dumpSourceLine(-1);
                 goto fail;
             }
             Instr *ins = getNextInstruction(t, pos);
@@ -543,7 +543,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
         p->proc.unk_65 = 1;
         break;
     default:
-        func_0804ad38("Processor::Build:: bad build type request\n");
+        reportError("Processor::Build:: bad build type request\n");
         goto done;
     }
     p->proc.unk_62 = 0;
@@ -551,18 +551,18 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
     p->proc.unk_3f = 0;
     blocks = new flowBlock[0x1000];
     if (!blocks) {
-        func_0804ad38("Processor::Build() new failed for decLine table\n");
+        reportError("Processor::Build() new failed for decLine table\n");
         goto done;
     }
     pos = 0;
-    while (lineIdx < parser->func_0805017c()) {
-        LocTag *t = parser->func_0805018c(lineIdx);
+    while (lineIdx < parser->getParsedLineCount()) {
+        LocTag *t = parser->getParsedLine(lineIdx);
         if (!t) {
-            func_0804ad38("NULL LE return\n");
+            reportError("NULL LE return\n");
             goto done;
         }
         if (t->func_08050f48()) {
-            func_0804ad84("unexpected line continue\n");
+            reportUserMessage("unexpected line continue\n");
             goto done;
         }
         if (t->unk_08) {
@@ -570,7 +570,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             b->unk_05 = 6;
             char *s = dupString(t->unk_00);
             if (!s) {
-                func_0804ad38("failed to dupe the pass thru text\n");
+                reportError("failed to dupe the pass thru text\n");
                 goto done;
             }
             b->unk_00 = s;
@@ -581,13 +581,13 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
         if (t->func_08050eec()) {
             Directive *d = func_080519a0(t);
             if (!d) {
-                func_0804ad84("failed to find a directive from line : \n");
-                t->func_08050c40(-1);
+                reportUserMessage("failed to find a directive from line : \n");
+                t->dumpSourceLine(-1);
                 goto done;
             }
             if (!d->fn(p, t)) {
-                func_0804ad84("a directive parser failed at line:\n");
-                t->func_08050c40(-1);
+                reportUserMessage("a directive parser failed at line:\n");
+                t->dumpSourceLine(-1);
                 goto done;
             }
             lineIdx++;
@@ -595,57 +595,57 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
         }
         nOut = 0;
         do {
-            t = parser->func_0805018c(lineIdx);
+            t = parser->getParsedLine(lineIdx);
             if (!t) {
-                func_0804ad38("got a null return.. while expanding line continues\n");
+                reportError("got a null return.. while expanding line continues\n");
                 goto done;
             }
             int old = pos;
             if (!p->proc.decodeLE(t, &pos, &labels, ins, &nOut)) {
-                func_0804ad38("failed to build list of instructions for line\n");
+                reportError("failed to build list of instructions for line\n");
                 goto done;
             }
             if (pos >= func_0805085c(t)) {
                 lineIdx++;
                 pos = 0;
             } else if (old >= pos) {
-                func_0804ad38("didn't advance start token during processing\n");
+                reportError("didn't advance start token during processing\n");
                 goto done;
             }
-        } while (parser->func_08050738(lineIdx));
+        } while (parser->isAssignmentLine(lineIdx));
         if (!nOut)
             continue;
         if (n < 0) {
-            func_0804ad38("out of bounds rLine getting decoded instructions\n");
+            reportError("out of bounds rLine getting decoded instructions\n");
             goto done;
         }
         if (n >= maxLines) {
-            func_0804ad38("out of bounds rLine getting decoded instructions\n");
+            reportError("out of bounds rLine getting decoded instructions\n");
             goto done;
         }
         flowBlock *b = &blocks[n];
         b->func_08084220();
         if (!b->unk_14.func_0804b4d0(&labels)) {
-            func_0804ad38("failed to grab labels from current list\n");
+            reportError("failed to grab labels from current list\n");
             goto done;
         }
         bool synth = false;
         for (int i = 0; i != nOut; i++) {
             if (!ins[i]) {
-                func_0804ad38("instruction decoder appears to have failed?\n");
-                t->func_08050c40(-1);
+                reportError("instruction decoder appears to have failed?\n");
+                t->dumpSourceLine(-1);
                 goto done;
             }
             if (ins[i]->unk_13cd) {
                 if (nOut != 1) {
-                    func_0804ad84("only one synthetic allowed per line\n");
-                    t->func_08050c40(-1);
+                    reportUserMessage("only one synthetic allowed per line\n");
+                    t->dumpSourceLine(-1);
                     goto done;
                 }
                 synth = true;
             }
             if (!func_080522c4(ins[i]->unk_1389, p->proc.unk_3d, false)) {
-                func_0804ad84("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
+                reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(p->proc.unk_3d));
                 ins[i]->leDump();
                 goto done;
@@ -657,13 +657,13 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             Instr *in = ins[0];
             b->unk_0c[0] = in;
             if (!in) {
-                func_0804ad38("during the initial build, found an iEntry, which thought it was synthetic, but had no instruction\n");
+                reportError("during the initial build, found an iEntry, which thought it was synthetic, but had no instruction\n");
                 goto done;
             }
             switch ((unsigned char)in->unk_13cd) {
             case 1:
                 if (state) {
-                    func_0804ad84("encountered enter directive in bad context\n");
+                    reportUserMessage("encountered enter directive in bad context\n");
                     goto done;
                 }
                 enters++;
@@ -671,7 +671,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
                 break;
             case 2:
                 if (state != 1) {
-                    func_0804ad84("ValidateSynthetics: encountered an end enter directive, but not in enter context\n");
+                    reportUserMessage("ValidateSynthetics: encountered an end enter directive, but not in enter context\n");
                     goto done;
                 }
                 state = 0;
@@ -679,7 +679,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             case 3:
             case 11:
                 if (state) {
-                    func_0804ad84("encountered exit directive in bad context\n");
+                    reportUserMessage("encountered exit directive in bad context\n");
                     goto done;
                 }
                 exits++;
@@ -687,34 +687,34 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
                 break;
             case 4:
                 if (state != 2) {
-                    func_0804ad84("encountered a end enter directive, but not in enter context\n");
+                    reportUserMessage("encountered a end enter directive, but not in enter context\n");
                     goto done;
                 }
                 state = 0;
                 break;
             case 5:
                 if (state) {
-                    func_0804ad84("encountered cont directive in bad context..mode=%d\n", state);
+                    reportUserMessage("encountered cont directive in bad context..mode=%d\n", state);
                     goto done;
                 }
                 exits++;
                 break;
             case 6:
                 if (state != 1) {
-                    func_0804ad84("encountered an input directive, but not in enter context\n");
+                    reportUserMessage("encountered an input directive, but not in enter context\n");
                     goto done;
                 }
                 break;
             case 7:
                 if (state != 2) {
-                    func_0804ad84("encountered an output directive, but not in enter context\n");
+                    reportUserMessage("encountered an output directive, but not in enter context\n");
                     goto done;
                 }
                 break;
             case 9:
             case 12:
                 if (b->unk_05 == 3) {
-                    func_0804ad84("a loop size directive is an invalid directive for raw mode vsm..\n");
+                    reportUserMessage("a loop size directive is an invalid directive for raw mode vsm..\n");
                     goto done;
                 }
                 /* fall through */
@@ -725,39 +725,39 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             case 10:
                 break;
             default:
-                func_0804ad38("iStream::ValidateSynthetics() - unhandled/unexpected synthetic type (%d)\n",
+                reportError("iStream::ValidateSynthetics() - unhandled/unexpected synthetic type (%d)\n",
                               (unsigned char)in->unk_13cd);
                 in->func_08054008(false);
                 goto done;
             }
         } else if (p->proc.unk_3d == 3) {
-            if (nOut != p->proc.unk_38) {
-                func_0804ad84("in RAW decode mode, there weren't %d instructions on line : \n", p->proc.unk_38);
-                t->func_08050c40(-1);
+            if (nOut != p->proc.instructionsPerRawLine) {
+                reportUserMessage("in RAW decode mode, there weren't %d instructions on line : \n", p->proc.instructionsPerRawLine);
+                t->dumpSourceLine(-1);
                 goto done;
             }
             if (p->proc.unk_3f)
                 b->unk_0a = p->proc.unk_40;
-            for (int j = 0; j != p->proc.unk_38; j++)
+            for (int j = 0; j != p->proc.instructionsPerRawLine; j++)
                 b->unk_0c[j] = ins[j];
         } else {
             if (p->proc.unk_3f) {
-                func_0804ad38("Build() - was in loop mode during uta\n");
+                reportError("Build() - was in loop mode during uta\n");
                 goto done;
             }
             if (nOut != 1) {
-                func_0804ad84("Build() - more than one instruction on the line in vcl mode\n");
-                t->func_08050c40(-1);
+                reportUserMessage("Build() - more than one instruction on the line in vcl mode\n");
+                t->dumpSourceLine(-1);
                 goto done;
             }
             Instr *in = ins[0];
             if (!in) {
-                func_0804ad38("decode vcl - instruction ptr was null.. when I thought it wasn't\n");
-                t->func_08050c40(-1);
+                reportError("decode vcl - instruction ptr was null.. when I thought it wasn't\n");
+                t->dumpSourceLine(-1);
                 goto done;
             }
             if (in->unk_138a) {
-                func_0804ad84("vcl: instruction '%s' is unsupported, except in RAW mode.\n", in->unk_34->unk_04);
+                reportUserMessage("vcl: instruction '%s' is unsupported, except in RAW mode.\n", in->opcodeInfo->unk_04);
                 in->leDump();
                 delete in;
                 goto done;
@@ -769,7 +769,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             if (in && ((in->unk_1388 >> 2) & 1)) {
                 int r = in->func_08053104();
                 if (r < 0) {
-                    func_0804ad38("failed to fixup a branch\n");
+                    reportError("failed to fixup a branch\n");
                     goto done;
                 }
                 if (r == 0) {
@@ -786,36 +786,36 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
     }
     if (labels.unk_08) {
         if (n < 0) {
-            func_0804ad38("out of bounds rLine extending table\n");
+            reportError("out of bounds rLine extending table\n");
             goto done;
         }
         if (n >= maxLines) {
-            func_0804ad38("out of bounds rLine extending table\n");
+            reportError("out of bounds rLine extending table\n");
             goto done;
         }
-        func_0804ac7c("gathering labels at end of code into the final namelist\n");
+        reportWarning("gathering labels at end of code into the final namelist\n");
         if (!p->proc.unk_20.func_0804b4d0(&labels)) {
-            func_0804ad38("failed to grab ending labels\n");
+            reportError("failed to grab ending labels\n");
             goto done;
         }
         for (mNode *nd = p->proc.unk_20.unk_0c; nd; nd = nd->unk_04) {
             if (nd->unk_18) {
-                func_0804ad84("can't attach [modifiers] to labels at the end of code\n");
-                func_0804ad84("Label '%s:' has '%s'\n", nd->unk_14, func_08052314(nd->unk_18));
+                reportUserMessage("can't attach [modifiers] to labels at the end of code\n");
+                reportUserMessage("Label '%s:' has '%s'\n", nd->unk_14, func_08052314(nd->unk_18));
                 goto done;
             }
         }
     }
     if (state) {
-        func_0804ad38("iStream::Validate - left stream - but not in null state\n");
+        reportError("iStream::Validate - left stream - but not in null state\n");
         goto done;
     }
     if (!enters) {
-        func_0804ad38("iStream: no enter directives!\n");
+        reportError("iStream: no enter directives!\n");
         goto done;
     }
     if (!exits) {
-        func_0804ad38("iStream: no exit directives\n");
+        reportError("iStream: no exit directives\n");
         goto done;
     }
     for (int i = 0; i != n - 1; i++) {
@@ -827,7 +827,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             if (c->unk_0c) {
                 for (mNode *nd = a->unk_0c; nd; nd = nd->unk_04) {
                     if (c->func_0804b284(nd->unk_14)) {
-                        func_0804ad84("found at least two uses of the label '%s' in the source\n", nd->unk_14);
+                        reportUserMessage("found at least two uses of the label '%s' in the source\n", nd->unk_14);
                         goto done;
                     }
                 }
@@ -842,7 +842,7 @@ done:
         blocks = 0;
         *count = 0;
     } else if (p->proc.unk_4c.unk_08)
-        func_0804ac7c("scope stack open (depth %d) at end of source\n", p->proc.unk_4c.unk_08);
+        reportWarning("scope stack open (depth %d) at end of source\n", p->proc.unk_4c.unk_08);
     p->proc.unk_4c.func_0804b1b0();
     return blocks;
 }
@@ -854,9 +854,9 @@ int gatherTokens(LocTag *t, int i, bool stopAtOpcode)
     char sep;
 
     for (; i < func_0805085c(t); i++) {
-        char *tok = t->func_08050be4(i, &sep);
+        char *tok = t->tokenTextAt(i, &sep);
         if (!tok) {
-            func_0804ad38("gatherTokens() - failed to get token\n");
+            reportError("gatherTokens() - failed to get token\n");
             return -1;
         }
         if (!t->func_08050f18(i)) {
@@ -878,7 +878,7 @@ int gatherTokens(LocTag *t, int i, bool stopAtOpcode)
             n++;
             while (*tok) {
                 if ((unsigned)(d - gatheredToken) > 0x3fe) {
-                    func_0804ad84("gatherTokens: the gathered token became too long!\n");
+                    reportUserMessage("gatherTokens: the gathered token became too long!\n");
                     return -1;
                 }
                 *d++ = *tok++;

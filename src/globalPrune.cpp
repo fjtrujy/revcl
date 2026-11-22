@@ -13,7 +13,7 @@ int func_0806e530(int flags);
 bool globalPrune(Program *p)
 {
     instStream *s;
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_2cc == 2) {
             s->unk_264 = 1;
             s->unk_226 = 1;
@@ -22,7 +22,7 @@ bool globalPrune(Program *p)
             s->unk_226 = 0;
         }
         if (s->unk_124) {
-            func_0804acb0("pass thru  - setting reached top for %s\n", s->func_0806d674());
+            reportInfo("pass thru  - setting reached top for %s\n", s->streamName());
             s->unk_264 = 1;
         }
     }
@@ -30,13 +30,13 @@ bool globalPrune(Program *p)
     bool changed;
     do {
         changed = false;
-        for (s = p->unk_a0; s; s = s->unk_108) {
+        for (s = p->streamHead; s; s = s->nextStream) {
             if (s->unk_226 == 1) {
                 s->unk_226 = 2;
                 for (linkNode *l = s->unk_134.unk_00; l; l = l->unk_08) {
                     instStream *o = l->unk_0c;
                     if (!o) {
-                        func_0804ad38("null outist\n");
+                        reportError("null outist\n");
                         return false;
                     }
                     o->unk_264 = 1;
@@ -50,15 +50,15 @@ bool globalPrune(Program *p)
     } while (changed);
 
     instStream *next;
-    for (s = p->unk_a0; s; s = next) {
-        next = s->unk_108;
+    for (s = p->streamHead; s; s = next) {
+        next = s->nextStream;
         if (s->unk_264)
             continue;
-        func_0804acb0("prune inaccessible stream %s\n", s->func_0806d674());
+        reportInfo("prune inaccessible stream %s\n", s->streamName());
         workTable *t = s->getTable();
         for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00)
             if (!in->func_08054138()) {
-                func_0804acb0("REMOVE INST: ");
+                reportInfo("REMOVE INST: ");
                 int saved = errorOccurred;
                 errorOccurred = !quiet_080bbd98;
                 in->leDump();
@@ -67,26 +67,26 @@ bool globalPrune(Program *p)
         linkNode *l;
         while ((l = s->unk_128.unk_00) != 0) {
             if (!p->unlinkStreams(l->unk_0c, s, l->unk_14)) {
-                func_0804ad38("unlink failed for input\n");
+                reportError("unlink failed for input\n");
                 return false;
             }
         }
         while ((l = s->unk_134.unk_00) != 0) {
             if (!p->unlinkStreams(s, l->unk_0c, l->unk_14)) {
-                func_0804ad38("unlink failed for output\n");
+                reportError("unlink failed for output\n");
                 return false;
             }
         }
         if (!p->removeStream(s)) {
-            func_0804ad38("failed to unlink an ist\n");
+            reportError("failed to unlink an ist\n");
             return false;
         }
         delete s;
     }
 
     instStream *follow;
-    for (s = p->unk_a0; s; s = follow) {
-        follow = s->unk_108;
+    for (s = p->streamHead; s; s = follow) {
+        follow = s->nextStream;
         instStream *next = follow;
         if (next && s->unk_2ce && s->func_0806d968() != 4) {
             bool keepLink = false;
@@ -98,10 +98,10 @@ bool globalPrune(Program *p)
                     keepLink = true;
             }
             if (!l) {
-                func_0804acb0("remove branch..\n");
+                reportInfo("remove branch..\n");
                 Instr *br = s->getBranch();
                 if (!br) {
-                    func_0804ad38("which wasn't there?\n");
+                    reportError("which wasn't there?\n");
                     return false;
                 }
                 int saved = errorOccurred;
@@ -110,15 +110,15 @@ bool globalPrune(Program *p)
                 errorOccurred = saved;
                 int type = func_0806e530(s->unk_2ce);
                 if (!p->unlinkStreams(s, next, type)) {
-                    func_0804ad38("failed to unlink the streams through the branch\n");
+                    reportError("failed to unlink the streams through the branch\n");
                     return false;
                 }
                 if (!s->removeBranch()) {
-                    func_0804ad38("failed to remove branch instruction\n");
+                    reportError("failed to remove branch instruction\n");
                     return false;
                 }
                 if (!keepLink && !p->linkStreams(s, next, 0)) {
-                    func_0804ad38("failed to relink two streams following removing an absolute branch\n");
+                    reportError("failed to relink two streams following removing an absolute branch\n");
                     return false;
                 }
             }

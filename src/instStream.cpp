@@ -1,3 +1,4 @@
+#include "os.h"
 #include "instStream.h"
 
 bool isReferencedLabel(Program *p, char *name);
@@ -23,13 +24,13 @@ instStream::instStream()
     unk_2c8 = -1;
     unk_238 = 0;
     unk_2d0 = 0;
-    unk_108 = 0;
-    unk_10c = 0;
+    nextStream = 0;
+    previousStream = 0;
     unk_2c0 = 0;
     unk_2c2 = 0;
     unk_2c6 = 0;
-    unk_104 = 0;
-    unk_218 = 0;
+    owningProgram = 0;
+    workTablePtr = 0;
     unk_220 = 0;
     unk_214 = 0;
     unk_21c = 0;
@@ -60,7 +61,7 @@ bool instStream::reset()
     unk_2ba = 0;
     unk_110.func_0804b1b0();
     unk_2c0 = -1;
-    unk_104 = 0;
+    owningProgram = 0;
     unk_2ce = 0;
     if (unk_238)
         delete[] unk_238;
@@ -81,9 +82,9 @@ void instStream::dump(int)
     unk_110.func_0804b534();
     unk_128.dump();
     canLoop();
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (!wt) {
-        func_0804ac7c("iStream:: dump - null work table - defaulting to inputTable\n");
+        reportWarning("iStream:: dump - null work table - defaulting to inputTable\n");
         wt = &unk_148;
     }
     wt->dump();
@@ -97,11 +98,11 @@ void instStream::dump(int)
 
 void instStream::zeroStats()
 {
-    if (!unk_218) {
-        func_0804ad38("no work table set for zeroStats!\n");
-        func_0804adf0(-1);
+    if (!workTablePtr) {
+        reportError("no work table set for zeroStats!\n");
+        exitAfterCleanup(-1);
     }
-    for (Instr *i = unk_218->unk_88.unk_00; i; i = i->unk_1c.unk_00)
+    for (Instr *i = workTablePtr->unk_88.unk_00; i; i = i->unk_1c.unk_00)
         i->unk_13f0.func_0805e340();
     unk_278.func_0805e340();
 }
@@ -109,12 +110,12 @@ void instStream::zeroStats()
 bool instStream::iOwn(Instr *i)
 {
     if (!i) {
-        func_0804ac7c("iStream::iOwn - passed a null pointer\n");
+        reportWarning("iStream::iOwn - passed a null pointer\n");
         return false;
     }
     instStream *o = i->func_08054168();
     if (!o) {
-        func_0804ac7c("iStream::iOwn - no owner for instruction\n");
+        reportWarning("iStream::iOwn - no owner for instruction\n");
         return false;
     }
     return o == this;
@@ -122,16 +123,16 @@ bool instStream::iOwn(Instr *i)
 
 bool instStream::patchLatencies()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     int n = 0;
     if (!wt) {
-        func_0804ad38("iStream::PatchLatencies - no work table\n");
+        reportError("iStream::PatchLatencies - no work table\n");
         return false;
     }
     for (Instr *i = wt->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
         i->unk_13e4 = n;
         if (!i->func_08052f84()) {
-            func_0804ad38("failed to patch latencies for instruction\n");
+            reportError("failed to patch latencies for instruction\n");
             return false;
         }
         n++;
@@ -229,8 +230,8 @@ bool instStream::canLoop()
     if (unk_2ce == 1 || unk_2ce == 5) {
         instStream *s = unk_134.getStream(1);
         if (!s) {
-            func_0804ad38("canLoop - bad return from outIST getFirst\n");
-            func_0804adf0(-1);
+            reportError("canLoop - bad return from outIST getFirst\n");
+            exitAfterCleanup(-1);
         } else {
             int sv = s->unk_00;
             unsigned char z = s->unk_2ce;
@@ -257,42 +258,42 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
     if (!buf)
         return 0;
     if (!unk_110.unk_08) {
-        func_0804ad38("iStream::Emit: stream with no name\n");
+        reportError("iStream::Emit: stream with no name\n");
         return 0;
     }
     if (!(char)checkStartEnd()) {
-        func_0804ad38("failed to check stream /start/end\n");
+        reportError("failed to check stream /start/end\n");
         dumpEmitStream(this);
         return 0;
     }
     if (unk_2cc != 2 && !unk_128.func_0806e4f0() && !unk_124) {
-        func_0804acb0("skip target emit. .coz it's no longer visible\n");
+        reportInfo("skip target emit. .coz it's no longer visible\n");
         return buf;
     }
     for (mNode *n = unk_110.unk_0c; n; n = n->unk_04) {
-        if (n->unk_14 && (isReferencedLabel(unk_104, n->unk_14)
-                          || func_0806f4e8(unk_104, n->unk_14) || n->unk_18))
-            buf += func_0804adbc(buf, "%s:\n", n->unk_14);
+        if (n->unk_14 && (isReferencedLabel(owningProgram, n->unk_14)
+                          || func_0806f4e8(owningProgram, n->unk_14) || n->unk_18))
+            buf += formatIntoBuffer(buf, "%s:\n", n->unk_14);
     }
     if (unk_124) {
-        buf += func_0804adbc(buf, "\n%s\n", unk_124);
+        buf += formatIntoBuffer(buf, "\n%s\n", unk_124);
     } else {
         if (!unk_21c) {
-            func_0804ad38("can't emit .. no table!\n");
+            reportError("can't emit .. no table!\n");
             return 0;
         }
         buf = unk_21c->emit(buf, a, p1, p2);
         if (!buf) {
-            func_0804ad38("failed to build out table\n");
+            reportError("failed to build out table\n");
             return 0;
         }
         if (unk_2cd == 4) {
-            buf += func_0804adbc(buf, "\n");
+            buf += formatIntoBuffer(buf, "\n");
             if (!unk_2d0) {
-                func_0804ad38("end string not set\n");
+                reportError("end string not set\n");
                 return 0;
             }
-            buf += func_0804adbc(buf, "         %s\n", unk_2d0);
+            buf += formatIntoBuffer(buf, "         %s\n", unk_2d0);
         }
     }
     return buf;
@@ -300,35 +301,35 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
 
 bool instStream::flowReset()
 {
-    if (!unk_218) {
-        func_0804ad38("work table not set\n");
+    if (!workTablePtr) {
+        reportError("work table not set\n");
         return false;
     }
-    if (!unk_218->unk_14.clear()) {
-        func_0804ad38("iStream::flowReset() - failed to dispose regrefs\n");
+    if (!workTablePtr->unk_14.clear()) {
+        reportError("iStream::flowReset() - failed to dispose regrefs\n");
         return false;
     }
-    for (Instr *i = unk_218->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
+    for (Instr *i = workTablePtr->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
         if (!i->func_0805417c()) {
-            func_0804ad38("failed to init flow for isn\n");
+            reportError("failed to init flow for isn\n");
             return false;
         }
     }
-    if (!unk_218->func_080737e4()) {
-        func_0804ad38("failed to flow reset the iEntries for a work table\n");
+    if (!workTablePtr->func_080737e4()) {
+        reportError("failed to flow reset the iEntries for a work table\n");
         return false;
     }
     unk_260 = 0;
     return true;
 }
 
-const char *instStream::func_0806d674()
+const char *instStream::streamName()
 {
-    const char *s = unk_110.func_0804b550();
-    const char *n = "UNNAMED_ISTREAM";
-    if (s)
-        n = s;
-    return n;
+    const char *candidateName = unk_110.func_0804b550();
+    const char *resolvedName = "UNNAMED_ISTREAM";
+    if (candidateName)
+        resolvedName = candidateName;
+    return resolvedName;
 }
 
 void instStream::dumpSynthetics()
@@ -348,7 +349,7 @@ char *instStream::emitLabels(char *buf)
                     s++;
                 }
                 if (*p)
-                    buf += func_0804adbc(buf, "%-40s = %d\n", n->unk_14, unk_2c8);
+                    buf += formatIntoBuffer(buf, "%-40s = %d\n", n->unk_14, unk_2c8);
             }
         }
     }
@@ -363,8 +364,8 @@ Instr *instStream::getBranch()
 bool instStream::removeBranch()
 {
     requireTable("getBranch  - no work table!\n");
-    if (!unk_218->removeBranch()) {
-        func_0804ad38("failed to delete branch from work table\n");
+    if (!workTablePtr->removeBranch()) {
+        reportError("failed to delete branch from work table\n");
         return false;
     }
     unk_2ce = 0;
@@ -375,11 +376,11 @@ char *instStream::getBranchTargetImmediate()
 {
     char *r = 0;
     requireTable("getBranch  - no work table!\n");
-    Instr *br = unk_218->getBranch();
+    Instr *br = workTablePtr->getBranch();
     if (br)
         r = br->getBranchTargetImmediate();
     else
-        func_0804ac7c("getBranchTargetImmediate:: failed to get branch\n");
+        reportWarning("getBranchTargetImmediate:: failed to get branch\n");
     return r;
 }
 
@@ -387,38 +388,38 @@ RegPoolEntry *instStream::getBranchTargetRegister()
 {
     RegPoolEntry *r = 0;
     requireTable("getBranch  - no work table!\n");
-    Instr *br = unk_218->getBranch();
+    Instr *br = workTablePtr->getBranch();
     if (br)
         r = br->getBranchTargetRegister();
     else
-        func_0804ac7c("getBranchTargetImmediate:: failed to get branch\n");
+        reportWarning("getBranchTargetImmediate:: failed to get branch\n");
     return r;
 }
 
 unsigned char instStream::func_0806d908()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt)
         return wt->unk_09;
-    func_0804ad38("getCodeMode - work table not set\n");
+    reportError("getCodeMode - work table not set\n");
     return 0;
 }
 
 const char *instStream::getCodeModeName()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt)
         return codeModeName(wt->unk_09);
-    func_0804ad38("getCodeMode - work table not set\n");
+    reportError("getCodeMode - work table not set\n");
     return 0;
 }
 
 unsigned char instStream::func_0806d968()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt)
         return wt->func_08073754();
-    func_0804ad38("getCodeMode - work table not set\n");
+    reportError("getCodeMode - work table not set\n");
     return 0;
 }
 
@@ -434,7 +435,7 @@ static inline bool isFreeRawTable(workTable *wt)
 
 bool instStream::func_0806d9a0()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (!wt)
         return false;
     return isFreeRawTable(wt);
@@ -447,7 +448,7 @@ static inline bool isFixedRawTable(workTable *wt)
 
 bool instStream::func_0806d9d4()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (!wt)
         return false;
     return isFixedRawTable(wt);
@@ -455,16 +456,16 @@ bool instStream::func_0806d9d4()
 
 unsigned char instStream::getAllocMode()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt)
         return wt->unk_08;
-    func_0804ad38("getAllocMode - work table not set\n");
+    reportError("getAllocMode - work table not set\n");
     return 0;
 }
 
 bool instStream::func_0806da34()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt && wt->unk_09 == 3)
         return false;
     return true;
@@ -472,8 +473,8 @@ bool instStream::func_0806da34()
 
 bool instStream::func_0806da58()
 {
-    if (unk_218)
-        return unk_218->func_08073854();
+    if (workTablePtr)
+        return workTablePtr->func_08073854();
     return false;
 }
 
@@ -492,42 +493,42 @@ int instStream::func_0806da80()
 bool instStream::processCmdSynth(Instr *i)
 {
     if (!i) {
-        func_0804ad38("processCmdSynth - passed a null ptr\n");
+        reportError("processCmdSynth - passed a null ptr\n");
         return false;
     }
     if (i->unk_1420 > 0) {
-        func_0804ad84("parseLid set for processCmdSynth\n");
+        reportUserMessage("parseLid set for processCmdSynth\n");
         i->leDump();
         return false;
     }
     switch ((unsigned char)i->unk_13cd) {
     case 5:
         if (unk_2cd != 1) {
-            func_0804ad38("CONT directive encountered - but end mode isn't null\n");
+            reportError("CONT directive encountered - but end mode isn't null\n");
             return false;
         }
         unk_2cd = 2;
         break;
     case 8:
         if (!i->func_08054d64(0, &unk_270) || !i->func_08054d64(1, &unk_274)) {
-            func_0804ad84("failed to decode the --LoopCS directive, one of the 2 expected operands failed to parse\n");
+            reportUserMessage("failed to decode the --LoopCS directive, one of the 2 expected operands failed to parse\n");
             i->leDump();
             return false;
         }
         if (unk_270 <= 0) {
-            func_0804ad84("for --LoopCS, the minimum known count (arg 1) must be must be >0\n");
+            reportUserMessage("for --LoopCS, the minimum known count (arg 1) must be must be >0\n");
             i->leDump();
             return false;
         }
         if (unk_274 < 0) {
-            func_0804ad84("for --LoopCS, the minimum safe count (arg 2) must be must be >=0\n");
+            reportUserMessage("for --LoopCS, the minimum safe count (arg 2) must be must be >=0\n");
             i->leDump();
             return false;
         }
         break;
     case 9:
         if (!i->func_08054d64(0, &unk_26c) || unk_26c < 0) {
-            func_0804ad84("failed to get immediate field 0 (extra loop count) while processing --LoopExtra. value must be >=0\n");
+            reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopExtra. value must be >=0\n");
             i->leDump();
             return false;
         }
@@ -538,17 +539,17 @@ bool instStream::processCmdSynth(Instr *i)
             const char *n = "UNNAMED_ISTREAM";
             if (s)
                 n = s;
-            func_0804ad38("multiple barriers in one flow..%s?\n", n);
+            reportError("multiple barriers in one flow..%s?\n", n);
             return false;
         }
         unk_2d6 = 1;
         break;
     default:
-        func_0804ad84("unexpected synthetic instruction encountered\n");
+        reportUserMessage("unexpected synthetic instruction encountered\n");
         break;
     case 12:
         if (!i->func_08054d64(0, &unk_268) || unk_268 <= 2) {
-            func_0804ad84("failed to get immediate field 0 (extra loop count) while processing --LoopAbs. value must be >=2\n");
+            reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopAbs. value must be >=2\n");
             i->leDump();
             return false;
         }
@@ -560,9 +561,9 @@ bool instStream::processCmdSynth(Instr *i)
 bool instStream::disposeInputTable()
 {
     workTable *t = &unk_148;
-    if (t == unk_218) {
-        func_0804ad38("can't dispose of input table while it's the work table\n");
-        func_0804aeb0();
+    if (t == workTablePtr) {
+        reportError("can't dispose of input table while it's the work table\n");
+        abortAfterError();
     }
     return t->dispose();
 }

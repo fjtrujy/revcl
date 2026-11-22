@@ -4,12 +4,12 @@
 
 bool func_0805082c(LocTag *t)
 {
-    return (t->unk_00 && t->unk_8c) || (!t->unk_00 && !t->unk_8c);
+    return (t->unk_00 && t->tokenCount) || (!t->unk_00 && !t->tokenCount);
 }
 
 int func_0805085c(LocTag *t)
 {
-    return t->unk_8c;
+    return t->tokenCount;
 }
 
 
@@ -23,191 +23,191 @@ extern const char locTagGetTokenNullError[];
 extern const char locTagDumpNoPtrError[];
 extern const char locTagInvalidDumpError[];
 
-char *LocTag::func_0805086c(int *mode, char *in)
+char *LocTag::tokenizeSourceLine(int *commentMode, char *input)
 {
     if (!unk_00) {
-        func_0804ad38(locTagNullLineDataError);
+        reportError(locTagNullLineDataError);
         return 0;
     }
-    if (!in) {
-        func_0804ad38(locTagNullInPError);
+    if (!input) {
+        reportError(locTagNullInPError);
         return 0;
     }
-    if (*mode != 0 && *mode != 2) {
-        func_0804ad38(locTagInvalidCommentError);
+    if (*commentMode != 0 && *commentMode != 2) {
+        reportError(locTagInvalidCommentError);
         return 0;
     }
-    char *p = in;
-    int state = 1;
-    unk_8c = 0;
-    int n = 0;
-    TokenEntry *te = 0;
-    TokenEntry *last = 0;
-    char *out = unk_00;
-    while (*p) {
-        bool split = false;
-        bool isTok = func_08050708(*p);
-        if (*mode == 2) {
-            if (n > 1 && p[-2] == '*' && p[-1] == '/') {
-                *mode = 0;
-                split = true;
+    char *readCursor = input;
+    int tokenState = 1;
+    tokenCount = 0;
+    int processedCharCount = 0;
+    TokenEntry *currentToken = 0;
+    TokenEntry *previousToken = 0;
+    char *writeCursor = unk_00;
+    while (*readCursor) {
+        bool splitHere = false;
+        bool isTokenChar = func_08050708(*readCursor);
+        if (*commentMode == 2) {
+            if (processedCharCount > 1 && readCursor[-2] == '*' && readCursor[-1] == '/') {
+                *commentMode = 0;
+                splitHere = true;
             }
-        } else if (*p == '/' && p[1] == '*') {
-            *mode = 2;
-            split = true;
-        } else if (*p == '/' && p[1] == '/') {
-            if (*mode != 3)
-                split = true;
-            *mode = 3;
-        } else if (*p == ';') {
-            if (*mode != 1)
-                split = true;
-            *mode = 1;
+        } else if (*readCursor == '/' && readCursor[1] == '*') {
+            *commentMode = 2;
+            splitHere = true;
+        } else if (*readCursor == '/' && readCursor[1] == '/') {
+            if (*commentMode != 3)
+                splitHere = true;
+            *commentMode = 3;
+        } else if (*readCursor == ';') {
+            if (*commentMode != 1)
+                splitHere = true;
+            *commentMode = 1;
         }
-        if (*mode == 0) {
-            if (n > 1 && *p != ':' && p[-1] == ':' && p[-2] != ':')
-                split = true;
-            if (*p == 0 || (n > 0 && p[-1] == 0))
-                split = true;
+        if (*commentMode == 0) {
+            if (processedCharCount > 1 && *readCursor != ':' && readCursor[-1] == ':' && readCursor[-2] != ':')
+                splitHere = true;
+            if (*readCursor == 0 || (processedCharCount > 0 && readCursor[-1] == 0))
+                splitHere = true;
         }
-        if (*mode != 0)
-            isTok = true;
-        if (split && te) {
-            te->unk_02 = 0;
-            *out++ = 0;
-            state = 1;
-            te = 0;
+        if (*commentMode != 0)
+            isTokenChar = true;
+        if (splitHere && currentToken) {
+            currentToken->separator = 0;
+            *writeCursor++ = 0;
+            tokenState = 1;
+            currentToken = 0;
         }
-        switch (state) {
+        switch (tokenState) {
         case 0:
-            if (!isTok) {
-                if (*p == ',') {
-                    if (!last) {
-                        func_0804acb0("unexpected comma encountered\n");
+            if (!isTokenChar) {
+                if (*readCursor == ',') {
+                    if (!previousToken) {
+                        reportInfo("unexpected comma encountered\n");
                         return 0;
                     }
-                    last->unk_02 = 1;
-                    last = 0;
+                    previousToken->separator = 1;
+                    previousToken = 0;
                 }
-                *out++ = 0;
-                state = 1;
-                te = 0;
+                *writeCursor++ = 0;
+                tokenState = 1;
+                currentToken = 0;
             } else {
-                if (!te) {
-                    func_0804ad38(locTagNullTeError);
+                if (!currentToken) {
+                    reportError(locTagNullTeError);
                     return 0;
                 }
-                *out++ = *p;
+                *writeCursor++ = *readCursor;
             }
             break;
         case 1:
-            if (te) {
-                func_0804ad38(locTagNonNullTeError);
+            if (currentToken) {
+                reportError(locTagNonNullTeError);
                 return 0;
             }
-            if (isTok) {
-                if (unk_8c >= 200) {
-                    func_0804ad38(locTagTooManyTokensError);
+            if (isTokenChar) {
+                if (tokenCount >= 200) {
+                    reportError(locTagTooManyTokensError);
                     return 0;
                 }
-                te = &unk_090[unk_8c];
-                te->unk_00 = out - unk_00;
-                te->unk_02 = 0;
-                te->unk_03 = *mode != 0;
-                last = te;
-                *out++ = *p;
-                state = 0;
-                unk_8c++;
-            } else if (*p == ',') {
-                if (!last) {
-                    func_0804acb0("unexpected comma encountered\n");
+                currentToken = &tokens[tokenCount];
+                currentToken->textOffset = writeCursor - unk_00;
+                currentToken->separator = 0;
+                currentToken->inComment = *commentMode != 0;
+                previousToken = currentToken;
+                *writeCursor++ = *readCursor;
+                tokenState = 0;
+                tokenCount++;
+            } else if (*readCursor == ',') {
+                if (!previousToken) {
+                    reportInfo("unexpected comma encountered\n");
                     return 0;
                 }
-                last->unk_02 = 1;
-                last = 0;
+                previousToken->separator = 1;
+                previousToken = 0;
             }
             break;
         }
-        n++;
-        p++;
+        processedCharCount++;
+        readCursor++;
     }
-    if (te) {
-        te->unk_02 = 2;
-        *out++ = 0;
+    if (currentToken) {
+        currentToken->separator = 2;
+        *writeCursor++ = 0;
     }
-    if (n > 1 && p[-2] == '*' && p[-1] == '/')
-        *mode = 0;
-    if (*mode != 2)
-        *mode = 0;
-    if (!unk_8c)
+    if (processedCharCount > 1 && readCursor[-2] == '*' && readCursor[-1] == '/')
+        *commentMode = 0;
+    if (*commentMode != 2)
+        *commentMode = 0;
+    if (!tokenCount)
         unk_00 = 0;
-    return out;
+    return writeCursor;
 }
 
-char *LocTag::func_08050be4(int i, char *type)
+char *LocTag::tokenTextAt(int tokenIndex, char *separatorOut)
 {
-    if (!unk_8c)
+    if (!tokenCount)
         return 0;
-    if (i < 0 || i >= unk_8c)
+    if (tokenIndex < 0 || tokenIndex >= tokenCount)
         return 0;
     if (!unk_00) {
-        func_0804ad38(locTagGetTokenNullError);
+        reportError(locTagGetTokenNullError);
         return 0;
     }
-    if (type)
-        *type = unk_090[i].unk_02;
-    return unk_00 + unk_090[i].unk_00;
+    if (separatorOut)
+        *separatorOut = tokens[tokenIndex].separator;
+    return unk_00 + tokens[tokenIndex].textOffset;
 }
 
-void LocTag::func_08050c40(int hl)
+void LocTag::dumpSourceLine(int highlightedToken)
 {
     if (!isValid()) {
-        func_0804ad38(locTagInvalidDumpError);
+        reportError(locTagInvalidDumpError);
         return;
     }
     if (unk_0a > 0) {
         for (int d = 0; d != unk_0a; d++) {
             for (int k = 0; k != d; k++)
-                func_0804ac50("  ");
+                reportMessage("  ");
             if (!unk_0c[d].unk_00)
-                func_0804ad38(locTagDumpNoPtrError, d, unk_0a);
-            func_0804ac50(" line %4d ", unk_0c[d].unk_04);
+                reportError(locTagDumpNoPtrError, d, unk_0a);
+            reportMessage(" line %4d ", unk_0c[d].unk_04);
             unk_0c[d].unk_00->func_080510cc();
         }
     }
-    if (!unk_8c && unk_00) {
-        func_0804ac50("  ---> '%s'", unk_00);
+    if (!tokenCount && unk_00) {
+        reportMessage("  ---> '%s'", unk_00);
     } else {
-        func_0804ac50("  ---> ");
-        bool inC = false;
-        for (int i = 0; i != unk_8c; i++) {
-            char *s = func_08050be4(i, 0);
-            if (i == hl)
-                func_0804ac50("[***");
-            if (inComment(i) && !inC)
-                func_0804ac50(" [ ");
-            func_0804ac50("{");
-            func_0804ac50("%s", s);
-            func_0804ac50("}");
-            if (i == hl)
-                func_0804ac50("***]");
-            if (!inComment(i) && inC)
-                func_0804ac50(" ] ");
-            inC = inComment(i);
-            if (unk_090[i].unk_02 == 1)
-                func_0804ac50(",");
+        reportMessage("  ---> ");
+        bool wasInComment = false;
+        for (int i = 0; i != tokenCount; i++) {
+            char *tokenText = tokenTextAt(i, 0);
+            if (i == highlightedToken)
+                reportMessage("[***");
+            if (inComment(i) && !wasInComment)
+                reportMessage(" [ ");
+            reportMessage("{");
+            reportMessage("%s", tokenText);
+            reportMessage("}");
+            if (i == highlightedToken)
+                reportMessage("***]");
+            if (!inComment(i) && wasInComment)
+                reportMessage(" ] ");
+            wasInComment = inComment(i);
+            if (tokens[i].separator == 1)
+                reportMessage(",");
             else
-                func_0804ac50(" ");
+                reportMessage(" ");
         }
-        if (inC)
-            func_0804ac50("] ");
+        if (wasInComment)
+            reportMessage("] ");
     }
-    func_0804ac50("\n");
+    reportMessage("\n");
 }
 
 bool LocTag::func_08050eec()
 {
-    char *s = func_08050be4(0, 0);
+    char *s = tokenTextAt(0, 0);
     if (s && *s == '.')
         return true;
     return false;
@@ -215,14 +215,14 @@ bool LocTag::func_08050eec()
 
 bool LocTag::func_08050f18(int i)
 {
-    if (i >= 0 && i < unk_8c)
-        return unk_090[i].unk_03 != 0;
+    if (i >= 0 && i < tokenCount)
+        return tokens[i].inComment != 0;
     return true;
 }
 
 bool LocTag::func_08050f48()
 {
-    char *s = func_08050be4(0, 0);
+    char *s = tokenTextAt(0, 0);
     if (s && s[0] == '=' && s[1] == 0)
         return true;
     return false;
@@ -231,7 +231,7 @@ bool LocTag::func_08050f48()
 bool LocTag::func_08050f7c(int i)
 {
     if (!inComment(i))
-        func_08050be4(i, 0);
+        tokenTextAt(i, 0);
     return false;
 }
 

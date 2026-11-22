@@ -51,9 +51,9 @@ void Line::func_080510cc()
 {
     if (unk_00) {
         int t = unk_04;
-        func_0804ac50("[%s : '%s']", lineTypeNameInl(t), unk_00, t);
+        reportMessage("[%s : '%s']", lineTypeNameInl(t), unk_00, t);
     } else
-        func_0804ac50("[EMPTY_LOCTAG]");
+        reportMessage("[EMPTY_LOCTAG]");
 }
 
 const char *Line::typeName(int t)

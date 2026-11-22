@@ -1,3 +1,4 @@
+#include "os.h"
 #include "backTrace_shared.h"
 
 static inline regUseSlot *registerPart(regUse *u, int part)
@@ -21,41 +22,41 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
 {
     regUse *tr = t->unk_234;
     if (!tr) {
-        func_0804ad38("bThru enabled - but no btRegRef in the target!\n");
+        reportError("bThru enabled - but no btRegRef in the target!\n");
         return false;
     }
     for (instStream *s = p->unk_dc; s; s = s->unk_250) {
         regUse *sr = s->unk_234;
         if (!sr) {
-            func_0804ad38("no btRegRef for something on the match list %s.%d target=%s stream is %s!\n",
-                          reg->func_0805a8e0(), part, t->func_0806d674(), s->func_0806d674());
+            reportError("no btRegRef for something on the match list %s.%d target=%s stream is %s!\n",
+                          reg->registerName(), part, t->streamName(), s->streamName());
             return false;
         }
         int key = func_08061cb0(p, s);
         if (key <= 0) {
-            func_0804ad38("minimal path key was bad\n");
+            reportError("minimal path key was bad\n");
             return false;
         }
         ol_s *ol = registerPart(sr, part)->unk_20.unk_00;
         if (!ol)
-            func_0804ad38("there's no local setters for thruput chase for ext setter\n");
+            reportError("there's no local setters for thruput chase for ext setter\n");
         for (; ol; ol = ol->unk_00) {
             ol_s *n = tr->unk_20[part].unk_18.func_08058348(ol, true);
             if (!n) {
-                func_0804ad38("failed to add an external setter\n");
+                reportError("failed to add an external setter\n");
                 return false;
             }
             n->unk_08 = key;
         }
         ol = registerPart(tr, part)->unk_20.unk_00;
         if (!ol) {
-            func_0804ad38("there's no local setters.. for a thruput chase .. for target\n");
+            reportError("there's no local setters.. for a thruput chase .. for target\n");
             return false;
         }
         for (; ol; ol = ol->unk_00) {
             ol_s *n = sr->unk_20[part].unk_28.func_08058348(ol, true);
             if (!n) {
-                func_0804ad38("failed to add post setter!\n");
+                reportError("failed to add post setter!\n");
                 return false;
             }
             n->unk_08 = key;
@@ -67,7 +68,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
             int tend = thruputTail(s, sr, part);
             int fst = tr->unk_20[part].unk_3c[7];
             if (fst < 0 || tend < 0 || dist < 0) {
-                func_0804ad38("something wrong checking for thruput stalls fst=%d tend=%d path_dist=%d\n",
+                reportError("something wrong checking for thruput stalls fst=%d tend=%d path_dist=%d\n",
                               fst, tend, dist);
                 return false;
             }
@@ -79,7 +80,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
                 int again = lastAddress[1];
                 if (!p->proc.unk_74.addStall(setter, tr->unk_20[part].unk_20.unk_00, 1,
                                         again - dist)) {
-                    func_0804ad38("failed to add an interstream latency stall\n");
+                    reportError("failed to add an interstream latency stall\n");
                     return false;
                 }
             }

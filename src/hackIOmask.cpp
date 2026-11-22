@@ -1,3 +1,4 @@
+#include "os.h"
 #include "Instr.h"
 
 bool func_08087860(void *, Instr *in);
@@ -27,32 +28,32 @@ bool func_0806b4f0(Program *p)
 
 int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp)
 {
-    iInfo *info = in->unk_34;
+    iInfo *info = in->opcodeInfo;
     if (!info) {
-        func_0804ad38("hackIOmask - no inst set\n");
+        reportError("hackIOmask - no inst set\n");
         return -1;
     }
     Operand *out = in->getOp(outOp);
     if (!out) {
-        func_0804ad38("failed to get output op\n");
+        reportError("failed to get output op\n");
         return -1;
     }
     Operand *ip = in->getOp(inOp);
     if (!ip) {
-        func_0804ad38("failed to get input op\n");
+        reportError("failed to get input op\n");
         return -1;
     }
     if (!outReg(out)) {
-        func_0804ad38("output op had no register!\n");
+        reportError("output op had no register!\n");
         return -1;
     }
     if (!inReg(ip)) {
-        func_0804ad38("input op had no register!\n");
+        reportError("input op had no register!\n");
         return -1;
     }
     int bits = mask & out->unk_07;
     if (bits != mask) {
-        func_0804ad38("out of range t_bits vs modbits for input\n");
+        reportError("out of range t_bits vs modbits for input\n");
         return -1;
     }
     if (!mask)

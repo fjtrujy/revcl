@@ -91,6 +91,10 @@ historical compiler options. The frozen fixtures are in `tests/oracle/`.
 Reverse-engineering research material and third-party downloads are maintained
 separately rather than redistributed here.
 
+For recovering meaningful source names, see the [naming audit](docs/NAMING_AUDIT.md),
+its owner-qualified field review queues, and the native C scanner in
+`tools/naming-audit.c`. Naming-only changes must preserve the historical SHA.
+
 ## Contributing and licensing
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for upstream provenance,

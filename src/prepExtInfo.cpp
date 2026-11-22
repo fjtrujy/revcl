@@ -26,17 +26,17 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
     regUseList *ul = &wt->unk_14;
     for (ru = ul->unk_04; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
-        for (int k = 0; k != reg->unk_28; k++) {
+        for (int k = 0; k != reg->partCount; k++) {
             regUseSlot *sl = &ru->unk_20[k];
             if (!sl) {
-                func_0804ad38("failed to get rrp\n");
+                reportError("failed to get rrp\n");
                 return 0;
             }
             sl->unk_30 = 0;
             sl->unk_32 = 30000;
             for (ol_s *ol = sl->unk_00.unk_00; ol; ol = ol->unk_00) {
                 Instr *in = ol->unk_04;
-                Operand *op = &in->unk_38[ol->unk_10];
+                Operand *op = &in->operands[ol->unk_10];
                 OpSlot *part = op->getPart(ol->unk_11);
                 short best = 0;
                 ol_s *e = part->unk_54.unk_00;
@@ -44,26 +44,26 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     for (; e; e = e->unk_00) {
                         int key = e->unk_08;
                         if (!key) {
-                            func_0804ad38("can't have a null minkey for ext\n");
+                            reportError("can't have a null minkey for ext\n");
                             return 0;
                         }
                         Instr *setter = e->unk_04;
                         Operand *src = func_0805802c(e);
                         instStream *ss = setter->func_08054168();
                         if (!ss) {
-                            func_0804ad38("failed to get the setters ist\n");
+                            reportError("failed to get the setters ist\n");
                             return 0;
                         }
                         int sid = ss->unk_2c0;
                         bool same = sid == id;
                         int kl = guessKeyLen(p, key, sid, id);
                         if (kl < 0) {
-                            func_0804ad38("minimal length .. bah\n");
+                            reportError("minimal length .. bah\n");
                             return 0;
                         }
                         int te = getToEnd(setter);
                         if (te < 0) {
-                            func_0804ad38("distance to end -ve..error\n");
+                            reportError("distance to end -ve..error\n");
                             return 0;
                         }
                         int total = te + kl;
@@ -76,19 +76,19 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     else
                         in->func_08055fdc(best);
                 } else {
-                    func_0804ad38("no external setter for prepExtInfo.. register is %s.%d\n",
-                                  reg->func_0805a8e0(), k);
+                    reportError("no external setter for prepExtInfo.. register is %s.%d\n",
+                                  reg->registerName(), k);
                     return 0;
                 }
             }
             for (ol_s *ol = sl->unk_08.unk_00; ol; ol = ol->unk_00) {
                 Instr *in = ol->unk_04;
                 if (!in) {
-                    func_0804ad38("not get visible output\n");
+                    reportError("not get visible output\n");
                     return 0;
                 }
                 short best = 0;
-                Operand *op = &in->unk_38[ol->unk_10];
+                Operand *op = &in->operands[ol->unk_10];
                 olList *xl = &op->getPart(ol->unk_11)->unk_54;
                 ol_s *e = xl->func_080583d8();
                 if (!ol->isExtUsed() || e) {
@@ -96,28 +96,28 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         for (; e; e = e->func_08058414()) {
                             int key = e->unk_08;
                             if (!key) {
-                                func_0804ad38("can't have a null minkey for ext\n");
+                                reportError("can't have a null minkey for ext\n");
                                 return 0;
                             }
                             Instr *user = e->unk_04;
                             Operand *dst = func_0805802c(e);
                             if (!user || !dst) {
-                                func_0804ad38("no setting instruction/operand\n");
+                                reportError("no setting instruction/operand\n");
                                 return 0;
                             }
                             instStream *ss = user->func_08054168();
                             if (!ss) {
-                                func_0804ad38("failed to get the setters ist\n");
+                                reportError("failed to get the setters ist\n");
                                 return 0;
                             }
                             int kl = guessKeyLen(p, key, id, ss->unk_2c0);
                             if (kl < 0) {
-                                func_0804ad38("minimal length .. bah\n");
+                                reportError("minimal length .. bah\n");
                                 return 0;
                             }
                             int fs = getFromStart(user);
                             if (fs < 0) {
-                                func_0804ad38("distance to end -ve..error\n");
+                                reportError("distance to end -ve..error\n");
                                 return 0;
                             }
                             int total = fs + kl;
@@ -130,13 +130,13 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         else
                             in->func_0805601c(best);
                     } else {
-                        func_0804ad38("operand doesn't think there's any external users, but - there's an entry on it's ext list\n");
+                        reportError("operand doesn't think there's any external users, but - there's an entry on it's ext list\n");
                         ol->func_08057fec();
                         xl->func_08057e9c();
                         return 0;
                     }
                 } else {
-                    func_0804ad38("operand is tagged as being used externally - but.. there's no ext entry on it's oll?\n");
+                    reportError("operand is tagged as being used externally - but.. there's no ext entry on it's oll?\n");
                     ol->func_08057fec();
                     return 0;
                 }
@@ -146,28 +146,28 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 for (ol = sl->unk_18.unk_00; ol; ol = ol->unk_00) {
                     int key = ol->unk_08;
                     if (!key) {
-                        func_0804ad38("can't have a null minkey for ext\n");
+                        reportError("can't have a null minkey for ext\n");
                         return 0;
                     }
                     Instr *in = ol->unk_04;
                     if (!in) {
-                        func_0804ad38("not get visible input\n");
+                        reportError("not get visible input\n");
                         return 0;
                     }
                     instStream *ss = in->func_08054168();
                     if (!ss) {
-                        func_0804ad38("failed to get the setters ist\n");
+                        reportError("failed to get the setters ist\n");
                         return 0;
                     }
                     int sourceId = ss->unk_2c0;
                     int kl = guessKeyLen(p, key, sourceId, id);
                     if (kl < 0) {
-                        func_0804ad38("minimal length .. bah\n");
+                        reportError("minimal length .. bah\n");
                         return 0;
                     }
                     int te = getToEnd(in);
                     if (te < 0) {
-                        func_0804ad38("distance to end -ve..error\n");
+                        reportError("distance to end -ve..error\n");
                         return 0;
                     }
                     int total = te + kl;
@@ -180,27 +180,27 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 for (ol = sl->unk_28.unk_00; ol; ol = ol->unk_00) {
                     int key = ol->unk_08;
                     if (!key) {
-                        func_0804ad38("can't have a null minkey for ext\n");
+                        reportError("can't have a null minkey for ext\n");
                         return 0;
                     }
                     Instr *in = ol->unk_04;
                     if (!in) {
-                        func_0804ad38("not get visible input\n");
+                        reportError("not get visible input\n");
                         return 0;
                     }
                     instStream *ss = in->func_08054168();
                     if (!ss) {
-                        func_0804ad38("failed to get the setters ist\n");
+                        reportError("failed to get the setters ist\n");
                         return 0;
                     }
                     int kl = guessKeyLen(p, key, id, ss->unk_2c0);
                     if (kl < 0) {
-                        func_0804ad38("minimal length .. bah\n");
+                        reportError("minimal length .. bah\n");
                         return 0;
                     }
                     int fs = getFromStart(in);
                     if (fs < 0) {
-                        func_0804ad38("distance from start -ve..error\n");
+                        reportError("distance from start -ve..error\n");
                         return 0;
                     }
                     int d = fs + kl + 1;
@@ -214,7 +214,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 instStream *a = (instStream *)tp->a;
                 instStream *b = (instStream *)tp->b;
                 if (!a || !b) {
-                    func_0804ad38("there's no src or dst in a tpair\n");
+                    reportError("there's no src or dst in a tpair\n");
                     return 0;
                 }
                 workTable *wa = a->getTable();
@@ -223,12 +223,12 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     int sourceId = a->unk_2c0;
                     int k1 = guessKeyLen(p, tp->src, sourceId, id);
                     if (k1 < 0) {
-                        func_0804ad38("failed to guess the key length\n");
+                        reportError("failed to guess the key length\n");
                         return 0;
                     }
                     int k2 = guessKeyLen(p, tp->dst, id, b->unk_2c0);
                     if (k2 < 0) {
-                        func_0804ad38("distance to dst is bad\n");
+                        reportError("distance to dst is bad\n");
                         return 0;
                     }
                     Instr *w = wa->unk_88.unk_04;
@@ -237,7 +237,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         if ((wo = w->func_080557a4(reg, 1 << k)) != 0)
                             break;
                     if (!wo) {
-                        func_0804ad38("can't get last writer\n");
+                        reportError("can't get last writer\n");
                         return 0;
                     }
                     Instr *u = wb->unk_88.unk_00;
@@ -246,12 +246,12 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         if ((uo = u->func_08055720(reg, 1 << k)) != 0)
                             break;
                     if (!uo) {
-                        func_0804ad38("can't get first user \n");
+                        reportError("can't get first user \n");
                         return 0;
                     }
                     int te = getToEnd(w);
                     if (te < 0) {
-                        func_0804ad38("<ve to end \n");
+                        reportError("<ve to end \n");
                         return 0;
                     }
                     int fs = getFromStart(u);
@@ -265,16 +265,16 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
     }
     if (changed) {
         for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
-            for (int i = 0; i != in->unk_138b; i++) {
-                Operand *op = &in->unk_38[i];
+            for (int i = 0; i != in->operandCount; i++) {
+                Operand *op = &in->operands[i];
                 RegPoolEntry *r = isRegisterOperand(op, 2) ? op->unk_18 : 0;
                 if (r && r->unk_2c) {
                     regUse *u = ul->func_0805b5dc(r);
                     if (!u) {
-                        func_0804ad38("failed to find regref\n");
-                        func_0804adf0(-1);
+                        reportError("failed to find regref\n");
+                        exitAfterCleanup(-1);
                     }
-                    for (int k = 0; k != r->unk_28; k++)
+                    for (int k = 0; k != r->partCount; k++)
                         if ((op->unk_07 >> k) & 1) {
                             regUseSlot *slot = &u->unk_20[k];
                             in->func_08055fbc(slot->unk_30);
@@ -286,8 +286,8 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
     }
     Instr *in;
     for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
-        for (int i = 0; i != in->unk_138b; i++) {
-            Operand *op = &in->unk_38[i];
+        for (int i = 0; i != in->operandCount; i++) {
+            Operand *op = &in->operands[i];
             RegPoolEntry *reg = op->unk_18;
             if (reg) {
                 regUse *u = ul->func_0805b5dc(reg);

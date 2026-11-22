@@ -29,14 +29,14 @@ int propagateMoves(workTable *t)
     int count = 0;
     for (Instr *in = list->unk_04; in; in = in->unk_1c.prev()) {
         if (in->func_080532d8() < 0) {
-            func_0804ad38(propagateNormaliseError);
+            reportError(propagateNormaliseError);
             return 0;
         }
         if (!in->unk_142c)
             continue;
-        int mask = in->unk_38[0].unk_07;
-        RegPoolEntry *dst = in->unk_38[0].unk_18;
-        RegPoolEntry *src = in->unk_38[1].unk_18;
+        int mask = in->operands[0].unk_07;
+        RegPoolEntry *dst = in->operands[0].unk_18;
+        RegPoolEntry *src = in->operands[1].unk_18;
         int keep = 0;
         int srcWritten = 0;
         int valid = mask;
@@ -48,7 +48,7 @@ int propagateMoves(workTable *t)
             if (p && p->unk_13e8.unk_00 == row) {
                 bool a;
                 if (p->func_08054c24(dst, &a)) {
-                    func_0804ad38(propagateTwoWritesError);
+                    reportError(propagateTwoWritesError);
                     return 0;
                 }
                 bool b;
@@ -57,7 +57,7 @@ int propagateMoves(workTable *t)
             if (n && n->unk_13e8.unk_00 == row) {
                 bool a;
                 if (n->func_08054c24(dst, &a)) {
-                    func_0804ad38(propagateTwoWritesError);
+                    reportError(propagateTwoWritesError);
                     return 0;
                 }
                 bool b;
@@ -79,10 +79,10 @@ int propagateMoves(workTable *t)
             int used = cur->func_08054cc4(dst, &paired);
             if (used) {
                 if (!(used & ~valid) && !(used & srcWritten) && !paired)
-                    for (int i = 0; i != cur->unk_138b; i++) {
-                        Operand *op = &cur->unk_38[i];
+                    for (int i = 0; i != cur->operandCount; i++) {
+                        Operand *op = &cur->operands[i];
                         if (registerOperand(op, 1) == dst)
-                            op->getRegFrom(&in->unk_38[1]);
+                            op->getRegFrom(&in->operands[1]);
                         count++;
                     }
                 else
@@ -95,19 +95,19 @@ int propagateMoves(workTable *t)
             cur = cur->unk_1c.unk_00;
             row = r;
         }
-        if (~valid & in->unk_38[0].unk_27) {
-            func_0804ad38(propagateValidMaskError,
-                          dst->func_0805a8e0(), src->func_0805a8e0());
-            func_0804ad38(propagateValidDetailError,
-                          valid, in->unk_38[0].unk_27);
+        if (~valid & in->operands[0].unk_27) {
+            reportError(propagateValidMaskError,
+                          dst->registerName(), src->registerName());
+            reportError(propagateValidDetailError,
+                          valid, in->operands[0].unk_27);
             return -1;
         }
-        keep |= in->unk_38[0].unk_27;
+        keep |= in->operands[0].unk_27;
         if (!keep)
-            in->unk_38[0].unk_18 = in->unk_38[1].unk_18;
+            in->operands[0].unk_18 = in->operands[1].unk_18;
         in->unk_138f = keep;
-        in->unk_38[0].unk_07 = keep;
-        in->unk_38[1].unk_07 = keep;
+        in->operands[0].unk_07 = keep;
+        in->operands[1].unk_07 = keep;
     }
     return count;
 }
@@ -118,9 +118,9 @@ int removeDeadMoves(workTable *t)
     Instr *next;
     for (Instr *in = t->unk_88.unk_00; in; in = next) {
         next = in->unk_1c.unk_00;
-        if (in->unk_142c && in->unk_38[0].unk_18 == in->unk_38[1].unk_18) {
+        if (in->unk_142c && in->operands[0].unk_18 == in->operands[1].unk_18) {
             if (!t->destroyInstruction(in)) {
-                func_0804ad38("failed to destroy a move\n");
+                reportError("failed to destroy a move\n");
                 return -1;
             }
             count++;

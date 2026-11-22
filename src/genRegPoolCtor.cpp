@@ -1,3 +1,4 @@
+#include "os.h"
 #include "genRegPool_shared.h"
 
 #include "Program.h"
@@ -25,26 +26,26 @@ genRegPool::~genRegPool()
 bool genRegPool::func_08088e54(workTable *t)
 {
     if (!t) {
-        func_0804ad38("failed to get itable in nassign - which is not really likely\n");
+        reportError("failed to get itable in nassign - which is not really likely\n");
         return false;
     }
     if (!func_08059cdc()) {
-        func_0804ad38("failed to reset local allocation scheme for pool\n");
+        reportError("failed to reset local allocation scheme for pool\n");
         return false;
     }
     setRangeFrom(t);
     if (!initAlloc(t->func_0807411c(), t->func_080741c0())) {
-        func_0804ad38("failed to set table range\n");
+        reportError("failed to set table range\n");
         return false;
     }
     regUse *ru = t->unk_14.firstReal();
     regUseList *list = &t->unk_14;
     for (; ru; ru = ru->nextReal()) {
         if (!set_in_aTab(ru)) {
-            func_0804ad38("failed to set forced register in aTab\n");
+            reportError("failed to set forced register in aTab\n");
             t->dump();
             list->func_0805b44c();
-            func_0804adf0(-1);
+            exitAfterCleanup(-1);
             return false;
         }
     }
@@ -54,18 +55,18 @@ bool genRegPool::func_08088e54(workTable *t)
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             RegPoolEntry *reg = op->unk_18;
-            if (func_08059e20(reg) && reg->unk_14 && reg->unk_3c < 0) {
-                if (!build_tTab(reg, (1 << reg->unk_28) - 1)) {
-                    func_0804ad38("failed to build ttab while building todolist\n");
+            if (func_08059e20(reg) && reg->isVirtual && reg->unk_3c < 0) {
+                if (!build_tTab(reg, (1 << reg->partCount) - 1)) {
+                    reportError("failed to build ttab while building todolist\n");
                     t->dump();
-                    func_0804adf0(-1);
+                    exitAfterCleanup(-1);
                 }
                 reg->unk_3c = countTTab();
                 reg->unk_40 = todo;
                 todo = reg;
                 if (reg->unk_3c < 0) {
-                    func_0804ad38("-ve ttabsize\n");
-                    func_0804adf0(-1);
+                    reportError("-ve ttabsize\n");
+                    exitAfterCleanup(-1);
                 }
             }
         }
@@ -83,29 +84,29 @@ bool genRegPool::func_08088e54(workTable *t)
             }
         }
         if (!best) {
-            func_0804ad38("failed to find lowest register!\n");
-            func_0804adf0(-1);
+            reportError("failed to find lowest register!\n");
+            exitAfterCleanup(-1);
         }
-        if (!build_tTab(best, (1 << best->unk_28) - 1)) {
-            func_0804ad38("failed to build tta externalb\n");
-            func_0804adf0(-1);
+        if (!build_tTab(best, (1 << best->partCount) - 1)) {
+            reportError("failed to build tta externalb\n");
+            exitAfterCleanup(-1);
         }
         int r = bestReg();
         if (r < 0) {
             if (!func_08059f70()) {
-                func_0804ad38("vcl failed to allocate a register of type %s, but there's no registers of this type available for it to use.. maybe adding a .init_.. directive would help\n", unk_2c);
+                reportError("vcl failed to allocate a register of type %s, but there's no registers of this type available for it to use.. maybe adding a .init_.. directive would help\n", poolName);
                 func_0804ac44();
                 return false;
             } else
                 list->func_0805bab0();
             return false;
         }
-        best->unk_18 = &unk_04[r];
+        best->assignedPhysicalRegister = &registerEntries[r];
         if (!set_t_in_aTab(r)) {
             ru->func_0805b51c();
             list->func_0805b44c();
-            func_0804ad38("failed to set t\n");
-            func_0804adf0(-1);
+            reportError("failed to set t\n");
+            exitAfterCleanup(-1);
         }
         dumpATab();
         dumpTTab();
@@ -118,13 +119,13 @@ bool genRegPool::func_08088e54(workTable *t)
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             RegPoolEntry *reg = op->unk_18;
-            if (func_08059e20(reg) && reg->unk_14) {
-                if (!reg->unk_18) {
-                    func_0804ad38("notmapped!, should have been mapped by now..%s!\n",
-                                  reg->func_0805a8e0());
-                    func_0804adf0(-1);
+            if (func_08059e20(reg) && reg->isVirtual) {
+                if (!reg->assignedPhysicalRegister) {
+                    reportError("notmapped!, should have been mapped by now..%s!\n",
+                                  reg->registerName());
+                    exitAfterCleanup(-1);
                 }
-                op->unk_18 = reg->unk_18;
+                op->unk_18 = reg->assignedPhysicalRegister;
             }
         }
     }
@@ -135,44 +136,44 @@ bool genRegPool::func_08088e54(workTable *t)
 bool genRegPool::assignExt(instStream *s)
 {
     if (!s) {
-        func_0804ad38("AssignExternalRegisters - passed a null  pointer!\n");
+        reportError("AssignExternalRegisters - passed a null  pointer!\n");
         return false;
     }
-    Program *owner = s->unk_104;
+    Program *owner = s->owningProgram;
     if (!owner) {
-        func_0804ad38("AssignExternalRegisters - stream had no owner\n");
+        reportError("AssignExternalRegisters - stream had no owner\n");
         return false;
     }
     workTable *wt = s->getTable();
     for (regUse *ru = wt->unk_14.firstVirtual(); ru; ru = ru->nextVirtual()) {
         RegPoolEntry *reg = ru->unk_08;
         if (!reg) {
-            func_0804ad38("flowMon::AssignExt: register not set in rf\n");
+            reportError("flowMon::AssignExt: register not set in rf\n");
             return false;
         }
-        if (func_08059e20(reg) && ru->isExternal() && !reg->unk_18) {
+        if (func_08059e20(reg) && ru->isExternal() && !reg->assignedPhysicalRegister) {
             initRegMask(this);
-            for (instStream *p = owner->unk_a0; p; p = p->unk_108) {
+            for (instStream *p = owner->streamHead; p; p = p->nextStream) {
                 if (!func_08088e6c(p, reg)) {
-                    func_0804ad38("generic external allocator had internal error.. ret<0 for DiscardDisjoint\n");
+                    reportError("generic external allocator had internal error.. ret<0 for DiscardDisjoint\n");
                     return false;
                 }
             }
             int r = firstEmptyMask(this);
             if (r < 0) {
                 if (!func_08059f70()) {
-                    func_0804ad38("vcl failed to assign a register of type %s, but there's no registers of that type available for it to use, maybe adding a .init.. directive would help\n");
+                    reportError("vcl failed to assign a register of type %s, but there's no registers of that type available for it to use, maybe adding a .init.. directive would help\n");
                     func_0804ac44();
                     return false;
                 }
-                func_0804acb0("currently at stream: %s trying to allocate external register %s\n",
-                              s->func_0806d674(), reg->func_0805a8e0());
+                reportInfo("currently at stream: %s trying to allocate external register %s\n",
+                              s->streamName(), reg->registerName());
                 wt->unk_14.func_0805bab0();
-                func_0804ad38("failed to assign an external %s\n", reg->func_0805a8e0());
+                reportError("failed to assign an external %s\n", reg->registerName());
                 func_0804ac44();
                 return false;
             }
-            reg->unk_18 = &unk_04[r];
+            reg->assignedPhysicalRegister = &registerEntries[r];
         }
     }
     return true;
@@ -181,12 +182,12 @@ bool genRegPool::assignExt(instStream *s)
 bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
 {
     if (!reg || !func_08059e20(reg)) {
-        func_0804ad38("discard disjoint called, but this pool doesn't own this register!\n");
+        reportError("discard disjoint called, but this pool doesn't own this register!\n");
         return false;
     }
-    if (reg->unk_18) {
-        func_0804ad38("rg_a is mapped.. at start of DiscardDisjoint registers %s\n",
-                      reg->func_0805a8e0());
+    if (reg->assignedPhysicalRegister) {
+        reportError("rg_a is mapped.. at start of DiscardDisjoint registers %s\n",
+                      reg->registerName());
         return false;
     }
     workTable *wt = s->getTable();
@@ -195,7 +196,7 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
     for (ru = l->firstVirtual(); ru; ru = ru->nextVirtual()) {
         if (ru->unk_08 == reg) {
             if (!ru->isExternal()) {
-                func_0804ad38("discard disjoint - found a match - but it's not external\n");
+                reportError("discard disjoint - found a match - but it's not external\n");
                 return false;
             }
             break;
@@ -204,24 +205,24 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
     if (!ru)
         return true;
     if (!(ru->unk_0c | ru->unk_0d | ru->unk_10)) {
-        func_0804ad38("genRegPool: discard disjoint - an xnf register had was not xixot\n");
+        reportError("genRegPool: discard disjoint - an xnf register had was not xixot\n");
         return false;
     }
     if (ru->unk_0c & ~ru->unk_0e) {
-        func_0804ad38("xiBits is outside of iBits \n");
+        reportError("xiBits is outside of iBits \n");
         return false;
     }
     if (ru->unk_0d & ~ru->unk_0f) {
-        func_0804ad38("xiBits is outside of iBits \n");
+        reportError("xiBits is outside of iBits \n");
         return false;
     }
     for (regUse *o = l->unk_04; o; o = o->unk_04) {
         RegPoolEntry *r = o->unk_08;
         if (!r) {
-            func_0804ad38("flowMon::discard disjoint forced regref with null reg\n");
+            reportError("flowMon::discard disjoint forced regref with null reg\n");
             return false;
         }
-        if (!func_08059e20(r) || (!r->unk_18 && r->unk_14))
+        if (!func_08059e20(r) || (!r->assignedPhysicalRegister && r->isVirtual))
             continue;
         unsigned char m = 0;
         switch (wt->unk_09) {
@@ -238,17 +239,17 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
             break;
         }
         case 3:
-            for (int i = 0; i != reg->unk_28; i++) {
+            for (int i = 0; i != reg->partCount; i++) {
                 int as = 0, ae = 0;
                 bool aa = false;
                 int bs = 0, be = 0;
                 bool ba = false;
                 if (!regRefLiveRange(ru, i, &as, &ae, &aa)) {
-                    func_0804ad38("couldn't determine live range_a\n");
+                    reportError("couldn't determine live range_a\n");
                     return false;
                 }
                 if (!regRefLiveRange(o, i, &bs, &be, &ba)) {
-                    func_0804ad38("couldn't determine live range_b.%d\n", i);
+                    reportError("couldn't determine live range_b.%d\n", i);
                     o->func_0805b51c();
                     wt->dump();
                     return false;
@@ -263,16 +264,16 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
             return false;
         }
         RegPoolEntry *tmpr;
-        if (r->unk_14 != 1)
+        if (r->isVirtual != 1)
             tmpr = r;
         else
-            tmpr = r->unk_18;
+            tmpr = r->assignedPhysicalRegister;
         if (!tmpr) {
-            func_0804ad38("tmpr is zero\n");
+            reportError("tmpr is zero\n");
             return false;
         }
-        if (tmpr->unk_14) {
-            func_0804ad38("tmpr is virtual\n");
+        if (tmpr->isVirtual) {
+            reportError("tmpr is virtual\n");
             return false;
         }
         regMask_080dde40[tmpr->regIndex()] |= m;

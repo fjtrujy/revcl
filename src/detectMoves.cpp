@@ -25,7 +25,7 @@ static inline void dumpMove(Instr *in)
 
 bool detectMoves(Program *p)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (wt->unk_09 == 1 || isPipeMode(wt)) {
             Instr *next;
@@ -41,20 +41,20 @@ bool detectMoves(Program *p)
                 mask = 0;
                 if (!detectMove(in, opc, mask, dstOp, srcOp))
                     continue;
-                RegPoolEntry *srcReg = in->unk_38[srcOp].unk_18;
-                RegPoolEntry *dstReg = in->unk_38[dstOp].unk_18;
+                RegPoolEntry *srcReg = in->operands[srcOp].unk_18;
+                RegPoolEntry *dstReg = in->operands[dstOp].unk_18;
                 iInfo *info = func_0806bf74(opc);
                 Instr *mv = new Instr(info);
                 if (!mv) {
-                    func_0804ad38("failed to make a move\n");
+                    reportError("failed to make a move\n");
                     return false;
                 }
                 mv->unk_142c = opc;
                 mv->unk_142e = 0;
-                Operand *sr = &mv->unk_38[1];
-                Operand *d = &mv->unk_38[0];
-                if (dstReg == dstReg->unk_04->unk_10) {
-                    func_0804ad38("found a move to a const zero register\n");
+                Operand *sr = &mv->operands[1];
+                Operand *d = &mv->operands[0];
+                if (dstReg == dstReg->ownerPool->zeroRegister) {
+                    reportError("found a move to a const zero register\n");
                     dumpMove(in);
                     return false;
                 }
@@ -63,19 +63,19 @@ bool detectMoves(Program *p)
                 mv->unk_138f = mask;
                 sr->unk_07 = mask;
                 d->unk_07 = mask;
-                sr->unk_14 = in->unk_38[srcOp].unk_14;
-                d->unk_14 = in->unk_38[dstOp].unk_14;
-                sr->unk_10 = in->unk_38[srcOp].unk_10;
-                d->unk_10 = in->unk_38[dstOp].unk_10;
+                sr->unk_14 = in->operands[srcOp].unk_14;
+                d->unk_14 = in->operands[dstOp].unk_14;
+                sr->unk_10 = in->operands[srcOp].unk_10;
+                d->unk_10 = in->operands[dstOp].unk_10;
                 if (isRawTable(wt)) {
                     int pipe = in->unk_13e8.unk_02;
                     if (!resolveMovePipe(wt, mv, pipe)) {
-                        func_0804ad38("failed to resolve a detected move for the pipe I found it in\n");
+                        reportError("failed to resolve a detected move for the pipe I found it in\n");
                         return false;
                     }
                 }
                 if (!wt->replaceInstruction(in, mv)) {
-                    func_0804ad38("failed to replace instruction!\n");
+                    reportError("failed to replace instruction!\n");
                     return false;
                 }
                 delete in;

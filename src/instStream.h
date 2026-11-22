@@ -13,6 +13,8 @@ class workTable;
 class Instr;
 struct regUse;
 class instStream;
+// Source-level alias: original member mangling is required for exact output.
+#define streamName func_0806d674
 struct Program;
 
 // 16-byte record in the leading table of a stream (name guessed).
@@ -26,36 +28,36 @@ struct istRec {
 class instStream {
 public:
     instStream();
-    const char *func_0806d674();  // stream name or default
+    const char *streamName();  // stream name or default
     workTable *getWorkTable()
     {
-        if (unk_218)
-            return unk_218;
-        func_0804ad38("work table not set in %s\n", func_0806d674());
+        if (workTablePtr)
+            return workTablePtr;
+        func_0804ad38("work table not set in %s\n", streamName());
         func_0804adf0(-1);
-        return unk_218;
+        return workTablePtr;
     }
     // Same check as getWorkTable, written as a guarded block (different code shape).
     workTable *getTable()
     {
-        if (!unk_218) {
-            func_0804ad38("work table not set in %s\n", func_0806d674());
+        if (!workTablePtr) {
+            func_0804ad38("work table not set in %s\n", streamName());
             func_0804adf0(-1);
         }
-        return unk_218;
+        return workTablePtr;
     }
 
     workTable *checkedTable(const char *msg)
     {
-        if (unk_218)
-            return unk_218;
+        if (workTablePtr)
+            return workTablePtr;
         func_0804ad38(msg);
         func_0804adf0(-1);
-        return unk_218;
+        return workTablePtr;
     }
     void requireTable(const char *msg)
     {
-        if (!unk_218) {
+        if (!workTablePtr) {
             func_0804ad38(msg);
             func_0804adf0(-1);
         }
@@ -111,9 +113,9 @@ public:
 
     int unk_00;                  // record count
     istRec unk_04[16];
-    Program *unk_104;
-    instStream *unk_108;         // next in Program::unk_a0
-    instStream *unk_10c;         // previous stream (to-register branch)
+    Program *owningProgram;
+    instStream *nextStream;         // next in Program::unk_a0
+    instStream *previousStream;         // previous stream (to-register branch)
     mList unk_110;               // name list
     char *unk_124;               // pass thru
     linkList unk_128;            // input links
@@ -123,7 +125,7 @@ public:
     int unk_144;
     workTable unk_148;           // own work table
     workTable *unk_214;  // opt table
-    workTable *unk_218;  // work table
+    workTable *workTablePtr;  // work table
     workTable *unk_21c;  // tidied work table
     workTable *unk_220;  // saved work table
     short unk_224;

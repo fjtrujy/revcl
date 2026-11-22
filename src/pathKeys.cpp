@@ -1,3 +1,4 @@
+#include "os.h"
 #include "backTrace_shared.h"
 
 bool func_08061c34(instStream *n);
@@ -11,7 +12,7 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
 {
     workTable *wt = n->getTable();
     if (!wt) {
-        func_0804ad38("failed to get work table\n");
+        reportError("failed to get work table\n");
         return 0;
     }
     regUse *u = wt->unk_14.func_0805b5dc(reg);
@@ -29,20 +30,20 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
             n->unk_224 = count;
             ol_s *head = u->unk_20[part].unk_08.unk_00;
             if (!head) {
-                func_0804ad38("visible outputs has no head for l_init.. but it should!\n");
+                reportError("visible outputs has no head for l_init.. but it should!\n");
                 return 0;
             }
             int lo = head->unk_12;
             n->unk_230 = lo;
             ol_s *last = registerPart(u, part)->func_0805ba2c(0, true);
             if (!last) {
-                func_0804ad38("visible outputs had nothing visible at infinity\n");
+                reportError("visible outputs had nothing visible at infinity\n");
                 return 0;
             }
             int hi = last->unk_12;
             n->unk_232 = hi;
             if (n->unk_230 > n->unk_232) {
-                func_0804ad38("minimal writeVal was > maximal writeVal\n");
+                reportError("minimal writeVal was > maximal writeVal\n");
                 return 0;
             }
         }
@@ -71,18 +72,18 @@ bool func_08061c34(instStream *n)
 
 int func_08061cb0(Program *p, instStream *n)
 {
-    VisitCache *vc = &p->unk_bc;
+    VisitCache *vc = &p->backTraceVisitCache;
     if (!vc->startRecord()) {
-        func_0804ad38("failed to start a record\n");
+        reportError("failed to start a record\n");
         return 0;
     }
     if (!vc->setBit(p->unk_d4->unk_2c0)) {
-        func_0804ad38("failed to add target to min path key\n");
+        reportError("failed to add target to min path key\n");
         return 0;
     }
     for (; n; n = n->unk_244) {
         if (!vc->setBit(n->unk_2c0)) {
-            func_0804ad38("failed to add to to min path record\n");
+            reportError("failed to add to to min path record\n");
             return 0;
         }
     }
@@ -91,18 +92,18 @@ int func_08061cb0(Program *p, instStream *n)
 
 int getMaxPathKey(Program *p, instStream *n)
 {
-    VisitCache *vc = &p->unk_bc;
+    VisitCache *vc = &p->backTraceVisitCache;
     if (!vc->startRecord()) {
-        func_0804ad38("failed to start a record\n");
+        reportError("failed to start a record\n");
         return 0;
     }
     if (!vc->setBit(p->unk_d4->unk_2c0)) {
-        func_0804ad38("failed to add target to max path key\n");
+        reportError("failed to add target to max path key\n");
         return 0;
     }
     for (; n; n = n->unk_24c) {
         if (!vc->setBit(n->unk_2c0)) {
-            func_0804ad38("failed to add to record to max path\n");
+            reportError("failed to add to record to max path\n");
             return 0;
         }
     }
@@ -112,12 +113,12 @@ int getMaxPathKey(Program *p, instStream *n)
 bool isPathRaw(Program *p, int key)
 {
     if (key <= 0) {
-        func_0804ad38("<=0 input to isPathRaw\n");
-        func_0804adf0(-1);
+        reportError("<=0 input to isPathRaw\n");
+        exitAfterCleanup(-1);
     }
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         int id = s->unk_2c0;
-        if (p->unk_bc.testBit(key, id) && s->func_0806d908() == 1)
+        if (p->backTraceVisitCache.testBit(key, id) && s->func_0806d908() == 1)
             return false;
     }
     return true;
@@ -125,13 +126,13 @@ bool isPathRaw(Program *p, int key)
 
 int guessKeyLen(Program *p, int key, int start, int end)
 {
-    instStream *s = p->unk_a0;
+    instStream *s = p->streamHead;
     int len = 0;
     bool foundStart = false;
     bool foundEnd = false;
-    for (; s; s = s->unk_108) {
+    for (; s; s = s->nextStream) {
         int id = s->unk_2c0;
-        if (p->unk_bc.testBit(key, id)) {
+        if (p->backTraceVisitCache.testBit(key, id)) {
             bool hit = false;
             if (id == start) {
                 foundStart = true;
@@ -146,7 +147,7 @@ int guessKeyLen(Program *p, int key, int start, int end)
         }
     }
     if (!foundEnd || !foundStart) {
-        func_0804ad38("guessKeyLen - didn't contain one of start or end\n");
+        reportError("guessKeyLen - didn't contain one of start or end\n");
         return -1;
     }
     return len;
@@ -154,18 +155,18 @@ int guessKeyLen(Program *p, int key, int start, int end)
 
 void dumpMinPathToTarget(instStream *s)
 {
-    func_0804acb0("%s  minPathToTarget\n", s->func_0806d674());
+    reportInfo("%s  minPathToTarget\n", s->streamName());
     int i = 0;
     for (instStream *q = s->unk_244; q; q = q->unk_244)
-        func_0804acb0("    %2d:   [%3d] %s\n", ++i, q->unk_240, q->func_0806d674());
-    func_0804acb0("done .. %s  minPathToTarget\n", s->func_0806d674());
+        reportInfo("    %2d:   [%3d] %s\n", ++i, q->unk_240, q->streamName());
+    reportInfo("done .. %s  minPathToTarget\n", s->streamName());
 }
 
 void dumpMaxPathToTarget(instStream *s)
 {
-    func_0804acb0("%s  maxPathToTarget\n", s->func_0806d674());
+    reportInfo("%s  maxPathToTarget\n", s->streamName());
     int i = 0;
     for (instStream *q = s->unk_24c; q; q = q->unk_24c)
-        func_0804acb0("    %2d:   [%3d] %s\n", ++i, q->unk_248, q->func_0806d674());
-    func_0804acb0("done .. %s  maxPathToTarget\n", s->func_0806d674());
+        reportInfo("    %2d:   [%3d] %s\n", ++i, q->unk_248, q->streamName());
+    reportInfo("done .. %s  maxPathToTarget\n", s->streamName());
 }

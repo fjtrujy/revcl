@@ -18,10 +18,10 @@ const char *getOptimiserName(int id);
 Program::Program(bool symbolic)
 {
     unk_9c = symbolic;
-    unk_a4 = 0;
-    unk_a0 = 0;
-    unk_a8 = 0;
-    unk_b0 = 0;
+    streamTail = 0;
+    streamHead = 0;
+    streamCount = 0;
+    streamsById = 0;
 }
 
 Program::~Program()
@@ -32,22 +32,22 @@ Program::~Program()
 bool Program::Init(CpuDef *cpu, const char *uniqueName, bool uniqueAll)
 {
     if (!dispose()) {
-        func_0804ad38("flowMon::Init() - failed to dispose\n");
+        reportError("flowMon::Init() - failed to dispose\n");
         return false;
     }
     if (!cpu) {
-        func_0804ad38("flowMon::init - bad cpu type\n");
+        reportError("flowMon::init - bad cpu type\n");
         dispose();
         return false;
     }
     if (!proc.setUniqueName(uniqueName)) {
-        func_0804ad38("flowMon::Init - failed to set name\n");
+        reportError("flowMon::Init - failed to set name\n");
         dispose();
         return false;
     }
     proc.unk_60 = uniqueAll;
     if (!proc.Init(cpu)) {
-        func_0804ad38("flowMon::Init failed to init cpu object\n");
+        reportError("flowMon::Init failed to init cpu object\n");
         return false;
     }
     return true;
@@ -55,21 +55,21 @@ bool Program::Init(CpuDef *cpu, const char *uniqueName, bool uniqueAll)
 
 bool Program::dispose()
 {
-    instStream *s = unk_a0;
+    instStream *s = streamHead;
     while (s) {
-        instStream *next = s->unk_108;
+        instStream *next = s->nextStream;
         s->reset();
         delete s;
         s = next;
     }
-    unk_a4 = 0;
-    unk_a0 = 0;
-    unk_a8 = 0;
-    if (unk_b0)
-        delete[] unk_b0;
-    unk_b0 = 0;
+    streamTail = 0;
+    streamHead = 0;
+    streamCount = 0;
+    if (streamsById)
+        delete[] streamsById;
+    streamsById = 0;
     disposeBackTrace(this);
-    unk_88.func_0804b1b0();
+    uniqueNamePrefixes.func_0804b1b0();
     return true;
 }
 
@@ -78,23 +78,23 @@ bool Program::addStream(instStream *s)
 {
     if (!s)
         return false;
-    if (s->unk_104) {
-        func_0804ad38("addistream - owner already set\n");
+    if (s->owningProgram) {
+        reportError("addistream - owner already set\n");
         return false;
     }
-    if (unk_a0) {
-        unk_a4->unk_108 = s;
-        s->unk_10c = unk_a4;
-        s->unk_108 = 0;
-        unk_a4 = s;
+    if (streamHead) {
+        streamTail->nextStream = s;
+        s->previousStream = streamTail;
+        s->nextStream = 0;
+        streamTail = s;
     } else {
-        unk_a0 = s;
-        unk_a4 = s;
-        s->unk_108 = 0;
-        s->unk_10c = 0;
+        streamHead = s;
+        streamTail = s;
+        s->nextStream = 0;
+        s->previousStream = 0;
     }
-    s->unk_104 = this;
-    unk_a8++;
+    s->owningProgram = this;
+    streamCount++;
     return true;
 }
 
@@ -102,53 +102,53 @@ bool Program::insertStreamAfter(instStream *after, instStream *s)
 {
     if (!s)
         return false;
-    if (s->unk_104) {
-        func_0804ad38("addistream - owner already set\n");
+    if (s->owningProgram) {
+        reportError("addistream - owner already set\n");
         return false;
     }
-    s->unk_10c = after;
+    s->previousStream = after;
     if (after) {
-        s->unk_108 = after->unk_108;
-        if (after->unk_108)
-            after->unk_108->unk_10c = s;
+        s->nextStream = after->nextStream;
+        if (after->nextStream)
+            after->nextStream->previousStream = s;
         else
-            unk_a4 = s;
-        after->unk_108 = s;
+            streamTail = s;
+        after->nextStream = s;
     } else {
-        s->unk_108 = unk_a0;
-        if (unk_a0)
-            unk_a0->unk_10c = s;
-        unk_a0 = s;
+        s->nextStream = streamHead;
+        if (streamHead)
+            streamHead->previousStream = s;
+        streamHead = s;
     }
-    s->unk_104 = this;
-    unk_a8++;
+    s->owningProgram = this;
+    streamCount++;
     return true;
 }
 
 bool Program::removeStream(instStream *s)
 {
-    if (s->unk_104 != this) {
-        func_0804ad38("didn't have owner! or not us!\n");
+    if (s->owningProgram != this) {
+        reportError("didn't have owner! or not us!\n");
         return false;
     }
-    if (s->unk_108)
-        s->unk_108->unk_10c = s->unk_10c;
+    if (s->nextStream)
+        s->nextStream->previousStream = s->previousStream;
     else
-        unk_a4 = s->unk_10c;
-    if (s->unk_10c)
-        s->unk_10c->unk_108 = s->unk_108;
+        streamTail = s->previousStream;
+    if (s->previousStream)
+        s->previousStream->nextStream = s->nextStream;
     else
-        unk_a0 = s->unk_108;
-    s->unk_104 = 0;
-    s->unk_108 = 0;
-    s->unk_10c = 0;
-    unk_a8--;
+        streamHead = s->nextStream;
+    s->owningProgram = 0;
+    s->nextStream = 0;
+    s->previousStream = 0;
+    streamCount--;
     return true;
 }
 
 void func_0806ed78(Program *p, int b)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108)
+    for (instStream *s = p->streamHead; s; s = s->nextStream)
         s->dump(b);
     func_0806be68(p);
 }
@@ -156,7 +156,7 @@ void func_0806ed78(Program *p, int b)
 instStream *Program::findStreamById(int id)
 {
     instStream *s;
-    for (s = unk_a0; s && s->unk_2c0 != id; s = s->unk_108)
+    for (s = streamHead; s && s->unk_2c0 != id; s = s->nextStream)
         ;
     return s;
 }
@@ -166,7 +166,7 @@ instStream *Program::findStream(const char *name)
     if (!name)
         return 0;
     instStream *s;
-    for (s = unk_a0; s && !s->unk_110.func_0804b284(name); s = s->unk_108)
+    for (s = streamHead; s && !s->unk_110.func_0804b284(name); s = s->nextStream)
         ;
     return s;
 }
@@ -180,46 +180,46 @@ bool Program::retarget(instStream *from, instStream *to)
         next = in->unk_08;
         instStream *src = in->unk_0c;
         if (!src) {
-            func_0804ad38("null ist pointer found on ist list\n");
+            reportError("null ist pointer found on ist list\n");
             return false;
         }
         linkNode *out = src->unk_134.func_0806dff4(from, in->unk_14);
         if (!out) {
-            func_0804ad38("Retarget:: failed to find matching output\n");
+            reportError("Retarget:: failed to find matching output\n");
             return false;
         }
         out->unk_0c = to;
         if (!from->unk_128.unlink(in)) {
-            func_0804ad38("Retarget::failed to unlink input from old\n");
+            reportError("Retarget::failed to unlink input from old\n");
             return false;
         }
         if (!to->unk_128.relink(in)) {
-            func_0804ad38("Retarget::failed to relink input to new\n");
+            reportError("Retarget::failed to relink input to new\n");
             return false;
         }
         switch (out->unk_14) {
         case 2:
         case 4:
         case 5:
-            func_0804ac7c("flowMon::can't reliably retarget a branch-to-register instruction\n");
+            reportWarning("flowMon::can't reliably retarget a branch-to-register instruction\n");
             break;
         case 0:
             break;
         case 1:
         case 3: {
             Instr *br = src->getBranch();
-            if (br && !br->changeBranchImmediate(to->func_0806d674())) {
-                func_0804ad38("failed to change branch immediate\n");
-                func_0804adf0(-1);
+            if (br && !br->changeBranchImmediate(to->streamName())) {
+                reportError("failed to change branch immediate\n");
+                exitAfterCleanup(-1);
             }
             break;
         }
         default:
             const char *typeName = linkTypeName(out->unk_14);
-            func_0804ad38("flowMon::Retarget - unexpected output type %d %s\n",
+            reportError("flowMon::Retarget - unexpected output type %d %s\n",
                           out->unk_14, typeName);
-            func_0804ad38("error retargeting %s->%s\n",
-                          from->func_0806d674(), to->func_0806d674());
+            reportError("error retargeting %s->%s\n",
+                          from->streamName(), to->streamName());
             return false;
         }
     }
@@ -229,17 +229,17 @@ bool Program::retarget(instStream *from, instStream *to)
 bool Program::func_0806efc4(Parser *parser, int a, bool newSyntax)
 {
     if (!parseReset(this)) {
-        func_0804ad38("flow::failed to reset cpu\n");
+        reportError("flow::failed to reset cpu\n");
         return false;
     }
     int count = 0;
     flowBlock *blocks = func_08083768(this, parser, a, newSyntax, &count);
     if (!blocks) {
-        func_0804ad38("flow: failed to build it from parse\n");
+        reportError("flow: failed to build it from parse\n");
         return false;
     }
     if (count <= 0) {
-        func_0804ad38("<=0 number of decoded line entries from source??\n");
+        reportError("<=0 number of decoded line entries from source??\n");
         delete blocks;
         return false;
     }
@@ -247,7 +247,7 @@ bool Program::func_0806efc4(Parser *parser, int a, bool newSyntax)
     if (!ok) {
         for (int i = 0; i != count; i++)
             blocks[i].func_080842f0();
-        func_0804ad38("flow: failed to split parser stream\n");
+        reportError("flow: failed to split parser stream\n");
     }
     delete[] blocks;
     return ok;
@@ -255,9 +255,9 @@ bool Program::func_0806efc4(Parser *parser, int a, bool newSyntax)
 
 bool func_0806f0e8(Program *p)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (!s->patchLatencies())
-            func_0804ad38("flowMon::PatchLatencies - failed for '%s'\n", s->func_0806d674());
+            reportError("flowMon::PatchLatencies - failed for '%s'\n", s->streamName());
     }
     return true;
 }
@@ -267,51 +267,51 @@ char *emitProgram(Program *p, char *out, int comments)
     instStream *s;
     int total = 0;
     if (!out) {
-        func_0804ad38("flowMon::Emit - null output pointer\n");
+        reportError("flowMon::Emit - null output pointer\n");
         return 0;
     }
     char *buf = out;
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_00) {
-            buf += func_0804adbc(buf, "; === __LP__ %s:\n", s->func_0806d674());
+            buf += formatIntoBuffer(buf, "; === __LP__ %s:\n", s->streamName());
             for (int i = 0; i != s->unk_00; i++) {
                 if (s->unk_04[i].unk_00 > 0) {
-                    buf += func_0804adbc(buf, "; === %16s : optimal=%d clid=%d mlid=%d size=(%d) ",
+                    buf += formatIntoBuffer(buf, "; === %16s : optimal=%d clid=%d mlid=%d size=(%d) ",
                                          getOptimiserName(i), s->unk_04[i].unk_04, s->unk_04[i].unk_0c,
                                          s->unk_04[i].unk_08, s->unk_04[i].unk_00);
-                    buf += func_0804adbc(buf, "\n");
+                    buf += formatIntoBuffer(buf, "\n");
                 }
             }
         }
     }
-    buf += func_0804adbc(buf, "; =================================================\n");
-    buf += func_0804adbc(buf, "; flowMon::Emit() vcl 1.4beta7 produced this code:\n");
+    buf += formatIntoBuffer(buf, "; =================================================\n");
+    buf += formatIntoBuffer(buf, "; flowMon::Emit() vcl 1.4beta7 produced this code:\n");
     emitReset(p);
     buf = emitFileStart(p, buf);
     if (!buf) {
-        func_0804ad38("failed to emit the start of the source file\n");
+        reportError("failed to emit the start of the source file\n");
         return 0;
     }
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         s->dump(0);
         int n = 0, m = 0;
         s->unk_2c8 = total;
         buf = s->emit(buf, comments, &n, &m);
         if (!buf) {
-            func_0804ad38("flowMon : failed to write a stream\n");
+            reportError("flowMon : failed to write a stream\n");
             return 0;
         }
         total += n;
     }
     buf = emitFileEnd(p, buf);
     if (!buf) {
-        func_0804ad38("failed to emit end of file\n");
+        reportError("failed to emit end of file\n");
         return 0;
     }
-    buf += func_0804adbc(buf, ";\tiCount=%d\n", total);
+    buf += formatIntoBuffer(buf, ";\tiCount=%d\n", total);
     buf = emitStats(p, buf);
     if (!buf) {
-        func_0804ad38("failed to emit cpu stats\n");
+        reportError("failed to emit cpu stats\n");
         return 0;
     }
     return buf;
@@ -329,10 +329,10 @@ const char *getUniqueName(Program *p)
 
 char *emitLabels(Program *p, char *buf)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         buf = s->emitLabels(buf);
         if (!buf) {
-            func_0804ad38("failed to emit user labels for '%s'\n", s->func_0806d674());
+            reportError("failed to emit user labels for '%s'\n", s->streamName());
             return 0;
         }
     }
@@ -341,19 +341,19 @@ char *emitLabels(Program *p, char *buf)
 
 bool isReferencedLabel(Program *p, char *name)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_2cc == 2) {
             linkNode *l = s->unk_134.unk_00;
             if (l) {
                 linkNode *next = l->unk_08;
                 if (next) {
-                    func_0804ad38("found entry point with more than one exit\n");
-                    func_0804adf0(-1);
+                    reportError("found entry point with more than one exit\n");
+                    exitAfterCleanup(-1);
                 }
                 instStream *t = l->unk_0c;
                 if (!t) {
-                    func_0804ad38("no stream for ir\n");
-                    func_0804adf0(-1);
+                    reportError("no stream for ir\n");
+                    exitAfterCleanup(-1);
                 }
                 if (t->unk_110.func_0804b234(name))
                     return true;
@@ -365,7 +365,7 @@ bool isReferencedLabel(Program *p, char *name)
                 return true;
         }
     }
-    return p->unk_88.func_0804b234(name) != 0;
+    return p->uniqueNamePrefixes.func_0804b234(name) != 0;
 }
 
 bool func_0806f4a0(Program *p, instStream *s)
@@ -385,46 +385,46 @@ bool func_0806f4e8(Program *p, char *name)
 
 bool recalcFlowUIDs(Program *p)
 {
-    instStream *s = p->unk_a0;
+    instStream *s = p->streamHead;
     int n = 0;
-    p->unk_ac = -1;
-    for (; s; s = s->unk_108) {
+    p->flowIdCount = -1;
+    for (; s; s = s->nextStream) {
         if (!s->func_0806d908()) {
-            func_0804ad38("recalcFlowUIDs - found bad code mode at %s\n", s->func_0806d674());
+            reportError("recalcFlowUIDs - found bad code mode at %s\n", s->streamName());
             return false;
         }
         s->unk_2c0 = n++;
     }
-    if (n != p->unk_a8) {
-        func_0804ad38("recalcFlowUIDs - there was a hole somewhere?\n");
+    if (n != p->streamCount) {
+        reportError("recalcFlowUIDs - there was a hole somewhere?\n");
         return false;
     }
-    p->unk_ac = n;
-    int size = p->unk_ac + 1;
-    if (p->unk_b0) {
-        delete p->unk_b0;
-        p->unk_b0 = 0;
+    p->flowIdCount = n;
+    int size = p->flowIdCount + 1;
+    if (p->streamsById) {
+        delete p->streamsById;
+        p->streamsById = 0;
     }
-    p->unk_b0 = new instStream *[size];
-    if (!p->unk_b0) {
-        func_0804ad38("failed to get a new linear table\n");
+    p->streamsById = new instStream *[size];
+    if (!p->streamsById) {
+        reportError("failed to get a new linear table\n");
         return false;
     }
-    for (s = p->unk_a0; s; s = s->unk_108)
-        p->unk_b0[s->unk_2c0] = s;
+    for (s = p->streamHead; s; s = s->nextStream)
+        p->streamsById[s->unk_2c0] = s;
     return true;
 }
 
 bool func_0806f610(Program *p)
 {
     if (!p->proc.func_0806bd40()) {
-        func_0804ad38("failed to alloc reset the cpu\n");
+        reportError("failed to alloc reset the cpu\n");
         return false;
     }
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (!wt) {
-            func_0804ad38("failed to get work table\n");
+            reportError("failed to get work table\n");
             return false;
         }
         wt->unk_08 = 1;
@@ -435,7 +435,7 @@ bool func_0806f610(Program *p)
 bool func_0806f6a4(Program *p)
 {
     if (!p->proc.func_0806bd88()) {
-        func_0804ad38("failed to alloc reset the cpu\n");
+        reportError("failed to alloc reset the cpu\n");
         return false;
     }
     return true;
@@ -445,7 +445,7 @@ static inline void printNamedLink(const char *fmt, linkNode *l, const char *name
 {
     int other = l->unk_0c->unk_2c0;
     const char *type = linkTypeName(l->unk_14);
-    func_0804acb0(fmt, type, other, name);
+    reportInfo(fmt, type, other, name);
 }
 
 static inline bool isEntryStream(instStream *s) { return s->unk_2cc == 2; }
@@ -453,9 +453,9 @@ static inline bool isExitStream(instStream *s) { return s->unk_2cd == 3; }
 
 void dumpFlow(Program *p)
 {
-    instStream *s = p->unk_a0;
-    func_0804acb0("dumpFlow-------------------\n");
-    for (; s; s = s->unk_108) {
+    instStream *s = p->streamHead;
+    reportInfo("dumpFlow-------------------\n");
+    for (; s; s = s->nextStream) {
         const char *tag = "";
         if (isEntryStream(s))
             tag = " ---ENTRY";
@@ -463,26 +463,26 @@ void dumpFlow(Program *p)
             tag = " ---EXIT";
         bool fallThrough = false;
         int id = s->unk_2c0;
-        func_0804acb0("[%5d] %s %s   <--\n", id, s->func_0806d674(), tag);
+        reportInfo("[%5d] %s %s   <--\n", id, s->streamName(), tag);
         linkNode *l;
         for (l = s->unk_128.unk_00; l; l = l->unk_08) {
             if (l->unk_14) {
-                const char *name = l->unk_0c->func_0806d674();
+                const char *name = l->unk_0c->streamName();
                 printNamedLink("       <--[(%s) [%5d]%s]\n", l, name);
             }
         }
         for (l = s->unk_134.unk_00; l; l = l->unk_08) {
             if (l->unk_14) {
-                const char *name = l->unk_0c->func_0806d674();
+                const char *name = l->unk_0c->streamName();
                 printNamedLink("     --> %s [%5d]%s\n", l, name);
             } else
                 fallThrough = true;
         }
         if (fallThrough) {
-            func_0804acb0("    |\n");
-            func_0804acb0("    V\n");
+            reportInfo("    |\n");
+            reportInfo("    V\n");
         } else
-            func_0804acb0("\n");
+            reportInfo("\n");
     }
-    func_0804acb0("dumpFlow - done\n");
+    reportInfo("dumpFlow - done\n");
 }

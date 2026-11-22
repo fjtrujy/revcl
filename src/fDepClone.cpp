@@ -15,15 +15,15 @@ bool copyCloneFdeps(Instr *in, ol_s *o, olList *dst);
 static inline bool fdep_LinkInline(Instr *pre, Instr *post)
 {
     if (!pre && !post) {
-        func_0804ad38("fdep_Link -passed a null ptr\n");
+        reportError("fdep_Link -passed a null ptr\n");
         return false;
     }
     if (!pre->unk_13a8.func_0805826c(post)) {
-        func_0804ad38("failed to add post to the post list\n");
+        reportError("failed to add post to the post list\n");
         return false;
     }
     if (!post->unk_13a0.func_0805826c(pre)) {
-        func_0804ad38("failed to add pre to the pre list\n");
+        reportError("failed to add pre to the pre list\n");
         return false;
     }
     return true;
@@ -36,7 +36,7 @@ bool func_0806558c(Instr *i, int *row)
     for (ol_s *o = i->unk_13a0.unk_00; o; o = o->unk_00) {
         Instr *in = o->unk_04;
         if (!in) {
-            func_0804ad38("BuildCandidateList - in_f not set in ol\n");
+            reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
         }
         int r = in->unk_13e8.unk_00;
@@ -58,7 +58,7 @@ bool func_080655e8(Instr *i, int *row)
     for (ol_s *o = i->unk_13a8.unk_00; o; o = o->unk_00) {
         Instr *in = o->unk_04;
         if (!in) {
-            func_0804ad38("BuildCandidateList - in_f not set in ol\n");
+            reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
         }
         int r = in->unk_13e8.unk_00;
@@ -70,11 +70,11 @@ bool func_080655e8(Instr *i, int *row)
 
 bool instStream::func_0806563c(bool a, bool b)
 {
-    if (!unk_218) {
-        func_0804ac7c("BuildfDepList - no work table set for %s!\n", func_0806d674());
+    if (!workTablePtr) {
+        reportWarning("BuildfDepList - no work table set for %s!\n", streamName());
         return false;
     }
-    return BuildfDepList(unk_218, a, b);
+    return BuildfDepList(workTablePtr, a, b);
 }
 
 bool BuildfDepList(workTable *wt, bool force, bool)
@@ -89,11 +89,11 @@ bool BuildfDepList(workTable *wt, bool force, bool)
         in->unk_1412 = 0;
         in->unk_1414 = 0;
         if (!in->unk_13a0.clear()) {
-            func_0804ad38("failed to dispose of existing prefdeplist\n");
+            reportError("failed to dispose of existing prefdeplist\n");
             return false;
         }
         if (!in->unk_13a8.clear()) {
-            func_0804ad38("failed to dispose of existing postfdeplist\n");
+            reportError("failed to dispose of existing postfdeplist\n");
             return false;
         }
     }
@@ -110,7 +110,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
             Operand *ea = 0;
             bool b20 = false;
             if (in->unk_13d0 & 0x08) {
-                func_0804ad38("found an instruction barrier fdep - this should be done with --barrier fixup!\n");
+                reportError("found an instruction barrier fdep - this should be done with --barrier fixup!\n");
                 in->leDump();
                 return false;
             }
@@ -123,25 +123,25 @@ bool BuildfDepList(workTable *wt, bool force, bool)
             if (in->unk_13ce == 2) {
                 ea = getEA(in);
                 if (!ea) {
-                    func_0804ad38("failed to get ea op for store\n");
+                    reportError("failed to get ea op for store\n");
                     return false;
                 }
                 b10 = true;
                 b20 = true;
                 ramBits = in->getRamBits();
                 if (!ramBits)
-                    func_0804ac7c("found store instruction with no ram bits\n");
+                    reportWarning("found store instruction with no ram bits\n");
             }
             if (in->unk_13ce == 1) {
                 ea = getEA(in);
                 if (!ea) {
-                    func_0804ad38("failed to get ea op for load\n");
+                    reportError("failed to get ea op for load\n");
                     return false;
                 }
                 b20 = true;
                 ramBits = in->getRamBits();
                 if (!ramBits)
-                    func_0804ac7c("found load instruction with no ram bits\n");
+                    reportWarning("found load instruction with no ram bits\n");
             }
             if (b20 || b10 || b40) {
                 for (Instr *o = in->unk_1c.unk_04; o; o = o->unk_1c.unk_04) {
@@ -162,24 +162,24 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                     }
                     if (dep) {
                         if (!fdep_LinkInline(o, in)) {
-                            func_0804ad38("failed to add ol for fdeps \n");
-                            func_0804adf0(-1);
+                            reportError("failed to add ol for fdeps \n");
+                            exitAfterCleanup(-1);
                         }
                     }
                 }
             } else if (in->unk_139c) {
-                func_0804ad38("tag string, but no match criteria set\n");
+                reportError("tag string, but no match criteria set\n");
                 return false;
             }
-            for (int k = 0; k != in->unk_138b; k++) {
-                Operand *op = &in->unk_38[k];
+            for (int k = 0; k != in->operandCount; k++) {
+                Operand *op = &in->operands[k];
                 if (op) {
                     RegPoolEntry *r = registerOperand(op, 2);
                     if (r) {
-                        if (r->unk_30 == 48)
+                        if (r->registerIndex == 48)
                             in->unk_1414 = op->unk_07;
-                        if (r->unk_30 == 48 || r->unk_30 == 49) {
-                            for (int p = 0; p != r->unk_28; p++)
+                        if (r->registerIndex == 48 || r->registerIndex == 49) {
+                            for (int p = 0; p != r->partCount; p++)
                                 if ((op->unk_07 >> p) & 1)
                                     for (ol_s *l = op->unk_2c[p].unk_54.unk_00; l; l = l->unk_00) {
                                         Instr *x = l->unk_04;
@@ -189,7 +189,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                         }
                     }
                     r = registerOperand(op, 1);
-                    if (r && r->unk_30 == 48)
+                    if (r && r->registerIndex == 48)
                         in->unk_1412 = op->unk_07;
                 }
             }
@@ -267,16 +267,16 @@ bool fixupCloneFdeps(workTable *wt)
         n += 8;
         in->unk_13e4 = n;
         if (!orig) {
-            func_0804ad38("no original set\n");
-            func_0804adf0(-1);
+            reportError("no original set\n");
+            exitAfterCleanup(-1);
         }
         in->unk_1410 = orig->unk_1410;
         if (!copyCloneFdeps(in, orig->unk_13a0.unk_00, &in->unk_13a0)) {
-            func_0804ad38("failed to fixup the pre fdep list\n");
+            reportError("failed to fixup the pre fdep list\n");
             return false;
         }
         if (!copyCloneFdeps(in, orig->unk_13a8.unk_00, &in->unk_13a8)) {
-            func_0804ad38("failed to fix the post fdeps\n");
+            reportError("failed to fix the post fdeps\n");
             return false;
         }
     }
@@ -286,15 +286,15 @@ bool fixupCloneFdeps(workTable *wt)
 bool fdep_Link(Instr *pre, Instr *post)
 {
     if (!pre && !post) {
-        func_0804ad38("fdep_Link -passed a null ptr\n");
+        reportError("fdep_Link -passed a null ptr\n");
         return false;
     }
     if (!pre->unk_13a8.func_0805826c(post)) {
-        func_0804ad38("failed to add post to the post list\n");
+        reportError("failed to add post to the post list\n");
         return false;
     }
     if (!post->unk_13a0.func_0805826c(pre)) {
-        func_0804ad38("failed to add pre to the pre list\n");
+        reportError("failed to add pre to the pre list\n");
         return false;
     }
     return true;
@@ -305,16 +305,16 @@ bool copyCloneFdeps(Instr *, ol_s *o, olList *dst)
     for (; o; o = o->unk_00) {
         Instr *in = o->unk_04;
         if (!in) {
-            func_0804ad38("qInstruction.. fDepList in_f not set in ol\n");
+            reportError("qInstruction.. fDepList in_f not set in ol\n");
             return false;
         }
         Instr *clone = in->unk_08;
         if (!clone) {
-            func_0804ad38("qInstruction - fdep list - clone image not set during rebuild\n");
+            reportError("qInstruction - fdep list - clone image not set during rebuild\n");
             return false;
         }
         if (!dst->func_0805826c(clone)) {
-            func_0804ad38("qInstruction - failed to add an OL to the fdep list from clone\n");
+            reportError("qInstruction - failed to add an OL to the fdep list from clone\n");
             return false;
         }
     }
@@ -325,19 +325,19 @@ bool func_08065fd4(Instr *in, Instr *other)
 {
     in->func_08054008(false);
     other->func_08054008(false);
-    for (int k = 0; k != other->unk_138b; k++) {
-        Operand *op = &other->unk_38[k];
+    for (int k = 0; k != other->operandCount; k++) {
+        Operand *op = &other->operands[k];
         RegPoolEntry *r = registerOperand(op, 1);
         if (r) {
-            for (int p = 0; p != r->unk_28; p++)
+            for (int p = 0; p != r->partCount; p++)
                 if ((op->unk_07 >> p) & 1)
                     for (ol_s *l = op->unk_2c[p].unk_54.unk_00; l; l = l->unk_00) {
                         Instr *x = l->unk_04;
                         if (x && x != in && x->unk_13e4 < in->unk_13e4) {
                             in->unk_1410 = 1;
                             if (!in->unk_13a0.func_0805826c(x)) {
-                                func_0804ad38("failed to add\n");
-                                func_0804adf0(-1);
+                                reportError("failed to add\n");
+                                exitAfterCleanup(-1);
                             }
                             x->func_08054008(false);
                         }

@@ -20,13 +20,13 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     Operand *op;
     RegPoolEntry *reg;
     if (!row) {
-        func_0804ad38("passed a null pointer to emuVSM\n");
+        reportError("passed a null pointer to emuVSM\n");
         return -1;
     }
     if (row->unk_08)
         return 0;
     if (uta && !Cycle(p, uta)) {
-        func_0804ad38("Processor::Emu - failed initial cycle for uta!\n");
+        reportError("Processor::Emu - failed initial cycle for uta!\n");
         return -1;
     }
 
@@ -35,17 +35,17 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         if (!in)
             continue;
         if (commit && in->unk_1434) {
-            func_0804ad38("previous thruput write already set for instruction\n");
+            reportError("previous thruput write already set for instruction\n");
             return -1;
         }
         int lid = (signed char)in->unk_13e8.unk_03;
         if (uta) {
             if (lid != -1) {
-                func_0804ad38("lid>=0 for uta mode emu\n");
+                reportError("lid>=0 for uta mode emu\n");
                 return -1;
             }
         } else if (lid) {
-            func_0804ad38("emu - called with an instruction with lid non-zero for vsm..%d\n", lid);
+            reportError("emu - called with an instruction with lid non-zero for vsm..%d\n", lid);
             return -1;
         }
     }
@@ -57,7 +57,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             reg = registerOperand(op, 1);
             if (reg) {
-                for (int part = 0; part != reg->unk_28; part++)
+                for (int part = 0; part != reg->partCount; part++)
                     if ((op->unk_07 >> part) & 1) {
                         rPart *rp = &reg->unk_44[part];
                         if (rp->unk_00[4] < 0) {
@@ -73,7 +73,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                     }
             }
             if (reg && op->unk_0b) {
-                for (int part = 0; part != reg->unk_28; part++)
+                for (int part = 0; part != reg->partCount; part++)
                     if ((op->unk_07 >> part) & 1) {
                         rPart *rp = &reg->unk_44[part];
                         int lat;
@@ -81,11 +81,11 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             ol_s tmp;
                             tmp.init(in, o, part, false);
                             if (commit && !p->proc.unk_74.addStall(rp->unk_38, &tmp, 0, lat)) {
-                                func_0804ad38("failed to add an internal latency stall\n");
+                                reportError("failed to add an internal latency stall\n");
                                 return -1;
                             }
                             if (op->unk_29) {
-                                func_0804ad38("vcl detected an ialu op too close to a dependent conditional branch. target behaviour isn't guaranteed\n");
+                                reportError("vcl detected an ialu op too close to a dependent conditional branch. target behaviour isn't guaranteed\n");
                                 in->leDump();
                                 return -1;
                             }
@@ -100,19 +100,19 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                     if (reg->unk_2c) {
                         if (commit) {
                             if (in->unk_1434) {
-                                func_0804ad38("multiple set for prevThruput\n");
+                                reportError("multiple set for prevThruput\n");
                                 return -1;
                             }
-                            in->unk_1434 = reg->unk_38;
-                        } else if (reg->unk_38 != in->unk_1434) {
-                            func_0804ad38("unexpected value found in prev thru write\n");
+                            in->unk_1434 = reg->throughputWriter;
+                        } else if (reg->throughputWriter != in->unk_1434) {
+                            reportError("unexpected value found in prev thru write\n");
                             return -1;
                         }
                     }
-                    reg->unk_38 = in;
+                    reg->throughputWriter = in;
                     reg->unk_36++;
                 }
-                for (int part = 0; part != reg->unk_28; part++) {
+                for (int part = 0; part != reg->partCount; part++) {
                     if ((op->unk_07 >> part) & 1) {
                         rPart *rp = &reg->unk_44[part];
                         if (rp->unk_3e) {
@@ -121,7 +121,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             if (commit) {
                                 int issueLock = rp->unk_3e;
                                 if (!p->proc.unk_74.addStall(rp->unk_38, &tmp, 1, issueLock)) {
-                                    func_0804ad38("failed to add an internal thruput stall\n");
+                                    reportError("failed to add an internal thruput stall\n");
                                     return -1;
                                 }
                             }
@@ -135,7 +135,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     int cyc;
     if (uta) {
         if (maxLat || maxThru) {
-            func_0804ad38("in uta mode, but encountered latency / throughput stall\n");
+            reportError("in uta mode, but encountered latency / throughput stall\n");
             return -1;
         }
         cyc = -1;
@@ -149,8 +149,8 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             stalls = stall;
             do {
                 if (!Cycle(p, uta)) {
-                    func_0804ad38("failed to cycle cpu\n");
-                    func_0804adf0(-1);
+                    reportError("failed to cycle cpu\n");
+                    exitAfterCleanup(-1);
                 }
             } while (--stall);
         }
@@ -167,7 +167,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             reg = registerOperand(op, 1);
             if (reg) {
-                for (int part = 0; part != reg->unk_28; part++) {
+                for (int part = 0; part != reg->partCount; part++) {
                     if ((op->unk_07 >> part) & 1) {
                         rPart *rp = &reg->unk_44[part];
                         ol_s *setter = &rp->unk_24;
@@ -178,17 +178,17 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                         }
                         Operand *so = func_0805802c(setter);
                         if (!so || !isRegisterOperand(so, 2)) {
-                            func_0804ad38("emuUTA: operand that wasn't output set input\n");
+                            reportError("emuUTA: operand that wasn't output set input\n");
                             return -1;
                         }
                         if (!((so->unk_07 >> part) & 1)) {
-                            func_0804ad38("we used something not really set by setter\n");
+                            reportError("we used something not really set by setter\n");
                             return -1;
                         }
                         if (commit) {
                             int sourceOp = rp->unk_24.unk_10;
                             if (!link_oParts(src, sourceOp, part, in, o, part)) {
-                                func_0804ad38("failed to cross link operands\n");
+                                reportError("failed to cross link operands\n");
                                 return -1;
                             }
                         }
@@ -204,16 +204,16 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             reg = registerOperand(op, 2);
             if (reg) {
-                for (int part = 0; part != reg->unk_28; part++) {
+                for (int part = 0; part != reg->partCount; part++) {
                     if ((op->unk_07 >> part) & 1) {
                         rPart *rp = &reg->unk_44[part];
                         if (rp->unk_3e) {
-                            func_0804ad38("inconsistency detected.. issuelock still non-zero\n");
+                            reportError("inconsistency detected.. issuelock still non-zero\n");
                             return -1;
                         }
                         if (op->unk_0b) {
                             if (!rp->flushPending()) {
-                                func_0804ad38("failed to flush pending outputs before a blocking output\n");
+                                reportError("failed to flush pending outputs before a blocking output\n");
                                 return -1;
                             }
                             ol_s *ol = &rp->unk_24;
@@ -224,7 +224,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                         } else {
                             ol_s *ol = rp->func_0805a164();
                             if (!ol) {
-                                func_0804ad38("EMU: failed to get OL\n");
+                                reportError("EMU: failed to get OL\n");
                                 return -1;
                             }
                             ol->init(in, o, part, false);
@@ -264,7 +264,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     }
     stalls++;
     if (!Cycle(p, uta)) {
-        func_0804ad38("failed to cycle cpu!\n");
+        reportError("failed to cycle cpu!\n");
         return -1;
     }
     return stalls;

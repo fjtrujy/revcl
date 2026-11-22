@@ -7,7 +7,7 @@
 
 #include "os.h"
 
-int func_0804ad84(const char *fmt, ...);
+int reportUserMessage(const char *fmt, ...);
 char *func_0804a6e0(int tool, char *buf, int *len, int argFirst, int argEnd,
                     char **argv, bool keepTemps);
 
@@ -35,7 +35,7 @@ static inline bool startsWith(const char *s, const char *prefix)
 bool func_0804a410(const char *buf)
 {
     if (!buf) {
-        func_0804ad84("Input was a null pointer?\n");
+        reportUserMessage("Input was a null pointer?\n");
         return false;
     }
     const char *p = buf;
@@ -49,13 +49,13 @@ bool func_0804a410(const char *buf)
             inComment = false;
         if (!inComment) {
             if (startsWith(p, ".mac") || startsWith(p, ".inc")) {
-                func_0804ad84("The input seems to include directives that should be processed by gasp, not vcl ('%s...')\n", matchedDirective);
-                func_0804ad84("Try adding '-g' to the command line\n");
+                reportUserMessage("The input seems to include directives that should be processed by gasp, not vcl ('%s...')\n", matchedDirective);
+                reportUserMessage("Try adding '-g' to the command line\n");
                 return false;
             }
             if (startsWith(p, "#def") || startsWith(p, "#inc")) {
-                func_0804ad84("The input seems to include directives that should be processed by gcc, not vcl ('%s..')\n", matchedDirective);
-                func_0804ad84("Try adding '-G' to the command line\n");
+                reportUserMessage("The input seems to include directives that should be processed by gcc, not vcl ('%s..')\n", matchedDirective);
+                reportUserMessage("Try adding '-G' to the command line\n");
                 return false;
             }
         }

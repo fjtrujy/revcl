@@ -3,7 +3,7 @@
 #include "mList.h"
 #include "os.h"
 
-bool func_0804bfcc(const char *a, const char *b);
+bool asciiCaseEqual(const char *a, const char *b);
 bool func_0804c03c(const char *a, const char *b);
 char *dupString(const char *s);
 int mstrlen(const char *s);
@@ -69,7 +69,7 @@ mNode *mList::func_0804b284(const char *name)
     mNode *node = unk_0c;
     while (node) {
         if (name) {
-            if (node->unk_14 && func_0804bfcc(name, node->unk_14))
+            if (node->unk_14 && asciiCaseEqual(name, node->unk_14))
                 break;
         } else if (!node->unk_14)
             break;
@@ -84,8 +84,8 @@ mNode *mList::func_0804b2d4(const char *name)
     if (!node) {
         node = func_0804b444(name);
         if (!node) {
-            func_0804ad38("create add tail failed.\n");
-            func_0804adf0(-1);
+            reportError("create add tail failed.\n");
+            exitAfterCleanup(-1);
         }
     }
     return node;
@@ -199,7 +199,7 @@ char *mList::func_0804b574(char *buf)
 {
     for (mNode *node = unk_0c; node; node = node->unk_04)
         if (node->unk_14)
-            buf += func_0804adbc(buf, "%s:\n", node->unk_14);
+            buf += formatIntoBuffer(buf, "%s:\n", node->unk_14);
     return buf;
 }
 

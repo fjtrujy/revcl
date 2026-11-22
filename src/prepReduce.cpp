@@ -18,8 +18,8 @@ bool func_0807e528(Program *p, instStream *s, workTable *wt)
             s->unk_261 = 0;
             s->unk_262 = 0;
             s->unk_263 = 1;
-            func_0804acb0("table %s appears to have stalls - so skipping reduce pass\n",
-                          s->func_0806d674());
+            reportInfo("table %s appears to have stalls - so skipping reduce pass\n",
+                          s->streamName());
             return true;
         }
         regUseList *ul = &wt->unk_14;
@@ -32,8 +32,8 @@ bool func_0807e528(Program *p, instStream *s, workTable *wt)
             s->unk_263 = 1;
         }
         for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
-            for (int i = 0; i != in->unk_138b; i++) {
-                Operand *op = &in->unk_38[i];
+            for (int i = 0; i != in->operandCount; i++) {
+                Operand *op = &in->operands[i];
                 RegPoolEntry *reg = op->unk_18;
                 op->unk_28 = 0;
                 if (!reg)

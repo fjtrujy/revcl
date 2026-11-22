@@ -6,7 +6,7 @@
 #include "VUStr.h"
 
 int func_0804bf50(unsigned int);
-bool func_0804bfcc(const char *a, const char *b);
+bool asciiCaseEqual(const char *a, const char *b);
 void func_0804c0c8(char *s);
 int mstrlen(const char *s);
 
@@ -31,7 +31,7 @@ Operand::Operand()
     int i;
     for (i = 0; i != 4; i++) {
         if (!unk_2c[i].unk_54.clear()) {
-            func_0804ad38("failed to flow reset part %d\n", i);
+            reportError("failed to flow reset part %d\n", i);
             break;
         }
     }
@@ -47,21 +47,21 @@ bool Operand::func_080563f8()
     case 1:
     case 35:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_FL4 or V_FL4S/ MEM!\n");
+            reportError("reg no reg set - V_FL4 or V_FL4S/ MEM!\n");
             return false;
         }
         if ((unk_07 & 0xf) == unk_07)
             return true;
-        func_0804ad38("not all!\n");
+        reportError("not all!\n");
         return false;
     case 3:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_FL1!\n");
+            reportError("reg no reg set - V_FL1!\n");
             return false;
         }
         if (unk_07 == 1 || unk_07 == 2 || unk_07 == 4 || unk_07 == 8)
             return true;
-        func_0804ad38("bad mod bits for FL1..%d\n", unk_07);
+        reportError("bad mod bits for FL1..%d\n", unk_07);
         return false;
     case 4:
     case 5:
@@ -69,75 +69,75 @@ bool Operand::func_080563f8()
     case 7:
     case 8:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_P/Q/R/I/nQ!\n");
+            reportError("reg no reg set - V_P/Q/R/I/nQ!\n");
             return false;
         }
         if (unk_07 == 1)
             return true;
-        func_0804ad38("bad mod bits for V_P/Q/R/I\n");
+        reportError("bad mod bits for V_P/Q/R/I\n");
         return false;
     case 9:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_ACC!\n");
+            reportError("reg no reg set - V_ACC!\n");
             return false;
         }
         if ((unk_07 & 0xf) == unk_07)
             return true;
-        func_0804ad38("bad mod bits..hmm..out of range for acc\n");
+        reportError("bad mod bits..hmm..out of range for acc\n");
         return false;
     case 10:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_ACCYZ!\n");
+            reportError("reg no reg set - V_ACCYZ!\n");
             return false;
         }
         if (unk_07 == 7)
             return true;
-        func_0804ad38("xyz not set to ACCXYZ!\n");
+        reportError("xyz not set to ACCXYZ!\n");
         return false;
     case 11:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_FLXYZ!\n");
+            reportError("reg no reg set - V_FLXYZ!\n");
             return false;
         }
         if (unk_07 == 7)
             return true;
-        func_0804ad38("xyz not set to XYZ!\n");
+        reportError("xyz not set to XYZ!\n");
         return false;
     case 13:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_FLX!\n");
+            reportError("reg no reg set - V_FLX!\n");
             return false;
         }
         if (unk_07 == 1)
             return true;
-        func_0804ad38("bad mod bits for FLX\n");
+        reportError("bad mod bits for FLX\n");
         return false;
     case 14:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_FLY!\n");
+            reportError("reg no reg set - V_FLY!\n");
             return false;
         }
         if (unk_07 == 2)
             return true;
-        func_0804ad38("bad mod bits for FLY\n");
+        reportError("bad mod bits for FLY\n");
         return false;
     case 15:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_FLZ!\n");
+            reportError("reg no reg set - V_FLZ!\n");
             return false;
         }
         if (unk_07 == 4)
             return true;
-        func_0804ad38("bad mod bits for FLZ\n");
+        reportError("bad mod bits for FLZ\n");
         return false;
     case 16:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_FLW!\n");
+            reportError("reg no reg set - V_FLW!\n");
             return false;
         }
         if (unk_07 == 8)
             return true;
-        func_0804ad38("bad mod bits for FLW\n");
+        reportError("bad mod bits for FLW\n");
         return false;
     case 17:
     case 18:
@@ -168,17 +168,17 @@ bool Operand::func_080563f8()
     case 2:
     case 36:
         if (!unk_18) {
-            func_0804ad38("reg no reg set - V_INT/INTS!\n");
+            reportError("reg no reg set - V_INT/INTS!\n");
             return false;
         }
         if (unk_07 == 1)
             return true;
-        func_0804ad38("bad mod bits for int/ints!\n");
+        reportError("bad mod bits for int/ints!\n");
         return false;
     case 37:
         if (unk_18)
             return true;
-        func_0804ad38("ramreg.. not ok.. no m_Reg\n");
+        reportError("ramreg.. not ok.. no m_Reg\n");
         return false;
     case 39:
     case 40:
@@ -196,7 +196,7 @@ bool Operand::func_080563f8()
     case 54:
         if (unk_18)
             return true;
-        func_0804ad38("not ok type %d.. no reg!\n", unk_04);
+        reportError("not ok type %d.. no reg!\n", unk_04);
         return false;
     }
     return false;
@@ -234,7 +234,7 @@ static inline int operandZeroValue(Operand *op)
 {
     int z = 0;
     if (op->unk_18) {
-        if (op->unk_18 == op->unk_18->unk_04->unk_10)
+        if (op->unk_18 == op->unk_18->ownerPool->zeroRegister)
             z = 1;
     }
     return z;
@@ -248,35 +248,35 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     if (!func_080563f8())
         return 0;
     if (unk_18) {
-        int z = unk_18 == unk_18->unk_04->unk_10;
+        int z = unk_18 == unk_18->ownerPool->zeroRegister;
         if ((char)z != (char)operandZeroValue(this)) {
-            func_0804ad38("Operand::Emit - zero mismatch..%s but %d\n", unk_18->func_0805a8e0(), operandZeroValue(this));
+            reportError("Operand::Emit - zero mismatch..%s but %d\n", unk_18->registerName(), operandZeroValue(this));
             return 0;
         }
     }
     if (symbolic) {
         if (unk_18) {
             if (!unk_14) {
-                func_0804ad38("no original register set register is %s\n", unk_18->func_0805a8e0());
+                reportError("no original register set register is %s\n", unk_18->registerName());
                 return 0;
             }
-            rn = unk_14->func_0805a8e0();
+            rn = unk_14->registerName();
         }
     } else {
         RegPoolEntry *reg = unk_18;
         if (reg) {
-            if (reg->unk_14) {
-                func_0804ad38("non symbolic emit.. but found a virtual register in an operand!\n");
+            if (reg->isVirtual) {
+                reportError("non symbolic emit.. but found a virtual register in an operand!\n");
                 return 0;
             }
-            rn = reg->func_0805a8e0();
-            reg->unk_35 |= unk_07;
+            rn = reg->registerName();
+            reg->usedSlotMask |= unk_07;
         }
     }
     switch (unk_04) {
     case 13:
     emit_x:
-        buf += func_0804adbc(buf, "%sx", rn);
+        buf += formatIntoBuffer(buf, "%sx", rn);
         break;
     case 3:
         if (unk_07 & 1)
@@ -290,129 +290,129 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         return 0;
     case 14:
     emit_y:
-        buf += func_0804adbc(buf, "%sy", rn);
+        buf += formatIntoBuffer(buf, "%sy", rn);
         break;
     case 4:
-        buf += func_0804adbc(buf, "I");
+        buf += formatIntoBuffer(buf, "I");
         break;
     case 5:
-        buf += func_0804adbc(buf, "P");
+        buf += formatIntoBuffer(buf, "P");
         break;
     case 6:
-        buf += func_0804adbc(buf, "nP");
+        buf += formatIntoBuffer(buf, "nP");
         break;
     case 7:
-        buf += func_0804adbc(buf, "Q");
+        buf += formatIntoBuffer(buf, "Q");
         break;
     case 15:
     emit_z:
-        buf += func_0804adbc(buf, "%sz", rn);
+        buf += formatIntoBuffer(buf, "%sz", rn);
         break;
     case 8:
-        buf += func_0804adbc(buf, "R");
+        buf += formatIntoBuffer(buf, "R");
         break;
     case 9:
-        buf += func_0804adbc(buf, "ACC");
+        buf += formatIntoBuffer(buf, "ACC");
         break;
     case 10:
-        buf += func_0804adbc(buf, "ACCxyz");
+        buf += formatIntoBuffer(buf, "ACCxyz");
         break;
     case 16:
     emit_w:
-        buf += func_0804adbc(buf, "%sw", rn);
+        buf += formatIntoBuffer(buf, "%sw", rn);
         break;
     case 11:
-        buf += func_0804adbc(buf, "%sxyz", rn);
+        buf += formatIntoBuffer(buf, "%sxyz", rn);
         break;
     case 1:
     case 2:
-        buf += func_0804adbc(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", rn);
         break;
     case 39:
     case 40:
     case 41:
     case 42:
-        buf += func_0804adbc(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", rn);
         break;
     case 43:
     case 44:
-        buf += func_0804adbc(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", rn);
         break;
     case 54:
-        buf += func_0804adbc(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", rn);
         break;
     case 34:
-        buf += func_0804adbc(buf, "%s", rn);
+        buf += formatIntoBuffer(buf, "%s", rn);
         break;
     case 27: {
         mValue *imm = &unk_1c;
         if (!imm->isNumeric()) {
             char *s = imm->asChars();
             if (!s) {
-                func_0804ad38("failed to get chars from immediate operand\n");
+                reportError("failed to get chars from immediate operand\n");
                 return 0;
             }
-            buf += func_0804adbc(buf, "%s", s);
+            buf += formatIntoBuffer(buf, "%s", s);
         } else {
             if (func_08070300(unk_05) == 2)
-                buf += func_0804adbc(buf, "%d", imm->i);
+                buf += formatIntoBuffer(buf, "%d", imm->i);
             else
-                buf += func_0804adbc(buf, "0x%08x", imm->u);
+                buf += formatIntoBuffer(buf, "0x%08x", imm->u);
         }
         break;
     }
     case 29:
     case 46: {
         if (!rn) {
-            func_0804ad38("null rn - abort _BLAH_EA_IMM\n");
+            reportError("null rn - abort _BLAH_EA_IMM\n");
             return 0;
         }
         char *s = unk_1c.asChars();
         if (!s) {
-            func_0804ad38("failed to get chars from ximm blah_ea_imm\n");
+            reportError("failed to get chars from ximm blah_ea_imm\n");
             return 0;
         }
-        buf += func_0804adbc(buf, "%s(%s)", s, rn);
+        buf += formatIntoBuffer(buf, "%s(%s)", s, rn);
         break;
     }
     case 31: {
         char *s = unk_1c.asChars();
         if (!s)
-            func_0804ad38("failed to get chars from ximm for v_ea_imm\n");
-        buf += func_0804adbc(buf, "%s", s);
+            reportError("failed to get chars from ximm for v_ea_imm\n");
+        buf += formatIntoBuffer(buf, "%s", s);
     }
     case 30:
         if (!rn) {
-            func_0804ad38("null rn - abort _V_EA_REG\n");
+            reportError("null rn - abort _V_EA_REG\n");
             return 0;
         }
     case 28:
-        buf += func_0804adbc(buf, "(%s)", rn);
+        buf += formatIntoBuffer(buf, "(%s)", rn);
         break;
     case 32:
         if (!rn) {
-            func_0804ad38("null rn - abort _V_EA_INC\n");
+            reportError("null rn - abort _V_EA_INC\n");
             return 0;
         }
-        buf += func_0804adbc(buf, "(%s++)", rn);
+        buf += formatIntoBuffer(buf, "(%s++)", rn);
         break;
     case 33:
         if (!rn) {
-            func_0804ad38("null rn - abort _V_EA_DEC\n");
+            reportError("null rn - abort _V_EA_DEC\n");
             return 0;
         }
-        buf += func_0804adbc(buf, "(--%s)", rn);
+        buf += formatIntoBuffer(buf, "(--%s)", rn);
         break;
     case 37:
         if (!rn) {
-            func_0804ad38("emit ramreg - no rn\n");
+            reportError("emit ramreg - no rn\n");
             return 0;
         }
-        buf += func_0804adbc("ramreg-[%s]", rn);
+        buf += formatIntoBuffer("ramreg-[%s]", rn);
         break;
     case 55:
     default:
-        func_0804ad38("asked to emit an unknown/unemittable operand\n");
+        reportError("asked to emit an unknown/unemittable operand\n");
         return 0;
     }
     return buf;
@@ -427,14 +427,14 @@ bool Operand::func_080569cc()
     unk_2b = 0;
     for (; i != 4; i++) {
         if (!unk_2c[i].unk_54.clear()) {
-            func_0804ad38("failed to flow reset part %d\n", i);
+            reportError("failed to flow reset part %d\n", i);
             return false;
         }
     }
     return true;
 }
 
-static inline bool resetOperandLock(cls0805bcc4 *lock)
+static inline bool resetOperandLock(OperandLock *lock)
 {
     return lock->func_0805bcc4();
 }
@@ -466,7 +466,7 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
     case 9:  mstrcpy(out->name, "ACC");   out->unk_2000 = 15; return true;
     case 17: mstrcpy(out->name, "CLIP");  out->unk_2000 = 1; return true;
     case 18: case 19: case 20: case 21:
-        func_0804ad38("odecode for a V_STAT\n");
+        reportError("odecode for a V_STAT\n");
         return false;
     case 55:
         out->name[0] = 0;
@@ -485,7 +485,7 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
     case 40: out->unk_2000 = 3; return true;
     case 45: mstrcpy(out->name, "CLIPA"); out->unk_2000 = 1; return true;
     default:
-        func_0804ad38("fell through building an implicit operand of type %s\n", opKindName(kind));
+        reportError("fell through building an implicit operand of type %s\n", opKindName(kind));
         out->name[0] = 0;
         out->unk_800[0] = 0;
         return false;
@@ -522,7 +522,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     int uB;
     char zG;
     if (mstrlen(tok) > 2047) {
-        func_0804ad38("odecodeToken: token was too long\n");
+        reportError("odecodeToken: token was too long\n");
         return false;
     }
 
@@ -555,7 +555,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         if (td == out->unk_1800) {
             ((int *)tok)[1] = uA;
             ((int *)tok)[2] = uB;
-            func_0804ac7c("ignoring empty tag\n");
+            reportWarning("ignoring empty tag\n");
             out->unk_1800[0] = 0;
         } else {
             td[0] = ':';
@@ -584,7 +584,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         if (zs)
             return false;
         *spk = svx;
-        func_0804ad38("encountered a force bind to $ra in an explicit operand\n");
+        reportError("encountered a force bind to $ra in an explicit operand\n");
         return false;
     }
     case 35: {
@@ -596,7 +596,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         *d = 0;
         if (*e) {
             if (*e != '(') {
-                func_0804ad38("oDecodeToken: bad fl4s\n");
+                reportError("oDecodeToken: bad fl4s\n");
                 return false;
             }
             e++;
@@ -621,7 +621,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             *pbad = false;
             bool ok = func_08051f08(out->name, &out->unk_2000, pbad);
             if (*pbad) {
-                func_0804ad84("bad mod bits in operand\n");
+                reportUserMessage("bad mod bits in operand\n");
                 return false;
             }
             if (!ok) {
@@ -635,7 +635,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 out->unk_2000 = 15;
             }
             if (out->unk_2000 == -1) {
-                func_0804ad38("oDecodeToken: bad FL4S bits\n");
+                reportError("oDecodeToken: bad FL4S bits\n");
                 return false;
             }
             func_0804c0c8(out->name);
@@ -651,7 +651,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         *d = 0;
         if (*s) {
             if (*s != '(') {
-                func_0804ad38("oDecodeToken: bad gprs\n");
+                reportError("oDecodeToken: bad gprs\n");
                 return false;
             }
             s++;
@@ -700,7 +700,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 if (zs1)
                     return false;
                 *spk1 = svx1;
-                func_0804ad38("oDecodeToken: bad FL4 bits\n");
+                reportError("oDecodeToken: bad FL4 bits\n");
                 return false;
             }
             mstrcpy(out->name, tok);
@@ -724,7 +724,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         if (func_08051f78(tok, pmask)) {
             out->unk_2008 = 1;
             if (func_0804bf50(mask) != 1) {
-                func_0804ad84("bad [x,y,z,w] token for scalar\n");
+                reportUserMessage("bad [x,y,z,w] token for scalar\n");
                 return false;
             }
             out->unk_2000 = mask;
@@ -739,13 +739,13 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             *d = 0;
             return true;
         }
-        if (func_0804bfcc(tok, "q")) {
+        if (asciiCaseEqual(tok, "q")) {
             out->unk_2008 = 1;
             out->unk_2000 = 1;
             mstrcpy(out->name, "Q");
             return true;
         }
-        if (func_0804bfcc(tok, "i")) {
+        if (asciiCaseEqual(tok, "i")) {
             out->unk_2008 = 1;
             out->unk_2000 = 1;
             mstrcpy(out->name, "I");
@@ -767,7 +767,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         }
         if (newSyntax) {
             if (!func_08051f78(tok, pmask) || func_0804bf50(mask) != 1) {
-                func_0804ad38("oDecodeToken: [x/y/z/w] token for new syntax\n");
+                reportError("oDecodeToken: [x/y/z/w] token for new syntax\n");
                 return false;
             }
             out->unk_2000 = mask;
@@ -783,7 +783,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         } else {
             mask = func_08052100(tok);
             if (func_0804bf50(mask) != 1) {
-                func_0804ad38("oDecodeToken: bad FL1 bits\n");
+                reportError("oDecodeToken: bad FL1 bits\n");
                 return false;
             }
             out->unk_2000 = mask;
@@ -793,7 +793,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     case 4:
         if (count != 1 || (*tok != 'i' && *tok != 'I')) {
-            func_0804ad38("oDecode:: arg I\n");
+            reportError("oDecode:: arg I\n");
             return false;
         }
         out->unk_2000 = 1;
@@ -811,14 +811,14 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[kind] = svk_c5;
         }
         if (count != 1 || (*tok != 'p' && *tok != 'P'))
-            func_0804ad38("oDecode:: arg P\n");
+            reportError("oDecode:: arg P\n");
         out->unk_2000 = 1;
         out->name[0] = 'P';
         out->name[1] = 0;
         return true;
     case 7:
         if (count != 1 || (*tok != 'q' && *tok != 'Q')) {
-            func_0804ad38("oDecode:: arg Q\n");
+            reportError("oDecode:: arg Q\n");
             return false;
         }
         out->unk_2000 = 1;
@@ -836,7 +836,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[kind] = field;
         }
         if (count != 1 || (*tok != 'r' && *tok != 'R')) {
-            func_0804ad38("oDecode:: arg R\n");
+            reportError("oDecode:: arg R\n");
             return false;
         }
         out->unk_2000 = 1;
@@ -867,7 +867,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             ((int *)tok)[kind] = svk_c9;
         }
-            func_0804ad38("oDecodeToken: bad FL4 bits\n");
+            reportError("oDecodeToken: bad FL4 bits\n");
             return false;
         }
         mstrcpy(out->name, "ACC");
@@ -876,7 +876,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     case 10:
         mask = func_08052100(tok);
         if (mask && mask != 7) {
-            func_0804ad38("bad mod bits for ACCxyz\n");
+            reportError("bad mod bits for ACCxyz\n");
             return false;
         }
         out->unk_2000 = 7;
@@ -889,7 +889,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             m = 0;
             if (func_08051f78(tok, &m)) {
                 if (m != field) {
-                    func_0804ad84("instruction and operand have mismatching field select\n");
+                    reportUserMessage("instruction and operand have mismatching field select\n");
                     return false;
                 }
                 char *s = tok;
@@ -909,7 +909,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         } else {
             mask = func_08052100(tok);
             if (mask && mask != field) {
-                func_0804ad38("oDecode: bad FL?\n");
+                reportError("oDecode: bad FL?\n");
                 return false;
             }
             out->unk_2000 = field;
@@ -964,7 +964,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         *d = 0;
         if (*e) {
             if (*e != '(') {
-                func_0804ad38("oDecodeToken: bad ints\n");
+                reportError("oDecodeToken: bad ints\n");
                 return false;
             }
             e++;
@@ -1104,8 +1104,8 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             ((int *)tok)[kind] = svk_c34;
         }
-        if (!func_0804bfcc(tok, "vi01") && !func_0804bfcc(tok, "vi1")) {
-            func_0804ad84("oDecode:: operand has to be vi01 for this instruction..\n");
+        if (!asciiCaseEqual(tok, "vi01") && !asciiCaseEqual(tok, "vi1")) {
+            reportUserMessage("oDecode:: operand has to be vi01 for this instruction..\n");
             return false;
         }
         mstrcpy(out->unk_800, tok);
@@ -1113,8 +1113,8 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         out->unk_2000 = 1;
         return true;
     case 26:
-        func_0804ad38("explicit mac register - but I'm writing ASTATUS here??\n");
-        func_0804adf0(1);
+        reportError("explicit mac register - but I'm writing ASTATUS here??\n");
+        exitAfterCleanup(1);
         out->unk_2000 = 1;
         mstrcpy(out->name, "ASTATUS");
         return true;
@@ -1148,7 +1148,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         *d = 0;
         if (*s) {
             if (*s != '(') {
-                func_0804ad38("oDecodeToken: bad fprs\n");
+                reportError("oDecodeToken: bad fprs\n");
                 return false;
             }
             s++;
@@ -1203,7 +1203,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             while (*s && *s != ')')
                 *d++ = *s++;
         }
-        func_0804ad38("oDecode: general BAD '%s'\n", opKindName(kind));
+        reportError("oDecode: general BAD '%s'\n", opKindName(kind));
         e = 0;
         q = 0;
         break;
@@ -1333,11 +1333,11 @@ Instr *Operand::getOwner()
 {
     Instr *owner = 0;
     if (unk_26 >= 0) {
-        VclPtrWord off = (VclPtrWord)&((Instr *)0)->unk_38[unk_26];
+        VclPtrWord off = (VclPtrWord)&((Instr *)0)->operands[unk_26];
         Instr *p = (Instr *)((char *)this - off);
-        if (p->unk_138b < unk_26) {
-            func_0804ad38("operand: getOwner - bad instruction?\n");
-            func_0804adf0(-1);
+        if (p->operandCount < unk_26) {
+            reportError("operand: getOwner - bad instruction?\n");
+            exitAfterCleanup(-1);
         }
         owner = p;
     }
@@ -1347,16 +1347,16 @@ Instr *Operand::getOwner()
 OpSlot *Operand::getPart(int part)
 {
     if (part < 0 || part > 3) {
-        func_0804ad38("failed to get operand part - out of range!!\n", part);
-        func_0804adf0(-1);
+        reportError("failed to get operand part - out of range!!\n", part);
+        exitAfterCleanup(-1);
     }
     if (!unk_18) {
-        func_0804ad38("operand had no register for get part\n");
-        func_0804adf0(-1);
+        reportError("operand had no register for get part\n");
+        exitAfterCleanup(-1);
     }
-    if (part >= unk_18->unk_28) {
-        func_0804ad38("operand::getPart: out of range for register\n");
-        func_0804adf0(-1);
+    if (part >= unk_18->partCount) {
+        reportError("operand::getPart: out of range for register\n");
+        exitAfterCleanup(-1);
     }
     bool has = (unk_07 >> part) & 1;
     if (has)
@@ -1371,42 +1371,42 @@ char *Operand::func_08057b90(bool flag, char *buf)
     if (unk_08)
         return buf;
     switch (unk_04) {
-    case 38: buf += func_0804adbc(buf, "vec_reg"); break;
+    case 38: buf += formatIntoBuffer(buf, "vec_reg"); break;
     case 1:
         if (flag)
-            buf += func_0804adbc(buf, "vf_reg");
+            buf += formatIntoBuffer(buf, "vf_reg");
         else
-            buf += func_0804adbc(buf, "vf_reg[xyzw]");
+            buf += formatIntoBuffer(buf, "vf_reg[xyzw]");
         break;
-    case 2: buf += func_0804adbc(buf, "vi_reg"); break;
-    case 3: buf += func_0804adbc(buf, "vf_reg[x/y/z/w]"); break;
-    case 4: buf += func_0804adbc(buf, "I"); break;
-    case 5: buf += func_0804adbc(buf, "P"); break;
-    case 7: buf += func_0804adbc(buf, "Q"); break;
-    case 8: buf += func_0804adbc(buf, "R"); break;
-    case 9: buf += func_0804adbc(buf, "ACC"); break;
-    case 10: buf += func_0804adbc(buf, "ACCxyz"); break;
-    case 11: buf += func_0804adbc(buf, "vf_regxyz"); break;
-    case 13: buf += func_0804adbc(buf, "vf_regx"); break;
-    case 14: buf += func_0804adbc(buf, "vf_regy"); break;
-    case 15: buf += func_0804adbc(buf, "vf_regz"); break;
-    case 16: buf += func_0804adbc(buf, "vf_regw"); break;
-    case 27: buf += func_0804adbc(buf, "IMMEDIATE(%s)", func_0806a33c(unk_05)); break;
-    case 28: buf += func_0804adbc(buf, "(vi_reg)"); break;
-    case 29: buf += func_0804adbc(buf, "OFFSET(vi_reg)"); break;
-    case 30: buf += func_0804adbc(buf, "(vi_reg)[x/y/z/w]"); break;
-    case 31: buf += func_0804adbc(buf, "OFFSET(vi_reg)[x/y/z/w]"); break;
-    case 32: buf += func_0804adbc(buf, "(vi_reg++)"); break;
-    case 33: buf += func_0804adbc(buf, "(--vi_reg)"); break;
-    case 34: buf += func_0804adbc(buf, "vi01"); break;
-    case 35: buf += func_0804adbc(buf, "vf_reg[.xyzw][(base_reg)]"); break;
-    case 36: buf += func_0804adbc(buf, "vi_reg[(base_reg)]"); break;
-    case 39: case 40: case 41: buf += func_0804adbc(buf, "gpr"); break;
-    case 42: buf += func_0804adbc(buf, "gpr(reg)"); break;
-    case 43: buf += func_0804adbc(buf, "fpr"); break;
-    case 44: buf += func_0804adbc(buf, "fpr(reg)"); break;
-    case 46: buf += func_0804adbc(buf, "OFFSET(gpr)"); break;
-    case 54: buf += func_0804adbc(buf, "$ra"); break;
+    case 2: buf += formatIntoBuffer(buf, "vi_reg"); break;
+    case 3: buf += formatIntoBuffer(buf, "vf_reg[x/y/z/w]"); break;
+    case 4: buf += formatIntoBuffer(buf, "I"); break;
+    case 5: buf += formatIntoBuffer(buf, "P"); break;
+    case 7: buf += formatIntoBuffer(buf, "Q"); break;
+    case 8: buf += formatIntoBuffer(buf, "R"); break;
+    case 9: buf += formatIntoBuffer(buf, "ACC"); break;
+    case 10: buf += formatIntoBuffer(buf, "ACCxyz"); break;
+    case 11: buf += formatIntoBuffer(buf, "vf_regxyz"); break;
+    case 13: buf += formatIntoBuffer(buf, "vf_regx"); break;
+    case 14: buf += formatIntoBuffer(buf, "vf_regy"); break;
+    case 15: buf += formatIntoBuffer(buf, "vf_regz"); break;
+    case 16: buf += formatIntoBuffer(buf, "vf_regw"); break;
+    case 27: buf += formatIntoBuffer(buf, "IMMEDIATE(%s)", func_0806a33c(unk_05)); break;
+    case 28: buf += formatIntoBuffer(buf, "(vi_reg)"); break;
+    case 29: buf += formatIntoBuffer(buf, "OFFSET(vi_reg)"); break;
+    case 30: buf += formatIntoBuffer(buf, "(vi_reg)[x/y/z/w]"); break;
+    case 31: buf += formatIntoBuffer(buf, "OFFSET(vi_reg)[x/y/z/w]"); break;
+    case 32: buf += formatIntoBuffer(buf, "(vi_reg++)"); break;
+    case 33: buf += formatIntoBuffer(buf, "(--vi_reg)"); break;
+    case 34: buf += formatIntoBuffer(buf, "vi01"); break;
+    case 35: buf += formatIntoBuffer(buf, "vf_reg[.xyzw][(base_reg)]"); break;
+    case 36: buf += formatIntoBuffer(buf, "vi_reg[(base_reg)]"); break;
+    case 39: case 40: case 41: buf += formatIntoBuffer(buf, "gpr"); break;
+    case 42: buf += formatIntoBuffer(buf, "gpr(reg)"); break;
+    case 43: buf += formatIntoBuffer(buf, "fpr"); break;
+    case 44: buf += formatIntoBuffer(buf, "fpr(reg)"); break;
+    case 46: buf += formatIntoBuffer(buf, "OFFSET(gpr)"); break;
+    case 54: buf += formatIntoBuffer(buf, "$ra"); break;
     default: break;
     }
     return buf;
@@ -1428,18 +1428,18 @@ int Operand::getRegFrom(Operand *src)
     int a = func_08057a34(unk_04);
     int b = func_08057a34(src->unk_04);
     if (b != a) {
-        func_0804ad38("incompatible type request getting type for operand\n");
+        reportError("incompatible type request getting type for operand\n");
         return 0;
     }
     unk_18 = src->unk_18;
     unk_14 = src->unk_14;
     unk_10 = src->unk_10;
     if (!unk_18) {
-        func_0804ad38("no register set in get reg from\n");
+        reportError("no register set in get reg from\n");
         return 0;
     }
-    if (unk_18->unk_24 != b) {
-        func_0804ad38("register not of correct type\n");
+    if (unk_18->registerClass != b) {
+        reportError("register not of correct type\n");
         return 0;
     }
     return func_080563f8();
@@ -1449,5 +1449,5 @@ const char *Operand::func_08057e40()
 {
     if (!unk_18)
         return "NO_REG";
-    return unk_18->func_0805a8e0();
+    return unk_18->registerName();
 }

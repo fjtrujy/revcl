@@ -3,9 +3,9 @@
 set(VCL_SOURCES
   src/main.cpp
   src/preprocess.cpp
-  src/f0804a608.cpp
+  src/preprocessorTools.cpp
   src/os.cpp
-  src/f0804ac44.cpp
+  src/diagnostics.cpp
   src/cgReadFile.cpp
   src/mList.cpp
   src/lists.cpp
@@ -17,13 +17,13 @@ set(VCL_SOURCES
   src/ExecRP.cpp
   src/VUStr.cpp
   src/infoList.cpp
-  src/f08052f84.cpp
-  src/f080532d8.cpp
+  src/instructionBranchFixups.cpp
+  src/instructionOperandNormalization.cpp
   src/Instr.cpp
   src/Operand.cpp
   src/olListClear.cpp
   src/olList.cpp
-  src/cls08058718.cpp
+  src/instructionPosition.cpp
   src/tPairList.cpp
   src/RegPool.cpp
   src/flushPending.cpp
@@ -60,7 +60,7 @@ set(VCL_SOURCES
   src/fitsSigned.cpp
   src/collapse.cpp
   src/explodeRaw.cpp
-  src/f0806ae58.cpp
+  src/movePropagation.cpp
   src/detectMoves.cpp
   src/hackIOmask.cpp
   src/Processor.cpp
@@ -74,7 +74,7 @@ set(VCL_SOURCES
   src/moveRec.cpp
   src/loadStalls.cpp
   src/wtRow.cpp
-  src/f080724f0.cpp
+  src/tableRowAccess.cpp
   src/iTable.cpp
   src/prepExtInfo.cpp
   src/prepRawTable.cpp
@@ -89,18 +89,18 @@ set(VCL_SOURCES
   src/sred.cpp
   src/findCap.cpp
   src/capping.cpp
-  src/f0807aee4.cpp
+  src/externalStreamPreparation.cpp
   src/earliestInsert.cpp
   src/setLocks.cpp
   src/prepReduce.cpp
   src/linearReduce.cpp
   src/pullUp.cpp
   src/dragDown.cpp
-  src/f0807f2c4.cpp
-  src/f0807f308.cpp
+  src/localMoveResolution.cpp
+  src/moveListConsistency.cpp
   src/wrangle.cpp
-  src/f0808061c.cpp
-  src/f080817d4.cpp
+  src/wrangleCore.cpp
+  src/wrangleCandidateSelection.cpp
   src/wrangleOpts.cpp
   src/optNormal1.cpp
   src/optHDown.cpp
@@ -111,18 +111,18 @@ set(VCL_SOURCES
   src/optVuta1.cpp
   src/oDecode.cpp
   src/flowBlock.cpp
-  src/f080843a0.cpp
+  src/flowBlockQueries.cpp
   src/fileEmit.cpp
   src/bindExternals.cpp
   src/bindDependencies.cpp
-  src/f08085a9c.cpp
-  src/f08085aa8.cpp
+  src/flowBuildHooks.cpp
+  src/splitParserStream.cpp
   src/streamBuilders.cpp
   src/buildRaw.cpp
   src/buildSynth.cpp
   src/buildUta.cpp
   src/resolveStreamBranches.cpp
-  src/f0808750c.cpp
+  src/instructionTextEmission.cpp
   src/efu_Hook.cpp
   src/RegWeb.cpp
   src/VU.cpp

@@ -43,55 +43,55 @@ bool func_0807e740(Program *p, workTable *wt, unsigned char a, unsigned char b);
 bool workTable::qRegRef(regUse *ru)
 {
     if (!ru) {
-        func_0804ad38("qRegRef: passed a null pointer\n");
-        func_0804adf0(-1);
+        reportError("qRegRef: passed a null pointer\n");
+        exitAfterCleanup(-1);
     }
     regUse *c = ru->Clone();
     if (!c) {
-        func_0804ad38("failed to clone regref\n");
-        func_0804adf0(-1);
+        reportError("failed to clone regref\n");
+        exitAfterCleanup(-1);
     }
     RegPoolEntry *reg = c->unk_08;
     if (!reg) {
-        func_0804ad38("no register attached to cloned rf during qRegRef\n");
+        reportError("no register attached to cloned rf during qRegRef\n");
         delete c;
         return false;
     }
     if (!unk_14.append(c)) {
-        func_0804ad38("failed to add cloned regref to list\n");
+        reportError("failed to add cloned regref to list\n");
         delete c;
         return false;
     }
     if (~c->unk_0f & c->unk_0d) {
-        func_0804ad38("xobits set, but o bits not\n");
+        reportError("xobits set, but o bits not\n");
         c->func_0805b51c();
         return false;
     }
     if (~c->unk_0e & c->unk_0c) {
-        func_0804ad38("xibits set, but i bits not\n");
+        reportError("xibits set, but i bits not\n");
         c->func_0805b51c();
         return false;
     }
-    for (int i = 0; i != reg->unk_28; i++) {
+    for (int i = 0; i != reg->partCount; i++) {
         c->unk_20[i].unk_30 = ru->unk_20[i].unk_30;
         c->unk_20[i].unk_32 = ru->unk_20[i].unk_32;
-        cls0805c244 *ll = getLockList(reg, i);
+        RegisterPartLockList *ll = getLockList(reg, i);
         if (!ll) {
-            func_0804ad38("failed to get lock list ptr in register for rfv for reg %s\n", reg->func_0805a8e0());
-            func_0804adf0(-1);
+            reportError("failed to get lock list ptr in register for rfv for reg %s\n", reg->registerName());
+            exitAfterCleanup(-1);
         }
         if (c->unk_20[i].unk_58) {
-            func_0804ad38("rll is already set in rrp\n");
-            func_0804adf0(-1);
+            reportError("rll is already set in rrp\n");
+            exitAfterCleanup(-1);
         }
         c->unk_20[i].unk_58 = (VclPtrWord)ll;
         if (reg->func_0805a908(i)) {
-            func_0804ad38("regref register part already had locklist\n");
-            func_0804adf0(-1);
+            reportError("regref register part already had locklist\n");
+            exitAfterCleanup(-1);
         }
         if (!reg->func_0805a924(i, (VclPtrWord)ll)) {
-            func_0804ad38("failed to set curr lock list pointer in rf register\n");
-            func_0804adf0(-1);
+            reportError("failed to set curr lock list pointer in rf register\n");
+            exitAfterCleanup(-1);
         }
         if ((c->unk_0f >> i) & 1)
             ll->unk_29 = 0;
@@ -102,37 +102,37 @@ bool workTable::qRegRef(regUse *ru)
             sync = true;
         char nb = reg->unk_1c;
         if (!nb && (c->unk_10 & (c->unk_0f | c->unk_0d))) {
-            func_0804ad38("t bits set for nbid register\n");
+            reportError("t bits set for nbid register\n");
             c->func_0805b51c();
             return false;
         }
         if (t || xi || sync) {
             unsigned char nbz = nb == 0;
-            cls0805bcc4 *lk = c->unk_20[i].func_0805b830();
+            OperandLock *lk = c->unk_20[i].func_0805b830();
             if (!lk)
-                func_0804ad38("failed to get lock for %s.%d as %s\n",
-                              reg->func_0805a8e0(), i, reg->func_0805a8e0());
+                reportError("failed to get lock for %s.%d as %s\n",
+                              reg->registerName(), i, reg->registerName());
             if (!lk->setOwner(i, c)) {
-                func_0804ad38("falied to set owner\n");
-                func_0804adf0(-1);
+                reportError("falied to set owner\n");
+                exitAfterCleanup(-1);
                 return false;
             }
             if (!ll->addOutput(lk, 0, 1, nbz)) {
-                func_0804ad38("failed to register output lock for regref\n");
-                func_0804adf0(-1);
+                reportError("failed to register output lock for regref\n");
+                exitAfterCleanup(-1);
                 return false;
             }
             if (t) {
                 bool ext = !(((c->unk_0f | c->unk_0e) >> i) & 1);
                 if (!ll->addExtOutput(lk, ext)) {
-                    func_0804ad38("failed to add pass thru reg ref as ext output for register %s\n",
-                                  reg->func_0805a8e0());
+                    reportError("failed to add pass thru reg ref as ext output for register %s\n",
+                                  reg->registerName());
                     return false;
                 }
                 dump();
             }
             if (!ll->addOutputLock(lk)) {
-                func_0804ad38("regRef::LoadLocks - failed to add output lock\n");
+                reportError("regRef::LoadLocks - failed to add output lock\n");
                 return false;
             }
         }
@@ -158,34 +158,34 @@ bool workTable::qInstruction(Instr *in)
 {
     int i;
     if (!in->func_080541fc()) {
-        func_0804ad38("tried to queue a synthetic\n");
+        reportError("tried to queue a synthetic\n");
         return false;
     }
     in->func_08054138();
     Instr *c = in->clone();
     if (!c) {
-        func_0804ad38("failed to clone instruction\n");
-        func_0804adf0(-1);
+        reportError("failed to clone instruction\n");
+        exitAfterCleanup(-1);
     }
     c->func_08055f78(in);
     if (!unk_10) {
-        func_0804ad38("qInstruction - no owner\n");
+        reportError("qInstruction - no owner\n");
         return false;
     }
     if (c->unk_13d5 == 1 || c->unk_13d5 == 2) {
         if (c->unk_13d6 < 0) {
-            func_0804ad38("m_aaOp<0 but dstMode is set!\n");
-            func_0804adf0(-1);
+            reportError("m_aaOp<0 but dstMode is set!\n");
+            exitAfterCleanup(-1);
         }
-        c->unk_38[c->unk_13d6].unk_2b = 2;
+        c->operands[c->unk_13d6].unk_2b = 2;
     }
     setPipeBits(c);
 
-    for (i = 0; i != c->unk_138b; i++) {
+    for (i = 0; i != c->operandCount; i++) {
         Operand *src = in->getOp(i);
         Operand *dst = c->getOp(i);
         if (!src || !dst) {
-            func_0804ad38("qInstruction failed to get an operand\n");
+            reportError("qInstruction failed to get an operand\n");
             return false;
         }
         RegPoolEntry *reg = dst->unk_18;
@@ -193,9 +193,9 @@ bool workTable::qInstruction(Instr *in)
             continue;
         regUse *rr = unk_14.func_0805b5dc(reg);
         if (!rr) {
-            func_0804ad38("find reg ref failed to find rr from owner.. by now - this is fatal.. register %s\n",
-                          reg->func_0805a8e0());
-            func_0804adf0(-1);
+            reportError("find reg ref failed to find rr from owner.. by now - this is fatal.. register %s\n",
+                          reg->registerName());
+            exitAfterCleanup(-1);
         }
         if (isRegisterOperand(dst, 1)) {
             if (isAAOperand(dst))
@@ -204,21 +204,21 @@ bool workTable::qInstruction(Instr *in)
         if (isRegisterOperand(dst, 1)) {
             if (g_080b336c && func_0806c6c4(reg) && dst->unk_2b != 2)
                 dst->unk_2b = 1;
-            for (int k = 0; k != reg->unk_28; k++) {
+            for (int k = 0; k != reg->partCount; k++) {
                 if ((dst->unk_07 >> k) & 1) {
-                cls0805bcc4 *lk = &dst->unk_2c[k];
+                OperandLock *lk = &dst->unk_2c[k];
                 int a = 0;
-                cls0805c244 *ll = (cls0805c244 *)reg->func_0805a908(k);
+                RegisterPartLockList *ll = (RegisterPartLockList *)reg->func_0805a908(k);
                 if (!ll) {
-                    func_0804ad38("failed to get curr lock list during qinst\n");
-                    func_0804adf0(-1);
+                    reportError("failed to get curr lock list during qinst\n");
+                    exitAfterCleanup(-1);
                 }
                 lk->setOwner(k, c, i);
-                cls0805bcc4 *out;
+                OperandLock *out;
                 if ((dst->unk_27 >> k) & 1) {
                     regUse *o = unk_14.func_0805b5dc(reg);
                     if (!o) {
-                        func_0804ad38("failed to find regref owner for input\n");
+                        reportError("failed to find regref owner for input\n");
                         return false;
                     }
                     out = o->unk_20[k].func_0805b830();
@@ -226,26 +226,26 @@ bool workTable::qInstruction(Instr *in)
                     olList *uses = &src->unk_2c[k].unk_54;
                     ol_s *ol = uses->unk_00;
                     if (!ol || ol->unk_00) {
-                        func_0804ad38("more or less than one oploc for non-extern input\n");
-                        func_0804adf0(-1);
+                        reportError("more or less than one oploc for non-extern input\n");
+                        exitAfterCleanup(-1);
                     }
                     Instr *setter = ol->unk_04;
                     if (!setter) {
-                        func_0804ad38("could not get setting op for setter\n");
-                        func_0804adf0(-1);
+                        reportError("could not get setting op for setter\n");
+                        exitAfterCleanup(-1);
                     }
                     Instr *img = setter->unk_08;
                     if (!img) {
-                        func_0804ad38("qInstruction - setter had null work clone set\n");
+                        reportError("qInstruction - setter had null work clone set\n");
                         return false;
                     }
                     if ((workTable *)img->unk_30 != this) {
-                        func_0804ad38("qInstruction  - image of setter wasn't in this table\n");
+                        reportError("qInstruction  - image of setter wasn't in this table\n");
                         return false;
                     }
                     Operand *sop = img->getOp(ol->unk_10);
                     if (!sop) {
-                        func_0804ad38("failed to get setter operand\n");
+                        reportError("failed to get setter operand\n");
                         return false;
                     }
                     out = &sop->unk_2c[k];
@@ -253,7 +253,7 @@ bool workTable::qInstruction(Instr *in)
                 }
                 lk->unk_19 = operandLockMode(dst);
                 if (!ll->addInput(out, lk, a, dst->unk_0b)) {
-                    func_0804ad38("failed to register input operand\n");
+                    reportError("failed to register input operand\n");
                     return false;
                 }
                 }
@@ -263,33 +263,33 @@ bool workTable::qInstruction(Instr *in)
             dst->unk_2b = 1;
     }
 
-    for (i = 0; i != c->unk_138b; i++) {
+    for (i = 0; i != c->operandCount; i++) {
         Operand *op = c->getOp(i);
         RegPoolEntry *reg = registerOperand(op, 2);
         if (!reg)
             continue;
-        for (int k = 0; k != reg->unk_28; k++) {
+        for (int k = 0; k != reg->partCount; k++) {
             if ((op->unk_07 >> k) & 1) {
-                cls0805c244 *ll = (cls0805c244 *)reg->func_0805a908(k);
+                RegisterPartLockList *ll = (RegisterPartLockList *)reg->func_0805a908(k);
                 if (!ll) {
-                    func_0804ad38("couldn't get rll from reg\n");
-                    func_0804adf0(-1);
+                    reportError("couldn't get rll from reg\n");
+                    exitAfterCleanup(-1);
                 }
-                cls0805bcc4 *lk = &op->unk_2c[k];
+                OperandLock *lk = &op->unk_2c[k];
                 lk->setOwner(k, c, i);
                 int a = 1;
                 if (reg->unk_2c)
                     a = c->unk_13cf;
                 if (!ll->addOutput(lk, a, op->unk_0a, op->unk_0b)) {
-                    func_0804ad38("failed to register output operand : %s.%d\n", reg->func_0805a8e0(), k);
+                    reportError("failed to register output operand : %s.%d\n", reg->registerName(), k);
                     return false;
                 }
                 if ((op->unk_27 >> k) & 1) {
-                    cls0805c244 *el = (cls0805c244 *)reg->func_0805a908(k);
+                    RegisterPartLockList *el = (RegisterPartLockList *)reg->func_0805a908(k);
                     if (!el)
-                        func_0804ad38("couldn't get curr lock list for output\n");
+                        reportError("couldn't get curr lock list for output\n");
                     if (!el->addExtOutput(lk, false)) {
-                        func_0804ad38("failed to add ext output!\n");
+                        reportError("failed to add ext output!\n");
                         return false;
                     }
                 }
@@ -297,7 +297,7 @@ bool workTable::qInstruction(Instr *in)
         }
     }
 
-    for (i = 0; i != c->unk_138b; i++) {
+    for (i = 0; i != c->operandCount; i++) {
         Operand *op = c->getOp(i);
         RegPoolEntry *reg = registerOperand(op, 1);
         if (!reg)
@@ -307,32 +307,32 @@ bool workTable::qInstruction(Instr *in)
             if (registerOperand(o2, 2) != reg)
                 continue;
             int k = 0;
-            if (k != reg->unk_28) {
+            if (k != reg->partCount) {
                 OpSlot *outputLock = o2->unk_2c;
                 OpSlot *inputLock = op->unk_2c;
                 do {
                     if (((op->unk_07 & o2->unk_07) >> k) & 1) {
                         if (!inputLock->setInOut(outputLock)) {
-                            func_0804ad38("failed to set in out\n");
-                            func_0804adf0(-1);
+                            reportError("failed to set in out\n");
+                            exitAfterCleanup(-1);
                             return false;
                         }
                     }
                     k++;
                     outputLock++;
                     inputLock++;
-                } while (k != reg->unk_28);
+                } while (k != reg->partCount);
             }
         }
     }
 
     if (!AddToDo_Tail((Block *)this, c)) {
-        func_0804ad38("iTable::qInstruction - failed to add to todo tail\n");
+        reportError("iTable::qInstruction - failed to add to todo tail\n");
         delete c;
         return false;
     }
     if (!logAddLinear_Tail(c)) {
-        func_0804ad38("iTable::qInstruction - failed to add to linear list tail\n");
+        reportError("iTable::qInstruction - failed to add to linear list tail\n");
         return false;
     }
     if (unk_38 && c->unk_1388) {

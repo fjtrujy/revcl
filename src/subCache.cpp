@@ -1,3 +1,4 @@
+#include "os.h"
 #include "subCache.h"
 
 static inline void subCache_release_inl(subCache *sc)
@@ -12,7 +13,7 @@ static inline void subCache_release_inl(subCache *sc)
 static inline void subCache_flush_inl(subCache *sc)
 {
     if (!sc->unk_00)
-        func_0804ae34("subcache flush - no table\n");
+        exitWithError("subcache flush - no table\n");
     for (unsigned i = 0; i != sc->unk_0c; i++)
         sc->unk_00[i] = 0;
 }
@@ -21,13 +22,13 @@ void subCache::init(int fuidMax)
 {
     subCache_release_inl(this);
     if (fuidMax <= 0)
-        func_0804ae34("fuid_max is <=0 in sub cache init\n");
+        exitWithError("fuid_max is <=0 in sub cache init\n");
     unk_08 = (unsigned)(fuidMax + 3) >> 2;
     unk_0c = unk_08 * (fuidMax + 1);
     unk_04 = fuidMax;
     unk_00 = new int[unk_0c];
     if (!unk_00)
-        func_0804ae34("failed to get table for subc\n");
+        exitWithError("failed to get table for subc\n");
     subCache_flush_inl(this);
 }
 
@@ -44,8 +45,8 @@ void subCache::flush()
 int subCache::offset(unsigned fuid)
 {
     if (!unk_00)
-        func_0804ae34("no table set for subCache\n");
+        exitWithError("no table set for subCache\n");
     if (fuid > unk_04)
-        func_0804ae34("out of bounds fuid for subCache\n");
+        exitWithError("out of bounds fuid for subCache\n");
     return fuid * unk_08 * 4;
 }

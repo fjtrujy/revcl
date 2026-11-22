@@ -12,7 +12,7 @@ const char *g_080b308c =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_@.[]";
 const char *g_080b3090[3] = { "0123456789", "0123456789abcdef", "01" };
 
-bool func_0804bfcc(const char *a, const char *b);
+bool asciiCaseEqual(const char *a, const char *b);
 char *dupString(const char *s);
 int mstrlen(const char *s);
 
@@ -95,11 +95,11 @@ bool mValue::getInt(int *out)
 bool mValue::set(mValue *src)
 {
     if (!src) {
-        func_0804ad38("xpVal::set() - source is null ptr\n");
+        reportError("xpVal::set() - source is null ptr\n");
         return false;
     }
     if (src->type < UINT || src->type > STRING) {
-        func_0804ad38("xpVal::set() - source is invalid\n");
+        reportError("xpVal::set() - source is invalid\n");
         return false;
     }
     if (type == STRING) {
@@ -112,7 +112,7 @@ bool mValue::set(mValue *src)
     if (type == STRING) {
         str = dupString(src->str);
         if (!str) {
-            func_0804ad38("failed to dup literal\n");
+            reportError("failed to dup literal\n");
             if (type == STRING) {
                 if (str)
                     delete[] str;
@@ -150,7 +150,7 @@ bool mValue::setString(const char *s)
     type = STRING;
     str = dupString(s);
     if (!str) {
-        func_0804ad38("failed to dup string for set str\n");
+        reportError("failed to dup string for set str\n");
         type = NONE;
         return false;
     }
@@ -170,7 +170,7 @@ bool mValue::setString(const char *s, int n)
     type = STRING;
     str = new char[n + 1];
     if (!str) {
-        func_0804ad38("failed to new chars for set str\n");
+        reportError("failed to new chars for set str\n");
         type = NONE;
         return false;
     }
@@ -349,11 +349,11 @@ bool func_0804ca94(mValue *dst, mValue *a, mValue *b)
             dst->f = fa + fb;
             return true;
         }
-        func_0804ad38("failed to get args\n");
+        reportError("failed to get args\n");
         return false;
     case mValue::INT:
         if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
-            func_0804ad38("failed to get args\n");
+            reportError("failed to get args\n");
             return false;
         }
         dst->i = ia + ib;
@@ -398,11 +398,11 @@ bool func_0804cd68(mValue *dst, mValue *a, mValue *b)
             dst->f = fa - fb;
             return true;
         }
-        func_0804ad38("failed to get args\n");
+        reportError("failed to get args\n");
         return false;
     case mValue::INT:
         if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
-            func_0804ad38("failed to get args\n");
+            reportError("failed to get args\n");
             return false;
         }
         dst->i = ia - ib;
@@ -447,11 +447,11 @@ bool func_0804d040(mValue *dst, mValue *a, mValue *b)
             dst->f = fa * fb;
             return true;
         }
-        func_0804ad38("failed to get args\n");
+        reportError("failed to get args\n");
         return false;
     case mValue::INT:
         if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
-            func_0804ad38("failed to get args\n");
+            reportError("failed to get args\n");
             return false;
         }
         dst->i = ia * ib;
@@ -496,11 +496,11 @@ bool func_0804d314(mValue *dst, mValue *a, mValue *b)
             dst->f = fa / fb;
             return true;
         }
-        func_0804ad38("failed to get args\n");
+        reportError("failed to get args\n");
         return false;
     case mValue::INT:
         if (!getIntInl(a, &ia) || !getIntInl(b, &ib)) {
-            func_0804ad38("failed to get args\n");
+            reportError("failed to get args\n");
             return false;
         }
         dst->i = ia / ib;
@@ -922,7 +922,7 @@ bool mValue::parse(const char *s)
             digits++;
     }
     if (skip || !digits) {
-        func_0804ad38("error parsing literal %s\n", s);
+        reportError("error parsing literal %s\n", s);
         return false;
     }
     if (isFlt)
@@ -965,20 +965,20 @@ char *mValue::asChars()
     char *p = g_080bbda0 + g_080bcda0;
     switch (type) {
     case INT:
-        func_0804adbc(p, "%d", i);
+        formatIntoBuffer(p, "%d", i);
         break;
     case UINT:
-        func_0804adbc(p, "%u", u);
+        formatIntoBuffer(p, "%u", u);
         break;
     case FLOAT:
-        func_0804adbc(p, "%1.9e", f);
+        formatIntoBuffer(p, "%1.9e", f);
         break;
     case STRING:
         if (!str) {
-            func_0804ad38("asChars - but no str for a literal\n");
+            reportError("asChars - but no str for a literal\n");
             return 0;
         }
-        func_0804adbc(p, "%s", str);
+        formatIntoBuffer(p, "%s", str);
         break;
     }
     g_080bcda0 += mstrlen(p) + 1;
@@ -995,7 +995,7 @@ bool func_0804e5c0(mValue *a, mValue *b)
         if (a->type != b->type)
             return false;
         if (a->type == mValue::STRING)
-            return func_0804bfcc(a->str, b->str);
+            return asciiCaseEqual(a->str, b->str);
     }
     if (a && a->type == mValue::STRING)
         return false;

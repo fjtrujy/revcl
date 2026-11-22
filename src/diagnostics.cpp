@@ -24,7 +24,7 @@ void func_0804ac44()
     flag_080b3038 = 1;
 }
 
-int func_0804ac50(const char *fmt, ...)
+int reportMessage(const char *fmt, ...)
 {
     if (quiet_080bbd98)
         return 0;
@@ -33,7 +33,7 @@ int func_0804ac50(const char *fmt, ...)
     return vfprintf(stderr, fmt, ap);
 }
 
-int func_0804ac7c(const char *fmt, ...)
+int reportWarning(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -41,7 +41,7 @@ int func_0804ac7c(const char *fmt, ...)
     return vfprintf(stderr, fmt, ap);
 }
 
-int func_0804acb0(const char *fmt, ...)
+int reportInfo(const char *fmt, ...)
 {
     if (quiet_080bbd98)
         return 0;
@@ -51,7 +51,7 @@ int func_0804acb0(const char *fmt, ...)
     return vfprintf(stderr, fmt, ap);
 }
 
-int func_0804acf4(const char *fmt, ...)
+int reportVerboseInfo(const char *fmt, ...)
 {
     if (quiet_080bbd98)
         return 0;
@@ -61,7 +61,7 @@ int func_0804acf4(const char *fmt, ...)
     return vfprintf(stderr, fmt, ap);
 }
 
-int func_0804ad38(const char *fmt, ...)
+int reportError(const char *fmt, ...)
 {
     if (flag_080b3038)
         return 0;
@@ -72,7 +72,7 @@ int func_0804ad38(const char *fmt, ...)
     return vfprintf(stderr, fmt, ap);
 }
 
-int func_0804ad84(const char *fmt, ...)
+int reportUserMessage(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -81,19 +81,19 @@ int func_0804ad84(const char *fmt, ...)
     return vfprintf(stderr, fmt, ap);
 }
 
-int func_0804adbc(char *buf, const char *fmt, ...)
+int formatIntoBuffer(char *buf, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
     return vsprintf(buf, fmt, ap);
 }
 
-int func_0804add4(const char *s)
+int parseInteger(const char *s)
 {
     return atoi(s);
 }
 
-void func_0804adf0(int status)
+void exitAfterCleanup(int status)
 {
     if (status) {
         if (outName_080b303c)
@@ -105,7 +105,7 @@ void func_0804adf0(int status)
     exit(status);
 }
 
-void func_0804ae34(const char *fmt, ...)
+void exitWithError(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);

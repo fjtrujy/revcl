@@ -60,10 +60,10 @@ bool optAnother(workTable *wt, wrangleCand *c)
 int anotherRegCost(Instr *in)
 {
     int cost = 0;
-    for (int i = 0; i != in->unk_138b; i++) {
-        RegPoolEntry *r = in->unk_38[i].inRegOp2();
+    for (int i = 0; i != in->operandCount; i++) {
+        RegPoolEntry *r = in->operands[i].inRegOp2();
         if (r) {
-            switch (r->unk_30) {
+            switch (r->registerIndex) {
             case 55:
             case 56:
             case 59:

@@ -21,56 +21,56 @@ bool func_08060018(Program *p, bool b)
 {
     buildDepCount_080b33a4++;
     if (!flowReset(p)) {
-        func_0804ad38("failed to reset cpu\n");
+        reportError("failed to reset cpu\n");
         return false;
     }
     instStream *s;
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (!s->flowReset()) {
-            func_0804ad38("failed to flow reset a stream\n");
+            reportError("failed to flow reset a stream\n");
             return false;
         }
     }
     if (!recalcFlowUIDs(p)) {
-        func_0804ad38("flowMon::flowReset: failed to recalculate flow UIDs\n");
+        reportError("flowMon::flowReset: failed to recalculate flow UIDs\n");
         return false;
     }
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (!func_0806c0f8(p)) {
-            func_0804ad38("flowInit - failed for stream %s\n", s->func_0806d674());
+            reportError("flowInit - failed for stream %s\n", s->streamName());
             return false;
         }
         if (!func_080642ec(p, s)) {
-            func_0804ad38("build dependency - failed to %s stream..\n", s->getCodeModeName());
+            reportError("build dependency - failed to %s stream..\n", s->getCodeModeName());
             return false;
         }
         if (!s->func_0806563c(b, true)) {
-            func_0804ad38("failed to build memory dependencies for ist\n");
+            reportError("failed to build memory dependencies for ist\n");
             return false;
         }
         if (!s->gatherStats()) {
-            func_0804ad38("failed to gather stats for the istream\n");
+            reportError("failed to gather stats for the istream\n");
             return false;
         }
     }
     if (!initBackTrace(p)) {
-        func_0804ad38("flowMon:: failed to init back trace\n");
+        reportError("flowMon:: failed to init back trace\n");
         return false;
     }
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         for (regUse *ru = s->getWorkTable()->unk_14.unk_04; ru; ru = ru->unk_04) {
             RegPoolEntry *reg = ru->unk_08;
             if (!reg) {
-                func_0804ad38("found a reg ref with no reg!\n");
+                reportError("found a reg ref with no reg!\n");
                 return false;
             }
-            for (int part = 0; part != reg->unk_28; part++) {
+            for (int part = 0; part != reg->partCount; part++) {
                 bool hot = false;
                 int mode = 0;
                 if ((ru->unk_0c >> part) & 1) {
                     char bm = ru->unk_15;
                     if (bm == -1) {
-                        func_0804ad38("regref doesn't have block mode set\n");
+                        reportError("regref doesn't have block mode set\n");
                         return false;
                     }
                     mode = (bm != 0) + 1;
@@ -88,13 +88,13 @@ bool func_08060018(Program *p, bool b)
                         mode = 2;
                 }
                 if (!doBackTrace(p, s, reg, part, depth, mode, hot)) {
-                    func_0804ad38("failed to back trace a register!\n");
+                    reportError("failed to back trace a register!\n");
                     return false;
                 }
                 if (p->unk_e0) {
                     for (instStream *t = p->unk_e0; t; t = t->unk_258) {
                         if (!int_buildTpairs(p, reg, part, t, s)) {
-                            func_0804ad38("failed to build the tpairs\n");
+                            reportError("failed to build the tpairs\n");
                             return false;
                         }
                     }
@@ -103,12 +103,12 @@ bool func_08060018(Program *p, bool b)
         }
     }
     if (!disposeBackTrace(p)) {
-        func_0804ad38("faield to dispose of the backtrace info\n");
+        reportError("faield to dispose of the backtrace info\n");
         return false;
     }
-    for (s = p->unk_a0; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (!s->gatherStats()) {
-            func_0804ad38("failed to gather stats for the istream\n");
+            reportError("failed to gather stats for the istream\n");
             return false;
         }
     }
@@ -117,9 +117,9 @@ bool func_08060018(Program *p, bool b)
 
 bool func_080603bc(Program *p)
 {
-    for (instStream *s = p->unk_a0; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (!s->gatherStats()) {
-            func_0804ad38("failed to gather stats for the istream\n");
+            reportError("failed to gather stats for the istream\n");
             return false;
         }
     }

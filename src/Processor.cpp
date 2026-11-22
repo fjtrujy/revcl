@@ -15,7 +15,7 @@ char *dupString(const char *s);
 
 Processor::Processor()
 {
-    unk_34 = 0;
+    uniqueName = 0;
     g_080b33a8 = 0;
     unk_00 = 0;
     g_080de6c0 = 0;
@@ -24,7 +24,7 @@ Processor::Processor()
     unk_64 = 0;
     unk_65 = 0;
     unk_44 = -1;
-    unk_38 = 0;
+    instructionsPerRawLine = 0;
     unk_60 = 0;
     unk_3d = 0;
     unk_3e = 0;
@@ -41,39 +41,39 @@ Processor::~Processor()
 bool Processor::Init(CpuDef *cpu)
 {
     if (!cpu) {
-        func_0804ad38("null pointer got into init for a cpu\n");
+        reportError("null pointer got into init for a cpu\n");
         return false;
     }
     if (!cpu->name) {
-        func_0804ad38("must name a cpu\n");
+        reportError("must name a cpu\n");
         return false;
     }
     PoolDef *pools = cpu->pools;
     iInfo *iinfos = cpu->iinfos;
     if (!checkTable(iinfos, 0xd6)) {
-        func_0804ad38("couldnt init cpu '%s' - the idefs were bad\n", cpu->name);
+        reportError("couldnt init cpu '%s' - the idefs were bad\n", cpu->name);
         return false;
     }
     g_080de720 = cpu->devtab;
-    unk_38 = cpu->unk_04;
-    if (unk_38 < 1 || unk_38 > 2) {
-        func_0804ad38("processor '%s' has too many instructions per raw line\n", cpu->name);
+    instructionsPerRawLine = cpu->instructionsPerRawLine;
+    if (instructionsPerRawLine < 1 || instructionsPerRawLine > 2) {
+        reportError("processor '%s' has too many instructions per raw line\n", cpu->name);
         return false;
     }
     unk_1c = cpu->name;
     if (!pools) {
-        func_0804ad38("processor: init - passed a null strap table\n");
+        reportError("processor: init - passed a null strap table\n");
         return false;
     }
     if (!iinfos) {
-        func_0804ad38("passed a null itable\n");
+        reportError("passed a null itable\n");
         return false;
     }
     g_080de6c0 = iinfos;
     for (int i = 0; pools[i].type; i++) {
-        PoolDef *d = &pools[i];
+        PoolDef *poolDefinition = &pools[i];
         RegPool *pool;
-        switch (d->type) {
+        switch (poolDefinition->type) {
         case 1:
             pool = new genRegPool;
             break;
@@ -84,48 +84,48 @@ bool Processor::Init(CpuDef *cpu)
             pool = new memRegPool;
             break;
         default:
-            func_0804ad38("Processor::Init - bad type_id found\n");
+            reportError("Processor::Init - bad type_id found\n");
             return false;
         }
         if (!pool)
-            func_0804ad38("Processor::Init  - failed to get a regpool '%s'\n", d->name);
-        if (!pool->Init((VclPtrWord)d->prefix, d->name, d->cls, d->unk_10)) {
-            func_0804ad38("failed to init reg pool '%s'\n", d->name);
+            reportError("Processor::Init  - failed to get a regpool '%s'\n", poolDefinition->name);
+        if (!pool->Init((VclPtrWord)poolDefinition->prefix, poolDefinition->name, poolDefinition->cls, poolDefinition->virtualRegisterParts)) {
+            reportError("failed to init reg pool '%s'\n", poolDefinition->name);
             delete pool;
             return false;
         }
-        if (d->zeroReg) {
-            RegPoolEntry *e = pool->func_08059418(d->zeroReg);
+        if (poolDefinition->zeroReg) {
+            RegPoolEntry *e = pool->func_08059418(poolDefinition->zeroReg);
             if (!e) {
-                func_0804ad38("failed to get zero reg for pool %s\n", d->name);
+                reportError("failed to get zero reg for pool %s\n", poolDefinition->name);
                 delete pool;
                 return false;
             }
-            pool->unk_10 = e;
+            pool->zeroRegister = e;
         }
-        if (d->extReg) {
-            RegPoolEntry *e = pool->func_08059418(d->extReg);
+        if (poolDefinition->extReg) {
+            RegPoolEntry *e = pool->func_08059418(poolDefinition->extReg);
             if (!e) {
-                func_0804ad38("failed to get ext reg for pool %s\n", d->name);
+                reportError("failed to get ext reg for pool %s\n", poolDefinition->name);
                 delete pool;
                 return false;
             }
-            pool->unk_14 = e;
+            pool->externalRegister = e;
         }
-        if (g_080de6e0[d->cls]) {
-            func_0804ad38("already initialised reg type %d\n", d->cls);
+        if (g_080de6e0[poolDefinition->cls]) {
+            reportError("already initialised reg type %d\n", poolDefinition->cls);
             delete pool;
             return false;
         }
-        g_080de6e0[d->cls] = pool;
+        g_080de6e0[poolDefinition->cls] = pool;
     }
     if (!cpu->dstSpecs) {
-        func_0804ad38("procDec has no dstSpecs loaded\n");
+        reportError("procDec has no dstSpecs loaded\n");
         return false;
     }
     g_080de728 = cpu->dstSpecs;
     if (!cpu->srcSpecs) {
-        func_0804ad38("procDec has no srcSpecs loaded\n");
+        reportError("procDec has no srcSpecs loaded\n");
         return false;
     }
     g_080de724 = cpu->srcSpecs;
@@ -154,7 +154,7 @@ int Processor::gatherInflight(ol_s **out)
         if (g_080de6e0[i]) {
             int r = g_080de6e0[i]->gatherInflight(out + n);
             if (r < 0) {
-                func_0804ad38("error during inflight gather\n");
+                reportError("error during inflight gather\n");
                 return -1;
             }
             n += r;
@@ -167,7 +167,7 @@ bool Processor::func_0806bd40()
 {
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_08059c4c()) {
-            func_0804ad38("failed to alloc reset an rpool\n");
+            reportError("failed to alloc reset an rpool\n");
             return false;
         }
     return true;
@@ -177,7 +177,7 @@ bool Processor::func_0806bd88()
 {
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_08059c94()) {
-            func_0804ad38("failed to alloc reset an rpool\n");
+            reportError("failed to alloc reset an rpool\n");
             return false;
         }
     return true;
@@ -186,7 +186,7 @@ bool Processor::func_0806bd88()
 void Processor::func_0806bdd0()
 {
     if (!g_080de6c0) {
-        func_0804ad38("iInfos not set in processor\n");
+        reportError("iInfos not set in processor\n");
         return;
     }
     int saved = errorOccurred;
@@ -197,8 +197,8 @@ void Processor::func_0806bdd0()
         n++;
     }
     if (n != 0xd6) {
-        func_0804ad38("error processing inst table\n");
-        func_0804adf0(-1);
+        reportError("error processing inst table\n");
+        exitAfterCleanup(-1);
     }
     errorOccurred = saved;
 }
@@ -222,8 +222,8 @@ bool parseReset(Program *p)
     p->proc.unk_61 = 0;
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_080595d4()) {
-            func_0804ad38("Processor::parseReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+            reportError("Processor::parseReset() - failed to reset %s\n",
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -233,8 +233,8 @@ bool statReset(Program *p)
 {
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_080594c0()) {
-            func_0804ad38("Processor::statReset() - failed to stat %s\n",
-                          g_080de6e0[i]->unk_2c);
+            reportError("Processor::statReset() - failed to stat %s\n",
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -248,11 +248,11 @@ iInfo *func_0806bf74(int id)
 iInfo *func_0806bf8c(const char *tok, bool all)
 {
     if (!tok) {
-        func_0804ad38("Proc::FindInstruction() - null token passed\n");
+        reportError("Proc::FindInstruction() - null token passed\n");
         return 0;
     }
     if (!g_080de6c0) {
-        func_0804ad38("Proc::FindInstruction() - no instruction set loaded!\n");
+        reportError("Proc::FindInstruction() - no instruction set loaded!\n");
         return 0;
     }
     iInfo *p = g_080de6c0;
@@ -284,8 +284,8 @@ bool optReset(Program *p)
 {
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_08059578()) {
-            func_0804ad38("Processor::optReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+            reportError("Processor::optReset() - failed to reset %s\n",
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -296,8 +296,8 @@ bool Cycle(Program *p, bool flag)
     p->unk_80++;
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_08059828(flag)) {
-            func_0804ad38("Processor::Cycle() - failed to cycle %s\n",
-                          g_080de6e0[i]->unk_2c);
+            reportError("Processor::Cycle() - failed to cycle %s\n",
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -308,8 +308,8 @@ bool func_0806c0f8(Program *p)
     p->unk_80 = 0;
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_08059464()) {
-            func_0804ad38("Processor::emuReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+            reportError("Processor::emuReset() - failed to reset %s\n",
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -319,7 +319,7 @@ inline RegPool *getRP(unsigned t)
 {
     if (t < 12)
         return g_080de6e0[t];
-    func_0804ac7c("Processor::GetRP - out of range register type (%d)\n", t);
+    reportWarning("Processor::GetRP - out of range register type (%d)\n", t);
     return 0;
 }
 
@@ -327,8 +327,8 @@ RegPoolEntry *getReg(unsigned type, const char *name)
 {
     RegPool *pool = getRP(type);
     if (!pool) {
-        func_0804ad38("getBaseReg from - not find pool %d\n", type);
-        func_0804adf0(-1);
+        reportError("getBaseReg from - not find pool %d\n", type);
+        exitAfterCleanup(-1);
     }
     return pool->func_08059418(name);
 }
@@ -337,8 +337,8 @@ RegPoolEntry *getReg(unsigned type, int index)
 {
     RegPool *pool = getRP(type);
     if (!pool) {
-        func_0804ad38("getBaseReg from - not find pool %d\n", type);
-        func_0804adf0(-1);
+        reportError("getBaseReg from - not find pool %d\n", type);
+        exitAfterCleanup(-1);
     }
     return pool->func_080593e0(index);
 }
@@ -360,26 +360,26 @@ RegPoolEntry *getOperandZeroReg(int kind)
 {
     RegPool *pool = getRP(func_08057a34(kind));
     if (!pool) {
-        func_0804ad38("getRP failed for operand getZeroReg\n");
-        func_0804adf0(-1);
+        reportError("getRP failed for operand getZeroReg\n");
+        exitAfterCleanup(-1);
     }
-    return pool->unk_10;
+    return pool->zeroRegister;
 }
 
 RegPoolEntry *getZeroReg(unsigned type)
 {
     RegPool *pool = getRP(type);
     if (!pool) {
-        func_0804ad38("getRP failed getZeroReg\n");
-        func_0804adf0(-1);
+        reportError("getRP failed getZeroReg\n");
+        exitAfterCleanup(-1);
     }
-    return pool->unk_10;
+    return pool->zeroRegister;
 }
 
 RegPool *GetRP(unsigned t)
 {
     if (t > 11) {
-        func_0804ac7c("Processor::GetRP - out of range register type (%d)\n", t);
+        reportWarning("Processor::GetRP - out of range register type (%d)\n", t);
         return 0;
     }
     return g_080de6e0[t];
@@ -391,8 +391,8 @@ bool flowReset(Program *p)
     p->proc.unk_74.clear();
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_0805951c()) {
-            func_0804ad38("Processor::flowReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+            reportError("Processor::flowReset() - failed to reset %s\n",
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -402,7 +402,7 @@ void reportUBS(Program *p)
 {
     ubsList *ubs = &p->proc.unk_68;
     if (ubs->unk_08) {
-        func_0804acb0("uh-oh, VCL thinks the following operands were used before set:\n");
+        reportInfo("uh-oh, VCL thinks the following operands were used before set:\n");
         ubs->func_080525c8();
     }
 }
@@ -411,7 +411,7 @@ void reportStalls(Program *p)
 {
     infoList *st = &p->proc.unk_74;
     if (st->unk_08) {
-        func_0804acb0("VCL thinks the following instructions caused stalls:\n");
+        reportInfo("VCL thinks the following instructions caused stalls:\n");
         st->func_080525c8();
     }
 }
@@ -419,8 +419,8 @@ void reportStalls(Program *p)
 int checkDispatchEntry(Instr **ie)
 {
     if (!ie) {
-        func_0804ad38("checkDispatchEntry - passed a null pointer\n");
-        func_0804adf0(-1);
+        reportError("checkDispatchEntry - passed a null pointer\n");
+        exitAfterCleanup(-1);
     }
     for (int p = 0; p != 2; p++) {
         Instr *in = GetI(ie, p);
@@ -428,8 +428,8 @@ int checkDispatchEntry(Instr **ie)
             continue;
         if (!(((unsigned char)in->unk_138c >> p) & 1))
             return -1;
-        for (int i = 0; i != in->unk_138b; i++) {
-            RegPoolEntry *r = registerOperand(&in->unk_38[i], 2);
+        for (int i = 0; i != in->operandCount; i++) {
+            RegPoolEntry *r = registerOperand(&in->operands[i], 2);
             if (!r)
                 continue;
             for (int q = p + 1; q <= 1; q++) {
@@ -438,8 +438,8 @@ int checkDispatchEntry(Instr **ie)
                     continue;
                 if (!(((unsigned char)o->unk_138c >> q) & 1))
                     return -1;
-                for (int j = 0; j != o->unk_138b; j++) {
-                    RegPoolEntry *r2 = registerOperand(&o->unk_38[j], 2);
+                for (int j = 0; j != o->operandCount; j++) {
+                    RegPoolEntry *r2 = registerOperand(&o->operands[j], 2);
                     if (r2 && r2 == r)
                         return -1;
                 }
@@ -452,8 +452,8 @@ int checkDispatchEntry(Instr **ie)
 bool wouldPair(Instr **ie, Instr *in, unsigned p)
 {
     if (!ie || !in || p > 1) {
-        func_0804ad38("wouldPair - bad args\n");
-        func_0804adf0(-1);
+        reportError("wouldPair - bad args\n");
+        exitAfterCleanup(-1);
     }
     int i;
     for (i = 0; i != 2; i++)
@@ -486,15 +486,15 @@ const char *func_0806c6a0(int dev)
 
 bool func_0806c6c4(RegPoolEntry *r)
 {
-    return r->unk_24 == 8 || r->unk_24 == 9;
+    return r->registerClass == 8 || r->registerClass == 9;
 }
 
 bool func_0806c6dc(Program *p)
 {
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->optReset()) {
-            func_0804ad38("Processor::optReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+            reportError("Processor::optReset() - failed to reset %s\n",
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -524,14 +524,14 @@ aaDesc *func_0806c768(Instr *in)
         res = 0;
         return res;
     }
-    if (!in->unk_34) {
+    if (!in->opcodeInfo) {
         res = 0;
         return res;
     }
-    int id = iinfoId(in->unk_34);
+    int id = iinfoId(in->opcodeInfo);
     if (id < 0) {
-        func_0804ad38("couldn't deduce instruction uid\n");
-        func_0804adf0(-1);
+        reportError("couldn't deduce instruction uid\n");
+        exitAfterCleanup(-1);
     }
     if (!g_080de724) {
         res = 0;
@@ -555,12 +555,12 @@ aaUse *func_0806c7f8(Instr *in)
 {
     if (!in)
         return 0;
-    if (!in->unk_34)
+    if (!in->opcodeInfo)
         return 0;
-    int id = iinfoId(in->unk_34);
+    int id = iinfoId(in->opcodeInfo);
     if (id < 0) {
-        func_0804ad38("couldn't deduce instruction uid\n");
-        func_0804adf0(-1);
+        reportError("couldn't deduce instruction uid\n");
+        exitAfterCleanup(-1);
     }
     if (!g_080de724)
         return 0;
@@ -574,8 +574,8 @@ bool emitReset(Program *p)
 {
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->emitReset()) {
-            func_0804ad38("Processor::emitReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+            reportError("Processor::emitReset() - failed to reset %s\n",
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -583,13 +583,13 @@ bool emitReset(Program *p)
 
 char *emitStats(Program *p, char *buf)
 {
-    buf += func_0804adbc(buf, "; register stats:\n");
+    buf += formatIntoBuffer(buf, "; register stats:\n");
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && g_080de6e0[i]->unk_18) {
+        if (g_080de6e0[i] && g_080de6e0[i]->virtualPartCount) {
             buf = g_080de6e0[i]->emitStats(buf);
             if (!buf) {
-                func_0804ad38("Processor::emitStats() - failed to emit stats for %s\n",
-                              g_080de6e0[i]->unk_2c);
+                reportError("Processor::emitStats() - failed to emit stats for %s\n",
+                              g_080de6e0[i]->poolName);
                 return 0;
             }
         }
@@ -599,7 +599,7 @@ char *emitStats(Program *p, char *buf)
 int getPoolsByClassID(int cls, RegPool **tab, int max)
 {
     if (!tab) {
-        func_0804ad38("Processor :: passed a null table pointer to getPoolsByClassID()\n");
+        reportError("Processor :: passed a null table pointer to getPoolsByClassID()\n");
         return -1;
     }
     int n = 0;
@@ -607,7 +607,7 @@ int getPoolsByClassID(int cls, RegPool **tab, int max)
         RegPool *rp = g_080de6e0[i];
         if (rp && rp->unk_0e == cls) {
             if (n >= max) {
-                func_0804ad38("Processor:: more pools than space provided in getPoolsByClassID()\n");
+                reportError("Processor:: more pools than space provided in getPoolsByClassID()\n");
                 return -1;
             }
             tab[n++] = rp;
@@ -618,12 +618,12 @@ int getPoolsByClassID(int cls, RegPool **tab, int max)
 
 bool Processor::setUniqueName(const char *name)
 {
-    if (unk_34)
-        delete[] unk_34;
-    unk_34 = 0;
+    if (uniqueName)
+        delete[] uniqueName;
+    uniqueName = 0;
     if (name) {
-        unk_34 = dupString(name);
-        for (char *s = unk_34; *s; s++)
+        uniqueName = dupString(name);
+        for (char *s = uniqueName; *s; s++)
             if (!func_0804bf9c(*s))
                 *s = '_';
     }
@@ -632,7 +632,7 @@ bool Processor::setUniqueName(const char *name)
 
 const char *Processor::getUniqueName()
 {
-    return unk_34 ? unk_34 : "FLOW";
+    return uniqueName ? uniqueName : "FLOW";
 }
 
 int g_080b33a8 = 1;

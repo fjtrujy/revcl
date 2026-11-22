@@ -20,29 +20,29 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
     workTable *wt = s->getTable();
     if (loopSize) {
         if (!s->canLoop()) {
-            func_0804ad38("prepLockTable: can't loop, but loop size requested\n");
+            reportError("prepLockTable: can't loop, but loop size requested\n");
             return 0;
         }
         if (wt->unk_09 == 3) {
-            func_0804ad38("prepLockTable: loopSize requested, but mode is RAW\n");
+            reportError("prepLockTable: loopSize requested, but mode is RAW\n");
             return 0;
         }
     }
     if (!optReset(p)) {
-        func_0804ad38("failed to optReset cpu\n");
+        reportError("failed to optReset cpu\n");
         return 0;
     }
     if (!wt->clearClones()) {
-        func_0804ad38("failed to flush workClones table for %s\n", s->func_0806d674());
+        reportError("failed to flush workClones table for %s\n", s->streamName());
         return 0;
     }
     workTable *nt = new workTable;
     if (!nt) {
-        func_0804ad38("iStream::prepUta - failed alloc table\n");
-        func_0804adf0(-1);
+        reportError("iStream::prepUta - failed alloc table\n");
+        exitAfterCleanup(-1);
     }
     if (!nt->init(2, s->unk_2bc)) {
-        func_0804ad38("failed to allocate large table\n");
+        reportError("failed to allocate large table\n");
         delete nt;
         return 0;
     }
@@ -65,7 +65,7 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
     regUseList &regs = wt->unk_14;
     for (regUse *ru = regs.unk_04; ru; ru = ru->unk_04) {
         if (!nt->qRegRef(ru)) {
-            func_0804ad38("failed to add a cloned regref in %s\n", s->func_0806d674());
+            reportError("failed to add a cloned regref in %s\n", s->streamName());
             wt->dump();
             delete nt;
             return 0;
@@ -73,19 +73,19 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
     }
     for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
         if (in->func_08054168() != s) {
-            func_0804ad38("owner not set or mismatch for prepUta .. istOwner = %x we are %x!\n",
+            reportError("owner not set or mismatch for prepUta .. istOwner = %x we are %x!\n",
                           in->func_08054168(), p);
             in->leDump();
-            func_0804adf0(-1);
+            exitAfterCleanup(-1);
         }
         in->unk_141a = 0;
         if (in->func_080541fc() && !in->func_08054138() && !nt->qInstruction(in)) {
-            func_0804ad38("iStream: failed to queue instruction into table for opt\n");
-            func_0804adf0(-1);
+            reportError("iStream: failed to queue instruction into table for opt\n");
+            exitAfterCleanup(-1);
         }
     }
     if (!fixupCloneFdeps(nt)) {
-        func_0804ad38("failed to fix fdeps to new table\n");
+        reportError("failed to fix fdeps to new table\n");
         return 0;
     }
     return nt;

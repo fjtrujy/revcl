@@ -24,8 +24,8 @@ int dragDown(workTable *wt)
         return 0;
     wt->getBranch();
     if (wt->unk_38) {
-        func_0804ad38("hit this debug assert - loopsize!=0\n");
-        func_0804aeb0();
+        reportError("hit this debug assert - loopsize!=0\n");
+        abortAfterError();
     }
     setRange(wt->unk_30, wt->unk_34, wt->unk_38);
 
@@ -44,15 +44,15 @@ int dragDown(workTable *wt)
                     short mte = in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6;
                     int mn = wt->unk_34 - mte - 1;
                     if (rl != l) {
-                        func_0804ad38("rl not l!\n");
-                        func_0804adf0(-1);
+                        reportError("rl not l!\n");
+                        exitAfterCleanup(-1);
                     }
                     int k;
                     Operand *op;
                     for (k = 0; (op = in->getOp(k)) != 0; k++) {
                         RegPoolEntry *reg = registerOperand(op, 2);
                         if (reg) {
-                            for (int j = 0; j != reg->unk_28; j++) {
+                            for (int j = 0; j != reg->partCount; j++) {
                                 OpSlot *sl = &op->unk_2c[j];
                                 if ((op->unk_07 >> j) & 1) {
                                     int e = wt->unk_34 - 1;
@@ -68,7 +68,7 @@ int dragDown(workTable *wt)
                     }
                     if (mn > rl) {
                         if (!doLocalMove(wt, in, mn, rl, -1)) {
-                            func_0804ad38("failed to do local move for raw down\n");
+                            reportError("failed to do local move for raw down\n");
                             return -1;
                         }
                         if (in->unk_13e8.getRow() != rl)
@@ -82,12 +82,12 @@ int dragDown(workTable *wt)
                         msl = s;
                     if (msl < oStart) {
                         short mfs = in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2;
-                        func_0804ac7c("%s %d-%d < mSline=%d [%d,%d]\n",
-                                      in->unk_34->unk_04, in->unk_13e8.getRow(),
+                        reportWarning("%s %d-%d < mSline=%d [%d,%d]\n",
+                                      in->opcodeInfo->unk_04, in->unk_13e8.getRow(),
                                       mfs,
                                       msl, wt->unk_30, wt->unk_34);
-                        const char *name = in->unk_34 ? in->unk_34->unk_04 : "NO_BASE_INST";
-                        func_0804ac7c("%s: fixing mSline<oStart.. oStart=%d mSline=%d\n",
+                        const char *name = in->opcodeInfo ? in->opcodeInfo->unk_04 : "NO_BASE_INST";
+                        reportWarning("%s: fixing mSline<oStart.. oStart=%d mSline=%d\n",
                                       name,
                                       oStart, msl);
                         msl = oStart;

@@ -1,4 +1,4 @@
-// Separate compilation is documented in config/matching-evidence/cgreadfile-split.md.
+// File reading and terminal error handling (separate original translation unit).
 
 #include <unistd.h>
 #include <stdio.h>
@@ -9,7 +9,7 @@
 
 extern char *outName_080b303c;
 
-void func_0804aeb0()
+void abortAfterError()
 {
     if (outName_080b303c)
         printf("ERROR: something went wrong, making '%s' vcl's outta here.\n", outName_080b303c);
@@ -64,7 +64,7 @@ char *func_0804aff0(int fd, int *len, bool nulTerm)
     char *buf = (char *)malloc(0x10000);
 
     if (!buf) {
-        func_0804ad38("failed to alloc initial read buffer\n");
+        reportError("failed to alloc initial read buffer\n");
     } else {
         int size = 0x10000;
         for (;;) {
@@ -72,14 +72,14 @@ char *func_0804aff0(int fd, int *len, bool nulTerm)
                 size += 0x10000;
                 char *nbuf = (char *)realloc(buf, size);
                 if (!nbuf) {
-                    func_0804ad38("nReadFile - failed to extend buffer\n");
+                    reportError("nReadFile - failed to extend buffer\n");
                     break;
                 }
                 buf = nbuf;
             }
             int n = read(fd, buf + used, 0xffff);
             if (n < 0) {
-                func_0804ad38("read returned <0\n");
+                reportError("read returned <0\n");
                 break;
             }
             if (n == 0) {

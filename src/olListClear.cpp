@@ -6,7 +6,7 @@
 #include "VUStr.h"
 
 int func_0804bf50(unsigned int);
-bool func_0804bfcc(const char *a, const char *b);
+bool asciiCaseEqual(const char *a, const char *b);
 void func_0804c0c8(char *s);
 int mstrlen(const char *s);
 
