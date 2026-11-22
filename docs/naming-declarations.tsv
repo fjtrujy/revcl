@@ -100,8 +100,8 @@ local_review	op	src/Instr.cpp	848	classifySchedulingCategory	Operand *
 local_review	ie	src/Instr.cpp	866	getIE	Instr **
 local_review	i	src/Instr.cpp	880	getFirstOutputLatency	int
 local_review	op	src/Instr.cpp	881	getFirstOutputLatency	Operand *
-local_review	r	src/Instr.cpp	890	func_08055a88	bool
-local_review	r	src/Instr.cpp	897	func_08055aa8	bool
+local_review	r	src/Instr.cpp	890	markDependencyInputReachable	bool
+local_review	r	src/Instr.cpp	897	markDependencyOutputReachable	bool
 local_review	i	src/Instr.cpp	916	expandVirtualStatOperand	int
 local_review	op	src/Instr.cpp	917	expandVirtualStatOperand	Operand *
 local_review	a	src/Instr.cpp	970	expandVirtualStatOperand	bool
@@ -157,8 +157,8 @@ local_review	i	src/Parser.cpp	275	Dump	int
 local_review	i	src/Parser.cpp	285	DumpLocTags	int
 local_review	i	src/Parser.cpp	320	FindLocTag	int
 local_review	q	src/Parser.cpp	328	isGaspDigit	const char *
-local_review	q	src/Parser.cpp	435	func_08050708	const char *
-local_review	ch	src/Parser.cpp	436	func_08050708	char
+local_review	q	src/Parser.cpp	435	isTokenSeparatorCharacter	const char *
+local_review	ch	src/Parser.cpp	436	isTokenSeparatorCharacter	char
 local_review	i	src/Processor.cpp	31	Processor	int
 local_review	i	src/Processor.cpp	33	Processor	int
 local_review	i	src/Processor.cpp	73	Init	int
@@ -168,8 +168,8 @@ local_review	i	src/Processor.cpp	145	dumpRegisterPools	int
 local_review	n	src/Processor.cpp	152	gatherInflight	int
 local_review	i	src/Processor.cpp	153	gatherInflight	int
 local_review	r	src/Processor.cpp	155	gatherInflight	int
-local_review	i	src/Processor.cpp	168	func_0806bd40	int
-local_review	i	src/Processor.cpp	178	func_0806bd88	int
+local_review	i	src/Processor.cpp	168	clearAllRegisterAssignmentsFirstPass	int
+local_review	i	src/Processor.cpp	178	clearAllRegisterAssignmentsSecondPass	int
 local_review	n	src/Processor.cpp	194	validateOpcodeTableCount	int
 local_review	p	src/Processor.cpp	195	validateOpcodeTableCount	iInfo *
 local_review	i	src/Processor.cpp	208	dumpProcessorRegisterPools	int
@@ -180,7 +180,7 @@ local_review	s	src/Processor.cpp	262	findOpcodeInfoByMnemonic	const char *
 local_review	m	src/Processor.cpp	263	findOpcodeInfoByMnemonic	const char *
 local_review	i	src/Processor.cpp	285	optReset	int
 local_review	i	src/Processor.cpp	297	Cycle	int
-local_review	i	src/Processor.cpp	309	func_0806c0f8	int
+local_review	i	src/Processor.cpp	309	resetProcessorThroughput	int
 local_review	i	src/Processor.cpp	348	findRegisterByGlobalIndex	int
 local_review	rp	src/Processor.cpp	349	findRegisterByGlobalIndex	RegPool *
 local_review	e	src/Processor.cpp	351	findRegisterByGlobalIndex	RegPoolEntry *
@@ -224,12 +224,12 @@ local_review	s	src/Program.cpp	332	emitLabels	instStream *
 local_review	s	src/Program.cpp	344	isReferencedLabel	instStream *
 local_review	l	src/Program.cpp	346	isReferencedLabel	linkNode *
 local_review	t	src/Program.cpp	353	isReferencedLabel	instStream *
-local_review	l	src/Program.cpp	373	func_0806f4a0	mList *
-local_review	n	src/Program.cpp	374	func_0806f4a0	mNode *
+local_review	l	src/Program.cpp	373	streamExportsSymbol	mList *
+local_review	n	src/Program.cpp	374	streamExportsSymbol	mNode *
 local_review	s	src/Program.cpp	388	recalcFlowUIDs	instStream *
 local_review	n	src/Program.cpp	389	recalcFlowUIDs	int
-local_review	s	src/Program.cpp	424	func_0806f610	instStream *
-local_review	wt	src/Program.cpp	425	func_0806f610	workTable *
+local_review	s	src/Program.cpp	424	resetProgramAllocationsForFirstPass	instStream *
+local_review	wt	src/Program.cpp	425	resetProgramAllocationsForFirstPass	workTable *
 local_review	s	src/Program.cpp	456	dumpFlow	instStream *
 local_review	id	src/Program.cpp	465	dumpFlow	int
 local_review	l	src/Program.cpp	467	dumpFlow	linkNode *
@@ -288,12 +288,12 @@ local_review	e	src/RegPool.cpp	326	findOrCreateRegister	RegPoolEntry *
 local_review	e	src/RegPool.cpp	353	createVirtualRegister	RegPoolEntry *
 local_review	e	src/RegPool.cpp	397	markAllocatablePhysicalRegistersUsed	RegPoolEntry *
 local_review	i	src/RegPool.cpp	398	markAllocatablePhysicalRegistersUsed	int
-local_review	e	src/RegPool.cpp	407	func_08059c4c	RegPoolEntry *
-local_review	i	src/RegPool.cpp	408	func_08059c4c	int
-local_review	p	src/RegPool.cpp	411	func_08059c4c	RegPoolEntry *
-local_review	e	src/RegPool.cpp	419	func_08059c94	RegPoolEntry *
-local_review	i	src/RegPool.cpp	420	func_08059c94	int
-local_review	p	src/RegPool.cpp	423	func_08059c94	RegPoolEntry *
+local_review	e	src/RegPool.cpp	407	clearRegisterAssignmentsFirstPass	RegPoolEntry *
+local_review	i	src/RegPool.cpp	408	clearRegisterAssignmentsFirstPass	int
+local_review	p	src/RegPool.cpp	411	clearRegisterAssignmentsFirstPass	RegPoolEntry *
+local_review	e	src/RegPool.cpp	419	clearRegisterAssignmentsSecondPass	RegPoolEntry *
+local_review	i	src/RegPool.cpp	420	clearRegisterAssignmentsSecondPass	int
+local_review	p	src/RegPool.cpp	423	clearRegisterAssignmentsSecondPass	RegPoolEntry *
 local_review	p	src/RegPool.cpp	430	resetPoolLocalAllocationState	RegPoolEntry *
 local_review	e	src/RegPool.cpp	437	resetPoolLocalAllocationState	RegPoolEntry *
 local_review	i	src/RegPool.cpp	438	resetPoolLocalAllocationState	int
@@ -322,19 +322,19 @@ local_review	e	src/RegPool.cpp	572	gatherInflight	RegPoolEntry *
 local_review	r	src/RegPool.cpp	573	gatherInflight	int
 local_review	p	src/RegPool.cpp	578	gatherInflight	RegPoolEntry *
 local_review	r	src/RegPool.cpp	579	gatherInflight	int
-local_review	p	src/VUStr.cpp	7	func_08051f08	const char *
-local_review	m	src/VUStr.cpp	18	func_08051f08	int
-local_review	p	src/VUStr.cpp	32	func_08051f78	const char *
-local_review	c	src/VUStr.cpp	58	func_08051ff0	char
-local_review	p	src/VUStr.cpp	83	func_08052064	char *
-local_review	p	src/VUStr.cpp	110	func_08052100	const char *
-local_review	c	src/VUStr.cpp	114	func_08052100	char
-local_review	r	src/VUStr.cpp	133	func_0805219c	int
-local_review	p	src/VUStr.cpp	136	func_0805219c	const char *
-local_review	p	src/VUStr.cpp	161	func_080521f0	char *
-local_review	m	src/VUStr.cpp	162	func_080521f0	int
-local_review	ok	src/VUStr.cpp	163	func_080521f0	bool
-local_review	p	src/VUStr.cpp	211	func_08052314	char *
+local_review	p	src/VUStr.cpp	7	parseTrailingComponentMask	const char *
+local_review	m	src/VUStr.cpp	18	parseTrailingComponentMask	int
+local_review	p	src/VUStr.cpp	32	parseBracketedComponentMask	const char *
+local_review	c	src/VUStr.cpp	58	decodeComponentMaskLetters	char
+local_review	p	src/VUStr.cpp	83	formatComponentMaskLetters	char *
+local_review	p	src/VUStr.cpp	110	readTrailingComponentMask	const char *
+local_review	c	src/VUStr.cpp	114	readTrailingComponentMask	char
+local_review	r	src/VUStr.cpp	133	lastComponentBit	int
+local_review	p	src/VUStr.cpp	136	lastComponentBit	const char *
+local_review	p	src/VUStr.cpp	161	removeInstructionModifierGroups	char *
+local_review	m	src/VUStr.cpp	162	removeInstructionModifierGroups	int
+local_review	ok	src/VUStr.cpp	163	removeInstructionModifierGroups	bool
+local_review	p	src/VUStr.cpp	211	formatInstructionModifiers	char *
 local_review	p	src/VisitCache.cpp	21	vc_extend_inl	unsigned int *
 local_review	p	src/VisitCache.cpp	74	Extend	unsigned int *
 local_review	i	src/VisitCache.cpp	99	startRecord	int
@@ -431,17 +431,17 @@ local_review	t	src/buildUta.cpp	22	buildUta	workTable *
 local_review	i	src/buildUta.cpp	34	buildUta	int
 local_review	b	src/buildUta.cpp	35	buildUta	DecodedLine *
 local_review	in	src/buildUta.cpp	41	buildUta	Instr *
-local_review	s	src/capping.cpp	21	func_0807aa28	instStream *
-local_review	n	src/capping.cpp	34	func_0807aa28	int
-local_review	wt	src/capping.cpp	52	func_0807aaf4	workTable *
-local_review	rl	src/capping.cpp	69	func_0807aaf4	int
-local_review	id	src/capping.cpp	71	func_0807aaf4	int
-local_review	pp	src/capping.cpp	72	func_0807aaf4	int
-local_review	in	src/capping.cpp	73	func_0807aaf4	Instr *
-local_review	op	src/capping.cpp	76	func_0807aaf4	Operand *
-local_review	i	src/capping.cpp	77	func_0807aaf4	int
-local_review	r	src/capping.cpp	96	func_0807aaf4	wtRow *
-local_review	q	src/capping.cpp	101	func_0807aaf4	int
+local_review	s	src/capping.cpp	21	insertAllRegisterCaps	instStream *
+local_review	n	src/capping.cpp	34	insertAllRegisterCaps	int
+local_review	wt	src/capping.cpp	52	insertStreamRegisterCaps	workTable *
+local_review	rl	src/capping.cpp	69	insertStreamRegisterCaps	int
+local_review	id	src/capping.cpp	71	insertStreamRegisterCaps	int
+local_review	pp	src/capping.cpp	72	insertStreamRegisterCaps	int
+local_review	in	src/capping.cpp	73	insertStreamRegisterCaps	Instr *
+local_review	op	src/capping.cpp	76	insertStreamRegisterCaps	Operand *
+local_review	i	src/capping.cpp	77	insertStreamRegisterCaps	int
+local_review	r	src/capping.cpp	96	insertStreamRegisterCaps	wtRow *
+local_review	q	src/capping.cpp	101	insertStreamRegisterCaps	int
 local_review	bs	src/catLocks.cpp	14	catLocks	int
 local_review	be	src/catLocks.cpp	15	catLocks	int
 local_review	p	src/catLocks.cpp	42	canMoveInputLock	int
@@ -472,10 +472,10 @@ local_review	lk	src/catLocks.cpp	202	canMoveOutputLock	OperandLock *
 local_review	ls	src/catLocks.cpp	207	canMoveOutputLock	int
 local_review	le	src/catLocks.cpp	208	canMoveOutputLock	int
 local_review	x	src/catLocks.cpp	216	canMoveOutputLock	OperandLock *
-local_review	s	src/catStreams.cpp	20	func_08063154	instStream *
-local_review	n	src/catStreams.cpp	31	func_08063154	instStream *
-local_review	l	src/catStreams.cpp	53	func_08063154	linkNode *
-local_review	to	src/catStreams.cpp	55	func_08063154	instStream *
+local_review	s	src/catStreams.cpp	20	concatenateCompatibleStreams	instStream *
+local_review	n	src/catStreams.cpp	31	concatenateCompatibleStreams	instStream *
+local_review	l	src/catStreams.cpp	53	concatenateCompatibleStreams	linkNode *
+local_review	to	src/catStreams.cpp	55	concatenateCompatibleStreams	instStream *
 local_review	i	src/catStreams.cpp	97	catOnTo	int
 local_review	j	src/catStreams.cpp	101	catOnTo	int
 local_review	in	src/catStreams.cpp	102	catOnTo	Instr *
@@ -550,19 +550,19 @@ local_review	hi	src/collapse.cpp	18	fitsSigned	int
 local_review	lo	src/collapse.cpp	19	fitsSigned	int
 local_review	in	src/collapse.cpp	34	pushImmediate	Instr *
 local_review	val	src/collapse.cpp	35	pushImmediate	int
-local_review	s	src/collapse.cpp	63	func_0806a74c	instStream *
-local_review	t	src/collapse.cpp	65	func_0806a74c	workTable *
-local_review	in	src/collapse.cpp	66	func_0806a74c	Instr *
-local_review	v	src/collapse.cpp	69	func_0806a74c	mValue *
-local_review	val	src/collapse.cpp	71	func_0806a74c	int
-local_review	t	src/collapse.cpp	97	func_0806a74c	workTable *
-local_review	in	src/collapse.cpp	98	func_0806a74c	Instr *
-local_review	k	src/collapse.cpp	99	func_0806a74c	int
-local_review	ok	src/collapse.cpp	106	func_0806a74c	bool
-local_review	ol	src/collapse.cpp	108	func_0806a74c	ol_s *
-local_review	op	src/collapse.cpp	110	func_0806a74c	Operand *
-local_review	val	src/collapse.cpp	118	func_0806a74c	int
-local_review	u	src/collapse.cpp	129	func_0806a74c	ol_s *
+local_review	s	src/collapse.cpp	63	collapseProgramStreams	instStream *
+local_review	t	src/collapse.cpp	65	collapseProgramStreams	workTable *
+local_review	in	src/collapse.cpp	66	collapseProgramStreams	Instr *
+local_review	v	src/collapse.cpp	69	collapseProgramStreams	mValue *
+local_review	val	src/collapse.cpp	71	collapseProgramStreams	int
+local_review	t	src/collapse.cpp	97	collapseProgramStreams	workTable *
+local_review	in	src/collapse.cpp	98	collapseProgramStreams	Instr *
+local_review	k	src/collapse.cpp	99	collapseProgramStreams	int
+local_review	ok	src/collapse.cpp	106	collapseProgramStreams	bool
+local_review	ol	src/collapse.cpp	108	collapseProgramStreams	ol_s *
+local_review	op	src/collapse.cpp	110	collapseProgramStreams	Operand *
+local_review	val	src/collapse.cpp	118	collapseProgramStreams	int
+local_review	u	src/collapse.cpp	129	collapseProgramStreams	ol_s *
 local_review	val	src/collapse.cpp	161	func_0806aa54	int
 local_review	r	src/collapse.cpp	206	immFitsUnsigned	int
 local_review	v	src/collapse.cpp	240	immCalc	mValue *
@@ -721,7 +721,7 @@ local_review	wt	src/expandRaw.cpp	22	expandRawTables	workTable *
 local_review	s	src/explodeRaw.cpp	19	explodeRaw	instStream *
 local_review	t	src/explodeRaw.cpp	21	explodeRaw	workTable *
 local_review	r	src/explodeRaw.cpp	40	explodeRaw	int
-local_review	s	src/externalStreamPreparation.cpp	22	func_0807aee4	instStream *
+local_review	s	src/externalStreamPreparation.cpp	22	prepareExternalSchedulingForProgram	instStream *
 local_review	wt	src/externalStreamPreparation.cpp	47	removeNops	workTable *
 local_review	hw	src/externalStreamPreparation.cpp	63	removeNops	RegPool *
 local_review	rl	src/externalStreamPreparation.cpp	83	removeNops	int
@@ -851,11 +851,11 @@ local_review	i	src/decodedLineQueries.cpp	7	maximumDecodedLineFlowId	int
 local_review	i	src/decodedLineQueries.cpp	15	hasFlowStartSynthetic	int
 local_review	in	src/decodedLineQueries.cpp	16	hasFlowStartSynthetic	Instr *
 local_review	t	src/decodedLineQueries.cpp	18	hasFlowStartSynthetic	char
-local_review	s	src/flowMon.cpp	27	func_08060018	instStream *
-local_review	ru	src/flowMon.cpp	61	func_08060018	regUse *
-local_review	bm	src/flowMon.cpp	71	func_08060018	char
-local_review	t	src/flowMon.cpp	95	func_08060018	instStream *
-local_review	s	src/flowMon.cpp	120	func_080603bc	instStream *
+local_review	s	src/flowMon.cpp	27	rebuildFlowDependencies	instStream *
+local_review	ru	src/flowMon.cpp	61	rebuildFlowDependencies	regUse *
+local_review	bm	src/flowMon.cpp	71	rebuildFlowDependencies	char
+local_review	t	src/flowMon.cpp	95	rebuildFlowDependencies	instStream *
+local_review	s	src/flowMon.cpp	120	gatherAllStreamStatistics	instStream *
 local_review	i	src/flushPending.cpp	10	flushPending	int
 local_review	i	src/flushPending.cpp	19	acquireFreePendingLocation	int
 local_review	i	src/flushPending.cpp	36	cycle	int
@@ -1007,8 +1007,8 @@ local_review	wt	src/getNumOptimisers.cpp	339	doRawAndSynth	workTable *
 local_review	s	src/getNumOptimisers.cpp	353	relaxOpt	instStream *
 local_review	wt	src/getNumOptimisers.cpp	361	relaxOpt	workTable *
 local_review	i	src/getNumOptimisers.cpp	367	relaxOpt	Instr *
-local_review	s	src/getNumOptimisers.cpp	390	func_08079fdc	instStream *
-local_review	wt	src/getNumOptimisers.cpp	400	func_08079fdc	workTable *
+local_review	s	src/getNumOptimisers.cpp	390	optimizeProgramScheduling	instStream *
+local_review	wt	src/getNumOptimisers.cpp	400	optimizeProgramScheduling	workTable *
 local_review	s	src/getUninserted.cpp	13	selectUninsertedStream	instStream *
 local_review	in	src/getUninserted.cpp	19	selectUninsertedStream	int
 local_review	in	src/getUninserted.cpp	49	getUninsertedxInputs	Instr *
@@ -1073,13 +1073,13 @@ local_review	k	src/iGroupList.cpp	208	logTable	int
 local_review	o	src/iGroupList.cpp	209	logTable	ol_s *
 local_review	n	src/iGroupList.cpp	214	logTable	int
 local_review	t	src/iInfo.cpp	18	ramType	unsigned char
-local_review	i	src/iInfo.cpp	46	func_08070080	int
+local_review	i	src/iInfo.cpp	46	scanOpcodeOperandDescriptors	int
 local_review	d	src/iInfo.cpp	58	check	iOpDesc *
 local_review	i	src/iInfo.cpp	59	check	int
 local_review	i	src/iInfo.cpp	98	checkTable	int
-local_review	v	src/iInfo.cpp	114	func_080701f4	unsigned int
-local_review	v	src/iInfo.cpp	120	func_0807021c	unsigned int
-local_review	v	src/iInfo.cpp	126	func_08070244	unsigned int
+local_review	v	src/iInfo.cpp	114	branchFlagBit1	unsigned int
+local_review	v	src/iInfo.cpp	120	branchFlagBit3	unsigned int
+local_review	v	src/iInfo.cpp	126	branchFlagBit2	unsigned int
 local_review	r	src/iInfo.cpp	132	canPruneOperands	int
 local_review	rt	src/iInfo.cpp	136	canPruneOperands	int
 local_review	t	src/iInfo.cpp	138	canPruneOperands	unsigned char
@@ -1161,7 +1161,7 @@ local_review	wt	src/immFixup.cpp	23	initStreamImm	workTable *
 local_review	in	src/immFixup.cpp	29	initStreamImm	Instr *
 local_review	wt	src/immFixup.cpp	44	do_immFixup	workTable *
 local_review	in	src/immFixup.cpp	47	do_immFixup	Instr *
-local_review	s	src/immFixup.cpp	60	func_08069324	instStream *
+local_review	s	src/immFixup.cpp	60	resolveProgramImmediateFixups	instStream *
 local_review	wt	src/immFixup.cpp	127	aaFixup	workTable *
 local_review	ru	src/immFixup.cpp	132	aaFixup	regUse *
 local_review	in	src/immFixup.cpp	138	aaFixup	Instr *
@@ -1320,20 +1320,20 @@ local_review	d	src/linkMatchList.cpp	45	linkMatchList	int
 local_review	ol	src/linkMatchList.cpp	63	linkMatchList	ol_s *
 local_review	mn	src/linkMatchList.cpp	69	linkMatchList	int
 local_review	mx	src/linkMatchList.cpp	70	linkMatchList	int
-local_review	n	src/lists.cpp	359	func_0804bf50	int
-local_review	p	src/lists.cpp	374	func_0804bf6c	const char *
-local_review	ch	src/lists.cpp	375	func_0804bf6c	char
-local_review	p	src/lists.cpp	383	func_0804bf9c	const char *
-local_review	ch	src/lists.cpp	384	func_0804bf9c	char
-local_review	p	src/lists.cpp	426	func_0804c08c	char *
-local_review	p	src/lists.cpp	440	func_0804c0c8	char *
+local_review	n	src/lists.cpp	359	countSetBits	int
+local_review	p	src/lists.cpp	374	isTokenAlphabetCharacter	const char *
+local_review	ch	src/lists.cpp	375	isTokenAlphabetCharacter	char
+local_review	p	src/lists.cpp	383	isIdentifierAlphabetCharacter	const char *
+local_review	ch	src/lists.cpp	384	isIdentifierAlphabetCharacter	char
+local_review	p	src/lists.cpp	426	removeLastDotSuffix	char *
+local_review	p	src/lists.cpp	440	removeTrailingComponentSuffix	char *
 local_review	e	src/lists.cpp	459	dupString	const char *
 local_review	d	src/lists.cpp	462	dupString	char *
 local_review	q	src/lists.cpp	468	dupString	char *
 local_review	e	src/lists.cpp	481	dupLabelString	const char *
 local_review	d	src/lists.cpp	484	dupLabelString	char *
 local_review	q	src/lists.cpp	489	dupLabelString	char *
-local_review	q	src/lists.cpp	506	func_0804c220	char *
+local_review	q	src/lists.cpp	506	clearRawBytes	char *
 local_review	e	src/lists.cpp	517	mstrlen	const char *
 local_review	s	src/lists.cpp	533	mstrcpy	const char *
 local_review	d	src/lists.cpp	534	mstrcpy	char *
@@ -1381,7 +1381,7 @@ local_review	ll	src/lock.cpp	1048	regName	cls0805c244 *
 local_review	rg	src/lock.cpp	1051	regName	RegPoolEntry *
 local_review	n	src/lock.cpp	1079	wrapRangeLocal	int
 local_review	i	src/loopDebris.cpp	24	ld_findEpi_inl	int
-local_review	i	src/loopDebris.cpp	70	func_0806770c	int
+local_review	i	src/loopDebris.cpp	70	validateLoopDebrisName	int
 local_review	r	src/loopDebris.cpp	83	getEnterStream	epiRec *
 local_review	r	src/loopDebris.cpp	93	getExitStream	epiRec *
 local_review	r	src/loopDebris.cpp	103	getMainStream	epiRec *
@@ -1389,21 +1389,21 @@ local_review	r	src/loopDebris.cpp	113	getProStream	epiRec *
 local_review	r	src/loopDebris.cpp	123	getEpiStream	epiRec *
 local_review	r	src/loopDebris.cpp	139	allocPro	epiRec *
 local_review	r	src/loopDebris.cpp	168	allocEpi	epiRec *
-local_review	i	src/loopDebris.cpp	255	func_08067c70	int
+local_review	i	src/loopDebris.cpp	255	findEpilogueByLoopKey	int
 local_review	r	src/loopDebris.cpp	287	checkedProStream	epiRec *
 local_review	n	src/loopDebris.cpp	310	init	mNode *
 local_review	wt	src/loopDebris.cpp	315	init	workTable *
 local_review	s	src/loopDebris.cpp	320	init	instStream *
-local_review	wt	src/loopDebris.cpp	342	func_08067e18	workTable *
-local_review	i	src/loopDebris.cpp	351	func_08067e18	int
-local_review	ld	src/loopDebris.cpp	352	func_08067e18	loopDebris
-local_review	r	src/loopDebris.cpp	392	func_08067e18	epiRec *
-local_review	d	src/loopDebris.cpp	393	func_08067e18	loopDebris *
-local_review	pr	src/loopDebris.cpp	395	func_08067e18	epiRec *
-local_review	ps	src/loopDebris.cpp	400	func_08067e18	instStream *
-local_review	er	src/loopDebris.cpp	413	func_08067e18	epiRec *
-local_review	es	src/loopDebris.cpp	418	func_08067e18	instStream *
-local_review	es	src/loopDebris.cpp	485	func_08067e18	instStream *
+local_review	wt	src/loopDebris.cpp	342	expandOneLoopIntoRegions	workTable *
+local_review	i	src/loopDebris.cpp	351	expandOneLoopIntoRegions	int
+local_review	ld	src/loopDebris.cpp	352	expandOneLoopIntoRegions	loopDebris
+local_review	r	src/loopDebris.cpp	392	expandOneLoopIntoRegions	epiRec *
+local_review	d	src/loopDebris.cpp	393	expandOneLoopIntoRegions	loopDebris *
+local_review	pr	src/loopDebris.cpp	395	expandOneLoopIntoRegions	epiRec *
+local_review	ps	src/loopDebris.cpp	400	expandOneLoopIntoRegions	instStream *
+local_review	er	src/loopDebris.cpp	413	expandOneLoopIntoRegions	epiRec *
+local_review	es	src/loopDebris.cpp	418	expandOneLoopIntoRegions	instStream *
+local_review	es	src/loopDebris.cpp	485	expandOneLoopIntoRegions	instStream *
 local_review	wt	src/loopDebris.cpp	594	explodeLoop	workTable *
 local_review	r	src/loopDebris.cpp	618	explodeLoop	epiRec *
 local_review	i	src/loopDebris.cpp	634	explodeLoop	int
@@ -1425,78 +1425,78 @@ local_review	e	src/loopDebris.cpp	757	explodeLoop	epiRec *
 local_review	t	src/loopDebris.cpp	767	explodeLoop	workTable *
 local_review	b	src/loopDebris.cpp	774	explodeLoop	Instr *
 local_review	x	src/loopDebris.cpp	800	explodeLoop	epiRec *
-local_review	t	src/mValue.cpp	54	func_0804c4f8	int
+local_review	t	src/mValue.cpp	54	promoteIntegralValueType	int
 local_review	p	src/mValue.cpp	177	setString	const char *
 local_review	d	src/mValue.cpp	178	setString	char *
-local_review	fa	src/mValue.cpp	328	func_0804ca94	float
-local_review	fb	src/mValue.cpp	328	func_0804ca94	float
-local_review	ia	src/mValue.cpp	329	func_0804ca94	int
-local_review	ib	src/mValue.cpp	329	func_0804ca94	int
-local_review	ua	src/mValue.cpp	330	func_0804ca94	unsigned int
-local_review	ub	src/mValue.cpp	330	func_0804ca94	unsigned int
-local_review	t	src/mValue.cpp	331	func_0804ca94	int
-local_review	fa	src/mValue.cpp	377	func_0804cd68	float
-local_review	fb	src/mValue.cpp	377	func_0804cd68	float
-local_review	ia	src/mValue.cpp	378	func_0804cd68	int
-local_review	ib	src/mValue.cpp	378	func_0804cd68	int
-local_review	ua	src/mValue.cpp	379	func_0804cd68	unsigned int
-local_review	ub	src/mValue.cpp	379	func_0804cd68	unsigned int
-local_review	t	src/mValue.cpp	380	func_0804cd68	int
-local_review	fa	src/mValue.cpp	426	func_0804d040	float
-local_review	fb	src/mValue.cpp	426	func_0804d040	float
-local_review	ia	src/mValue.cpp	427	func_0804d040	int
-local_review	ib	src/mValue.cpp	427	func_0804d040	int
-local_review	ua	src/mValue.cpp	428	func_0804d040	unsigned int
-local_review	ub	src/mValue.cpp	428	func_0804d040	unsigned int
-local_review	t	src/mValue.cpp	429	func_0804d040	int
-local_review	fa	src/mValue.cpp	475	func_0804d314	float
-local_review	fb	src/mValue.cpp	475	func_0804d314	float
-local_review	ia	src/mValue.cpp	476	func_0804d314	int
-local_review	ib	src/mValue.cpp	476	func_0804d314	int
-local_review	ua	src/mValue.cpp	477	func_0804d314	unsigned int
-local_review	ub	src/mValue.cpp	477	func_0804d314	unsigned int
-local_review	t	src/mValue.cpp	478	func_0804d314	int
+local_review	fa	src/mValue.cpp	328	addValues	float
+local_review	fb	src/mValue.cpp	328	addValues	float
+local_review	ia	src/mValue.cpp	329	addValues	int
+local_review	ib	src/mValue.cpp	329	addValues	int
+local_review	ua	src/mValue.cpp	330	addValues	unsigned int
+local_review	ub	src/mValue.cpp	330	addValues	unsigned int
+local_review	t	src/mValue.cpp	331	addValues	int
+local_review	fa	src/mValue.cpp	377	subtractValues	float
+local_review	fb	src/mValue.cpp	377	subtractValues	float
+local_review	ia	src/mValue.cpp	378	subtractValues	int
+local_review	ib	src/mValue.cpp	378	subtractValues	int
+local_review	ua	src/mValue.cpp	379	subtractValues	unsigned int
+local_review	ub	src/mValue.cpp	379	subtractValues	unsigned int
+local_review	t	src/mValue.cpp	380	subtractValues	int
+local_review	fa	src/mValue.cpp	426	multiplyValues	float
+local_review	fb	src/mValue.cpp	426	multiplyValues	float
+local_review	ia	src/mValue.cpp	427	multiplyValues	int
+local_review	ib	src/mValue.cpp	427	multiplyValues	int
+local_review	ua	src/mValue.cpp	428	multiplyValues	unsigned int
+local_review	ub	src/mValue.cpp	428	multiplyValues	unsigned int
+local_review	t	src/mValue.cpp	429	multiplyValues	int
+local_review	fa	src/mValue.cpp	475	divideValues	float
+local_review	fb	src/mValue.cpp	475	divideValues	float
+local_review	ia	src/mValue.cpp	476	divideValues	int
+local_review	ib	src/mValue.cpp	476	divideValues	int
+local_review	ua	src/mValue.cpp	477	divideValues	unsigned int
+local_review	ub	src/mValue.cpp	477	divideValues	unsigned int
+local_review	t	src/mValue.cpp	478	divideValues	int
 local_review	t	src/mValue.cpp	529	promoteIntType	int
-local_review	ia	src/mValue.cpp	539	func_0804d5ec	int
-local_review	ib	src/mValue.cpp	539	func_0804d5ec	int
-local_review	ua	src/mValue.cpp	540	func_0804d5ec	unsigned int
-local_review	ub	src/mValue.cpp	540	func_0804d5ec	unsigned int
-local_review	t	src/mValue.cpp	549	func_0804d5ec	int
-local_review	ia	src/mValue.cpp	579	func_0804d7d4	int
-local_review	ib	src/mValue.cpp	579	func_0804d7d4	int
-local_review	ua	src/mValue.cpp	580	func_0804d7d4	unsigned int
-local_review	ub	src/mValue.cpp	580	func_0804d7d4	unsigned int
-local_review	t	src/mValue.cpp	589	func_0804d7d4	int
-local_review	ia	src/mValue.cpp	617	func_0804d9c0	int
-local_review	ib	src/mValue.cpp	617	func_0804d9c0	int
-local_review	ua	src/mValue.cpp	618	func_0804d9c0	unsigned int
-local_review	ub	src/mValue.cpp	618	func_0804d9c0	unsigned int
-local_review	t	src/mValue.cpp	627	func_0804d9c0	int
-local_review	ia	src/mValue.cpp	655	func_0804dbac	int
-local_review	ib	src/mValue.cpp	655	func_0804dbac	int
-local_review	ua	src/mValue.cpp	656	func_0804dbac	unsigned int
-local_review	ub	src/mValue.cpp	656	func_0804dbac	unsigned int
-local_review	t	src/mValue.cpp	665	func_0804dbac	int
-local_review	ia	src/mValue.cpp	693	func_0804ddc0	int
-local_review	ib	src/mValue.cpp	693	func_0804ddc0	int
-local_review	ua	src/mValue.cpp	694	func_0804ddc0	unsigned int
-local_review	ub	src/mValue.cpp	694	func_0804ddc0	unsigned int
-local_review	t	src/mValue.cpp	703	func_0804ddc0	int
+local_review	ia	src/mValue.cpp	539	moduloValues	int
+local_review	ib	src/mValue.cpp	539	moduloValues	int
+local_review	ua	src/mValue.cpp	540	moduloValues	unsigned int
+local_review	ub	src/mValue.cpp	540	moduloValues	unsigned int
+local_review	t	src/mValue.cpp	549	moduloValues	int
+local_review	ia	src/mValue.cpp	579	shiftValuesLeft	int
+local_review	ib	src/mValue.cpp	579	shiftValuesLeft	int
+local_review	ua	src/mValue.cpp	580	shiftValuesLeft	unsigned int
+local_review	ub	src/mValue.cpp	580	shiftValuesLeft	unsigned int
+local_review	t	src/mValue.cpp	589	shiftValuesLeft	int
+local_review	ia	src/mValue.cpp	617	shiftValuesRight	int
+local_review	ib	src/mValue.cpp	617	shiftValuesRight	int
+local_review	ua	src/mValue.cpp	618	shiftValuesRight	unsigned int
+local_review	ub	src/mValue.cpp	618	shiftValuesRight	unsigned int
+local_review	t	src/mValue.cpp	627	shiftValuesRight	int
+local_review	ia	src/mValue.cpp	655	logicalOrValues	int
+local_review	ib	src/mValue.cpp	655	logicalOrValues	int
+local_review	ua	src/mValue.cpp	656	logicalOrValues	unsigned int
+local_review	ub	src/mValue.cpp	656	logicalOrValues	unsigned int
+local_review	t	src/mValue.cpp	665	logicalOrValues	int
+local_review	ia	src/mValue.cpp	693	logicalAndValues	int
+local_review	ib	src/mValue.cpp	693	logicalAndValues	int
+local_review	ua	src/mValue.cpp	694	logicalAndValues	unsigned int
+local_review	ub	src/mValue.cpp	694	logicalAndValues	unsigned int
+local_review	t	src/mValue.cpp	703	logicalAndValues	int
 local_review	t	src/mValue.cpp	731	promoteType	int
-local_review	t	src/mValue.cpp	747	func_0804dfd4	int
-local_review	t	src/mValue.cpp	767	func_0804e050	int
-local_review	t	src/mValue.cpp	787	func_0804e0cc	int
-local_review	p	src/mValue.cpp	802	func_0804e148	const char *
+local_review	t	src/mValue.cpp	747	bitwiseAndValues	int
+local_review	t	src/mValue.cpp	767	bitwiseOrValues	int
+local_review	t	src/mValue.cpp	787	bitwiseXorValues	int
+local_review	p	src/mValue.cpp	802	hasOnlyImmediateCharacters	const char *
 local_review	p	src/mValue.cpp	863	parse	const char *
 local_review	c	src/mValue.cpp	864	parse	char
 local_review	d	src/mValue.cpp	909	parse	const char *
 local_review	ch	src/mValue.cpp	911	parse	char
 local_review	tmp	src/mValue.cpp	950	makeNumeric	mValue
 local_review	p	src/mValue.cpp	965	asChars	char *
-local_review	za	src/mValue.cpp	990	func_0804e5c0	unsigned int
-local_review	zb	src/mValue.cpp	991	func_0804e5c0	unsigned int
-local_review	pa	src/mValue.cpp	992	func_0804e5c0	unsigned int *
-local_review	pb	src/mValue.cpp	993	func_0804e5c0	unsigned int *
+local_review	za	src/mValue.cpp	990	sameImmediateValue	unsigned int
+local_review	zb	src/mValue.cpp	991	sameImmediateValue	unsigned int
+local_review	pa	src/mValue.cpp	992	sameImmediateValue	unsigned int *
+local_review	pb	src/mValue.cpp	993	sameImmediateValue	unsigned int *
 local_review	i	src/main.cpp	86	main	int
 local_review	fd	src/main.cpp	243	main	int
 local_review	n	src/main.cpp	444	main	int
@@ -1724,12 +1724,12 @@ local_review	f	src/optVuta1.cpp	31	optVuta1	int
 local_review	i	src/optVuta1.cpp	54	vuta1RegCost	int
 local_review	r	src/optVuta1.cpp	55	vuta1RegCost	RegPoolEntry *
 local_review	fd	src/os.cpp	67	func_0804ab6c	int
-local_review	wt	src/pathKeys.cpp	13	func_08061ab0	workTable *
-local_review	u	src/pathKeys.cpp	18	func_08061ab0	regUse *
-local_review	lo	src/pathKeys.cpp	36	func_08061ab0	int
-local_review	hi	src/pathKeys.cpp	43	func_08061ab0	int
-local_review	l	src/pathKeys.cpp	61	func_08061c34	linkNode *
-local_review	vc	src/pathKeys.cpp	75	func_08061cb0	VisitCache *
+local_review	wt	src/pathKeys.cpp	13	initializeRegisterBacktraceLocation	workTable *
+local_review	u	src/pathKeys.cpp	18	initializeRegisterBacktraceLocation	regUse *
+local_review	lo	src/pathKeys.cpp	36	initializeRegisterBacktraceLocation	int
+local_review	hi	src/pathKeys.cpp	43	initializeRegisterBacktraceLocation	int
+local_review	l	src/pathKeys.cpp	61	resetStreamPathSearch	linkNode *
+local_review	vc	src/pathKeys.cpp	75	buildMinimumPathKey	VisitCache *
 local_review	vc	src/pathKeys.cpp	95	getMaxPathKey	VisitCache *
 local_review	s	src/pathKeys.cpp	119	isPathRaw	instStream *
 local_review	id	src/pathKeys.cpp	120	isPathRaw	int
@@ -1802,26 +1802,26 @@ local_review	p	src/prepRawTable.cpp	57	prepRawTable	int
 local_review	in	src/prepRawTable.cpp	58	prepRawTable	Instr *
 local_review	il	src/prepRawTable.cpp	72	prepRawTable	int
 local_review	nl	src/prepRawTable.cpp	102	prepRawTable	signed char
-local_review	t	src/prepReduce.cpp	14	func_0807e528	workTable *
-local_review	ul	src/prepReduce.cpp	25	func_0807e528	regUseList *
-local_review	r	src/prepReduce.cpp	26	func_0807e528	regUse *
-local_review	in	src/prepReduce.cpp	34	func_0807e528	Instr *
-local_review	i	src/prepReduce.cpp	35	func_0807e528	int
-local_review	op	src/prepReduce.cpp	36	func_0807e528	Operand *
-local_review	ru	src/prepReduce.cpp	41	func_0807e528	regUse *
+local_review	t	src/prepReduce.cpp	14	prepareReductionCandidates	workTable *
+local_review	ul	src/prepReduce.cpp	25	prepareReductionCandidates	regUseList *
+local_review	r	src/prepReduce.cpp	26	prepareReductionCandidates	regUse *
+local_review	in	src/prepReduce.cpp	34	prepareReductionCandidates	Instr *
+local_review	i	src/prepReduce.cpp	35	prepareReductionCandidates	int
+local_review	op	src/prepReduce.cpp	36	prepareReductionCandidates	Operand *
+local_review	ru	src/prepReduce.cpp	41	prepareReductionCandidates	regUse *
 local_review	wt	src/prepUta.cpp	20	prepUta	workTable *
 local_review	nt	src/prepUta.cpp	39	prepUta	workTable *
 local_review	ru	src/prepUta.cpp	66	prepUta	regUse *
 local_review	in	src/prepUta.cpp	74	prepUta	Instr *
 local_review	p	src/preprocess.cpp	25	startsWith	const char *
-local_review	p	src/preprocess.cpp	41	func_0804a410	const char *
-local_review	i	src/preprocessorTools.cpp	78	func_0804a67c	int
-local_review	ok	src/preprocessorTools.cpp	99	func_0804a6e0	bool
-local_review	t	src/preprocessorTools.cpp	100	func_0804a6e0	Tool *
-local_review	n	src/preprocessorTools.cpp	109	func_0804a6e0	int
-local_review	p	src/preprocessorTools.cpp	132	func_0804a6e0	char *
-local_review	i	src/preprocessorTools.cpp	133	func_0804a6e0	int
-local_review	rc	src/preprocessorTools.cpp	137	func_0804a6e0	int
+local_review	p	src/preprocess.cpp	41	warnAboutMissingPreprocessing	const char *
+local_review	i	src/preprocessorTools.cpp	78	runSelectedPreprocessors	int
+local_review	ok	src/preprocessorTools.cpp	99	runSinglePreprocessor	bool
+local_review	t	src/preprocessorTools.cpp	100	runSinglePreprocessor	Tool *
+local_review	n	src/preprocessorTools.cpp	109	runSinglePreprocessor	int
+local_review	p	src/preprocessorTools.cpp	132	runSinglePreprocessor	char *
+local_review	i	src/preprocessorTools.cpp	133	runSinglePreprocessor	int
+local_review	rc	src/preprocessorTools.cpp	137	runSinglePreprocessor	int
 local_review	s	src/processActiveList.cpp	9	processActiveList	instStream *
 local_review	l	src/processActiveList.cpp	52	extendBackTrace	linkNode *
 local_review	b	src/processActiveList.cpp	72	extendBackTrace	linkNode *
@@ -2063,12 +2063,12 @@ local_review	s	src/tPairList.cpp	133	int_buildTpairs	instStream *
 local_review	sr	src/tPairList.cpp	134	int_buildTpairs	regUse *
 local_review	i	src/tidy.cpp	10	extendForEnd_inl	int
 local_review	r	src/tidy.cpp	11	extendForEnd_inl	wtRow *
-local_review	s	src/tidy.cpp	23	func_08062a88	instStream *
-local_review	wt	src/tidy.cpp	29	func_08062a88	workTable *
-local_review	n	src/tidy.cpp	45	func_08062a88	linkNode *
-local_review	n	src/tidy.cpp	59	func_08062a88	linkNode *
-local_review	b	src/tidy.cpp	68	func_08062a88	Instr *
-local_review	wt	src/tidy.cpp	77	func_08062a88	workTable *
+local_review	s	src/tidy.cpp	23	tidyProgramStreams	instStream *
+local_review	wt	src/tidy.cpp	29	tidyProgramStreams	workTable *
+local_review	n	src/tidy.cpp	45	tidyProgramStreams	linkNode *
+local_review	n	src/tidy.cpp	59	tidyProgramStreams	linkNode *
+local_review	b	src/tidy.cpp	68	tidyProgramStreams	Instr *
+local_review	wt	src/tidy.cpp	77	tidyProgramStreams	workTable *
 local_review	i	src/tidy.cpp	95	extendForEnd	int
 local_review	r	src/tidy.cpp	96	extendForEnd	wtRow *
 local_review	i	src/workTable.cpp	17	dumpRegisterUses	int
@@ -2120,8 +2120,8 @@ local_review	t	src/wrangle.cpp	508	buildCandidateList	int
 local_review	in	src/wrangle.cpp	560	func_080803dc	Instr *
 local_review	p	src/wrangle.cpp	585	findInsertPosition	int
 local_review	r	src/wrangle.cpp	587	findInsertPosition	int
-local_review	in	src/wrangleCandidateSelection.cpp	17	func_080817d4	Instr *
-local_review	in	src/wrangleCandidateSelection.cpp	37	func_0808184c	Instr *
+local_review	in	src/wrangleCandidateSelection.cpp	17	selectDumbSchedulingCandidate	Instr *
+local_review	in	src/wrangleCandidateSelection.cpp	37	selectLoopDumbSchedulingCandidate	Instr *
 local_review	in	src/wrangleCore.cpp	28	func_0808061c	Instr *
 local_review	r	src/wrangleCore.cpp	66	func_0808061c	bool
 local_review	tmp	src/wrangleCore.cpp	79	wrangleMode0Worker	VclPtrWord
@@ -2209,9 +2209,9 @@ local_review	d	src/xpNode.cpp	187	setDepth	const int &
 local_review	i	src/xpNode.cpp	188	setDepth	int
 local_review	d	src/xpNode.cpp	203	setDepthInl	const int &
 local_review	i	src/xpNode.cpp	204	setDepthInl	int
-local_review	i	src/xpNode.cpp	218	func_0804ea8c	int
-local_review	n	src/xpNode.cpp	225	func_0804ead0	xpNode *
-local_review	i	src/xpNode.cpp	228	func_0804ead0	int
+local_review	i	src/xpNode.cpp	218	visitExpressionDescendants	int
+local_review	n	src/xpNode.cpp	225	resetExpressionDepths	xpNode *
+local_review	i	src/xpNode.cpp	228	resetExpressionDepths	int
 local_review	i	src/xpNode.cpp	238	dumpNode	int
 local_review	i	src/xpNode.cpp	241	dumpNode	int
 local_review	n	src/xpNode.cpp	252	dump	xpNode *
@@ -2237,14 +2237,14 @@ local_review	i	src/xpNode.cpp	527	rec_Eval	int
 local_review	a	src/xpNode.cpp	543	rec_Eval	mValue *
 local_review	b	src/xpNode.cpp	544	rec_Eval	mValue *
 local_review	a	src/xpNode.cpp	569	rec_Eval	mValue *
-local_review	i	src/xpNode.cpp	597	func_0804f6c0	int
-local_review	p	src/xpNode.cpp	606	func_0804f6ec	xun *
-local_review	p	src/xpNode.cpp	622	func_0804f75c	xun *
-local_review	x	src/xpNode.cpp	625	func_0804f75c	xun *
-local_review	p	src/xpNode.cpp	644	func_0804f844	xun *
-local_review	n	src/xpNode.cpp	664	func_0804f8f0	xpNode *
-local_review	i	src/xpNode.cpp	675	func_0804f920	int
-local_review	s	src/xpNode.cpp	685	func_0804f920	const char *
+local_review	i	src/xpNode.cpp	597	findExpressionOperatorByType	int
+local_review	p	src/xpNode.cpp	606	clearUnknownSymbols	xun *
+local_review	p	src/xpNode.cpp	622	recordUnknownSymbol	xun *
+local_review	x	src/xpNode.cpp	625	recordUnknownSymbol	xun *
+local_review	p	src/xpNode.cpp	644	visitUnknownSymbols	xun *
+local_review	n	src/xpNode.cpp	664	countUnknownExpressionSymbols	xpNode *
+local_review	i	src/xpNode.cpp	675	countUnknownSymbolsInNode	int
+local_review	s	src/xpNode.cpp	685	countUnknownSymbolsInNode	const char *
 parameter_review	t	src/ExecRP.cpp	75	func_0805116c	LocTag *
 parameter_review	t	src/ExecRP.cpp	80	func_0805118c	LocTag *
 parameter_review	t	src/ExecRP.cpp	85	func_080511ac	LocTag *
@@ -2321,23 +2321,23 @@ parameter_review	<unnamed>	src/Operand.cpp	453	buildImplicitOperand	bool
 parameter_review	c	src/Parser.cpp	87	isEol	char
 parameter_review	c	src/Parser.cpp	92	isNewline	char
 parameter_review	s	src/Parser.cpp	236	isWhite	const char *
-parameter_review	p	src/Parser.cpp	256	func_080501c0	const char *
-parameter_review	c	src/Parser.cpp	261	func_080501d4	char
+parameter_review	p	src/Parser.cpp	256	isLineFeedAt	const char *
+parameter_review	c	src/Parser.cpp	261	isLineEndingCharacter	char
 parameter_review	n	src/Parser.cpp	318	FindLocTag	int
 parameter_review	c	src/Parser.cpp	326	isGaspDigit	unsigned char
-parameter_review	s	src/Parser.cpp	424	func_080506e0	const char *
-parameter_review	c	src/Parser.cpp	433	func_08050708	char
-parameter_review	kw	src/Parser.cpp	454	func_08050780	const char *
-parameter_review	s	src/Parser.cpp	454	func_08050780	const char *
-parameter_review	s	src/Parser.cpp	469	func_080507f4	const char *
-parameter_review	s	src/Parser.cpp	474	func_08050810	const char *
+parameter_review	s	src/Parser.cpp	424	hasTrailingLabelColon	const char *
+parameter_review	c	src/Parser.cpp	433	isTokenSeparatorCharacter	char
+parameter_review	kw	src/Parser.cpp	454	matchesLeadingKeyword	const char *
+parameter_review	s	src/Parser.cpp	454	matchesLeadingKeyword	const char *
+parameter_review	s	src/Parser.cpp	469	matchesFirstSpecialKeyword	const char *
+parameter_review	s	src/Parser.cpp	474	matchesSecondSpecialKeyword	const char *
 parameter_review	p	src/Processor.cpp	206	dumpProcessorRegisterPools	Program *
 parameter_review	p	src/Processor.cpp	213	parseReset	Program *
 parameter_review	p	src/Processor.cpp	232	statReset	Program *
 parameter_review	id	src/Processor.cpp	243	getOpcodeInfoById	int
 parameter_review	p	src/Processor.cpp	283	optReset	Program *
 parameter_review	p	src/Processor.cpp	294	Cycle	Program *
-parameter_review	p	src/Processor.cpp	306	func_0806c0f8	Program *
+parameter_review	p	src/Processor.cpp	306	resetProcessorThroughput	Program *
 parameter_review	t	src/Processor.cpp	318	getRP	unsigned int
 parameter_review	t	src/Processor.cpp	379	GetRP	unsigned int
 parameter_review	p	src/Processor.cpp	388	flowReset	Program *
@@ -2369,12 +2369,12 @@ parameter_review	p	src/Program.cpp	320	setUniqueName	Program *
 parameter_review	p	src/Program.cpp	325	getUniqueName	Program *
 parameter_review	p	src/Program.cpp	330	emitLabels	Program *
 parameter_review	p	src/Program.cpp	342	isReferencedLabel	Program *
-parameter_review	p	src/Program.cpp	371	func_0806f4a0	Program *
-parameter_review	s	src/Program.cpp	371	func_0806f4a0	instStream *
+parameter_review	p	src/Program.cpp	371	streamExportsSymbol	Program *
+parameter_review	s	src/Program.cpp	371	streamExportsSymbol	instStream *
 parameter_review	p	src/Program.cpp	381	isExportedSymbol	Program *
 parameter_review	p	src/Program.cpp	386	recalcFlowUIDs	Program *
-parameter_review	p	src/Program.cpp	418	func_0806f610	Program *
-parameter_review	p	src/Program.cpp	435	func_0806f6a4	Program *
+parameter_review	p	src/Program.cpp	418	resetProgramAllocationsForFirstPass	Program *
+parameter_review	p	src/Program.cpp	435	resetProgramAllocationsForSecondPass	Program *
 parameter_review	l	src/Program.cpp	444	printNamedLink	linkNode *
 parameter_review	s	src/Program.cpp	451	isEntryStream	instStream *
 parameter_review	s	src/Program.cpp	452	isExitStream	instStream *
@@ -2382,12 +2382,12 @@ parameter_review	p	src/Program.cpp	454	dumpFlow	Program *
 parameter_review	c	src/RegPool.cpp	235	isRegNameChar	char
 parameter_review	p	src/RegPool.cpp	310	findVirtual	RegPoolEntry *
 parameter_review	e	src/RegPool.cpp	481	ownsRegisterClass	RegPoolEntry *
-parameter_review	s	src/VUStr.cpp	5	func_08051f08	const char *
-parameter_review	s	src/VUStr.cpp	29	func_08051f78	const char *
-parameter_review	s	src/VUStr.cpp	54	func_08051ff0	const char *
-parameter_review	s	src/VUStr.cpp	105	func_08052100	const char *
-parameter_review	s	src/VUStr.cpp	131	func_0805219c	const char *
-parameter_review	s	src/VUStr.cpp	148	func_080521f0	char *
+parameter_review	s	src/VUStr.cpp	5	parseTrailingComponentMask	const char *
+parameter_review	s	src/VUStr.cpp	29	parseBracketedComponentMask	const char *
+parameter_review	s	src/VUStr.cpp	54	decodeComponentMaskLetters	const char *
+parameter_review	s	src/VUStr.cpp	105	readTrailingComponentMask	const char *
+parameter_review	s	src/VUStr.cpp	131	lastComponentBit	const char *
+parameter_review	s	src/VUStr.cpp	148	removeInstructionModifierGroups	char *
 parameter_review	vc	src/VisitCache.cpp	7	vc_release_inl	VisitCache *
 parameter_review	vc	src/VisitCache.cpp	19	vc_extend_inl	VisitCache *
 parameter_review	vc	src/VisitCache.cpp	150	testPathBit	VisitCache *
@@ -2423,9 +2423,9 @@ parameter_review	in	src/buildSynth.cpp	14	dumpSynthInstruction	Instr *
 parameter_review	s	src/buildSynth.cpp	20	buildSynth	instStream *
 parameter_review	in	src/buildUta.cpp	14	dumpUtaInstruction	Instr *
 parameter_review	s	src/buildUta.cpp	20	buildUta	instStream *
-parameter_review	p	src/capping.cpp	18	func_0807aa28	Program *
-parameter_review	p	src/capping.cpp	45	func_0807aaf4	Program *
-parameter_review	s	src/capping.cpp	45	func_0807aaf4	instStream *
+parameter_review	p	src/capping.cpp	18	insertAllRegisterCaps	Program *
+parameter_review	p	src/capping.cpp	45	insertStreamRegisterCaps	Program *
+parameter_review	s	src/capping.cpp	45	insertStreamRegisterCaps	instStream *
 parameter_review	a	src/catLocks.cpp	4	catLocks	OperandLock *
 parameter_review	b	src/catLocks.cpp	4	catLocks	OperandLock *
 parameter_review	e	src/catLocks.cpp	4	catLocks	int *
@@ -2435,7 +2435,7 @@ parameter_review	a	src/catLocks.cpp	35	sameLockOwner	OperandLock *
 parameter_review	b	src/catLocks.cpp	35	sameLockOwner	OperandLock *
 parameter_review	in	src/catLocks.cpp	40	canMoveInputLock	OperandLock *
 parameter_review	s	src/catStreams.cpp	13	dumpRawStream	instStream *
-parameter_review	p	src/catStreams.cpp	18	func_08063154	Program *
+parameter_review	p	src/catStreams.cpp	18	concatenateCompatibleStreams	Program *
 parameter_review	a	src/catStreams.cpp	138	appendStream	instStream *
 parameter_review	b	src/catStreams.cpp	138	appendStream	instStream *
 parameter_review	p	src/catStreams.cpp	138	appendStream	Program *
@@ -2452,7 +2452,7 @@ parameter_review	p	src/checkOpt.cpp	58	checkOpt3	Program *
 parameter_review	v	src/collapse.cpp	15	fitsSigned	int
 parameter_review	v	src/collapse.cpp	25	fitsUnsigned	int
 parameter_review	ol	src/collapse.cpp	31	pushImmediate	ol_s *
-parameter_review	p	src/collapse.cpp	60	func_0806a74c	Program *
+parameter_review	p	src/collapse.cpp	60	collapseProgramStreams	Program *
 parameter_review	v	src/collapse.cpp	149	isStringValue	mValue *
 parameter_review	in	src/collapse.cpp	154	func_0806aa54	Instr *
 parameter_review	v	src/collapse.cpp	204	immFitsUnsigned	int
@@ -2517,7 +2517,7 @@ parameter_review	p	src/emuInst.cpp	15	emuInst	Program *
 parameter_review	wt	src/expandRaw.cpp	6	expandRaw	workTable *
 parameter_review	p	src/expandRaw.cpp	15	expandRawTables	Program *
 parameter_review	p	src/explodeRaw.cpp	16	explodeRaw	Program *
-parameter_review	p	src/externalStreamPreparation.cpp	20	func_0807aee4	Program *
+parameter_review	p	src/externalStreamPreparation.cpp	20	prepareExternalSchedulingForProgram	Program *
 parameter_review	p	src/externalStreamPreparation.cpp	41	removeNops	Program *
 parameter_review	s	src/externalStreamPreparation.cpp	41	removeNops	instStream *
 parameter_review	wt	src/externalStreamPreparation.cpp	289	func_0807bb84	workTable *
@@ -2563,10 +2563,10 @@ parameter_review	in	src/findCap.cpp	25	findCap	Instr *
 parameter_review	wt	src/findCap.cpp	25	findCap	workTable *
 parameter_review	v	src/fitsSigned.cpp	10	fitsSigned	int
 parameter_review	v	src/fitsSigned.cpp	20	fitsUnsigned	int
-parameter_review	<unnamed>	src/flowBuildHooks.cpp	10	func_08085a9c	Program *
-parameter_review	b	src/flowMon.cpp	20	func_08060018	bool
-parameter_review	p	src/flowMon.cpp	20	func_08060018	Program *
-parameter_review	p	src/flowMon.cpp	118	func_080603bc	Program *
+parameter_review	<unnamed>	src/flowBuildHooks.cpp	10	noopFlowBuildHook	Program *
+parameter_review	b	src/flowMon.cpp	20	rebuildFlowDependencies	bool
+parameter_review	p	src/flowMon.cpp	20	rebuildFlowDependencies	Program *
+parameter_review	p	src/flowMon.cpp	118	gatherAllStreamStatistics	Program *
 parameter_review	i	src/flushPending.cpp	205	getPartPayload	int
 parameter_review	i	src/flushPending.cpp	210	setPartPayload	int
 parameter_review	v	src/flushPending.cpp	210	setPartPayload	VclPtrWord
@@ -2588,7 +2588,7 @@ parameter_review	s	src/getNumOptimisers.cpp	162	loopStallReason	instStream *
 parameter_review	p	src/getNumOptimisers.cpp	167	doLoop	Program *
 parameter_review	p	src/getNumOptimisers.cpp	288	doRawAndSynth	Program *
 parameter_review	p	src/getNumOptimisers.cpp	351	relaxOpt	Program *
-parameter_review	p	src/getNumOptimisers.cpp	388	func_08079fdc	Program *
+parameter_review	p	src/getNumOptimisers.cpp	388	optimizeProgramScheduling	Program *
 parameter_review	id	src/getNumOptimisers.cpp	433	getOptimiserName	int
 parameter_review	p	src/getUninserted.cpp	11	selectUninsertedStream	Program *
 parameter_review	in	src/getUninserted.cpp	137	getToEnd	Instr *
@@ -2610,7 +2610,7 @@ parameter_review	p	src/iGroupList.cpp	54	add	void *
 parameter_review	sz	src/iGroupList.cpp	54	add	int
 parameter_review	wt	src/iGroupList.cpp	161	logTable	workTable *
 parameter_review	x	src/iInfo.cpp	159	decodeImmediateCategory	unsigned char
-parameter_review	<unnamed>	src/iInfo.cpp	169	func_0807031c	unsigned char
+parameter_review	<unnamed>	src/iInfo.cpp	169	defaultImmediateFlags	unsigned char
 parameter_review	x	src/iInfo.cpp	174	immediateFlagBit7	unsigned char
 parameter_review	in	src/iTable.cpp	320	unlinkAndUnlog	Instr *
 parameter_review	i	src/iTable.cpp	369	takeOut	Instr *
@@ -2641,7 +2641,7 @@ parameter_review	s	src/immFixup.cpp	21	initStreamImm	instStream *
 parameter_review	in	src/immFixup.cpp	34	fixInst	Instr *
 parameter_review	s	src/immFixup.cpp	42	do_immFixup	instStream *
 parameter_review	s	src/immFixup.cpp	52	dumpFailed	instStream *
-parameter_review	p	src/immFixup.cpp	58	func_08069324	Program *
+parameter_review	p	src/immFixup.cpp	58	resolveProgramImmediateFixups	Program *
 parameter_review	m	src/immFixup.cpp	80	bit0	unsigned char
 parameter_review	m	src/immFixup.cpp	85	bit0Clear	unsigned char
 parameter_review	in	src/immFixup.cpp	91	hasAaData	Instr *
@@ -2755,19 +2755,19 @@ parameter_review	n	src/lists.cpp	214	AddToDo_Tail	Instr *
 parameter_review	n	src/lists.cpp	250	AddDone_Tail	Instr *
 parameter_review	n	src/lists.cpp	286	AddLinear_Tail	Instr *
 parameter_review	n	src/lists.cpp	322	AddLinear_After	Instr *
-parameter_review	a	src/lists.cpp	348	func_0804bf28	char
-parameter_review	b	src/lists.cpp	348	func_0804bf28	char
-parameter_review	x	src/lists.cpp	357	func_0804bf50	unsigned int
-parameter_review	c	src/lists.cpp	372	func_0804bf6c	char
-parameter_review	c	src/lists.cpp	381	func_0804bf9c	char
-parameter_review	a	src/lists.cpp	411	func_0804c03c	const char *
-parameter_review	b	src/lists.cpp	411	func_0804c03c	const char *
-parameter_review	s	src/lists.cpp	424	func_0804c08c	char *
-parameter_review	s	src/lists.cpp	438	func_0804c0c8	char *
+parameter_review	a	src/lists.cpp	348	equalAsciiCaseInsensitive	char
+parameter_review	b	src/lists.cpp	348	equalAsciiCaseInsensitive	char
+parameter_review	x	src/lists.cpp	357	countSetBits	unsigned int
+parameter_review	c	src/lists.cpp	372	isTokenAlphabetCharacter	char
+parameter_review	c	src/lists.cpp	381	isIdentifierAlphabetCharacter	char
+parameter_review	a	src/lists.cpp	411	equalExactStrings	const char *
+parameter_review	b	src/lists.cpp	411	equalExactStrings	const char *
+parameter_review	s	src/lists.cpp	424	removeLastDotSuffix	char *
+parameter_review	s	src/lists.cpp	438	removeTrailingComponentSuffix	char *
 parameter_review	s	src/lists.cpp	453	dupString	const char *
 parameter_review	s	src/lists.cpp	475	dupLabelString	const char *
-parameter_review	n	src/lists.cpp	496	func_0804c220	int
-parameter_review	p	src/lists.cpp	496	func_0804c220	char *
+parameter_review	n	src/lists.cpp	496	clearRawBytes	int
+parameter_review	p	src/lists.cpp	496	clearRawBytes	char *
 parameter_review	s	src/lists.cpp	511	mstrlen	const char *
 parameter_review	a	src/lists.cpp	541	mprefix_del	const char *
 parameter_review	b	src/lists.cpp	541	mprefix_del	const char *
@@ -2824,8 +2824,8 @@ parameter_review	i	src/loopDebris.cpp	285	checkedProStream	int
 parameter_review	ld	src/loopDebris.cpp	285	checkedProStream	loopDebris *
 parameter_review	i	src/loopDebris.cpp	295	proRecord	int
 parameter_review	ld	src/loopDebris.cpp	295	proRecord	loopDebris *
-parameter_review	p	src/loopDebris.cpp	340	func_08067e18	Program *
-parameter_review	s	src/loopDebris.cpp	340	func_08067e18	instStream *
+parameter_review	p	src/loopDebris.cpp	340	expandOneLoopIntoRegions	Program *
+parameter_review	s	src/loopDebris.cpp	340	expandOneLoopIntoRegions	instStream *
 parameter_review	a	src/loopDebris.cpp	551	initDebris	int
 parameter_review	ld	src/loopDebris.cpp	551	initDebris	loopDebris *
 parameter_review	e	src/loopDebris.cpp	572	recName	epiRec *
@@ -2833,10 +2833,10 @@ parameter_review	ld	src/loopDebris.cpp	582	mainRec	loopDebris *
 parameter_review	ld	src/loopDebris.cpp	587	explodeLoop	loopDebris *
 parameter_review	s	src/loopDebris.cpp	587	explodeLoop	instStream *
 parameter_review	n	src/mList.cpp	11	mNode_detach_inl	mNode *
-parameter_review	a	src/mValue.cpp	45	func_0804c4e8	int
-parameter_review	b	src/mValue.cpp	45	func_0804c4e8	int
-parameter_review	a	src/mValue.cpp	52	func_0804c4f8	int
-parameter_review	b	src/mValue.cpp	52	func_0804c4f8	int
+parameter_review	a	src/mValue.cpp	45	maximumValueType	int
+parameter_review	b	src/mValue.cpp	45	maximumValueType	int
+parameter_review	a	src/mValue.cpp	52	promoteIntegralValueType	int
+parameter_review	b	src/mValue.cpp	52	promoteIntegralValueType	int
 parameter_review	v	src/mValue.cpp	129	setInt	int
 parameter_review	s	src/mValue.cpp	142	setString	const char *
 parameter_review	n	src/mValue.cpp	160	setString	int
@@ -2846,46 +2846,46 @@ parameter_review	v	src/mValue.cpp	200	setFloat	float
 parameter_review	v	src/mValue.cpp	293	getUIntInl	mValue *
 parameter_review	v	src/mValue.cpp	304	getIntInl	mValue *
 parameter_review	v	src/mValue.cpp	315	getFloatInl	mValue *
-parameter_review	a	src/mValue.cpp	326	func_0804ca94	mValue *
-parameter_review	b	src/mValue.cpp	326	func_0804ca94	mValue *
-parameter_review	a	src/mValue.cpp	375	func_0804cd68	mValue *
-parameter_review	b	src/mValue.cpp	375	func_0804cd68	mValue *
-parameter_review	a	src/mValue.cpp	424	func_0804d040	mValue *
-parameter_review	b	src/mValue.cpp	424	func_0804d040	mValue *
-parameter_review	a	src/mValue.cpp	473	func_0804d314	mValue *
-parameter_review	b	src/mValue.cpp	473	func_0804d314	mValue *
+parameter_review	a	src/mValue.cpp	326	addValues	mValue *
+parameter_review	b	src/mValue.cpp	326	addValues	mValue *
+parameter_review	a	src/mValue.cpp	375	subtractValues	mValue *
+parameter_review	b	src/mValue.cpp	375	subtractValues	mValue *
+parameter_review	a	src/mValue.cpp	424	multiplyValues	mValue *
+parameter_review	b	src/mValue.cpp	424	multiplyValues	mValue *
+parameter_review	a	src/mValue.cpp	473	divideValues	mValue *
+parameter_review	b	src/mValue.cpp	473	divideValues	mValue *
 parameter_review	t	src/mValue.cpp	522	isNumType	unsigned int
 parameter_review	a	src/mValue.cpp	527	promoteIntType	int
 parameter_review	b	src/mValue.cpp	527	promoteIntType	int
-parameter_review	a	src/mValue.cpp	537	func_0804d5ec	mValue *
-parameter_review	b	src/mValue.cpp	537	func_0804d5ec	mValue *
-parameter_review	a	src/mValue.cpp	577	func_0804d7d4	mValue *
-parameter_review	b	src/mValue.cpp	577	func_0804d7d4	mValue *
-parameter_review	a	src/mValue.cpp	615	func_0804d9c0	mValue *
-parameter_review	b	src/mValue.cpp	615	func_0804d9c0	mValue *
-parameter_review	a	src/mValue.cpp	653	func_0804dbac	mValue *
-parameter_review	b	src/mValue.cpp	653	func_0804dbac	mValue *
-parameter_review	a	src/mValue.cpp	691	func_0804ddc0	mValue *
-parameter_review	b	src/mValue.cpp	691	func_0804ddc0	mValue *
+parameter_review	a	src/mValue.cpp	537	moduloValues	mValue *
+parameter_review	b	src/mValue.cpp	537	moduloValues	mValue *
+parameter_review	a	src/mValue.cpp	577	shiftValuesLeft	mValue *
+parameter_review	b	src/mValue.cpp	577	shiftValuesLeft	mValue *
+parameter_review	a	src/mValue.cpp	615	shiftValuesRight	mValue *
+parameter_review	b	src/mValue.cpp	615	shiftValuesRight	mValue *
+parameter_review	a	src/mValue.cpp	653	logicalOrValues	mValue *
+parameter_review	b	src/mValue.cpp	653	logicalOrValues	mValue *
+parameter_review	a	src/mValue.cpp	691	logicalAndValues	mValue *
+parameter_review	b	src/mValue.cpp	691	logicalAndValues	mValue *
 parameter_review	a	src/mValue.cpp	729	promoteType	int
 parameter_review	b	src/mValue.cpp	729	promoteType	int
-parameter_review	a	src/mValue.cpp	737	func_0804dfd4	mValue *
-parameter_review	b	src/mValue.cpp	737	func_0804dfd4	mValue *
-parameter_review	a	src/mValue.cpp	757	func_0804e050	mValue *
-parameter_review	b	src/mValue.cpp	757	func_0804e050	mValue *
-parameter_review	a	src/mValue.cpp	777	func_0804e0cc	mValue *
-parameter_review	b	src/mValue.cpp	777	func_0804e0cc	mValue *
-parameter_review	s	src/mValue.cpp	797	func_0804e148	const char *
+parameter_review	a	src/mValue.cpp	737	bitwiseAndValues	mValue *
+parameter_review	b	src/mValue.cpp	737	bitwiseAndValues	mValue *
+parameter_review	a	src/mValue.cpp	757	bitwiseOrValues	mValue *
+parameter_review	b	src/mValue.cpp	757	bitwiseOrValues	mValue *
+parameter_review	a	src/mValue.cpp	777	bitwiseXorValues	mValue *
+parameter_review	b	src/mValue.cpp	777	bitwiseXorValues	mValue *
+parameter_review	s	src/mValue.cpp	797	hasOnlyImmediateCharacters	const char *
 parameter_review	s	src/mValue.cpp	814	parse	const char *
-parameter_review	a	src/mValue.cpp	988	func_0804e5c0	mValue *
-parameter_review	b	src/mValue.cpp	988	func_0804e5c0	mValue *
+parameter_review	a	src/mValue.cpp	988	sameImmediateValue	mValue *
+parameter_review	b	src/mValue.cpp	988	sameImmediateValue	mValue *
 parameter_review	p	src/main.cpp	567	reportErrors	Program *
 parameter_review	p	src/main.cpp	573	reportWarnings	Program *
-parameter_review	a	src/main.cpp	579	func_0804a2b4	bool
-parameter_review	b	src/main.cpp	579	func_0804a2b4	bool
-parameter_review	c	src/main.cpp	579	func_0804a2b4	bool
-parameter_review	p	src/main.cpp	579	func_0804a2b4	Program *
-parameter_review	p	src/main.cpp	597	func_0804a358	Program *
+parameter_review	a	src/main.cpp	579	validateFlowDependenciesAndHazards	bool
+parameter_review	b	src/main.cpp	579	validateFlowDependenciesAndHazards	bool
+parameter_review	c	src/main.cpp	579	validateFlowDependenciesAndHazards	bool
+parameter_review	p	src/main.cpp	579	validateFlowDependenciesAndHazards	Program *
+parameter_review	p	src/main.cpp	597	analyzeAndPropagateMoves	Program *
 parameter_review	to	src/makeForceTable.cpp	11	copyShort	short &
 parameter_review	p	src/makeForceTable.cpp	19	makeForceTable	Program *
 parameter_review	s	src/makeForceTable.cpp	19	makeForceTable	instStream *
@@ -2900,7 +2900,7 @@ parameter_review	mv	src/makeMove.cpp	364	undoMove	Instr *
 parameter_review	<unnamed>	src/memRegPool.cpp	51	func_08088e54	workTable *
 parameter_review	<unnamed>	src/memRegPool.cpp	56	assignExt	instStream *
 parameter_review	<unnamed>	src/memRegPool.cpp	61	func_08088e6c	RegPoolEntry *
-parameter_review	p	src/movePropagation.cpp	21	func_0806ae58	Program *
+parameter_review	p	src/movePropagation.cpp	21	noopMovePropagationHook	Program *
 parameter_review	t	src/movePropagation.cpp	26	propagateMoves	workTable *
 parameter_review	t	src/movePropagation.cpp	115	removeDeadMoves	workTable *
 parameter_review	<unnamed>	src/moveRec.cpp	16	getMove	int
@@ -2952,10 +2952,10 @@ parameter_review	c	src/optVuta1.cpp	9	optVuta1	wrangleCand *
 parameter_review	wt	src/optVuta1.cpp	9	optVuta1	workTable *
 parameter_review	in	src/optVuta1.cpp	51	vuta1RegCost	Instr *
 parameter_review	u	src/pathKeys.cpp	6	registerPart	regUse *
-parameter_review	n	src/pathKeys.cpp	11	func_08061ab0	instStream *
-parameter_review	n	src/pathKeys.cpp	58	func_08061c34	instStream *
-parameter_review	n	src/pathKeys.cpp	73	func_08061cb0	instStream *
-parameter_review	p	src/pathKeys.cpp	73	func_08061cb0	Program *
+parameter_review	n	src/pathKeys.cpp	11	initializeRegisterBacktraceLocation	instStream *
+parameter_review	n	src/pathKeys.cpp	58	resetStreamPathSearch	instStream *
+parameter_review	n	src/pathKeys.cpp	73	buildMinimumPathKey	instStream *
+parameter_review	p	src/pathKeys.cpp	73	buildMinimumPathKey	Program *
 parameter_review	n	src/pathKeys.cpp	93	getMaxPathKey	instStream *
 parameter_review	p	src/pathKeys.cpp	93	getMaxPathKey	Program *
 parameter_review	p	src/pathKeys.cpp	113	isPathRaw	Program *
@@ -2965,9 +2965,9 @@ parameter_review	s	src/pathKeys.cpp	165	dumpMaxPathToTarget	instStream *
 parameter_review	p	src/prepExtInfo.cpp	15	prepExtInfo	Program *
 parameter_review	s	src/prepExtInfo.cpp	15	prepExtInfo	instStream *
 parameter_review	in	src/prepRawTable.cpp	8	dumpRawInstruction	Instr *
-parameter_review	p	src/prepReduce.cpp	7	func_0807e528	Program *
-parameter_review	s	src/prepReduce.cpp	7	func_0807e528	instStream *
-parameter_review	wt	src/prepReduce.cpp	7	func_0807e528	workTable *
+parameter_review	p	src/prepReduce.cpp	7	prepareReductionCandidates	Program *
+parameter_review	s	src/prepReduce.cpp	7	prepareReductionCandidates	instStream *
+parameter_review	wt	src/prepReduce.cpp	7	prepareReductionCandidates	workTable *
 parameter_review	to	src/prepUta.cpp	11	copyShort	short &
 parameter_review	p	src/prepUta.cpp	18	prepUta	Program *
 parameter_review	s	src/prepUta.cpp	18	prepUta	instStream *
@@ -3058,7 +3058,7 @@ parameter_review	b	src/tPairList.cpp	92	int_buildTpairs	void *
 parameter_review	p	src/tPairList.cpp	92	int_buildTpairs	Program *
 parameter_review	t	src/tPairList.cpp	92	int_buildTpairs	instStream *
 parameter_review	wt	src/tidy.cpp	7	extendForEnd_inl	workTable *
-parameter_review	p	src/tidy.cpp	21	func_08062a88	Program *
+parameter_review	p	src/tidy.cpp	21	tidyProgramStreams	Program *
 parameter_review	wt	src/tidy.cpp	92	extendForEnd	workTable *
 parameter_review	ol	src/workTable.cpp	165	addOutput	ol_s *
 parameter_review	f	src/wrangle.cpp	42	func_0807f360	wrangleFunc
@@ -3070,10 +3070,10 @@ parameter_review	c	src/wrangle.cpp	556	func_080803dc	wrangleCand *
 parameter_review	wt	src/wrangle.cpp	556	func_080803dc	workTable *
 parameter_review	in	src/wrangle.cpp	578	findInsertPosition	Instr *
 parameter_review	wt	src/wrangle.cpp	578	findInsertPosition	workTable *
-parameter_review	c	src/wrangleCandidateSelection.cpp	13	func_080817d4	wrangleCand *
-parameter_review	wt	src/wrangleCandidateSelection.cpp	13	func_080817d4	workTable *
-parameter_review	c	src/wrangleCandidateSelection.cpp	33	func_0808184c	wrangleCand *
-parameter_review	wt	src/wrangleCandidateSelection.cpp	33	func_0808184c	workTable *
+parameter_review	c	src/wrangleCandidateSelection.cpp	13	selectDumbSchedulingCandidate	wrangleCand *
+parameter_review	wt	src/wrangleCandidateSelection.cpp	13	selectDumbSchedulingCandidate	workTable *
+parameter_review	c	src/wrangleCandidateSelection.cpp	33	selectLoopDumbSchedulingCandidate	wrangleCand *
+parameter_review	wt	src/wrangleCandidateSelection.cpp	33	selectLoopDumbSchedulingCandidate	workTable *
 parameter_review	f	src/wrangleCore.cpp	15	func_0808061c	wrangleFunc
 parameter_review	wt	src/wrangleCore.cpp	15	func_0808061c	workTable *
 parameter_review	f	src/wrangleCore.cpp	74	wrangleMode0Worker	wrangleFunc
@@ -3102,11 +3102,11 @@ parameter_review	n	src/xpNode.cpp	148	dispose	xpNode *
 parameter_review	n	src/xpNode.cpp	183	setDepth	xpNode *
 parameter_review	n	src/xpNode.cpp	199	setDepthInl	xpNode *
 parameter_review	t	src/xpNode.cpp	199	setDepthInl	xpTree *
-parameter_review	n	src/xpNode.cpp	215	func_0804ea8c	xpNode *
+parameter_review	n	src/xpNode.cpp	215	visitExpressionDescendants	xpNode *
 parameter_review	n	src/xpNode.cpp	234	dumpNode	xpNode *
 parameter_review	s	src/xpNode.cpp	261	func_0804ec74	const char *
 parameter_review	s	src/xpNode.cpp	343	evalExp	const char *
 parameter_review	n	src/xpNode.cpp	518	rec_Eval	xpNode *
 parameter_review	<unnamed>	src/xpNode.cpp	614	xun	InitTag
-parameter_review	s	src/xpNode.cpp	616	func_0804f75c	const char *
-parameter_review	n	src/xpNode.cpp	670	func_0804f920	xpNode *
+parameter_review	s	src/xpNode.cpp	616	recordUnknownSymbol	const char *
+parameter_review	n	src/xpNode.cpp	670	countUnknownSymbolsInNode	xpNode *

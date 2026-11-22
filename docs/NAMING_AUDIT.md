@@ -566,6 +566,87 @@ are the other acceptance gates. This snapshot leaves **192** address-based
 function names and **269** owner-qualified offset fields for subsequent
 review; neither count measures byte-matching completeness.
 
+## Expression evaluator, optimizer and stream internals milestone
+
+This larger review follows the merged register/operand-lock naming milestone.
+It resolves **113 direct C++ function names and 83 owner-qualified offset-style
+fields** (196 tracked improvements) in one coherent review. Function names
+are changed in declarations, definitions and call sites directly, without
+preprocessor aliases. The original object layouts, member types and
+translation-unit ordering have not changed.
+
+### Expression evaluation, preprocessing and parser utilities
+
+- The preprocessor helpers now distinguish GCC, GASP and alternate GASP
+  selection, flag updates, invocation, tool-option matching and advice about
+  missing preprocessing. Parser helpers name newline detection, token
+  separators, label-colon detection and keyword matching, following the
+  corresponding token and line tests.
+- VU string helpers now expose component-mask parsing and formatting,
+  instruction modifier parsing, modifier validation, and component-bit
+  selection. These names are supported by their switch cases and the
+  `x/y/z/w` component masks.
+- Expression tree nodes identify depth, operator type, precedence, operand
+  arity and child count. The existing expression operator table and recursive
+  evaluation paths establish those meanings. Tree helpers name unknown-symbol
+  collection, lookups, resetting, walking and counting.
+- The `mValue` arithmetic operations now identify addition, subtraction,
+  multiplication, division, remainder, left/right shift, boolean and bitwise
+  operators, numeric type promotion and immediate comparisons. Their actual
+  `mValue` operations, not guesses based on function addresses, support the
+  names. No evaluation logic was changed.
+
+### Instruction, scheduling and stream graph ownership
+
+- `iInfo` now distinguishes pipeline mask, resource mask, minimum issue
+  spacing and branch target operand selector. The original packed union and
+  descriptor layout remain intact.
+- The eight `cls0805e2e4` scheduling counters now identify forward/reverse
+  latency/dependency lengths and move-chain statistics. `Instr` and
+  `instStream` both name their embedded `schedulingStatistics`; the statistics
+  update, merge, optimizer and candidate-scoring callers provide evidence.
+- `instStream` now identifies optimization records, optimization mask,
+  loop region role, barrier flags, backtrace register use, source/output
+  locations and shortest/longest path lengths, emitted instruction offsets,
+  loop-directive counts and physical instruction budget. `istRec` fields
+  reflect the optimization record emitted with stream diagnostics.
+- `Instr` now identifies its clone image, instruction ID, source tag,
+  linear/pending list links, next move, owning work table, replacement word,
+  candidate attempt/cost/row metadata and move record. `iLink` directly names
+  next/previous instruction pointers, while `InstructionPosition` names
+  linear row, pipeline, loop iteration and loop-local row.
+- External input/output scheduling constraints and operand locations are
+  named from their setters, readers and matching lock decisions. Loop
+  prologue/epilogue records now expose stream/table, loop key, source loop ID,
+  index bounds and conditional branch; the matching loop-debris object
+  identifies the source table and requested allocation mode.
+
+### Pipeline entry points, resource helpers and precise validation
+
+- Program-level operations now name flow dependency rebuilding, statistics,
+  move analysis, register assignments, loop expansion, stream concatenation,
+  scheduling optimization, register-cap insertion, immediate fixups and
+  pruning preparation. Register-pool passes and their processor wrappers
+  retain their separate first/second identities even where their bodies
+  currently have the same implementation.
+- Common helpers now identify bit counting, exact/case-insensitive string
+  comparisons, component-suffix removal, buffer clearing, device-name
+  lookup, path-key construction and backtrace state initialization. Existing
+  empty helper implementations are explicitly named `noop*` rather than
+  being attributed unproven behavior.
+- Owner-qualified member replacements were checked across all consumers;
+  a conflicting `statCounts::unk_00` reference was kept intact because it
+  is not an `instStream` optimization record.
+
+The source was rebuilt using the verified historical RH9/GCC 3.2 toolchain.
+The original stripped VCL ELF remains **byte-for-byte identical**, SHA-256
+`83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
+The final review also requires the 13 modern CTest checks, historical
+`exact-sha256` check and generated naming-inventory consistency check.
+The cumulative queue now contains **79** address-coded functions and **186**
+owner-qualified offset fields, down from 192 and 269 before this milestone.
+This measures naming coverage only, not binary reconstruction coverage.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
