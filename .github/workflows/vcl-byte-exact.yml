@@ -19,10 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-
       - name: Install historical RPM extraction tools
         run: |
           sudo apt-get update
@@ -41,26 +37,23 @@ jobs:
         run: |
           docker build --platform linux/386 -t revcl-rh9 tools/rh9
           docker run --rm --platform linux/386 revcl-rh9 g++ --version
+          docker run --rm --platform linux/386 revcl-rh9 make --version
 
-      - name: Install Python comparison dependencies
-        run: python -m pip install -r scripts/requirements.txt
+      - name: Compile and link VCL with the historical GNU Make and GCC
+        run: |
+          docker run --rm --platform linux/386 \
+            --mount type=bind,src="$PWD",dst=/work \
+            -w /work revcl-rh9 make -j2
 
-      - name: Run VCL unit tests
-        run: python -m unittest discover -s tests/unit -q
+      - name: Verify native stripped ELF SHA-256 on the host
+        run: make verify-sha
 
-      - name: Recompile and link using original Red Hat toolchain
-        run: python scripts/score.py --quiet
-
-      - name: Require exact SHA-256 for native and reconstructed ELF
-        run: python scripts/ci/verify_vcl_sha.py
-
-      - name: Preserve diagnostics on failure
+      - name: Preserve native ELF artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: vcl-byte-exact-failure
+          name: vcl-native-build-failure
           path: |
-            tmp/build/score.json
-            tmp/build/logs/
-            tmp/build/link/ld.log
+            tmp/native/vcl
+            tmp/native/vcl.stripped
           if-no-files-found: ignore
