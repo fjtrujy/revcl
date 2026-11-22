@@ -1,0 +1,59 @@
+name: VCL modern compilers and tests
+
+on:
+  push:
+    branches:
+      - main
+      - 'ci/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  modern:
+    name: Modern ${{ matrix.compiler }} (32-bit) + tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: g++
+            output: gcc
+          - compiler: clang++
+            output: clang
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install modern 32-bit C++ toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-multilib clang
+          ${{ matrix.compiler }} --version
+
+      - name: Install comparison and test dependencies
+        run: python -m pip install -r scripts/requirements.txt
+
+      - name: Run Python unit tests
+        run: python -m unittest discover -s tests/unit -q
+
+      - name: Build all 131 VCL translation units and link native Linux i386 executable
+        # Full -O2 builds can consume substantial memory; avoid OOMs on
+        # standard hosted runners when two heavy source owners compile together.
+        run: python scripts/ci/build_modern.py --compiler ${{ matrix.compiler }} --jobs 2
+
+      - name: Run VCL executable and all standalone oracle fixtures
+        run: python scripts/ci/test_modern_vcl.py --compiler ${{ matrix.output }}
+
+      - name: Upload modern executable
+        uses: actions/upload-artifact@v7
+        with:
+          name: vcl-modern-${{ matrix.output }}-linux-i386
+          path: tmp/modern/${{ matrix.output }}/vcl
+          if-no-files-found: error

@@ -74,6 +74,20 @@ The full reproducibility report and verification procedure are in
 
 ### Developer tools
 
+The independent [modern compiler workflow](.github/workflows/vcl-modern.yml)
+builds all 131 C++ translation units with modern GCC and Clang, targets
+32-bit Linux (the original program's pointer layout), links runnable
+executables, runs the Python unit suite, and executes all 11 standalone
+oracle fixture cases (including both expected invalid inputs). It does
+**not** require the historical toolchain and intentionally does not require
+a SHA match from the modern compilers. Modern Linux binaries are available
+as GitHub Actions artifacts.
+
+Two source files contain historical diagnostic messages that used physical
+newlines inside quoted strings. They have been normalized to standard
+`\n` escapes to satisfy modern compilers; verification with GCC 3.2.2
+confirmed this does not change the original SHA-256.
+
 After completing the setup above:
 
 ```sh
