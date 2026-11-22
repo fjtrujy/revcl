@@ -140,3 +140,9 @@ Modern native fixture tests also remain green.
   the ten remaining flag exceptions. A successful refactor would need
   source-level evidence and a fresh historical SHA check, not merely a
   functional test.
+
+**Follow-up:** [Enum types and remaining compiler flags](ENUM_TYPES_AND_COMPILER_FLAGS.md)
+documents the subsequent successful promotion of `-fmerge-all-constants` to
+a project-wide flag, reducing the ten exceptions recorded above to **five**.
+It also records exact-SHA-tested enum-typed fields and source-level trials
+that did not yet remove the other flags.
