@@ -95,14 +95,14 @@ bool checkOpt3(Program *program)
             }
             int count = 0;
             Instr *prev = 0;
-            for (int i = start; i != end; i++) {
-                Instr **instructionSlot = ((cls_unk30 *)scheduleTable)->getIE_ck(i);
+            for (int rowIndex = start; rowIndex != end; rowIndex++) {
+                Instr **instructionSlot = ((cls_unk30 *)scheduleTable)->getIE_ck(rowIndex);
                 if (!instructionSlot) {
                     reportError("failed to get ientry from table\n");
                     return false;
                 }
-                for (int j = 0; j != 2; j++) {
-                    Instr *rowInstruction = instructionSlot[j];
+                for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
+                    Instr *rowInstruction = instructionSlot[pipeIndex];
                     if (!rowInstruction)
                         continue;
                     if (((VclPtrWord)rowInstruction & 1) == 1) {
@@ -119,11 +119,11 @@ bool checkOpt3(Program *program)
                         return false;
                     }
                     prev = rowInstruction;
-                    if (rowInstruction->position.getRow() != i) {
+                    if (rowInstruction->position.getRow() != rowIndex) {
                         reportError("instruction is very lost\n");
                         return false;
                     }
-                    if (rowInstruction->position.getPipe() != j) {
+                    if (rowInstruction->position.getPipe() != pipeIndex) {
                         reportError("instruction is quite lost\n");
                         return false;
                     }
@@ -181,8 +181,8 @@ bool checkOpt3(Program *program)
                     return false;
                 }
                 if (reg) {
-                    for (unsigned n = 0; n != (unsigned)reg->partCount; n++) {
-                        OpSlot *slot = operand->getPart(n);
+                    for (unsigned partIndex = 0; partIndex != (unsigned)reg->partCount; partIndex++) {
+                        OpSlot *slot = operand->getPart(partIndex);
                         if (!slot)
                             continue;
                         ol_s *location = slot->operandLocations.head;

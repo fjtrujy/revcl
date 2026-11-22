@@ -204,13 +204,13 @@ finalize_ready:
     Instr *last[4] = { 0, 0, 0, 0 };
     // After entry, phaseHead is only a non-null continuation flag.
     for (; phaseHead; phaseHead = (Instr *)((instruction = instruction->linearLink.nextInstruction) != 0)) {
-        int p;
-        for (p = 0; p != 4; p++)
-            if (((instruction->specialRegisterWriteMask >> p) & 1) && !((instruction->specialRegisterReadMask >> p) & 1))
-                last[p] = instruction;
-        for (p = 0; p != 4; p++) {
-            if ((instruction->specialRegisterReadMask >> p) & 1) {
-                Instr *writerInstruction = last[p];
+        int specialPartIndex;
+        for (specialPartIndex = 0; specialPartIndex != 4; specialPartIndex++)
+            if (((instruction->specialRegisterWriteMask >> specialPartIndex) & 1) && !((instruction->specialRegisterReadMask >> specialPartIndex) & 1))
+                last[specialPartIndex] = instruction;
+        for (specialPartIndex = 0; specialPartIndex != 4; specialPartIndex++) {
+            if ((instruction->specialRegisterReadMask >> specialPartIndex) & 1) {
+                Instr *writerInstruction = last[specialPartIndex];
                 if (writerInstruction)
                     for (ol_s *operandLocation = instruction->predecessorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
                         Instr *pre = operandLocation->instruction;

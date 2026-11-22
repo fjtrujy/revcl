@@ -414,9 +414,9 @@ bool setRegisterRangeEnabled(LocTag *sourceLine, RegPool *pool, bool flag)
         }
         *outputCursor = 0;
         int first = -1, last;
-        int j;
-        for (j = 0; j <= range; j++) {
-            RegPoolEntry *registerEntry = pool->findPhysicalByName(buf[j]);
+        int registerNameIndex;
+        for (registerNameIndex = 0; registerNameIndex <= range; registerNameIndex++) {
+            RegPoolEntry *registerEntry = pool->findPhysicalByName(buf[registerNameIndex]);
             if (!registerEntry) {
                 reportError("not find %s\n", tok);
                 return false;
@@ -429,7 +429,7 @@ bool setRegisterRangeEnabled(LocTag *sourceLine, RegPool *pool, bool flag)
                 reportError("init_reg: reg is virtual! %s\n", registerEntry->registerName());
                 return false;
             }
-            if (j == 0)
+            if (registerNameIndex == 0)
                 first = last = registerEntry->registerIndex;
             else
                 last = registerEntry->registerIndex;
@@ -440,8 +440,8 @@ bool setRegisterRangeEnabled(LocTag *sourceLine, RegPool *pool, bool flag)
             last = first;
             first = swapIndex;
         }
-        for (j = first; j <= last; j++) {
-            RegPoolEntry *registerEntry = pool->findByRegisterIndex(j);
+        for (registerNameIndex = first; registerNameIndex <= last; registerNameIndex++) {
+            RegPoolEntry *registerEntry = pool->findByRegisterIndex(registerNameIndex);
             if (!registerEntry) {
                 reportError("not find %s\n", tok);
                 return false;

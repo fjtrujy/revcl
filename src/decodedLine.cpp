@@ -30,8 +30,8 @@ void DecodedLine::refreshInstructionOperands(int index)
 void refreshDecodedLineOperands(DecodedLine *blocks, int count)
 {
     if (blocks)
-        for (int i = 0; i != count; i++)
-            blocks[i].refreshInstructionOperands(i);
+        for (int lineIndex = 0; lineIndex != count; lineIndex++)
+            blocks[lineIndex].refreshInstructionOperands(lineIndex);
 }
 
 void DecodedLine::releaseContents()
@@ -49,8 +49,8 @@ void DecodedLine::releaseContents()
 
 DecodedLine *findDecodedLineByLabel(DecodedLine *blocks, int count, const char *name)
 {
-    for (int i = 0; i != count; i++)
-        if (blocks[i].labels.findByNameIgnoreCase(name))
-            return &blocks[i];
+    for (int lineIndex = 0; lineIndex != count; lineIndex++)
+        if (blocks[lineIndex].labels.findByNameIgnoreCase(name))
+            return &blocks[lineIndex];
     return 0;
 }

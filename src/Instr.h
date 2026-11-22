@@ -208,7 +208,7 @@ public:
     char containsRegisterOutput;
     char calculateLoopStats;
     unsigned char externalOutputCount;
-    char unk_2b;
+    char sharedExternalOutputFlag;
 
     cls0805c244();
     cls0805c244(cls0805c244 *next);

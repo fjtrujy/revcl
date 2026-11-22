@@ -117,8 +117,8 @@ bool isPathRaw(Program *program, int key)
         exitAfterCleanup(-1);
     }
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        int id = stream->streamId;
-        if (program->backTraceVisitCache.testBit(key, id) && stream->getCodeMode() == 1)
+        int streamId = stream->streamId;
+        if (program->backTraceVisitCache.testBit(key, streamId) && stream->getCodeMode() == 1)
             return false;
     }
     return true;
@@ -131,14 +131,14 @@ int guessKeyLen(Program *program, int key, int start, int end)
     bool foundStart = false;
     bool foundEnd = false;
     for (; stream; stream = stream->nextStream) {
-        int id = stream->streamId;
-        if (program->backTraceVisitCache.testBit(key, id)) {
+        int streamId = stream->streamId;
+        if (program->backTraceVisitCache.testBit(key, streamId)) {
             bool hit = false;
-            if (id == start) {
+            if (streamId == start) {
                 foundStart = true;
                 hit = true;
             }
-            if (id == end) {
+            if (streamId == end) {
                 foundEnd = true;
                 hit = true;
             }

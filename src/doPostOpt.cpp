@@ -123,8 +123,8 @@ bool workTable::doPostOpt(int rawMode)
                     int nBranch;
                     switch (rawMode) {
                     case 2: {
-                        int t = rowInstruction->position.loopRow;
-                        rowInstruction->scheduledCycle = t;
+                        int scheduledRow = rowInstruction->position.loopRow;
+                        rowInstruction->scheduledCycle = scheduledRow;
                         if (rangeStart) {
                             reportError("postopt - istart set for fixed mode \n");
                             return false;
@@ -133,8 +133,8 @@ bool workTable::doPostOpt(int rawMode)
                     }
                     case 1: {
                         nBranch = -1;
-                        int t = rowInstruction->position.loopRow;
-                        rowInstruction->scheduledCycle = t - rangeStart;
+                        int rawScheduledRow = rowInstruction->position.loopRow;
+                        rowInstruction->scheduledCycle = rawScheduledRow - rangeStart;
                         break;
                     }
                     case 3:
@@ -144,12 +144,12 @@ bool workTable::doPostOpt(int rawMode)
                             reportError("no work clone set\n");
                             return false;
                         }
-                        short t = cloneInstruction->scheduledCycle;
-                        if (t < 0 || t >= *(int *)&length) {
+                        short scheduledCycle = cloneInstruction->scheduledCycle;
+                        if (scheduledCycle < 0 || scheduledCycle >= *(int *)&length) {
                             reportError("emutick bad for raw postopt\n");
                             return false;
                         }
-                        rowInstruction->scheduledCycle = t;
+                        rowInstruction->scheduledCycle = scheduledCycle;
                         break;
                     }
                     default:
@@ -239,8 +239,8 @@ bool workTable::doPostOpt(int rawMode)
             Instr **rowInstructionSlots = ((cls_unk30 *)this)->getIE_ck(rowIndex);
             if (!rowInstructionSlots)
                 reportError("can't get ie during postopt\n");
-            for (int p = 0; p != 2; p++) {
-                Instr *linearInstruction = rowInstructionSlots[p];
+            for (int emissionPipeIndex = 0; emissionPipeIndex != 2; emissionPipeIndex++) {
+                Instr *linearInstruction = rowInstructionSlots[emissionPipeIndex];
                 if (linearInstruction) {
                     if (!logAddLinear_Tail(linearInstruction)) {
                         reportError("failed to add in to linear tale\n");

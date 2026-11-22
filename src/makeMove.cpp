@@ -83,8 +83,8 @@ int getMove(Block *blk, Instr *instruction, int now)
     if (instruction->moveRecordWord)
         return 2;
     Operand *operand;
-    int i;
-    for (i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+    int sourceOperandIndex;
+    for (sourceOperandIndex = 0; (operand = instruction->getOp(sourceOperandIndex)) != 0; sourceOperandIndex++) {
         RegPoolEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
             registerEntry->minimumMoveRow = 0x7fff;
@@ -92,7 +92,7 @@ int getMove(Block *blk, Instr *instruction, int now)
         }
     }
     Operand *op2;
-    for (i = 0; (op2 = instruction->getOp(i)) != 0; i++) {
+    for (sourceOperandIndex = 0; (op2 = instruction->getOp(sourceOperandIndex)) != 0; sourceOperandIndex++) {
         RegPoolEntry *reg = registerOperand(op2, 1);
         if (reg && isVuRegister(reg) && op2->operandStatus != 2) {
             OperandLock *lock = 0;
@@ -107,11 +107,11 @@ int getMove(Block *blk, Instr *instruction, int now)
                         score = 20000;
                     if (parent->ownerType != 2) {
                         int row = parent->linearRow;
-                        int z = op2->componentMask;
+                        int componentMask = op2->componentMask;
                         if (row < 0) {
-                            z >>= 4;
-                            z >>= 4;
-                            if (z <= 0) {
+                            componentMask >>= 4;
+                            componentMask >>= 4;
+                            if (componentMask <= 0) {
                                 reportError("parent not inserted during move\n");
                                 abortAfterError();
                             }
@@ -163,19 +163,19 @@ int getMove(Block *blk, Instr *instruction, int now)
     }
     Instr *owner = parent->ownerInstr();
     int mask = 0;
-    int p;
-    for (p = 0; p != bestReg->partCount; p++) {
-        OperandLock *outputLock = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
+    int movePartIndex;
+    for (movePartIndex = 0; movePartIndex != bestReg->partCount; movePartIndex++) {
+        OperandLock *outputLock = ((RegisterPartLockList *)bestReg->getPartPayload(movePartIndex))->outputLocks;
         if (outputLock && outputLock->activeReferenceCount)
-            mask |= 1 << p;
+            mask |= 1 << movePartIndex;
     }
     Instr *moveInstruction = makeMove(blk, bestReg);
     if (!moveInstruction) {
     no_move:
         Instr *earliest = 0;
-        for (p = 0; p != bestReg->partCount; p++) {
-            OperandLock *outputLock = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
-            if (((mask >> p) & 1) && outputLock && outputLock->activeReferenceCount) {
+        for (movePartIndex = 0; movePartIndex != bestReg->partCount; movePartIndex++) {
+            OperandLock *outputLock = ((RegisterPartLockList *)bestReg->getPartPayload(movePartIndex))->outputLocks;
+            if (((mask >> movePartIndex) & 1) && outputLock && outputLock->activeReferenceCount) {
                 Instr *otherInstruction = outputLock->ownerInstr();
                 if (otherInstruction && (!earliest || otherInstruction->position.getRow() < earliest->position.getRow()))
                     earliest = otherInstruction;
@@ -235,25 +235,25 @@ int getMove(Block *blk, Instr *instruction, int now)
                         moveInstruction->requiresFullLoopMoveDrag = 0;
                         continue;
                     }
-                    for (int p = 0; p != reg->partCount; p++) {
-                        if ((operand->componentMask >> p) & 1) {
-                            OperandLock *lock = &operand->parts[p];
+                    for (int movePartIndex = 0; movePartIndex != reg->partCount; movePartIndex++) {
+                        if ((operand->componentMask >> movePartIndex) & 1) {
+                            OperandLock *lock = &operand->parts[movePartIndex];
                             OperandLock *par = lock->getParent();
-                            RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(p);
-                            RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(p);
+                            RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(movePartIndex);
+                            RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(movePartIndex);
                             if (par->insertedIntoLockList) {
                                 OperandLock *oldOut = oldL->outputLocks;
-                                if (!((moved >> p) & 1)) {
-                                    OperandLock *moveInLock = &mvIn->parts[p];
-                                    if (!moveInLock->setOwner(p, moveInstruction, 1)) {
+                                if (!((moved >> movePartIndex) & 1)) {
+                                    OperandLock *moveInLock = &mvIn->parts[movePartIndex];
+                                    if (!moveInLock->setOwner(movePartIndex, moveInstruction, 1)) {
                                         reportError("getMove : failed to set owner for input\n");
                                         return -1;
                                     }
-                                    if (!out->parts[p].setOwner(p, moveInstruction, 0)) {
+                                    if (!out->parts[movePartIndex].setOwner(movePartIndex, moveInstruction, 0)) {
                                         reportError("getMove :failed to set owner for output\n");
                                         return -1;
                                     }
-                                    OperandLock *moveOutLock = &out->parts[p];
+                                    OperandLock *moveOutLock = &out->parts[movePartIndex];
                                     if (!oldL->addInput(oldOut, moveInLock, mvIn->additionalLatency, mvIn->externalBlockModeFlag)) {
                                         reportError("failed to register input from move instruction to old output\n");
                                         return -1;
@@ -265,12 +265,12 @@ int getMove(Block *blk, Instr *instruction, int now)
                                     }
                                     moveOutLock->operandStatusCode = out->getStatus();
                                 }
-                                moved |= 1 << p;
+                                moved |= 1 << movePartIndex;
                                 if (!oldL->removeInput(lock)) {
                                     reportError("failed to deregister an input during move create\n");
                                     return -1;
                                 }
-                                if (!newL->addInput(&out->parts[p], lock, operand->additionalLatency, operand->externalBlockModeFlag)) {
+                                if (!newL->addInput(&out->parts[movePartIndex], lock, operand->additionalLatency, operand->externalBlockModeFlag)) {
                                     reportError("failed to register input to a moves output\n");
                                     return -1;
                                 }
@@ -304,15 +304,15 @@ int getMove(Block *blk, Instr *instruction, int now)
                         oldBits |= operand->componentMask;
                     } else {
                         newBits |= operand->componentMask;
-                        for (int p = 0; p != reg->partCount; p++) {
-                            if ((operand->componentMask >> p) & 1) {
-                                RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(p);
-                                RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(p);
-                                if (!oldL->removeOutput(&operand->parts[p])) {
+                        for (int movePartIndex = 0; movePartIndex != reg->partCount; movePartIndex++) {
+                            if ((operand->componentMask >> movePartIndex) & 1) {
+                                RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(movePartIndex);
+                                RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(movePartIndex);
+                                if (!oldL->removeOutput(&operand->parts[movePartIndex])) {
                                     reportError("retargetOutputOperands: failed to deregister output\n");
                                     return -1;
                                 }
-                                if (!newL->addOutput(&operand->parts[p], pendingInstruction->baseIssueSpacing, operand->outputLatency, operand->externalBlockModeFlag)) {
+                                if (!newL->addOutput(&operand->parts[movePartIndex], pendingInstruction->baseIssueSpacing, operand->outputLatency, operand->externalBlockModeFlag)) {
                                     reportError("retargetOutputOperands : failed to reregister output\n");
                                     return -1;
                                 }
@@ -332,14 +332,14 @@ int getMove(Block *blk, Instr *instruction, int now)
         int zm1 = (unsigned char)out->componentMask;
         zm1 >>= 4;
         zm1 >>= 4;
-        int m = moved + zm1;
+        int movedComponentMask = moved + zm1;
         int zm2 = (unsigned char)mvIn->componentMask;
         zm2 >>= 4;
         zm2 >>= 4;
         if (zm2)
             goto no_move;
         discardedEmptyMoveCount = g1;
-        if (!m) {
+        if (!movedComponentMask) {
             addFreeMove(moveInstruction);
             discardedEmptyMoveCount++;
             goto no_move;
@@ -398,15 +398,15 @@ bool undoMove(Block *blk, Instr *moveInstruction)
                     }
                 }
                 if (isRegisterOperand(operand, 2)) {
-                    for (int p = 0; p != registerEntry->partCount; p++) {
-                        if ((bool)((operand->componentMask >> p) & 1)) {
-                            RegisterPartLockList *newList = (RegisterPartLockList *)orig->getPartPayload(p);
-                            RegisterPartLockList *oldList = (RegisterPartLockList *)dup->getPartPayload(p);
-                            if (!oldList->removeOutput(&operand->parts[p])) {
+                    for (int movePartIndex = 0; movePartIndex != registerEntry->partCount; movePartIndex++) {
+                        if ((bool)((operand->componentMask >> movePartIndex) & 1)) {
+                            RegisterPartLockList *newList = (RegisterPartLockList *)orig->getPartPayload(movePartIndex);
+                            RegisterPartLockList *oldList = (RegisterPartLockList *)dup->getPartPayload(movePartIndex);
+                            if (!oldList->removeOutput(&operand->parts[movePartIndex])) {
                                 reportError("failed to deregister output lock for undo move\n");
                                 return true;
                             }
-                            if (!newList->addOutput(&operand->parts[p], instruction->baseIssueSpacing, operand->outputLatency, operand->externalBlockModeFlag)) {
+                            if (!newList->addOutput(&operand->parts[movePartIndex], instruction->baseIssueSpacing, operand->outputLatency, operand->externalBlockModeFlag)) {
                                 reportError("undo move - failed to register output\n");
                                 return true;
                             }
@@ -416,18 +416,18 @@ bool undoMove(Block *blk, Instr *moveInstruction)
             }
         }
     }
-    for (int p = 0; p != dup->partCount; p++) {
-        if ((bool)((inputOperand->componentMask >> p) & 1)) {
-            RegisterPartLockList *registerPartLocks = (RegisterPartLockList *)orig->getPartPayload(p);
+    for (int movePartIndex = 0; movePartIndex != dup->partCount; movePartIndex++) {
+        if ((bool)((inputOperand->componentMask >> movePartIndex) & 1)) {
+            RegisterPartLockList *registerPartLocks = (RegisterPartLockList *)orig->getPartPayload(movePartIndex);
             if (!registerPartLocks) {
                 reportError("failed to get lock list for old reg in move undo\n");
                 abortAfterError();
             }
-            if (!inputOperand->parts[p].getParent()) {
+            if (!inputOperand->parts[movePartIndex].getParent()) {
                 reportError("undoMove: failed to get parent for old lock!\n");
                 abortAfterError();
             }
-            if (!registerPartLocks->removeInput(&inputOperand->parts[p])) {
+            if (!registerPartLocks->removeInput(&inputOperand->parts[movePartIndex])) {
                 reportError("undoMove : failed to register input lock\n");
                 abortAfterError();
             }

@@ -54,7 +54,7 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         activeInstruction = row->entries[entryIndex].instruction;
         if (!activeInstruction)
             continue;
-        for (int o = 0; (activeOperand = activeInstruction->getOp(o)) != 0; o++) {
+        for (int operandIndex = 0; (activeOperand = activeInstruction->getOp(operandIndex)) != 0; operandIndex++) {
             reg = registerOperand(activeOperand, 1);
             if (reg) {
                 for (int part = 0; part != reg->partCount; part++)
@@ -75,12 +75,12 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
             if (reg && activeOperand->externalBlockModeFlag) {
                 for (int part = 0; part != reg->partCount; part++)
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *rp = &reg->parts[part];
+                        rPart *inputRegisterPart = &reg->parts[part];
                         int lat;
-                        if (rp->pendingSource && (lat = rp->pendingSource->cycleOffset) != 0) {
+                        if (inputRegisterPart->pendingSource && (lat = inputRegisterPart->pendingSource->cycleOffset) != 0) {
                             ol_s temporaryLocation;
-                            temporaryLocation.init(activeInstruction, o, part, false);
-                            if (commit && !program->proc.stalls.addStall(rp->pendingSource, &temporaryLocation, 0, lat)) {
+                            temporaryLocation.init(activeInstruction, operandIndex, part, false);
+                            if (commit && !program->proc.stalls.addStall(inputRegisterPart->pendingSource, &temporaryLocation, 0, lat)) {
                                 reportError("failed to add an internal latency stall\n");
                                 return -1;
                             }
@@ -110,22 +110,22 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
                         }
                     }
                     reg->throughputWriter = activeInstruction;
-                    reg->unk_36++;
+                    reg->outputWriteCount++;
                 }
                 for (int part = 0; part != reg->partCount; part++) {
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *rp = &reg->parts[part];
-                        if (rp->issueLock) {
-                            ol_s tmp;
-                            tmp.init(activeInstruction, o, part, false);
+                        rPart *inputRegisterPart = &reg->parts[part];
+                        if (inputRegisterPart->issueLock) {
+                            ol_s inputPendingLocation;
+                            inputPendingLocation.init(activeInstruction, operandIndex, part, false);
                             if (commit) {
-                                int issueLock = rp->issueLock;
-                                if (!program->proc.stalls.addStall(rp->pendingSource, &tmp, 1, issueLock)) {
+                                int issueLock = inputRegisterPart->issueLock;
+                                if (!program->proc.stalls.addStall(inputRegisterPart->pendingSource, &inputPendingLocation, 1, issueLock)) {
                                     reportError("failed to add an internal thruput stall\n");
                                     return -1;
                                 }
                             }
-                            maxThru = rp->issueLock;
+                            maxThru = inputRegisterPart->issueLock;
                         }
                     }
                 }
@@ -164,13 +164,13 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         activeInstruction = row->entries[entryIndex].instruction;
         if (!activeInstruction)
             continue;
-        for (int o = 0; (activeOperand = activeInstruction->getOp(o)) != 0; o++) {
+        for (int operandIndex = 0; (activeOperand = activeInstruction->getOp(operandIndex)) != 0; operandIndex++) {
             reg = registerOperand(activeOperand, 1);
             if (reg) {
                 for (int part = 0; part != reg->partCount; part++) {
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *rp = &reg->parts[part];
-                        ol_s *setter = &rp->currentLocation;
+                        rPart *setterRegisterPart = &reg->parts[part];
+                        ol_s *setter = &setterRegisterPart->currentLocation;
                         Instr *src = setter->instruction;
                         if (!src) {
                             activeOperand->externalPartMask |= 1 << part;
@@ -186,8 +186,8 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
                             return -1;
                         }
                         if (commit) {
-                            int sourceOp = rp->currentLocation.operandIndex;
-                            if (!link_oParts(src, sourceOp, part, activeInstruction, o, part)) {
+                            int sourceOp = setterRegisterPart->currentLocation.operandIndex;
+                            if (!link_oParts(src, sourceOp, part, activeInstruction, operandIndex, part)) {
                                 reportError("failed to cross link operands\n");
                                 return -1;
                             }
@@ -201,62 +201,62 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         Instr *currentInstruction = row->entries[entryIndex].instruction;
         if (!currentInstruction)
             continue;
-        for (int o = 0; (activeOperand = currentInstruction->getOp(o)) != 0; o++) {
+        for (int operandIndex = 0; (activeOperand = currentInstruction->getOp(operandIndex)) != 0; operandIndex++) {
             reg = registerOperand(activeOperand, 2);
             if (reg) {
                 for (int part = 0; part != reg->partCount; part++) {
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *rp = &reg->parts[part];
-                        if (rp->issueLock) {
+                        rPart *outputRegisterPart = &reg->parts[part];
+                        if (outputRegisterPart->issueLock) {
                             reportError("inconsistency detected.. issuelock still non-zero\n");
                             return -1;
                         }
                         if (activeOperand->externalBlockModeFlag) {
-                            if (!rp->flushPending()) {
+                            if (!outputRegisterPart->flushPending()) {
                                 reportError("failed to flush pending outputs before a blocking output\n");
                                 return -1;
                             }
-                            ol_s *location = &rp->currentLocation;
-                            location->init(currentInstruction, o, part, false);
+                            ol_s *location = &outputRegisterPart->currentLocation;
+                            location->init(currentInstruction, operandIndex, part, false);
                             location->cycleOffset = clampByte(activeOperand->outputLatency);
-                            rp->pendingSource = location;
-                            rp->cycleAge = 0;
+                            outputRegisterPart->pendingSource = location;
+                            outputRegisterPart->cycleAge = 0;
                         } else {
-                            ol_s *pendingLocation = rp->acquireFreePendingLocation();
+                            ol_s *pendingLocation = outputRegisterPart->acquireFreePendingLocation();
                             if (!pendingLocation) {
                                 reportError("EMU: failed to get OL\n");
                                 return -1;
                             }
-                            pendingLocation->init(currentInstruction, o, part, false);
+                            pendingLocation->init(currentInstruction, operandIndex, part, false);
                             pendingLocation->cycleOffset = clampByte(activeOperand->outputLatency);
-                            rp->pendingSource = pendingLocation;
+                            outputRegisterPart->pendingSource = pendingLocation;
                         }
-                        rp->emulationTimingMetrics[1] += activeOperand->outputLatency;
-                        if (activeOperand->outputLatency > rp->emulationTimingMetrics[3])
-                            rp->emulationTimingMetrics[3] = activeOperand->outputLatency;
+                        outputRegisterPart->emulationTimingMetrics[1] += activeOperand->outputLatency;
+                        if (activeOperand->outputLatency > outputRegisterPart->emulationTimingMetrics[3])
+                            outputRegisterPart->emulationTimingMetrics[3] = activeOperand->outputLatency;
                         int throughputInterval = 1;
                         if (reg->tracksHotOutputPaths)
                             throughputInterval = currentInstruction->baseIssueSpacing;
-                        if (throughputInterval > rp->emulationTimingMetrics[2])
-                            rp->emulationTimingMetrics[2] = throughputInterval;
-                        if (rp->emulationTimingMetrics[9] < 0) {
-                            rp->emulationTimingMetrics[9] = line;
-                            rp->emulationTimingMetrics[10] = entryIndex;
+                        if (throughputInterval > outputRegisterPart->emulationTimingMetrics[2])
+                            outputRegisterPart->emulationTimingMetrics[2] = throughputInterval;
+                        if (outputRegisterPart->emulationTimingMetrics[9] < 0) {
+                            outputRegisterPart->emulationTimingMetrics[9] = line;
+                            outputRegisterPart->emulationTimingMetrics[10] = entryIndex;
                             if (uta)
-                                rp->emulationTimingMetrics[11] = -1;
+                                outputRegisterPart->emulationTimingMetrics[11] = -1;
                             else
-                                rp->emulationTimingMetrics[11] = program->emulatedCycleCount;
+                                outputRegisterPart->emulationTimingMetrics[11] = program->emulatedCycleCount;
                         }
-                        rp->emulationTimingMetrics[12] = line;
-                        rp->emulationTimingMetrics[13] = entryIndex;
+                        outputRegisterPart->emulationTimingMetrics[12] = line;
+                        outputRegisterPart->emulationTimingMetrics[13] = entryIndex;
                         if (uta)
-                            rp->emulationTimingMetrics[14] = -1;
+                            outputRegisterPart->emulationTimingMetrics[14] = -1;
                         else
-                            rp->emulationTimingMetrics[14] = program->emulatedCycleCount;
-                        rp->emulationTimingMetrics[16] = activeOperand->outputLatency;
-                        rp->emulationTimingMetrics[15] = throughputInterval;
-                        rp->emulationTimingMetrics[0] += throughputInterval;
-                        rp->issueLock = throughputInterval;
+                            outputRegisterPart->emulationTimingMetrics[14] = program->emulatedCycleCount;
+                        outputRegisterPart->emulationTimingMetrics[16] = activeOperand->outputLatency;
+                        outputRegisterPart->emulationTimingMetrics[15] = throughputInterval;
+                        outputRegisterPart->emulationTimingMetrics[0] += throughputInterval;
+                        outputRegisterPart->issueLock = throughputInterval;
                     }
                 }
             }

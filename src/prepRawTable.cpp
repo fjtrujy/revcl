@@ -99,13 +99,13 @@ bool workTable::prepRawTable()
             pos.setFromLinearRow(instructionRow);
             pos.setInstructionPipe(entryIndex);
             rowInstruction->position.linearRow = pos.linearRow;
-            signed char nl = pos.loopIteration;
+            signed char loopIteration = pos.loopIteration;
             loc->loopRow = pos.loopRow;
-            loc->loopIteration = nl;
+            loc->loopIteration = loopIteration;
             loc->pipelineIndex = pos.pipelineIndex;
-            if (nl != lid) {
+            if (loopIteration != lid) {
                 reportError("iTable::initialSetup - lid was bad (%d!=%d) lsz=%d rl=%d il=%d\n",
-                              nl, lid, loopSize, instructionRow, rowIndex);
+                              loopIteration, lid, loopSize, instructionRow, rowIndex);
                 return 0;
             }
             if (pos.loopRow != rowIndex) {

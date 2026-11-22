@@ -85,20 +85,20 @@ int pullUp(workTable *scheduleTable)
 
     int branchPresent = branchInstruction != 0;
     if (branchPresent) {
-        int l = mrl - 1;
+        int startingRowIndex = mrl - 1;
         bool done = false;
-        if (l < scheduleTable->rangeStart)
-            l = scheduleTable->rangeStart;
+        if (startingRowIndex < scheduleTable->rangeStart)
+            startingRowIndex = scheduleTable->rangeStart;
         while (!done) {
-            if (l >= scheduleTable->rangeEnd) {
+            if (startingRowIndex >= scheduleTable->rangeEnd) {
                 reportError("branch line overrun\n");
                 return -1;
             }
             InstructionPosition pos;
             pos.setInstructionPipe(branchInstruction->position.pipelineIndex);
-            pos.setFromLinearRow(l);
+            pos.setFromLinearRow(startingRowIndex);
             if (checkInstructionPlacementConstraints(scheduleTable, branchInstruction, &pos)) {
-                l++;
+                startingRowIndex++;
             } else {
                 if (!scheduleTable->takeOut(branchInstruction)) {
                     reportError("failed to take out instruction\n");
@@ -112,13 +112,13 @@ int pullUp(workTable *scheduleTable)
                     reportError("failed to put in back in\n");
                     exitAfterCleanup(-1);
                 }
-                l++;
-                if (l > mrl)
-                    mrl = l;
+                startingRowIndex++;
+                if (startingRowIndex > mrl)
+                    mrl = startingRowIndex;
                 if (lbdli) {
-                    pos.setFromLinearRow(l);
+                    pos.setFromLinearRow(startingRowIndex);
                     pos.setInstructionPipe(lbdli->position.pipelineIndex);
-                    if (l >= scheduleTable->rangeEnd) {
+                    if (startingRowIndex >= scheduleTable->rangeEnd) {
                         reportError("over run for bdli\n");
                         return -1;
                     }
@@ -136,8 +136,8 @@ int pullUp(workTable *scheduleTable)
                         reportError("failed to put in back in lbdli\n");
                         exitAfterCleanup(-1);
                     }
-                    if (l > mrl)
-                        mrl = l;
+                    if (startingRowIndex > mrl)
+                        mrl = startingRowIndex;
                 }
                 done = true;
             }

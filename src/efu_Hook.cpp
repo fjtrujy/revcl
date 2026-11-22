@@ -42,7 +42,7 @@ bool efu_Hook(void *opcodeMetadata, Instr *instruction)
 
 bool asciiCaseEqual(const char *a, const char *b);
 
-bool wr2w_Hook(void *opcodeMetadata, Instr *in)
+bool wr2w_Hook(void *opcodeMetadata, Instr *moveInstruction)
 {
     iInfo *info = (iInfo *)opcodeMetadata;
     iInfo *instructionInfo;
@@ -58,13 +58,13 @@ bool wr2w_Hook(void *opcodeMetadata, Instr *in)
         reportError("wr2w_Hook - failed to find extended instruction\n");
         return 0;
     }
-    in->opcodeInfo = instructionInfo;
-    in->operands[1].operandKind = 0x1f;
-    in->operands[1].immediateValue.setInt(0);
+    moveInstruction->opcodeInfo = instructionInfo;
+    moveInstruction->operands[1].operandKind = 0x1f;
+    moveInstruction->operands[1].immediateValue.setInt(0);
     return 1;
 }
 
-char *emitClip(char *buf, Instr *instruction, bool upper, char *mods, bool b, int)
+char *emitClip(char *buf, Instr *instruction, bool upper, char *mods, bool symbolic, int)
 {
     bool comma = false;
     int len = formatIntoBuffer(buf, "clipw%s.xyz", mods);
@@ -78,7 +78,7 @@ char *emitClip(char *buf, Instr *instruction, bool upper, char *mods, bool b, in
         if (comma)
             *outputCursor++ = ',';
         comma = true;
-        outputCursor = currentOperand->Emit(outputCursor, upper, b);
+        outputCursor = currentOperand->Emit(outputCursor, upper, symbolic);
         if (!outputCursor) {
             reportError("failed to emit operand\n");
             currentOperand->diagnoseOperand(0);
@@ -90,9 +90,9 @@ char *emitClip(char *buf, Instr *instruction, bool upper, char *mods, bool b, in
     return outputCursor;
 }
 
-char *vmove_Emit(char *buf, Instr *instruction, bool upper, char *mods, bool b, int)
+char *vmove_Emit(char *buf, Instr *instruction, bool upper, char *mods, bool symbolic, int)
 {
-    char *p;
+    char *outputCursor;
     if (!instruction)
         return 0;
     if (!instruction->abstractMoveOpcode) {
@@ -103,74 +103,74 @@ char *vmove_Emit(char *buf, Instr *instruction, bool upper, char *mods, bool b, 
         reportError("trying to emit an abstract move\n");
         return 0;
     }
-    p = buf;
+    outputCursor = buf;
     switch (instruction->concreteMoveOpcode) {
     case 0xb3:
-        p += formatIntoBuffer(buf, "iaddiu");
-        for (int paddingIndex = p - buf; paddingIndex < 14; paddingIndex++)
-            *p++ = ' ';
-        p = instruction->operands[0].Emit(p, upper, b);
-        if (!p)
+        outputCursor += formatIntoBuffer(buf, "iaddiu");
+        for (int paddingIndex = outputCursor - buf; paddingIndex < 14; paddingIndex++)
+            *outputCursor++ = ' ';
+        outputCursor = instruction->operands[0].Emit(outputCursor, upper, symbolic);
+        if (!outputCursor)
             goto fail;
-        *p++ = ',';
-        p = instruction->operands[1].Emit(p, upper, b);
-        if (!p)
+        *outputCursor++ = ',';
+        outputCursor = instruction->operands[1].Emit(outputCursor, upper, symbolic);
+        if (!outputCursor)
             goto fail;
-        *p++ = ',';
-        *p++ = '0';
+        *outputCursor++ = ',';
+        *outputCursor++ = '0';
         break;
     case 0xb5:
-        p += formatIntoBuffer(buf, "%s%s", "move", mods);
-        p = emitDestMask(p, 1, instruction->destinationMask);
-        if (!p) {
+        outputCursor += formatIntoBuffer(buf, "%s%s", "move", mods);
+        outputCursor = emitDestMask(outputCursor, 1, instruction->destinationMask);
+        if (!outputCursor) {
             reportError("failed to emit inst mods for lvfmove\n");
             return 0;
         }
-        for (int n = p - buf; n < 14; n++)
-            *p++ = ' ';
-        p = instruction->operands[0].Emit(p, upper, b);
-        if (!p)
+        for (int secondPaddingIndex = outputCursor - buf; secondPaddingIndex < 14; secondPaddingIndex++)
+            *outputCursor++ = ' ';
+        outputCursor = instruction->operands[0].Emit(outputCursor, upper, symbolic);
+        if (!outputCursor)
             goto fail;
-        *p++ = ',';
-        p = instruction->operands[1].Emit(p, upper, b);
-        if (!p)
+        *outputCursor++ = ',';
+        outputCursor = instruction->operands[1].Emit(outputCursor, upper, symbolic);
+        if (!outputCursor)
             goto fail;
         break;
     case 0xb6:
-        p += formatIntoBuffer(buf, "%s%s", "max", mods);
-        p = emitDestMask(p, 1, instruction->destinationMask);
-        if (!p) {
+        outputCursor += formatIntoBuffer(buf, "%s%s", "max", mods);
+        outputCursor = emitDestMask(outputCursor, 1, instruction->destinationMask);
+        if (!outputCursor) {
             reportError("failed to emit inst mods for lvfmove\n");
             return 0;
         }
-        for (int n = p - buf; n < 14; n++)
-            *p++ = ' ';
-        p = instruction->operands[0].Emit(p, upper, b);
-        if (!p)
+        for (int thirdPaddingIndex = outputCursor - buf; thirdPaddingIndex < 14; thirdPaddingIndex++)
+            *outputCursor++ = ' ';
+        outputCursor = instruction->operands[0].Emit(outputCursor, upper, symbolic);
+        if (!outputCursor)
             goto fail;
-        *p++ = ',';
-        p = instruction->operands[1].Emit(p, upper, b);
-        if (!p)
+        *outputCursor++ = ',';
+        outputCursor = instruction->operands[1].Emit(outputCursor, upper, symbolic);
+        if (!outputCursor)
             goto fail;
-        *p++ = ',';
-        p = instruction->operands[1].Emit(p, upper, b);
-        if (!p)
+        *outputCursor++ = ',';
+        outputCursor = instruction->operands[1].Emit(outputCursor, upper, symbolic);
+        if (!outputCursor)
             goto fail;
         break;
     default:
         reportError("unknown vmove output requested\n");
         return 0;
     }
-    *p = 0;
+    *outputCursor = 0;
     goto done;
 fail:
     reportError("failed to emit operand 0\n");
     return 0;
 done:
-    return p;
+    return outputCursor;
 }
 
-bool semSynth(void *opcodeMetadata, Instr *in)
+bool semSynth(void *opcodeMetadata, Instr *syntheticInstruction)
 {
     iInfo *info = (iInfo *)opcodeMetadata;
     char name[32];
@@ -178,29 +178,29 @@ bool semSynth(void *opcodeMetadata, Instr *in)
     const char *mnemonicSource = info->mnemonic;
     while (*mnemonicSource)
         *nameDestination++ = *mnemonicSource++;
-    if (in->operands[0].operandKind == 9) {
+    if (syntheticInstruction->operands[0].operandKind == 9) {
         if (nameDestination[-1] != 'a' && nameDestination[-1] != 'A') {
             *nameDestination++ = 'a';
-            in->operands[0].outputLatency = 1;
+            syntheticInstruction->operands[0].outputLatency = 1;
         }
     } else
-        in->operands[0].outputLatency = 4;
-    char k = in->operands[2].operandKind;
-    if (k == 4) {
-        in->operands[2].externalBlockModeFlag = 1;
+        syntheticInstruction->operands[0].outputLatency = 4;
+    char operandKind = syntheticInstruction->operands[2].operandKind;
+    if (operandKind == 4) {
+        syntheticInstruction->operands[2].externalBlockModeFlag = 1;
         *nameDestination++ = 'i';
     }
-    if (k == 7) {
+    if (operandKind == 7) {
         *nameDestination++ = 'q';
-        in->operands[2].externalBlockModeFlag = 0;
+        syntheticInstruction->operands[2].externalBlockModeFlag = 0;
     }
-    if (k == 3) {
-        unsigned char m = in->operands[2].componentMask;
+    if (operandKind == 3) {
+        unsigned char componentMask = syntheticInstruction->operands[2].componentMask;
         int componentCount = 0;
-        if (m == 1) { *nameDestination++ = 'x'; componentCount++; }
-        if (m == 2) { *nameDestination++ = 'y'; componentCount++; }
-        if (m == 4) { *nameDestination++ = 'z'; componentCount++; }
-        if (m == 8) { *nameDestination++ = 'w'; componentCount++; }
+        if (componentMask == 1) { *nameDestination++ = 'x'; componentCount++; }
+        if (componentMask == 2) { *nameDestination++ = 'y'; componentCount++; }
+        if (componentMask == 4) { *nameDestination++ = 'z'; componentCount++; }
+        if (componentMask == 8) { *nameDestination++ = 'w'; componentCount++; }
         if (componentCount != 1) {
             reportError("semSynth - bad FL1 bits\n");
             return 0;
@@ -212,6 +212,6 @@ bool semSynth(void *opcodeMetadata, Instr *in)
         reportError("failed to find derived instruction type '%s'\n", name);
         return 0;
     }
-    in->opcodeInfo = instructionInfo;
+    syntheticInstruction->opcodeInfo = instructionInfo;
     return 1;
 }

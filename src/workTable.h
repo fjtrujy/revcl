@@ -27,7 +27,7 @@ struct regUse {
     unsigned char hazardBroadcastMask;
     char externalBlockMode;
     short unk_16;
-    short unk_18;
+    short recordedOutputWriteCount;
     Instr *definingInstruction;
     regUseSlot slots[4];
 

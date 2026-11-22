@@ -54,7 +54,7 @@ int instStream::getUninsertedxInputs()
         }
         base += schedulingStatistics.reverseLatencyDepth - instruction->schedulingStatistics.reverseLatencyDepth;
         Operand *operand;
-        for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+        for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
             RegPoolEntry *reg = registerOperand(operand, 1);
             if (!reg || !operand->externalPartMask)
                 continue;
@@ -104,7 +104,7 @@ int instStream::getUninsertedxOutputs()
         }
         base += schedulingStatistics.forwardLatencyDepth - instruction->schedulingStatistics.forwardLatencyDepth;
         Operand *operand;
-        for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+        for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
             RegPoolEntry *reg = registerOperand(operand, 2);
             if (!reg || !operand->externalPartMask)
                 continue;

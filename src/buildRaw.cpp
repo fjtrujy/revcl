@@ -16,30 +16,30 @@ static inline void dumpRow(wtRow *row)
     row->refreshInstructionOperands(-1);
 }
 
-bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int loopMode)
+bool buildRaw(Program *prog, instStream *targetStream, DecodedLine *blocks, int count, int loopMode)
 {
-    workTable *scheduleTable = &s->sourceTable;
+    workTable *scheduleTable = &targetStream->sourceTable;
     if (!scheduleTable) {
         reportError("build: failed to get input table from ist\n");
         return false;
     }
     if (!scheduleTable->init(5, count)) {
-        reportError("failed to init raw table for '%s' with %d entries\n", s->streamName(), count);
+        reportError("failed to init raw table for '%s' with %d entries\n", targetStream->streamName(), count);
         return false;
     }
-    scheduleTable->ownerStream = s;
+    scheduleTable->ownerStream = targetStream;
     if (!scheduleTable->setTableRawMode(loopMode)) {
         reportError("failed to set sub mode\n");
         return false;
     }
-    int i = 0;
+    int decodedLineIndex = 0;
     int rows = 0;
     bool looped = false;
     Instr *branch = 0;
     int branchRow = -1;
     int branchType = 0;
-    for (; i != count; i++) {
-        DecodedLine *decodedLine = &blocks[i];
+    for (; decodedLineIndex != count; decodedLineIndex++) {
+        DecodedLine *decodedLine = &blocks[decodedLineIndex];
         if (decodedLine->labels.combinedFlags()) {
             reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
@@ -47,7 +47,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         decodedLine->labels.clearNodes();
         Instr *syntheticInstruction = decodedLine->instructions[0];
         if (syntheticInstruction && syntheticInstruction->syntheticKind) {
-            if (!s->processCmdSynth(syntheticInstruction)) {
+            if (!targetStream->processCmdSynth(syntheticInstruction)) {
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
                 errorOccurred = !quietDiagnostics;
@@ -64,15 +64,15 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         row->clearEntries();
         int instructionCount = 0;
         int valid = 0;
-        for (int j = 0; j != 2; j++) {
-            Instr *decodedInstruction = decodedLine->instructions[j];
+        for (int instructionIndex = 0; instructionIndex != 2; instructionIndex++) {
+            Instr *decodedInstruction = decodedLine->instructions[instructionIndex];
             if (!decodedInstruction)
                 continue;
             if (decodedInstruction->syntheticKind) {
                 reportError("encountered a synth instruction in raw mode\n");
                 return false;
             }
-            decodedLine->instructions[j] = 0;
+            decodedLine->instructions[instructionIndex] = 0;
             if (!scheduleTable->logAddLinear_Tail(decodedInstruction)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
@@ -108,7 +108,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                 branchRow = rows;
                 branch = decodedInstruction;
             }
-            row->entries[j].instruction = decodedInstruction;
+            row->entries[instructionIndex].instruction = decodedInstruction;
             decodedInstruction->setOwner((cls_unk30 *)scheduleTable);
             valid++;
             instructionCount++;
@@ -125,7 +125,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             rows++;
         }
     }
-    s->branchType = branchType;
+    targetStream->branchType = branchType;
     if (branchRow >= 0) {
         int branchDelayRows = rows - branchRow - 1;
         if (branchDelayRows <= 0) {
@@ -151,8 +151,8 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         scheduleTable->setRange(0, rows);
     setRangeFrom(scheduleTable);
     int maxLid = 0;
-    for (i = 0; i != rows; i++) {
-        wtRow *row = scheduleTable->getRowByIndex(i);
+    for (decodedLineIndex = 0; decodedLineIndex != rows; decodedLineIndex++) {
+        wtRow *row = scheduleTable->getRowByIndex(decodedLineIndex);
         if (!row) {
             reportError("failed to get ie from table\n");
             return false;
@@ -164,9 +164,9 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             int lid, pos;
             if (looped) {
                 lid = rowInstruction->parsedLoopId - 1;
-                pos = i + rows * lid;
+                pos = decodedLineIndex + rows * lid;
             } else {
-                pos = i;
+                pos = decodedLineIndex;
                 lid = 0;
             }
             rowInstruction->parsedLoopId = -1;

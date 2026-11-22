@@ -108,11 +108,11 @@ bool sredTable(workTable *scheduleTable)
 {
     if (!isPipeMode(scheduleTable))
         return true;
-    int i = scheduleTable->rangeStart;
-    int n = scheduleTable->rangeEnd;
-    if (i != n) {
-        i = n = scheduleTable->loopSize;
-        if (i) {
+    int rowIndex = scheduleTable->rangeStart;
+    int rangeEnd = scheduleTable->rangeEnd;
+    if (rowIndex != rangeEnd) {
+        rowIndex = rangeEnd = scheduleTable->loopSize;
+        if (rowIndex) {
             reportError("can't do modular reduction\n");
             return false;
         }
@@ -121,10 +121,10 @@ bool sredTable(workTable *scheduleTable)
         int changed;
         do {
             changed = false;
-            for (i = scheduleTable->rangeStart; i != scheduleTable->rangeEnd; i++) {
-                Instr *instruction = scheduleTable->getRowByIndex(i)->onlyEntry();
+            for (rowIndex = scheduleTable->rangeStart; rowIndex != scheduleTable->rangeEnd; rowIndex++) {
+                Instr *instruction = scheduleTable->getRowByIndex(rowIndex)->onlyEntry();
                 if (instruction) {
-                    if (instruction->position.loopRow != i) {
+                    if (instruction->position.loopRow != rowIndex) {
                         reportError(sredBadlyPlacedError);
                         return false;
                     }
@@ -138,14 +138,14 @@ bool sredTable(workTable *scheduleTable)
 
         do {
             changed = false;
-            for (i = scheduleTable->rangeEnd - 1; i >= scheduleTable->rangeStart; i--) {
-                Instr *in = scheduleTable->getRowByIndex(i)->onlyEntry();
-                if (in && !atEarliest(scheduleTable, in)) {
-                    if (in->position.loopRow != i) {
+            for (rowIndex = scheduleTable->rangeEnd - 1; rowIndex >= scheduleTable->rangeStart; rowIndex--) {
+                Instr *reductionInstruction = scheduleTable->getRowByIndex(rowIndex)->onlyEntry();
+                if (reductionInstruction && !atEarliest(scheduleTable, reductionInstruction)) {
+                    if (reductionInstruction->position.loopRow != rowIndex) {
                         reportError(sredBadlyPlacedError);
                         return false;
                     }
-                    if (!sredInstr(scheduleTable, in, false)) {
+                    if (!sredInstr(scheduleTable, reductionInstruction, false)) {
                         reportError("failed to sred a line\n");
                         return false;
                     }

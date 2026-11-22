@@ -59,12 +59,12 @@ bool Program::doUnique()
     for (stream = streamHead; stream; stream = stream->nextStream) {
         for (mNode *macroNode = stream->labels.head; macroNode; macroNode = macroNode->next) {
             if (!isExportedSymbol(this, macroNode->name)) {
-                char *nn = mprefix_del(getUniqueName(this), macroNode->name);
-                if (!nn) {
+                char *qualifiedLabelName = mprefix_del(getUniqueName(this), macroNode->name);
+                if (!qualifiedLabelName) {
                     reportError("failed to cat\n");
                     return false;
                 }
-                if (!macroNode->setName(nn)) {
+                if (!macroNode->setName(qualifiedLabelName)) {
                     reportError("failed to set new name\n");
                     return false;
                 }
@@ -73,12 +73,12 @@ bool Program::doUnique()
     }
     for (mNode *prefixNode = uniqueNamePrefixes.head; prefixNode; prefixNode = prefixNode->next) {
         if (!isExportedSymbol(this, prefixNode->name)) {
-            char *nn = mprefix_del(getUniqueName(this), prefixNode->name);
-            if (!nn) {
+            char *qualifiedPrefixName = mprefix_del(getUniqueName(this), prefixNode->name);
+            if (!qualifiedPrefixName) {
                 reportError("failed to cat\n");
                 return false;
             }
-            if (!prefixNode->setName(nn)) {
+            if (!prefixNode->setName(qualifiedPrefixName)) {
                 reportError("failed to set new name\n");
                 return false;
             }

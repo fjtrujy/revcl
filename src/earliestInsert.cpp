@@ -7,14 +7,14 @@
 
 int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
 {
-    short e = instruction->externalInputConstraint;
-    if (e < instruction->externalInputPairedConstraint)
-        e = instruction->externalInputPairedConstraint;
-    int line = e + scheduleTable->rangeStart;
+    short inputConstraint = instruction->externalInputConstraint;
+    if (inputConstraint < instruction->externalInputPairedConstraint)
+        inputConstraint = instruction->externalInputPairedConstraint;
+    int line = inputConstraint + scheduleTable->rangeStart;
     int thru = -1;
     int iline = instruction->position.loopRow;
     Operand *operand;
-    for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+    for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
         RegPoolEntry *reg = registerOperand(operand, 1);
         if (reg) {
             for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
@@ -42,9 +42,9 @@ int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
         }
         reg = registerOperand(operand, 2);
         if (reg && reg->tracksHotOutputPaths) {
-            for (int p = 0; p != reg->partCount; p++) {
-                if ((operand->componentMask >> p) & 1) {
-                    OpSlot *slot = &operand->parts[p];
+            for (int dependencyPartIndex = 0; dependencyPartIndex != reg->partCount; dependencyPartIndex++) {
+                if ((operand->componentMask >> dependencyPartIndex) & 1) {
+                    OpSlot *slot = &operand->parts[dependencyPartIndex];
                     OperandLock *operandLock = slot->ownerLockList->sortedOutputLocks;
                     while (operandLock && operandLock != slot) {
                         int outputLockRow = operandLock->linearRow;
@@ -82,14 +82,14 @@ int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
 
 int latestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
 {
-    short e = instruction->externalOutputConstraint;
-    if (e < instruction->externalOutputPairedConstraint)
-        e = instruction->externalOutputPairedConstraint;
-    int line = scheduleTable->rangeEnd - e - 1;
+    short outputConstraint = instruction->externalOutputConstraint;
+    if (outputConstraint < instruction->externalOutputPairedConstraint)
+        outputConstraint = instruction->externalOutputPairedConstraint;
+    int line = scheduleTable->rangeEnd - outputConstraint - 1;
     int iline = instruction->position.loopRow;
     bool thru = false;
     Operand *operand;
-    for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+    for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
         RegPoolEntry *reg = registerOperand(operand, 1);
         if (reg && operand->reductionHazardMask) {
             thru = true;

@@ -4,9 +4,9 @@
 int maximumDecodedLineFlowId(DecodedLine *blocks, int count)
 {
     int max = 0;
-    for (int i = 0; i != count; i++)
-        if (blocks[i].flowId > max)
-            max = blocks[i].flowId;
+    for (int lineIndex = 0; lineIndex != count; lineIndex++)
+        if (blocks[lineIndex].flowId > max)
+            max = blocks[lineIndex].flowId;
     return max;
 }
 
@@ -15,8 +15,8 @@ bool DecodedLine::hasFlowStartSynthetic()
     for (int instructionIndex = 0; instructionIndex != 2; instructionIndex++) {
         Instr *instruction = instructions[instructionIndex];
         if (instruction) {
-            char t = instruction->syntheticKind;
-            if (t == 11 || t == 3 || t == 1)
+            char syntheticKind = instruction->syntheticKind;
+            if (syntheticKind == 11 || syntheticKind == 3 || syntheticKind == 1)
                 return true;
         }
     }

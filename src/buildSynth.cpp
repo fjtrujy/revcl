@@ -17,25 +17,25 @@ static inline void dumpSynthInstruction(Instr *instruction)
 }
 
 
-bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
+bool buildSynth(Program *prog, instStream *targetStream, DecodedLine *blocks, int count)
 {
-    workTable *scheduleTable = &s->sourceTable;
+    workTable *scheduleTable = &targetStream->sourceTable;
     if (!scheduleTable) {
         reportError("build: failed to get input table from ist\n");
         return false;
     }
     if (!scheduleTable->init(4, 0)) {
-        reportError("failed to init synth table for '%s'\n", s->streamName());
+        reportError("failed to init synth table for '%s'\n", targetStream->streamName());
         return false;
     }
-    scheduleTable->ownerStream = s;
+    scheduleTable->ownerStream = targetStream;
     int inSynth;
     int stype;
     int flags = 0;
     inSynth = 0;
     stype = 0;
-    for (int i = 0; i != count; i++) {
-        DecodedLine *decodedLine = &blocks[i];
+    for (int decodedLineIndex = 0; decodedLineIndex != count; decodedLineIndex++) {
+        DecodedLine *decodedLine = &blocks[decodedLineIndex];
         if (decodedLine->labels.combinedFlags()) {
             reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
@@ -53,7 +53,7 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
         decodedInstruction->parsedLoopId = -1;
         switch ((unsigned char)decodedInstruction->syntheticKind) {
         case 11:
-            if (s->endDirectiveText) {
+            if (targetStream->endDirectiveText) {
                 reportUserMessage("istream already has end macro attached\n");
                 return false;
             }
@@ -61,7 +61,7 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
                 reportError("EXITM has no macro string attached\n");
                 return false;
             }
-            s->endDirectiveText = dupString(decodedInstruction->operands[0].immediateValue.getString());
+            targetStream->endDirectiveText = dupString(decodedInstruction->operands[0].immediateValue.getString());
         case 1:
         case 3:
             if (stype) {
@@ -130,17 +130,17 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
     }
     switch (stype) {
     case 11:
-        s->endType = 4;
-        if (!s->endDirectiveText) {
+        targetStream->endType = 4;
+        if (!targetStream->endDirectiveText) {
             reportError("exitmacro not set.. but end_macro endtype?\n");
             return false;
         }
         break;
     case 3:
-        s->endType = 3;
+        targetStream->endType = 3;
         break;
     case 1:
-        s->startType = 2;
+        targetStream->startType = 2;
         break;
     default:
         reportUserMessage("vcl found a problem making an enter/exit block, and I'll improve this error message later\n");

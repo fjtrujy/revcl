@@ -7,8 +7,8 @@
 static inline bool extendForEnd_inl(workTable *scheduleTable)
 {
     do {
-        int i = scheduleTable->rangeEnd++;
-        wtRow *workRow = scheduleTable->getRowByIndex(i);
+        int rowIndex = scheduleTable->rangeEnd++;
+        wtRow *workRow = scheduleTable->getRowByIndex(rowIndex);
         if (!workRow) {
             reportError("failed to get ie for end patch\n");
             return false;
@@ -56,14 +56,14 @@ bool tidyProgramStreams(Program *program)
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
         if (!stream->mergeIntoSuccessor)
             continue;
-        linkNode *n = stream->outputLinks.head;
-        while (n) {
-            linkNode *next = n->next;
-            if (!program->unLinkStreams(stream, n->otherStream, n->linkType)) {
+        linkNode *outgoingLink = stream->outputLinks.head;
+        while (outgoingLink) {
+            linkNode *next = outgoingLink->next;
+            if (!program->unLinkStreams(stream, outgoingLink->otherStream, outgoingLink->linkType)) {
                 reportError("failed disappear linkage\n");
                 return false;
             }
-            n = next;
+            outgoingLink = next;
         }
         Instr *instruction = stream->getBranch();
         if (instruction)
@@ -74,14 +74,14 @@ bool tidyProgramStreams(Program *program)
             reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *wt = stream->workTablePtr;
-        if (wt->codeModeValue == 4)
+        workTable *streamTable = stream->workTablePtr;
+        if (streamTable->codeModeValue == 4)
             continue;
-        if (wt->getRangeStart() < 0)
+        if (streamTable->getRangeStart() < 0)
             continue;
-        if (wt->getPhysicalLen() > 1 && wt->hasSafeTrailingInstructions())
+        if (streamTable->getPhysicalLen() > 1 && streamTable->hasSafeTrailingInstructions())
             continue;
-        if (!extendForEnd_inl(wt)) {
+        if (!extendForEnd_inl(streamTable)) {
             reportError("failed to extend for e\n");
             return false;
         }
@@ -92,8 +92,8 @@ bool tidyProgramStreams(Program *program)
 bool extendForEnd(workTable *scheduleTable)
 {
     do {
-        int i = scheduleTable->rangeEnd++;
-        wtRow *workRow = scheduleTable->getRowByIndex(i);
+        int rowIndex = scheduleTable->rangeEnd++;
+        wtRow *workRow = scheduleTable->getRowByIndex(rowIndex);
         if (!workRow) {
             reportError("failed to get ie for end patch\n");
             return false;

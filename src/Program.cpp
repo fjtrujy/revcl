@@ -294,9 +294,9 @@ char *emitProgram(Program *program, char *out, int comments)
     }
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
         stream->dump(0);
-        int emittedInstructionCount = 0, m = 0;
+        int emittedInstructionCount = 0, emittedRowCount = 0;
         stream->emissionStartIndex = total;
-        outputCursor = stream->emit(outputCursor, comments, &emittedInstructionCount, &m);
+        outputCursor = stream->emit(outputCursor, comments, &emittedInstructionCount, &emittedRowCount);
         if (!outputCursor) {
             reportError("flowMon : failed to write a stream\n");
             return 0;

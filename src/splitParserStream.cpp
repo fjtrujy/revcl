@@ -11,7 +11,7 @@
 
 bool splitParserStream(Program *program, DecodedLine *blocks, int count)
 {
-    int i = 0;
+    int lineIndex = 0;
     if (!blocks) {
         reportError("flowMon::Build - passed a null table\n");
         return false;
@@ -21,23 +21,23 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
         return false;
     }
 
-    for (; i != count; i++) {
-        DecodedLine *decodedLine = &blocks[i];
+    for (; lineIndex != count; lineIndex++) {
+        DecodedLine *decodedLine = &blocks[lineIndex];
         for (int instructionIndex = 0; instructionIndex != 2; instructionIndex++) {
-            VclPtrWord in = (VclPtrWord)decodedLine->instructions[instructionIndex];
-            if (!in || !((Instr *)in)->branchFlags)
+            VclPtrWord instructionWord = (VclPtrWord)decodedLine->instructions[instructionIndex];
+            if (!instructionWord || !((Instr *)instructionWord)->branchFlags)
                 continue;
-            char *target = ((Instr *)in)->getBranchTargetImmediate();
+            char *target = ((Instr *)instructionWord)->getBranchTargetImmediate();
             if (target) {
-                DecodedLine *f = findDecodedLineByLabel(blocks, count, target);
-                if (!f) {
+                DecodedLine *targetLine = findDecodedLineByLabel(blocks, count, target);
+                if (!targetLine) {
                     reportUserMessage("vcl couldn't find the label '%s' refered to in instruction :\n", target);
-                    ((Instr *)in)->leDump(-1);
+                    ((Instr *)instructionWord)->leDump(-1);
                     return false;
                 }
-                f->isBranchTarget = 1;
+                targetLine->isBranchTarget = 1;
             } else {
-                char *tags = ((Instr *)in)->branchLabelTags;
+                char *tags = ((Instr *)instructionWord)->branchLabelTags;
                 if (!tags)
                     continue;
                 char *tag = tags;
@@ -50,17 +50,17 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
                     while (*scan != ':')
                         *outputCursor++ = *scan++;
                     *outputCursor = 0;
-                    DecodedLine *f = findDecodedLineByLabel(blocks, count, buf);
-                    if (!f) {
+                    DecodedLine *matchedTagLine = findDecodedLineByLabel(blocks, count, buf);
+                    if (!matchedTagLine) {
                         reportError("failed to find a tagged label '%s' attached to branch:\n", buf);
-                        ((Instr *)in)->leDump(-1);
+                        ((Instr *)instructionWord)->leDump(-1);
                         return false;
                     }
                     if (!program->uniqueNamePrefixes.findByExactName(buf) && !program->uniqueNamePrefixes.findOrAppendByExactName(buf)) {
                         reportError("failed to add tag name '%s' to the global tag list\n", buf);
                         return false;
                     }
-                    f->isBranchTarget = 1;
+                    matchedTagLine->isBranchTarget = 1;
                     tag = scan + 1;
                 } while (*tag);
             }
@@ -72,17 +72,17 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
     unsigned char mode = 0;
     unsigned char sub = 0;
     short uid = 1;
-    for (i = 0; i != count; i++) {
-        DecodedLine *b = &blocks[i];
-        char kind = b->decodeMode;
+    for (lineIndex = 0; lineIndex != count; lineIndex++) {
+        DecodedLine *currentDecodedLine = &blocks[lineIndex];
+        char kind = currentDecodedLine->decodeMode;
         switch ((unsigned char)kind) {
         case 1:
         case 3: {
             unsigned int nextMode = (unsigned char)kind;
-            if (mode != nextMode || sub != (unsigned char)b->decodeSubMode) {
+            if (mode != nextMode || sub != (unsigned char)currentDecodedLine->decodeSubMode) {
                 uid++;
                 mode = nextMode;
-                sub = b->decodeSubMode;
+                sub = currentDecodedLine->decodeSubMode;
             }
             break;
         }
@@ -90,48 +90,48 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
             uid++;
             break;
         case 0:
-            reportError("flow::Build : hit a bad ientry.at line %d\n", i);
-            b->refreshInstructionOperands(i);
+            reportError("flow::Build : hit a bad ientry.at line %d\n", lineIndex);
+            currentDecodedLine->refreshInstructionOperands(lineIndex);
             return false;
         default:
             reportError("calculateFlowAndGLobalUID's : hit a totally bogus ientry\n");
             return false;
         }
-        if (i && b[-1].decodeMode == 6)
+        if (lineIndex && currentDecodedLine[-1].decodeMode == 6)
             uid++;
-        if (b->labels.combinedFlags())
+        if (currentDecodedLine->labels.combinedFlags())
             uid++;
-        int f = b->rawLoopId;
-        if ((short)f > 0) {
+        int rawLoopId = currentDecodedLine->rawLoopId;
+        if ((short)rawLoopId > 0) {
             if (mode != 3) {
                 reportError("+ve flow uid in non raw sequence\n");
                 return false;
             }
-            if ((short)f != lastUid) {
+            if ((short)rawLoopId != lastUid) {
                 uid++;
-                lastUid = (short)f;
+                lastUid = (short)rawLoopId;
             }
         } else if (lastUid > 0) {
             lastUid = 0;
             uid++;
         }
-        if (b->isBranchTarget)
+        if (currentDecodedLine->isBranchTarget)
             uid++;
-        int id = uid;
-        for (int k = 0; k != 2; k++) {
-            Instr *in = b->instructions[k];
-            if (!in)
+        int flowId = uid;
+        for (int blockInstructionIndex = 0; blockInstructionIndex != 2; blockInstructionIndex++) {
+            Instr *blockInstruction = currentDecodedLine->instructions[blockInstructionIndex];
+            if (!blockInstruction)
                 continue;
             int serial = nextInstructionSerial++;
-            in->instructionSerial = serial;
-            char t = in->syntheticKind;
-            switch ((unsigned char)t) {
+            blockInstruction->instructionSerial = serial;
+            char syntheticKind = blockInstruction->syntheticKind;
+            switch ((unsigned char)syntheticKind) {
             case 1:
             case 3:
             case 10:
             case 11:
                 uid++;
-                id++;
+                flowId++;
                 break;
             case 2:
             case 4:
@@ -139,16 +139,16 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
                 uid++;
                 break;
             }
-            if ((t || mode == 1) && delay) {
+            if ((syntheticKind || mode == 1) && delay) {
                 reportUserMessage("found a branch delay slot with no instruction in in RAW mode..\n");
                 reportUserMessage("to make life easier for itself - vcl treats this as an error..\n");
                 reportUserMessage("this includes.. having a BDL slot as a branch target.. in this case\n");
                 return false;
             }
-            if (in->branchFlags) {
+            if (blockInstruction->branchFlags) {
                 if (delay) {
                     reportUserMessage("found a branch in a branch delay slot\n");
-                    in->leDump();
+                    blockInstruction->leDump();
                     return false;
                 }
                 delay = (mode == 3) + 1;
@@ -159,25 +159,25 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
                 uid++;
             delay--;
         }
-        b->flowId = id;
+        currentDecodedLine->flowId = flowId;
     }
     program->flowIdCount = uid;
 
     mList unused;
-    i = 0;
-    while (i < count) {
-        DecodedLine *b = &blocks[i];
-        int end = i;
-        short id = b->flowId;
-        mode = b->decodeMode;
-        sub = b->decodeSubMode;
+    lineIndex = 0;
+    while (lineIndex < count) {
+        DecodedLine *blockStartLine = &blocks[lineIndex];
+        int end = lineIndex;
+        short blockFlowId = blockStartLine->flowId;
+        mode = blockStartLine->decodeMode;
+        sub = blockStartLine->decodeSubMode;
         if (end < count) {
-            DecodedLine *q = b;
+            DecodedLine *scanLine = blockStartLine;
             do {
-                int candidateId = q->flowId;
-                if (id != (short)candidateId)
+                int candidateId = scanLine->flowId;
+                if (blockFlowId != (short)candidateId)
                     break;
-                if (q->hasFlowStartSynthetic()) {
+                if (scanLine->hasFlowStartSynthetic()) {
                     if (mode == 1) {
                         mode = 4;
                     } else {
@@ -186,10 +186,10 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
                     }
                 }
                 end++;
-                q++;
+                scanLine++;
             } while (end < count);
         }
-        int streamLineCount = end - i;
+        int streamLineCount = end - lineIndex;
         instStream *stream = new instStream;
         if (!stream) goto allocationOfStreamFailed;
         goto afterNHandler;
@@ -197,13 +197,13 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
             reportError("flowMon::build - new failed\n");
             return false;
         afterNHandler:;
-        stream->streamId = id;
-        mList *labels = &b->labels;
+        stream->streamId = blockFlowId;
+        mList *labels = &blockStartLine->labels;
         if (!labels->nodeCount) {
             int nameLength = mstrlen(getUniqueName(program));
             char *name = new char[nameLength + 128];
             if (name) {
-                formatIntoBuffer(name, "__v_%s_%d", getUniqueName(program), id);
+                formatIntoBuffer(name, "__v_%s_%d", getUniqueName(program), blockFlowId);
                 if (!stream->labels.appendNamedNode(name)) {
                     reportError("failed to creat add a default name node\n");
                     delete[] name;
@@ -228,25 +228,25 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
         afterAError:;
         switch (mode) {
         case 1:
-            if (!buildUta(program, stream, b, streamLineCount)) {
+            if (!buildUta(program, stream, blockStartLine, streamLineCount)) {
                 reportInfo("buildUta table failed for some reason\n");
                 return false;
             }
             break;
         case 6:
-            if (!buildPassThru(program, stream, b, streamLineCount)) {
+            if (!buildPassThru(program, stream, blockStartLine, streamLineCount)) {
                 reportInfo("buildPass failed for some reason\n");
                 return false;
             }
             break;
         case 3:
-            if (!buildRaw(program, stream, b, streamLineCount, sub)) {
+            if (!buildRaw(program, stream, blockStartLine, streamLineCount, sub)) {
                 reportInfo("buildRaw table failed for some reason\n");
                 return false;
             }
             break;
         case 4:
-            if (!buildSynth(program, stream, b, streamLineCount)) {
+            if (!buildSynth(program, stream, blockStartLine, streamLineCount)) {
                 reportInfo("buildSynth table failed for some reason\n");
                 return false;
             }
@@ -255,12 +255,12 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
             reportError("bad decMode for builder switch\n");
             return false;
         }
-        for (int k = 0; k != streamLineCount; k++)
-            blocks[i + k].releaseContents();
+        for (int lineOffset = 0; lineOffset != streamLineCount; lineOffset++)
+            blocks[lineIndex + lineOffset].releaseContents();
         if (!program->addStream(stream))
             goto streamError;
         stream->workTablePtr = &stream->sourceTable;
-        i = end;
+        lineIndex = end;
         goto afterSHandler;
         streamError:
             reportError("flowBuild: failed to add istream\n");

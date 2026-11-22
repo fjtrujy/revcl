@@ -25,14 +25,14 @@ static inline void dumpLinearReduce(Program *program)
     dumpProgramStreamsAndRegisters(program, 0);
 }
 
-bool reduceLinearSchedule(Program *program, workTable *scheduleTable, unsigned char up, unsigned char down)
+bool reduceLinearSchedule(Program *program, workTable *scheduleTable, unsigned char reduceUpward, unsigned char down)
 {
     if (!isPipeMode(scheduleTable))
         return true;
     if (scheduleTable->getLoopSize())
         return true;
 
-    int passes = up != 0;
+    int passes = reduceUpward != 0;
     if (down)
         passes++;
 
@@ -43,7 +43,7 @@ bool reduceLinearSchedule(Program *program, workTable *scheduleTable, unsigned c
     int count = passes;
     while (count) {
         count--;
-        if (up) {
+        if (reduceUpward) {
             int reductionResult = pullUp(scheduleTable);
             if (reductionResult < 0) {
                 reportError("failed to pull up\n");
@@ -54,12 +54,12 @@ bool reduceLinearSchedule(Program *program, workTable *scheduleTable, unsigned c
                 count = passes;
         }
         if (down) {
-            int r = dragDown(scheduleTable);
-            if (r < 0) {
+            int dragResult = dragDown(scheduleTable);
+            if (dragResult < 0) {
                 reportError("failed drag down\n");
                 return false;
             }
-            if (r)
+            if (dragResult)
                 count = passes;
         }
     }

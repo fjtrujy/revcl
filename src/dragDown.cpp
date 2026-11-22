@@ -47,9 +47,9 @@ int dragDown(workTable *scheduleTable)
                         reportError("rl not l!\n");
                         exitAfterCleanup(-1);
                     }
-                    int k;
+                    int operandIndex;
                     Operand *operand;
-                    for (k = 0; (operand = instruction->getOp(k)) != 0; k++) {
+                    for (operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
                         RegPoolEntry *reg = registerOperand(operand, 2);
                         if (reg) {
                             for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {

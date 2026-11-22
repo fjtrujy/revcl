@@ -24,9 +24,9 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
         reportError("failed to reset cpu\n");
         return false;
     }
-    instStream *s;
-    for (s = program->streamHead; s; s = s->nextStream) {
-        if (!s->flowReset()) {
+    instStream *streamCursor;
+    for (streamCursor = program->streamHead; streamCursor; streamCursor = streamCursor->nextStream) {
+        if (!streamCursor->flowReset()) {
             reportError("failed to flow reset a stream\n");
             return false;
         }
@@ -35,20 +35,20 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
         reportError("flowMon::flowReset: failed to recalculate flow UIDs\n");
         return false;
     }
-    for (s = program->streamHead; s; s = s->nextStream) {
+    for (streamCursor = program->streamHead; streamCursor; streamCursor = streamCursor->nextStream) {
         if (!resetProcessorThroughput(program)) {
-            reportError("flowInit - failed for stream %s\n", s->streamName());
+            reportError("flowInit - failed for stream %s\n", streamCursor->streamName());
             return false;
         }
-        if (!emulateAndCollectRegisterUses(program, s)) {
-            reportError("build dependency - failed to %s stream..\n", s->getCodeModeName());
+        if (!emulateAndCollectRegisterUses(program, streamCursor)) {
+            reportError("build dependency - failed to %s stream..\n", streamCursor->getCodeModeName());
             return false;
         }
-        if (!s->buildForwardDependencies(forceDependencyChecks, true)) {
+        if (!streamCursor->buildForwardDependencies(forceDependencyChecks, true)) {
             reportError("failed to build memory dependencies for ist\n");
             return false;
         }
-        if (!s->gatherStats()) {
+        if (!streamCursor->gatherStats()) {
             reportError("failed to gather stats for the istream\n");
             return false;
         }
@@ -57,8 +57,8 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
         reportError("flowMon:: failed to init back trace\n");
         return false;
     }
-    for (s = program->streamHead; s; s = s->nextStream) {
-        for (regUse *registerUse = s->getWorkTable()->registerUses.head; registerUse; registerUse = registerUse->next) {
+    for (streamCursor = program->streamHead; streamCursor; streamCursor = streamCursor->nextStream) {
+        for (regUse *registerUse = streamCursor->getWorkTable()->registerUses.head; registerUse; registerUse = registerUse->next) {
             RegPoolEntry *reg = registerUse->registerEntry;
             if (!reg) {
                 reportError("found a reg ref with no reg!\n");
@@ -68,32 +68,32 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
                 bool hot = false;
                 int mode = 0;
                 if ((registerUse->externalInputMask >> part) & 1) {
-                    char bm = registerUse->externalBlockMode;
-                    if (bm == -1) {
+                    char externalBlockMode = registerUse->externalBlockMode;
+                    if (externalBlockMode == -1) {
                         reportError("regref doesn't have block mode set\n");
                         return false;
                     }
-                    mode = (bm != 0) + 1;
+                    mode = (externalBlockMode != 0) + 1;
                 }
                 if (registerUse->outputMask & (1 << part) & reg->tracksHotOutputPaths)
                     hot = true;
                 if (!hot && !mode)
                     continue;
                 int depth;
-                if (s->getCodeMode() == 3)
+                if (streamCursor->getCodeMode() == 3)
                     depth = registerUse->slots[part].timingValues[2];
                 else {
                     depth = 30000;
                     if (mode == 1)
                         mode = 2;
                 }
-                if (!doBackTrace(program, s, reg, part, depth, mode, hot)) {
+                if (!doBackTrace(program, streamCursor, reg, part, depth, mode, hot)) {
                     reportError("failed to back trace a register!\n");
                     return false;
                 }
                 if (program->resolvedStreams) {
-                    for (instStream *t = program->resolvedStreams; t; t = t->nextResolvedStream) {
-                        if (!int_buildTpairs(program, reg, part, t, s)) {
+                    for (instStream *resolvedStream = program->resolvedStreams; resolvedStream; resolvedStream = resolvedStream->nextResolvedStream) {
+                        if (!int_buildTpairs(program, reg, part, resolvedStream, streamCursor)) {
                             reportError("failed to build the tpairs\n");
                             return false;
                         }
@@ -106,8 +106,8 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
         reportError("faield to dispose of the backtrace info\n");
         return false;
     }
-    for (s = program->streamHead; s; s = s->nextStream) {
-        if (!s->gatherStats()) {
+    for (streamCursor = program->streamHead; streamCursor; streamCursor = streamCursor->nextStream) {
+        if (!streamCursor->gatherStats()) {
             reportError("failed to gather stats for the istream\n");
             return false;
         }

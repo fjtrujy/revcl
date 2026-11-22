@@ -67,12 +67,12 @@ bool makeLpWork(instStream *stream, int maxSpread)
     }
     for (instruction = scheduleTable->linearInstructions.tail; instruction; instruction = instruction->linearLink.previousInstruction) {
         int earliest = 30000;
-        for (int i = 0; i != instruction->operandCount; i++) {
-            Operand *operand = &instruction->operands[i];
+        for (int sourceOperandIndex = 0; sourceOperandIndex != instruction->operandCount; sourceOperandIndex++) {
+            Operand *operand = &instruction->operands[sourceOperandIndex];
             RegPoolEntry *reg = registerOperand(operand, 2);
             if (reg) {
-                for (int j = 0; j != reg->partCount; j++) {
-                    for (ol_s *operandLocation = operand->parts[j].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                for (int sourcePartIndex = 0; sourcePartIndex != reg->partCount; sourcePartIndex++) {
+                    for (ol_s *operandLocation = operand->parts[sourcePartIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                         Instr *dst = operandLocation->instruction;
                         Operand *otherOperand = operandAtLocation(operandLocation);
                         if (!dst || !otherOperand) {
@@ -99,16 +99,16 @@ bool makeLpWork(instStream *stream, int maxSpread)
         int minimumDependencyRow = 30000;
         int maximumDependencyRow = 0;
         char *outputCursor = buf;
-        for (int i = 0; i != instruction->operandCount; i++) {
-            Operand *operand = &instruction->operands[i];
+        for (int destinationOperandIndex = 0; destinationOperandIndex != instruction->operandCount; destinationOperandIndex++) {
+            Operand *operand = &instruction->operands[destinationOperandIndex];
             RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
                 outputCursor += formatIntoBuffer(outputCursor, " %s: ", reg->registerName());
                 int rlo = 30000, rhi = 0;
                 bool any = false;
-                for (int j = 0; j != reg->partCount; j++) {
-                    if ((operand->componentMask >> j) & 1) {
-                        ol_s *operandLocation = operand->parts[j].operandLocations.head;
+                for (int destinationPartIndex = 0; destinationPartIndex != reg->partCount; destinationPartIndex++) {
+                    if ((operand->componentMask >> destinationPartIndex) & 1) {
+                        ol_s *operandLocation = operand->parts[destinationPartIndex].operandLocations.head;
                         if (operandLocation) {
                             Instr *src = operandLocation->instruction;
                             int dependencyDistance = instruction->instructionId - src->instructionId;
@@ -202,8 +202,8 @@ bool lsqChain(workTable *table)
             abortAfterError();
         }
         int total = 0;
-        for (int i = 0; i != chainedInstructionCount; i++) {
-            Instr *instruction = list[i];
+        for (int instructionIndex = 0; instructionIndex != chainedInstructionCount; instructionIndex++) {
+            Instr *instruction = list[instructionIndex];
             int opc = instruction->opcodeId();
             int delta = 0;
             switch (opc) {
@@ -222,7 +222,7 @@ bool lsqChain(workTable *table)
             const char *name = "NO_BASE_INST";
             if (instruction->opcodeInfo)
                 name = instruction->opcodeInfo->mnemonic;
-            reportInfo("  %3d : %s\n", i, name);
+            reportInfo("  %3d : %s\n", instructionIndex, name);
         }
         iInfo *opcodeInfo;
         if (total < 0) {

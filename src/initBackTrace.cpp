@@ -53,25 +53,25 @@ bool disposeBackTrace(Program *program)
     return true;
 }
 
-bool g_initBackTrace(instStream *s, int streamCount)
+bool g_initBackTrace(instStream *initialStream, int streamCount)
 {
-    s->backtraceDependencyLength = s->getOrGuessDepLength();
-    if (s->backtraceDependencyLength < 0) {
+    initialStream->backtraceDependencyLength = initialStream->getOrGuessDepLength();
+    if (initialStream->backtraceDependencyLength < 0) {
         reportError("ist::g_initBackTrace - failed to get or guess the [depend] length of this stream\n");
         return false;
     }
-    int len = s->getOrGuessLogicalLength();
+    int len = initialStream->getOrGuessLogicalLength();
     if (len < 0) {
         reportError("ist::g_initBackTrace - failed to get or guess the logical length of this stream\n");
         return false;
     }
-    if (len > s->backtraceDependencyLength) {
-        reportError("minimal length > dep length for %s (%d > %d)\n", s->streamName(), len, s->backtraceDependencyLength);
+    if (len > initialStream->backtraceDependencyLength) {
+        reportError("minimal length > dep length for %s (%d > %d)\n", initialStream->streamName(), len, initialStream->backtraceDependencyLength);
         return false;
     }
-    if (s->endType == 2)
-        s->backtraceDependencyLength += 1000;
-    if (s->traceStore) {
+    if (initialStream->endType == 2)
+        initialStream->backtraceDependencyLength += 1000;
+    if (initialStream->traceStore) {
         reportError("m_tStore is already set !\n");
         return false;
     }
@@ -79,8 +79,8 @@ bool g_initBackTrace(instStream *s, int streamCount)
         reportError("no t store entries\n");
         return false;
     }
-    s->traceStore = new unsigned[(streamCount + 31) / 4];
-    if (!s->traceStore) {
+    initialStream->traceStore = new unsigned[(streamCount + 31) / 4];
+    if (!initialStream->traceStore) {
         reportError("failed to get new tSTore\n");
         return false;
     }

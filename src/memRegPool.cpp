@@ -33,8 +33,8 @@ bool initializeMemoryRegisterArea(RegPool *pool, const char *base, int size)
     RegPoolEntry *registerEntry = tab;
     pool->entryCount = size;
     int idx = 10000;
-    for (int i = 0; i != size; i++, registerEntry++, idx++) {
-        formatIntoBuffer(buf, "(%s+%d)(vi00)", base, i);
+    for (int registerOffset = 0; registerOffset != size; registerOffset++, registerEntry++, idx++) {
+        formatIntoBuffer(buf, "(%s+%d)(vi00)", base, registerOffset);
         if (!registerEntry->addRegisterNameAlias(buf)) {
             reportError("init mem area: failed to add register %s\n", buf);
             return false;

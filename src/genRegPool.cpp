@@ -27,13 +27,13 @@ void clearRegMask()
 bool initRegMask(RegPool *pool)
 {
     RegPoolEntry *registerEntry = pool->registerEntries;
-    int *mp = &maximumAllocationParts;
+    int *maximumPartsOut = &maximumAllocationParts;
     clearRawBytes(allocationRegisterMask, 32);
     for (int entryIndex = 0; entryIndex != pool->entryCount; entryIndex++, registerEntry++) {
         if (!registerEntry->enabledPhysicalRegister)
             allocationRegisterMask[entryIndex] = (1 << registerEntry->partCount) - 1;
-        if (registerEntry->partCount > *mp)
-            *mp = registerEntry->partCount;
+        if (registerEntry->partCount > *maximumPartsOut)
+            *maximumPartsOut = registerEntry->partCount;
     }
     return true;
 }
@@ -61,8 +61,8 @@ bool assignExtRegisters(Program *program)
                           stream->streamName(), modeName);
             return false;
         }
-        for (unsigned i = 0; i != 12; i++) {
-            RegPool *registerPool = GetRP(i);
+        for (unsigned poolIndex = 0; poolIndex != 12; poolIndex++) {
+            RegPool *registerPool = GetRP(poolIndex);
             if (registerPool && !registerPool->assignExt(stream)) {
                 reportError("flowMon::AssignExt registers failed for pool %s\n", registerPool->poolName);
                 return false;

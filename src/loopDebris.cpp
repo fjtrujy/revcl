@@ -21,9 +21,9 @@ static inline epiRec *ld_getEpiRec_inl(loopDebris *loopRecord, int epilogueIndex
 
 static inline epiRec *ld_findEpi_inl(loopDebris *loopRecord, int key)
 {
-    for (int i = 0; i != loopRecord->m_nEpi; i++)
-        if (loopRecord->m_epi[i].loopKey == key)
-            return &loopRecord->m_epi[i];
+    for (int epilogueIndex = 0; epilogueIndex != loopRecord->m_nEpi; epilogueIndex++)
+        if (loopRecord->m_epi[epilogueIndex].loopKey == key)
+            return &loopRecord->m_epi[epilogueIndex];
     return 0;
 }
 
@@ -252,9 +252,9 @@ epiRec *loopDebris::getEpiRec(int epilogueIndex)
 
 epiRec *loopDebris::findEpilogueByLoopKey(int key)
 {
-    for (int i = 0; i != m_nEpi; i++)
-        if (m_epi[i].loopKey == key)
-            return &m_epi[i];
+    for (int epilogueIndex = 0; epilogueIndex != m_nEpi; epilogueIndex++)
+        if (m_epi[epilogueIndex].loopKey == key)
+            return &m_epi[epilogueIndex];
     return 0;
 }
 
@@ -317,10 +317,10 @@ bool epiRec::init(int size, const char *name)
         reportError("failed to init it_pro for size %d\n", size);
         exitAfterCleanup(-1);
     }
-    instStream *s = stream;
+    instStream *ownerStream = stream;
     int serial = g_streamSerial;
     table = scheduleTable;
-    s->streamSerial = serial;
+    ownerStream->streamSerial = serial;
     scheduleTable->ownerStream = stream;
     stream->workTablePtr = &stream->sourceTable;
     return true;
@@ -348,7 +348,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         reportError("intput table is not vsm\n");
         return -1;
     }
-    int i;
+    int regionIndex;
     loopDebris loopRegions;
     char buf[4096];
     formatIntoBuffer(buf, "EXPL_%s_%s_", getUniqueName(program), stream->streamName());
@@ -391,8 +391,8 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
     instStream *prev = enter;
     epiRec *region;
     loopDebris *loopRecord;
-    for (i = 0; i != (loopRecord = &loopRegions)->getNumPro(); i++) {
-        epiRec *prologueRegion = proRecord(loopRecord, i, loopRegions.getNumPro());
+    for (regionIndex = 0; regionIndex != (loopRecord = &loopRegions)->getNumPro(); regionIndex++) {
+        epiRec *prologueRegion = proRecord(loopRecord, regionIndex, loopRegions.getNumPro());
         if (!prologueRegion) {
             reportError("failed to get prologue\n");
             return -1;
@@ -424,15 +424,15 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
                 reportError("failed to link prologue to epilogue\n");
                 return -1;
             }
-        } else if (i != loopRegions.getNumPro() - 1) {
+        } else if (regionIndex != loopRegions.getNumPro() - 1) {
             reportError("not last prologue, but no conditional\n");
             exitAfterCleanup(-1);
         }
         instStream *next;
-        if (i == loopRegions.getNumPro() - 1) {
+        if (regionIndex == loopRegions.getNumPro() - 1) {
             next = loopRegions.m_main.stream;
         } else {
-            next = checkedProStream(&loopRegions, i + 1);
+            next = checkedProStream(&loopRegions, regionIndex + 1);
         }
         if (!next) {
             reportError("failed to get next stream for a prologue\n");
@@ -476,8 +476,8 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         return -1;
     }
 
-    for (i = 0; i != loopRegions.getNumEpi(); i++) {
-        region = ld_getEpiRec_inl(&loopRegions, i);
+    for (regionIndex = 0; regionIndex != loopRegions.getNumEpi(); regionIndex++) {
+        region = ld_getEpiRec_inl(&loopRegions, regionIndex);
         if (!region) {
             reportError("failed to get epi \n");
             return -1;
@@ -516,8 +516,8 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
     }
 
     last = enter;
-    for (i = 0; i != loopRegions.getNumPro(); i++) {
-        region = ld_getProRec_inl(&loopRegions, i);
+    for (regionIndex = 0; regionIndex != loopRegions.getNumPro(); regionIndex++) {
+        region = ld_getProRec_inl(&loopRegions, regionIndex);
         if (!program->insertStreamAfter(last, region->stream)) {
             reportError("failed to add after\n");
             exitAfterCleanup(-1);
@@ -529,8 +529,8 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         exitAfterCleanup(-1);
     }
     last = main;
-    for (i = 0; i != loopRegions.getNumEpi(); i++) {
-        region = ld_getEpiRec_inl(&loopRegions, i);
+    for (regionIndex = 0; regionIndex != loopRegions.getNumEpi(); regionIndex++) {
+        region = ld_getEpiRec_inl(&loopRegions, regionIndex);
         if (!program->insertStreamAfter(last, region->stream)) {
             reportError("failed to add after\n");
             exitAfterCleanup(-1);
@@ -631,28 +631,28 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
     if (last >= mlid)
         last = mlid;
     epiRec *pro = 0;
-    for (int i = 0; i != mlid; i++) {
+    for (int prologueIndex = 0; prologueIndex != mlid; prologueIndex++) {
         if (!pro) {
-            pro = loopRecord->allocPro(lsz * (last - i + 1));
+            pro = loopRecord->allocPro(lsz * (last - prologueIndex + 1));
             if (!pro) {
                 reportError("failed to get pro\n");
                 exitAfterCleanup(-1);
             }
         }
-        if (!cloneAppend(scheduleTable, pro->table, i, 0, i >= last, true, false)) {
+        if (!cloneAppend(scheduleTable, pro->table, prologueIndex, 0, prologueIndex >= last, true, false)) {
             reportError("failed to clone/append main table to prologue table\n");
             exitAfterCleanup(-1);
         }
-        if (i == last || i == mlid - 1) {
+        if (prologueIndex == last || prologueIndex == mlid - 1) {
             if (!pro->table->prepRawTable()) {
                 reportError("failed to prep pro table!\n");
                 return false;
             }
             pro->loopKey = 0;
-            pro->sourceLoopId = i;
-            pro->regionEndIndex = i + 1;
-            pro->regionStartIndex = i - clid + 1;
-            if (i == last)
+            pro->sourceLoopId = prologueIndex;
+            pro->regionEndIndex = prologueIndex + 1;
+            pro->regionStartIndex = prologueIndex - clid + 1;
+            if (prologueIndex == last)
                 pro->stream->branchType = 5;
             Instr *cloneInstruction = pro->table->getConditionalBranch();
             pro->conditionalBranch = cloneInstruction;
@@ -660,7 +660,7 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
                 pro->stream->branchType = 5;
                 cloneInstruction->reverseBranchSense = 1;
             }
-            last = i + 1;
+            last = prologueIndex + 1;
             pro = 0;
         }
     }
@@ -694,17 +694,17 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
 
     int rowOffset = lsz * (mlid - clid);
     if (rowOffset) {
-        for (int j = loopRecord->m_nPro - 1; j >= 0; j--) {
-            epiRec *prologueRegion = ld_getProRec_inl(loopRecord, j);
+        for (int reversePrologueIndex = loopRecord->m_nPro - 1; reversePrologueIndex >= 0; reversePrologueIndex--) {
+            epiRec *prologueRegion = ld_getProRec_inl(loopRecord, reversePrologueIndex);
             if (!prologueRegion) {
-                reportError("failed to get pro %d\n", j);
+                reportError("failed to get pro %d\n", reversePrologueIndex);
                 exitAfterCleanup(-1);
             }
             epiRec *epilogueRegion = loopRecord->allocEpi(rowOffset);
             epilogueRegion->loopKey = prologueRegion->sourceLoopId + 1;
             int proBase = prologueRegion->regionStartIndex;
             int lid = epilogueRegion->loopKey;
-            for (int k = clid + 1; k <= mlid; k++, lid++) {
+            for (int loopId = clid + 1; loopId <= mlid; loopId++, lid++) {
                 if (!cloneAppend(scheduleTable, epilogueRegion->table, lid, lid - proBase + 1, false, true, false)) {
                     reportError("failed to attach to epi sequence!\n");
                     return false;
@@ -714,9 +714,9 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
     }
 
     loopRecord->validateLoopDebrisName();
-    for (int i = 0; i != loopRecord->m_nPro; i++) {
-        epiRec *prologueRegion = ld_getProRec_inl(loopRecord, i);
-        epiRec *next = (i == loopRecord->m_nPro - 1) ? &mainRec(loopRecord) : ld_getProRec_inl(loopRecord, i + 1);
+    for (int primaryPrologueIndex = 0; primaryPrologueIndex != loopRecord->m_nPro; primaryPrologueIndex++) {
+        epiRec *prologueRegion = ld_getProRec_inl(loopRecord, primaryPrologueIndex);
+        epiRec *next = (primaryPrologueIndex == loopRecord->m_nPro - 1) ? &mainRec(loopRecord) : ld_getProRec_inl(loopRecord, primaryPrologueIndex + 1);
         if (!next) {
             reportError("failed to get next\n");
             exitAfterCleanup(-1);
@@ -753,8 +753,8 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
     }
 
     int nEpi = loopRecord->m_nEpi;
-    for (int i = 0; i != nEpi; i++) {
-        epiRec *epilogueRegion = ld_getEpiRec_inl(loopRecord, i);
+    for (int epilogueIndex = 0; epilogueIndex != nEpi; epilogueIndex++) {
+        epiRec *epilogueRegion = ld_getEpiRec_inl(loopRecord, epilogueIndex);
         if (!epilogueRegion) {
             reportError("failed to get epi\n");
             exitAfterCleanup(-1);
@@ -769,7 +769,7 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
             reportError("no itable for e\n");
             exitAfterCleanup(-1);
         }
-        if (i != nEpi - 1) {
+        if (epilogueIndex != nEpi - 1) {
             ist->branchType = 1;
             Instr *secondInstruction = new Instr(findOpcodeInfoByMnemonic("b", false));
             if (!secondInstruction) {

@@ -160,20 +160,20 @@ int removeInstructionModifierGroups(char *modifierText)
             if (*src == '[') {
                 char *modifierCursor = src + 1;
                 int modifierMask = 0;
-                bool ok = true;
+                bool validModifierGroup = true;
                 while (*modifierCursor && *modifierCursor != ']') {
                     switch (*modifierCursor) {
                     case 'E': case 'e': modifierMask |= 2; break;
                     case 'D': case 'd': modifierMask |= 4; break;
                     case 'M': case 'm': modifierMask |= 1; break;
                     case 'T': case 't': modifierMask |= 8; break;
-                    default: ok = false; break;
+                    default: validModifierGroup = false; break;
                     }
                     modifierCursor++;
                 }
                 if (*modifierCursor != ']')
-                    ok = false;
-                if (ok) {
+                    validModifierGroup = false;
+                if (validModifierGroup) {
                     mods |= modifierMask;
                     src = modifierCursor + 1;
                 } else {

@@ -21,8 +21,8 @@ static inline int iHolderMatches(iHolder *holder, ol_s *location)
     if (!location || !holder->instruction)
         return 0;
     int matches = 0;
-    Instr *i = location->instruction;
-    if (holder->instruction == i) {
+    Instr *locationInstruction = location->instruction;
+    if (holder->instruction == locationInstruction) {
         int idx = location->operandIndex;
         if (holder->operandIndex == idx)
             matches = 1;
@@ -58,12 +58,12 @@ bool iHolder::catInit(ol_s *location)
         return false;
     }
     if (!instruction) {
-        Instr *in = location->instruction;
-        if (!in) {
+        Instr *locationInstruction = location->instruction;
+        if (!locationInstruction) {
             reportError("iHolder:: init called, but ol_s not inst\n");
             return false;
         }
-        instruction = in;
+        instruction = locationInstruction;
         operandIndex = location->operandIndex;
         componentMask = 0;
     } else if (instruction != location->instruction || operandIndex != location->operandIndex) {
@@ -82,11 +82,11 @@ infoList::infoList()
 
 infoList::~infoList()
 {
-    infoNode *p = head;
-    while (p) {
-        infoNode *n = p->next;
-        delete p;
-        p = n;
+    infoNode *currentNode = head;
+    while (currentNode) {
+        infoNode *nextNode = currentNode->next;
+        delete currentNode;
+        currentNode = nextNode;
     }
     head = 0;
     count = 0;
@@ -278,28 +278,28 @@ void ubsNode::dump()
                     int bit = location->componentIndex;
                     int opnd = location->operandIndex;
                     bit = 1 << bit;
-                    int j;
-                    for (j = 0; j < usedBeforeSetCount &&
-                         (list[j].inst != inst || list[j].opnd != opnd); j++)
+                    int useIndex;
+                    for (useIndex = 0; useIndex < usedBeforeSetCount &&
+                         (list[useIndex].inst != inst || list[useIndex].opnd != opnd); useIndex++)
                         ;
                     ubsEntry *usedBeforeSetEntry = 0;
-                    if (j == usedBeforeSetCount) {
+                    if (useIndex == usedBeforeSetCount) {
                         if (usedBeforeSetCount < 64) {
                             usedBeforeSetEntry = &list[usedBeforeSetCount];
                             usedBeforeSetEntry->mask = 0;
                             usedBeforeSetCount++;
                         }
                     } else
-                        usedBeforeSetEntry = &list[j];
+                        usedBeforeSetEntry = &list[useIndex];
                     usedBeforeSetEntry->inst = inst;
                     usedBeforeSetEntry->mask |= bit;
                     usedBeforeSetEntry->opnd = opnd;
                 }
             }
         }
-        for (int k = 0; k != usedBeforeSetCount; k++) {
+        for (int remainingUseIndex = 0; remainingUseIndex != usedBeforeSetCount; remainingUseIndex++) {
             reportInfo("   ");
-            list[k].inst->leDump(list[k].opnd, list[k].mask);
+            list[remainingUseIndex].inst->leDump(list[remainingUseIndex].opnd, list[remainingUseIndex].mask);
         }
     } else {
         reportInfo("register %s is used before set at \n",

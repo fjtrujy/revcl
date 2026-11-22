@@ -61,10 +61,10 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
         RegPool *pool = r0->ownerPool;
         if (isPoolZero(pool, r0)) {
             unsigned char mask[32];
-            int i;
-            for (i = 0; i != 32; i++) {
-                RegPoolEntry *candidateRegister = pool->findByRegisterIndex(i);
-                mask[i] = (candidateRegister->enabledPhysicalRegister && candidateRegister->allocatable) ? instruction->operands[0].componentMask : 0;
+            int registerIndex;
+            for (registerIndex = 0; registerIndex != 32; registerIndex++) {
+                RegPoolEntry *candidateRegister = pool->findByRegisterIndex(registerIndex);
+                mask[registerIndex] = (candidateRegister->enabledPhysicalRegister && candidateRegister->allocatable) ? instruction->operands[0].componentMask : 0;
             }
             mask[0] = 0;
             for (regUse *registerUse = scheduleTable->registerUses.head; registerUse; registerUse = registerUse->next) {
@@ -75,21 +75,21 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
                     reportError("register isn't base!\n");
                     return -1;
                 }
-                unsigned char m = registerUse->inputMask | registerUse->outputMask | registerUse->throughputMask;
+                unsigned char usedComponentMask = registerUse->inputMask | registerUse->outputMask | registerUse->throughputMask;
                 int idx = pool->regIndex(reg->registerIndex);
                 if (idx < 0) {
                     reportError("failed to get local id\n");
                     return -1;
                 }
-                if (m & mask[idx])
+                if (usedComponentMask & mask[idx])
                     mask[idx] = 0;
             }
             int best = 0;
-            for (i = 1; i != 32; i++) {
-                int matchingComponentMask = instruction->operands[0].componentMask & mask[i];
+            for (registerIndex = 1; registerIndex != 32; registerIndex++) {
+                int matchingComponentMask = instruction->operands[0].componentMask & mask[registerIndex];
                 int matchedComponentCount = countSetBits(matchingComponentMask);
                 if (matchedComponentCount > best) {
-                    RegPoolEntry *selectedRegister = pool->findByRegisterIndex(i);
+                    RegPoolEntry *selectedRegister = pool->findByRegisterIndex(registerIndex);
                     selectedCapMask = matchingComponentMask;
                     selectedCapRegister = selectedRegister;
                     best = matchedComponentCount;
@@ -134,23 +134,23 @@ bool doCap(int line, int pipe, int mask)
         reportError("zero mod bits for doCap\n");
         return false;
     }
-    Instr *ci = new Instr(selectedCapOpcodeInfo);
-    if (!ci) {
+    Instr *capInstruction = new Instr(selectedCapOpcodeInfo);
+    if (!capInstruction) {
         reportError("failed to make cap instruction\n");
         return false;
     }
-    ci->destinationMask = mask;
-    for (int operandIndex = 0; operandIndex != ci->operandCount; operandIndex++)
-        ci->operands[operandIndex].componentMask = mask;
+    capInstruction->destinationMask = mask;
+    for (int operandIndex = 0; operandIndex != capInstruction->operandCount; operandIndex++)
+        capInstruction->operands[operandIndex].componentMask = mask;
 
     if (selectedCapRegister->registerClass == 9) {
         RegPoolEntry *registerEntry = getZeroReg(9);
-        ci->operands[0].assignedRegister = registerEntry;
-        ci->operands[0].originalRegister = registerEntry;
-        ci->operands[0].forcedBaseRegister = 0;
-        ci->operands[1].assignedRegister = selectedCapRegister;
-        ci->operands[1].originalRegister = selectedCapRegister;
-        ci->operands[1].forcedBaseRegister = 0;
+        capInstruction->operands[0].assignedRegister = registerEntry;
+        capInstruction->operands[0].originalRegister = registerEntry;
+        capInstruction->operands[0].forcedBaseRegister = 0;
+        capInstruction->operands[1].assignedRegister = selectedCapRegister;
+        capInstruction->operands[1].originalRegister = selectedCapRegister;
+        capInstruction->operands[1].forcedBaseRegister = 0;
         selectedCapOriginalInstruction->operands[0].originalRegister = selectedCapRegister;
         selectedCapOriginalInstruction->operands[0].assignedRegister = selectedCapRegister;
         selectedCapOriginalInstruction->operands[0].forcedBaseRegister = 0;
@@ -165,12 +165,12 @@ bool doCap(int line, int pipe, int mask)
         registerUse->inputMask |= mask;
         registerUse->outputMask |= mask;
     } else {
-        ci->operands[0].assignedRegister = selectedCapRegister;
-        ci->operands[0].originalRegister = selectedCapRegister;
+        capInstruction->operands[0].assignedRegister = selectedCapRegister;
+        capInstruction->operands[0].originalRegister = selectedCapRegister;
     }
-    ci->position.setFromLinearRow(line);
-    ci->position.setInstructionPipe(pipe);
-    if (!capInsertionWorkTable->putIn(ci)) {
+    capInstruction->position.setFromLinearRow(line);
+    capInstruction->position.setInstructionPipe(pipe);
+    if (!capInsertionWorkTable->putIn(capInstruction)) {
         reportError("failed to put instruction into itable\n");
         return false;
     }

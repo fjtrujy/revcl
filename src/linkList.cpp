@@ -250,7 +250,7 @@ bool Program::unlinkStreams(instStream *stream, instStream *destinationStream, i
     link = findRef(destinationStream->inputLinks.head, stream, type);
     if (!link) {
         reportError("unLinkStreams::failed to find ref for unlink in input of %s\n", destinationStream->streamName());
-        for (linkNode *p = destinationStream->inputLinks.head; p; p = p->next)
+        for (linkNode *incomingLink = destinationStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next)
             ;
         return false;
     }
@@ -275,7 +275,7 @@ bool Program::unLinkStreams(instStream *stream, instStream *destinationStream, i
     link = findRef(destinationStream->inputLinks.head, stream, type);
     if (!link) {
         reportError("unLinkStreams::failed to find ref for unlink in input of %s\n", destinationStream->streamName());
-        for (linkNode *p = destinationStream->inputLinks.head; p; p = p->next)
+        for (linkNode *incomingLink = destinationStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next)
             ;
         return false;
     }

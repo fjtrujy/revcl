@@ -75,9 +75,9 @@ void enableAlternateGaspPreprocessing(unsigned char *flags)
 char *runSelectedPreprocessors(unsigned char flags, char *buf, int *len, int argFirst, int argEnd,
                     char **argv, bool keepTemps)
 {
-    for (int i = 0; i != 3; i++) {
-        if ((flags >> i) & 1) {
-            buf = runSinglePreprocessor(i, buf, len, argFirst, argEnd, argv, keepTemps);
+    for (int preprocessorIndex = 0; preprocessorIndex != 3; preprocessorIndex++) {
+        if ((flags >> preprocessorIndex) & 1) {
+            buf = runSinglePreprocessor(preprocessorIndex, buf, len, argFirst, argEnd, argv, keepTemps);
             if (!buf)
                 return 0;
         }
@@ -96,7 +96,7 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
     char *result = 0;
     int fdIn = -1;
     int fdOut = -1;
-    bool ok = false;
+    bool preprocessingSucceeded = false;
     Tool *preprocessorTool = &preprocessorToolTable[tool];
 
     reportInfo("..processing with %s\n", preprocessorTool->name);
@@ -130,9 +130,9 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
                     close(fdOut);
                     fdOut = -1;
                     char *commandCursor = cmd + sprintf(cmd, "%s ", preprocessorTool->cmd);
-                    for (int i = argFirst; i < argEnd; i++)
-                        if (toolOptMatches(1 << tool, argv[i][1]))
-                            commandCursor += sprintf(commandCursor, "%s ", argv[i]);
+                    for (int argumentIndex = argFirst; argumentIndex < argEnd; argumentIndex++)
+                        if (toolOptMatches(1 << tool, argv[argumentIndex][1]))
+                            commandCursor += sprintf(commandCursor, "%s ", argv[argumentIndex]);
                     sprintf(commandCursor, "%s > %s\n", inPath, outPath);
                     int processStatus = system(cmd);
                     if (processStatus) {
@@ -141,7 +141,7 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
                         result = readFileIntoBuffer(outPath, len, true);
                         if (!result)
                             reportError("failed to read tmp out file\n");
-                        ok = true;
+                        preprocessingSucceeded = true;
                     }
                 }
             }
@@ -158,7 +158,7 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
         if (outPath[0] && unlink(outPath))
             reportWarning("failed to unlink temporary gasp output file %s\n", outPath);
     }
-    if (!ok) {
+    if (!preprocessingSucceeded) {
         if (result)
             delete[] result;
         result = 0;

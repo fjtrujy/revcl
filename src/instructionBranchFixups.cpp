@@ -4,8 +4,8 @@
 
 bool Instr::patchBranchLatencies()
 {
-    for (int i = 0; i != operandCount; i++) {
-        Operand *operand = &operands[i];
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+        Operand *operand = &operands[operandIndex];
         if (!registerOperand(operand, 1))
             continue;
         operand->additionalLatency = 0;
@@ -15,12 +15,12 @@ bool Instr::patchBranchLatencies()
             Instr *branchInstruction = location->instruction;
             bool found = false;
             if (branchInstruction->ramAccessType) {
-                int c = location->operandIndex;
-                if ((char)c == 0)
+                int locationOperandIndex = location->operandIndex;
+                if ((char)locationOperandIndex == 0)
                     continue;
             }
-            for (int j = 0; j != branchInstruction->operandCount; j++) {
-                RegPoolEntry *registerEntry = registerOperand(&branchInstruction->operands[j], 1);
+            for (int branchOperandIndex = 0; branchOperandIndex != branchInstruction->operandCount; branchOperandIndex++) {
+                RegPoolEntry *registerEntry = registerOperand(&branchInstruction->operands[branchOperandIndex], 1);
                 if (registerEntry && (unsigned)(registerEntry->registerIndex - 54) <= 5) {
                     found = true;
                     break;

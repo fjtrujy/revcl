@@ -21,24 +21,24 @@ bool resolveStreamBranches(Program *program)
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         switch (currentStream->endType) {
         case 1: {
-            unsigned char bt = currentStream->branchType;
-            int headFlags = bt;
+            unsigned char branchType = currentStream->branchType;
+            int headFlags = branchType;
             if (!(unsigned char)headFlags || (unsigned char)(headFlags & 4)) {
                 if (currentStream->nextStream) {
                     if (!program->linkStreams(currentStream, currentStream->nextStream, 0)) {
                         reportError("failed to link streams together\n");
                         return false;
                     }
-                    bt = currentStream->branchType;
+                    branchType = currentStream->branchType;
                 } else if (!currentStream->passThroughText) {
                     reportError("fell off the bottom of code! .. last stream should either end in END or be a branch\n");
                     return false;
                 }
             }
-            int flags = bt;
+            int flags = branchType;
             if ((unsigned char)flags) {
                 int btorMask = 1;
-                int btor = (bt >> 1) & btorMask;
+                int btor = (branchType >> 1) & btorMask;
                 if (!(unsigned char)btor) {
                     int type = branchLinkTypeForFlags(flags);
                     char *label = currentStream->getBranchTargetImmediate();
@@ -71,12 +71,12 @@ bool resolveStreamBranches(Program *program)
                                 *outputCursor++ = *tagTextCursor++;
                             *outputCursor = 0;
                             labelTagCursor = tagTextCursor;
-                            instStream *t = program->findStream(name);
-                            if (!t) {
+                            instStream *resolvedTargetStream = program->findStream(name);
+                            if (!resolvedTargetStream) {
                                 reportUserMessage("branch-to-register tag, failed to find label '%s'\n", name);
                                 return false;
                             }
-                            if (!program->linkStreams(currentStream, t, type)) {
+                            if (!program->linkStreams(currentStream, resolvedTargetStream, type)) {
                                 reportError("failed to link streams together\n");
                                 return false;
                             }
@@ -138,10 +138,10 @@ bool resolveStreamBranches(Program *program)
 
     dumpProgramStreamsAndRegisters(program, 0);
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
-        Instr *br = currentStream->getBranch();
-        if (br && br->branchLabelTags) {
-            delete[] br->branchLabelTags;
-            br->branchLabelTags = 0;
+        Instr *cleanupBranchInstruction = currentStream->getBranch();
+        if (cleanupBranchInstruction && cleanupBranchInstruction->branchLabelTags) {
+            delete[] cleanupBranchInstruction->branchLabelTags;
+            cleanupBranchInstruction->branchLabelTags = 0;
         }
     }
     return true;
@@ -178,23 +178,23 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
             if (currentStream->visitState != 1)
                 continue;
             workTable *scheduleTable = currentStream->getTable();
-            Instr *in;
+            Instr *previousInstruction;
             if (first) {
-                in = instruction->linearLink.previousInstruction;
+                previousInstruction = instruction->linearLink.previousInstruction;
                 currentStream->visitState = 0;
                 first = false;
             } else {
-                in = scheduleTable->linearInstructions.tail;
+                previousInstruction = scheduleTable->linearInstructions.tail;
                 currentStream->visitState = 2;
             }
-            for (; in; in = in->linearLink.previousInstruction) {
-                if (in->outputMaskForRegister(reg, 0xff)) {
-                    in->dumpOperandDiagnostics(false);
+            for (; previousInstruction; previousInstruction = previousInstruction->linearLink.previousInstruction) {
+                if (previousInstruction->outputMaskForRegister(reg, 0xff)) {
+                    previousInstruction->dumpOperandDiagnostics(false);
                     break;
                 }
             }
-            if (in) {
-                if ((in->branchFlags >> 3) & 1) {
+            if (previousInstruction) {
+                if ((previousInstruction->branchFlags >> 3) & 1) {
                     if (!currentStream->nextStream) {
                         reportUserMessage("no physical successor to a branch+link\n");
                         return false;
@@ -211,20 +211,20 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
                     reportError("VCL has found a branch to register at :\n");
                     instruction->dumpOperandDiagnostics(false);
                     reportError("that's apparently set by:\n");
-                    in->dumpOperandDiagnostics(false);
+                    previousInstruction->dumpOperandDiagnostics(false);
                     reportError("unfortunately vcl can't figure out where the branch should go..\n");
                     reportError("try adding a tag list to the branch\n");
                     return false;
                 }
             } else {
-                for (linkNode *n = currentStream->inputLinks.head; n; n = n->next) {
-                    instStream *o = n->otherStream;
-                    if (!o) {
+                for (linkNode *incomingLink = currentStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next) {
+                    instStream *sourceStream = incomingLink->otherStream;
+                    if (!sourceStream) {
                         reportError("null outist\n");
                         return false;
                     }
-                    if (!o->visitState) {
-                        o->visitState = 1;
+                    if (!sourceStream->visitState) {
+                        sourceStream->visitState = 1;
                         again = true;
                     }
                 }

@@ -9,12 +9,12 @@ extern bool parseFloatImmediateMode;
 
 int fitsSigned(int value, int bits)
 {
-    int r = 0;
-    int hi = 1 << (bits - 1);
-    int lo = -hi;
-    if (value >= lo && value < hi)
-        r = 1;
-    return r;
+    int fitsRange = 0;
+    int signedUpperBound = 1 << (bits - 1);
+    int signedLowerBound = -signedUpperBound;
+    if (value >= signedLowerBound && value < signedUpperBound)
+        fitsRange = 1;
+    return fitsRange;
 }
 
 bool fitsUnsigned(int value, int bits)

@@ -11,16 +11,16 @@ bool cls0805c244::catLocks(OperandLock *firstLock, OperandLock *operandLock, int
         *end = firstLock->latestReadyCycle + lsz;
         found = true;
     }
-    int bs = operandLock->earliestReadyCycle;
-    int be = operandLock->fullLatencyReadyCycle;
+    int lockReadyStart = operandLock->earliestReadyCycle;
+    int fullLatencyStart = operandLock->fullLatencyReadyCycle;
     int bend = operandLock->latestReadyCycle;
     if (!found) {
-        *rangeStartOut = bs;
-        *rangeEndOut = be;
+        *rangeStartOut = lockReadyStart;
+        *rangeEndOut = fullLatencyStart;
         *end = bend;
     } else {
-        *rangeStartOut = bs;
-        *rangeEndOut = be;
+        *rangeStartOut = lockReadyStart;
+        *rangeEndOut = fullLatencyStart;
         if (bend > *end)
             *end = bend;
     }

@@ -22,9 +22,9 @@ static inline bool addNewInputInl(Instr *instruction, RegPoolEntry *registerEntr
     return true;
 }
 
-static inline bool addNewOutputInl(Instr *instruction, RegPoolEntry *registerEntry, int bits, bool f)
+static inline bool addNewOutputInl(Instr *instruction, RegPoolEntry *registerEntry, int bits, bool externalFlag)
 {
-    if (!addNewOperand(instruction, registerEntry, bits, 0x37, 2, f)) {
+    if (!addNewOperand(instruction, registerEntry, bits, 0x37, 2, externalFlag)) {
         reportError("add new output failed\n");
         return false;
     }
@@ -115,8 +115,8 @@ bool bindDependencies(Program *program)
             }
         }
         if (xin || xout) {
-            for (int i = 0; i != hardwarePoolCount; i++) {
-                RegPool *hardwarePool = pools[i];
+            for (int poolIndex = 0; poolIndex != hardwarePoolCount; poolIndex++) {
+                RegPool *hardwarePool = pools[poolIndex];
                 RegPoolEntry *ext = hardwarePool->externalRegister;
                 if (!ext) {
                     reportError("failed to get EXT for pool %s\n", hardwarePool->poolName);
@@ -227,7 +227,7 @@ Instr *addXoutFor(instStream *stream, RegPoolEntry *registerEntry)
     return newOutputInstruction;
 }
 
-bool addNewOperand(Instr *in, RegPoolEntry *registerEntry, int bits, int kind, int dir, int flag)
+bool addNewOperand(Instr *targetInstruction, RegPoolEntry *registerEntry, int bits, int kind, int dir, int flag)
 {
     if (!registerEntry) {
         reportError("add new output - passed a null rg pointer\n");
@@ -241,26 +241,26 @@ bool addNewOperand(Instr *in, RegPoolEntry *registerEntry, int bits, int kind, i
         reportError("add new output - out of bounds mod bits requested\n");
         return false;
     }
-    iInfo *info = in->opcodeInfo;
+    iInfo *info = targetInstruction->opcodeInfo;
     if (!info) {
         reportError("instruction has no m_Inst\n");
         return false;
     }
-    unsigned char n = in->operandCount;
-    int i;
-    for (i = 0; i < n; i++) {
-        Operand *existingOperand = &in->operands[i];
+    unsigned char existingOperandCount = targetInstruction->operandCount;
+    int operandIndex;
+    for (operandIndex = 0; operandIndex < existingOperandCount; operandIndex++) {
+        Operand *existingOperand = &targetInstruction->operands[operandIndex];
         if (existingOperand->isImplicit && existingOperand->direction == dir && registerEntry == existingOperand->assignedRegister) {
             existingOperand->componentMask |= bits;
             return true;
         }
     }
-    if (i == 12) {
+    if (operandIndex == 12) {
         reportError("ran out of operand space for add new output\n");
         return false;
     }
-    Operand *newOperand = &in->operands[n];
-    newOperand->operandIndex = n;
+    Operand *newOperand = &targetInstruction->operands[existingOperandCount];
+    newOperand->operandIndex = existingOperandCount;
     newOperand->externalBlockModeFlag = 1;
     newOperand->direction = dir;
     newOperand->isImplicit = 1;
@@ -271,8 +271,8 @@ bool addNewOperand(Instr *in, RegPoolEntry *registerEntry, int bits, int kind, i
     newOperand->assignedRegister = registerEntry;
     newOperand->componentMask = bits;
     newOperand->operandKind = kind;
-    in->operandCount++;
-    return in->validateOperands();
+    targetInstruction->operandCount++;
+    return targetInstruction->validateOperands();
 }
 
 bool addNewInput(Instr *instruction, RegPoolEntry *registerEntry, int bits)

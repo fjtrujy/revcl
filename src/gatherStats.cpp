@@ -109,8 +109,8 @@ bool instStream::gatherStats()
     branchForwardLatencyDepth = -1;
     unk_2b6 = -1;
     statCounts *statistics = &stats;
-    for (int i = 0; i != 9; i++)
-        statistics->resourceInstructionCounts[i] = 0;
+    for (int resourceIndex = 0; resourceIndex != 9; resourceIndex++)
+        statistics->resourceInstructionCounts[resourceIndex] = 0;
     savedStallReason = 0;
     currentStallReason = 0;
     workTable *table = getTable();
@@ -129,10 +129,10 @@ bool instStream::gatherStats()
         instructionStatistics->independentLatencyDepth = 0;
         int logged = 0;
         if (instruction) {
-            for (int j = 0; j != 9; j++) {
-                bool resourceEnabled = (instruction->opcodeResourceMask >> j) & 1;
+            for (int resourceUsageIndex = 0; resourceUsageIndex != 9; resourceUsageIndex++) {
+                bool resourceEnabled = (instruction->opcodeResourceMask >> resourceUsageIndex) & 1;
                 if (resourceEnabled)
-                    statistics->resourceInstructionCounts[j] += 2;
+                    statistics->resourceInstructionCounts[resourceUsageIndex] += 2;
             }
             logged = 1;
         }
@@ -172,28 +172,28 @@ bool instStream::gatherStats()
     }
 
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-        for (int i = 0; i != instruction->operandCount; i++) {
-            Operand *operand = &instruction->operands[i];
+        for (int statsOperandIndex = 0; statsOperandIndex != instruction->operandCount; statsOperandIndex++) {
+            Operand *operand = &instruction->operands[statsOperandIndex];
             RegPoolEntry *registerEntry;
             if (isRegisterOperand(operand, 1) && operand->operandStatus != 2)
                 registerEntry = operand->assignedRegister;
             else
                 registerEntry = 0;
             if (registerEntry) {
-                for (int p = 0; p != registerEntry->partCount; p++) {
-                    if (((operand->componentMask & ~operand->externalPartMask) >> p) & 1) {
-                        if (operand->parts[p].operandLocations.count != 1) {
+                for (int statsPartIndex = 0; statsPartIndex != registerEntry->partCount; statsPartIndex++) {
+                    if (((operand->componentMask & ~operand->externalPartMask) >> statsPartIndex) & 1) {
+                        if (operand->parts[statsPartIndex].operandLocations.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = operand->parts[p].operandLocations.head->instruction;
-                        Operand *sourceOperand = operandAtLocation(operand->parts[p].operandLocations.head);
-                        int d = src->schedulingStatistics.forwardLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
-                        int h = src->schedulingStatistics.forwardDependencyHeight + 1;
-                        if (d > instruction->schedulingStatistics.forwardLatencyDepth)
-                            instruction->schedulingStatistics.forwardLatencyDepth = d;
-                        if (h > instruction->schedulingStatistics.forwardDependencyHeight)
-                            instruction->schedulingStatistics.forwardDependencyHeight = h;
+                        Instr *src = operand->parts[statsPartIndex].operandLocations.head->instruction;
+                        Operand *sourceOperand = operandAtLocation(operand->parts[statsPartIndex].operandLocations.head);
+                        int forwardLatencyDepth = src->schedulingStatistics.forwardLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
+                        int forwardDependencyHeight = src->schedulingStatistics.forwardDependencyHeight + 1;
+                        if (forwardLatencyDepth > instruction->schedulingStatistics.forwardLatencyDepth)
+                            instruction->schedulingStatistics.forwardLatencyDepth = forwardLatencyDepth;
+                        if (forwardDependencyHeight > instruction->schedulingStatistics.forwardDependencyHeight)
+                            instruction->schedulingStatistics.forwardDependencyHeight = forwardDependencyHeight;
                     }
                 }
             }
@@ -201,21 +201,21 @@ bool instStream::gatherStats()
     }
 
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-        for (int i = 0; i != instruction->operandCount; i++) {
-            Operand *operand = &instruction->operands[i];
+        for (int statsOperandIndex = 0; statsOperandIndex != instruction->operandCount; statsOperandIndex++) {
+            Operand *operand = &instruction->operands[statsOperandIndex];
             RegPoolEntry *registerEntry = (isRegisterOperand(operand, 1) && operand->operandStatus != 2) ? operand->assignedRegister : 0;
             if (registerEntry) {
-                for (int p = 0; p != registerEntry->partCount; p++) {
-                    if (((operand->componentMask & ~operand->externalPartMask) >> p) & 1) {
-                        if (operand->parts[p].operandLocations.count != 1) {
+                for (int statsPartIndex = 0; statsPartIndex != registerEntry->partCount; statsPartIndex++) {
+                    if (((operand->componentMask & ~operand->externalPartMask) >> statsPartIndex) & 1) {
+                        if (operand->parts[statsPartIndex].operandLocations.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = operand->parts[p].operandLocations.head->instruction;
-                        Operand *sourceOperand = operandAtLocation(operand->parts[p].operandLocations.head);
-                        int d = src->schedulingStatistics.independentLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
-                        if (d > instruction->schedulingStatistics.independentLatencyDepth)
-                            instruction->schedulingStatistics.independentLatencyDepth = d;
+                        Instr *src = operand->parts[statsPartIndex].operandLocations.head->instruction;
+                        Operand *sourceOperand = operandAtLocation(operand->parts[statsPartIndex].operandLocations.head);
+                        int independentLatencyDepth = src->schedulingStatistics.independentLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
+                        if (independentLatencyDepth > instruction->schedulingStatistics.independentLatencyDepth)
+                            instruction->schedulingStatistics.independentLatencyDepth = independentLatencyDepth;
                     }
                 }
             }
@@ -224,28 +224,28 @@ bool instStream::gatherStats()
 
     wtInstrList *lst = &table->linearInstructions;
     for (instruction = lst->tail; instruction; instruction = instruction->linearLink.previousInstruction) {
-        for (int i = 0; i != instruction->operandCount; i++) {
-            Operand *operand = &instruction->operands[i];
+        for (int statsOperandIndex = 0; statsOperandIndex != instruction->operandCount; statsOperandIndex++) {
+            Operand *operand = &instruction->operands[statsOperandIndex];
             RegPoolEntry *registerEntry;
             if (isRegisterOperand(operand, 1) && operand->operandStatus != 2)
                 registerEntry = operand->assignedRegister;
             else
                 registerEntry = 0;
             if (registerEntry) {
-                for (int p = 0; p != registerEntry->partCount; p++) {
-                    if (((operand->componentMask & ~operand->externalPartMask) >> p) & 1) {
-                        if (operand->parts[p].operandLocations.count != 1) {
+                for (int statsPartIndex = 0; statsPartIndex != registerEntry->partCount; statsPartIndex++) {
+                    if (((operand->componentMask & ~operand->externalPartMask) >> statsPartIndex) & 1) {
+                        if (operand->parts[statsPartIndex].operandLocations.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = operand->parts[p].operandLocations.head->instruction;
-                        Operand *sourceOperand = operandAtLocation(operand->parts[p].operandLocations.head);
-                        int d = instruction->schedulingStatistics.reverseLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
-                        int h = instruction->schedulingStatistics.reverseDependencyHeight + 1;
-                        if (d > src->schedulingStatistics.reverseLatencyDepth)
-                            src->schedulingStatistics.reverseLatencyDepth = d;
-                        if (h > src->schedulingStatistics.reverseDependencyHeight)
-                            src->schedulingStatistics.reverseDependencyHeight = h;
+                        Instr *src = operand->parts[statsPartIndex].operandLocations.head->instruction;
+                        Operand *sourceOperand = operandAtLocation(operand->parts[statsPartIndex].operandLocations.head);
+                        int reverseLatencyDepth = instruction->schedulingStatistics.reverseLatencyDepth + sourceOperand->outputLatency + operand->additionalLatency;
+                        int reverseDependencyHeight = instruction->schedulingStatistics.reverseDependencyHeight + 1;
+                        if (reverseLatencyDepth > src->schedulingStatistics.reverseLatencyDepth)
+                            src->schedulingStatistics.reverseLatencyDepth = reverseLatencyDepth;
+                        if (reverseDependencyHeight > src->schedulingStatistics.reverseDependencyHeight)
+                            src->schedulingStatistics.reverseDependencyHeight = reverseDependencyHeight;
                     }
                 }
             }
@@ -288,20 +288,20 @@ bool instStream::gatherStats()
 
     int maxIssue = 0;
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-        for (int i = 0; i != instruction->operandCount; i++) {
-            Operand *operand = &instruction->operands[i];
+        for (int statsOperandIndex = 0; statsOperandIndex != instruction->operandCount; statsOperandIndex++) {
+            Operand *operand = &instruction->operands[statsOperandIndex];
             RegPoolEntry *registerEntry = registerOperand(operand, 2);
             if (registerEntry) {
-                for (int p = 0; p != registerEntry->partCount; p++) {
+                for (int statsPartIndex = 0; statsPartIndex != registerEntry->partCount; statsPartIndex++) {
                     int nBoth = 0;
                     int n1 = 0;
                     int nOther = 0;
-                    if ((operand->componentMask >> p) & 1) {
-                        for (ol_s *operandLocation = operand->parts[p].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation()) {
-                            char c = operandLocation->instruction->permittedPipelineMask;
-                            if (c == 3)
+                    if ((operand->componentMask >> statsPartIndex) & 1) {
+                        for (ol_s *operandLocation = operand->parts[statsPartIndex].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation()) {
+                            char instructionPipelineMask = operandLocation->instruction->permittedPipelineMask;
+                            if (instructionPipelineMask == 3)
                                 nBoth++;
-                            else if (c == 1)
+                            else if (instructionPipelineMask == 1)
                                 n1++;
                             else
                                 nOther++;
@@ -328,20 +328,20 @@ bool instStream::gatherStats()
 
     {
         int upperPipeCount = upper;
-        int l = lower;
+        int initialLowerPipeCount = lower;
         for (; both; both--) {
-            if (upperPipeCount < l)
+            if (upperPipeCount < initialLowerPipeCount)
                 upperPipeCount++;
             else
-                l++;
+                initialLowerPipeCount++;
         }
         if (upperPipeCount > best) {
             currentStallReason = 3;
             best = upperPipeCount;
         }
-        if (l > best) {
+        if (initialLowerPipeCount > best) {
             currentStallReason = 4;
-            best = l;
+            best = initialLowerPipeCount;
         }
     }
     if (maxIssue > best) {
@@ -358,9 +358,9 @@ bool instStream::gatherStats()
             reportError("regref had no reg\n");
             return false;
         }
-        for (int p = 0; p != registerEntry->partCount; p++) {
-            if ((registerUse->outputMask >> p) & 1) {
-                regUseSlot *useSlot = &registerUse->slots[p];
+        for (int statsPartIndex = 0; statsPartIndex != registerEntry->partCount; statsPartIndex++) {
+            if ((registerUse->outputMask >> statsPartIndex) & 1) {
+                regUseSlot *useSlot = &registerUse->slots[statsPartIndex];
                 int totalThroughput = useSlot->throughputSums[0];
                 if (totalThroughput > thru)
                     thru = totalThroughput;
@@ -504,18 +504,18 @@ int instStream::getOrGuessLogicalLength()
 
 void statCounts::clear()
 {
-    for (int i = 0; i != 9; i++)
-        resourceInstructionCounts[i] = 0;
+    for (int resourceIndex = 0; resourceIndex != 9; resourceIndex++)
+        resourceInstructionCounts[resourceIndex] = 0;
 }
 
 bool statCounts::add(Instr *instruction)
 {
     if (!instruction)
         return false;
-    for (int i = 0; i != 9; i++) {
-        bool resourceEnabled = (instruction->opcodeResourceMask >> i) & 1;
+    for (int resourceIndex = 0; resourceIndex != 9; resourceIndex++) {
+        bool resourceEnabled = (instruction->opcodeResourceMask >> resourceIndex) & 1;
         if (resourceEnabled)
-            resourceInstructionCounts[i] += 2;
+            resourceInstructionCounts[resourceIndex] += 2;
     }
     return true;
 }

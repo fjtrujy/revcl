@@ -7,14 +7,14 @@
 bool UnlinkFromToDo(Block *blk, Instr *n);
 bool AddDone_Tail(Block *blk, Instr *n);
 
-bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
+bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *pos)
 {
     int operandIndex = 0;
-    if (!in) {
+    if (!candidateInstruction) {
         reportError("forceInsert - null in\n");
         return false;
     }
-    InstructionPosition *instructionPosition = &in->position;
+    InstructionPosition *instructionPosition = &candidateInstruction->position;
     int row = pos->loopRow;
     int pipe = pos->pipelineIndex;
     if (instructionPosition->loopRow >= 0) {
@@ -39,7 +39,7 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         return false;
     }
     Instr **slot = &instructionSlot[pipe];
-    if (*slot != (Instr *)in->replacedInstructionWord) {
+    if (*slot != (Instr *)candidateInstruction->replacedInstructionWord) {
         reportError("instruction already inserted or bad key\n");
         return false;
     }
@@ -47,11 +47,11 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
     instructionPosition->loopRow = pos->loopRow;
     instructionPosition->loopIteration = pos->loopIteration;
     instructionPosition->pipelineIndex = pos->pipelineIndex;
-    *slot = in;
-    in->insertionSerial = nextInsertionSerial;
+    *slot = candidateInstruction;
+    candidateInstruction->insertionSerial = nextInsertionSerial;
     nextInsertionSerial++;
-    for (operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
-        Operand *operand = &in->operands[operandIndex];
+    for (operandIndex = 0; operandIndex != candidateInstruction->operandCount; operandIndex++) {
+        Operand *operand = &candidateInstruction->operands[operandIndex];
         RegPoolEntry *reg = registerOperand(operand, 1);
         if (!reg)
             continue;
@@ -75,36 +75,36 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
             }
         }
     }
-    for (operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
-        Operand *op = &in->operands[operandIndex];
-        RegPoolEntry *reg = registerOperand(op, 2);
+    for (operandIndex = 0; operandIndex != candidateInstruction->operandCount; operandIndex++) {
+        Operand *outputOperand = &candidateInstruction->operands[operandIndex];
+        RegPoolEntry *reg = registerOperand(outputOperand, 2);
         if (!reg)
             continue;
-        for (int k = 0; k != reg->partCount; k++) {
-            if ((bool)((op->componentMask >> k) & 1)) {
-                OperandLock *lk = &op->parts[k];
-                if (!lk) {
+        for (int outputPartIndex = 0; outputPartIndex != reg->partCount; outputPartIndex++) {
+            if ((bool)((outputOperand->componentMask >> outputPartIndex) & 1)) {
+                OperandLock *outputLock = &outputOperand->parts[outputPartIndex];
+                if (!outputLock) {
                     reportError("failed to get lock \n");
                     return false;
                 }
-                RegisterPartLockList *ll = lk->ownerLockList;
-                if (!ll) {
+                RegisterPartLockList *outputLockList = outputLock->ownerLockList;
+                if (!outputLockList) {
                     reportError("lock had no lock list\n");
                     return false;
                 }
-                lk->setFrom(pos);
-                if (!ll->addOutputLock(lk)) {
+                outputLock->setFrom(pos);
+                if (!outputLockList->addOutputLock(outputLock)) {
                     reportError("failed to add output lock\n");
                     return false;
                 }
             }
         }
     }
-    if (!UnlinkFromToDo((Block *)this, in)) {
+    if (!UnlinkFromToDo((Block *)this, candidateInstruction)) {
         reportError("failed to unlink from the todo list\n");
         return false;
     }
-    if (!AddDone_Tail((Block *)this, in)) {
+    if (!AddDone_Tail((Block *)this, candidateInstruction)) {
         reportError("failed to add instruction to the done list tail\n");
         return false;
     }

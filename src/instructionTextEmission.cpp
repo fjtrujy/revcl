@@ -16,7 +16,7 @@ static inline void dumpEmitInstruction(Instr *instruction)
     instruction->dumpOperandDiagnostics(false);
 }
 
-char *emitGenericInstructionText(char *buf, Instr *instruction, bool upper, char *mods, bool b, int)
+char *emitGenericInstructionText(char *buf, Instr *instruction, bool upper, char *mods, bool symbolic, int)
 {
     iInfo *info = instruction->opcodeInfo;
     bool comma = false;
@@ -38,7 +38,7 @@ char *emitGenericInstructionText(char *buf, Instr *instruction, bool upper, char
         if (comma)
             *outputCursor++ = ',';
         comma = true;
-        outputCursor = currentOperand->Emit(outputCursor, upper, b);
+        outputCursor = currentOperand->Emit(outputCursor, upper, symbolic);
         if (!outputCursor) {
             reportError("failed to emit operand\n");
             currentOperand->diagnoseOperand(0);
@@ -50,14 +50,14 @@ char *emitGenericInstructionText(char *buf, Instr *instruction, bool upper, char
     return outputCursor;
 }
 
-char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b, int)
+char *emitReversibleBranch(char *buf, Instr *branchInstruction, bool upper, char *mods, bool symbolic, int)
 {
-    iInfo *info = in->opcodeInfo;
+    iInfo *info = branchInstruction->opcodeInfo;
     bool comma = false;
     if (!mods)
         mods = "";
-    if (in->reverseBranchSense) {
-        if ((in->branchFlags >> 4) & 1) {
+    if (branchInstruction->reverseBranchSense) {
+        if ((branchInstruction->branchFlags >> 4) & 1) {
             reportError("can't reverse sense of a likely branch at the emit stage\n");
             return 0;
         }
@@ -69,26 +69,26 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
     }
     int len = formatIntoBuffer(buf, "%s%s", info->mnemonic, mods);
     char *outputCursor = buf + len;
-    outputCursor = emitDestMask(outputCursor, (char)info->destinationMaskMode, in->destinationMask);
+    outputCursor = emitDestMask(outputCursor, (char)info->destinationMaskMode, branchInstruction->destinationMask);
     if (!outputCursor) {
         reportError("failed to generate instruction mod string\n");
         return 0;
     }
     for (int paddingIndex = outputCursor - buf; paddingIndex < 14; paddingIndex++)
         *outputCursor++ = ' ';
-    for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
-        Operand *currentOperand = &in->operands[operandIndex];
+    for (int operandIndex = 0; operandIndex != branchInstruction->operandCount; operandIndex++) {
+        Operand *currentOperand = &branchInstruction->operands[operandIndex];
         if (currentOperand->isImplicit)
             continue;
         if (comma)
             *outputCursor++ = ',';
         comma = true;
-        outputCursor = currentOperand->Emit(outputCursor, upper, b);
+        outputCursor = currentOperand->Emit(outputCursor, upper, symbolic);
         if (!outputCursor) {
             reportError("failed to emit operand\n");
             currentOperand->diagnoseOperand(0);
             reportError("from\n");
-            dumpEmitInstruction(in);
+            dumpEmitInstruction(branchInstruction);
             return 0;
         }
     }

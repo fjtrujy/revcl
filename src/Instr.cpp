@@ -81,19 +81,19 @@ Instr::Instr(iInfo *info)
     opcodeFlags = info->kindAndFlags & ~7;
     rawOnly = info->isRawOnly();
     syntheticKind = info->syntheticKind();
-    for (int i = 0; info->operandDescriptors[i].operandKind; i++) {
+    for (int operandIndex = 0; info->operandDescriptors[operandIndex].operandKind; operandIndex++) {
         operandCount++;
-        Operand *operand = &operands[i];
-        iOpDesc *descriptor = &info->operandDescriptors[i];
+        Operand *operand = &operands[operandIndex];
+        iOpDesc *descriptor = &info->operandDescriptors[operandIndex];
         operand->operandKind = descriptor->operandKind;
-        operand->operandIndex = i;
+        operand->operandIndex = operandIndex;
         operand->externalBlockModeFlag = descriptor->externalBlockModeFlag != 0;
         operand->direction = descriptor->direction;
         operand->isImplicit = descriptor->isImplicit != 0;
         operand->immediateDataType = descriptor->immediateDataType;
         operand->pairedOperandIndexPlusOne = descriptor->patchedOutputIndexPlusOne;
         if (operand->pairedOperandIndexPlusOne)
-            operands[operand->pairedOperandIndexPlusOne - 1].pairedOperandIndexPlusOne = i + 1;
+            operands[operand->pairedOperandIndexPlusOne - 1].pairedOperandIndexPlusOne = operandIndex + 1;
         if (descriptor->direction == 2)
             operand->outputLatency = descriptor->outputLatency;
         else
@@ -144,8 +144,8 @@ void Instr::dumpOperandDiagnostics(int flags)
             count = operandCount;
         }
         if (flags & 1) {
-            for (int j = 0; j != operandCount; j++) {
-                Operand *operand = &operands[j];
+            for (int diagnosticOperandIndex = 0; diagnosticOperandIndex != operandCount; diagnosticOperandIndex++) {
+                Operand *operand = &operands[diagnosticOperandIndex];
                 RegPoolEntry *registerEntry = operand->assignedRegister;
                 if (registerEntry && registerEntry->isVirtual)
                     for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++)
@@ -328,13 +328,13 @@ Instr *Instr::clone()
         cloneInstruction->branchLabelTags = dupString(branchLabelTags);
     cloneInstruction->operandCount = operandCount;
     Operand *sourceOperand;
-    for (int i = 0; (sourceOperand = getOp(i)) != 0; i++) {
-        Operand *destinationOperand = cloneInstruction->getOp(i);
+    for (int operandIndex = 0; (sourceOperand = getOp(operandIndex)) != 0; operandIndex++) {
+        Operand *destinationOperand = cloneInstruction->getOp(operandIndex);
         if (destinationOperand == 0) {
             reportError("fatal error, couldn't get operand during clone\n");
             exitAfterCleanup(-1);
         }
-        if (sourceOperand->operandIndex != i) {
+        if (sourceOperand->operandIndex != operandIndex) {
             reportError("bad index in operand for clone\n");
             exitAfterCleanup(-1);
         }
@@ -434,7 +434,7 @@ int Instr::collectOutputRegisterMask(RegPoolEntry *reg, bool *paired)
     int mask = 0;
     *paired = false;
     Operand *operand;
-    for (int i = 0; (operand = getOp(i)) != 0; i++) {
+    for (int operandIndex = 0; (operand = getOp(operandIndex)) != 0; operandIndex++) {
         RegPoolEntry *registerEntry;
         if (operand->isOutput())
             registerEntry = operand->assignedRegister;
@@ -453,7 +453,7 @@ int Instr::collectInputRegisterMask(RegPoolEntry *reg, bool *paired)
     int mask = 0;
     *paired = false;
     Operand *operand;
-    for (int i = 0; (operand = getOp(i)) != 0; i++) {
+    for (int operandIndex = 0; (operand = getOp(operandIndex)) != 0; operandIndex++) {
         RegPoolEntry *registerEntry;
         if (operand->isInput())
             registerEntry = operand->assignedRegister;
@@ -538,7 +538,7 @@ static inline void dumpLinkOperand(Operand *operand)
     operand->diagnoseOperand(0);
 }
 
-bool link_oParts(ol_s *location, ol_s *inputLocation, int minimumPathKey, int y)
+bool link_oParts(ol_s *location, ol_s *inputLocation, int minimumPathKey, int maximumPathKey)
 {
     if (!location) {
         reportError("link_oParts, null arg pointer2!\n");
@@ -609,10 +609,10 @@ bool link_oParts(ol_s *location, ol_s *inputLocation, int minimumPathKey, int y)
         clampedCycleOffset = 0xff;
     linkedInputLocation->cycleOffset = clampedCycleOffset;
     linkedInputLocation->pathKey = minimumPathKey;
-    linkedInputLocation->maximumPathKey = y;
+    linkedInputLocation->maximumPathKey = maximumPathKey;
     linkedOutputLocation->cycleOffset = 0;
     linkedOutputLocation->pathKey = minimumPathKey;
-    linkedOutputLocation->maximumPathKey = y;
+    linkedOutputLocation->maximumPathKey = maximumPathKey;
     return true;
 }
 
@@ -887,16 +887,16 @@ int Instr::getFirstOutputLatency()
 
 bool Instr::markDependencyInputReachable()
 {
-    bool r = !inputDependencyReachable;
+    bool wasInputUnreachable = !inputDependencyReachable;
     inputDependencyReachable = 1;
-    return r;
+    return wasInputUnreachable;
 }
 
 bool Instr::markDependencyOutputReachable()
 {
-    bool r = !outputDependencyReachable;
+    bool wasOutputUnreachable = !outputDependencyReachable;
     outputDependencyReachable = 1;
-    return r;
+    return wasOutputUnreachable;
 }
 
 int Instr::opcodeId()
@@ -913,11 +913,11 @@ static inline bool isLiteral(mValue *value)
 
 bool Instr::expandVirtualStatOperand()
 {
-    for (int i = 0; i != operandCount; i++) {
-        Operand *operand = &operands[i];
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+        Operand *operand = &operands[operandIndex];
         if (operand->operandKind < 22 || operand->operandKind > 25)
             continue;
-        if (i != operandCount - 1) {
+        if (operandIndex != operandCount - 1) {
             reportError("virtual stat operand not final\n");
             return false;
         }
@@ -932,7 +932,7 @@ bool Instr::expandVirtualStatOperand()
             operand->outputLatency = 4;
             operand->externalBlockModeFlag = 0;
             operand->operandIndex = operandCount++;
-            operand = &operands[i + 1];
+            operand = &operands[operandIndex + 1];
             operand->isImplicit = 1;
             operand->operandKind = 18;
             operand->direction = 1;
@@ -951,7 +951,7 @@ bool Instr::expandVirtualStatOperand()
             operand->outputLatency = operands[0].outputLatency;
             operand->externalBlockModeFlag = 0;
             operand->operandIndex = operandCount;
-            operand = &operands[i + 1];
+            operand = &operands[operandIndex + 1];
             operandCount++;
             operand->isImplicit = 1;
             operand->operandKind = 19;
@@ -963,7 +963,7 @@ bool Instr::expandVirtualStatOperand()
             operand->operandIndex = operandCount++;
             break;
         case 24: {
-            if (operands[i - 1].operandKind != 27) {
+            if (operands[operandIndex - 1].operandKind != 27) {
                 reportError("not immediate predecessor in fs test\n");
                 return false;
             }
@@ -971,7 +971,7 @@ bool Instr::expandVirtualStatOperand()
             bool b = true;
             bool c = true;
             bool d = true;
-            mValue *value = &operands[i - 1].immediateValue;
+            mValue *value = &operands[operandIndex - 1].immediateValue;
             unsigned int imm;
             if (isLiteral(value)) {
                 reportWarning("fsop has literals - so assuming the worst - if it were numerical vcl could figure out dependencies better\n");
@@ -1081,7 +1081,7 @@ bool Instr::expandVirtualStatOperand()
             operand->outputLatency = 1;
             operand->externalBlockModeFlag = 1;
             operand->operandIndex = operandCount;
-            operand = &operands[i + 1];
+            operand = &operands[operandIndex + 1];
             operandCount++;
             operand->isImplicit = 1;
             operand->operandKind = 19;

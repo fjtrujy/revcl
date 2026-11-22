@@ -66,14 +66,14 @@ bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *reg
             if (ext)
                 match = last;
             else {
-                int mn = matchedStream->minimumPathLength;
-                int mx = matchedStream->maximumPathLength;
-                if (mx < mn) {
+                int matchedMinimumPathLength = matchedStream->minimumPathLength;
+                int matchedMaximumPathLength = matchedStream->maximumPathLength;
+                if (matchedMaximumPathLength < matchedMinimumPathLength) {
                     reportError("max_ilen<min_ilen for a non-blocking instruction match.. %d < %d and logmax is %d\n",
-                                  mx, mn, program->trackMaximumPathLength);
+                                  matchedMaximumPathLength, matchedMinimumPathLength, program->trackMaximumPathLength);
                     return false;
                 }
-                if (mn < 0) {
+                if (matchedMinimumPathLength < 0) {
                     reportError("minimal length<0\n");
                     return false;
                 }
@@ -82,8 +82,8 @@ bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *reg
                     reportError("instruction not inserted or emu'd??\n");
                     return false;
                 }
-                ol_s *min_s = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(pos + mn, false);
-                ol_s *max_s = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(pos + mx, false);
+                ol_s *min_s = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(pos + matchedMinimumPathLength, false);
+                ol_s *max_s = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(pos + matchedMaximumPathLength, false);
                 if (min_s) {
                     if (!max_s) {
                         reportError("min_s set, but couldn't find max_s\n");
@@ -101,7 +101,7 @@ bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *reg
                             reportWarning("vcl found a RAW stream with a non blocking operation for '%s' where by going down differing paths, an operand was set in different places..\n",
                                           reg->registerName());
                             reportWarning("this is a bit dodgy - min_ilen=%d.. max_ilen=%d.. target is %s, and match is  %s\n",
-                                          mn, mx, targetStream->streamName(), matchedStream->streamName());
+                                          matchedMinimumPathLength, matchedMaximumPathLength, targetStream->streamName(), matchedStream->streamName());
                             reportWarning("I can't really guarantee that the code is correct after this - but - since vcl would stop anyway here, let's carry on and see what happens... \n");
                             reportWarning("carrying on.. fixed raw mode. carrying on..\n");
                             reportWarning("paths - min..\n");

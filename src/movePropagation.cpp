@@ -41,35 +41,35 @@ int propagateMoves(workTable *scheduleTable)
         int srcWritten = 0;
         int valid = mask;
         int row = instruction->position.linearRow;
-        Instr *n = instruction->linearLink.next();
-        Instr *cur = n;
+        Instr *nextInstruction = instruction->linearLink.next();
+        Instr *cur = nextInstruction;
         if (row >= 0) {
             Instr *previousInstruction = instruction->linearLink.prev();
             if (previousInstruction && previousInstruction->position.linearRow == row) {
-                bool a;
-                if (previousInstruction->collectOutputRegisterMask(dst, &a)) {
+                bool previousDestinationPaired;
+                if (previousInstruction->collectOutputRegisterMask(dst, &previousDestinationPaired)) {
                     reportError(propagateTwoWritesError);
                     return 0;
                 }
-                bool b;
-                srcWritten = previousInstruction->collectOutputRegisterMask(src, &b);
+                bool previousSourcePaired;
+                srcWritten = previousInstruction->collectOutputRegisterMask(src, &previousSourcePaired);
             }
-            if (n && n->position.linearRow == row) {
-                bool a;
-                if (n->collectOutputRegisterMask(dst, &a)) {
+            if (nextInstruction && nextInstruction->position.linearRow == row) {
+                bool nextDestinationPaired;
+                if (nextInstruction->collectOutputRegisterMask(dst, &nextDestinationPaired)) {
                     reportError(propagateTwoWritesError);
                     return 0;
                 }
-                bool b;
-                srcWritten |= n->collectOutputRegisterMask(src, &b);
-                cur = n->linearLink.next();
+                bool nextSourcePaired;
+                srcWritten |= nextInstruction->collectOutputRegisterMask(src, &nextSourcePaired);
+                cur = nextInstruction->linearLink.next();
             }
         }
         int pendSrc = 0;
         int pendDst = 0;
         while (cur && valid) {
-            int r = cur->position.linearRow;
-            if (r < 0 || r != row) {
+            int currentRow = cur->position.linearRow;
+            if (currentRow < 0 || currentRow != row) {
                 srcWritten |= pendSrc;
                 valid &= ~pendDst;
                 pendSrc = 0;
@@ -88,12 +88,12 @@ int propagateMoves(workTable *scheduleTable)
                 else
                     keep |= used & valid;
             }
-            bool c;
-            pendSrc |= cur->collectOutputRegisterMask(src, &c);
-            bool d;
-            pendDst |= cur->collectOutputRegisterMask(dst, &d);
+            bool pendingSourcePaired;
+            pendSrc |= cur->collectOutputRegisterMask(src, &pendingSourcePaired);
+            bool pendingDestinationPaired;
+            pendDst |= cur->collectOutputRegisterMask(dst, &pendingDestinationPaired);
             cur = cur->linearLink.nextInstruction;
-            row = r;
+            row = currentRow;
         }
         if (~valid & instruction->operands[0].externalPartMask) {
             reportError(propagateValidMaskError,

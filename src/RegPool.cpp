@@ -146,10 +146,10 @@ RegPoolEntry* RegPool::findByRegisterIndex(int index)
 {
     if (!registerEntries)
         return 0;
-    int i = index - registerEntries->registerIndex;
-    if (i < 0 || i >= entryCount)
+    int registerOffset = index - registerEntries->registerIndex;
+    if (registerOffset < 0 || registerOffset >= entryCount)
         return 0;
-    return &registerEntries[i];
+    return &registerEntries[registerOffset];
 }
 
 RegPoolEntry* RegPool::findPhysicalByName(const char* name)
@@ -556,9 +556,9 @@ int RegPoolEntry::gatherInflight(ol_s** out)
         ol_s* location = &registerPart->currentLocation;
         if (location->cycleOffset)
             out[inflightLocationCount++] = location;
-        int j;
+        int pendingLocationIndex;
         ol_s* pendingLocation;
-        for (j = 0, pendingLocation = registerPart->pendingLocations; j != 4; j++, pendingLocation++)
+        for (pendingLocationIndex = 0, pendingLocation = registerPart->pendingLocations; pendingLocationIndex != 4; pendingLocationIndex++, pendingLocation++)
             if (pendingLocation->cycleOffset)
                 out[inflightLocationCount++] = pendingLocation;
     }
@@ -576,10 +576,10 @@ int RegPool::gatherInflight(ol_s** out)
         inflightLocationCount += appendedLocationCount;
     }
     for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next) {
-        int r = virtualRegister->gatherInflight(out + inflightLocationCount);
-        if (r < 0)
+        int virtualInflightCount = virtualRegister->gatherInflight(out + inflightLocationCount);
+        if (virtualInflightCount < 0)
             return -1;
-        inflightLocationCount += r;
+        inflightLocationCount += virtualInflightCount;
     }
     return inflightLocationCount;
 }

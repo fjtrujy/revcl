@@ -15,9 +15,9 @@ unsigned char iInfo::branchFlags()
 unsigned char iInfo::ramType()
 {
     if (kind() == 4) {
-        unsigned char t = kindData;
-        if ((unsigned char)(t - 1) <= 1)
-            return t;
+        unsigned char ramAccessType = kindData;
+        if ((unsigned char)(ramAccessType - 1) <= 1)
+            return ramAccessType;
         reportError(iInfoLoadstoreRamtypeError);
         exitAfterCleanup(-1);
     }
@@ -56,7 +56,7 @@ bool iInfo::check()
 {
     bool noImplicitYet = true;
     iOpDesc *operandDescriptor = operandDescriptors;
-    for (int i = 0; operandDescriptor->operandKind; i++, operandDescriptor++) {
+    for (int operandIndex = 0; operandDescriptor->operandKind; operandIndex++, operandDescriptor++) {
         if (operandDescriptor->patchedOutputIndexPlusOne) {
             if (!operandDescriptor->isImplicit) {
                 reportError("implicit web patch set on explicit operand\n");
@@ -74,7 +74,7 @@ bool iInfo::check()
                 reportError("implicit web patch links to implicit operand\n");
                 return false;
             }
-            if (operandDescriptor->patchedOutputIndexPlusOne - 1 > i) {
+            if (operandDescriptor->patchedOutputIndexPlusOne - 1 > operandIndex) {
                 reportError(iInfoPatchedAfterPatchError);
                 return false;
             }
@@ -95,15 +95,15 @@ bool checkTable(iInfo *tab, int count)
         reportError("checkTable - passed a null table\n");
         return false;
     }
-    int i;
-    for (i = 0; tab->mnemonic; i++, tab++) {
+    int opcodeIndex;
+    for (opcodeIndex = 0; tab->mnemonic; opcodeIndex++, tab++) {
         if (!tab->check()) {
             reportError("checkTable failed\n");
             return false;
         }
     }
-    if (i != count) {
-        reportError("instruction count mismatch %d!=%d\n", i, count);
+    if (opcodeIndex != count) {
+        reportError("instruction count mismatch %d!=%d\n", opcodeIndex, count);
         return false;
     }
     return true;
@@ -111,20 +111,20 @@ bool checkTable(iInfo *tab, int count)
 
 int iInfo::branchFlagBit1()
 {
-    unsigned int v = kind() == 3 ? kindData : 0;
-    return (v >> 1) & 1;
+    unsigned int branchKindBits = kind() == 3 ? kindData : 0;
+    return (branchKindBits >> 1) & 1;
 }
 
 int iInfo::branchFlagBit3()
 {
-    unsigned int v = kind() == 3 ? kindData : 0;
-    return (v >> 3) & 1;
+    unsigned int branchKindBits = kind() == 3 ? kindData : 0;
+    return (branchKindBits >> 3) & 1;
 }
 
 int iInfo::branchFlagBit2()
 {
-    unsigned int v = kind() == 3 ? kindData : 0;
-    return (v >> 2) & 1;
+    unsigned int branchKindBits = kind() == 3 ? kindData : 0;
+    return (branchKindBits >> 2) & 1;
 }
 
 int iInfo::canPruneOperands()
@@ -135,9 +135,9 @@ int iInfo::canPruneOperands()
         if (!k2) {
             int ramTypeValue;
             if (kind() == 4) {
-                unsigned char t = kindData;
-                if ((unsigned char)(t - 1) <= 1)
-                    ramTypeValue = t;
+                unsigned char ramType = kindData;
+                if ((unsigned char)(ramType - 1) <= 1)
+                    ramTypeValue = ramType;
                 else {
                     reportError(iInfoLoadstoreRamtypeError);
                     exitAfterCleanup(-1);
@@ -160,8 +160,8 @@ int decodeImmediateCategory(unsigned char immediateFlags)
 {
     int category = 0;
     if (immediateFlags) {
-        unsigned int f = immediateFlags & 0x60;
-        category = (f >> 5) + 1;
+        unsigned int immediateClassBits = immediateFlags & 0x60;
+        category = (immediateClassBits >> 5) + 1;
     }
     return category;
 }

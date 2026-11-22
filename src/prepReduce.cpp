@@ -11,10 +11,10 @@ bool prepareReductionCandidates(Program *program, instStream *stream, workTable 
         stream->allowDownwardReduction = 1;
         stream->reductionSkipped = 0;
         bool ext = false;
-        workTable *t = stream->getTable();
-        int len = t->getRangeEnd() - t->getRangeStart();
-        if (stream->participatesInStall || len < t->externalMinimumLength) {
-            t->setTableRawMode(2);
+        workTable *reductionTable = stream->getTable();
+        int len = reductionTable->getRangeEnd() - reductionTable->getRangeStart();
+        if (stream->participatesInStall || len < reductionTable->externalMinimumLength) {
+            reductionTable->setTableRawMode(2);
             stream->allowUpwardReduction = 0;
             stream->allowDownwardReduction = 0;
             stream->reductionSkipped = 1;

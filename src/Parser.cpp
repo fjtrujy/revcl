@@ -272,9 +272,9 @@ void Parser::Dump()
     for (int lineIndex = 0; lineIndex != parsedLineCount; lineIndex++)
         parsedLines[lineIndex].dumpSourceLine(-1);
     reportMessage("parser::DumpLocTags..\n");
-    for (int i = 0; i != locationTagCount; i++) {
-        reportMessage("%4d : ", i);
-        lines[i].dumpLocation();
+    for (int tagIndex = 0; tagIndex != locationTagCount; tagIndex++) {
+        reportMessage("%4d : ", tagIndex);
+        lines[tagIndex].dumpLocation();
         reportMessage("\n");
     }
 }
@@ -315,10 +315,10 @@ found:
     return idx;
 }
 
-int Parser::FindLocTag(const char *name, int n)
+int Parser::FindLocTag(const char *name, int locationKind)
 {
     for (int lineIndex = 0; lineIndex < locationTagCount; lineIndex++)
-        if (lines[lineIndex].locationKind == n && equalExactStrings(lines[lineIndex].locationName, name))
+        if (lines[lineIndex].locationKind == locationKind && equalExactStrings(lines[lineIndex].locationName, name))
             return lineIndex;
     return -1;
 }

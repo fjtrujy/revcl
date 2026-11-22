@@ -1105,6 +1105,71 @@ The historical RH9/i686 GCC 3.2.2 build and its **exact-sha256**
 test also pass: the stripped VCL SHA-256 remains
 83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274.
 
+## Final high-confidence scoped review and flow-state fields
+
+After PR #15 merged, the remaining AST queue was reviewed by source
+role, not shortened by renaming unconsumed or unknown placeholders.
+**511 function-local/parameter declarations** and **2,176 direct
+references** were renamed across the instruction pipeline, operand
+handling, scheduler, stream graph, optimizer, emission, and expression
+evaluation. The tracked queue shrank from **67 to 30 parameters** and
+from **500 to 26 local variables**. Several remaining parameters
+are deliberately unnamed because they are unused ABI-compatible
+arguments.
+
+### Scoped declarations and collision handling
+
+- **Instruction/operand traversal:** the operand index is named after
+  getOp, operands, and operand-descriptor uses; register part,
+  instruction slot, and pipe indices follow their collections. The
+  index scanning expression-tree children is distinct from the
+  index scanning operator definitions.
+- **Independent scheduling ranges:** ready-cycle, latency and
+  dependency distances distinguish input from output, source from
+  destination, and producer from consumer. Nested loop and part
+  indices use context-specific names when a generic partIndex or
+  rowIndex already exists in the same function.
+- **Output and parser cursors:** source and destination character
+  pointers identify which buffer they read or write. Some opaque
+  parser cursors remain unrenamed because one variable serves
+  several purposes in the long legacy parser function.
+- **Competing optimization choices:** temporary scores are named
+  after dependency height, move count, distance, instruction
+  ordering, candidate placement, and the probed scheduling row.
+  No scoring formula or execution order changed.
+- **Shadowing discipline:** the AST pass uses each declaration's ID
+  and its DeclRefExpr sites, with exact token/offset checks. An
+  explicit member access is not a declaration collision, while
+  unqualified accesses and existing locals still block unsafe reuse.
+  Two pre-existing shadowed variables with the same old name may
+  adopt the same new name without changing their lexical relationship.
+
+### Three owner-qualified field names established from consumers
+
+1. RegPoolEntry::outputWriteCount replaces unk_36. It is reset
+   in the register-flow/throughput paths and incremented for nonempty
+   register-output operands in emuInst.
+2. regUse::recordedOutputWriteCount replaces unk_18. It snapshots
+   the source register's write count at construction, is retained
+   in register-use clones, and is checked for exactly one write
+   by address-alias fixup.
+3. RegisterPartLockList::sharedExternalOutputFlag replaces unk_2b.
+   The value is supplied by addExtOutput, cleared with lock-list
+   state, and read by local register allocation when checking shared
+   external-output overlaps.
+
+All three fields retain their original type, order, size, and memory
+offset. **61 owner-qualified unresolved offset fields** remain.
+Many are explicit padding or have only reset writes; no semantic
+name was fabricated for those.
+
+Native CMake/Apple-Clang and all **13 CTests** passed. The historical
+RH9/i686 GCC 3.2.2 build and the **exact-sha256** gate passed after
+both the scoped and field passes. Reference stripped VCL SHA-256:
+83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274.
+There are no function-name macro aliases, vtable/layout rewrites,
+translation-unit reorderings, or VUC branch changes in this batch.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout

@@ -28,21 +28,21 @@ bool concatenateCompatibleStreams(Program *program)
             dumpRawStream(stream);
             return 0;
         }
-        instStream *n = stream->nextStream;
-        if (n && !n->containsBarrier && !stream->mergedBarrierFlag) {
+        instStream *followingStream = stream->nextStream;
+        if (followingStream && !followingStream->containsBarrier && !stream->mergedBarrierFlag) {
         linkList *out = &stream->outputLinks;
-        if (out->count == 1 && n->inputLinks.count == 1
-            && stream->usesFreeRawLayout() && n->usesFreeRawLayout()
-            && stream->endType == 1 && n->startType == 1
+        if (out->count == 1 && followingStream->inputLinks.count == 1
+            && stream->usesFreeRawLayout() && followingStream->usesFreeRawLayout()
+            && stream->endType == 1 && followingStream->startType == 1
             && !stream->getBranch()
-            && out->getStream(0) == n
-            && !n->leadingLabelFlags && !stream->trailingLabelFlags
-            && !streamExportsSymbol(program, n)) {
-            if (!appendStream(program, stream, n)) {
-                reportError("failed to append %s onto %s\n", n->streamName(), stream->streamName());
+            && out->getStream(0) == followingStream
+            && !followingStream->leadingLabelFlags && !stream->trailingLabelFlags
+            && !streamExportsSymbol(program, followingStream)) {
+            if (!appendStream(program, stream, followingStream)) {
+                reportError("failed to append %s onto %s\n", followingStream->streamName(), stream->streamName());
                 return 0;
             }
-            if (!program->unlinkStreams(stream, n, 0)) {
+            if (!program->unlinkStreams(stream, followingStream, 0)) {
                 reportError("failed to unlink streams\n");
                 return 0;
             }
@@ -51,10 +51,10 @@ bool concatenateCompatibleStreams(Program *program)
                 return 0;
             }
             linkNode *outgoingLink;
-            while ((outgoingLink = n->outputLinks.head) != 0) {
+            while ((outgoingLink = followingStream->outputLinks.head) != 0) {
                 instStream *destinationStream = outgoingLink->otherStream;
                 int type = outgoingLink->linkType;
-                if (!program->unlinkStreams(n, destinationStream, type)) {
+                if (!program->unlinkStreams(followingStream, destinationStream, type)) {
                     reportError("failed to unlink streams\n");
                     return 0;
                 }
@@ -63,11 +63,11 @@ bool concatenateCompatibleStreams(Program *program)
                     return 0;
                 }
             }
-            if (!program->removeStream(n)) {
+            if (!program->removeStream(followingStream)) {
                 reportError("failed to unlink ist_n\n");
                 return 0;
             }
-            delete n;
+            delete followingStream;
             continue;
         }
         }
@@ -113,8 +113,8 @@ bool catOnTo(workTable *t1, workTable *t2)
     }
     for (rowIndex = t1->rangeStart; rowIndex < t1->rangeEnd; rowIndex++) {
         wtRow *workRow = &t1->rows[rowIndex];
-        for (int j = 0; j != 2; j++) {
-            Instr *destinationInstruction = workRow->entries[j].instruction;
+        for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
+            Instr *destinationInstruction = workRow->entries[pipeIndex].instruction;
             if (destinationInstruction && !UnlinkFromLinear((Block *)t1, destinationInstruction)) {
                 reportError("failed to link in from it1\n");
                 return 0;
