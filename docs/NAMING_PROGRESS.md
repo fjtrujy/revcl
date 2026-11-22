@@ -8,14 +8,14 @@ Tracked naming-review snapshot. The **baseline** is the pre-refactor `main` sour
 | Classes with numeric names and no source alias | 4 | 1 | -3 |
 | Classes with provisional names (manual review) | 4 | 4 | +0 |
 | Structs with provisional names (manual review) | 5 | 5 | +0 |
-| Functions with address-based names | 436 | 4 | -432 |
-| Fields with offset names (owner-qualified) | 614 | 135 | -479 |
+| Functions with address-based names | 436 | 0 | -436 |
+| Fields with offset names (owner-qualified) | 614 | 64 | -550 |
 | Parameters with short/generic names (AST review) | 879 | 865 | -14 |
 | Local variables with short/generic names (AST review) | 2291 | 2246 | -45 |
-| Address-suffixed globals/other identifiers | 85 | 14 | -71 |
+| Address-suffixed globals/other identifiers | 85 | 0 | -85 |
 | Explicit numeric placeholder identifiers | 4 | 4 | +0 |
 
-**Direct function naming progress:** 432 of 436 original address-based function names have been eliminated from source; 4 remain. These are genuine C++ function renames, not preprocessor aliases.
+**Direct function naming progress:** 436 of 436 original address-based function names have been eliminated from source; 0 remain. These are genuine C++ function renames, not preprocessor aliases.
 
 **Numeric class alias coverage:** 3 of 4 have readable typedefs; 1 remain without an alias.
 

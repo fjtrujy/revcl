@@ -19,7 +19,7 @@ int mstrlen(const char *s);
 bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax);
 bool parseImmediate(const char *s, unsigned char type, mValue *v);
 RegPool *GetRP(unsigned t);
-int g_080b34dc = -1;
+int expectedSyntaxDiagnosticMode = -1;
 
 Instr *Processor::getNextInstruction(LocTag *t, int *pos)
 {
@@ -147,13 +147,13 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         reportError("processor: decode le - bad insn type\n");
         goto fail;
     }
-    op.unk_1000[0] = 0;
+    op.immediateText[0] = 0;
     op.name[0] = 0;
-    op.unk_800[0] = 0;
-    op.unk_1800[0] = 0;
-    op.unk_2000 = 0;
-    op.unk_2008 = 0;
-    op.unk_200c = 0;
+    op.physicalRegisterName[0] = 0;
+    op.branchLabelText[0] = 0;
+    op.componentMask = 0;
+    op.genericOperandForm = 0;
+    op.forcePhysicalBinding = 0;
     for (i = 0; i != in->operandCount; i++) {
         Operand *opd = &in->operands[i];
         int next = cur;
@@ -182,7 +182,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             bool last = false;
             if (i == in->operandCount - 1 || opd[1].isImplicit)
                 last = true;
-            opd->unk_24 = cur;
+            opd->sourceTokenStartIndex = cur;
             next = gatherTokens(t, cur, last);
             if (next < 0)
                 goto fail;
@@ -190,25 +190,25 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 gatheredToken[0] = ' ';
                 gatheredToken[1] = 0;
             }
-            opd->unk_25 = next;
+            opd->sourceTokenEndIndex = next;
             if (!oDecodeToken(opd->operandKind, gatheredToken, &op, newSyntax)) {
                 reportUserMessage("failed to decode operand\n");
                 goto fail;
             }
         }
-        if (op.unk_1800[0]) {
+        if (op.branchLabelText[0]) {
             if (in->branchLabelTags) {
                 reportUserMessage("more than one tagged operand associated with instruction at operand %d\n", i);
                 goto fail;
             }
-            in->branchLabelTags = dupString(op.unk_1800);
+            in->branchLabelTags = dupString(op.branchLabelText);
         }
-        if (op.unk_1000[0] && !parseImmediate(op.unk_1000, opd->unk_05, &opd->immediateValue)) {
+        if (op.immediateText[0] && !parseImmediate(op.immediateText, opd->immediateDataType, &opd->immediateValue)) {
             reportError("failed to decode an immediate\n");
             goto fail;
         }
-        opd->unk_0c = op.unk_2004;
-        opd->componentMask = op.unk_2000;
+        opd->addressComponentMask = op.addressComponentMask;
+        opd->componentMask = op.componentMask;
         if (opd->operandKind == 35 || opd->operandKind == 42 || opd->operandKind == 1 || opd->operandKind == 9) {
             if (forcedMods) {
                 if (opd->componentMask != in->destinationMask && opd->componentMask != 15)
@@ -225,29 +225,29 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         }
         if (opd->operandKind == 30 || opd->operandKind == 31) {
             if (explicitMods) {
-                if (opd->unk_0c) {
-                    if (opd->unk_0c != in->destinationMask) {
+                if (opd->addressComponentMask) {
+                    if (opd->addressComponentMask != in->destinationMask) {
                         reportError("ea/reg or imm(ea)reg has differing mod bits\n");
                         goto fail;
                     }
                 } else
-                    opd->unk_0c = in->destinationMask;
+                    opd->addressComponentMask = in->destinationMask;
             } else {
-                if (!opd->unk_0c) {
+                if (!opd->addressComponentMask) {
                     reportError("have to set modbits for ea/reg or imm(ea)reg somewhere\n");
                     goto fail;
                 }
-                if (info->destinationMaskMode == 3 && countSetBits(opd->unk_0c) != 1) {
+                if (info->destinationMaskMode == 3 && countSetBits(opd->addressComponentMask) != 1) {
                     reportError("only one mod field allowed (one of x,y,z, or w)\n");
                     goto fail;
                 }
-                in->destinationMask = opd->unk_0c;
+                in->destinationMask = opd->addressComponentMask;
             }
         }
         if (op.name[0]) {
             int cls = -1;
             if (opd->operandKind == 38) {
-                if (op.unk_2008 == 1) {
+                if (op.genericOperandForm == 1) {
                     if (i != 2) {
                         reportUserMessage("a scalar can only be the third operand in generic instruction\n");
                         goto fail;
@@ -264,7 +264,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                         cls = 9;
                         opd->operandKind = 3;
                     }
-                } else if (op.unk_2008 == 2) {
+                } else if (op.genericOperandForm == 2) {
                     if (i == 0) {
                         if (asciiCaseEqual(op.name, "acc")) {
                             cls = 10;
@@ -332,10 +332,10 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 reportUserMessage("oDecode: not find register '%s' from %s\n", full, pool->poolName);
                 goto fail;
             }
-            if (op.unk_200c) {
+            if (op.forcePhysicalBinding) {
                 RegPoolEntry *base = 0;
-                if (op.unk_800[0]) {
-                    base = pool->findPhysicalByName(op.unk_800);
+                if (op.physicalRegisterName[0]) {
+                    base = pool->findPhysicalByName(op.physicalRegisterName);
                     if (!base) {
                         reportUserMessage("request to bing non-base register\n");
                         goto fail;
@@ -360,10 +360,10 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 }
                 r->assignedPhysicalRegister = base;
                 opd->forcedBaseRegister = base;
-            } else if (op.unk_800[0]) {
-                RegPoolEntry *base = pool->findPhysicalByName(op.unk_800);
+            } else if (op.physicalRegisterName[0]) {
+                RegPoolEntry *base = pool->findPhysicalByName(op.physicalRegisterName);
                 if (!base) {
-                    reportUserMessage("failed to find base map reg '%s'\n", op.unk_800);
+                    reportUserMessage("failed to find base map reg '%s'\n", op.physicalRegisterName);
                     goto fail;
                 }
                 if (r->isVirtual != 1 && base != r) {
@@ -371,7 +371,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     goto fail;
                 }
                 opd->forcedBaseRegister = base;
-            } else if (unk_65) {
+            } else if (preferExistingPhysicalRegisters) {
                 RegPoolEntry *e = pool->findPhysicalByName(op.name);
                 if (e && e != e->ownerPool->zeroRegister)
                     opd->forcedBaseRegister = e;
@@ -402,14 +402,14 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     }
     ok = true;
     in->sourceTag = t;
-    in->unk_18 = *pos;
-    in->unk_1a = cur;
+    in->sourceTokenStartIndex = *pos;
+    in->sourceTokenEndIndex = cur;
 fail:
     if (!ok) {
         if (in) {
             reportUserMessage("couldn't decode instruction .. problem is at:\n");
             t->dumpSourceLine(cur);
-            if (in->emitExpectedSyntax(newSyntax, fmtBuf, g_080b34dc))
+            if (in->emitExpectedSyntax(newSyntax, fmtBuf, expectedSyntaxDiagnosticMode))
                 reportUserMessage("expected format is: %s\n", fmtBuf);
             delete in;
             in = 0;
@@ -490,7 +490,7 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
 next:
     while (*pos < getLineTokenCount(t)) {
         if (!t->isCommentToken(*pos)) {
-            if (t->func_08050f7c(*pos)) {
+            if (t->probeNonCommentTokenAndReturnFalse(*pos)) {
                 (*pos)++;
                 goto done;
             }
@@ -529,18 +529,18 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
     int exits = 0;
     int enters = 0;
     int maxLines = 0x1000;
-    p->proc.unk_64 = type;
+    p->proc.sourceBuildType = type;
     p->proc.newSyntax = newSyntax;
     DecodedLine *blocks = 0;
 
     switch (type) {
     case 1:
         p->proc.decodeMode = 1;
-        p->proc.unk_65 = 0;
+        p->proc.preferExistingPhysicalRegisters = 0;
         break;
     case 2:
         p->proc.decodeMode = 3;
-        p->proc.unk_65 = 1;
+        p->proc.preferExistingPhysicalRegisters = 1;
         break;
     default:
         reportError("Processor::Build:: bad build type request\n");
@@ -860,7 +860,7 @@ int gatherTokens(LocTag *t, int i, bool stopAtOpcode)
             return -1;
         }
         if (!t->isCommentToken(i)) {
-            if (t->func_08050f7c(i)) {
+            if (t->probeNonCommentTokenAndReturnFalse(i)) {
                 *d = 0;
                 return i;
             }

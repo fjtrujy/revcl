@@ -48,8 +48,8 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
     p->loopIteration = pos->loopIteration;
     p->pipelineIndex = pos->pipelineIndex;
     *slot = in;
-    in->insertionSerial = unk_40;
-    unk_40++;
+    in->insertionSerial = nextInsertionSerial;
+    nextInsertionSerial++;
     for (i = 0; i != in->operandCount; i++) {
         Operand *op = &in->operands[i];
         RegPoolEntry *reg = registerOperand(op, 1);

@@ -43,7 +43,7 @@ instStream::instStream()
     allowUpwardReduction = 0;
     allowDownwardReduction = 0;
     unk_2b6 = -1;
-    unk_2b4 = -1;
+    branchForwardLatencyDepth = -1;
     branchType = 0;
     endType = 1;
     startType = 1;

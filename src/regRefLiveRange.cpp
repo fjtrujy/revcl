@@ -80,7 +80,7 @@ static inline bool isInternalLock(OperandLock *lk)
 
 static inline bool isInternalIn(OperandLock *lk)
 {
-    return lk->unk_19 == 2;
+    return lk->operandStatusCode == 2;
 }
 
 bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)

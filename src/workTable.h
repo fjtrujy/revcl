@@ -23,7 +23,7 @@ struct regUse {
     unsigned char throughputMask;
     bool unk_11;
     unsigned char hazardMask;
-    unsigned char unk_13;
+    unsigned char sourcePathHazardMask;
     unsigned char hazardBroadcastMask;
     char externalBlockMode;
     short unk_16;
@@ -136,14 +136,14 @@ inline const char *codeModeStr(int mode)
 class workTable {
 public:
     int optimizerIndex;
-    short unk_04;
+    short maximumDynamicStartRow;
     short unk_06;  // dynamic statistics high-watermark (written as a short)
     char allocationMode;
     unsigned char codeModeValue;
     unsigned char rawSchedulingMode;
     bool isAbstract() { return codeModeValue == 1; }
     unsigned char codeMode() { return codeModeValue; }
-    char unk_0b;
+    char postOptimizationPrepared;
     int declaredRawLength;
     instStream *ownerStream;
     regUseList registerUses;
@@ -155,26 +155,26 @@ public:
     int rangeEnd;
     int loopSize;
     int mainLoopId;
-    int unk_40;
+    int nextInsertionSerial;
     int externalMinimumLength;
     char unk_48[4];
     Instr *moveListHead;
     int pendingMoveCount;
     cls08058718 lastScheduledPosition;
     cls0805e2e4 statistics;
-    short unk_74;
-    short unk_76;
+    short streamDependencyLength;
+    short streamLogicalLength;
     short logicalInstructionLength;
-    short unk_7a;
-    short unk_7c;
+    short minimumSafeLoopCount;
+    short recordedMaximumBranchLoopId;
     char unk_7e[2];
-    short unk_80;
-    short unk_82;
-    Instr *unk_84;
+    short fallbackAdjustedLoopLimit;
+    short fallbackAbsoluteLoopLimit;
+    Instr *loopBoundaryInstruction;
     wtInstrList linearInstructions;     // linear list
     wtInstrList pendingInstructions;
     wtInstrList completedInstructions;
-    char unk_ac;
+    char fallbackSchedulingActive;
     char unk_ad;
     char unk_ae[2];
     int vectorMoveCount;             // move count, class 3

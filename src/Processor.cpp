@@ -16,13 +16,13 @@ char *dupString(const char *s);
 Processor::Processor()
 {
     uniqueName = 0;
-    g_080b33a8 = 0;
+    nextInstructionSerial = 0;
     newSyntax = 0;
     processorInstructionTable = 0;
     cpuName = "Nameless";
     globalName = "";
-    unk_64 = 0;
-    unk_65 = 0;
+    sourceBuildType = 0;
+    preferExistingPhysicalRegisters = 0;
     mpgTargetAddress = -1;
     instructionsPerRawLine = 0;
     uniqueAll = 0;
@@ -31,7 +31,7 @@ Processor::Processor()
     for (int i = 0; i != 12; i++)
         processorRegisterPools[i] = 0;
     for (int i = 0; i != 3; i++)
-        g_080de714[i] = 0;
+        freeMoveRecordsByType[i] = 0;
 }
 
 Processor::~Processor()
@@ -538,14 +538,14 @@ aaDesc *findAddressAliasDescriptor(Instr *in)
         return res;
     }
     aaDesc *t = (aaDesc *)processorSourceSpecs;
-    if (t->unk_00) {
+    if (t->opcodeId) {
         do {
-            if (t->unk_00 == id) {
+            if (t->opcodeId == id) {
                 res = t;
                 return res;
             }
             t++;
-        } while (t->unk_00);
+        } while (t->opcodeId);
     }
     res = 0;
     return res;
@@ -564,8 +564,8 @@ aaUse *findAddressAliasUse(Instr *in)
     }
     if (!processorSourceSpecs)
         return 0;
-    for (aaUse *t = (aaUse *)processorDestinationSpecs; t->unk_00; t++)
-        if (t->unk_00 == id)
+    for (aaUse *t = (aaUse *)processorDestinationSpecs; t->opcodeId; t++)
+        if (t->opcodeId == id)
             return t;
     return 0;
 }
@@ -635,11 +635,11 @@ const char *Processor::getUniqueName()
     return uniqueName ? uniqueName : "FLOW";
 }
 
-int g_080b33a8 = 1;
+int nextInstructionSerial = 1;
 bool staggerMemoryAccess = false;
 iInfo *processorInstructionTable;
 RegPool *processorRegisterPools[13];
-VclPtrWord g_080de714[3];
+VclPtrWord freeMoveRecordsByType[3];
 void *processorDeviceTable;
 void *processorSourceSpecs;
 void *processorDestinationSpecs;

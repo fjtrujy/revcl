@@ -108,7 +108,7 @@ bool extHook(void *, Instr *in)
             reportError("extHook - register already set\n");
             return 0;
         }
-        RegPoolEntry *r = getReg((unsigned char)op->unk_05, "EXT");
+        RegPoolEntry *r = getReg((unsigned char)op->immediateDataType, "EXT");
         if (!r) {
             reportError("couldn't get ext register for pool\n");
             return 0;

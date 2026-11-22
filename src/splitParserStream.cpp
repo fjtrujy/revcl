@@ -122,7 +122,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
             Instr *in = b->instructions[k];
             if (!in)
                 continue;
-            int serial = g_080b33a8++;
+            int serial = nextInstructionSerial++;
             in->instructionSerial = serial;
             char t = in->syntheticKind;
             switch ((unsigned char)t) {

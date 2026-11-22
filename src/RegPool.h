@@ -9,14 +9,14 @@
 #include "ol_s.h"
 
 struct rPart {
-    short unk_00[0x24 / 2];
+    short emulationTimingMetrics[0x24 / 2];
     ol_s currentLocation;
     ol_s* pendingSource;
     short cycleAge;
     short issueLock;
     short unk_40;
-    short unk_42;
-    short unk_44;
+    short earliestPendingReadCycle;
+    short latestPendingReadCycle;
     short unk_46;
     VclPtrWord payload;
     ol_s pendingLocations[4];
@@ -89,10 +89,10 @@ struct RegPoolEntry {
     Instr* moveInstruction;
     int registerClass;         // register class
     int partCount;         // slot count (nparts)
-    bool unk_2c;
+    bool tracksHotOutputPaths;
     char unk_2d[3];
     int registerIndex;         // register index
-    char unk_34;
+    char seenInputComponentMask;
     unsigned char usedSlotMask;   // used slot mask
     short unk_36;
     Instr *throughputWriter;          // previous thruput writer
@@ -161,7 +161,7 @@ struct RegDesc {
     unsigned char registerClass;
     unsigned char partCount;
     char nonBlockId;
-    unsigned char unk_14;
+    unsigned char tracksHotOutputPaths;
 };
 
 extern RegDesc regDescTable[];

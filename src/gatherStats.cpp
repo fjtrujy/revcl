@@ -106,7 +106,7 @@ bool instStream::gatherStats()
     st->independentLatencyDepth = -1;
     int physSum = 0;
     int maxLat = 0;
-    unk_2b4 = -1;
+    branchForwardLatencyDepth = -1;
     unk_2b6 = -1;
     statCounts *sc = &stats;
     for (int i = 0; i != 9; i++)
@@ -275,7 +275,7 @@ bool instStream::gatherStats()
     int both = 0;
     for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         if (in->branchFlags)
-            unk_2b4 = in->schedulingStatistics.forwardLatencyDepth;
+            branchForwardLatencyDepth = in->schedulingStatistics.forwardLatencyDepth;
         char c = in->permittedPipelineMask;
         if (c == 3)
             both++;
@@ -425,8 +425,8 @@ bool instStream::gatherStats()
         }
     }
     dependencyLength = best;
-    wt->unk_74 = dependencyLength;
-    wt->unk_76 = logicalLength;
+    wt->streamDependencyLength = dependencyLength;
+    wt->streamLogicalLength = logicalLength;
     wt->logicalInstructionLength = depth;
     return true;
 }

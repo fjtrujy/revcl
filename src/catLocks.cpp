@@ -29,7 +29,7 @@ bool cls0805c244::catLocks(OperandLock *a, OperandLock *b, int *s, int *e, int *
 
 static inline bool isAAInputLock(OperandLock *in)
 {
-    return in->unk_19 == 2;
+    return in->operandStatusCode == 2;
 }
 
 static inline bool sameLockOwner(OperandLock *a, OperandLock *b)
@@ -141,8 +141,8 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
 
     int lim;
     if (out->referenceCount) {
-        int a = out->unk_48, b = out->unk_4a;
-        int d = out->unk_46;
+        int a = out->upperPipeConsumerCount, b = out->lowerPipeConsumerCount;
+        int d = out->eitherPipeConsumerCount;
         int hi = a, lo = b;
         if (a < b) {
             hi = b;

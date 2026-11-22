@@ -22,8 +22,8 @@ struct iOpDesc {
     unsigned char direction;     // 1 = input, 2 = output
     unsigned char isImplicit;
     unsigned char outputLatency;  // forwarded to output operand timing
-    unsigned char unk_04;
-    unsigned char unk_05;
+    unsigned char externalBlockModeFlag;
+    unsigned char immediateDataType;
     unsigned char patchedOutputIndexPlusOne;
 };
 
@@ -109,9 +109,9 @@ typedef cls0805c244 RegisterPartLockList;
 
 class cls0805bcc4 {
 public:
-    unsigned char unk_00;
-    unsigned char unk_01;
-    unsigned char unk_02;
+    unsigned char lowerPipeInputDemand;
+    unsigned char upperPipeInputDemand;
+    unsigned char eitherPipeInputDemand;
     cls0805c244 *ownerLockList;
     cls0805bcc4 *nextSibling;
     cls0805bcc4 *parentOrChildren;
@@ -121,7 +121,7 @@ public:
     char externalOutputSlotPlusOne;
     char throughputSpacing;
     char issueLatency;
-    char unk_19;
+    char operandStatusCode;
     char priority;
     char unk_1b;
     cls0805bcc4 *pairedLock;
@@ -145,9 +145,9 @@ public:
     short adjustedLatestConsumerCycle;
     short latestConsumerCycle;
     short unk_44;
-    short unk_46;
-    short unk_48;
-    short unk_4a;
+    short eitherPipeConsumerCount;
+    short upperPipeConsumerCount;
+    short lowerPipeConsumerCount;
     short adjustedLatestReadyCycle;
     short latestReadyCycle;
 
@@ -195,7 +195,7 @@ public:
 
 class cls0805c244 {
 public:
-    short unk_00;
+    short loopWrapMinimumRow;
     unsigned char componentIndex;
     unsigned char assigned;
     RegPoolEntry *registerEntry;
@@ -250,8 +250,8 @@ int defaultImmediateFlags(unsigned char);
 unsigned char immediateFlagBit7(unsigned char);
 
 struct OpSlot : public cls0805bcc4 {
-    short unk_50;
-    char unk_52[2];
+    short conflictingOutputLockCount;
+    char outputConflictMarked[2];
     olList operandLocations;
 
     OpSlot();
@@ -264,22 +264,22 @@ struct OpSlot : public cls0805bcc4 {
 struct Operand {
     RegWeb *registerWeb;
     char operandKind;
-    char unk_05;
+    char immediateDataType;
     char externalComponentMask;
     unsigned char componentMask;
     char isImplicit;
     char direction;
     char outputLatency;
-    char unk_0b;
-    char unk_0c;
+    char externalBlockModeFlag;
+    char addressComponentMask;
     char pairedOperandIndexPlusOne;
     char unk_0e[2];
     RegPoolEntry *forcedBaseRegister;
     RegPoolEntry *originalRegister;
     RegPoolEntry *assignedRegister;
     mValue immediateValue;
-    char unk_24;
-    char unk_25;
+    char sourceTokenStartIndex;
+    char sourceTokenEndIndex;
     char operandIndex;
     unsigned char externalPartMask;
     char reductionHazardMask;
@@ -608,7 +608,7 @@ public:
 
 extern int activeLoopSize;  // range lsz
 extern bool fatalReadBeforeReady; // rfUsed before result ready is fatal (name guessed)
-extern bool g_080de288;
+extern bool allowInputLockLoopWrapping;
 extern int activeSchedulingRangeStart;  // range start
 extern int activeSchedulingRangeEnd;  // range end
 
@@ -638,22 +638,22 @@ struct cls_unk30 {
 
 class Instr {
 public:
-    VclPtrWord unk_00;
-    VclPtrWord unk_04;
+    VclPtrWord optimizedInstructionImageWord;
+    VclPtrWord originalInstructionImageWord;
     Instr *cloneImage;
     short instructionId;
     union {
-        unsigned char unk_0e;
+        unsigned char dependencyReachabilityFlags;
         struct {
-            unsigned char unk_0e_0 : 1;
-            unsigned char unk_0e_1 : 1;
+            unsigned char outputDependencyReachable : 1;
+            unsigned char inputDependencyReachable : 1;
         };
     };
     char unk_0f;
-    iGroupList unk_10;
+    iGroupList instructionGroups;
     LocTag *sourceTag;
-    short unk_18;
-    short unk_1a;
+    short sourceTokenStartIndex;
+    short sourceTokenEndIndex;
     iLink linearLink;
     iLink pendingLink;
     Instr *nextMoveInstruction;
@@ -687,12 +687,12 @@ public:
     char ramAccessType;
     unsigned char baseIssueSpacing;
     unsigned char opcodeFlags;
-    char unk_13d1;
+    char requiresFullLoopMoveDrag;
     short expectedAliasLoopId;
     char addressAliasMode;
     char addressAliasDirection;
     char addressAliasOperandIndex;
-    char unk_13d7;
+    char originalPipelineMask;
     mValue addressImmediateValue;
     int instructionSerial;
     int linearOrderIndex;
@@ -779,7 +779,7 @@ public:
     bool hasRawTableOrImmediateToken();
     char *getBranchTargetImmediate();
     RegPoolEntry *getBranchTargetRegister();
-    int func_08055718();
+    int constantZeroInstructionHook();
     Operand *findInputOperand(RegPoolEntry *reg, int mask);
     Operand *findOutputOperand(RegPoolEntry *reg, int mask);
     bool hasLinkedOutputFrom(unsigned int n);
@@ -808,18 +808,18 @@ bool isVuRegister(RegPoolEntry *r);
 
 // Address-alias descriptor per opcode (12-byte entries, names guessed).
 struct aaDesc {
-    int unk_00;             // opcode id
-    char unk_04;            // -> Instr::addressAliasMode
-    unsigned char unk_05;   // operand index
-    unsigned char unk_06;   // output operand index
-    signed char unk_07;     // immediate operand index, <0 => unk_08
-    int unk_08;             // literal immediate
+    int opcodeId;
+    char aliasMode;
+    unsigned char inputOperandIndex;
+    unsigned char outputOperandIndex;
+    signed char immediateOperandIndex;
+    int literalImmediate;
 };
 
 // Address-alias use entry per opcode (8-byte entries, names guessed).
 struct aaUse {
-    int unk_00;             // opcode id
-    unsigned char unk_04;   // operand index
+    int opcodeId;
+    unsigned char operandIndex;
 };
 
 aaDesc *findAddressAliasDescriptor(Instr *in);
@@ -844,33 +844,33 @@ const char *syntheticTypeName(int t);
 // Implicit operand description (name guessed).
 struct ImplicitOp {
     char name[0x800];
-    char unk_800[0x800];
-    char unk_1000[0x800];
-    char unk_1800[0x800];
-    int unk_2000;           // slot mask
-    int unk_2004;
-    int unk_2008;
-    char unk_200c;
+    char physicalRegisterName[0x800];
+    char immediateText[0x800];
+    char branchLabelText[0x800];
+    int componentMask;
+    int addressComponentMask;
+    int genericOperandForm;
+    char forcePhysicalBinding;
     char unk_200d[3];
 };
 
 bool buildImplicitOperand(int kind, ImplicitOp *out, bool);
 const char *opKindName(int kind);
 int registerClassForOperandKind(int kind);
-bool func_08057d60(int kind);
-bool func_08057d9c(int kind);
+bool isScalarFloatingOperandKind(int kind);
+bool isVectorOrAccumulatorOperandKind(int kind);
 const char *immediateTypeName(unsigned char);
 extern ol_s *olFreeList;
 
 struct opPair_s {
     int opcode;
-    signed char unk_04[4];
-    int unk_08;
+    signed char operandPairSlots[4];
+    int pairingMode;
 };
 
 struct opCount_s {
     int opcode;
-    int unk_04;
+    int operandCount;
 };
 
 extern opPair_s pairedOperandDescriptions[];

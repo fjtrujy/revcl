@@ -10,7 +10,7 @@ workTable::workTable()
     moveListHead = 0;
     registerLockLists = 0;
     registerLockListCount = 0;
-    unk_0b = 0;
+    postOptimizationPrepared = 0;
     ownerStream = 0;
     dispose();
 }
@@ -49,11 +49,11 @@ bool workTable::init(unsigned char mode, int size)
     rangeStart = 0;
     rangeEnd = 0;
     loopSize = 0;
-    unk_ac = 0;
-    unk_40 = 0;
+    fallbackSchedulingActive = 0;
+    nextInsertionSerial = 0;
     unk_ad = 0;
     declaredRawLength = 0;
-    unk_7a = 0;
+    minimumSafeLoopCount = 0;
     codeModeValue = mode;
     return true;
 }
@@ -67,7 +67,7 @@ bool workTable::dispose()
             delete p;
         p = next;
     }
-    unk_0b = 0;
+    postOptimizationPrepared = 0;
     if (!freeLockLists(registerLockLists)) {
         reportError("failed to dispose rll list\n");
         abortAfterError();
@@ -98,7 +98,7 @@ bool workTable::dispose()
     pendingInstructions.reset();
     completedInstructions.reset();
     pendingMoveCount = 0;
-    unk_40 = 0;
+    nextInsertionSerial = 0;
     declaredRawLength = -1;
     ownerStream = 0;
     return true;
@@ -1098,15 +1098,15 @@ workTable *workTable::localClone()
         return 0;
     }
     nt->init(1, 0);
-    nt->unk_7a = unk_7a;
+    nt->minimumSafeLoopCount = minimumSafeLoopCount;
     nt->statistics.copyCountersFrom(&statistics);
-    nt->unk_74 = unk_74;
-    nt->unk_76 = unk_76;
+    nt->streamDependencyLength = streamDependencyLength;
+    nt->streamLogicalLength = streamLogicalLength;
     nt->logicalInstructionLength = logicalInstructionLength;
     nt->externalMinimumLength = externalMinimumLength;
     unsigned int t = (unsigned char)allocationMode;
     nt->allocationMode = t;
-    nt->unk_40 = 0;
+    nt->nextInsertionSerial = 0;
     nt->ownerStream = ownerStream;
     regUseList &regs = registerUses;
     for (regUse *r = regs.head; r; r = r->next) {

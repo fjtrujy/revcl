@@ -365,9 +365,9 @@ bool relaxOpt(Program *p)
             }
             wt->dump();
             for (Instr *i = s->getTable()->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
-                i->unk_00 = 0;
+                i->optimizedInstructionImageWord = 0;
                 i->cloneImage = 0;
-                i->unk_04 = 0;
+                i->originalInstructionImageWord = 0;
             }
             s->optimizedTable = 0;
             break;

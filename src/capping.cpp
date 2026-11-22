@@ -78,7 +78,7 @@ int insertStreamRegisterCaps(Program *p, instStream *s)
                 op = &in->operands[i];
                 RegPoolEntry *reg = registerOperand(op, 2);
                 ol_s *live = op->parts[0].operandLocations.head;
-                if (!reg || op->unk_0b || !live)
+                if (!reg || op->externalBlockModeFlag || !live)
                     continue;
                 RegPoolEntry *capReg = 0;
                 int capMask = 0;

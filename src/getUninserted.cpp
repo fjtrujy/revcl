@@ -67,7 +67,7 @@ int instStream::getUninsertedxInputs()
                 }
                 for (; ol; ol = ol->next) {
                     Instr *setter = ol->instruction;
-                    if (setter->getOwningStream() == this || setter->unk_00)
+                    if (setter->getOwningStream() == this || setter->optimizedInstructionImageWord)
                         continue;
                     int te = getToEnd(setter);
                     if (te < 0) {
@@ -112,7 +112,7 @@ int instStream::getUninsertedxOutputs()
                 if ((op->externalPartMask >> k) & 1) {
                     for (ol_s *ol = op->parts[k].operandLocations.head; ol; ol = ol->next) {
                         Instr *user = ol->instruction;
-                        if (user->getOwningStream() == this || user->unk_00)
+                        if (user->getOwningStream() == this || user->optimizedInstructionImageWord)
                             continue;
                         int fs = getFromStart(user);
                         if (fs < 0) {
@@ -147,8 +147,8 @@ int getToEnd(Instr *in)
         return -1;
     }
     Instr *img = in;
-    if (in->unk_00) {
-        img = (Instr *)in->unk_00;
+    if (in->optimizedInstructionImageWord) {
+        img = (Instr *)in->optimizedInstructionImageWord;
         if (!img->ownerTable) {
             reportError("image had no owner\n");
             return -1;
@@ -210,8 +210,8 @@ int getFromStart(Instr *in)
         return -1;
     }
     Instr *img = in;
-    if (in->unk_00) {
-        img = (Instr *)in->unk_00;
+    if (in->optimizedInstructionImageWord) {
+        img = (Instr *)in->optimizedInstructionImageWord;
         if (!img->ownerTable) {
             reportError("image had no owner\n");
             return -1;
@@ -263,7 +263,7 @@ bool loadLocks(Program *p, workTable *wt)
         reportError("load locks to registers - failed\n");
         return false;
     }
-    if (!wt->unk_0b) {
+    if (!wt->postOptimizationPrepared) {
         reportError("locks aren't valid for loadlocks\n");
         return false;
     }

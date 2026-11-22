@@ -159,7 +159,7 @@ public:
     int safeMinimumLoopCount;                 // minimum safe count
     cls0805e2e4 schedulingStatistics;
     statCounts stats;
-    short unk_2b4;
+    short branchForwardLatencyDepth;
     short unk_2b6;
     short savedStallReason;
     short currentStallReason;

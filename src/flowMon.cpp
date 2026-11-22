@@ -75,7 +75,7 @@ bool rebuildFlowDependencies(Program *p, bool b)
                     }
                     mode = (bm != 0) + 1;
                 }
-                if (ru->outputMask & (1 << part) & reg->unk_2c)
+                if (ru->outputMask & (1 << part) & reg->tracksHotOutputPaths)
                     hot = true;
                 if (!hot && !mode)
                     continue;

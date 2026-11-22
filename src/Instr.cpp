@@ -35,13 +35,13 @@ Instr::Instr(iInfo *info)
         exitAfterCleanup(-1);
     }
     operandCount = 0;
-    unk_13d1 = 0;
+    requiresFullLoopMoveDrag = 0;
     instructionModifierBits = 0;
     destinationMask = 0;
     previousThroughputWriter = 0;
     sourceTag = 0;
-    unk_18 = 0;
-    unk_1a = 0;
+    sourceTokenStartIndex = 0;
+    sourceTokenEndIndex = 0;
     moveRowOffset = 0;
     moveChainDepth = 0;
     abstractMoveOpcode = 0;
@@ -62,8 +62,8 @@ Instr::Instr(iInfo *info)
     opcodeInfo = info;
     candidateBaseRow = 0;
     cloneImage = 0;
-    unk_00 = 0;
-    unk_04 = 0;
+    optimizedInstructionImageWord = 0;
+    originalInstructionImageWord = 0;
     reverseBranchSense = 0;
     tildePrefix = 0;
     scheduledCycle = -1;
@@ -72,7 +72,7 @@ Instr::Instr(iInfo *info)
     schedulerCategory = -1;
     resetImmFixup();
     opcodeInfo = info;
-    unk_13d7 = info->pipelineMask;
+    originalPipelineMask = info->pipelineMask;
     permittedPipelineMask = info->pipelineMask;
     opcodeResourceMask = info->resourceMask;
     branchFlags = info->branchFlags();
@@ -87,10 +87,10 @@ Instr::Instr(iInfo *info)
         iOpDesc *d = &info->operandDescriptors[i];
         op->operandKind = d->operandKind;
         op->operandIndex = i;
-        op->unk_0b = d->unk_04 != 0;
+        op->externalBlockModeFlag = d->externalBlockModeFlag != 0;
         op->direction = d->direction;
         op->isImplicit = d->isImplicit != 0;
-        op->unk_05 = d->unk_05;
+        op->immediateDataType = d->immediateDataType;
         op->pairedOperandIndexPlusOne = d->patchedOutputIndexPlusOne;
         if (op->pairedOperandIndexPlusOne)
             operands[op->pairedOperandIndexPlusOne - 1].pairedOperandIndexPlusOne = i + 1;
@@ -192,7 +192,7 @@ bool Instr::clearTransientFlags()
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
         for (int k = 0; k != 4; k++)
-            op->parts[k].unk_50 = 0;
+            op->parts[k].conflictingOutputLockCount = 0;
     }
     return true;
 }
@@ -216,7 +216,7 @@ void Instr::leDump(int opnd, int mask)
     int saved = errorOccurred;
     errorOccurred = !quietDiagnostics;
     if (sourceTag) {
-        int idx = unk_18;
+        int idx = sourceTokenStartIndex;
         if (opnd >= 0) {
             if (operands[opnd].assignedRegister && operands[opnd].assignedRegister->partCount != 1 && mask >= 0)
                 reportMessage("(field(s) : %s) ", formatComponentMaskLetters(mask));
@@ -226,7 +226,7 @@ void Instr::leDump(int opnd, int mask)
                 else
                     reportError("implicit operand with no register??\n");
             } else
-                idx = operands[opnd].unk_24;
+                idx = operands[opnd].sourceTokenStartIndex;
         }
         sourceTag->dumpSourceLine(idx);
     } else {
@@ -300,7 +300,7 @@ Instr *Instr::clone()
     c->instructionModifierBits = instructionModifierBits;
     c->abstractMoveOpcode = abstractMoveOpcode;
     c->concreteMoveOpcode = concreteMoveOpcode;
-    c->unk_13d7 = unk_13d7;
+    c->originalPipelineMask = originalPipelineMask;
     c->schedulingStatistics.copyCountersFrom(&schedulingStatistics);
     c->linearOrderIndex = linearOrderIndex;
     c->instructionSerial = instructionSerial;
@@ -309,8 +309,8 @@ Instr *Instr::clone()
     c->tildePrefix = tildePrefix;
     c->reverseBranchSense = reverseBranchSense;
     c->sourceTag = sourceTag;
-    c->unk_18 = unk_18;
-    c->unk_1a = unk_1a;
+    c->sourceTokenStartIndex = sourceTokenStartIndex;
+    c->sourceTokenEndIndex = sourceTokenEndIndex;
     c->addressAliasMode = addressAliasMode;
     c->addressAliasDirection = addressAliasDirection;
     c->addressAliasOperandIndex = addressAliasOperandIndex;
@@ -342,11 +342,11 @@ Instr *Instr::clone()
         d->operandKind = s->operandKind;
         d->direction = s->direction;
         d->outputLatency = s->outputLatency;
-        d->unk_05 = s->unk_05;
-        d->unk_0b = s->unk_0b;
+        d->immediateDataType = s->immediateDataType;
+        d->externalBlockModeFlag = s->externalBlockModeFlag;
         d->assignedRegister = s->assignedRegister;
         d->componentMask = s->componentMask;
-        d->unk_0c = s->unk_0c;
+        d->addressComponentMask = s->addressComponentMask;
         d->pairedOperandIndexPlusOne = s->pairedOperandIndexPlusOne;
         d->isImplicit = s->isImplicit;
         d->originalRegister = s->originalRegister;
@@ -357,8 +357,8 @@ Instr *Instr::clone()
                 exitAfterCleanup(-1);
             }
         }
-        d->unk_24 = s->unk_24;
-        d->unk_25 = s->unk_25;
+        d->sourceTokenStartIndex = s->sourceTokenStartIndex;
+        d->sourceTokenEndIndex = s->sourceTokenEndIndex;
         d->additionalLatency = s->additionalLatency;
         d->externalPartMask = s->externalPartMask;
         d->operandStatus = 0;
@@ -396,9 +396,9 @@ int Instr::getRamBits()
                 reportError("failed to get op1 for mod_1 ram test\n");
                 exitAfterCleanup(-1);
             }
-            if (!op->unk_0c)
+            if (!op->addressComponentMask)
                 reportWarning("mb was 0 failed to get xmod bits for mod 1 inst\n");
-            r = op->unk_0c;
+            r = op->addressComponentMask;
             break;
         }
         case 0:
@@ -609,10 +609,10 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         s = 0xff;
     a->cycleOffset = s;
     a->pathKey = x;
-    a->unk_0c = y;
+    a->maximumPathKey = y;
     b->cycleOffset = 0;
     b->pathKey = x;
-    b->unk_0c = y;
+    b->maximumPathKey = y;
     return true;
 }
 
@@ -731,7 +731,7 @@ const char *syntheticTypeName(int t)
 
 bool Instr::hasRawTableOrImmediateToken()
 {
-    if (unk_00)
+    if (optimizedInstructionImageWord)
         return true;
     if (ownerTable)
         return ownerTable->codeModeValue == 3;
@@ -791,7 +791,7 @@ RegPoolEntry *Instr::getBranchTargetRegister()
     return r;
 }
 
-int Instr::func_08055718()
+int Instr::constantZeroInstructionHook()
 {
     return 0;
 }
@@ -879,7 +879,7 @@ int Instr::getFirstOutputLatency()
 {
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
-        if (op->outRegZ() && !op->unk_0b)
+        if (op->outRegZ() && !op->externalBlockModeFlag)
             return op->outputLatency;
     }
     return 0;
@@ -887,15 +887,15 @@ int Instr::getFirstOutputLatency()
 
 bool Instr::markDependencyInputReachable()
 {
-    bool r = !unk_0e_1;
-    unk_0e_1 = 1;
+    bool r = !inputDependencyReachable;
+    inputDependencyReachable = 1;
     return r;
 }
 
 bool Instr::markDependencyOutputReachable()
 {
-    bool r = !unk_0e_0;
-    unk_0e_0 = 1;
+    bool r = !outputDependencyReachable;
+    outputDependencyReachable = 1;
     return r;
 }
 
@@ -930,7 +930,7 @@ bool Instr::expandVirtualStatOperand()
             op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(55);
             op->componentMask = 1;
             op->outputLatency = 4;
-            op->unk_0b = 0;
+            op->externalBlockModeFlag = 0;
             op->operandIndex = operandCount++;
             op = &operands[i + 1];
             op->isImplicit = 1;
@@ -939,7 +939,7 @@ bool Instr::expandVirtualStatOperand()
             op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
             op->componentMask = 1;
             op->outputLatency = -1;
-            op->unk_0b = 1;
+            op->externalBlockModeFlag = 1;
             op->operandIndex = operandCount++;
             break;
         case 22:
@@ -949,7 +949,7 @@ bool Instr::expandVirtualStatOperand()
             op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(56);
             op->componentMask = 1;
             op->outputLatency = operands[0].outputLatency;
-            op->unk_0b = 0;
+            op->externalBlockModeFlag = 0;
             op->operandIndex = operandCount;
             op = &operands[i + 1];
             operandCount++;
@@ -959,7 +959,7 @@ bool Instr::expandVirtualStatOperand()
             op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
             op->componentMask = 1;
             op->outputLatency = -1;
-            op->unk_0b = 1;
+            op->externalBlockModeFlag = 1;
             op->operandIndex = operandCount++;
             break;
         case 24: {
@@ -1011,7 +1011,7 @@ bool Instr::expandVirtualStatOperand()
                 op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(55);
                 op->componentMask = 1;
                 op->outputLatency = -1;
-                op->unk_0b = 0;
+                op->externalBlockModeFlag = 0;
                 op->operandIndex = operandCount;
                 op++;
                 operandCount++;
@@ -1023,7 +1023,7 @@ bool Instr::expandVirtualStatOperand()
                 op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(56);
                 op->componentMask = 1;
                 op->outputLatency = -1;
-                op->unk_0b = 0;
+                op->externalBlockModeFlag = 0;
                 op->operandIndex = operandCount;
                 op++;
                 operandCount++;
@@ -1035,7 +1035,7 @@ bool Instr::expandVirtualStatOperand()
                 op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
                 op->componentMask = 1;
                 op->outputLatency = -1;
-                op->unk_0b = 1;
+                op->externalBlockModeFlag = 1;
                 op->operandIndex = operandCount;
                 op++;
                 operandCount++;
@@ -1045,7 +1045,7 @@ bool Instr::expandVirtualStatOperand()
                 op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
                 op->componentMask = 1;
                 op->outputLatency = 1;
-                op->unk_0b = 1;
+                op->externalBlockModeFlag = 1;
                 op->operandIndex = operandCount;
                 op++;
                 operandCount++;
@@ -1057,7 +1057,7 @@ bool Instr::expandVirtualStatOperand()
                 op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
                 op->componentMask = 1;
                 op->outputLatency = -1;
-                op->unk_0b = 1;
+                op->externalBlockModeFlag = 1;
                 op->operandIndex = operandCount;
                 op++;
                 operandCount++;
@@ -1067,7 +1067,7 @@ bool Instr::expandVirtualStatOperand()
                 op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
                 op->componentMask = 1;
                 op->outputLatency = 1;
-                op->unk_0b = 1;
+                op->externalBlockModeFlag = 1;
                 op->operandIndex = operandCount++;
             }
             break;
@@ -1079,7 +1079,7 @@ bool Instr::expandVirtualStatOperand()
             op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
             op->componentMask = 1;
             op->outputLatency = 1;
-            op->unk_0b = 1;
+            op->externalBlockModeFlag = 1;
             op->operandIndex = operandCount;
             op = &operands[i + 1];
             operandCount++;
@@ -1089,7 +1089,7 @@ bool Instr::expandVirtualStatOperand()
             op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
             op->componentMask = 1;
             op->outputLatency = 1;
-            op->unk_0b = 1;
+            op->externalBlockModeFlag = 1;
             op->operandIndex = operandCount++;
             break;
         }
@@ -1148,8 +1148,8 @@ void OpSlot::noopOperandSlotHook()
 bool OpSlot::resetSlotLock()
 {
     resetLock();
-    unk_50 = 0;
-    unk_52[0] = 0;
+    conflictingOutputLockCount = 0;
+    outputConflictMarked[0] = 0;
     return true;
 }
 

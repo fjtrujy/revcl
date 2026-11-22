@@ -42,7 +42,7 @@ bool prepareReductionCandidates(Program *p, instStream *s, workTable *wt)
                 if (isRegisterOperand(op, 1))
                     op->reductionHazardMask = ru->hazardMask & op->externalPartMask;
                 if (isRegisterOperand(op, 2))
-                    op->reductionHazardMask = ru->unk_13 & op->externalPartMask;
+                    op->reductionHazardMask = ru->sourcePathHazardMask & op->externalPartMask;
                 op->reductionHazardMask |= ru->hazardBroadcastMask;
             }
         }

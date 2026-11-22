@@ -53,7 +53,7 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
         in->forcedBaseRegister = 0;
         out->operandStatus = 1;
         out->forcedBaseRegister = 0;
-        mv->unk_13d1 = 1;
+        mv->requiresFullLoopMoveDrag = 1;
         mv->schedulerCategory = 0;
     }
     return mv;
@@ -67,7 +67,7 @@ bool logInstr(Block *blk, Instr *in);
 void trackEarliestInsertion(Instr *in);
 
 short g_streamSerial = 1;
-int g_080b33ec = 0;
+int discardedEmptyMoveCount = 0;
 
 static inline void countCreatedMove(Block *blk, Instr *mv)
 {
@@ -139,10 +139,10 @@ int getMove(Block *blk, Instr *in, int now)
                     }
                 }
             }
-            int s1 = in->unk_00;
+            int s1 = in->optimizedInstructionImageWord;
             Instr *s2 = blk->pendingInstructions.head;
             if (score > bestScore) {
-                in->unk_00 = s1;
+                in->optimizedInstructionImageWord = s1;
                 blk->pendingInstructions.head = s2;
                 bestOp = op2;
                 bestScore = score;
@@ -232,7 +232,7 @@ int getMove(Block *blk, Instr *in, int now)
                         stale = true;
                     }
                     if (stale) {
-                        mv->unk_13d1 = 0;
+                        mv->requiresFullLoopMoveDrag = 0;
                         continue;
                     }
                     for (int p = 0; p != reg->partCount; p++) {
@@ -254,23 +254,23 @@ int getMove(Block *blk, Instr *in, int now)
                                         return -1;
                                     }
                                     OperandLock *moveOutLock = &out->parts[p];
-                                    if (!oldL->addInput(oldOut, moveInLock, mvIn->additionalLatency, mvIn->unk_0b)) {
+                                    if (!oldL->addInput(oldOut, moveInLock, mvIn->additionalLatency, mvIn->externalBlockModeFlag)) {
                                         reportError("failed to register input from move instruction to old output\n");
                                         return -1;
                                     }
-                                    moveInLock->unk_19 = mvIn->getStatus();
-                                    if (!newL->addOutput(moveOutLock, mv->baseIssueSpacing, out->outputLatency, out->unk_0b)) {
+                                    moveInLock->operandStatusCode = mvIn->getStatus();
+                                    if (!newL->addOutput(moveOutLock, mv->baseIssueSpacing, out->outputLatency, out->externalBlockModeFlag)) {
                                         reportError("getMove : failed to register output lock for move\n");
                                         return -1;
                                     }
-                                    moveOutLock->unk_19 = out->getStatus();
+                                    moveOutLock->operandStatusCode = out->getStatus();
                                 }
                                 moved |= 1 << p;
                                 if (!oldL->removeInput(lk)) {
                                     reportError("failed to deregister an input during move create\n");
                                     return -1;
                                 }
-                                if (!newL->addInput(&out->parts[p], lk, op->additionalLatency, op->unk_0b)) {
+                                if (!newL->addInput(&out->parts[p], lk, op->additionalLatency, op->externalBlockModeFlag)) {
                                     reportError("failed to register input to a moves output\n");
                                     return -1;
                                 }
@@ -281,7 +281,7 @@ int getMove(Block *blk, Instr *in, int now)
                                         reportError("failed to deregister an input during move create\n");
                                         return -1;
                                     }
-                                    if (!newL->addInput(par, lk, op->additionalLatency, op->unk_0b)) {
+                                    if (!newL->addInput(par, lk, op->additionalLatency, op->externalBlockModeFlag)) {
                                         reportError("failed to register an input during move create\n");
                                         return -1;
                                     }
@@ -300,7 +300,7 @@ int getMove(Block *blk, Instr *in, int now)
                 RegPoolEntry *reg = registerOperand(op, 2);
                 if (reg == bestReg) {
                     if (op->operandStatus != 1) {
-                        mv->unk_13d1 = 0;
+                        mv->requiresFullLoopMoveDrag = 0;
                         oldBits |= op->componentMask;
                     } else {
                         newBits |= op->componentMask;
@@ -312,7 +312,7 @@ int getMove(Block *blk, Instr *in, int now)
                                     reportError("retargetOutputOperands: failed to deregister output\n");
                                     return -1;
                                 }
-                                if (!newL->addOutput(&op->parts[p], it->baseIssueSpacing, op->outputLatency, op->unk_0b)) {
+                                if (!newL->addOutput(&op->parts[p], it->baseIssueSpacing, op->outputLatency, op->externalBlockModeFlag)) {
                                     reportError("retargetOutputOperands : failed to reregister output\n");
                                     return -1;
                                 }
@@ -323,7 +323,7 @@ int getMove(Block *blk, Instr *in, int now)
                 }
             }
         }
-        int g1 = g_080b33ec;
+        int g1 = discardedEmptyMoveCount;
         int zm0 = (unsigned char)in->operandCount;
         zm0 >>= 4;
         zm0 >>= 4;
@@ -338,10 +338,10 @@ int getMove(Block *blk, Instr *in, int now)
         zm2 >>= 4;
         if (zm2)
             goto no_move;
-        g_080b33ec = g1;
+        discardedEmptyMoveCount = g1;
         if (!m) {
             addFreeMove(mv);
-            g_080b33ec++;
+            discardedEmptyMoveCount++;
             goto no_move;
         }
         mv->destinationMask = moved;
@@ -390,7 +390,7 @@ bool undoMove(Block *blk, Instr *mv)
                                 reportError("failed to deregister input lock for undo move\n");
                                 return true;
                             }
-                            if (!newList->addInput(parent, lk, op->additionalLatency, op->unk_0b)) {
+                            if (!newList->addInput(parent, lk, op->additionalLatency, op->externalBlockModeFlag)) {
                                 reportError("undo move - failed to register input\n");
                                 return true;
                             }
@@ -406,7 +406,7 @@ bool undoMove(Block *blk, Instr *mv)
                                 reportError("failed to deregister output lock for undo move\n");
                                 return true;
                             }
-                            if (!newList->addOutput(&op->parts[p], i->baseIssueSpacing, op->outputLatency, op->unk_0b)) {
+                            if (!newList->addOutput(&op->parts[p], i->baseIssueSpacing, op->outputLatency, op->externalBlockModeFlag)) {
                                 reportError("undo move - failed to register output\n");
                                 return true;
                             }

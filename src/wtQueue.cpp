@@ -98,7 +98,7 @@ bool workTable::qRegRef(regUse *ru)
         char xi = (c->externalInputMask >> i) & 1;
         char t = (c->throughputMask >> i) & 1;
         bool sync = false;
-        if (reg->unk_2c && activeLoopSize == 0)
+        if (reg->tracksHotOutputPaths && activeLoopSize == 0)
             sync = true;
         char nb = reg->nonBlockId;
         if (!nb && (c->throughputMask & (c->outputMask | c->externalOutputMask))) {
@@ -142,7 +142,7 @@ bool workTable::qRegRef(regUse *ru)
 
 bool setPipeBits(Instr *in);
 bool AddToDo_Tail(Block *blk, Instr *n);
-extern int g_080b33f0;
+extern int nextReservedInstructionKey;
 
 static inline bool isAAOperand(Operand *op)
 {
@@ -251,8 +251,8 @@ bool workTable::qInstruction(Instr *in)
                     out = &sop->parts[k];
                     a = dst->additionalLatency;
                 }
-                lk->unk_19 = operandLockMode(dst);
-                if (!ll->addInput(out, lk, a, dst->unk_0b)) {
+                lk->operandStatusCode = operandLockMode(dst);
+                if (!ll->addInput(out, lk, a, dst->externalBlockModeFlag)) {
                     reportError("failed to register input operand\n");
                     return false;
                 }
@@ -278,9 +278,9 @@ bool workTable::qInstruction(Instr *in)
                 OperandLock *lk = &op->parts[k];
                 lk->setOwner(k, c, i);
                 int a = 1;
-                if (reg->unk_2c)
+                if (reg->tracksHotOutputPaths)
                     a = c->baseIssueSpacing;
-                if (!ll->addOutput(lk, a, op->outputLatency, op->unk_0b)) {
+                if (!ll->addOutput(lk, a, op->outputLatency, op->externalBlockModeFlag)) {
                     reportError("failed to register output operand : %s.%d\n", reg->registerName(), k);
                     return false;
                 }
@@ -336,9 +336,9 @@ bool workTable::qInstruction(Instr *in)
         return false;
     }
     if (loopSize && c->branchFlags) {
-        g_080b33f0 += 2;
-        c->replacedInstructionWord = g_080b33f0;
-        reserveEntry(g_080b33f0, loopSize - 2, 1);
+        nextReservedInstructionKey += 2;
+        c->replacedInstructionWord = nextReservedInstructionKey;
+        reserveEntry(nextReservedInstructionKey, loopSize - 2, 1);
     }
     return true;
 }

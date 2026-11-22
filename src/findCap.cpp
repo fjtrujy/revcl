@@ -24,16 +24,16 @@ static inline bool isPoolZero(RegPool *p, RegPoolEntry *r) { return r == p->zero
 
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask)
 {
-    g_080de73c = wt;
+    capInsertionWorkTable = wt;
     selectedCapRegister = 0;
     *capReg = 0;
     Operand *op = &in->operands[opIdx];
     int cap = -1;
-    g_080de734 = 0;
+    selectedCapPipelineProperties = 0;
     selectedCapMask = 0;
     *capMask = 0;
-    g_080de738 = 0;
-    g_080de740 = 0;
+    selectedCapOpcodeInfo = 0;
+    selectedCapOriginalInstruction = 0;
 
     RegPoolEntry *reg = isRegisterOperand(op, 2) ? op->assignedRegister : 0;
     switch (reg->registerIndex) {
@@ -108,7 +108,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     if (cap < 0)
         return 0;
     iInfo *ii = getOpcodeInfoById(cap);
-    g_080de738 = ii;
+    selectedCapOpcodeInfo = ii;
     if (!ii && cap != 0) {
         reportError("failed to get II for cap \n");
         return -1;
@@ -118,15 +118,15 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
         return -1;
     }
     *capReg = selectedCapRegister;
-    g_080de740 = in;
+    selectedCapOriginalInstruction = in;
     *capMask = selectedCapMask;
-    g_080de734 = ii->unk_0e_w;
-    return g_080de734;
+    selectedCapPipelineProperties = ii->unk_0e_w;
+    return selectedCapPipelineProperties;
 }
 
 bool doCap(int line, int pipe, int mask)
 {
-    if (!g_080de738) {
+    if (!selectedCapOpcodeInfo) {
         reportError("cap_ii not set\n");
         return false;
     }
@@ -134,7 +134,7 @@ bool doCap(int line, int pipe, int mask)
         reportError("zero mod bits for doCap\n");
         return false;
     }
-    Instr *ci = new Instr(g_080de738);
+    Instr *ci = new Instr(selectedCapOpcodeInfo);
     if (!ci) {
         reportError("failed to make cap instruction\n");
         return false;
@@ -151,12 +151,12 @@ bool doCap(int line, int pipe, int mask)
         ci->operands[1].assignedRegister = selectedCapRegister;
         ci->operands[1].originalRegister = selectedCapRegister;
         ci->operands[1].forcedBaseRegister = 0;
-        g_080de740->operands[0].originalRegister = selectedCapRegister;
-        g_080de740->operands[0].assignedRegister = selectedCapRegister;
-        g_080de740->operands[0].forcedBaseRegister = 0;
-        regUse *ru = g_080de73c->registerUses.findByRegister(selectedCapRegister);
+        selectedCapOriginalInstruction->operands[0].originalRegister = selectedCapRegister;
+        selectedCapOriginalInstruction->operands[0].assignedRegister = selectedCapRegister;
+        selectedCapOriginalInstruction->operands[0].forcedBaseRegister = 0;
+        regUse *ru = capInsertionWorkTable->registerUses.findByRegister(selectedCapRegister);
         if (!ru) {
-            ru = g_080de73c->registerUses.AddNewRegRef(selectedCapRegister);
+            ru = capInsertionWorkTable->registerUses.AddNewRegRef(selectedCapRegister);
             if (!ru) {
                 reportError("failed to add new regref\n");
                 return true;
@@ -170,10 +170,10 @@ bool doCap(int line, int pipe, int mask)
     }
     ci->position.setFromLinearRow(line);
     ci->position.setInstructionPipe(pipe);
-    if (!g_080de73c->putIn(ci)) {
+    if (!capInsertionWorkTable->putIn(ci)) {
         reportError("failed to put instruction into itable\n");
         return false;
     }
-    g_080de738 = 0;
+    selectedCapOpcodeInfo = 0;
     return true;
 }

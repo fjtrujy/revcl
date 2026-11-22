@@ -33,10 +33,10 @@ struct CpuDef {
     void *dstSpecs;
 };
 
-extern int g_080b33a8;
+extern int nextInstructionSerial;
 extern iInfo *processorInstructionTable;
 extern RegPool *processorRegisterPools[13];
-extern VclPtrWord g_080de714[3];
+extern VclPtrWord freeMoveRecordsByType[3];
 extern void *processorDeviceTable;    // device table
 extern void *processorSourceSpecs;    // srcSpecs
 extern void *processorDestinationSpecs;    // dstSpecs
@@ -77,8 +77,8 @@ public:
     char savedDecodeSubMode;
     char savedDecodeMode;
     bool vuDirectiveSeen;
-    char unk_64;
-    char unk_65;
+    char sourceBuildType;
+    char preferExistingPhysicalRegisters;
     ubsList usedBeforeSet;
     stallList stalls;
 };

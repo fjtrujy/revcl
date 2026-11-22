@@ -5,10 +5,10 @@
 #include "workTable.h"
 #include "Instr.h"
 
-extern int g_080de734;
-extern iInfo *g_080de738;
-extern workTable *g_080de73c;
-extern Instr *g_080de740;
+extern int selectedCapPipelineProperties;
+extern iInfo *selectedCapOpcodeInfo;
+extern workTable *capInsertionWorkTable;
+extern Instr *selectedCapOriginalInstruction;
 extern RegPoolEntry *selectedCapRegister;
 extern int selectedCapMask;
 

@@ -139,8 +139,8 @@ bool emulateAndCollectRegisterUses(Program *p, instStream *s)
             for (int k = 0; k != reg->partCount; k++) {
                 if ((o->externalPartMask >> k) & 1) {
                     if (ru->externalBlockMode == -1)
-                        ru->externalBlockMode = o->unk_0b;
-                    else if (ru->externalBlockMode != (unsigned char)o->unk_0b)
+                        ru->externalBlockMode = o->externalBlockModeFlag;
+                    else if (ru->externalBlockMode != (unsigned char)o->externalBlockModeFlag)
                         reportWarning("differing block modes for external input for %s..taking first encountered\n",
                                       reg->registerName());
                     if (!ru->slots[k].inputLocations.addOperandLocation(i, op, k, false)) {
@@ -148,7 +148,7 @@ bool emulateAndCollectRegisterUses(Program *p, instStream *s)
                         return false;
                     }
                 }
-                if (((o->componentMask >> k) & 1) && reg->unk_2c && isRegisterOperand(o, 2)) {
+                if (((o->componentMask >> k) & 1) && reg->tracksHotOutputPaths && isRegisterOperand(o, 2)) {
                     if (!ru->slots[k].sourceLocations.addOperandLocation(i, op, k, false)) {
                         reportError("failed to add a local setter for a thruput check\n");
                         reportError("register is %s\n", reg->registerName());
@@ -171,23 +171,23 @@ bool emulateAndCollectRegisterUses(Program *p, instStream *s)
         for (int part = 0; part != reg->partCount; part++) {
             regUseSlot *slot = &ru->slots[part];
             rPart *rp = &reg->parts[part];
-            slot->timingValues[0] = rp->unk_00[4];
-            slot->timingValues[1] = rp->unk_00[5];
-            slot->timingValues[2] = rp->unk_00[6];
-            slot->timingValues[3] = rp->unk_00[7];
-            slot->timingValues[4] = rp->unk_00[8];
-            slot->timingValues[5] = rp->unk_00[9];
-            slot->timingValues[6] = rp->unk_00[10];
-            slot->timingValues[7] = rp->unk_00[11];
-            slot->timingValues[8] = rp->unk_00[12];
-            slot->timingValues[9] = rp->unk_00[13];
-            slot->timingValues[10] = rp->unk_00[14];
-            slot->timingValues[11] = rp->unk_00[15];
-            slot->timingValues[12] = rp->unk_00[16];
-            slot->throughputSums[1] = rp->unk_00[1];
-            slot->throughputSums[0] = rp->unk_00[0];
-            slot->throughputSums[3] = rp->unk_00[2];
-            slot->throughputSums[2] = rp->unk_00[3];
+            slot->timingValues[0] = rp->emulationTimingMetrics[4];
+            slot->timingValues[1] = rp->emulationTimingMetrics[5];
+            slot->timingValues[2] = rp->emulationTimingMetrics[6];
+            slot->timingValues[3] = rp->emulationTimingMetrics[7];
+            slot->timingValues[4] = rp->emulationTimingMetrics[8];
+            slot->timingValues[5] = rp->emulationTimingMetrics[9];
+            slot->timingValues[6] = rp->emulationTimingMetrics[10];
+            slot->timingValues[7] = rp->emulationTimingMetrics[11];
+            slot->timingValues[8] = rp->emulationTimingMetrics[12];
+            slot->timingValues[9] = rp->emulationTimingMetrics[13];
+            slot->timingValues[10] = rp->emulationTimingMetrics[14];
+            slot->timingValues[11] = rp->emulationTimingMetrics[15];
+            slot->timingValues[12] = rp->emulationTimingMetrics[16];
+            slot->throughputSums[1] = rp->emulationTimingMetrics[1];
+            slot->throughputSums[0] = rp->emulationTimingMetrics[0];
+            slot->throughputSums[3] = rp->emulationTimingMetrics[2];
+            slot->throughputSums[2] = rp->emulationTimingMetrics[3];
             if ((ru->outputMask >> part) & 1) {
                 ol_s *out = &rp->currentLocation;
                 if (out->instruction && !slot->addOutput(out)) {

@@ -21,15 +21,15 @@ bool cls0805bcc4::resetLock()
     latencyModeFlag = 0;
     pairedLock = 0;
     insertedIntoLockList = 0;
-    unk_19 = 0;
+    operandStatusCode = 0;
     nextSortedOutput = 0;
     scheduledConsumerCount = 0;
-    unk_48 = 0;
-    unk_4a = 0;
-    unk_46 = 0;
-    unk_02 = 0;
-    unk_01 = 0;
-    unk_00 = 0;
+    upperPipeConsumerCount = 0;
+    lowerPipeConsumerCount = 0;
+    eitherPipeConsumerCount = 0;
+    eitherPipeInputDemand = 0;
+    upperPipeInputDemand = 0;
+    lowerPipeInputDemand = 0;
     ownerPointer = 0;
     ownerType = 0;
     lockDirection = 0;
@@ -291,7 +291,7 @@ cls0805c244::cls0805c244()
     containsRegisterOutput = 0;
     calculateLoopStats = 1;
     sortedOutputLocks = 0;
-    unk_00 = 0;
+    loopWrapMinimumRow = 0;
 }
 
 cls0805c244::cls0805c244(cls0805c244 *next)
@@ -308,7 +308,7 @@ cls0805c244::cls0805c244(cls0805c244 *next)
     containsRegisterOutput = 0;
     calculateLoopStats = 1;
     sortedOutputLocks = 0;
-    unk_00 = 0;
+    loopWrapMinimumRow = 0;
 }
 
 cls0805c244::~cls0805c244()
@@ -340,7 +340,7 @@ bool cls0805c244::reset()
     containsRegisterOutput = 0;
     calculateLoopStats = 1;
     sortedOutputLocks = 0;
-    unk_00 = 0;
+    loopWrapMinimumRow = 0;
     return true;
 }
 
@@ -350,12 +350,12 @@ bool cls0805c244::addInput(cls0805bcc4 *out, cls0805bcc4 *in, char a, unsigned c
     in->ownerLockList = this;
     out->latencyModeFlag = b;
     in->issueLatency = a;
-    out->unk_46 += in->unk_02;
-    out->unk_48 += in->unk_01;
+    out->eitherPipeConsumerCount += in->eitherPipeInputDemand;
+    out->upperPipeConsumerCount += in->upperPipeInputDemand;
     out->referenceCount++;
     out->activeReferenceCount++;
     in->parentOrChildren = out;
-    out->unk_4a += in->unk_00;
+    out->lowerPipeConsumerCount += in->lowerPipeInputDemand;
     return true;
 }
 
@@ -381,11 +381,11 @@ bool cls0805c244::addOutput(cls0805bcc4 *lk, int a, int b, unsigned char c)
 bool cls0805c244::removeInput(cls0805bcc4 *in)
 {
     cls0805bcc4 *out = in->parentOrChildren;
-    out->unk_46 -= in->unk_02;
-    out->unk_48 -= in->unk_01;
+    out->eitherPipeConsumerCount -= in->eitherPipeInputDemand;
+    out->upperPipeConsumerCount -= in->upperPipeInputDemand;
     out->referenceCount--;
     out->activeReferenceCount--;
-    out->unk_4a -= in->unk_00;
+    out->lowerPipeConsumerCount -= in->lowerPipeInputDemand;
     in->ownerLockList = 0;
     in->lockDirection = 0;
     in->parentOrChildren = 0;
@@ -720,7 +720,7 @@ bool cls0805bcc4::calcStats(Instr *skip)
             if (o == skip)
                 continue;
         }
-        if (c->unk_19 == 2)
+        if (c->operandStatusCode == 2)
             continue;
         int t = c->linearRow;
         if (t > maxT)
@@ -809,8 +809,8 @@ bool cls0805bcc4::calcStats(Instr *skip)
         latestReadyCycle = latestConsumerCycle;
         if (!lsz || ownerType != 2) {
             int hi, lo;
-            int a = unk_48, b = unk_4a;
-            int len = unk_46;
+            int a = upperPipeConsumerCount, b = lowerPipeConsumerCount;
+            int len = eitherPipeConsumerCount;
             hi = a; lo = b;
             if (a < b) { hi = b; lo = a; }
             int d = hi - lo;
@@ -975,7 +975,7 @@ Instr *cls0805c244::earliestExt()
         if (hasRegUseOwner(lk)) {
             int best = 30000;
             for (cls0805bcc4 *ch = lk->parentOrChildren; ch; ch = ch->nextSibling) {
-                if (ch->unk_19 != 2) {
+                if (ch->operandStatusCode != 2) {
                     Instr *in = ch->ownerType == 1 ? (Instr *)ch->ownerPointer : 0;
                     if (!in) {
                         reportError("not get in for earliest ext\n");

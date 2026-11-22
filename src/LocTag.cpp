@@ -228,7 +228,7 @@ bool LocTag::hasAssignmentMarker()
     return false;
 }
 
-bool LocTag::func_08050f7c(int i)
+bool LocTag::probeNonCommentTokenAndReturnFalse(int i)
 {
     if (!inComment(i))
         tokenTextAt(i, 0);

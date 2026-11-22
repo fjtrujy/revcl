@@ -108,7 +108,7 @@ bool RegPool::Init(VclPtrWord registerPrefix, const char* name, int cls, int vir
         entry->registerClass = descriptor->registerClass;
         entry->ownerPool = this;
         entry->partCount = descriptor->partCount;
-        entry->unk_2c = descriptor->unk_14 != 0;
+        entry->tracksHotOutputPaths = descriptor->tracksHotOutputPaths != 0;
         entry->nonBlockId = descriptor->nonBlockId;
         if (entry->nonBlockId && entry->partCount != 1) {
             reportError("nonblockid is set, but nparts!=1.. register is %s\n", entry->registerName());

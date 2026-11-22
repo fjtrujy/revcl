@@ -14,8 +14,8 @@
 bool suppressErrorReports = false;
 int errorOccurred;
 bool quietDiagnostics;
-bool g_080bbd99;
-bool g_080bbd9a;
+bool unhandledOptionQSeen;
+bool unhandledOptionPSeen;
 char *currentOutputFileName = 0;
 
 

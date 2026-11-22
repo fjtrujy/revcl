@@ -89,16 +89,16 @@ void RegPoolEntry::resetRegisterPartTiming()
     for (int i = 0; i != 4; i++) {
         rPart* p = &parts[i];
         p->unk_40 = -1;
-        p->unk_42 = -1;
-        p->unk_44 = -1;
+        p->earliestPendingReadCycle = -1;
+        p->latestPendingReadCycle = -1;
     }
 }
 
 void rPart::resetPartTiming()
 {
     unk_40 = -1;
-    unk_42 = -1;
-    unk_44 = -1;
+    earliestPendingReadCycle = -1;
+    latestPendingReadCycle = -1;
 }
 
 void RegPoolEntry::resetRegisterThroughputState()
@@ -111,27 +111,27 @@ void RegPoolEntry::resetRegisterThroughputState()
 
 void rPart::resetPartFlowState()
 {
-    unk_00[3] = 0;
-    unk_00[2] = 0;
-    unk_00[0] = 0;
-    unk_00[1] = 0;
+    emulationTimingMetrics[3] = 0;
+    emulationTimingMetrics[2] = 0;
+    emulationTimingMetrics[0] = 0;
+    emulationTimingMetrics[1] = 0;
     issueLock = 0;
     currentLocation.reset();
     pendingSource = 0;
     cycleAge = 0;
-    unk_00[7] = -1;
-    unk_00[4] = -1;
-    unk_00[8] = -1;
-    unk_00[5] = -1;
-    unk_00[6] = -1;
-    unk_00[12] = -1;
-    unk_00[9] = -1;
-    unk_00[13] = -1;
-    unk_00[10] = -1;
-    unk_00[14] = -1;
-    unk_00[11] = -1;
-    unk_00[16] = -1;
-    unk_00[15] = -1;
+    emulationTimingMetrics[7] = -1;
+    emulationTimingMetrics[4] = -1;
+    emulationTimingMetrics[8] = -1;
+    emulationTimingMetrics[5] = -1;
+    emulationTimingMetrics[6] = -1;
+    emulationTimingMetrics[12] = -1;
+    emulationTimingMetrics[9] = -1;
+    emulationTimingMetrics[13] = -1;
+    emulationTimingMetrics[10] = -1;
+    emulationTimingMetrics[14] = -1;
+    emulationTimingMetrics[11] = -1;
+    emulationTimingMetrics[16] = -1;
+    emulationTimingMetrics[15] = -1;
     for (int i = 0; i != 4; i++)
         pendingLocations[i].reset();
 }
@@ -176,7 +176,7 @@ RegPoolEntry::RegPoolEntry()
     enabledPhysicalRegister = false;
     usedSlotMask = 0;
     nonBlockId = 0;
-    unk_2c = false;
+    tracksHotOutputPaths = false;
     assignedPhysicalRegister = 0;
 }
 

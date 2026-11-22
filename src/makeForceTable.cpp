@@ -14,7 +14,7 @@ static inline void copyShort(short &to, const short &from)
 }
 
 workTable *prepUta(Program *p, instStream *s, int loopSize, char smart);
-extern int g_080b33f0;
+extern int nextReservedInstructionKey;
 
 workTable *makeForceTable(Program *p, instStream *s)
 {

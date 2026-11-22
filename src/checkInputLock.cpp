@@ -1,11 +1,11 @@
 #include "os.h"
 #include "lock_shared.h"
 
-bool g_080de288;
+bool allowInputLockLoopWrapping;
 
 static inline bool canWrapInputLock(OperandLock *in)
 {
-    return in->unk_19 == 1;
+    return in->operandStatusCode == 1;
 }
 
 static inline void wrapInputRange(int &s, int &e)
@@ -30,7 +30,7 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
     int p = ((InstructionPosition *)pos)->linearRow;
 
     in->priority = 0;
-    if (in->unk_19 == 2) {
+    if (in->operandStatusCode == 2) {
         reportError("CheckInputLock::aa input\n");
         abortAfterError();
         return 0;
@@ -114,7 +114,7 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
                 return ret | 0x10;
             }
         } else if (lockRangesOverlap(s, e, ls, le)) {
-            if (g_080de288 && lsz && canWrapInputLock(in)) {
+            if (allowInputLockLoopWrapping && lsz && canWrapInputLock(in)) {
                 in->priority = 2;
                 ret |= 0x100;
             } else {
@@ -177,8 +177,8 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
     if (!out->referenceCount)
         lim = first;
     else {
-        int a = out->unk_48, b = out->unk_4a;
-        int d = out->unk_46;
+        int a = out->upperPipeConsumerCount, b = out->lowerPipeConsumerCount;
+        int d = out->eitherPipeConsumerCount;
         int hi = a, lo = b;
         if (a < b) {
             hi = b;

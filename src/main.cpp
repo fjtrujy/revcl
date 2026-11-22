@@ -61,8 +61,8 @@ void reportStalls(Program *p);
 extern int errorOccurred;
 extern char *currentOutputFileName;
 extern bool quietDiagnostics;
-extern bool g_080bbd99;
-extern bool g_080bbd9a;
+extern bool unhandledOptionQSeen;
+extern bool unhandledOptionPSeen;
 extern bool staggerMemoryAccess;
 struct CpuDef;
 extern CpuDef vuProcessorDefinition;
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
             reportWarning(" prune disabled (not) this options was deprecated, and now is disabled\n");
             break;
         case 'Q':
-            g_080bbd99 = true;
+            unhandledOptionQSeen = true;
             break;
         case 'S':
             reportInfo("stagger ram access...\n");
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
             newSyntax = true;
             break;
         case 'p':
-            g_080bbd9a = true;
+            unhandledOptionPSeen = true;
             break;
         case 'q':
             quietDiagnostics = true;

@@ -102,7 +102,7 @@ bool removeNops(Program *p, instStream *s)
                 RegPoolEntry *reg = op->assignedRegister;
                 int part = ol->componentIndex;
                 int lat = ol->cycleOffset;
-                if (reg->unk_2c) {
+                if (reg->tracksHotOutputPaths) {
                     int tv = in->baseIssueSpacing;
                     if (tv <= 6)
                         exitWithError("bad throught value in register\n");
@@ -131,7 +131,7 @@ bool removeNops(Program *p, instStream *s)
                 }
                 for (ol_s *u = op->parts[part].operandLocations.firstInternalLocation(); u && !u->isExt(); u = u->next) {
                     Instr *ui = u->instruction;
-                    if (operandAtLocation(u)->unk_0b && op->outputLatency > 1) {
+                    if (operandAtLocation(u)->externalBlockModeFlag && op->outputLatency > 1) {
                         int ul = ui->position.linearRow;
                         int tu = wt->ctime(ul);
                         if (tu <= tNow) {
@@ -161,7 +161,7 @@ bool removeNops(Program *p, instStream *s)
                     Operand *uo = operandAtLocation(u);
                     int ul = ui->position.linearRow;
                     int tu = wt->ctime(ul) - 1;
-                    if (!op->unk_0b && !uo->unk_0b && ul < m && tNow + lat > tu)
+                    if (!op->externalBlockModeFlag && !uo->externalBlockModeFlag && ul < m && tNow + lat > tu)
                         ok = false;
                 }
             }
@@ -181,7 +181,7 @@ bool removeNops(Program *p, instStream *s)
                             RegPoolEntry *w = registerOperand(o, 2);
                             if (o->reductionHazardMask)
                                 ok = false;
-                            if (w && !o->unk_0b) {
+                            if (w && !o->externalBlockModeFlag) {
                                 int t = base + o->outputLatency;
                                 if (t < tm) {
                                     int l2 = m;

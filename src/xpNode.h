@@ -8,7 +8,7 @@
 
 class xpNode {
 public:
-    char unk_00;
+    char unmatchedOpeningParentheses;
     unsigned char depth;
     unsigned char operatorType;
     unsigned char precedence;
