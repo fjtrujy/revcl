@@ -42,9 +42,9 @@ bool optVuta1(workTable *wt, wrangleCand *c)
     }
     if (!best)
         return false;
-    c->unk_00 = best;
-    c->unk_04 = (best->candidateAttemptCount >> 2) + best->candidateBaseRow;
-    c->unk_06 = (best->candidateAttemptCount >> 3) & 1;
+    c->candidateInstruction = best;
+    c->candidateRow = (best->candidateAttemptCount >> 2) + best->candidateBaseRow;
+    c->candidatePipe = (best->candidateAttemptCount >> 3) & 1;
     return true;
 }
 

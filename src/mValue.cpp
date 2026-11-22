@@ -7,10 +7,10 @@
 #include "mValue.h"
 #include "os.h"
 
-bool g_080b3088 = false;
-const char *g_080b308c =
+bool parseFloatImmediateMode = false;
+const char *immediateLiteralCharacters =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_@.[]";
-const char *g_080b3090[3] = { "0123456789", "0123456789abcdef", "01" };
+const char *immediateLiteralDigitsByBase[3] = { "0123456789", "0123456789abcdef", "01" };
 
 bool asciiCaseEqual(const char *a, const char *b);
 char *dupString(const char *s);
@@ -278,7 +278,7 @@ bool mValue::bitNot(mValue *src)
     return true;
 }
 
-const char *func_0804ca58(int type)
+const char *immediateValueTypeName(int type)
 {
     switch (type) {
     case 3: return "EXP_DATATYPE_FLOAT";
@@ -799,7 +799,7 @@ bool hasOnlyImmediateCharacters(const char *s)
     if (!s)
         return false;
     for (; *s; s++) {
-        const char *p = g_080b308c;
+        const char *p = immediateLiteralCharacters;
         while (*p) {
             if (*p == *s)
                 break;
@@ -837,7 +837,7 @@ bool mValue::parse(const char *s)
         case 'X':
             base = 1;
             radix = 16;
-            rtype = g_080b3088 ? FLOAT : UINT;
+            rtype = parseFloatImmediateMode ? FLOAT : UINT;
             start = s + 2;
             break;
         case 'b':
@@ -906,7 +906,7 @@ bool mValue::parse(const char *s)
         if (c == '_')
             skip = 1;
         if (!skip) {
-            const char *d = g_080b3090[base];
+            const char *d = immediateLiteralDigitsByBase[base];
             int idx;
             char ch;
             for (idx = 0; (ch = *d) != 0; d++, idx++)
@@ -956,13 +956,13 @@ bool mValue::makeNumeric()
 }
 
 char g_080bbda0[4096];
-int g_080bcda0;
+int immediateValueStringOffset;
 
 char *mValue::asChars()
 {
-    if (g_080bcda0 > 2048)
-        g_080bcda0 = 0;
-    char *p = g_080bbda0 + g_080bcda0;
+    if (immediateValueStringOffset > 2048)
+        immediateValueStringOffset = 0;
+    char *p = g_080bbda0 + immediateValueStringOffset;
     switch (type) {
     case INT:
         formatIntoBuffer(p, "%d", i);
@@ -981,7 +981,7 @@ char *mValue::asChars()
         formatIntoBuffer(p, "%s", str);
         break;
     }
-    g_080bcda0 += mstrlen(p) + 1;
+    immediateValueStringOffset += mstrlen(p) + 1;
     return p;
 }
 

@@ -99,7 +99,7 @@ bool workTable::doPostOpt(int rawMode)
         }
         case 3:
         case 4:
-            assignLength(length, rawLengthBits(pw->func_08072eec()));
+            assignLength(length, rawLengthBits(pw->getRawOrSyntheticLogicalLength()));
             break;
         }
         if (!setTableRawMode(rawMode)) {
@@ -196,7 +196,7 @@ bool workTable::doPostOpt(int rawMode)
                         reportError("i_lid set not in loop\n");
                         return false;
                     }
-                    int rebuilt = lid * g_080b336c;
+                    int rebuilt = lid * activeLoopSize;
                     rebuilt += row;
                     if (iloc != rebuilt) {
                         reportError("badly formed iloc in instruction\n");
@@ -253,7 +253,7 @@ bool workTable::doPostOpt(int rawMode)
             reportError("bad loop size for postOpt\n");
             return false;
         }
-        unk_0c = *(int *)&length;
+        declaredRawLength = *(int *)&length;
     }
     return true;
 }
@@ -341,8 +341,8 @@ bool instStream::setOptTable(workTable *nt)
     old->clearClones();
     workTablePtr = nt;
     optimizedTable = nt;
-    if (nt->unk_00 >= 0)
-        appliedOptimizationMask |= 1 << nt->unk_00;
+    if (nt->optimizerIndex >= 0)
+        appliedOptimizationMask |= 1 << nt->optimizerIndex;
     if (nt->getLoopSize())
         hasLoopOptimization = 1;
     return true;

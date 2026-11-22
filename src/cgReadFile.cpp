@@ -7,19 +7,19 @@
 
 #include "os.h"
 
-extern char *outName_080b303c;
+extern char *currentOutputFileName;
 
 void abortAfterError()
 {
-    if (outName_080b303c)
-        printf("ERROR: something went wrong, making '%s' vcl's outta here.\n", outName_080b303c);
+    if (currentOutputFileName)
+        printf("ERROR: something went wrong, making '%s' vcl's outta here.\n", currentOutputFileName);
     else
         puts("ERROR: something went wrong, vcl's outta here.");
     OS_End();
     exit(-1);
 }
 
-char *func_0804aef0(const char *path, int *len, bool nulTerm)
+char *readFileIntoBuffer(const char *path, int *len, bool nulTerm)
 {
     bool ok = false;
     char *buf = 0;
@@ -57,7 +57,7 @@ char *func_0804aef0(const char *path, int *len, bool nulTerm)
     return buf;
 }
 
-char *func_0804aff0(int fd, int *len, bool nulTerm)
+char *readDescriptorIntoBuffer(int fd, int *len, bool nulTerm)
 {
     int ok = 0;
     int used = 0;

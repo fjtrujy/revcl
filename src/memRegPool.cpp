@@ -4,14 +4,14 @@
 
 memRegPool::memRegPool()
 {
-    unk_0e = 2;
+    poolKind = 2;
 }
 
 memRegPool::~memRegPool()
 {
 }
 
-bool func_08088f20(RegPool *pool, const char *base, int size)
+bool initializeMemoryRegisterArea(RegPool *pool, const char *base, int size)
 {
     char buf[128];
 
@@ -48,7 +48,7 @@ bool func_08088f20(RegPool *pool, const char *base, int size)
     return true;
 }
 
-bool memRegPool::func_08088e54(workTable *)
+bool memRegPool::assignRegistersForWorkTable(workTable *)
 {
     return true;
 }
@@ -58,7 +58,7 @@ bool memRegPool::assignExt(instStream *)
     return true;
 }
 
-bool memRegPool::func_08088e6c(instStream *, RegPoolEntry *)
+bool memRegPool::discardDisjointExternalRegister(instStream *, RegPoolEntry *)
 {
     return true;
 }

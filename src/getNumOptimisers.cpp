@@ -11,7 +11,7 @@
 typedef bool (*wrangleFunc)(workTable *, int *);
 
 
-const char *g_080de730;
+const char *currentOptimizerName;
 
 struct wrangleCand;
 bool selectDumbSchedulingCandidate(workTable *wt, wrangleCand *c);
@@ -81,13 +81,13 @@ bool doLinear(Program *p, int smart)
         for (; i >= 0 && (i != 0 || !best); i--) {
             optimiser *o = &optTable[i];
             if (o->flags & 2) {
-                g_080de730 = o->name;
+                currentOptimizerName = o->name;
                 workTable *nt = prepUta(p, s, 0, 1);
                 if (!nt) {
                     reportError("failed to prepUta istream\n");
                     return false;
                 }
-                nt->unk_00 = i;
+                nt->optimizerIndex = i;
                 if (!statReset(p)) {
                     reportError("failed to reset stats for cpu\n");
                     return false;
@@ -99,10 +99,10 @@ bool doLinear(Program *p, int smart)
                 bool ok = false;
                 switch (o->wmode) {
                 case 0:
-                    ok = func_0808061c(nt, o->func);
+                    ok = scheduleMidTableMode0(nt, o->func);
                     break;
                 case 1:
-                    ok = func_0807f360(nt, o->func);
+                    ok = scheduleMidTableMode1(nt, o->func);
                     break;
                 default:
                     reportError("bad wmode\n");
@@ -196,7 +196,7 @@ bool doLoop(Program *p, int smart)
                 s->optimizationRecords[i].instructionCount = -1;
                 s->optimizationRecords[i].candidateLoopId = -1;
                 s->optimizationRecords[i].mainLoopId = -1;
-                g_080de730 = optTable[i].name;
+                currentOptimizerName = optTable[i].name;
                 if (optTable[i].flags & 1) {
                     const char *why = loopStallReason(s);
                     reportInfo("lpgen[%d](limit: %s) - '%s' flow %s\n",
@@ -206,7 +206,7 @@ bool doLoop(Program *p, int smart)
                         reportError("failed to prepUta istream\n");
                         return false;
                     }
-                    nt->unk_00 = i;
+                    nt->optimizerIndex = i;
                     if (!statReset(p)) {
                         reportError("failed to reset stats for cpu\n");
                         return false;
@@ -220,10 +220,10 @@ bool doLoop(Program *p, int smart)
                     bool ok = false;
                     switch (optTable[i].wmode) {
                     case 0:
-                        ok = func_0808061c(nt, optTable[i].func);
+                        ok = scheduleMidTableMode0(nt, optTable[i].func);
                         break;
                     case 1:
-                        ok = func_0807f360(nt, optTable[i].func);
+                        ok = scheduleMidTableMode1(nt, optTable[i].func);
                         break;
                     default:
                         reportError("bad wmode\n");
@@ -407,7 +407,7 @@ bool optimizeProgramScheduling(Program *p, int smart, bool sizeReduce)
                 return false;
             }
             if (s->usesFreeRawLayout()) {
-                if (!func_0807e740(p, wt, s->unk_261, s->unk_262)) {
+                if (!reduceLinearSchedule(p, wt, s->allowUpwardReduction, s->allowDownwardReduction)) {
                     reportError("failed to linear reduce table\n");
                     return false;
                 }

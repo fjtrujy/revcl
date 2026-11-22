@@ -11,27 +11,27 @@ bool setRange(int start, int end, int lsz);
 int countSetBits(unsigned int);
 int setRangeFrom(workTable *t);
 
-extern int maxParts_080bce20;
-extern int nRegs_080bce24;
-extern int tStart_080bce28;
-extern int tEnd_080bce2c;
-extern char aTab_080bce40[0x20000];
-extern char tTab_080dce40[0x1000];
-extern char regMask_080dde40[32];
+extern int maximumAllocationParts;
+extern int allocationRegisterCount;
+extern int allocationTimelineStart;
+extern int allocationTimelineEnd;
+extern char allocationRegisterTimeline[0x20000];
+extern char candidateRegisterTimeline[0x1000];
+extern char allocationRegisterMask[32];
 
 void clearRegMask()
 {
-    clearRawBytes(regMask_080dde40, 32);
+    clearRawBytes(allocationRegisterMask, 32);
 }
 
 bool initRegMask(RegPool *pool)
 {
     RegPoolEntry *e = pool->registerEntries;
-    int *mp = &maxParts_080bce20;
-    clearRawBytes(regMask_080dde40, 32);
+    int *mp = &maximumAllocationParts;
+    clearRawBytes(allocationRegisterMask, 32);
     for (int i = 0; i != pool->entryCount; i++, e++) {
-        if (!e->unk_16)
-            regMask_080dde40[i] = (1 << e->partCount) - 1;
+        if (!e->enabledPhysicalRegister)
+            allocationRegisterMask[i] = (1 << e->partCount) - 1;
         if (e->partCount > *mp)
             *mp = e->partCount;
     }
@@ -41,7 +41,7 @@ bool initRegMask(RegPool *pool)
 int firstEmptyMask(RegPool *pool)
 {
     for (int i = 0; i != pool->entryCount; i++)
-        if (!regMask_080dde40[i])
+        if (!allocationRegisterMask[i])
             return i;
     return -1;
 }

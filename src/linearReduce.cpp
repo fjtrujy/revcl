@@ -6,10 +6,10 @@ class Program;
 
 int setRangeFrom(workTable *t);
 bool moveLocks(Instr *i, InstructionPosition *pos);
-int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
-int func_0807dc44(workTable *wt, Instr *i, InstructionPosition *pos);
+int checkInstructionPlacementConstraints(workTable *wt, Instr *i, InstructionPosition *pos);
 bool setRange(int start, int end, int lsz);
 int pullUp(workTable *wt);
 int dragDown(workTable *wt);
@@ -25,7 +25,7 @@ static inline void dumpLinearReduce(Program *p)
     dumpProgramStreamsAndRegisters(p, 0);
 }
 
-bool func_0807e740(Program *p, workTable *wt, unsigned char up, unsigned char down)
+bool reduceLinearSchedule(Program *p, workTable *wt, unsigned char up, unsigned char down)
 {
     if (!isPipeMode(wt))
         return true;
@@ -91,7 +91,7 @@ bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl)
 
     for (; s_test != e_test; s_test += dl) {
         pos.setFromLinearRow(s_test);
-        if (!func_0807e130(wt, in, &pos, upwards)) {
+        if (!checkPlacementInAllowedPipelines(wt, in, &pos, upwards)) {
             found = true;
             break;
         }

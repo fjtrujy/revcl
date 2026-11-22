@@ -147,9 +147,9 @@ public:
     instStream *nextResolvedStream;
     instStream *nextActiveStream;
     char participatesInStall;      // set when stream takes part in a stall
-    char unk_261;
-    char unk_262;
-    char unk_263;
+    char allowUpwardReduction;
+    char allowDownwardReduction;
+    char reductionSkipped;
     char reachableFromEntry;      // reached top (accessible)
     char mergeIntoSuccessor;      // collapse into successor (tidy)
     char unk_266[2];

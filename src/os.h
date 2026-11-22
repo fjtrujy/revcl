@@ -7,17 +7,17 @@ struct Tool {
     const char *cmd;
 };
 
-extern Tool tools_080b301c[3];
+extern Tool preprocessorToolTable[3];
 
 bool OS_Init();
 bool setWatchdog(char *flag, unsigned int seconds);
 bool clearWatchdog();
 
-int func_0804ab6c(const char *name, char *pathOut);
+int createTemporaryFile(const char *name, char *pathOut);
 int OS_End();
 void suppressFurtherErrors();
-char *func_0804aef0(const char *path, int *len, bool flag);
-char *func_0804aff0(int fd, int *len, bool nulTerm);
+char *readFileIntoBuffer(const char *path, int *len, bool flag);
+char *readDescriptorIntoBuffer(int fd, int *len, bool nulTerm);
 int reportMessage(const char *fmt, ...);
 int reportWarning(const char *fmt, ...);
 int reportInfo(const char *fmt, ...);

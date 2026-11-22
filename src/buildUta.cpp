@@ -6,7 +6,7 @@
 #include "Processor.h"
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
@@ -51,7 +51,7 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
             if (!s->processCmdSynth(in)) {
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
-                errorOccurred = !quiet_080bbd98;
+                errorOccurred = !quietDiagnostics;
                 dumpUtaInstruction(in);
                 errorOccurred = saved;
             }

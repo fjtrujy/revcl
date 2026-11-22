@@ -9,7 +9,7 @@ Operand *getEA(Instr *i);
 bool sameEA(Instr *a, Instr *b);
 bool BuildfDepList(workTable *wt, bool force, bool);
 bool tagsMatch(Instr *a, Instr *b);
-bool func_08065fd4(Instr *in, Instr *other);
+bool addAdditionalClonePredecessors(Instr *in, Instr *other);
 bool copyCloneFdeps(Instr *in, ol_s *o, olList *dst);
 
 static inline bool fdep_LinkInline(Instr *pre, Instr *post)
@@ -30,7 +30,7 @@ static inline bool fdep_LinkInline(Instr *pre, Instr *post)
 }
 
 
-bool func_0806558c(Instr *i, int *row)
+bool calculateEarliestDependencyRow(Instr *i, int *row)
 {
     *row = 0;
     for (ol_s *o = i->predecessorDependencies.head; o; o = o->next) {
@@ -52,7 +52,7 @@ bool func_0806558c(Instr *i, int *row)
 
 
 
-bool func_080655e8(Instr *i, int *row)
+bool calculateLatestDependencyRow(Instr *i, int *row)
 {
     *row = 30000;
     for (ol_s *o = i->successorDependencies.head; o; o = o->next) {
@@ -184,7 +184,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                                     for (ol_s *l = op->parts[p].operandLocations.head; l; l = l->next) {
                                         Instr *x = l->instruction;
                                         if (x)
-                                            func_08065fd4(in, x);
+                                            addAdditionalClonePredecessors(in, x);
                                     }
                         }
                     }
@@ -321,7 +321,7 @@ bool copyCloneFdeps(Instr *, ol_s *o, olList *dst)
     return true;
 }
 
-bool func_08065fd4(Instr *in, Instr *other)
+bool addAdditionalClonePredecessors(Instr *in, Instr *other)
 {
     in->dumpOperandDiagnostics(false);
     other->dumpOperandDiagnostics(false);

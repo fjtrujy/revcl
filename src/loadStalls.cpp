@@ -30,7 +30,7 @@ bool loadStalls(Program *p)
             reportError("couldn't get ie for instruction\n");
             return 0;
         }
-        if (ie->entries[loc->pipelineIndex].unk_00 != in) {
+        if (ie->entries[loc->pipelineIndex].instruction != in) {
             reportError("instruction wasn't where I thought it was\n");
             return 0;
         }

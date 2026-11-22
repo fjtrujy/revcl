@@ -77,7 +77,7 @@ static inline void ol_s_copy_inl(ol_s *dst, ol_s *src)
         dst->instruction = src->instruction;
         dst->operandIndex = src->operandIndex;
         dst->componentIndex = src->componentIndex;
-        dst->unk_12 = src->unk_12;
+        dst->cycleOffset = src->cycleOffset;
     }
 }
 
@@ -89,7 +89,7 @@ void ol_s::copyLocationFrom(ol_s *src)
         instruction = src->instruction;
         operandIndex = src->operandIndex;
         componentIndex = src->componentIndex;
-        unk_12 = src->unk_12;
+        cycleOffset = src->cycleOffset;
     }
 }
 
@@ -227,7 +227,7 @@ ol_s *olList::insertExternalLocation(ol_s *src)
     ol_s *prev = 0;
     ol_s *p;
     for (p = head; p; p = p->next) {
-        if (src->unk_12 < p->unk_12)
+        if (src->cycleOffset < p->cycleOffset)
             break;
         prev = p;
     }
@@ -248,7 +248,7 @@ void markLocationExternallyUsed(ol_s *ol)
     ol->stateFlags |= 2;
 }
 
-int func_080585a8(ol_s *ol)
+int hasRawOrImmediateInstructionAtLocation(ol_s *ol)
 {
     return ol->instruction->hasRawTableOrImmediateToken();
 }

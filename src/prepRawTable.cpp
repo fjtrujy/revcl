@@ -29,7 +29,7 @@ bool workTable::prepRawTable()
     completedInstructions.reset();
     pendingInstructions.reset();
     moveListHead = 0;
-    unk_50 = 0;
+    pendingMoveCount = 0;
     mainLoopId = 0;
     resetCounts();
     if (rangeStart) {
@@ -55,7 +55,7 @@ bool workTable::prepRawTable()
             return 0;
         }
         for (int p = 0; p != 2; p++) {
-            Instr *in = ie->entries[p].unk_00;
+            Instr *in = ie->entries[p].instruction;
             if (!in)
                 continue;
             if (in->syntheticKind) {

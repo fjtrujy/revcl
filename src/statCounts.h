@@ -5,7 +5,7 @@ class Instr;
 
 class statCounts {
 public:
-    int unk_00[9];
+    int resourceInstructionCounts[9];
 
     void clear();
     bool add(Instr *in);

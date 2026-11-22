@@ -193,7 +193,7 @@ bool dynCalcStats(workTable *wt)
                         if (!isRegLock(par)) {
                             Instr *pi = par->ownerInstr();
                             int lat;
-                            if (s->unk_15)
+                            if (s->latencyModeFlag)
                                 lat = 1;
                             else
                                 lat = par->issueLatency;
@@ -220,7 +220,7 @@ bool dynCalcStats(workTable *wt)
 void dynDumpStats(Block *b)
 {
     int saved = errorOccurred;
-    errorOccurred = !quiet_080bbd98;
+    errorOccurred = !quietDiagnostics;
     reportInfo("dynDumpStats - start\n");
     int n = 0;
     for (Instr *in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {

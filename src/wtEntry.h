@@ -10,7 +10,7 @@ bool addFreeMove(Instr *in);
 
 class wtEntry {
 public:
-    Instr *unk_00;
+    Instr *instruction;
 
     wtEntry();
     ~wtEntry();
@@ -18,18 +18,18 @@ public:
 };
 
 struct wtEntryInl {
-    Instr *unk_00;
+    Instr *instruction;
 
-    wtEntryInl() { unk_00 = 0; }
+    wtEntryInl() { instruction = 0; }
     ~wtEntryInl()
     {
-        if (unk_00 && !((VclPtrWord)unk_00 & 1)) {
-            if (unk_00->moveRecordWord)
-                addFreeMove(unk_00);
+        if (instruction && !((VclPtrWord)instruction & 1)) {
+            if (instruction->moveRecordWord)
+                addFreeMove(instruction);
             else
-                delete unk_00;
+                delete instruction;
         }
-        unk_00 = 0;
+        instruction = 0;
     }
     bool clearInstruction() { return ((wtEntry *)this)->clearInstruction(); }
     operator wtEntry *() { return (wtEntry *)this; }

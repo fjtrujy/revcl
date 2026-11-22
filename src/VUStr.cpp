@@ -71,22 +71,22 @@ int decodeComponentMaskLetters(const char *s)
     return mask;
 }
 
-int g_080b3240 = 0;
-char g_080bcdc0[32];
-char g_080bcde0[32];
+int componentMaskStringOffset = 0;
+char dottedComponentMaskBuffer[32];
+char componentMaskTextBuffer[32];
 
 char *formatComponentMaskLetters(int mask)
 {
-    if (g_080b3240 > 24)
-        g_080b3240 = 0;
-    char *start = g_080bcde0 + g_080b3240;
+    if (componentMaskStringOffset > 24)
+        componentMaskStringOffset = 0;
+    char *start = componentMaskTextBuffer + componentMaskStringOffset;
     char *p = start;
     if (mask & 1) *p++ = 'X';
     if (mask & 2) *p++ = 'Y';
     if (mask & 4) *p++ = 'Z';
     if (mask & 8) *p++ = 'W';
     *p = 0;
-    g_080b3240 = p - g_080bcde0 + 1;
+    componentMaskStringOffset = p - componentMaskTextBuffer + 1;
     return start;
 }
 
@@ -99,7 +99,7 @@ inline char *VUStr_dot_mask(char *buf, int mask)
 
 char *formatDottedComponentMask(int mask)
 {
-    return VUStr_dot_mask(g_080bcdc0, mask);
+    return VUStr_dot_mask(dottedComponentMaskBuffer, mask);
 }
 
 int readTrailingComponentMask(const char *s)
@@ -204,11 +204,11 @@ bool areInstructionModifiersAllowed(int mods, unsigned char mode, bool flag)
     return (~allowed & mods) == 0;
 }
 
-char g_080bce00[32];
+char instructionModifierTextBuffer[32];
 
 char *formatInstructionModifiers(int mods)
 {
-    char *p = g_080bce00;
+    char *p = instructionModifierTextBuffer;
     if (mods)
         *p++ = '[';
     if (mods & 4) *p++ = 'D';
@@ -218,5 +218,5 @@ char *formatInstructionModifiers(int mods)
     if (mods & ~15) *p++ = '?';
     if (mods) *p++ = ']';
     *p = 0;
-    return g_080bce00;
+    return instructionModifierTextBuffer;
 }

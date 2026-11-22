@@ -9,7 +9,7 @@
 #include "ubsList.h"
 #include "os.h"
 
-extern char *stallNames_080b3244[3];
+extern char *stallTypeNames[3];
 int getOpcodeId(iInfo *ii);
 iInfo *findOpcodeInfoByMnemonic(const char *name, bool exact);
 

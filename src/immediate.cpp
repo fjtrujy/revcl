@@ -3,8 +3,8 @@
 #include "xpTree_inline.h"
 #include "os.h"
 
-const char *func_0804ca58(int type);
-extern bool g_080b3088;
+const char *immediateValueTypeName(int type);
+extern bool parseFloatImmediateMode;
 
 extern const char parseImmediateError[];
 extern const char evalImmediateError[];
@@ -13,16 +13,16 @@ extern const char maddImmediateInputError[];
 
 const char *immediateTypeName(unsigned char t)
 {
-    return func_0804ca58(decodeImmediateCategory(t));
+    return immediateValueTypeName(decodeImmediateCategory(t));
 }
 
 bool parseImmediate(const char *s, unsigned char type, mValue *v)
 {
     v->clear();
-    g_080b3088 = (type == 0x40);
+    parseFloatImmediateMode = (type == 0x40);
     int t = decodeImmediateCategory(type);
     if (t == 4) {
-        g_080b3088 = false;
+        parseFloatImmediateMode = false;
         return v->setString(s);
     }
     xpTree tree;
@@ -41,16 +41,16 @@ bool parseImmediate(const char *s, unsigned char type, mValue *v)
             } else {
                 v->dump();
                 if (!tree.evaluate(v, t)) {
-                    reportError(evalImmediateError, s, func_0804ca58(t));
+                    reportError(evalImmediateError, s, immediateValueTypeName(t));
                     goto fail;
                 }
             }
-            g_080b3088 = false;
+            parseFloatImmediateMode = false;
             return true;
         }
     }
 fail:
-    g_080b3088 = false;
+    parseFloatImmediateMode = false;
     return false;
 }
 

@@ -56,14 +56,14 @@ int dragDown(workTable *wt)
                                 OpSlot *sl = &op->parts[j];
                                 if ((op->componentMask >> j) & 1) {
                                     int e = wt->rangeEnd - 1;
-                                    if (sl->unk_2e)
-                                        e = sl->unk_3e - sl->issueLatency;
+                                    if (sl->scheduledConsumerCount)
+                                        e = sl->earliestConsumerFreeCycle - sl->issueLatency;
                                     if (e < mn)
                                         mn = e;
                                 }
                             }
                         }
-                        if (registerOperand(op, 1) && op->unk_28)
+                        if (registerOperand(op, 1) && op->reductionHazardMask)
                             mn = rl;
                     }
                     if (mn > rl) {

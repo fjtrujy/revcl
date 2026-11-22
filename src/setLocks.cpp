@@ -4,19 +4,19 @@
 #include "RegPool.h"
 
 class Block;
-bool func_0806558c(Instr *i, int *row);
-bool func_080655e8(Instr *i, int *row);
+bool calculateEarliestDependencyRow(Instr *i, int *row);
+bool calculateLatestDependencyRow(Instr *i, int *row);
 bool unresolveMove(Block *blk, Instr *mv);
 bool UnlinkFromToDo(Block *blk, Instr *n);
 bool AddDone_Tail(Block *blk, Instr *n);
 bool UnlinkFromDone(Block *blk, Instr *n);
 bool AddToDo_Head(Block *blk, Instr *n);
 bool setRange(int start, int end, int lsz);
-int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
-int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos);
-int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos);
+int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos);
+int pullLatencyWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos);
 int countSetBits(unsigned int x);
-extern bool stagger_080b33ac;
+extern bool staggerMemoryAccess;
 
 static inline void dumpLockInstruction(Instr *in)
 {
@@ -161,11 +161,11 @@ int checkLocks(Instr *in, short *pos, int *minPos)
                 int rc = ll->checkOutputLock(s, pos, minPos);
                 ret |= rc;
                 if (rc & 0x22000) {
-                    if (!g_080b336c) {
+                    if (!activeLoopSize) {
                         reportError("late extern, loop overrun, but no loop\n");
                         abortAfterError();
                     }
-                    int d = *pos + s->issueLatency - g_080b336c;
+                    int d = *pos + s->issueLatency - activeLoopSize;
                     if (d > 0) {
                         ll->unk_00 = d;
                         Instr *e = ll->earliestExt();
@@ -352,17 +352,17 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
     if (e < in->externalInputPairedConstraint)
         e = in->externalInputPairedConstraint;
     int v = e;
-    if (r4 < v + g_080b3370) {
+    if (r4 < v + activeSchedulingRangeStart) {
         int m = *minPos;
         int next;
-        if (!g_080b336c)
+        if (!activeLoopSize)
             next = v;
         else {
-            int rem = v % g_080b336c;
-            int q = m / g_080b336c;
-            if (rem <= m % g_080b336c)
+            int rem = v % activeLoopSize;
+            int q = m / activeLoopSize;
+            if (rem <= m % activeLoopSize)
                 q++;
-            next = q * g_080b336c + rem;
+            next = q * activeLoopSize + rem;
         }
         *minPos = next;
         return 0x10000;
@@ -371,11 +371,11 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
     short l = in->externalOutputConstraint;
     if (l < in->externalOutputPairedConstraint)
         l = in->externalOutputPairedConstraint;
-    if (l && g_080b3374 >= 0 && g_080b3374 - r4 <= l) {
+    if (l && activeSchedulingRangeEnd >= 0 && activeSchedulingRangeEnd - r4 <= l) {
         *minPos = 30000;
         return 0x10000;
     }
-    if (stagger_080b33ac && in->ramAccessType && (bool)(r4 & 1)) {
+    if (staggerMemoryAccess && in->ramAccessType && (bool)(r4 & 1)) {
         *minPos = row + 1;
         return 0x10000;
     }
@@ -392,7 +392,7 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
 
     int fr = 0;
     if (!in->hasExtraPredecessors) {
-        if (!func_0806558c(in, &fr)) {
+        if (!calculateEarliestDependencyRow(in, &fr)) {
             reportError("check fdeps failed\n");
             exitAfterCleanup(-1);
             return 0x80000000;
@@ -445,7 +445,7 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
     p = pos->getPipe();
     s->linearRow = b;
     s->pipelineIndex = p;
-    row->entries[p].unk_00 = in;
+    row->entries[p].instruction = in;
     b = setLocks(in);
     if (!(char)b) {
         reportError("DoInsert: failed to set locks in instruction insert\n");
@@ -532,7 +532,7 @@ bool reduceExtents(workTable *wt)
                                 cnt++;
                                 OpSlot *s = &op->parts[k];
                                 if (s->getRefCount() != 0) {
-                                    int e = s->unk_3e;
+                                    int e = s->earliestConsumerFreeCycle;
                                     if (e < minEnd)
                                         minEnd = e;
                                 }
@@ -548,7 +548,7 @@ bool reduceExtents(workTable *wt)
                     bool found = false;
                     for (; t > lo; t--) {
                         pos.setFromLinearRow(t);
-                        if (!func_0807e130(wt, in, &pos, false)) {
+                        if (!checkPlacementInAllowedPipelines(wt, in, &pos, false)) {
                             found = true;
                             break;
                         }
@@ -579,8 +579,8 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
 {
     if (!wt->loopSize)
         return 0;
-    func_0807de00(wt, in, pos);
-    func_0807e1f8(wt, in, pos);
+    pullSpecialRegisterWritersEarlier(wt, in, pos);
+    pullLatencyWritersEarlier(wt, in, pos);
     int total = 0;
     int n;
     do {
@@ -601,7 +601,7 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 int start = pos->linearRow - back;
                 if (!back)
                     start = oi->position.linearRow + 1;
-                if (!par->unk_15)
+                if (!par->latencyModeFlag)
                     start -= par->issueLatency;
                 bool single = true;
                 if (oi->unk_13d1) {
@@ -636,7 +636,7 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 cur.pipelineIndex = np.pipelineIndex;
                 for (; start <= maxPos; start++) {
                     cur.setFromLinearRow(start);
-                    if (!func_0807e130(wt, oi, &cur, false)) {
+                    if (!checkPlacementInAllowedPipelines(wt, oi, &cur, false)) {
                         np.linearRow = cur.linearRow;
                         np.loopRow = cur.loopRow;
                         np.loopIteration = cur.loopIteration;
@@ -679,7 +679,7 @@ RegisterPartLockList *workTable::getLockList(RegPoolEntry *reg, int part)
         reportError("failed to get new locklist\n");
         abortAfterError();
     }
-    unk_20++;
+    registerLockListCount++;
     registerLockLists = ll;
     if (!ll->setRepReg(reg)) {
         reportError("failed to set representative reg\n");
@@ -689,7 +689,7 @@ RegisterPartLockList *workTable::getLockList(RegPoolEntry *reg, int part)
     return ll;
 }
 
-int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
+int checkInstructionPlacementConstraints(workTable *wt, Instr *in, InstructionPosition *pos)
 {
     int row = pos->linearRow;
     int pipe = pos->pipelineIndex;
@@ -698,15 +698,15 @@ int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
     short e = in->externalInputConstraint;
     if (e < in->externalInputPairedConstraint)
         e = in->externalInputPairedConstraint;
-    if (r4 < e + g_080b3370)
+    if (r4 < e + activeSchedulingRangeStart)
         return 0x10000;
 
     short l = in->externalOutputConstraint;
     if (l < in->externalOutputPairedConstraint)
         l = in->externalOutputPairedConstraint;
-    if (l && g_080b3374 >= 0 && g_080b3374 - r4 <= l)
+    if (l && activeSchedulingRangeEnd >= 0 && activeSchedulingRangeEnd - r4 <= l)
         return 0x10000;
-    if (stagger_080b33ac && in->ramAccessType && (bool)(r4 & 1))
+    if (staggerMemoryAccess && in->ramAccessType && (bool)(r4 & 1))
         return 0x10000;
 
     if (wt->loopSize) {
@@ -718,7 +718,7 @@ int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
 
     if (!in->hasExtraPredecessors) {
         int fr = 0;
-        if (!func_0806558c(in, &fr)) {
+        if (!calculateEarliestDependencyRow(in, &fr)) {
             reportError("check fdeps failed\n");
             exitAfterCleanup(-1);
             return 0x80000000;
@@ -727,7 +727,7 @@ int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
             return 0x100000;
     }
     int lr = 30000;
-    if (!func_080655e8(in, &lr)) {
+    if (!calculateLatestDependencyRow(in, &lr)) {
         reportError("check fdeps failed\n");
         exitAfterCleanup(-1);
         return 0x80000000;
@@ -743,7 +743,7 @@ int func_0807dc44(workTable *wt, Instr *in, InstructionPosition *pos)
     return canMoveLocks(in, &pos->linearRow);
 }
 
-int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
+int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos)
 {
     int row = in->position.getRow() < 0 ? pos->getRow() : in->position.getRow();
     if (row < 0) {
@@ -775,7 +775,7 @@ int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
                 dest.setFromLinearRow(t);
                 for (; oiRow < t; t--) {
                     trial.setFromLinearRow(t);
-                    if (!func_0807e130(wt, oi, &trial, true)) {
+                    if (!checkPlacementInAllowedPipelines(wt, oi, &trial, true)) {
                         dest.linearRow = trial.linearRow;
                         dest.loopRow = trial.loopRow;
                         dest.loopIteration = trial.loopIteration;
@@ -804,14 +804,14 @@ int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
     return 1;
 }
 
-int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards)
+int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards)
 {
     int result = 0;
     if (in->permittedPipelineMask == 3) {
         if (upwards) {
             for (int i = 0; i != 2; i++) {
                 pos->setInstructionPipe(i);
-                int r = func_0807dc44(wt, in, pos);
+                int r = checkInstructionPlacementConstraints(wt, in, pos);
                 if (!r)
                     return 0;
                 result |= r;
@@ -819,7 +819,7 @@ int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwar
         } else {
             for (int i = 1; i >= 0; i--) {
                 pos->setInstructionPipe(i);
-                int r = func_0807dc44(wt, in, pos);
+                int r = checkInstructionPlacementConstraints(wt, in, pos);
                 if (!r)
                     return 0;
                 result |= r;
@@ -828,10 +828,10 @@ int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwar
         return result;
     }
     pos->setInstructionPipe(in->position.getPipe());
-    return func_0807dc44(wt, in, pos);
+    return checkInstructionPlacementConstraints(wt, in, pos);
 }
 
-int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos)
+int pullLatencyWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos)
 {
     int row = in->position.getRow() < 0 ? pos->getRow() : in->position.getRow();
     if (row < 0) {
@@ -847,7 +847,7 @@ int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos)
             if ((op->componentMask >> k) & 1) {
                 OpSlot *s = &op->parts[k];
                 OperandLock *par = s->getParent();
-                if (par->unk_22 != 0)
+                if (par->activeReferenceCount != 0)
                     continue;
                 Instr *oi = par->ownerInstr();
                 if (!oi)
@@ -864,7 +864,7 @@ int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos)
                 dest.setFromLinearRow(t);
                 for (; oiRow < t; t--) {
                     trial.setFromLinearRow(t);
-                    if (!func_0807e130(wt, oi, &trial, true)) {
+                    if (!checkPlacementInAllowedPipelines(wt, oi, &trial, true)) {
                         dest.linearRow = trial.linearRow;
                         dest.loopRow = trial.loopRow;
                         dest.loopIteration = trial.loopIteration;

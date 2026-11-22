@@ -6,12 +6,12 @@
 
 class VisitCache {
 public:
-    unsigned *unk_00;   // table, rows of unk_04 words
-    int unk_04;         // words per row
-    int unk_08;         // bits per row
-    int unk_0c;         // allocated rows
-    int unk_10;         // current record
-    bool unk_14;        // record started
+    unsigned *recordData;
+    int wordsPerRecord;
+    int bitsPerRecord;
+    int recordCapacity;
+    int recordCount;
+    bool recordStarted;
 
     VisitCache();
     ~VisitCache();

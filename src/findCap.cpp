@@ -8,7 +8,7 @@ bool setRange(int start, int end, int lsz);
 bool moveLocks(Instr *i, InstructionPosition *pos);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
 int latestInsert(workTable *wt, Instr *in, bool *found);
-int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 int countSetBits(unsigned int x);
 RegPoolEntry *getZeroReg(unsigned int type);
 
@@ -25,12 +25,12 @@ static inline bool isPoolZero(RegPool *p, RegPoolEntry *r) { return r == p->zero
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask)
 {
     g_080de73c = wt;
-    g_080de744 = 0;
+    selectedCapRegister = 0;
     *capReg = 0;
     Operand *op = &in->operands[opIdx];
     int cap = -1;
     g_080de734 = 0;
-    g_080de748 = 0;
+    selectedCapMask = 0;
     *capMask = 0;
     g_080de738 = 0;
     g_080de740 = 0;
@@ -39,12 +39,12 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     switch (reg->registerIndex) {
     case 52:
         cap = 0x73;
-        g_080de744 = findRegisterByGlobalIndex(51);
-        g_080de748 = 1;
+        selectedCapRegister = findRegisterByGlobalIndex(51);
+        selectedCapMask = 1;
         break;
     case 50:
-        g_080de744 = reg;
-        g_080de748 = 1;
+        selectedCapRegister = reg;
+        selectedCapMask = 1;
         cap = 0x74;
         break;
     case 55: case 57: case 59: {
@@ -64,7 +64,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
             int i;
             for (i = 0; i != 32; i++) {
                 RegPoolEntry *e = pool->findByRegisterIndex(i);
-                mask[i] = (e->unk_16 && e->allocatable) ? in->operands[0].componentMask : 0;
+                mask[i] = (e->enabledPhysicalRegister && e->allocatable) ? in->operands[0].componentMask : 0;
             }
             mask[0] = 0;
             for (regUse *ru = wt->registerUses.head; ru; ru = ru->next) {
@@ -90,16 +90,16 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
                 int n = countSetBits(m);
                 if (n > best) {
                     RegPoolEntry *e = pool->findByRegisterIndex(i);
-                    g_080de748 = m;
-                    g_080de744 = e;
+                    selectedCapMask = m;
+                    selectedCapRegister = e;
                     best = n;
                 }
             }
         } else {
-            g_080de748 = in->operands[0].componentMask;
-            g_080de744 = r0;
+            selectedCapMask = in->operands[0].componentMask;
+            selectedCapRegister = r0;
         }
-        if (g_080de744)
+        if (selectedCapRegister)
             cap = 0x21;
         break;
     }
@@ -117,9 +117,9 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
         reportError("failed to get II for cap \n");
         return -1;
     }
-    *capReg = g_080de744;
+    *capReg = selectedCapRegister;
     g_080de740 = in;
-    *capMask = g_080de748;
+    *capMask = selectedCapMask;
     g_080de734 = ii->unk_0e_w;
     return g_080de734;
 }
@@ -143,20 +143,20 @@ bool doCap(int line, int pipe, int mask)
     for (int i = 0; i != ci->operandCount; i++)
         ci->operands[i].componentMask = mask;
 
-    if (g_080de744->registerClass == 9) {
+    if (selectedCapRegister->registerClass == 9) {
         RegPoolEntry *z = getZeroReg(9);
         ci->operands[0].assignedRegister = z;
         ci->operands[0].originalRegister = z;
         ci->operands[0].forcedBaseRegister = 0;
-        ci->operands[1].assignedRegister = g_080de744;
-        ci->operands[1].originalRegister = g_080de744;
+        ci->operands[1].assignedRegister = selectedCapRegister;
+        ci->operands[1].originalRegister = selectedCapRegister;
         ci->operands[1].forcedBaseRegister = 0;
-        g_080de740->operands[0].originalRegister = g_080de744;
-        g_080de740->operands[0].assignedRegister = g_080de744;
+        g_080de740->operands[0].originalRegister = selectedCapRegister;
+        g_080de740->operands[0].assignedRegister = selectedCapRegister;
         g_080de740->operands[0].forcedBaseRegister = 0;
-        regUse *ru = g_080de73c->registerUses.findByRegister(g_080de744);
+        regUse *ru = g_080de73c->registerUses.findByRegister(selectedCapRegister);
         if (!ru) {
-            ru = g_080de73c->registerUses.AddNewRegRef(g_080de744);
+            ru = g_080de73c->registerUses.AddNewRegRef(selectedCapRegister);
             if (!ru) {
                 reportError("failed to add new regref\n");
                 return true;
@@ -165,8 +165,8 @@ bool doCap(int line, int pipe, int mask)
         ru->inputMask |= mask;
         ru->outputMask |= mask;
     } else {
-        ci->operands[0].assignedRegister = g_080de744;
-        ci->operands[0].originalRegister = g_080de744;
+        ci->operands[0].assignedRegister = selectedCapRegister;
+        ci->operands[0].originalRegister = selectedCapRegister;
     }
     ci->position.setFromLinearRow(line);
     ci->position.setInstructionPipe(pipe);

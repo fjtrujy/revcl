@@ -35,7 +35,7 @@ struct epiRec {
         conditionalBranch = 0;
     }
     bool init(int size, const char *name);
-    void func_08067df0();
+    void noopLoopRegionHook();
     const char *getName();
 };
 

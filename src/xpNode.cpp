@@ -15,7 +15,7 @@ struct xunDel {
     ~xunDel() { delete[] name; name = 0; next = 0; }
 };
 
-xpOp opTable_080b30a0[20] = {
+xpOp expressionOperatorTable[20] = {
     {"LIT", 0, 0, 1},
     {"=", 1, 1, 0},
     {"~", 7, 1, 30},
@@ -258,7 +258,7 @@ void xpTree::dump()
     dumpNode(root);
 }
 
-const char *func_0804ec74(const char *s, xpNode *node, bool binary)
+const char *parseExpressionTokenIntoNode(const char *s, xpNode *node, bool binary)
 {
     if (!s)
         return 0;
@@ -298,7 +298,7 @@ const char *func_0804ec74(const char *s, xpNode *node, bool binary)
             state = 0;
         }
         for (int i = 2; i != 20; i++) {
-            xpOp *e = &opTable_080b30a0[i];
+            xpOp *e = &expressionOperatorTable[i];
             if ((len || (binary ? e->arity > 1 : e->arity <= 1)) && state != 3) {
                 const char *a = e->name, *b = p;
                 for (; *a; a++, b++)
@@ -316,7 +316,7 @@ const char *func_0804ec74(const char *s, xpNode *node, bool binary)
         p++;
     } while (*p);
     if (len) {
-        found = &opTable_080b30a0[0];
+        found = &expressionOperatorTable[0];
     } else {
         if (!found)
             return 0;
@@ -335,8 +335,8 @@ const char *func_0804ec74(const char *s, xpNode *node, bool binary)
 static inline xpOp *findOp(unsigned char type)
 {
     for (int i = 0; i != 20; i++)
-        if (opTable_080b30a0[i].type == type)
-            return &opTable_080b30a0[i];
+        if (expressionOperatorTable[i].type == type)
+            return &expressionOperatorTable[i];
     return 0;
 }
 
@@ -398,7 +398,7 @@ bool xpTree::evalExp(const char *s)
                 reportError("failed to get new xn .. bah\n");
                 goto fail;
             }
-            p = func_0804ec74(p, n, xpNodeIsFull(cur));
+            p = parseExpressionTokenIntoNode(p, n, xpNodeIsFull(cur));
             if (!p) {
                 delete (xpNodeDel *)n;
                 goto fail;
@@ -588,27 +588,27 @@ bool xpTree::rec_Eval(xpNode *n)
 bool asciiCaseEqual(const char *a, const char *b);
 char *dupString(const char *s);
 
-xun *g_080bcda4;
-int g_080bcda8;
-int g_080b3140 = 0;
+xun *unknownSymbolListHead;
+int unknownSymbolCount;
+int expressionUnknownSymbolCount = 0;
 
 xpOp *findExpressionOperatorByType(int type)
 {
     for (int i = 0; i != 20; i++)
-        if (opTable_080b30a0[i].type == type)
-            return &opTable_080b30a0[i];
+        if (expressionOperatorTable[i].type == type)
+            return &expressionOperatorTable[i];
     return 0;
 }
 
 void clearUnknownSymbols()
 {
-    while (g_080bcda4) {
-        xun *p = g_080bcda4;
-        g_080bcda4 = p->next;
+    while (unknownSymbolListHead) {
+        xun *p = unknownSymbolListHead;
+        unknownSymbolListHead = p->next;
         delete (xunDel *)p;
     }
-    g_080bcda4 = 0;
-    g_080bcda8 = 0;
+    unknownSymbolListHead = 0;
+    unknownSymbolCount = 0;
 }
 
 inline xun::xun(InitTag) { next = 0; name = 0; }
@@ -619,7 +619,7 @@ bool recordUnknownSymbol(const char *s)
         reportError("passed a null string to add unknown\n");
         return false;
     }
-    for (xun *p = g_080bcda4; p; p = p->next)
+    for (xun *p = unknownSymbolListHead; p; p = p->next)
         if (asciiCaseEqual(p->name, s))
             return true;
     xun *x = new xun(xun::INIT);
@@ -633,15 +633,15 @@ bool recordUnknownSymbol(const char *s)
         delete (xunDel *)x;
         return false;
     }
-    g_080bcda8++;
-    x->next = g_080bcda4;
-    g_080bcda4 = x;
+    unknownSymbolCount++;
+    x->next = unknownSymbolListHead;
+    unknownSymbolListHead = x;
     return true;
 }
 
 void visitUnknownSymbols()
 {
-    for (xun *p = g_080bcda4; p; p = p->next)
+    for (xun *p = unknownSymbolListHead; p; p = p->next)
         ;
 }
 
@@ -660,22 +660,22 @@ xun::~xun()
 
 int xpTree::countUnknownExpressionSymbols()
 {
-    g_080b3140 = 0;
+    expressionUnknownSymbolCount = 0;
     xpNode *n = root;
     if (n)
         countUnknownSymbolsInNode(n);
-    return g_080b3140;
+    return expressionUnknownSymbolCount;
 }
 
 void xpTree::countUnknownSymbolsInNode(xpNode *n)
 {
-    if (g_080b3140 < 0)
+    if (expressionUnknownSymbolCount < 0)
         return;
     if (n->operandArity) {
         for (int i = 0; i != n->operandArity; i++) {
             if (n->child[i]) {
                 countUnknownSymbolsInNode(n->child[i]);
-                if (g_080b3140 < 0)
+                if (expressionUnknownSymbolCount < 0)
                     return;
             }
         }
@@ -687,9 +687,9 @@ void xpTree::countUnknownSymbolsInNode(xpNode *n)
             s = "<no_literal>";
         if (s && !recordUnknownSymbol(s)) {
             reportError("failed to add an unknown\n");
-            g_080b3140 = -1;
+            expressionUnknownSymbolCount = -1;
             return;
         }
-        g_080b3140++;
+        expressionUnknownSymbolCount++;
     }
 }

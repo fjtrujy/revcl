@@ -7,7 +7,7 @@
 #include "ubsList.h"
 #include "os.h"
 
-char *stallNames_080b3244[3] = { "LATENCY", "THRUPUT", "RFWRITE" };
+char *stallTypeNames[3] = { "LATENCY", "THRUPUT", "RFWRITE" };
 
 inline iHolder::iHolder()
 {
@@ -183,7 +183,7 @@ void stallNode::dump()
         if (v > max)
             max = v;
         if (v)
-            p += formatIntoBuffer(p, "_%s(%d)", stallNames_080b3244[i], v);
+            p += formatIntoBuffer(p, "_%s(%d)", stallTypeNames[i], v);
     }
     p += formatIntoBuffer(p, " maxVal %d ", max);
     if (isLocal)

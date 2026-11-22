@@ -31,14 +31,14 @@ void dumpThru(Program *prog)
 
 hwRegPool::hwRegPool()
 {
-    unk_0e = 3;
+    poolKind = 3;
 }
 
 hwRegPool::~hwRegPool()
 {
 }
 
-bool hwRegPool::func_08088e54(workTable *)
+bool hwRegPool::assignRegistersForWorkTable(workTable *)
 {
     return true;
 }
@@ -48,7 +48,7 @@ bool hwRegPool::assignExt(instStream *)
     return true;
 }
 
-bool hwRegPool::func_08088e6c(instStream *, RegPoolEntry *)
+bool hwRegPool::discardDisjointExternalRegister(instStream *, RegPoolEntry *)
 {
     return true;
 }

@@ -6,7 +6,7 @@
 #include "Processor.h"
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
@@ -16,7 +16,7 @@ static inline void dumpEmitInstruction(Instr *in)
     in->dumpOperandDiagnostics(false);
 }
 
-char *func_0808750c(char *buf, Instr *in, bool upper, char *mods, bool b, int)
+char *emitGenericInstructionText(char *buf, Instr *in, bool upper, char *mods, bool b, int)
 {
     iInfo *info = in->opcodeInfo;
     bool comma = false;

@@ -6,10 +6,10 @@
 #include "Instr.h"
 #include "ol_s.h"
 
-RegPoolEntry *g_080de6ac;
-mValue *g_080de6b0;
-int g_080de6b4;
-int func_0806aa54(Instr *in);
+RegPoolEntry *collapseImmediateSourceRegister;
+mValue *collapseImmediateValue;
+int collapseImmediateOffset;
+int decodeCollapsibleMoveImmediate(Instr *in);
 int expandOneLoopIntoRegions(Program *p, instStream *s);
 
 static inline int fitsSigned(int v, int bits)
@@ -96,7 +96,7 @@ bool collapseProgramStreams(Program *p)
         for (s = p->streamHead; s; s = s->nextStream) {
             workTable *t = s->getTable();
             for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-                int k = func_0806aa54(in);
+                int k = decodeCollapsibleMoveImmediate(in);
                 if (k == -2) {
                     reportError("an immediate is wrong someplace\n");
                     return false;
@@ -137,7 +137,7 @@ bool collapseProgramStreams(Program *p)
                         reportError("failed to push an immediate into a register\n");
                         return false;
                     }
-                    g_080de6b0->setInt(0);
+                    collapseImmediateValue->setInt(0);
                     changed = true;
                 }
             }
@@ -151,7 +151,7 @@ static inline bool isStringValue(mValue *v)
     return v->type == mValue::STRING;
 }
 
-int func_0806aa54(Instr *in)
+int decodeCollapsibleMoveImmediate(Instr *in)
 {
     int opc = in->opcodeId();
     int bits = 0;
@@ -159,30 +159,30 @@ int func_0806aa54(Instr *in)
     bool neg = false;
     bool isSigned = false;
     int val = 0;
-    g_080de6b0 = 0;
-    g_080de6ac = 0;
+    collapseImmediateValue = 0;
+    collapseImmediateSourceRegister = 0;
     switch (opc) {
     case 0x6e:
         bits = 15;
         idx = 0;
         isSigned = false;
-        g_080de6ac = in->operands[1].assignedRegister;
-        g_080de6b0 = &in->operands[2].immediateValue;
+        collapseImmediateSourceRegister = in->operands[1].assignedRegister;
+        collapseImmediateValue = &in->operands[2].immediateValue;
         break;
     case 0x70:
         bits = 15;
         isSigned = false;
-        g_080de6ac = in->operands[1].assignedRegister;
-        g_080de6b0 = &in->operands[2].immediateValue;
+        collapseImmediateSourceRegister = in->operands[1].assignedRegister;
+        collapseImmediateValue = &in->operands[2].immediateValue;
         idx = 0;
         neg = true;
         break;
     }
     if (idx < 0)
         return -1;
-    if (isStringValue(g_080de6b0))
+    if (isStringValue(collapseImmediateValue))
         return -1;
-    if (!g_080de6b0->getInt(&val)) {
+    if (!collapseImmediateValue->getInt(&val)) {
         reportError("failed to get immediate value\n");
         return -2;
     }
@@ -197,7 +197,7 @@ int func_0806aa54(Instr *in)
         reportWarning("immediate %d doesn't fit as unsigned value in %d bits - skipping\n", val, bits);
         return -1;
     }
-    g_080de6b4 = neg ? -val : val;
+    collapseImmediateOffset = neg ? -val : val;
     return idx;
 }
 
@@ -245,7 +245,7 @@ bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc)
         reportError("failed to get immediate value\n");
         return false;
     }
-    x = sub ? x - g_080de6b4 : x + g_080de6b4;
+    x = sub ? x - collapseImmediateOffset : x + collapseImmediateOffset;
     if (sgn) {
         if (!(char)fitsSigned(x, 11))
             return false;

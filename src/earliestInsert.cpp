@@ -22,7 +22,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                     OpSlot *slot = &op->parts[p];
                     OperandLock *par = slot->getParent();
                     if (slot->unk_19 != 2) {
-                        int s = par->unk_32;
+                        int s = par->linearRow;
                         if ((short)s >= 0) {
                             int t = s + par->issueLatency + slot->issueLatency;
                             if (t >= line) {
@@ -47,13 +47,13 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                     OpSlot *slot = &op->parts[p];
                     OperandLock *lk = slot->ownerLockList->sortedOutputLocks;
                     while (lk && lk != slot) {
-                        int s = lk->unk_32;
+                        int s = lk->linearRow;
                         if (s > iline) {
                             reportError("sorted list corrupted?\n");
                             exitAfterCleanup(-1);
                         }
                         if (s >= 0) {
-                            int t = s + lk->unk_17;
+                            int t = s + lk->throughputSpacing;
                             if (t >= line)
                                 line = thru = t;
                             if (t > iline) {
@@ -70,7 +70,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                 }
             }
         }
-        if (registerOperand(op, 2) && op->unk_28)
+        if (registerOperand(op, 2) && op->reductionHazardMask)
             line = iline;
     }
     if (in->branchFlags)
@@ -91,7 +91,7 @@ int latestInsert(workTable *wt, Instr *in, bool *found)
     Operand *op;
     for (int i = 0; (op = in->getOp(i)) != 0; i++) {
         RegPoolEntry *reg = registerOperand(op, 1);
-        if (reg && op->unk_28) {
+        if (reg && op->reductionHazardMask) {
             thru = true;
             break;
         }

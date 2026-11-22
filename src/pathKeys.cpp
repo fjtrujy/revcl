@@ -33,14 +33,14 @@ bool initializeRegisterBacktraceLocation(instStream *n, RegPoolEntry *reg, int p
                 reportError("visible outputs has no head for l_init.. but it should!\n");
                 return 0;
             }
-            int lo = head->unk_12;
+            int lo = head->cycleOffset;
             n->earliestOutputLocation = lo;
             ol_s *last = registerPart(u, part)->findPreviousOutputAtPosition(0, true);
             if (!last) {
                 reportError("visible outputs had nothing visible at infinity\n");
                 return 0;
             }
-            int hi = last->unk_12;
+            int hi = last->cycleOffset;
             n->latestOutputLocation = hi;
             if (n->earliestOutputLocation > n->latestOutputLocation) {
                 reportError("minimal writeVal was > maximal writeVal\n");
@@ -59,7 +59,7 @@ bool resetStreamPathSearch(instStream *n)
 {
     n->visitState = 0;
     for (linkNode *l = n->inputLinks.head; l; l = l->next)
-        l->unk_10 = l->linkType != 3 && l->linkType != 4;
+        l->includedInPathTraversal = l->linkType != 3 && l->linkType != 4;
     n->minimumPathLength = -1;
     n->shortestPathPredecessor = 0;
     n->maximumPathLength = -1;

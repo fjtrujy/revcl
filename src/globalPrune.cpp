@@ -6,7 +6,7 @@
 #include "Instr.h"
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 
 int branchLinkTypeForFlags(int flags);
 
@@ -60,7 +60,7 @@ bool globalPrune(Program *p)
             if (!in->isNop()) {
                 reportInfo("REMOVE INST: ");
                 int saved = errorOccurred;
-                errorOccurred = !quiet_080bbd98;
+                errorOccurred = !quietDiagnostics;
                 in->leDump();
                 errorOccurred = saved;
             }
@@ -105,7 +105,7 @@ bool globalPrune(Program *p)
                     return false;
                 }
                 int saved = errorOccurred;
-                errorOccurred = !quiet_080bbd98;
+                errorOccurred = !quietDiagnostics;
                 br->dumpOperandDiagnostics(false);
                 errorOccurred = saved;
                 int type = branchLinkTypeForFlags(s->branchType);

@@ -10,7 +10,7 @@ static inline bool canWrapInputLock(OperandLock *in)
 
 static inline void wrapInputRange(int &s, int &e)
 {
-    int n = g_080b336c;
+    int n = activeLoopSize;
     if (n) {
         if (s >= n) {
             do {
@@ -25,7 +25,7 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
 {
     OperandLock *lk = outputLocks;
     int ret;
-    int lsz = g_080b336c;
+    int lsz = activeLoopSize;
     ret = 0;
     int p = ((InstructionPosition *)pos)->linearRow;
 
@@ -35,15 +35,15 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
         abortAfterError();
         return 0;
     }
-    if (unk_29)
+    if (calculateLoopStats)
         return 0;
 
     OperandLock *par = in->getParent();
-    int lo = par->unk_36;
-    int hi = par->unk_4e;
+    int lo = par->earliestReadyCycle;
+    int hi = par->latestReadyCycle;
 
     if (lsz && isRegLock(par)) {
-        if (par->unk_2e == 0)
+        if (par->scheduledConsumerCount == 0)
             return 0;
         bool inside = true;
         if (p < lo) { lo = p; inside = false; }
@@ -59,8 +59,8 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
             }
             if (span > room) {
                 int need;
-                if (p < par->unk_3e)
-                    need = par->unk_4e - room;
+                if (p < par->earliestConsumerFreeCycle)
+                    need = par->latestReadyCycle - room;
                 else if (canWrapInputLock(in)) {
                     in->priority = 1;
                     return 0x100;
@@ -74,7 +74,7 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
         return 0;
     }
 
-    int start = par->unk_3a + in->issueLatency;
+    int start = par->fullLatencyReadyCycle + in->issueLatency;
     if (p < start) {
         if (start > *minPos)
             *minPos = start;
@@ -93,7 +93,7 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
         return 0x400;
     }
 
-    int s = par->unk_34;
+    int s = par->adjustedEarliestReadyCycle;
     int e = s + d;
     wrapInputRange(s, e);
 
@@ -106,9 +106,9 @@ int cls0805c244::checkInputLock(OperandLock *in, short *pos, int *minPos)
             continue;
         if (isExt && lk->ownerType == 2)
             continue;
-        int ls = lk->unk_34;
-        int le = lk->unk_4c;
-        if (lk->unk_22) {
+        int ls = lk->adjustedEarliestReadyCycle;
+        int le = lk->adjustedLatestReadyCycle;
+        if (lk->activeReferenceCount) {
             if (s < le && e >= ls) {
                 *minPos = 30000;
                 return ret | 0x10;
@@ -142,26 +142,26 @@ static inline void nextLoopPosition(int v, int row, int n, int &next)
 
 int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
 {
-    int lsz = g_080b336c;
+    int lsz = activeLoopSize;
     int ret = checkOverlap(out, pos, minPos);
     if (isRegLock(out))
         return 0;
     int p = ((InstructionPosition *)pos)->linearRow;
     int first;
-    if (out->unk_15)
+    if (out->latencyModeFlag)
         first = p + 1;
     else
         first = out->issueLatency + p;
     int last = out->issueLatency + p;
 
-    if (out->unk_16) {
+    if (out->externalOutputSlotPlusOne) {
         if (remainingLockCount > 1) {
             *minPos = 30000;
             return ret | 0x800;
         }
         for (OperandLock *lk = outputLocks; lk; lk = lk->nextSibling) {
-            if (first <= lk->unk_4e) {
-                int v = lk->unk_4e - (first - p) + 1;
+            if (first <= lk->latestReadyCycle) {
+                int v = lk->latestReadyCycle - (first - p) + 1;
                 if (*minPos < v)
                     *minPos = v;
                 ret |= 0x1000;
@@ -193,26 +193,26 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
         lim = last + off;
     }
 
-    if (lsz && unk_28) {
+    if (lsz && containsRegisterOutput) {
         OperandLock *h = sortedOutputLocks;
-        if (h->unk_22) {
+        if (h->activeReferenceCount) {
             *minPos = 30000;
             return ret | 4;
         }
-        if (h->unk_2e) {
-            if (first <= h->unk_4e) {
-                int v = h->unk_4e - (first - p) + 1;
+        if (h->scheduledConsumerCount) {
+            if (first <= h->latestReadyCycle) {
+                int v = h->latestReadyCycle - (first - p) + 1;
                 if (*minPos < v)
                     *minPos = v;
                 ret |= 0x4000;
             }
-            int hs = h->unk_3e + lsz;
-            he = h->unk_4e + lsz;
+            int hs = h->earliestConsumerFreeCycle + lsz;
+            he = h->latestReadyCycle + lsz;
             if (hs < last) {
                 *minPos = 30000;
                 return 0x20000;
             }
-            if (out->unk_16) {
+            if (out->externalOutputSlotPlusOne) {
                 if (he - first >= lsz) {
                     *minPos = 30000;
                     return 0x2000;
@@ -233,10 +233,10 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
     for (OperandLock *lk = outputLocks; lk; lk = lk->nextSibling) {
         if (ext && lk->ownerType == 2)
             continue;
-        int ls = lk->unk_34;
-        int le = lk->unk_4c;
+        int ls = lk->adjustedEarliestReadyCycle;
+        int le = lk->adjustedLatestReadyCycle;
         wrapRangeLocal(ls, le);
-        if (lk->unk_22) {
+        if (lk->activeReferenceCount) {
             if (lsz) {
                 *minPos = 30000;
                 return ret | 4;
@@ -247,8 +247,8 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
             }
         } else if (lockRangesOverlap(s, e, ls, le)) {
             first -= p;
-            int v = lk->unk_4e - first + 1;
-            nextLoopPosition(v, ((InstructionPosition *)pos)->linearRow, g_080b336c, he);
+            int v = lk->latestReadyCycle - first + 1;
+            nextLoopPosition(v, ((InstructionPosition *)pos)->linearRow, activeLoopSize, he);
             if (*minPos < he)
                 *minPos = he;
             return ret | 2;
@@ -260,30 +260,30 @@ int cls0805c244::checkOutputLock(OperandLock *out, short *pos, int *minPos)
 int cls0805c244::checkOverlap(OperandLock *out, short *pos, int *minPos)
 {
     int ret = 0;
-    if (out->unk_17 <= 1)
+    if (out->throughputSpacing <= 1)
         return 0;
 
     int s = pos[2];
-    int e = s + out->unk_17 - 1;
+    int e = s + out->throughputSpacing - 1;
     for (OperandLock *lk = outputLocks; lk; lk = lk->nextSibling) {
         if (lk == out)
             continue;
-        int os = lk->unk_30;
-        int oe = os + lk->unk_17;
+        int os = lk->loopRow;
+        int oe = os + lk->throughputSpacing;
         if (oe - 1 < 0)
             continue;
         if (lockRangesOverlap(s, e, os, oe - 1)) {
             ret |= 1;
             int p = ((InstructionPosition *)pos)->linearRow;
             int v;
-            if (!g_080b336c)
+            if (!activeLoopSize)
                 v = oe;
             else {
-                int r = oe % g_080b336c;
-                int q = p / g_080b336c;
-                if (r <= p % g_080b336c)
+                int r = oe % activeLoopSize;
+                int q = p / activeLoopSize;
+                if (r <= p % activeLoopSize)
                     q++;
-                v = q * g_080b336c + r;
+                v = q * activeLoopSize + r;
             }
             if (*minPos < v)
                 *minPos = v;
@@ -294,7 +294,7 @@ int cls0805c244::checkOverlap(OperandLock *out, short *pos, int *minPos)
 
 bool lockRangesOverlap(int s1, int e1, int s2, int e2)
 {
-    int n = g_080b336c;
+    int n = activeLoopSize;
     if (n) {
         int l1 = e1 - s1;
         int l2 = e2 - s2;

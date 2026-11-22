@@ -13,8 +13,8 @@ public:
     ~xun();
 };
 
-extern xun *g_080bcda4;
-extern int g_080bcda8;
+extern xun *unknownSymbolListHead;
+extern int unknownSymbolCount;
 
 void clearUnknownSymbols();
 bool recordUnknownSymbol(const char *s);

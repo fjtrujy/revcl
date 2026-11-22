@@ -326,7 +326,7 @@ bool epiRec::init(int size, const char *name)
     return true;
 }
 
-void epiRec::func_08067df0()
+void epiRec::noopLoopRegionHook()
 {
 }
 
@@ -789,7 +789,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
                 reportError("failed to get ie for branch insert\n");
                 return false;
             }
-            row->entries[1].unk_00 = b;
+            row->entries[1].instruction = b;
         }
         if (!e->table->prepRawTable()) {
             reportError("failed to prep epi table!\n");

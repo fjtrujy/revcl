@@ -55,7 +55,7 @@ void cls0805e2e4::mergeMaximumCounters(cls0805e2e4 *o)
     if (o->independentLatencyDepth > independentLatencyDepth) independentLatencyDepth = o->independentLatencyDepth;
 }
 
-char g_080de2a0[1024];  // stall reason text buffer
+char stallReasonTextBuffer[1024];  // stall reason text buffer
 
 const char *stallReasonStr(short why)
 {
@@ -86,8 +86,8 @@ const char *stallReasonStr(short why)
         s = "branch instruction dependency chain height";
         break;
     case 9:
-        formatIntoBuffer(g_080de2a0, "issue pressure on %s", deviceNameByIndex((char)((why & 0xff00) >> 8)));
-        s = g_080de2a0;
+        formatIntoBuffer(stallReasonTextBuffer, "issue pressure on %s", deviceNameByIndex((char)((why & 0xff00) >> 8)));
+        s = stallReasonTextBuffer;
         break;
     case 10:
         s = "circular dependency chain";
@@ -110,7 +110,7 @@ bool instStream::gatherStats()
     unk_2b6 = -1;
     statCounts *sc = &stats;
     for (int i = 0; i != 9; i++)
-        sc->unk_00[i] = 0;
+        sc->resourceInstructionCounts[i] = 0;
     savedStallReason = 0;
     currentStallReason = 0;
     workTable *wt = getTable();
@@ -132,7 +132,7 @@ bool instStream::gatherStats()
             for (int j = 0; j != 9; j++) {
                 bool b = (in->opcodeResourceMask >> j) & 1;
                 if (b)
-                    sc->unk_00[j] += 2;
+                    sc->resourceInstructionCounts[j] += 2;
             }
             logged = 1;
         }
@@ -384,7 +384,7 @@ bool instStream::gatherStats()
             reportError("bad stat\n");
             exitAfterCleanup(-1);
         }
-        int n = (sc->unk_00[i] + 1) >> 1;
+        int n = (sc->resourceInstructionCounts[i] + 1) >> 1;
         if (n > best) {
             best = n;
             currentStallReason = (i << 8) | 9;
@@ -427,7 +427,7 @@ bool instStream::gatherStats()
     dependencyLength = best;
     wt->unk_74 = dependencyLength;
     wt->unk_76 = logicalLength;
-    wt->unk_78 = depth;
+    wt->logicalInstructionLength = depth;
     return true;
 }
 
@@ -467,7 +467,7 @@ int instStream::getOrGuessDepLength()
         len = clampDepLen(dependencyLength);
         break;
     case 3:
-        len = wt->func_08072eec();
+        len = wt->getRawOrSyntheticLogicalLength();
         break;
     }
     return len;
@@ -505,7 +505,7 @@ int instStream::getOrGuessLogicalLength()
 void statCounts::clear()
 {
     for (int i = 0; i != 9; i++)
-        unk_00[i] = 0;
+        resourceInstructionCounts[i] = 0;
 }
 
 bool statCounts::add(Instr *in)
@@ -515,7 +515,7 @@ bool statCounts::add(Instr *in)
     for (int i = 0; i != 9; i++) {
         bool b = (in->opcodeResourceMask >> i) & 1;
         if (b)
-            unk_00[i] += 2;
+            resourceInstructionCounts[i] += 2;
     }
     return true;
 }
@@ -526,6 +526,6 @@ int statCounts::get(int i)
         reportError("bad stat\n");
         exitAfterCleanup(-1);
     }
-    return (unk_00[i] + 1) >> 1;
+    return (resourceInstructionCounts[i] + 1) >> 1;
 }
 

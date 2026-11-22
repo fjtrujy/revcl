@@ -9,7 +9,7 @@
 #include "statCounts.h"
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 
 static inline bool isRegLock(cls0805bcc4 *lk)
 {
@@ -18,17 +18,17 @@ static inline bool isRegLock(cls0805bcc4 *lk)
 
 static inline void wrapRange(int &s, int &e)
 {
-    if (g_080b336c) {
-        while (s >= g_080b336c) {
-            s -= g_080b336c;
-            e -= g_080b336c;
+    if (activeLoopSize) {
+        while (s >= activeLoopSize) {
+            s -= activeLoopSize;
+            e -= activeLoopSize;
         }
     }
 }
 
 static inline void wrapRangeLocal(int &s, int &e)
 {
-    int n = g_080b336c;
+    int n = activeLoopSize;
     if (n) {
         while (s >= n) {
             s -= n;

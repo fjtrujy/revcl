@@ -75,7 +75,7 @@ int instStream::getUninsertedxInputs()
                         return -1;
                     }
                     Operand *src = operandAtLocation(ol);
-                    if (te + base + ol->unk_12 + 1 < src->outputLatency + op->additionalLatency) {
+                    if (te + base + ol->cycleOffset + 1 < src->outputLatency + op->additionalLatency) {
                         if (reg->partCount == 1)
                             count += 4;
                         else
@@ -120,7 +120,7 @@ int instStream::getUninsertedxOutputs()
                             return -1;
                         }
                         Operand *src = operandAtLocation(ol);
-                        if (base + fs + ol->unk_12 + 1 < op->outputLatency + src->additionalLatency) {
+                        if (base + fs + ol->cycleOffset + 1 < op->outputLatency + src->additionalLatency) {
                             if (reg->partCount == 1)
                                 count += 4;
                             else
@@ -167,7 +167,7 @@ int getToEnd(Instr *in)
     case 1:
         return in->schedulingStatistics.reverseLatencyDepth;
     case 3: {
-        int len = wt->func_08072eec();
+        int len = wt->getRawOrSyntheticLogicalLength();
         if (len < 0) {
             reportError("logical len<0 for table \n");
             return -1;
@@ -230,7 +230,7 @@ int getFromStart(Instr *in)
     case 1:
         return in->schedulingStatistics.forwardLatencyDepth;
     case 3: {
-        int len = wt->func_08072eec();
+        int len = wt->getRawOrSyntheticLogicalLength();
         if (len < 0) {
             reportError("logical len<0 for table \n");
             return -1;

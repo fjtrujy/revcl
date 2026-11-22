@@ -364,14 +364,14 @@ int countSetBits(unsigned int x)
     return n;
 }
 
-const char *tokenChars_080b3080 =
+const char *tokenAllowedCharacters =
     "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?";
-const char *identChars_080b3084 =
+const char *identifierAllowedCharacters =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_@";
 
 bool isTokenAlphabetCharacter(char c)
 {
-    const char *p = tokenChars_080b3080;
+    const char *p = tokenAllowedCharacters;
     char ch;
     while ((ch = *p) != 0 && ch != c)
         p++;
@@ -380,7 +380,7 @@ bool isTokenAlphabetCharacter(char c)
 
 bool isIdentifierAlphabetCharacter(char c)
 {
-    const char *p = identChars_080b3084;
+    const char *p = identifierAllowedCharacters;
     char ch;
     while ((ch = *p) != 0 && ch != c)
         p++;

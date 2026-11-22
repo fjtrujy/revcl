@@ -135,7 +135,7 @@ inline const char *codeModeStr(int mode)
 
 class workTable {
 public:
-    int unk_00;
+    int optimizerIndex;
     short unk_04;
     short unk_06;  // dynamic statistics high-watermark (written as a short)
     char allocationMode;
@@ -144,10 +144,10 @@ public:
     bool isAbstract() { return codeModeValue == 1; }
     unsigned char codeMode() { return codeModeValue; }
     char unk_0b;
-    int unk_0c;
+    int declaredRawLength;
     instStream *ownerStream;
     regUseList registerUses;
-    int unk_20;
+    int registerLockListCount;
     cls0805c244 *registerLockLists;
     int rowCapacity;
     wtRow *rows;
@@ -159,12 +159,12 @@ public:
     int externalMinimumLength;
     char unk_48[4];
     Instr *moveListHead;
-    int unk_50;
-    cls08058718 unk_54;
+    int pendingMoveCount;
+    cls08058718 lastScheduledPosition;
     cls0805e2e4 statistics;
     short unk_74;
     short unk_76;
-    short unk_78;
+    short logicalInstructionLength;
     short unk_7a;
     short unk_7c;
     char unk_7e[2];
@@ -180,7 +180,7 @@ public:
     int vectorMoveCount;             // move count, class 3
     int oddPipeMoveCount;             // move count, odd class
     int evenPipeMoveCount;             // move count, even class
-    int unk_bc;
+    int dualPipelineInstructionCount;
     int instructionCountsByPipe[3];          // per-pipe instr counts, [2] = total in table
 
     wtRow *getRowByIndex(int i);
@@ -206,9 +206,9 @@ public:
     bool takeOut(Instr *i);
     bool putIn(Instr *i);
 #ifdef VCL_POSTOPT_FLOAT_LENGTH
-    float func_08072eec();
+    float getRawOrSyntheticLogicalLength();
 #else
-    int func_08072eec();
+    int getRawOrSyntheticLogicalLength();
 #endif
     int getLogicalLen();
     int getPhysicalLen();
@@ -266,7 +266,7 @@ public:
     {
         linearInstructions.reset();
         instructionCountsByPipe[2] = 0;
-        unk_bc = 0;
+        dualPipelineInstructionCount = 0;
         vectorMoveCount = 0;
         oddPipeMoveCount = 0;
         instructionCountsByPipe[0] = 0;
@@ -280,7 +280,7 @@ const char *rawModeName(int mode);
 const char *allocModeName(unsigned int mode);
 
 bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bool a6, bool a7);
-extern Instr *g_080de72c;   // instr with smallest insertionSerial
+extern Instr *earliestInsertionInstruction;   // instr with smallest insertionSerial
 void trackEarliestInsertion(Instr *in);
 
 #endif

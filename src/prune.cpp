@@ -97,17 +97,17 @@ bool initPrune(instStream *s)
 
 bool initPrune(Instr *in)
 {
-    in->unk_13cc = 0;
+    in->pruningRestricted = 0;
     if (in->opcodeInfo) {
         char ok = in->opcodeInfo->canPruneOperands();
         if (!ok)
-            in->unk_13cc = 1;
+            in->pruningRestricted = 1;
         for (int i = 0;; i++) {
             Operand *op = in->getOp(i);
             if (!op)
                 break;
             op->pruneMask = 0;
-            if (op->isInput() && in->unk_13cc)
+            if (op->isInput() && in->pruningRestricted)
                 op->pruneMask = op->componentMask;
         }
         return true;
@@ -252,7 +252,7 @@ bool doPrune(Program *p)
 }
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 
 bool doPrune(instStream *s)
 {
@@ -278,7 +278,7 @@ bool doPrune(instStream *s)
             if (!in->isNop()) {
                 reportVerboseInfo("REMOVE INST: ");
                 int saved = errorOccurred;
-                errorOccurred = quiet_080bbd98;
+                errorOccurred = quietDiagnostics;
                 in->leDump();
                 errorOccurred = saved;
             }
@@ -294,14 +294,14 @@ bool doPrune(instStream *s)
     return true;
 }
 
-bool func_08087860(void *, Instr *in);
+bool rotateInputComponentMask(void *, Instr *in);
 
 int doPrune(Instr *in)
 {
     int i;
     Operand *op;
     unsigned char any = 0;
-    if (in->unk_13cc)
+    if (in->pruningRestricted)
         return 1;
     for (i = 0; (op = in->getOp(i)) != 0; i++) {
         any |= op->pruneMask;
@@ -346,7 +346,7 @@ int doPrune(Instr *in)
             in->leDump();
             return -1;
         }
-        if (info->decodeHook == func_08087860)
+        if (info->decodeHook == rotateInputComponentMask)
             inOR = (inOR >> 1) | ((inOR & 1) << 3);
         if (nIn) {
             if (outOR & ~inOR) {
@@ -367,7 +367,7 @@ int doPrune(Instr *in)
         if (m != in->destinationMask) {
             reportVerboseInfo("PRUNE FIELD: [%s->%s]  ", formatComponentMaskLetters(in->destinationMask), formatComponentMaskLetters(m));
             int saved = errorOccurred;
-            errorOccurred = quiet_080bbd98;
+            errorOccurred = quietDiagnostics;
             in->leDump();
             errorOccurred = saved;
         }
@@ -376,7 +376,7 @@ int doPrune(Instr *in)
             if (op->operandKind == 1 || op->operandKind == 9)
                 op->componentMask = m;
         }
-        if (info->decodeHook == func_08087860)
+        if (info->decodeHook == rotateInputComponentMask)
             in->operands[1].componentMask = (((m & 8) >> 3) | (m << 1)) & 0xf;
     }
     for (i = 0; (op = in->getOp(i)) != 0; i++) {
@@ -391,7 +391,7 @@ int doPrune(Instr *in)
         if (pool->zeroRegister && !op->pairedOperandIndexPlusOne) {
             reportVerboseInfo("ZERO FIX   : ");
             int saved = errorOccurred;
-            errorOccurred = quiet_080bbd98;
+            errorOccurred = quietDiagnostics;
             in->leDump(i);
             errorOccurred = saved;
             op->assignedRegister = pool->zeroRegister;

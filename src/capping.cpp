@@ -6,7 +6,7 @@
 
 bool prepExtInfo(Program *p, instStream *s, bool b);
 int insertStreamRegisterCaps(Program *p, instStream *s);
-void func_0807bb84(workTable *wt);
+void initializeScheduledCycleTimes(workTable *wt);
 bool removeNops(Program *p, instStream *s);
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
 bool doCap(int line, int pipe, int mask);
@@ -65,7 +65,7 @@ int insertStreamRegisterCaps(Program *p, instStream *s)
         reportError("table is lready too short (%d<%d)\n", len, wt->externalMinimumLength);
         return -1;
     }
-    func_0807bb84(wt);
+    initializeScheduledCycleTimes(wt);
     for (int rl = wt->getRangeStart(); rl != wt->getRangeEnd(); rl++) {
         wtRow *row = (wtRow *)((cls_unk30 *)wt)->getIE_ck(rl);
         int id = row->ctime();

@@ -17,13 +17,13 @@ bool optDumb2(workTable *wt, wrangleCand *c)
     }
     if (!best)
         return false;
-    c->unk_00 = best;
-    c->unk_04 = (best->candidateAttemptCount >> 1) + best->candidateBaseRow;
+    c->candidateInstruction = best;
+    c->candidateRow = (best->candidateAttemptCount >> 1) + best->candidateBaseRow;
     if (!best->moveRecordWord) {
-        int row = wt->unk_54.getRow();
-        if (c->unk_04 < (short)row)
-            c->unk_04 = row;
+        int row = wt->lastScheduledPosition.getRow();
+        if (c->candidateRow < (short)row)
+            c->candidateRow = row;
     }
-    c->unk_06 = best->candidateAttemptCount & 1;
+    c->candidatePipe = best->candidateAttemptCount & 1;
     return true;
 }

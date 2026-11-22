@@ -31,7 +31,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     }
 
     for (k = 0; k != 2; k++) {
-        Instr *in = row->entries[k].unk_00;
+        Instr *in = row->entries[k].instruction;
         if (!in)
             continue;
         if (commit && in->previousThroughputWriter) {
@@ -51,7 +51,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     }
     int maxLat = 0, maxThru = 0;
     for (k = 0; k != 2; k++) {
-        in = row->entries[k].unk_00;
+        in = row->entries[k].instruction;
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
@@ -77,7 +77,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                     if ((op->componentMask >> part) & 1) {
                         rPart *rp = &reg->parts[part];
                         int lat;
-                        if (rp->pendingSource && (lat = rp->pendingSource->unk_12) != 0) {
+                        if (rp->pendingSource && (lat = rp->pendingSource->cycleOffset) != 0) {
                             ol_s tmp;
                             tmp.init(in, o, part, false);
                             if (commit && !p->proc.stalls.addStall(rp->pendingSource, &tmp, 0, lat)) {
@@ -157,11 +157,11 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         cyc = p->emulatedCycleCount;
     }
     for (k = 0; k != 2; k++)
-        if (row->entries[k].unk_00)
-            row->entries[k].unk_00->scheduledCycle = cyc;
+        if (row->entries[k].instruction)
+            row->entries[k].instruction->scheduledCycle = cyc;
 
     for (k = 0; k != 2; k++) {
-        in = row->entries[k].unk_00;
+        in = row->entries[k].instruction;
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
@@ -198,7 +198,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         }
     }
     for (k = 0; k != 2; k++) {
-        Instr *in = row->entries[k].unk_00;
+        Instr *in = row->entries[k].instruction;
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
@@ -218,7 +218,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             }
                             ol_s *ol = &rp->currentLocation;
                             ol->init(in, o, part, false);
-                            ol->unk_12 = clampByte(op->outputLatency);
+                            ol->cycleOffset = clampByte(op->outputLatency);
                             rp->pendingSource = ol;
                             rp->cycleAge = 0;
                         } else {
@@ -228,7 +228,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                                 return -1;
                             }
                             ol->init(in, o, part, false);
-                            ol->unk_12 = clampByte(op->outputLatency);
+                            ol->cycleOffset = clampByte(op->outputLatency);
                             rp->pendingSource = ol;
                         }
                         rp->unk_00[1] += op->outputLatency;

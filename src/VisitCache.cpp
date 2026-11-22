@@ -6,37 +6,37 @@
 
 static inline bool vc_release_inl(VisitCache *vc)
 {
-    if (vc->unk_00)
-        free(vc->unk_00);
-    vc->unk_00 = 0;
-    vc->unk_04 = 0;
-    vc->unk_08 = 0;
-    vc->unk_0c = 0;
-    vc->unk_10 = 0;
+    if (vc->recordData)
+        free(vc->recordData);
+    vc->recordData = 0;
+    vc->wordsPerRecord = 0;
+    vc->bitsPerRecord = 0;
+    vc->recordCapacity = 0;
+    vc->recordCount = 0;
     return true;
 }
 
 static inline bool vc_extend_inl(VisitCache *vc, int rows)
 {
-    unsigned *p = (unsigned *)realloc(vc->unk_00, rows * vc->unk_04 * sizeof(unsigned));
+    unsigned *p = (unsigned *)realloc(vc->recordData, rows * vc->wordsPerRecord * sizeof(unsigned));
     if (!p) {
         reportError("VisitCache::Extend.. failed to realloc\n");
         vc_release_inl(vc);
         return false;
     }
-    vc->unk_00 = p;
-    vc->unk_0c = rows;
+    vc->recordData = p;
+    vc->recordCapacity = rows;
     return true;
 }
 
 VisitCache::VisitCache()
 {
-    unk_14 = false;
-    unk_00 = 0;
-    unk_04 = 0;
-    unk_08 = 0;
-    unk_0c = 0;
-    unk_10 = 0;
+    recordStarted = false;
+    recordData = 0;
+    wordsPerRecord = 0;
+    bitsPerRecord = 0;
+    recordCapacity = 0;
+    recordCount = 0;
 }
 
 VisitCache::~VisitCache()
@@ -47,8 +47,8 @@ VisitCache::~VisitCache()
 bool VisitCache::init(int nbits)
 {
     vc_release_inl(this);
-    unk_08 = nbits;
-    unk_04 = (nbits + 31) / 32;
+    bitsPerRecord = nbits;
+    wordsPerRecord = (nbits + 31) / 32;
     if (!vc_extend_inl(this, 512)) {
         reportError("VisitCache:: init failed\n");
         vc_release_inl(this);
@@ -59,97 +59,97 @@ bool VisitCache::init(int nbits)
 
 bool VisitCache::release()
 {
-    if (unk_00)
-        free(unk_00);
-    unk_00 = 0;
-    unk_04 = 0;
-    unk_08 = 0;
-    unk_0c = 0;
-    unk_10 = 0;
+    if (recordData)
+        free(recordData);
+    recordData = 0;
+    wordsPerRecord = 0;
+    bitsPerRecord = 0;
+    recordCapacity = 0;
+    recordCount = 0;
     return true;
 }
 
 bool VisitCache::Extend(int rows)
 {
-    unsigned *p = (unsigned *)realloc(unk_00, rows * unk_04 * sizeof(unsigned));
+    unsigned *p = (unsigned *)realloc(recordData, rows * wordsPerRecord * sizeof(unsigned));
     if (!p) {
         reportError("VisitCache::Extend.. failed to realloc\n");
         vc_release_inl(this);
         return false;
     }
-    unk_00 = p;
-    unk_0c = rows;
+    recordData = p;
+    recordCapacity = rows;
     return true;
 }
 
 bool VisitCache::startRecord()
 {
-    if (unk_10 >= unk_0c - 1) {
-        if (!Extend(unk_0c + 512)) {
+    if (recordCount >= recordCapacity - 1) {
+        if (!Extend(recordCapacity + 512)) {
             reportError("startRecord - failed to extend\n");
             return false;
         }
     }
-    if (!unk_00) {
+    if (!recordData) {
         reportError("VisitCache:: startRecord - null table pointer\n");
         return false;
     }
-    unsigned *row = unk_00 + unk_10 * unk_04;
-    unk_14 = true;
-    for (int i = 0; i != unk_04; i++)
+    unsigned *row = recordData + recordCount * wordsPerRecord;
+    recordStarted = true;
+    for (int i = 0; i != wordsPerRecord; i++)
         *row++ = 0;
     return true;
 }
 
 bool VisitCache::setBit(int bit)
 {
-    unsigned *row = unk_00 + unk_10 * unk_04;
+    unsigned *row = recordData + recordCount * wordsPerRecord;
     row[bit / 32] |= 1 << (bit & 31);
     return true;
 }
 
 int VisitCache::endRecord()
 {
-    int n = unk_10;
-    unsigned *cur = unk_00 + n * unk_04;
-    unsigned *row = unk_00;
+    int n = recordCount;
+    unsigned *cur = recordData + n * wordsPerRecord;
+    unsigned *row = recordData;
     int i;
     for (i = 0; i != n; i++) {
         int j;
-        for (j = 0; j != unk_04; j++)
+        for (j = 0; j != wordsPerRecord; j++)
             if (row[j] != cur[j])
                 break;
-        if (j == unk_04)
+        if (j == wordsPerRecord)
             return i;
-        row += unk_04;
+        row += wordsPerRecord;
     }
-    unk_10 = n + 1;
+    recordCount = n + 1;
     return i;
 }
 
 bool VisitCache::testBit(int rec, int bit)
 {
-    unsigned *row = unk_00 + rec * unk_04;
+    unsigned *row = recordData + rec * wordsPerRecord;
     return (row[bit / 32] & (1 << (bit & 31))) != 0;
 }
 
 void VisitCache::Dump()
 {
     reportInfo("VisitCache::Dump()\n");
-    unsigned *row = unk_00;
-    for (int i = 0; i != unk_10; i++) {
+    unsigned *row = recordData;
+    for (int i = 0; i != recordCount; i++) {
         reportMessage(" [%3d] ", i);
-        for (int j = 0; j != unk_04; j++)
+        for (int j = 0; j != wordsPerRecord; j++)
             reportMessage(" %08x", row[j]);
         reportMessage("\n");
-        row += unk_04;
+        row += wordsPerRecord;
     }
-    reportInfo("VisitCache:: %d records\n", unk_10);
+    reportInfo("VisitCache:: %d records\n", recordCount);
 }
 
 static inline bool testPathBit(VisitCache *vc, int rec, int bit)
 {
-    unsigned *row = vc->unk_00 + rec * vc->unk_04;
+    unsigned *row = vc->recordData + rec * vc->wordsPerRecord;
     return (row[bit / 32] & (1 << (bit & 31))) != 0;
 }
 

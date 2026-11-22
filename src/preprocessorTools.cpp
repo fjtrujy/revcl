@@ -8,22 +8,22 @@
 #include "os.h"
 
 int reportUserMessage(const char *fmt, ...);
-bool symbolic_080b300c = false;
-bool flag_080b300d = false;
-bool noLoops_080b300e = false;
-int timeout_080b3010 = 4;
+bool symbolicOutputRequested = false;
+bool cautiousMemoryAccessMode = false;
+bool disableLoopProcessing = false;
+int optimizationTimeoutSeconds = 4;
 bool unk_080b3014 = false;
-bool sizeReduce_080b3015 = true;
-bool noAlign_080b3016 = false;
-bool noEbit_080b3017 = false;
-bool flag_080b3018 = true;
-Tool tools_080b301c[3] = {
+bool enableCodeSizeReduction = true;
+bool disableOutputAlignment = false;
+bool disableEndBits = false;
+bool enableInstructionCollapse = true;
+Tool preprocessorToolTable[3] = {
     { "gcc", "gcc -P -E -C -x assembler-with-cpp" },
     { "gasp", "gasp -p -s -c ';' " },
     { "gasp", "gasp -p -a -s -c ';' " },
 };
-unsigned char toolMask_080b3034 = 7;
-char toolOpt_080b3035 = 'I';
+unsigned char enabledPreprocessorTools = 7;
+char toolOptionSwitch = 'I';
 char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int argEnd,
                     char **argv, bool keepTemps);
 
@@ -40,8 +40,8 @@ bool usesGccPreprocessor(unsigned char flags)
 static inline bool toolOptMatches(unsigned char mask, char opt)
 {
     unsigned int bits = mask;
-    if (toolMask_080b3034 & bits) {
-        if (toolOpt_080b3035 == opt)
+    if (enabledPreprocessorTools & bits) {
+        if (toolOptionSwitch == opt)
             return true;
     }
     return false;
@@ -50,8 +50,8 @@ static inline bool toolOptMatches(unsigned char mask, char opt)
 bool matchesToolOption(unsigned char mask, char opt)
 {
     unsigned int bits = mask;
-    if (toolMask_080b3034 & bits) {
-        if (toolOpt_080b3035 == opt)
+    if (enabledPreprocessorTools & bits) {
+        if (toolOptionSwitch == opt)
             return true;
     }
     return false;
@@ -97,7 +97,7 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
     int fdIn = -1;
     int fdOut = -1;
     bool ok = false;
-    Tool *t = &tools_080b301c[tool];
+    Tool *t = &preprocessorToolTable[tool];
 
     reportInfo("..processing with %s\n", t->name);
     inPath[0] = 0;
@@ -111,7 +111,7 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
             reportError("in buffer is null length\n");
         } else {
             sprintf(inName, "vcli_%s", t->name);
-            fdIn = func_0804ab6c(inName, inPath);
+            fdIn = createTemporaryFile(inName, inPath);
             if (fdIn < 0) {
                 reportError("failed to make temp in file\n");
             } else if (write(fdIn, buf, n) != n) {
@@ -123,7 +123,7 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
                 delete[] buf;
                 buf = 0;
                 sprintf(outName, "vclo_%s", t->name);
-                fdOut = func_0804ab6c(outName, outPath);
+                fdOut = createTemporaryFile(outName, outPath);
                 if (fdOut < 0) {
                     reportError("failed to make tmp outfile\n");
                 } else {
@@ -138,7 +138,7 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
                     if (rc) {
                         reportError("system returned %d\n", rc);
                     } else {
-                        result = func_0804aef0(outPath, len, true);
+                        result = readFileIntoBuffer(outPath, len, true);
                         if (!result)
                             reportError("failed to read tmp out file\n");
                         ok = true;

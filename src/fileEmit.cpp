@@ -4,15 +4,15 @@
 #include "VUStr.h"
 #include "fileEmit.h"
 
-extern bool noAlign_080b3016;
+extern bool disableOutputAlignment;
 int getNumOptimisers();
 const char *getOptimiserName(int id);
 
 char *emitFileStart(Program *p, char *buf)
 {
-    if ((!p->proc.newSyntax || p->proc.unk_63) && p->proc.mpgTargetAddress < 0)
+    if ((!p->proc.newSyntax || p->proc.vuDirectiveSeen) && p->proc.mpgTargetAddress < 0)
         buf += formatIntoBuffer(buf, "\t\t.vu\n");
-    if (!noAlign_080b3016)
+    if (!disableOutputAlignment)
         buf += formatIntoBuffer(buf, "\t\t.align 4\n");
     if (p->proc.globalName && *p->proc.globalName) {
         buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeStart\n", p->proc.globalName);
@@ -40,7 +40,7 @@ char *emitFileStart(Program *p, char *buf)
 
 char *emitFileEnd(Program *p, char *buf)
 {
-    if (!noAlign_080b3016)
+    if (!disableOutputAlignment)
         buf += formatIntoBuffer(buf, "\t\t.align 4\n");
     if (p->proc.globalName && *p->proc.globalName)
         buf += formatIntoBuffer(buf, "%s_CodeEnd:\n", p->proc.globalName);
@@ -221,8 +221,8 @@ fail:
     return 0;
 }
 
-extern bool noEbit_080b3017;
-extern char *stallNames_080b3244[3];
+extern bool disableEndBits;
+extern char *stallTypeNames[3];
 int countSetBits(unsigned int);
 char *emitNop(char *buf, int flags, int *len);
 char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b);
@@ -243,14 +243,14 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
     buf += formatIntoBuffer(buf, "         ");
     int i;
     for (i = 0; i != 2; i++)
-        if (entries[i].unk_00)
-            flags |= entries[i].unk_00->instructionModifierBits;
+        if (entries[i].instruction)
+            flags |= entries[i].instruction->instructionModifierBits;
     int len = 0;
     for (i = 0; i != 2; i++) {
-        if (!entries[i].unk_00)
+        if (!entries[i].instruction)
             buf = emitNop(buf, flags, &len);
         else
-            buf = emitInstr(entries[i].unk_00, buf, false, flags, upper);
+            buf = emitInstr(entries[i].instruction, buf, false, flags, upper);
         if (!buf) {
             reportError("failed to emit upper for pipe %d ie\n", i);
             return 0;
@@ -265,7 +265,7 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
         for (int k = 0; k != 3; k++) {
             int bit = (stallTypeMask >> k) & 1;
             if (bit) {
-                buf += formatIntoBuffer(buf, "_%s", stallNames_080b3244[k]);
+                buf += formatIntoBuffer(buf, "_%s", stallTypeNames[k]);
                 any = true;
             }
         }
@@ -282,7 +282,7 @@ char *emitNop(char *buf, int flags, int *len)
     char line[320];
     char mods[16];
     char *p = line;
-    if (noEbit_080b3017)
+    if (disableEndBits)
         flags &= ~2;
     char *s = formatInstructionModifiers(flags);
     char *d = mods;
@@ -317,7 +317,7 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
                 return 0;
             }
         } else {
-            p = func_0808750c(line, in, upper, mods, b, 0);
+            p = emitGenericInstructionText(line, in, upper, mods, b, 0);
             if (!p) {
                 reportError("generic emit hook failed for an instruction\n");
                 return 0;

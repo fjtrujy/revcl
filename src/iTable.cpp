@@ -9,7 +9,7 @@ workTable::workTable()
     rows = 0;
     moveListHead = 0;
     registerLockLists = 0;
-    unk_20 = 0;
+    registerLockListCount = 0;
     unk_0b = 0;
     ownerStream = 0;
     dispose();
@@ -52,7 +52,7 @@ bool workTable::init(unsigned char mode, int size)
     unk_ac = 0;
     unk_40 = 0;
     unk_ad = 0;
-    unk_0c = 0;
+    declaredRawLength = 0;
     unk_7a = 0;
     codeModeValue = mode;
     return true;
@@ -73,7 +73,7 @@ bool workTable::dispose()
         abortAfterError();
     }
     registerLockLists = 0;
-    unk_20 = 0;
+    registerLockListCount = 0;
     registerUses.clear();
     delete[] rows;
     rows = 0;
@@ -82,12 +82,12 @@ bool workTable::dispose()
     rangeStart = 0;
     rangeEnd = 0;
     mainLoopId = 0;
-    unk_00 = -1;
+    optimizerIndex = -1;
     codeModeValue = 0;
     allocationMode = 0;
     rawSchedulingMode = 0;
     instructionCountsByPipe[2] = 0;
-    unk_bc = 0;
+    dualPipelineInstructionCount = 0;
     vectorMoveCount = 0;
     oddPipeMoveCount = 0;
     instructionCountsByPipe[0] = 0;
@@ -97,9 +97,9 @@ bool workTable::dispose()
     linearInstructions.reset();
     pendingInstructions.reset();
     completedInstructions.reset();
-    unk_50 = 0;
+    pendingMoveCount = 0;
     unk_40 = 0;
-    unk_0c = -1;
+    declaredRawLength = -1;
     ownerStream = 0;
     return true;
 }
@@ -132,7 +132,7 @@ void workTable::dump()
         if (!lsz && rangeEnd < 0) {
             wtRow *r = rows;
             for (int n = rowCapacity - 1; n >= 0; n--, r++)
-                if (r->entries[0].unk_00 || r->entries[1].unk_00)
+                if (r->entries[0].instruction || r->entries[1].instruction)
                     break;
         }
         for (int i = rangeStart; i < rangeEnd; i++) {
@@ -180,12 +180,12 @@ bool workTable::reserveEntry(int key, int row, int slot)
     return true;
 }
 
-int workTable::func_08072eec()
+int workTable::getRawOrSyntheticLogicalLength()
 {
     int len = -1;
     switch (codeModeValue) {
     case 3:
-        len = unk_0c;
+        len = declaredRawLength;
         break;
     case 1:
         reportError("called getlogical len on uta\n");
@@ -208,7 +208,7 @@ int workTable::getLogicalLen()
     switch (codeModeValue) {
     case 1:
     case 3:
-        len = unk_78;
+        len = logicalInstructionLength;
         break;
     case 4:
         break;
@@ -315,7 +315,7 @@ Instr *workTable::getBranch()
 }
 
 bool UnlinkFromLinear(Block *blk, Instr *n);
-bool func_08073bb0(Block *blk, Instr *in);
+bool decrementInstructionPipelineCounts(Block *blk, Instr *in);
 
 inline bool workTable::unlinkAndUnlog(Instr *in)
 {
@@ -328,7 +328,7 @@ inline bool workTable::unlinkAndUnlog(Instr *in)
         abortAfterError();
     }
     in->ownerTable = 0;
-    if (!func_08073bb0((Block *)this, in)) {
+    if (!decrementInstructionPipelineCounts((Block *)this, in)) {
         reportError("failed to unlog instruction\n");
         return 0;
     }
@@ -370,7 +370,7 @@ bool workTable::takeOut(Instr *i)
 {
     InstructionPosition *p = &i->position;
     wtRow *row = &rows[p->loopRow];
-    row->entries[p->pipelineIndex].unk_00 = (Instr *)i->replacedInstructionWord;
+    row->entries[p->pipelineIndex].instruction = (Instr *)i->replacedInstructionWord;
     i->clearSlot();
     return 1;
 }
@@ -379,7 +379,7 @@ bool workTable::putIn(Instr *i)
 {
     InstructionPosition *p = &i->position;
     wtRow *row = &rows[p->loopRow];
-    row->entries[p->pipelineIndex].unk_00 = i;
+    row->entries[p->pipelineIndex].instruction = i;
     return 1;
 }
 
@@ -442,7 +442,7 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                     }
                 }
             }
-            dr->entries[p].unk_00 = c;
+            dr->entries[p].instruction = c;
             if (c) {
                 InstructionPosition pos;
                 c->setOwner((cls_unk30 *)to);
@@ -493,19 +493,19 @@ bool workTable::setTableRawMode(unsigned char mode)
     return 1;
 }
 
-Instr *g_080de72c;
+Instr *earliestInsertionInstruction;
 
 void trackEarliestInsertion(Instr *in)
 {
     if (in) {
-        if (!g_080de72c || in->insertionSerial < g_080de72c->insertionSerial)
-            g_080de72c = in;
+        if (!earliestInsertionInstruction || in->insertionSerial < earliestInsertionInstruction->insertionSerial)
+            earliestInsertionInstruction = in;
     }
 }
 
 bool workTable::resetFlowStalls()
 {
-    unk_0c = -1;
+    declaredRawLength = -1;
     if (rows && rangeStart >= 0) {
         for (int i = rangeStart; i < rangeEnd; i++)
             if (!rows[i].clearStalls()) {
@@ -525,7 +525,7 @@ bool workTable::hasSafeTrailingInstructions()
     wtRow *r = rowAt(rangeEnd - 1);
     if (!r)
         return 0;
-    Instr *in = r->entries[1].unk_00;
+    Instr *in = r->entries[1].instruction;
     if (in) {
         if (in->ramAccessType || in->branchFlags)
             return 0;
@@ -536,7 +536,7 @@ bool workTable::hasSafeTrailingInstructions()
     r = rowAt(rangeEnd - 2);
     if (!r)
         return 1;
-    in = r->entries[1].unk_00;
+    in = r->entries[1].instruction;
     if (in && getOpcodeId(in->opcodeInfo) == 165)
         return 0;
     return 1;
@@ -639,7 +639,7 @@ int workTable::getPipeCount(int p)
 bool logInstr(Block *blk, Instr *in)
 {
     if (in->permittedPipelineMask == 3)
-        blk->unk_bc++;
+        blk->dualPipelineInstructionCount++;
     else {
         int n = 0;
         if (in->permittedPipelineMask & 1) {
@@ -659,10 +659,10 @@ bool logInstr(Block *blk, Instr *in)
     return 1;
 }
 
-bool func_08073bb0(Block *blk, Instr *in)
+bool decrementInstructionPipelineCounts(Block *blk, Instr *in)
 {
     if (in->permittedPipelineMask == 3)
-        blk->unk_bc--;
+        blk->dualPipelineInstructionCount--;
     else {
         int n = 0;
         if (in->permittedPipelineMask & 1) {
@@ -688,7 +688,7 @@ bool func_08073bb0(Block *blk, Instr *in)
 void workTable::resetCounts()
 {
     instructionCountsByPipe[2] = 0;
-    unk_bc = 0;
+    dualPipelineInstructionCount = 0;
     vectorMoveCount = 0;
     oddPipeMoveCount = 0;
     instructionCountsByPipe[0] = 0;
@@ -1041,7 +1041,7 @@ bool workTable::logUnlinkFromLinear(Instr *in)
         abortAfterError();
     }
     in->ownerTable = 0;
-    if (!func_08073bb0((Block *)this, in)) {
+    if (!decrementInstructionPipelineCounts((Block *)this, in)) {
         reportError("failed to unlog instruction\n");
         return 0;
     }
@@ -1062,7 +1062,7 @@ bool workTable::relinkRawIt()
             return 0;
         }
         for (int p = 0; p != 2; p++) {
-            Instr *in = r->entries[p].unk_00;
+            Instr *in = r->entries[p].instruction;
             if (in) {
                 in->linearLink.previousInstruction = 0;
                 in->linearLink.nextInstruction = 0;
@@ -1102,7 +1102,7 @@ workTable *workTable::localClone()
     nt->statistics.copyCountersFrom(&statistics);
     nt->unk_74 = unk_74;
     nt->unk_76 = unk_76;
-    nt->unk_78 = unk_78;
+    nt->logicalInstructionLength = logicalInstructionLength;
     nt->externalMinimumLength = externalMinimumLength;
     unsigned int t = (unsigned char)allocationMode;
     nt->allocationMode = t;
@@ -1219,7 +1219,7 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
             return 0;
         }
         wtRow *row = &rows[p->loopRow];
-        row->entries[p->pipelineIndex].unk_00 = nw;
+        row->entries[p->pipelineIndex].instruction = nw;
     }
     return 1;
 }

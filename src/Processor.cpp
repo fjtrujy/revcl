@@ -7,7 +7,7 @@
 #include "Program.h"
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 
 bool equalAsciiCaseInsensitive(char a, char b);
 bool isIdentifierAlphabetCharacter(char c);
@@ -18,7 +18,7 @@ Processor::Processor()
     uniqueName = 0;
     g_080b33a8 = 0;
     newSyntax = 0;
-    g_080de6c0 = 0;
+    processorInstructionTable = 0;
     cpuName = "Nameless";
     globalName = "";
     unk_64 = 0;
@@ -29,7 +29,7 @@ Processor::Processor()
     decodeMode = 0;
     decodeSubMode = 0;
     for (int i = 0; i != 12; i++)
-        g_080de6e0[i] = 0;
+        processorRegisterPools[i] = 0;
     for (int i = 0; i != 3; i++)
         g_080de714[i] = 0;
 }
@@ -54,7 +54,7 @@ bool Processor::Init(CpuDef *cpu)
         reportError("couldnt init cpu '%s' - the idefs were bad\n", cpu->name);
         return false;
     }
-    g_080de720 = cpu->devtab;
+    processorDeviceTable = cpu->devtab;
     instructionsPerRawLine = cpu->instructionsPerRawLine;
     if (instructionsPerRawLine < 1 || instructionsPerRawLine > 2) {
         reportError("processor '%s' has too many instructions per raw line\n", cpu->name);
@@ -69,7 +69,7 @@ bool Processor::Init(CpuDef *cpu)
         reportError("passed a null itable\n");
         return false;
     }
-    g_080de6c0 = iinfos;
+    processorInstructionTable = iinfos;
     for (int i = 0; pools[i].type; i++) {
         PoolDef *poolDefinition = &pools[i];
         RegPool *pool;
@@ -112,23 +112,23 @@ bool Processor::Init(CpuDef *cpu)
             }
             pool->externalRegister = e;
         }
-        if (g_080de6e0[poolDefinition->cls]) {
+        if (processorRegisterPools[poolDefinition->cls]) {
             reportError("already initialised reg type %d\n", poolDefinition->cls);
             delete pool;
             return false;
         }
-        g_080de6e0[poolDefinition->cls] = pool;
+        processorRegisterPools[poolDefinition->cls] = pool;
     }
     if (!cpu->dstSpecs) {
         reportError("procDec has no dstSpecs loaded\n");
         return false;
     }
-    g_080de728 = cpu->dstSpecs;
+    processorDestinationSpecs = cpu->dstSpecs;
     if (!cpu->srcSpecs) {
         reportError("procDec has no srcSpecs loaded\n");
         return false;
     }
-    g_080de724 = cpu->srcSpecs;
+    processorSourceSpecs = cpu->srcSpecs;
     return true;
 }
 
@@ -143,16 +143,16 @@ bool Processor::clearProcessorLists()
 void Processor::dumpRegisterPools()
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i])
-            g_080de6e0[i]->Dump();
+        if (processorRegisterPools[i])
+            processorRegisterPools[i]->Dump();
 }
 
 int Processor::gatherInflight(ol_s **out)
 {
     int n = 0;
     for (int i = 0; i != 12; i++) {
-        if (g_080de6e0[i]) {
-            int r = g_080de6e0[i]->gatherInflight(out + n);
+        if (processorRegisterPools[i]) {
+            int r = processorRegisterPools[i]->gatherInflight(out + n);
             if (r < 0) {
                 reportError("error during inflight gather\n");
                 return -1;
@@ -166,7 +166,7 @@ int Processor::gatherInflight(ol_s **out)
 bool Processor::clearAllRegisterAssignmentsFirstPass()
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->clearRegisterAssignmentsFirstPass()) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->clearRegisterAssignmentsFirstPass()) {
             reportError("failed to alloc reset an rpool\n");
             return false;
         }
@@ -176,7 +176,7 @@ bool Processor::clearAllRegisterAssignmentsFirstPass()
 bool Processor::clearAllRegisterAssignmentsSecondPass()
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->clearRegisterAssignmentsSecondPass()) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->clearRegisterAssignmentsSecondPass()) {
             reportError("failed to alloc reset an rpool\n");
             return false;
         }
@@ -185,14 +185,14 @@ bool Processor::clearAllRegisterAssignmentsSecondPass()
 
 void Processor::validateOpcodeTableCount()
 {
-    if (!g_080de6c0) {
+    if (!processorInstructionTable) {
         reportError("iInfos not set in processor\n");
         return;
     }
     int saved = errorOccurred;
-    errorOccurred = !quiet_080bbd98;
+    errorOccurred = !quietDiagnostics;
     int n = 0;
-    for (iInfo *p = g_080de6c0; p->mnemonic; p++) {
+    for (iInfo *p = processorInstructionTable; p->mnemonic; p++) {
         p->scanOpcodeOperandDescriptors();
         n++;
     }
@@ -206,13 +206,13 @@ void Processor::validateOpcodeTableCount()
 void dumpProcessorRegisterPools(Program *p)
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i])
-            g_080de6e0[i]->Dump();
+        if (processorRegisterPools[i])
+            processorRegisterPools[i]->Dump();
 }
 
 bool parseReset(Program *p)
 {
-    p->proc.unk_63 = false;
+    p->proc.vuDirectiveSeen = false;
     p->proc.exportedSymbols.clearNodes();
     p->proc.trailingLabels.clearNodes();
     p->proc.visibilityScopes.clearNodes();
@@ -221,9 +221,9 @@ bool parseReset(Program *p)
     p->proc.savedDecodeMode = 0;
     p->proc.savedDecodeSubMode = 0;
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->clearVirtualRegistersForParse()) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->clearVirtualRegistersForParse()) {
             reportError("Processor::parseReset() - failed to reset %s\n",
-                          g_080de6e0[i]->poolName);
+                          processorRegisterPools[i]->poolName);
             return false;
         }
     return true;
@@ -232,9 +232,9 @@ bool parseReset(Program *p)
 bool statReset(Program *p)
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->resetPoolPartTiming()) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->resetPoolPartTiming()) {
             reportError("Processor::statReset() - failed to stat %s\n",
-                          g_080de6e0[i]->poolName);
+                          processorRegisterPools[i]->poolName);
             return false;
         }
     return true;
@@ -242,7 +242,7 @@ bool statReset(Program *p)
 
 iInfo *getOpcodeInfoById(int id)
 {
-    return &g_080de6c0[id];
+    return &processorInstructionTable[id];
 }
 
 iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
@@ -251,11 +251,11 @@ iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
         reportError("Proc::FindInstruction() - null token passed\n");
         return 0;
     }
-    if (!g_080de6c0) {
+    if (!processorInstructionTable) {
         reportError("Proc::FindInstruction() - no instruction set loaded!\n");
         return 0;
     }
-    iInfo *p = g_080de6c0;
+    iInfo *p = processorInstructionTable;
     if (!all)
         p += 12;
     for (; p->mnemonic; p++) {
@@ -283,9 +283,9 @@ iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
 bool optReset(Program *p)
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->clearPoolPartPayloads()) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->clearPoolPartPayloads()) {
             reportError("Processor::optReset() - failed to reset %s\n",
-                          g_080de6e0[i]->poolName);
+                          processorRegisterPools[i]->poolName);
             return false;
         }
     return true;
@@ -295,9 +295,9 @@ bool Cycle(Program *p, bool flag)
 {
     p->emulatedCycleCount++;
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->cycleRegisters(flag)) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->cycleRegisters(flag)) {
             reportError("Processor::Cycle() - failed to cycle %s\n",
-                          g_080de6e0[i]->poolName);
+                          processorRegisterPools[i]->poolName);
             return false;
         }
     return true;
@@ -307,9 +307,9 @@ bool resetProcessorThroughput(Program *p)
 {
     p->emulatedCycleCount = 0;
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->resetPoolThroughputState()) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->resetPoolThroughputState()) {
             reportError("Processor::emuReset() - failed to reset %s\n",
-                          g_080de6e0[i]->poolName);
+                          processorRegisterPools[i]->poolName);
             return false;
         }
     return true;
@@ -318,7 +318,7 @@ bool resetProcessorThroughput(Program *p)
 inline RegPool *getRP(unsigned t)
 {
     if (t < 12)
-        return g_080de6e0[t];
+        return processorRegisterPools[t];
     reportWarning("Processor::GetRP - out of range register type (%d)\n", t);
     return 0;
 }
@@ -346,7 +346,7 @@ RegPoolEntry *getReg(unsigned type, int index)
 RegPoolEntry *findRegisterByGlobalIndex(int idx)
 {
     for (int i = 0; i != 12; i++) {
-        RegPool *rp = g_080de6e0[i];
+        RegPool *rp = processorRegisterPools[i];
         if (rp) {
             RegPoolEntry *e = rp->findByRegisterIndex(idx);
             if (e)
@@ -382,7 +382,7 @@ RegPool *GetRP(unsigned t)
         reportWarning("Processor::GetRP - out of range register type (%d)\n", t);
         return 0;
     }
-    return g_080de6e0[t];
+    return processorRegisterPools[t];
 }
 
 bool flowReset(Program *p)
@@ -390,9 +390,9 @@ bool flowReset(Program *p)
     p->proc.usedBeforeSet.clear();
     p->proc.stalls.clear();
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->resetPoolFlowState()) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->resetPoolFlowState()) {
             reportError("Processor::flowReset() - failed to reset %s\n",
-                          g_080de6e0[i]->poolName);
+                          processorRegisterPools[i]->poolName);
             return false;
         }
     return true;
@@ -476,7 +476,7 @@ bool wouldPair(Instr **ie, Instr *in, unsigned p)
 
 const char *deviceNameByIndex(int dev)
 {
-    const char **tab = (const char **)g_080de720;
+    const char **tab = (const char **)processorDeviceTable;
     if (!tab)
         return "NO_DEVTAB";
     if ((unsigned)dev > 8)
@@ -492,9 +492,9 @@ bool isVuRegister(RegPoolEntry *r)
 bool resetPoolOptimizationState(Program *p)
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->optReset()) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->optReset()) {
             reportError("Processor::optReset() - failed to reset %s\n",
-                          g_080de6e0[i]->poolName);
+                          processorRegisterPools[i]->poolName);
             return false;
         }
     return true;
@@ -504,7 +504,7 @@ static inline int iinfoId(iInfo *op)
 {
     if (!op)
         return -1;
-    int id = ((char *)op - (char *)g_080de6c0) / sizeof(iInfo);
+    int id = ((char *)op - (char *)processorInstructionTable) / sizeof(iInfo);
     if (id < 0)
         return -1;
     if (id >= 0xd6)
@@ -533,11 +533,11 @@ aaDesc *findAddressAliasDescriptor(Instr *in)
         reportError("couldn't deduce instruction uid\n");
         exitAfterCleanup(-1);
     }
-    if (!g_080de724) {
+    if (!processorSourceSpecs) {
         res = 0;
         return res;
     }
-    aaDesc *t = (aaDesc *)g_080de724;
+    aaDesc *t = (aaDesc *)processorSourceSpecs;
     if (t->unk_00) {
         do {
             if (t->unk_00 == id) {
@@ -562,9 +562,9 @@ aaUse *findAddressAliasUse(Instr *in)
         reportError("couldn't deduce instruction uid\n");
         exitAfterCleanup(-1);
     }
-    if (!g_080de724)
+    if (!processorSourceSpecs)
         return 0;
-    for (aaUse *t = (aaUse *)g_080de728; t->unk_00; t++)
+    for (aaUse *t = (aaUse *)processorDestinationSpecs; t->unk_00; t++)
         if (t->unk_00 == id)
             return t;
     return 0;
@@ -573,9 +573,9 @@ aaUse *findAddressAliasUse(Instr *in)
 bool emitReset(Program *p)
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->emitReset()) {
+        if (processorRegisterPools[i] && !processorRegisterPools[i]->emitReset()) {
             reportError("Processor::emitReset() - failed to reset %s\n",
-                          g_080de6e0[i]->poolName);
+                          processorRegisterPools[i]->poolName);
             return false;
         }
     return true;
@@ -585,11 +585,11 @@ char *emitStats(Program *p, char *buf)
 {
     buf += formatIntoBuffer(buf, "; register stats:\n");
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && g_080de6e0[i]->virtualPartCount) {
-            buf = g_080de6e0[i]->emitStats(buf);
+        if (processorRegisterPools[i] && processorRegisterPools[i]->virtualPartCount) {
+            buf = processorRegisterPools[i]->emitStats(buf);
             if (!buf) {
                 reportError("Processor::emitStats() - failed to emit stats for %s\n",
-                              g_080de6e0[i]->poolName);
+                              processorRegisterPools[i]->poolName);
                 return 0;
             }
         }
@@ -604,8 +604,8 @@ int getPoolsByClassID(int cls, RegPool **tab, int max)
     }
     int n = 0;
     for (int i = 0; i != 12; i++) {
-        RegPool *rp = g_080de6e0[i];
-        if (rp && rp->unk_0e == cls) {
+        RegPool *rp = processorRegisterPools[i];
+        if (rp && rp->poolKind == cls) {
             if (n >= max) {
                 reportError("Processor:: more pools than space provided in getPoolsByClassID()\n");
                 return -1;
@@ -636,10 +636,10 @@ const char *Processor::getUniqueName()
 }
 
 int g_080b33a8 = 1;
-bool stagger_080b33ac = false;
-iInfo *g_080de6c0;
-RegPool *g_080de6e0[13];
+bool staggerMemoryAccess = false;
+iInfo *processorInstructionTable;
+RegPool *processorRegisterPools[13];
 VclPtrWord g_080de714[3];
-void *g_080de720;
-void *g_080de724;
-void *g_080de728;
+void *processorDeviceTable;
+void *processorSourceSpecs;
+void *processorDestinationSpecs;

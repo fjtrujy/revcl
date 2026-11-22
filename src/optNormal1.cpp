@@ -46,8 +46,8 @@ bool optNormal1(workTable *wt, wrangleCand *c)
     }
     if (!best)
         return false;
-    c->unk_00 = best;
-    c->unk_04 = best->candidateBaseRow + best->candidateCostOffset;
-    c->unk_06 = best->candidateAttemptCount & 1;
+    c->candidateInstruction = best;
+    c->candidateRow = best->candidateBaseRow + best->candidateCostOffset;
+    c->candidatePipe = best->candidateAttemptCount & 1;
     return true;
 }

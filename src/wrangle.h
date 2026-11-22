@@ -4,9 +4,9 @@
 class Instr;
 
 struct wrangleCand {
-    Instr *unk_00;
-    short unk_04;       // row
-    char unk_06;        // pipe
+    Instr *candidateInstruction;
+    short candidateRow;
+    char candidatePipe;
 };
 
 #endif

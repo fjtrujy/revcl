@@ -106,7 +106,7 @@ int getMove(Block *blk, Instr *in, int now)
                     if (lk->getPriority() == 1 && score < 20000)
                         score = 20000;
                     if (parent->ownerType != 2) {
-                        int row = parent->unk_32;
+                        int row = parent->linearRow;
                         int z = op2->componentMask;
                         if (row < 0) {
                             z >>= 4;
@@ -166,7 +166,7 @@ int getMove(Block *blk, Instr *in, int now)
     int p;
     for (p = 0; p != bestReg->partCount; p++) {
         OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
-        if (o && o->unk_22)
+        if (o && o->activeReferenceCount)
             mask |= 1 << p;
     }
     Instr *mv = makeMove(blk, bestReg);
@@ -175,7 +175,7 @@ int getMove(Block *blk, Instr *in, int now)
         Instr *earliest = 0;
         for (p = 0; p != bestReg->partCount; p++) {
             OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
-            if (((mask >> p) & 1) && o && o->unk_22) {
+            if (((mask >> p) & 1) && o && o->activeReferenceCount) {
                 Instr *oi = o->ownerInstr();
                 if (oi && (!earliest || oi->position.getRow() < earliest->position.getRow()))
                     earliest = oi;
@@ -241,7 +241,7 @@ int getMove(Block *blk, Instr *in, int now)
                             OperandLock *par = lk->getParent();
                             RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(p);
                             RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(p);
-                            if (par->unk_2c) {
+                            if (par->insertedIntoLockList) {
                                 OperandLock *oldOut = oldL->outputLocks;
                                 if (!((moved >> p) & 1)) {
                                     OperandLock *moveInLock = &mvIn->parts[p];
@@ -359,7 +359,7 @@ int getMove(Block *blk, Instr *in, int now)
 
 int unresolveMove(Block *blk, Instr *mv);
 bool UnlinkFromToDo(Block *blk, Instr *n);
-void func_08073bb0(Block *blk, Instr *mv);
+void decrementInstructionPipelineCounts(Block *blk, Instr *mv);
 
 bool undoMove(Block *blk, Instr *mv)
 {
@@ -437,7 +437,7 @@ bool undoMove(Block *blk, Instr *mv)
         reportError("move with >2 operands\n");
         abortAfterError();
     }
-    func_08073bb0(blk, mv);
+    decrementInstructionPipelineCounts(blk, mv);
     adjustMoveCount(blk, mv, -1);
     addFreeMove(mv);
     return true;

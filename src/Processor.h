@@ -17,7 +17,7 @@ struct PoolDef {            // array ends at type == 0
     int type;               // 1 gen, 2 hw, 3 mem
     const char *prefix;     // register prefix ("vf", "vi", "hw")
     const char *name;
-    int cls;                // register class, index into g_080de6e0
+    int cls;                // register class, index into processorRegisterPools
     int virtualRegisterParts; // 0 forbids virtual registers; otherwise parts per virtual register
     const char *zeroReg;
     const char *extReg;
@@ -34,12 +34,12 @@ struct CpuDef {
 };
 
 extern int g_080b33a8;
-extern iInfo *g_080de6c0;
-extern RegPool *g_080de6e0[13];
+extern iInfo *processorInstructionTable;
+extern RegPool *processorRegisterPools[13];
 extern VclPtrWord g_080de714[3];
-extern void *g_080de720;    // device table
-extern void *g_080de724;    // srcSpecs
-extern void *g_080de728;    // dstSpecs
+extern void *processorDeviceTable;    // device table
+extern void *processorSourceSpecs;    // srcSpecs
+extern void *processorDestinationSpecs;    // dstSpecs
 
 class Processor {
 public:
@@ -76,7 +76,7 @@ public:
     char uniqueAll;
     char savedDecodeSubMode;
     char savedDecodeMode;
-    bool unk_63;
+    bool vuDirectiveSeen;
     char unk_64;
     char unk_65;
     ubsList usedBeforeSet;

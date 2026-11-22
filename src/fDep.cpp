@@ -7,7 +7,7 @@
 
 bool BuildfDepList(workTable *wt, bool force, bool);
 bool tagsMatch(Instr *a, Instr *b);
-bool func_08065fd4(Instr *in, Instr *other);
+bool addAdditionalClonePredecessors(Instr *in, Instr *other);
 bool copyCloneFdeps(Instr *in, ol_s *o, olList *dst);
 
 Operand *getEA(Instr *i)
