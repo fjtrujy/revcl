@@ -158,15 +158,15 @@ int getInstructionDistanceToStreamEnd(Instr *instruction)
             return -1;
         }
         table = (ScheduleTable *)img->ownerTable;
-        if (table->codeModeValue != 3) {
+        if (table->codeModeValue != VCL_CODE_RAW) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
         }
     }
     switch (table->codeModeValue) {
-    case 1:
+    case VCL_CODE_UTA:
         return instruction->schedulingStatistics.reverseLatencyDepth;
-    case 3: {
+    case VCL_CODE_RAW: {
         int len = table->getRawOrSyntheticLogicalLength();
         if (len < 0) {
             reportError("logical len<0 for table \n");
@@ -187,7 +187,7 @@ int getInstructionDistanceToStreamEnd(Instr *instruction)
         }
         return distanceToEnd;
     }
-    case 4:
+    case VCL_CODE_SYNTHETIC:
         return 0;
     default:
         const char *modeName = codeModeName(table->codeModeValue);
@@ -221,15 +221,15 @@ int getInstructionDistanceFromStreamStart(Instr *instruction)
             return -1;
         }
         table = (ScheduleTable *)img->ownerTable;
-        if (table->codeModeValue != 3) {
+        if (table->codeModeValue != VCL_CODE_RAW) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
         }
     }
     switch (table->codeModeValue) {
-    case 1:
+    case VCL_CODE_UTA:
         return instruction->schedulingStatistics.forwardLatencyDepth;
-    case 3: {
+    case VCL_CODE_RAW: {
         int len = table->getRawOrSyntheticLogicalLength();
         if (len < 0) {
             reportError("logical len<0 for table \n");
@@ -245,7 +245,7 @@ int getInstructionDistanceFromStreamStart(Instr *instruction)
         reportError("tick after table end\n");
         return -1;
     }
-    case 4:
+    case VCL_CODE_SYNTHETIC:
         return 0;
     default:
         reportError("bad code mode for getFromStart()\n");

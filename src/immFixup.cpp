@@ -389,7 +389,7 @@ bool resolveSourceEpilogueLoopId(olList *oll, int luid, int epType, int *lid)
 
 static inline bool isCinput(Operand *operand)
 {
-    return operand->direction == 1;
+    return operand->direction == VCL_OPERAND_READ;
 }
 
 bool resolveInstructionImmediateFixup(Instr *instruction)

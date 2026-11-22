@@ -61,7 +61,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         char *tokenSource = locationTag->tokenTextAt(cur);
         char *bufferDestination = buf;
         mnemonicCursor = bufferDestination;
-        for (; *tokenSource && copyCount < 0x800; copyCount++)
+        for (; *tokenSource && copyCount < VCL_TOKEN_COPY_LIMIT; copyCount++)
             *bufferDestination++ = *tokenSource++;
         *bufferDestination = 0;
     }
@@ -163,12 +163,12 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 goto fail;
             }
             if (opd->pairedOperandIndexPlusOne) {
-                if (opd->direction != 1) {
+                if (opd->direction != VCL_OPERAND_READ) {
                     reportError("implicit web patch set for non-output\n");
                     goto fail;
                 }
                 Operand *sourceOperand = &decodedInstruction->operands[opd->pairedOperandIndexPlusOne - 1];
-                if (sourceOperand->direction != 2) {
+                if (sourceOperand->direction != VCL_OPERAND_WRITE) {
                     reportError("implicit web patched operand not input\n");
                     goto fail;
                 }
@@ -209,9 +209,9 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         }
         opd->addressComponentMask = decodedOperand.addressComponentMask;
         opd->componentMask = decodedOperand.componentMask;
-        if (opd->operandKind == 35 || opd->operandKind == 42 || opd->operandKind == 1 || opd->operandKind == 9) {
+        if (opd->operandKind == VCL_OP_V_FL4S || opd->operandKind == VCL_OP_C_GPRS || opd->operandKind == VCL_OP_V_FL4 || opd->operandKind == VCL_OP_V_ACC) {
             if (forcedMods) {
-                if (opd->componentMask != decodedInstruction->destinationMask && opd->componentMask != 15)
+                if (opd->componentMask != decodedInstruction->destinationMask && opd->componentMask != VCL_COMPONENT_ALL)
                     reportWarning("getNextInstruction: forced mod bits!\n");
                 opd->componentMask = decodedInstruction->destinationMask;
             } else if (opBits < 0) {
@@ -223,7 +223,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 goto fail;
             }
         }
-        if (opd->operandKind == 30 || opd->operandKind == 31) {
+        if (opd->operandKind == VCL_OP_V_EA_REG || opd->operandKind == VCL_OP_V_EA_IMM_REG) {
             if (explicitMods) {
                 if (opd->addressComponentMask) {
                     if (opd->addressComponentMask != decodedInstruction->destinationMask) {
@@ -246,7 +246,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         }
         if (decodedOperand.name[0]) {
             int cls = -1;
-            if (opd->operandKind == 38) {
+            if (opd->operandKind == VCL_OP_V_TBD) {
                 if (decodedOperand.genericOperandForm == 1) {
                     if (operandIndex != 2) {
                         reportUserMessage("a scalar can only be the third operand in generic instruction\n");
@@ -254,21 +254,21 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                     }
                     if (asciiCaseEqual(decodedOperand.name, "i")) {
                         cls = 10;
-                        opd->operandKind = 4;
+                        opd->operandKind = VCL_OP_V_I;
                     }
                     if (asciiCaseEqual(decodedOperand.name, "q")) {
                         cls = 10;
-                        opd->operandKind = 7;
+                        opd->operandKind = VCL_OP_V_Q;
                     }
                     if (cls < 0) {
                         cls = 9;
-                        opd->operandKind = 3;
+                        opd->operandKind = VCL_OP_V_FL1;
                     }
                 } else if (decodedOperand.genericOperandForm == 2) {
                     if (operandIndex == 0) {
                         if (asciiCaseEqual(decodedOperand.name, "acc")) {
                             cls = 10;
-                            opd->operandKind = 9;
+                            opd->operandKind = VCL_OP_V_ACC;
                         }
                     } else if (asciiCaseEqual(decodedOperand.name, "acc")) {
                         reportUserMessage("ACC can only be first vector operand\n");
@@ -276,7 +276,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                     }
                     if (cls < 0) {
                         cls = 9;
-                        opd->operandKind = 1;
+                        opd->operandKind = VCL_OP_V_FL4;
                     }
                     opd->componentMask = decodedInstruction->destinationMask;
                     if (!newSyntax) {
@@ -444,7 +444,7 @@ bool Processor::decodeLE(LocTag *locationTag, int *pos, mList *labels, Instr **o
                 copyIndex = 0;
                 sourceCursor = tok;
                 destinationCursor = buf;
-                for (; *sourceCursor && copyIndex < 0x800; copyIndex++)
+                for (; *sourceCursor && copyIndex < VCL_TOKEN_COPY_LIMIT; copyIndex++)
                     *destinationCursor++ = *sourceCursor++;
                 *destinationCursor = 0;
             }
@@ -467,7 +467,7 @@ bool Processor::decodeLE(LocTag *locationTag, int *pos, mList *labels, Instr **o
                         sourceCursor = tok2;
                         destinationCursor = buf + 1;
                         copyIndex = 0;
-                        for (; *sourceCursor && copyIndex < 0x800; copyIndex++)
+                        for (; *sourceCursor && copyIndex < VCL_TOKEN_COPY_LIMIT; copyIndex++)
                             *destinationCursor++ = *sourceCursor++;
                         *destinationCursor = 0;
                     }
@@ -528,7 +528,7 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
     int state = 0;
     int exits = 0;
     int enters = 0;
-    int maxLines = 0x1000;
+    int maxLines = VCL_MAX_DECODED_SOURCE_LINES;
     program->proc.sourceBuildType = type;
     program->proc.newSyntax = newSyntax;
     DecodedLine *blocks = 0;
@@ -549,7 +549,7 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
     program->proc.savedDecodeMode = 0;
     program->proc.rawLoopId = 1;
     program->proc.insideRawLoop = 0;
-    blocks = new DecodedLine[0x1000];
+    blocks = new DecodedLine[VCL_MAX_DECODED_SOURCE_LINES];
     if (!blocks) {
         reportError("Processor::Build() new failed for decLine table\n");
         goto done;

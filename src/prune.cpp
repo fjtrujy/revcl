@@ -144,7 +144,7 @@ int tryPrune(InstructionStream *stream)
         return 0;
     }
     bool raw = false;
-    if (scheduleTable->codeModeValue == 4 || scheduleTable->getTableRawMode() == 4)
+    if (scheduleTable->codeModeValue == VCL_CODE_SYNTHETIC || scheduleTable->getTableRawMode() == VCL_RAW_USER_FIXED)
         raw = true;
     for (Instr *currentInstruction = scheduleTable->linearInstructions.head; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction) {
         int pruneResult = tryPrune(currentInstruction, raw);
@@ -179,7 +179,7 @@ int tryPrune(Instr *instruction, bool raw)
     }
     Operand *out;
     for (int outputOperandIndex = 0; (out = instruction->getOp(outputOperandIndex)) != 0; outputOperandIndex++) {
-        int isOut = out->direction == 2;
+        int isOut = out->direction == VCL_OPERAND_WRITE;
         RegisterEntry *reg = isOut ? out->assignedRegister : 0;
         if (!reg)
             continue;
@@ -214,11 +214,11 @@ int tryPrune(Instr *instruction, bool raw)
         }
         if (!cnt)
             continue;
-        if (out->operandKind == 10 || out->operandKind == 11)
+        if (out->operandKind == VCL_OP_V_ACCXYZ || out->operandKind == VCL_OP_V_FLXYZ)
             out->pruneMask = out->componentMask;
         Operand *inputOperand;
         for (int inputOperandIndex = 0; (inputOperand = instruction->getOp(inputOperandIndex)) != 0; inputOperandIndex++) {
-            int isIn = inputOperand->direction == 1;
+            int isIn = inputOperand->direction == VCL_OPERAND_READ;
             RegisterEntry *registerEntry = isIn ? inputOperand->assignedRegister : 0;
             if (!registerEntry)
                 continue;
@@ -261,7 +261,7 @@ bool doPrune(InstructionStream *stream)
         reportError("failed to get work table\n");
         return false;
     }
-    if (scheduleTable->getTableRawMode() == 4 || scheduleTable->getTableRawMode() == 3)
+    if (scheduleTable->getTableRawMode() == VCL_RAW_USER_FIXED || scheduleTable->getTableRawMode() == VCL_RAW_USER_FREE)
         return true;
     Instr *first = scheduleTable->linearInstructions.head;
     Instr *currentInstruction = first;
@@ -318,7 +318,7 @@ int doPrune(Instr *prunedInstruction)
     if (opcodeInfo->destinationMaskMode == 1) {
         int effectiveDestinationMask, nIn = 0, inOR = 0, outOR = 0, nOut = 0;
         for (operandIndex = 0; (currentOperand = prunedInstruction->getOp(operandIndex)) != 0; operandIndex++) {
-            if (currentOperand->operandKind != 1 && currentOperand->operandKind != 9)
+            if (currentOperand->operandKind != VCL_OP_V_FL4 && currentOperand->operandKind != VCL_OP_V_ACC)
                 continue;
             if (!currentOperand->assignedRegister) {
                 reportError("couldn't get a register for V_FL4 or V_ACC operand\n");
@@ -373,7 +373,7 @@ int doPrune(Instr *prunedInstruction)
         }
         prunedInstruction->destinationMask = effectiveDestinationMask;
         for (operandIndex = 0; (currentOperand = prunedInstruction->getOp(operandIndex)) != 0; operandIndex++) {
-            if (currentOperand->operandKind == 1 || currentOperand->operandKind == 9)
+            if (currentOperand->operandKind == VCL_OP_V_FL4 || currentOperand->operandKind == VCL_OP_V_ACC)
                 currentOperand->componentMask = effectiveDestinationMask;
         }
         if (opcodeInfo->decodeHook == rotateInputComponentMask)

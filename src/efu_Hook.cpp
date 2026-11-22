@@ -31,8 +31,8 @@ bool efu_Hook(void *opcodeMetadata, Instr *instruction)
     case 1: break;
     case 2: operand->componentMask = 3; break;
     case 3: operand->componentMask = 5; break;
-    case 4: operand->componentMask = 7; break;
-    case 5: operand->componentMask = 15; break;
+    case 4: operand->componentMask = VCL_COMPONENT_XYZ; break;
+    case 5: operand->componentMask = VCL_COMPONENT_ALL; break;
     default:
         reportError("unknown EFU mod bits type during efu_Hook at build\n");
         return 0;
@@ -59,7 +59,7 @@ bool wr2w_Hook(void *opcodeMetadata, Instr *moveInstruction)
         return 0;
     }
     moveInstruction->opcodeInfo = instructionInfo;
-    moveInstruction->operands[1].operandKind = 0x1f;
+    moveInstruction->operands[1].operandKind = VCL_OP_V_EA_IMM_REG;
     moveInstruction->operands[1].immediateValue.setInt(0);
     return 1;
 }
@@ -178,7 +178,7 @@ bool semSynth(void *opcodeMetadata, Instr *syntheticInstruction)
     const char *mnemonicSource = opcodeInfo->mnemonic;
     while (*mnemonicSource)
         *nameDestination++ = *mnemonicSource++;
-    if (syntheticInstruction->operands[0].operandKind == 9) {
+    if (syntheticInstruction->operands[0].operandKind == VCL_OP_V_ACC) {
         if (nameDestination[-1] != 'a' && nameDestination[-1] != 'A') {
             *nameDestination++ = 'a';
             syntheticInstruction->operands[0].outputLatency = 1;
@@ -186,21 +186,21 @@ bool semSynth(void *opcodeMetadata, Instr *syntheticInstruction)
     } else
         syntheticInstruction->operands[0].outputLatency = 4;
     char operandKind = syntheticInstruction->operands[2].operandKind;
-    if (operandKind == 4) {
+    if (operandKind == VCL_OP_V_I) {
         syntheticInstruction->operands[2].externalBlockModeFlag = 1;
         *nameDestination++ = 'i';
     }
-    if (operandKind == 7) {
+    if (operandKind == VCL_OP_V_Q) {
         *nameDestination++ = 'q';
         syntheticInstruction->operands[2].externalBlockModeFlag = 0;
     }
-    if (operandKind == 3) {
+    if (operandKind == VCL_OP_V_FL1) {
         unsigned char componentMask = syntheticInstruction->operands[2].componentMask;
         int componentCount = 0;
-        if (componentMask == 1) { *nameDestination++ = 'x'; componentCount++; }
-        if (componentMask == 2) { *nameDestination++ = 'y'; componentCount++; }
-        if (componentMask == 4) { *nameDestination++ = 'z'; componentCount++; }
-        if (componentMask == 8) { *nameDestination++ = 'w'; componentCount++; }
+        if (componentMask == VCL_COMPONENT_X) { *nameDestination++ = 'x'; componentCount++; }
+        if (componentMask == VCL_COMPONENT_Y) { *nameDestination++ = 'y'; componentCount++; }
+        if (componentMask == VCL_COMPONENT_Z) { *nameDestination++ = 'z'; componentCount++; }
+        if (componentMask == VCL_COMPONENT_W) { *nameDestination++ = 'w'; componentCount++; }
         if (componentCount != 1) {
             reportError("semSynth - bad FL1 bits\n");
             return 0;

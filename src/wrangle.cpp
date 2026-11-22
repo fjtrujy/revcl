@@ -42,7 +42,7 @@ extern bool quietDiagnostics;
 bool scheduleMidTableMode1(ScheduleTable *table, wrangleFunc candidateSelector)
 {
     allowInputLockLoopWrapping = 0;
-    if (table->codeModeValue != 2) {
+    if (table->codeModeValue != VCL_CODE_MID) {
         reportError("can't wrangle a non MID table\n");
         abortAfterError();
     }

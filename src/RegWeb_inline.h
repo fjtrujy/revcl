@@ -53,7 +53,7 @@ inline bool RegWeb::collectInstructionRegisterWebs(Instr *instruction)
             operand->registerWeb = registerWeb;
         }
         registerWeb->componentMask |= operand->componentMask;
-        if (operand->pairedOperandIndexPlusOne && operand->direction == 1) {
+        if (operand->pairedOperandIndexPlusOne && operand->direction == VCL_OPERAND_READ) {
             if (!merge(registerWeb, instruction->operands[operand->pairedOperandIndexPlusOne - 1].getRootRegisterWeb())) {
                 reportError("failed to merge web for implicit web patch\n");
                 return false;
@@ -117,7 +117,7 @@ inline bool RegWeb::collectInstructionRegisterWebs(Instr *instruction)
 
 inline RegWeb *RegWeb::createRegisterWeb(RegisterEntry *registerEntry)
 {
-    if (regWebCount >= 0x4000) {
+    if (regWebCount >= VCL_REGISTER_WEB_CAPACITY) {
         reportError("oh no! ran out of regweb entries\n");
         return 0;
     }

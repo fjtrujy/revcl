@@ -100,8 +100,8 @@ bool bindDependencies(Program *program)
         }
     }
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
-        bool xin = stream->startType == 2;
-        bool xout = stream->endType == 3;
+        bool xin = stream->startType == VCL_STREAM_START_ENTRY;
+        bool xout = stream->endType == VCL_STREAM_END_FINAL;
         if (xin) {
             RegisterEntry *sticky39 = findRegisterByGlobalIndex(0x39);
             if (!addXinFor(stream, sticky39)) {
@@ -167,7 +167,7 @@ Instr *addXinFor(InstructionStream *stream, RegisterEntry *registerEntry)
     int serial = nextInstructionSerial++;
     newInputInstruction->instructionSerial = serial;
     Operand *externalInputOperand = &newInputInstruction->operands[0];
-    if (externalInputOperand->operandKind != 0x37) {
+    if (externalInputOperand->operandKind != VCL_OP_EXT_DEP) {
         reportError("xin wasn't external\n");
         delete newInputInstruction;
         return 0;
@@ -207,7 +207,7 @@ Instr *addXoutFor(InstructionStream *stream, RegisterEntry *registerEntry)
     int serial = nextInstructionSerial++;
     newOutputInstruction->instructionSerial = serial;
     Operand *externalOutputOperand = &newOutputInstruction->operands[0];
-    if (externalOutputOperand->operandKind != 0x37) {
+    if (externalOutputOperand->operandKind != VCL_OP_EXT_DEP) {
         reportError("xout wasn't external\n");
         delete newOutputInstruction;
         return 0;

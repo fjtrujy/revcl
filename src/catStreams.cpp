@@ -33,7 +33,7 @@ bool concatenateCompatibleStreams(Program *program)
         StreamLinkList *out = &stream->outputLinks;
         if (out->count == 1 && followingStream->inputLinks.count == 1
             && stream->usesFreeRawLayout() && followingStream->usesFreeRawLayout()
-            && stream->endType == 1 && followingStream->startType == 1
+            && stream->endType == VCL_STREAM_END_NULL && followingStream->startType == VCL_STREAM_START_NULL
             && !stream->getBranch()
             && out->getStream(0) == followingStream
             && !followingStream->leadingLabelFlags && !stream->trailingLabelFlags

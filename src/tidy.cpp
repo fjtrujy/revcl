@@ -28,11 +28,11 @@ bool tidyProgramStreams(Program *program)
         }
         ScheduleTable *scheduleTable = stream->workTablePtr;
         switch (scheduleTable->codeModeValue) {
-        case 1:
+        case VCL_CODE_UTA:
             reportError("work table code mode is uta..%s\n", stream->streamName());
             break;
-        case 3:
-        case 4:
+        case VCL_CODE_RAW:
+        case VCL_CODE_SYNTHETIC:
             stream->emissionTable = scheduleTable;
             break;
         default:
@@ -40,13 +40,13 @@ bool tidyProgramStreams(Program *program)
             return false;
         }
         stream->mergeIntoSuccessor = 1;
-        if (stream->endType != 1)
+        if (stream->endType != VCL_STREAM_END_NULL)
             stream->mergeIntoSuccessor = 0;
         StreamLinkNode *link = stream->outputLinks.head;
         if (!link)
             stream->mergeIntoSuccessor = 0;
         while (link) {
-            if (link->otherStream->endType != 3) {
+            if (link->otherStream->endType != VCL_STREAM_END_FINAL) {
                 stream->mergeIntoSuccessor = 0;
                 break;
             }
@@ -69,13 +69,13 @@ bool tidyProgramStreams(Program *program)
         if (instruction)
             instruction->tildePrefix = 1;
         stream->branchType = 0;
-        stream->endType = 3;
+        stream->endType = VCL_STREAM_END_FINAL;
         if (!stream->workTablePtr) {
             reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
         ScheduleTable *streamTable = stream->workTablePtr;
-        if (streamTable->codeModeValue == 4)
+        if (streamTable->codeModeValue == VCL_CODE_SYNTHETIC)
             continue;
         if (streamTable->getRangeStart() < 0)
             continue;

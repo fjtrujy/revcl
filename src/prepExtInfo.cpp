@@ -219,7 +219,7 @@ bool prepExtInfo(Program *program, InstructionStream *stream, bool noExt)
                 }
                 ScheduleTable *scheduleTable = sourceStream->getTable();
                 ScheduleTable *destinationTable = destinationStream->getTable();
-                if (scheduleTable->codeModeValue == 3 && destinationTable->codeModeValue == 3) {
+                if (scheduleTable->codeModeValue == VCL_CODE_RAW && destinationTable->codeModeValue == VCL_CODE_RAW) {
                     int sourceId = sourceStream->streamId;
                     int k1 = guessKeyLen(program, transitionPair->src, sourceId, streamId);
                     if (k1 < 0) {
@@ -299,10 +299,10 @@ bool prepExtInfo(Program *program, InstructionStream *stream, bool noExt)
             }
         }
     int endType = stream->getEndType();
-    if ((unsigned char)endType == 2) {
+    if ((unsigned char)endType == VCL_STREAM_END_CONTINUE) {
         goto branchBound;
     }
-    if ((unsigned char)endType == 3) {
+    if ((unsigned char)endType == VCL_STREAM_END_FINAL) {
         goto branchBound;
     }
 success:

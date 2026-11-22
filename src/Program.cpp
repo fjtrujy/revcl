@@ -342,7 +342,7 @@ char *emitLabels(Program *program, char *outputBuffer)
 bool isReferencedLabel(Program *program, char *name)
 {
     for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        if (stream->startType == 2) {
+        if (stream->startType == VCL_STREAM_START_ENTRY) {
             StreamLinkNode *outputLink = stream->outputLinks.head;
             if (outputLink) {
                 StreamLinkNode *next = outputLink->next;
@@ -427,7 +427,7 @@ bool resetProgramAllocationsForFirstPass(Program *program)
             reportError("failed to get work table\n");
             return false;
         }
-        table->allocationMode = 1;
+        table->allocationMode = VCL_ALLOC_NONE;
     }
     return true;
 }
@@ -448,8 +448,8 @@ static inline void printNamedLink(const char *fmt, StreamLinkNode *link, const c
     reportInfo(fmt, type, other, name);
 }
 
-static inline bool isEntryStream(InstructionStream *stream) { return stream->startType == 2; }
-static inline bool isExitStream(InstructionStream *stream) { return stream->endType == 3; }
+static inline bool isEntryStream(InstructionStream *stream) { return stream->startType == VCL_STREAM_START_ENTRY; }
+static inline bool isExitStream(InstructionStream *stream) { return stream->endType == VCL_STREAM_END_FINAL; }
 
 void dumpFlow(Program *program)
 {

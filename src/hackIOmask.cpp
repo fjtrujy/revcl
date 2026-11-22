@@ -3,8 +3,8 @@
 
 bool rotateInputComponentMask(void *, Instr *in);
 
-static inline bool isOutput(Operand *operand) { return operand->direction == 2; }
-static inline bool isInput(Operand *operand) { return operand->direction == 1; }
+static inline bool isOutput(Operand *operand) { return operand->direction == VCL_OPERAND_WRITE; }
+static inline bool isInput(Operand *operand) { return operand->direction == VCL_OPERAND_READ; }
 
 static inline RegisterEntry *outReg(Operand *operand)
 {
@@ -58,7 +58,7 @@ int hackIOmask(Instr *instruction, int outOp, unsigned char mask, int inOp)
     }
     if (!mask)
         return 0;
-    if ((operand->operandKind == 1 || operand->operandKind == 9) && (out->operandKind == 1 || out->operandKind == 9)) {
+    if ((operand->operandKind == VCL_OP_V_FL4 || operand->operandKind == VCL_OP_V_ACC) && (out->operandKind == VCL_OP_V_FL4 || out->operandKind == VCL_OP_V_ACC)) {
         if (opcodeInfo->decodeHook == rotateInputComponentMask)
             return ((bits << 1) & 0xf) | ((mask & 8) >> 3);
         return bits;

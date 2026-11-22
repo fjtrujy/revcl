@@ -26,7 +26,7 @@ bool emuTable(Program *program, ScheduleTable *scheduleTable)
     }
     scheduleTable->declaredRawLength = -1;
     switch (scheduleTable->codeModeValue) {
-    case 3: {
+    case VCL_CODE_RAW: {
         int skipped = 0;
         for (int line = scheduleTable->getRangeStart(); line != scheduleTable->getRangeEnd(); line++) {
             ScheduleRow *workRow = scheduleTable->getRowByIndex(line);
@@ -61,8 +61,8 @@ bool emuTable(Program *program, ScheduleTable *scheduleTable)
     }
 fail:
     return false;
-    case 1:
-    case 4: {
+    case VCL_CODE_UTA:
+    case VCL_CODE_SYNTHETIC: {
         Instr *currentInstruction = scheduleTable->linearInstructions.head;
         ScheduleRow row;
         for (; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction) {

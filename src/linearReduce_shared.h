@@ -20,7 +20,7 @@ bool doLocalMove(ScheduleTable *wt, Instr *in, int s_test, int e_test, int dl);
 
 static inline bool isPipeMode(ScheduleTable *wt)
 {
-    return wt->codeModeValue == 3 && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
+    return wt->codeModeValue == VCL_CODE_RAW && (wt->rawSchedulingMode == VCL_RAW_COMPILER_FREE || wt->rawSchedulingMode == VCL_RAW_USER_FREE);
 }
 
 #endif

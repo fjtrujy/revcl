@@ -149,7 +149,7 @@ bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *outputL
 
 bool haveSimultaneousRegisterOutputs(ScheduleTable *scheduleTable, RegisterEntry *registerEntry, RegisterEntry *alternateRegister)
 {
-    if (scheduleTable->codeModeValue != 3) {
+    if (scheduleTable->codeModeValue != VCL_CODE_RAW) {
         reportError("hack_slo - called - but table not raw\n");
         return false;
     }

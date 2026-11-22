@@ -154,7 +154,7 @@ epiRec *loopDebris::allocPro(int size)
             region->table->allocationMode = requestedAllocationMode;
         } else {
             setDebrisMode(region->table, 1);
-            region->table->allocationMode = 2;
+            region->table->allocationMode = VCL_ALLOC_X;
         }
         m_nPro++;
     } else
@@ -183,7 +183,7 @@ epiRec *loopDebris::allocEpi(int size)
             region->table->allocationMode = requestedAllocationMode;
         } else {
             setDebrisMode(region->table, 1);
-            region->table->allocationMode = 2;
+            region->table->allocationMode = VCL_ALLOC_X;
         }
         m_nEpi++;
     } else
@@ -217,7 +217,7 @@ epiRec *loopDebris::allocEnter(int size)
         return 0;
     }
     m_enter.stream->loopRegionRole = 4;
-    m_enter.table->allocationMode = 2;
+    m_enter.table->allocationMode = VCL_ALLOC_X;
     m_enter.table->setTableRawMode(1);
     return &m_enter;
 }
@@ -230,7 +230,7 @@ epiRec *loopDebris::allocExit(int size)
         return 0;
     }
     m_exit.stream->loopRegionRole = 1;
-    m_exit.table->allocationMode = 2;
+    m_exit.table->allocationMode = VCL_ALLOC_X;
     m_exit.table->setTableRawMode(1);
     return &m_exit;
 }
@@ -344,7 +344,7 @@ int expandOneLoopIntoRegions(Program *program, InstructionStream *stream)
         reportError("BuildEP - loopsize not set in input stream\n");
         return -1;
     }
-    if (table->codeModeValue != 3) {
+    if (table->codeModeValue != VCL_CODE_RAW) {
         reportError("intput table is not vsm\n");
         return -1;
     }
@@ -605,7 +605,7 @@ bool explodeLoop(InstructionStream *stream, loopDebris *loopRecord, const char *
     int mlid = scheduleTable->mainLoopId;
     int clid = scheduleTable->getTerminatingConditionalLoopId();
     int lsz = scheduleTable->getLoopSize();
-    bool userFixed = scheduleTable->getTableRawMode() == 4;
+    bool userFixed = scheduleTable->getTableRawMode() == VCL_RAW_USER_FIXED;
     initDebris(loopRecord, baseName, (unsigned char)scheduleTable->allocationMode, userFixed);
     Instr *cond = scheduleTable->getConditionalBranch();
     if (mlid < 0 || clid < 0 || clid > mlid || !cond) {

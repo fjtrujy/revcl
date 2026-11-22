@@ -130,17 +130,17 @@ bool buildSynth(Program *program, InstructionStream *targetStream, DecodedLine *
     }
     switch (stype) {
     case 11:
-        targetStream->endType = 4;
+        targetStream->endType = VCL_STREAM_END_MACRO;
         if (!targetStream->endDirectiveText) {
             reportError("exitmacro not set.. but end_macro endtype?\n");
             return false;
         }
         break;
     case 3:
-        targetStream->endType = 3;
+        targetStream->endType = VCL_STREAM_END_FINAL;
         break;
     case 1:
-        targetStream->startType = 2;
+        targetStream->startType = VCL_STREAM_START_ENTRY;
         break;
     default:
         reportUserMessage("vcl found a problem making an enter/exit block, and I'll improve this error message later\n");

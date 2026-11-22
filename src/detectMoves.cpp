@@ -10,12 +10,12 @@ bool resolveMovePipe(ScheduleTable *wt, Instr *mv, int pipe);
 
 static inline bool isRawTable(ScheduleTable *scheduleTable)
 {
-    return scheduleTable->codeModeValue == 3;
+    return scheduleTable->codeModeValue == VCL_CODE_RAW;
 }
 
 static inline bool isPipeMode(ScheduleTable *scheduleTable)
 {
-    return isRawTable(scheduleTable) && (scheduleTable->rawSchedulingMode == 1 || scheduleTable->rawSchedulingMode == 3);
+    return isRawTable(scheduleTable) && (scheduleTable->rawSchedulingMode == VCL_RAW_COMPILER_FREE || scheduleTable->rawSchedulingMode == VCL_RAW_USER_FREE);
 }
 
 static inline void dumpMove(Instr *instruction)
@@ -27,7 +27,7 @@ bool detectMoves(Program *program)
 {
     for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         ScheduleTable *scheduleTable = stream->getTable();
-        if (scheduleTable->codeModeValue == 1 || isPipeMode(scheduleTable)) {
+        if (scheduleTable->codeModeValue == VCL_CODE_UTA || isPipeMode(scheduleTable)) {
             Instr *next;
             for (Instr *currentInstruction = scheduleTable->linearInstructions.head; currentInstruction; currentInstruction = next) {
                 next = currentInstruction->linearLink.nextInstruction;

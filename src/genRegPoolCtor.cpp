@@ -226,8 +226,8 @@ bool genRegPool::discardDisjointExternalRegister(InstructionStream *stream, Regi
             continue;
         unsigned char overlapMask = 0;
         switch (table->codeModeValue) {
-        case 1:
-        case 4: {
+        case VCL_CODE_UTA:
+        case VCL_CODE_SYNTHETIC: {
             unsigned char firstUsageMask = registerUse->inputMask | registerUse->outputMask;
             if (registerUse->outputMask)
                 firstUsageMask |= 0x80;
@@ -238,7 +238,7 @@ bool genRegPool::discardDisjointExternalRegister(InstructionStream *stream, Regi
             overlapMask |= (firstUsageMask & otherRegisterUse->throughputMask) | (secondUsageMask & registerUse->throughputMask);
             break;
         }
-        case 3:
+        case VCL_CODE_RAW:
             for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
                 int firstRangeStart = 0, firstRangeEnd = 0;
                 bool firstAlwaysLive = false;

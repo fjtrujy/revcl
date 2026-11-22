@@ -60,36 +60,36 @@ char stallReasonTextBuffer[1024];  // stall reason text buffer
 const char *stallReasonStr(short why)
 {
     const char *reasonName = "dunno why";
-    switch (why & 0xff) {
-    case 1:
+    switch (why & VCL_STALL_REASON_MASK) {
+    case VCL_STALL_INSTRUCTION_LATENCY:
         reasonName = "instruction latency";
         break;
-    case 2:
+    case VCL_STALL_INSTRUCTION_THROUGHPUT:
         reasonName = "instruction thruput";
         break;
-    case 3:
+    case VCL_STALL_UPPER_PIPE_PRESSURE:
         reasonName = "number of upper instructions";
         break;
-    case 4:
+    case VCL_STALL_LOWER_PIPE_PRESSURE:
         reasonName = "number of lower instructions";
         break;
-    case 5:
+    case VCL_STALL_CANNOT_LOOP:
         reasonName = "can't loop";
         break;
-    case 6:
+    case VCL_STALL_DEPENDENCY_CHAIN_DEPTH:
         reasonName = "dependency chain depth";
         break;
-    case 7:
+    case VCL_STALL_DEPENDENCY_CHAIN_HEIGHT:
         reasonName = "dependency chain height";
         break;
-    case 8:
+    case VCL_STALL_BRANCH_CHAIN_HEIGHT:
         reasonName = "branch instruction dependency chain height";
         break;
-    case 9:
+    case VCL_STALL_RESOURCE_PRESSURE:
         formatIntoBuffer(stallReasonTextBuffer, "issue pressure on %s", deviceNameByIndex((char)((why & 0xff00) >> 8)));
         reasonName = stallReasonTextBuffer;
         break;
-    case 10:
+    case VCL_STALL_CIRCULAR_DEPENDENCY:
         reasonName = "circular dependency chain";
         break;
     }
@@ -111,8 +111,8 @@ bool InstructionStream::gatherStats()
     statCounts *statistics = &stats;
     for (int resourceIndex = 0; resourceIndex != 9; resourceIndex++)
         statistics->resourceInstructionCounts[resourceIndex] = 0;
-    savedStallReason = 0;
-    currentStallReason = 0;
+    savedStallReason = VCL_STALL_NONE;
+    currentStallReason = VCL_STALL_NONE;
     ScheduleTable *table = getTable();
     if (!table) {
         reportError("failed to gather stats - no get work table\n");
@@ -336,17 +336,17 @@ bool InstructionStream::gatherStats()
                 initialLowerPipeCount++;
         }
         if (upperPipeCount > best) {
-            currentStallReason = 3;
+            currentStallReason = VCL_STALL_UPPER_PIPE_PRESSURE;
             best = upperPipeCount;
         }
         if (initialLowerPipeCount > best) {
-            currentStallReason = 4;
+            currentStallReason = VCL_STALL_LOWER_PIPE_PRESSURE;
             best = initialLowerPipeCount;
         }
     }
     if (maxIssue > best) {
         best = maxIssue;
-        currentStallReason = 1;
+        currentStallReason = VCL_STALL_INSTRUCTION_LATENCY;
     }
 
     int depth = schedulingStatistics.independentLatencyDepth;
@@ -372,11 +372,11 @@ bool InstructionStream::gatherStats()
         }
     }
     if (thru > best) {
-        currentStallReason = 2;
+        currentStallReason = VCL_STALL_INSTRUCTION_THROUGHPUT;
         best = thru;
     }
     if (maxLat > best) {
-        currentStallReason = 1;
+        currentStallReason = VCL_STALL_INSTRUCTION_LATENCY;
         best = maxLat;
     }
     for (int resourceSlotIndex = 0; resourceSlotIndex != 9; resourceSlotIndex++) {
@@ -387,16 +387,16 @@ bool InstructionStream::gatherStats()
         int resourceInstructionCount = (statistics->resourceInstructionCounts[resourceSlotIndex] + 1) >> 1;
         if (resourceInstructionCount > best) {
             best = resourceInstructionCount;
-            currentStallReason = (resourceSlotIndex << 8) | 9;
+            currentStallReason = (resourceSlotIndex << VCL_STALL_RESOURCE_SHIFT) | VCL_STALL_RESOURCE_PRESSURE;
         }
     }
     if (physSum < best * 4)
         physSum = best * 4;
-    if (physSum < 64)
-        physSum = 64;
-    if (physSum > 0x4000)
-        physSum = 0x4000;
-    if (table->codeModeValue == 3 && physSum < table->getPhysicalLen())
+    if (physSum < VCL_MIN_PHYSICAL_INSTRUCTIONS)
+        physSum = VCL_MIN_PHYSICAL_INSTRUCTIONS;
+    if (physSum > VCL_MAX_PHYSICAL_INSTRUCTIONS)
+        physSum = VCL_MAX_PHYSICAL_INSTRUCTIONS;
+    if (table->codeModeValue == VCL_CODE_RAW && physSum < table->getPhysicalLen())
         physSum = table->getPhysicalLen();
     physicalInstructionBudget = physSum;
     if (canLoop()) {
@@ -405,22 +405,22 @@ bool InstructionStream::gatherStats()
         if (best <= 1)
             logicalLength = 2;
     } else {
-        savedStallReason = 5;
+        savedStallReason = VCL_STALL_CANNOT_LOOP;
         logicalLength = 0;
     }
     if (schedulingStatistics.forwardLatencyDepth >= best) {
-        currentStallReason = 6;
+        currentStallReason = VCL_STALL_DEPENDENCY_CHAIN_DEPTH;
         best = schedulingStatistics.forwardLatencyDepth + 1;
     }
     if (schedulingStatistics.reverseLatencyDepth >= best) {
-        currentStallReason = 7;
+        currentStallReason = VCL_STALL_DEPENDENCY_CHAIN_HEIGHT;
         best = schedulingStatistics.reverseLatencyDepth + 1;
     }
     Instr *branchInstruction = table->getBranch();
     if (branchInstruction) {
         int branchLatencyDepth = branchInstruction->schedulingStatistics.forwardLatencyDepth + 2;
         if (best <= branchLatencyDepth) {
-            currentStallReason = 8;
+            currentStallReason = VCL_STALL_BRANCH_CHAIN_HEIGHT;
             best = branchLatencyDepth;
         }
     }
@@ -463,10 +463,10 @@ int InstructionStream::getOrGuessDepLength()
     }
     int len = 0;
     switch (table->codeModeValue) {
-    case 1:
+    case VCL_CODE_UTA:
         len = clampDepLen(dependencyLength);
         break;
-    case 3:
+    case VCL_CODE_RAW:
         len = table->getRawOrSyntheticLogicalLength();
         break;
     }
@@ -482,8 +482,8 @@ int InstructionStream::getClampedDependencyLength()
     }
     int len = 0;
     switch (table->codeModeValue) {
-    case 1:
-    case 3:
+    case VCL_CODE_UTA:
+    case VCL_CODE_RAW:
         len = clampDepLen(dependencyLength);
         break;
     }

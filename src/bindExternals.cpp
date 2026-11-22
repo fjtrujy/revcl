@@ -29,7 +29,7 @@ bool bindExternals(Program *program)
                     reportError(bindExtFindRegRefError);
                     return false;
                 }
-                if (registerUse->isExternal() || scheduleTable->allocationMode == 3) {
+                if (registerUse->isExternal() || scheduleTable->allocationMode == VCL_ALLOC_DONE) {
                     if (registerEntry->isVirtual) {
                         reportError(bindExtVirtualRegError);
                         return false;

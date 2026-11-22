@@ -2,6 +2,8 @@
 #define INSTR_H
 
 #include "vcl_portability.h"
+#include "vcl_modes.h"
+#include "vcl_limits.h"
 
 #include "RegPool.h"
 #include "mValue.h"
@@ -19,7 +21,7 @@ class RegWeb;
 // Opcode descriptor: mnemonic, pipeline/resource constraints, hooks and operands.
 struct iOpDesc {
     unsigned char operandKind;   // 0 terminates the list
-    unsigned char direction;     // 1 = input, 2 = output
+    unsigned char direction;     // VclOperandDirection: READ, WRITE, READ_WRITE
     unsigned char isImplicit;
     unsigned char outputLatency;  // forwarded to output operand timing
     unsigned char externalBlockModeFlag;
@@ -313,7 +315,7 @@ struct Operand {
     bool isReg()
     {
         bool r = false;
-        if (direction == 1 && !isZero())
+        if (direction == VCL_OPERAND_READ && !isZero())
             r = true;
         return r;
     }
@@ -330,42 +332,42 @@ struct Operand {
     RegisterEntry *inputReg()
     {
         int r = 0;
-        if (direction == 1 && !isZeroReg())
+        if (direction == VCL_OPERAND_READ && !isZeroReg())
             r = 1;
         return r ? assignedRegister : 0;
     }
     RegisterEntry *inputRegister()
     {
         int r = 0;
-        if (direction == 1 && !isZeroReg2())
+        if (direction == VCL_OPERAND_READ && !isZeroReg2())
             r = 1;
         return (char)r ? assignedRegister : 0;
     }
     RegisterEntry *outputRegister()
     {
         int r = 0;
-        if (direction == 2 && !isZero())
+        if (direction == VCL_OPERAND_WRITE && !isZero())
             r = 1;
         return (char)r ? assignedRegister : 0;
     }
     RegisterEntry *outputReg()
     {
         int r = 0;
-        if (direction == 2 && !isZero())
+        if (direction == VCL_OPERAND_WRITE && !isZero())
             r = 1;
         return (bool)r ? assignedRegister : 0;
     }
     RegisterEntry *inputRegB()
     {
         int r = 0;
-        if (direction == 1 && !isZero())
+        if (direction == VCL_OPERAND_READ && !isZero())
             r = 1;
         return (bool)r ? assignedRegister : 0;
     }
     RegisterEntry *outputRegZ()
     {
         int r = 0;
-        if (direction == 2) {
+        if (direction == VCL_OPERAND_WRITE) {
             if (!isZero())
                 r = 1;
         }
@@ -374,53 +376,53 @@ struct Operand {
     RegisterEntry *outputRegZB()
     {
         int r = 0;
-        if (direction == 2 && !isZeroReg())
+        if (direction == VCL_OPERAND_WRITE && !isZeroReg())
             r = 1;
         return r ? assignedRegister : 0;
     }
     bool isRegOp()
     {
         int r = 0;
-        if (direction == 1 && !isZero())
+        if (direction == VCL_OPERAND_READ && !isZero())
             r = 1;
         return r;
     }
     RegisterEntry *regOp() { return isRegOp() ? assignedRegister : 0; }
-    bool isInReg() { return direction == 1 && !isZero(); }
-    bool isOutReg() { return direction == 2 && !isZero(); }
+    bool isInReg() { return direction == VCL_OPERAND_READ && !isZero(); }
+    bool isOutReg() { return direction == VCL_OPERAND_WRITE && !isZero(); }
     bool isReg2()
     {
         bool r = false;
-        if (direction == 2 && !isZero())
+        if (direction == VCL_OPERAND_WRITE && !isZero())
             r = true;
         return r;
     }
     char isOutRegOp()
     {
         int r = 0;
-        if (direction == 2 && !isZero())
+        if (direction == VCL_OPERAND_WRITE && !isZero())
             r = 1;
         return r;
     }
     bool isInRegOp()
     {
         int r = 0;
-        if (direction == 1 && !isZeroReg())
+        if (direction == VCL_OPERAND_READ && !isZeroReg())
             r = 1;
         return r;
     }
-    bool isInRegOpB() { return direction == 1 && !isZeroReg(); }
+    bool isInRegOpB() { return direction == VCL_OPERAND_READ && !isZeroReg(); }
     bool isInRegB()
     {
         bool r = false;
-        if (direction == 1 && !isZeroReg())
+        if (direction == VCL_OPERAND_READ && !isZeroReg())
             r = true;
         return r;
     }
     RegisterEntry *outRegZ()
     {
         bool r = false;
-        if (direction == 2 && !isZeroReg2())
+        if (direction == VCL_OPERAND_WRITE && !isZeroReg2())
             r = true;
         if (r)
             return assignedRegister;
@@ -435,7 +437,7 @@ struct Operand {
     RegisterEntry *inRegOp()
     {
         bool r = false;
-        if (direction == 1 && !isZeroReg())
+        if (direction == VCL_OPERAND_READ && !isZeroReg())
             r = true;
         return r ? assignedRegister : 0;
     }
@@ -452,14 +454,14 @@ struct Operand {
     RegisterEntry *inRegOp2()
     {
         bool r = false;
-        if (direction == 1 && !isZeroReg2())
+        if (direction == VCL_OPERAND_READ && !isZeroReg2())
             r = true;
         return r ? assignedRegister : 0;
     }
     RegisterEntry *outRegOp()
     {
         bool r = false;
-        if (direction == 2 && !isZeroReg())
+        if (direction == VCL_OPERAND_WRITE && !isZeroReg())
             r = true;
         return r ? assignedRegister : 0;
     }
@@ -473,27 +475,27 @@ struct Operand {
     RegisterEntry *outputRegB()
     {
         int r = 0;
-        if (direction == 2 && !isZeroB())
+        if (direction == VCL_OPERAND_WRITE && !isZeroB())
             r = 1;
         return (bool)r ? assignedRegister : 0;
     }
     RegisterEntry *inputRegC()
     {
         int r = 0;
-        if (direction == 1 && !isZeroB())
+        if (direction == VCL_OPERAND_READ && !isZeroB())
             r = 1;
         return (bool)r ? assignedRegister : 0;
     }
     RegisterEntry *getRegD()
     {
         bool r = false;
-        if (direction == 1 && isZeroC() == false)
+        if (direction == VCL_OPERAND_READ && isZeroC() == false)
             r = true;
         return r ? assignedRegister : 0;
     }
     bool isZeroC() { return assignedRegister && assignedRegister == assignedRegister->ownerPool->zeroRegister; }
-    bool isInRegC() { return direction == 1 && !isZeroC(); }
-    bool isOutRegC() { return direction == 2 && !isZeroC(); }
+    bool isInRegC() { return direction == VCL_OPERAND_READ && !isZeroC(); }
+    bool isOutRegC() { return direction == VCL_OPERAND_WRITE && !isZeroC(); }
     bool isHardZero()
     {
         if (assignedRegister && assignedRegister == assignedRegister->ownerPool->zeroRegister)
@@ -503,20 +505,20 @@ struct Operand {
     bool isOutputReg()
     {
         int r = 0;
-        if (direction == 2 && !isHardZero())
+        if (direction == VCL_OPERAND_WRITE && !isHardZero())
             r = 1;
         return (bool)r;
     }
     bool isInputReg()
     {
         int r = 0;
-        if (direction == 1 && !isHardZero())
+        if (direction == VCL_OPERAND_READ && !isHardZero())
             r = 1;
         return (bool)r;
     }
     bool hasRegister() { return assignedRegister != 0; }
-    bool isInput() { return direction == 1; }
-    bool isOutput() { return direction == 2; }
+    bool isInput() { return direction == VCL_OPERAND_READ; }
+    bool isOutput() { return direction == VCL_OPERAND_WRITE; }
     RegisterEntry *inReg()
     {
         if (isInput() && assignedRegister)
@@ -525,7 +527,7 @@ struct Operand {
     }
     RegisterEntry *outReg()
     {
-        if (direction == 2)
+        if (direction == VCL_OPERAND_WRITE)
             return assignedRegister;
         return 0;
     }
@@ -839,10 +841,10 @@ const char *syntheticTypeName(int t);
 
 // Parsed implicit operand name, physical binding, component masks and literals.
 struct ImplicitOperandDescription {
-    char name[0x800];
-    char physicalRegisterName[0x800];
-    char immediateText[0x800];
-    char branchLabelText[0x800];
+    char name[VCL_IMPLICIT_OPERAND_TEXT_CAPACITY];
+    char physicalRegisterName[VCL_IMPLICIT_OPERAND_TEXT_CAPACITY];
+    char immediateText[VCL_IMPLICIT_OPERAND_TEXT_CAPACITY];
+    char branchLabelText[VCL_IMPLICIT_OPERAND_TEXT_CAPACITY];
     int componentMask;
     int addressComponentMask;
     int genericOperandForm;

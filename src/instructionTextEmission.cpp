@@ -102,7 +102,7 @@ bool extHook(void * unusedHookContext, Instr *instruction)
     int done = 0;
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *operand = &instruction->operands[operandIndex];
-        if (operand->operandKind != 55)
+        if (operand->operandKind != VCL_OP_EXT_DEP)
             continue;
         if (operand->assignedRegister) {
             reportError("extHook - register already set\n");

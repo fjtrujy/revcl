@@ -74,10 +74,10 @@ int Instr::simplifyBranch()
     if (target > 0) {
         for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
             operands[operandIndex].assignedRegister = 0;
-            operands[operandIndex].operandKind = 0;
+            operands[operandIndex].operandKind = VCL_OP_NULL;
         }
         operandCount = 1;
-        operands[0].operandKind = 0x1b;
+        operands[0].operandKind = VCL_OP_IMM;
         if (!operands[0].immediateValue.set(&operands[target].immediateValue)) {
             reportError("fixup branch -set new ximm\n");
             return -1;

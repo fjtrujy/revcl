@@ -10,11 +10,11 @@ InstructionStream::InstructionStream()
     resetOnlyStreamEmissionWord = 0;
     appliedOptimizationMask = 0;
     hasLoopOptimization = 0;
-    savedStallReason = 0;
-    currentStallReason = 0;
+    savedStallReason = VCL_STALL_NONE;
+    currentStallReason = VCL_STALL_NONE;
     dependencyLength = -1;
     logicalLength = -1;
-    physicalInstructionBudget = 0x4000;
+    physicalInstructionBudget = VCL_MAX_PHYSICAL_INSTRUCTIONS;
     externalSchedulingPrepared = 0;
     absoluteLoopCount = 0;
     extraLoopCount = 0;
@@ -45,8 +45,8 @@ InstructionStream::InstructionStream()
     resetOnlyStreamBranchTimingSentinel = -1;
     branchForwardLatencyDepth = -1;
     branchType = 0;
-    endType = 1;
-    startType = 1;
+    endType = VCL_STREAM_END_NULL;
+    startType = VCL_STREAM_START_NULL;
     optimizationRecordCount = 0;
 }
 
@@ -57,8 +57,8 @@ InstructionStream::~InstructionStream()
 
 bool InstructionStream::reset()
 {
-    savedStallReason = 0;
-    currentStallReason = 0;
+    savedStallReason = VCL_STALL_NONE;
+    currentStallReason = VCL_STALL_NONE;
     labels.clearNodes();
     streamId = -1;
     owningProgram = 0;
@@ -144,16 +144,16 @@ const char *istEndTypeName(int streamEndType)
 {
     const char *endTypeNameText = "ISTET_BAD";
     switch (streamEndType) {
-    case 1:
+    case VCL_STREAM_END_NULL:
         endTypeNameText = "ISTET_NULL";
         break;
-    case 2:
+    case VCL_STREAM_END_CONTINUE:
         endTypeNameText = "ISTET_END_CONT";
         break;
-    case 3:
+    case VCL_STREAM_END_FINAL:
         endTypeNameText = "ISTET_END_END";
         break;
-    case 4:
+    case VCL_STREAM_END_MACRO:
         endTypeNameText = "ISTET_END_MACRO";
         break;
     }
@@ -174,10 +174,10 @@ const char *istStartTypeName(int streamStartType)
 {
     const char *startTypeNameText;
     switch (streamStartType) {
-    case 1:
+    case VCL_STREAM_START_NULL:
         startTypeNameText = "ISTST_NULL";
         break;
-    case 2:
+    case VCL_STREAM_START_ENTRY:
         startTypeNameText = "ISTST_ENTRY";
         break;
     default:
@@ -192,16 +192,16 @@ const char *InstructionStream::endTypeName()
     int streamEndType = endType;
     const char *endTypeNameText = "ISTET_BAD";
     switch (streamEndType) {
-    case 1:
+    case VCL_STREAM_END_NULL:
         endTypeNameText = "ISTET_NULL";
         break;
-    case 2:
+    case VCL_STREAM_END_CONTINUE:
         endTypeNameText = "ISTET_END_CONT";
         break;
-    case 3:
+    case VCL_STREAM_END_FINAL:
         endTypeNameText = "ISTET_END_END";
         break;
-    case 4:
+    case VCL_STREAM_END_MACRO:
         endTypeNameText = "ISTET_END_MACRO";
         break;
     }
@@ -212,10 +212,10 @@ const char *InstructionStream::startTypeName()
 {
     const char *startTypeNameText;
     switch (startType) {
-    case 1:
+    case VCL_STREAM_START_NULL:
         startTypeNameText = "ISTST_NULL";
         break;
-    case 2:
+    case VCL_STREAM_START_ENTRY:
         startTypeNameText = "ISTST_ENTRY";
         break;
     default:
@@ -266,7 +266,7 @@ char *InstructionStream::emit(char *outputBuffer, int commentMode, int *p1, int 
         dumpEmitStream(this);
         return 0;
     }
-    if (startType != 2 && !inputLinks.countMarkedLinks() && !passThroughText) {
+    if (startType != VCL_STREAM_START_ENTRY && !inputLinks.countMarkedLinks() && !passThroughText) {
         reportInfo("skip target emit. .coz it's no longer visible\n");
         return outputBuffer;
     }
@@ -287,7 +287,7 @@ char *InstructionStream::emit(char *outputBuffer, int commentMode, int *p1, int 
             reportError("failed to build out table\n");
             return 0;
         }
-        if (endType == 4) {
+        if (endType == VCL_STREAM_END_MACRO) {
             outputBuffer += formatIntoBuffer(outputBuffer, "\n");
             if (!endDirectiveText) {
                 reportError("end string not set\n");
@@ -425,12 +425,12 @@ unsigned char InstructionStream::getRawSchedulingMode()
 
 static inline bool isRawTable(ScheduleTable *table)
 {
-    return table->codeModeValue == 3;
+    return table->codeModeValue == VCL_CODE_RAW;
 }
 
 static inline bool isFreeRawTable(ScheduleTable *table)
 {
-    return isRawTable(table) && (table->rawSchedulingMode == 1 || table->rawSchedulingMode == 3);
+    return isRawTable(table) && (table->rawSchedulingMode == VCL_RAW_COMPILER_FREE || table->rawSchedulingMode == VCL_RAW_USER_FREE);
 }
 
 bool InstructionStream::usesFreeRawLayout()
@@ -443,7 +443,7 @@ bool InstructionStream::usesFreeRawLayout()
 
 static inline bool isFixedRawTable(ScheduleTable *table)
 {
-    return isRawTable(table) && (table->rawSchedulingMode == 2 || table->rawSchedulingMode == 4);
+    return isRawTable(table) && (table->rawSchedulingMode == VCL_RAW_COMPILER_FIXED || table->rawSchedulingMode == VCL_RAW_USER_FIXED);
 }
 
 bool InstructionStream::usesFixedRawLayout()
@@ -466,7 +466,7 @@ unsigned char InstructionStream::getAllocMode()
 bool InstructionStream::isOutsideRawMode()
 {
     ScheduleTable *table = workTablePtr;
-    if (table && table->codeModeValue == 3)
+    if (table && table->codeModeValue == VCL_CODE_RAW)
         return false;
     return true;
 }
@@ -503,11 +503,11 @@ bool InstructionStream::processCmdSynth(Instr *instruction)
     }
     switch ((unsigned char)instruction->syntheticKind) {
     case 5:
-        if (endType != 1) {
+        if (endType != VCL_STREAM_END_NULL) {
             reportError("CONT directive encountered - but end mode isn't null\n");
             return false;
         }
-        endType = 2;
+        endType = VCL_STREAM_END_CONTINUE;
         break;
     case 8:
         if (!instruction->getImmediateOperand(0, &knownMinimumLoopCount) || !instruction->getImmediateOperand(1, &safeMinimumLoopCount)) {

@@ -24,9 +24,9 @@ bool ScheduleTable::init(unsigned char mode, int size)
 {
     dispose();
     switch (mode) {
-    case 2:
-    case 3:
-    case 5:
+    case VCL_CODE_MID:
+    case VCL_CODE_RAW:
+    case VCL_CODE_RAW_PREEXPANDED:
         size += 4;
         if (size < 4)
             size = 4;
@@ -35,8 +35,8 @@ bool ScheduleTable::init(unsigned char mode, int size)
             return false;
         rowCapacity = size;
         break;
-    case 1:
-    case 4:
+    case VCL_CODE_UTA:
+    case VCL_CODE_SYNTHETIC:
         if (size) {
             reportError("can't ask for a table based itable (%d) for a synth/uta table...like.. perleaze make me an abstract base class and leave me alone!\n", size);
             return false;
@@ -83,9 +83,9 @@ bool ScheduleTable::dispose()
     rangeEnd = 0;
     mainLoopId = 0;
     optimizerIndex = -1;
-    codeModeValue = 0;
-    allocationMode = 0;
-    rawSchedulingMode = 0;
+    codeModeValue = VCL_CODE_INVALID;
+    allocationMode = VCL_ALLOC_INVALID;
+    rawSchedulingMode = VCL_RAW_INVALID;
     instructionCountsByPipe[2] = 0;
     dualPipelineInstructionCount = 0;
     vectorMoveCount = 0;
@@ -107,15 +107,15 @@ bool ScheduleTable::dispose()
 void ScheduleTable::dump()
 {
     switch (codeModeValue) {
-    case 0:
+    case VCL_CODE_INVALID:
         break;
-    case 1:
-    case 4:
+    case VCL_CODE_UTA:
+    case VCL_CODE_SYNTHETIC:
         for (Instr *currentInstruction = linearInstructions.head; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction)
             currentInstruction->dumpOperandDiagnostics(false);
         break;
-    case 3:
-    case 5:
+    case VCL_CODE_RAW:
+    case VCL_CODE_RAW_PREEXPANDED:
         for (int dumpRowIndex = rangeStart; dumpRowIndex < rangeEnd; dumpRowIndex++) {
             ScheduleRow *row = rowAt(dumpRowIndex);
             if (!row)
@@ -123,7 +123,7 @@ void ScheduleTable::dump()
             row->refreshInstructionOperands(dumpRowIndex);
         }
         break;
-    case 2: {
+    case VCL_CODE_MID: {
         int lsz = loopSize;
         if (!rows) {
             reportError("code mode mid - but no table!\n");
@@ -184,14 +184,14 @@ int ScheduleTable::getRawOrSyntheticLogicalLength()
 {
     int len = -1;
     switch (codeModeValue) {
-    case 3:
+    case VCL_CODE_RAW:
         len = declaredRawLength;
         break;
-    case 1:
+    case VCL_CODE_UTA:
         reportError("called getlogical len on uta\n");
         abortAfterError();
         break;
-    case 4:
+    case VCL_CODE_SYNTHETIC:
         reportWarning("called getlogical on synth stream\n");
         len = 0;
         break;
@@ -206,11 +206,11 @@ int ScheduleTable::getLogicalLen()
 {
     int len = 0;
     switch (codeModeValue) {
-    case 1:
-    case 3:
+    case VCL_CODE_UTA:
+    case VCL_CODE_RAW:
         len = logicalInstructionLength;
         break;
-    case 4:
+    case VCL_CODE_SYNTHETIC:
         break;
     default:
         reportError("unknown code mode for logical len\n");
@@ -223,7 +223,7 @@ int ScheduleTable::getPhysicalLen()
 {
     int len = -1;
     switch (codeModeValue) {
-    case 3:
+    case VCL_CODE_RAW:
         if (!rows) {
             reportError("no table!\n");
             abortAfterError();
@@ -234,11 +234,11 @@ int ScheduleTable::getPhysicalLen()
         }
         len = rangeEnd - rangeStart;
         break;
-    case 1:
+    case VCL_CODE_UTA:
         reportError("called getphysical len on uta\n");
         abortAfterError();
         break;
-    case 4:
+    case VCL_CODE_SYNTHETIC:
         reportWarning("called getlogical on synth stream\n");
         len = 0;
         break;
@@ -265,7 +265,7 @@ Instr *ScheduleTable::getBranch()
 {
     Instr *secondInstruction = 0;
     switch (codeModeValue) {
-    case 3:
+    case VCL_CODE_RAW:
         if (!rows) {
             reportWarning("called getBranch - but no table\n");
             return 0;
@@ -277,10 +277,10 @@ Instr *ScheduleTable::getBranch()
             secondInstruction = rowAt(branchRow)->getEntry(1);
         }
         break;
-    case 1:
+    case VCL_CODE_UTA:
         secondInstruction = linearInstructions.tail;
         break;
-    case 4:
+    case VCL_CODE_SYNTHETIC:
         break;
     default: {
         const char *owner = ownerStream ? ownerStream->streamName() : "UNOWNED_TABLE";
@@ -477,14 +477,14 @@ bool ScheduleTable::clearClones()
 
 int ScheduleTable::getTableRawMode()
 {
-    if (codeModeValue == 3 || codeModeValue == 5)
+    if (codeModeValue == VCL_CODE_RAW || codeModeValue == VCL_CODE_RAW_PREEXPANDED)
         return rawSchedulingMode;
     return 0;
 }
 
 bool ScheduleTable::setTableRawMode(unsigned char mode)
 {
-    if (codeModeValue != 3 && codeModeValue != 5 && mode) {
+    if (codeModeValue != VCL_CODE_RAW && codeModeValue != VCL_CODE_RAW_PREEXPANDED && mode) {
         int currentCodeMode = codeModeValue;
         reportError("failed to set vsm mode - because code mode isn't vsm..mode=%d cm=%d\n", mode, currentCodeMode);
         abortAfterError();
@@ -608,11 +608,11 @@ const char *codeModeName(int mode)
 const char *rawModeName(int mode)
 {
     switch (mode) {
-    case 0: return "RAW_MODE_BAD";
-    case 1: return "RAW_MODE_VCL_FREE";
-    case 2: return "RAW_MODE_VCL_FIXED";
-    case 3: return "RAW_MODE_USER_FREE";
-    case 4: return "RAW_MODE_USER_FIXED";
+    case VCL_RAW_INVALID: return "RAW_MODE_BAD";
+    case VCL_RAW_COMPILER_FREE: return "RAW_MODE_VCL_FREE";
+    case VCL_RAW_COMPILER_FIXED: return "RAW_MODE_VCL_FIXED";
+    case VCL_RAW_USER_FREE: return "RAW_MODE_USER_FREE";
+    case VCL_RAW_USER_FIXED: return "RAW_MODE_USER_FIXED";
     }
     return "RAW_MODE_????";
 }
@@ -620,10 +620,10 @@ const char *rawModeName(int mode)
 const char *allocModeName(unsigned int mode)
 {
     switch (mode) {
-    case 0: return "ALLOC_MODE_BAD";
-    case 1: return "ALLOC_MODE_NONE";
-    case 2: return "ALLOC_MODE_X";
-    case 3: return "ALLOC_MODE_DONE";
+    case VCL_ALLOC_INVALID: return "ALLOC_MODE_BAD";
+    case VCL_ALLOC_NONE: return "ALLOC_MODE_NONE";
+    case VCL_ALLOC_X: return "ALLOC_MODE_X";
+    case VCL_ALLOC_DONE: return "ALLOC_MODE_DONE";
     }
     return "ALLOC_MODE_????";
 }
@@ -898,31 +898,31 @@ bool ScheduleTable::changeMode(unsigned char mode)
         return 0;
     }
     switch (cur) {
-    case 0:
+    case VCL_CODE_INVALID:
         reportError("can't change mode from bad\n");
         abortAfterError();
         return 0;
-    case 1:
+    case VCL_CODE_UTA:
         reportError("can't change uta->\n");
         abortAfterError();
         return 0;
-    case 2:
-        if (mode != 3) {
+    case VCL_CODE_MID:
+        if (mode != VCL_CODE_RAW) {
             reportError("can only go mid->raw\n");
             abortAfterError();
             return 0;
         }
         break;
-    case 3:
+    case VCL_CODE_RAW:
         reportError("can't change from raw to %s\n", codeModeStr(mode));
         abortAfterError();
         return 0;
-    case 4:
+    case VCL_CODE_SYNTHETIC:
         reportError("can't change from synth\n");
         abortAfterError();
         break;
-    case 5:
-        if (mode != 3) {
+    case VCL_CODE_RAW_PREEXPANDED:
+        if (mode != VCL_CODE_RAW) {
             reportError("can only go preexp->raw\n");
             abortAfterError();
             return 0;
@@ -1089,7 +1089,7 @@ bool ScheduleTable::unlockLine(InstructionPosition *line)
 
 ScheduleTable *ScheduleTable::localClone()
 {
-    if (codeModeValue != 1) {
+    if (codeModeValue != VCL_CODE_UTA) {
         reportError("table to be locally cloned isn't uta\n");
         return 0;
     }

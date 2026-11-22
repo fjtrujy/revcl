@@ -94,7 +94,7 @@ char *ScheduleTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
         nulls = 2;
     int top = (unsigned char)owner->leadingLabelFlags;
 
-    if (codeModeValue == 4) {
+    if (codeModeValue == VCL_CODE_SYNTHETIC) {
         *p1 = nulls;
         *p2 = nulls;
     } else {
@@ -110,7 +110,7 @@ char *ScheduleTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
         }
     }
 
-    if (codeModeValue == 4) {
+    if (codeModeValue == VCL_CODE_SYNTHETIC) {
         ScheduleRow blank;
         blank.clearEntries();
         for (int nopIndex = 0; nopIndex != nulls; nopIndex++) {
