@@ -13,8 +13,6 @@ class workTable;
 class Instr;
 struct regUse;
 class instStream;
-// Source-level alias: original member mangling is required for exact output.
-#define streamName func_0806d674
 struct Program;
 
 // 16-byte record in the leading table of a stream (name guessed).
@@ -33,16 +31,16 @@ public:
     {
         if (workTablePtr)
             return workTablePtr;
-        func_0804ad38("work table not set in %s\n", streamName());
-        func_0804adf0(-1);
+        reportError("work table not set in %s\n", streamName());
+        exitAfterCleanup(-1);
         return workTablePtr;
     }
     // Same check as getWorkTable, written as a guarded block (different code shape).
     workTable *getTable()
     {
         if (!workTablePtr) {
-            func_0804ad38("work table not set in %s\n", streamName());
-            func_0804adf0(-1);
+            reportError("work table not set in %s\n", streamName());
+            exitAfterCleanup(-1);
         }
         return workTablePtr;
     }
@@ -51,15 +49,15 @@ public:
     {
         if (workTablePtr)
             return workTablePtr;
-        func_0804ad38(msg);
-        func_0804adf0(-1);
+        reportError(msg);
+        exitAfterCleanup(-1);
         return workTablePtr;
     }
     void requireTable(const char *msg)
     {
         if (!workTablePtr) {
-            func_0804ad38(msg);
-            func_0804adf0(-1);
+            reportError(msg);
+            exitAfterCleanup(-1);
         }
     }
 

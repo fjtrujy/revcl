@@ -74,15 +74,6 @@ public:
 };
 
 // Operand-location list: list ownership and count checked by its dump helpers.
-// Source-level aliases retain the original linker symbols for byte matching.
-#define validateOperandLocations func_08057e9c
-#define dumpOperandLocations func_08057f2c
-#define addOperandLocation func_080580fc
-#define addInstructionLocation func_0805826c
-#define copyOperandLocation func_08058348
-#define firstInternalLocation func_08058370
-#define firstExternalLocation func_080583d8
-#define insertExternalLocation func_08058484
 class olList {
 public:
     ol_s *head;
@@ -768,8 +759,8 @@ public:
     Operand *getOp(int n)
     {
         if (n < 0) {
-            func_0804ad38("-ve operand passed to getOp!\n");
-            func_0804adf0(0);
+            reportError("-ve operand passed to getOp!\n");
+            exitAfterCleanup(0);
             return 0;
         }
         return n < operandCount ? &operands[n] : 0;

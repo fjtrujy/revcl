@@ -2,11 +2,6 @@
 #ifndef LINE_H
 #define LINE_H
 
-// Keep the recovered binary symbols for these member functions.
-#define setLocation func_08051054
-#define clearLocation func_0805109c
-#define dumpLocation func_080510cc
-
 class Line {
 public:
     char *locationName;

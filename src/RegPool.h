@@ -39,9 +39,6 @@ class Instr;
 class RegWeb;
 class instStream;
 class workTable;
-// Preserve the historical C++ symbol while exposing its semantic meaning.
-#define registerName func_0805a8e0
-
 struct RegPoolEntry {
     short unk_00;       // min row (getMove)
     short unk_02;       // max row (getMove)
@@ -73,9 +70,9 @@ struct RegPoolEntry {
     rPart* getRP(int i)
     {
         if (i < 0 || i >= partCount) {
-            func_0804ad38("getRP - asked to get out of range part %s.%d / %d\n",
+            reportError("getRP - asked to get out of range part %s.%d / %d\n",
                           registerName(), i, partCount);
-            func_0804adf0(-1);
+            exitAfterCleanup(-1);
         }
         return &unk_44[i];
     }

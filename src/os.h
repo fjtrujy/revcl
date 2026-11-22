@@ -9,22 +9,6 @@ struct Tool {
 
 extern Tool tools_080b301c[3];
 
-// Readable source-level aliases for the original GCC 3.2 linker symbols.
-// The preprocessor maps readable declarations, definitions and calls to the
-// unchanged mangled names in the byte-exact historical ELF.
-#define reportMessage func_0804ac50
-#define reportWarning func_0804ac7c
-#define reportInfo func_0804acb0
-#define reportVerboseInfo func_0804acf4
-#define reportError func_0804ad38
-#define reportUserMessage func_0804ad84
-#define formatIntoBuffer func_0804adbc
-#define parseInteger func_0804add4
-#define exitAfterCleanup func_0804adf0
-#define exitWithError func_0804ae34
-#define abortAfterError func_0804aeb0
-#define asciiCaseEqual func_0804bfcc
-
 bool OS_Init();
 bool setWatchdog(char *flag, unsigned int seconds);
 bool clearWatchdog();

@@ -9,6 +9,6 @@
 
 struct iInfo;
 iInfo *func_0806bf8c(const char *name, bool);
-bool func_0804bfcc(const char *a, const char *b);
+bool asciiCaseEqual(const char *a, const char *b);
 
 #endif

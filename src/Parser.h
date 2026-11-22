@@ -3,23 +3,6 @@
 
 #include "Line.h"
 
-// Source-level names; retain the recovered historical C++ mangled symbols.
-#define initializeParser func_0804fb94
-#define buildProcessedLines func_0804fd80
-#define getParsedLineCount func_0805017c
-#define getParsedLine func_0805018c
-#define addLocationTag func_0805030c
-#define decodeGaspLine func_0805041c
-#define isAssignmentLine func_08050738
-#define tokenizeSourceLine func_0805086c
-#define tokenTextAt func_08050be4
-#define dumpSourceLine func_08050c40
-#define isLocTagValid func_0805082c
-#define getLineTokenCount func_0805085c
-#define startsWithDirective func_08050eec
-#define isCommentToken func_08050f18
-#define hasAssignmentMarker func_08050f48
-
 // GASP source-location stack entry (8 bytes).
 struct LocRef {
     Line *sourceLocation;

@@ -36,7 +36,7 @@ static const char *metricLabels[METRIC_COUNT] = {
     "Classes with numeric names and no source alias",
     "Classes with provisional names (manual review)",
     "Structs with provisional names (manual review)",
-    "Functions with numeric names and no source alias",
+    "Functions with address-based names",
     "Fields with offset names (owner-qualified)",
     "Parameters with short/generic names (AST review)",
     "Local variables with short/generic names (AST review)",
@@ -55,7 +55,6 @@ struct Inventory {
     int functionCount;
     struct OpaqueName classes[256];
     int classCount;
-    int functionAliases;
     int classAliases;
 };
 
@@ -243,8 +242,8 @@ static int isSourceFile(const char *name)
                       !strcmp(name + n - 4, ".cpp")));
 }
 
-/* Alias declarations are intentionally counted, not ABI-visible renames. */
-static void scanAliases(const char *dir, struct Inventory *inv)
+/* Numeric C++ type names can have readable typedefs without changing layout. */
+static void scanClassTypedefs(const char *dir, struct Inventory *inv)
 {
     DIR *d = opendir(dir);
     struct dirent *entry;
@@ -261,11 +260,6 @@ static void scanAliases(const char *dir, struct Inventory *inv)
             fail("path too long", entry->d_name);
         f = openInput(path);
         while (fgets(line, sizeof(line), f)) {
-            if (sscanf(line, " #define %127s %127s", word1, word2) == 2 &&
-                strncmp(word1, "func_", 5)) {
-                inv->functionAliases += markAlias(
-                    inv->functions, inv->functionCount, word2);
-            }
             if (sscanf(line, " typedef %127s %127s", word1, word2) == 2) {
                 inv->classAliases += markAlias(
                     inv->classes, inv->classCount, word1);
@@ -276,8 +270,7 @@ static void scanAliases(const char *dir, struct Inventory *inv)
     closedir(d);
     inv->metrics[CLASSES_UNALIASED] =
         inv->classCount - inv->classAliases;
-    inv->metrics[FUNCTIONS_UNALIASED] =
-        inv->functionCount - inv->functionAliases;
+    inv->metrics[FUNCTIONS_UNALIASED] = inv->functionCount;
 }
 
 static void readBaseline(const char *path, long baseline[METRIC_COUNT])
@@ -337,9 +330,12 @@ static void printReport(const struct Inventory *inv,
                baseline[i], inv->metrics[i],
                inv->metrics[i] - baseline[i]);
     puts("");
-    printf("**Function alias coverage:** %d of %d address-named identifiers "
-           "have a readable source alias; %ld remain unaliased.\n\n",
-           inv->functionAliases, inv->functionCount,
+    printf("**Direct function naming progress:** %ld of %ld original "
+           "address-based function names have been eliminated from source; "
+           "%ld remain. These are genuine C++ function renames, not "
+           "preprocessor aliases.\n\n",
+           baseline[FUNCTIONS_UNALIASED] - inv->metrics[FUNCTIONS_UNALIASED],
+           baseline[FUNCTIONS_UNALIASED],
            inv->metrics[FUNCTIONS_UNALIASED]);
     printf("**Numeric class alias coverage:** %d of %d have readable "
            "typedefs; %ld remain without an alias.\n\n",
@@ -358,9 +354,11 @@ static void printReport(const struct Inventory *inv,
          "files have been refreshed.\n");
     puts("## What is counted (and what is not)\n");
     puts("- **Files:** source basenames matching historical address patterns."
-         "\n- **Functions/classes:** distinct address-coded identifiers "
-         "minus those with readable source-level aliases or typedefs. "
-         "The original ABI spellings often must remain for byte-exact GCC builds."
+         "\n- **Functions:** distinct address-coded identifiers still present "
+         "in source. Semantic replacements are direct C++ renames, accepted "
+         "only when the historical executable hash remains unchanged."
+         "\n- **Classes:** distinct address-coded type names minus those with "
+         "readable source-level typedefs."
          "\n- **Provisional classes/structs:** manually recorded `open` "
          "items in [the curated queue](naming-manual-review.tsv); mark "
          "`resolved` when evidence supports the name."
@@ -403,7 +401,7 @@ int main(int argc, char **argv)
     countRows(argv[4], &inv, 1);
     readManual(argv[5], &inv);
     /* The source directory is a fixed relative path in both modes. */
-    scanAliases("src", &inv);
+    scanClassTypedefs("src", &inv);
     if (!strcmp(argv[1], "--baseline")) {
         printBaseline(&inv);
     } else {

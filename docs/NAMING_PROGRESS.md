@@ -8,14 +8,14 @@ Tracked naming-review snapshot. The **baseline** is the pre-refactor `main` sour
 | Classes with numeric names and no source alias | 4 | 1 | -3 |
 | Classes with provisional names (manual review) | 4 | 4 | +0 |
 | Structs with provisional names (manual review) | 5 | 5 | +0 |
-| Functions with numeric names and no source alias | 436 | 396 | -40 |
+| Functions with address-based names | 436 | 396 | -40 |
 | Fields with offset names (owner-qualified) | 614 | 552 | -62 |
 | Parameters with short/generic names (AST review) | 879 | 865 | -14 |
 | Local variables with short/generic names (AST review) | 2291 | 2246 | -45 |
 | Address-suffixed globals/other identifiers | 85 | 85 | +0 |
 | Explicit numeric placeholder identifiers | 4 | 4 | +0 |
 
-**Function alias coverage:** 40 of 436 address-named identifiers have a readable source alias; 396 remain unaliased.
+**Direct function naming progress:** 40 of 436 original address-based function names have been eliminated from source; 396 remain. These are genuine C++ function renames, not preprocessor aliases.
 
 **Numeric class alias coverage:** 3 of 4 have readable typedefs; 1 remain without an alias.
 
@@ -33,7 +33,8 @@ Commit this report and any changed inventory TSVs **with the source renames**. G
 ## What is counted (and what is not)
 
 - **Files:** source basenames matching historical address patterns.
-- **Functions/classes:** distinct address-coded identifiers minus those with readable source-level aliases or typedefs. The original ABI spellings often must remain for byte-exact GCC builds.
+- **Functions:** distinct address-coded identifiers still present in source. Semantic replacements are direct C++ renames, accepted only when the historical executable hash remains unchanged.
+- **Classes:** distinct address-coded type names minus those with readable source-level typedefs.
 - **Provisional classes/structs:** manually recorded `open` items in [the curated queue](naming-manual-review.tsv); mark `resolved` when evidence supports the name.
 - **Fields:** distinct owning type and `unk_XX` field declarations in [the field queue](naming-fields.tsv).
 - **Parameters/local variables:** short or generic declarations in [the AST review queue](naming-declarations.tsv).
