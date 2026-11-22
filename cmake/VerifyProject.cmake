@@ -85,7 +85,7 @@ file(READ "${REVCL_SOURCE_DIR}/src/vcl_portability.h" shim)
 file(READ "${REVCL_SOURCE_DIR}/src/Block.h" block_header)
 if(NOT shim MATCHES "typedef intptr_t VclPtrWord"
     OR NOT shim MATCHES "typedef uintptr_t VclUPtrWord"
-    OR NOT block_header MATCHES "class Block : public workTable")
+    OR NOT block_header MATCHES "class Block : public ScheduleTable")
   message(FATAL_ERROR "Portable native layout declarations changed")
 endif()
 

@@ -6,23 +6,23 @@
 
 bool setRange(int start, int end, int lsz);
 bool moveLocks(Instr *i, InstructionPosition *pos);
-int earliestInsert(workTable *wt, Instr *in, bool *found);
-int latestInsert(workTable *wt, Instr *in, bool *found);
-int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int earliestInsert(ScheduleTable *wt, Instr *in, bool *found);
+int latestInsert(ScheduleTable *wt, Instr *in, bool *found);
+int checkPlacementInAllowedPipelines(ScheduleTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 int countSetBits(unsigned int x);
-RegPoolEntry *getPoolZeroRegister(unsigned int type);
+RegisterEntry *getPoolZeroRegister(unsigned int type);
 
 
 static inline bool isOut(Operand *operand) { return operand->direction == 2; }
-static inline RegPoolEntry *outR(Operand *operand)
+static inline RegisterEntry *outR(Operand *operand)
 {
     if (isOut(operand))
         return operand->assignedRegister;
     return 0;
 }
-static inline bool isPoolZero(RegPool *registerPool, RegPoolEntry *registerEntry) { return registerEntry == registerPool->zeroRegister; }
+static inline bool isPoolZero(RegPool *registerPool, RegisterEntry *registerEntry) { return registerEntry == registerPool->zeroRegister; }
 
-int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntry **capReg, int *capMask)
+int findCap(ScheduleTable *scheduleTable, Instr *instruction, int opIdx, RegisterEntry **capReg, int *capMask)
 {
     capInsertionWorkTable = scheduleTable;
     selectedCapRegister = 0;
@@ -35,7 +35,7 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
     selectedCapOpcodeInfo = 0;
     selectedCapOriginalInstruction = 0;
 
-    RegPoolEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
+    RegisterEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
     switch (registerEntry->registerIndex) {
     case 52:
         cap = 0x73;
@@ -50,7 +50,7 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
     case 55: case 57: case 59: {
         if (instruction->position.getPipe())
             break;
-        RegPoolEntry *r0 = outR(&instruction->operands[0]);
+        RegisterEntry *r0 = outR(&instruction->operands[0]);
         if (!r0) {
             const char *name = instruction->opcodeInfo ? instruction->opcodeInfo->mnemonic : "NO_BASE_INST";
             reportError("couldn't get r0 for %s\n", name);
@@ -63,12 +63,12 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
             unsigned char mask[32];
             int registerIndex;
             for (registerIndex = 0; registerIndex != 32; registerIndex++) {
-                RegPoolEntry *candidateRegister = pool->findByRegisterIndex(registerIndex);
+                RegisterEntry *candidateRegister = pool->findByRegisterIndex(registerIndex);
                 mask[registerIndex] = (candidateRegister->enabledPhysicalRegister && candidateRegister->allocatable) ? instruction->operands[0].componentMask : 0;
             }
             mask[0] = 0;
-            for (regUse *registerUse = scheduleTable->registerUses.head; registerUse; registerUse = registerUse->next) {
-                RegPoolEntry *registerEntry = registerUse->registerEntry;
+            for (RegisterUse *registerUse = scheduleTable->registerUses.head; registerUse; registerUse = registerUse->next) {
+                RegisterEntry *registerEntry = registerUse->registerEntry;
                 if (registerEntry->registerClass != 9)
                     continue;
                 if (registerEntry->isVirtual == 1) {
@@ -89,7 +89,7 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
                 int matchingComponentMask = instruction->operands[0].componentMask & mask[registerIndex];
                 int matchedComponentCount = countSetBits(matchingComponentMask);
                 if (matchedComponentCount > best) {
-                    RegPoolEntry *selectedRegister = pool->findByRegisterIndex(registerIndex);
+                    RegisterEntry *selectedRegister = pool->findByRegisterIndex(registerIndex);
                     selectedCapMask = matchingComponentMask;
                     selectedCapRegister = selectedRegister;
                     best = matchedComponentCount;
@@ -107,7 +107,7 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
 
     if (cap < 0)
         return 0;
-    iInfo *instructionInfo = getOpcodeInfoById(cap);
+    OpcodeDescriptor *instructionInfo = getOpcodeInfoById(cap);
     selectedCapOpcodeInfo = instructionInfo;
     if (!instructionInfo && cap != 0) {
         reportError("failed to get II for cap \n");
@@ -120,7 +120,7 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
     *capReg = selectedCapRegister;
     selectedCapOriginalInstruction = instruction;
     *capMask = selectedCapMask;
-    selectedCapPipelineProperties = instructionInfo->unk_0e_w;
+    selectedCapPipelineProperties = instructionInfo->pipelineAndIssueMaskWord;
     return selectedCapPipelineProperties;
 }
 
@@ -144,7 +144,7 @@ bool insertRegisterCapInstruction(int line, int pipe, int mask)
         capInstruction->operands[operandIndex].componentMask = mask;
 
     if (selectedCapRegister->registerClass == 9) {
-        RegPoolEntry *registerEntry = getPoolZeroRegister(9);
+        RegisterEntry *registerEntry = getPoolZeroRegister(9);
         capInstruction->operands[0].assignedRegister = registerEntry;
         capInstruction->operands[0].originalRegister = registerEntry;
         capInstruction->operands[0].forcedBaseRegister = 0;
@@ -154,7 +154,7 @@ bool insertRegisterCapInstruction(int line, int pipe, int mask)
         selectedCapOriginalInstruction->operands[0].originalRegister = selectedCapRegister;
         selectedCapOriginalInstruction->operands[0].assignedRegister = selectedCapRegister;
         selectedCapOriginalInstruction->operands[0].forcedBaseRegister = 0;
-        regUse *registerUse = capInsertionWorkTable->registerUses.findByRegister(selectedCapRegister);
+        RegisterUse *registerUse = capInsertionWorkTable->registerUses.findByRegister(selectedCapRegister);
         if (!registerUse) {
             registerUse = capInsertionWorkTable->registerUses.addRegisterUse(selectedCapRegister);
             if (!registerUse) {

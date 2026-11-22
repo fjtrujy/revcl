@@ -23,14 +23,14 @@ bool initializeMemoryRegisterArea(RegPool *pool, const char *base, int size)
         reportError("init mem area: size was <=0\n");
         return false;
     }
-    RegPoolEntry *tab = new RegPoolEntry[size];
+    RegisterEntry *tab = new RegisterEntry[size];
     pool->registerEntries = tab;
     if (!tab) {
         extern const char memRegPoolAllocError[];
         reportError(memRegPoolAllocError);
         return false;
     }
-    RegPoolEntry *registerEntry = tab;
+    RegisterEntry *registerEntry = tab;
     pool->entryCount = size;
     int idx = 10000;
     for (int registerOffset = 0; registerOffset != size; registerOffset++, registerEntry++, idx++) {
@@ -48,17 +48,17 @@ bool initializeMemoryRegisterArea(RegPool *pool, const char *base, int size)
     return true;
 }
 
-bool memRegPool::assignRegistersForWorkTable(workTable *)
+bool memRegPool::assignRegistersForWorkTable(ScheduleTable * unusedTable)
 {
     return true;
 }
 
-bool memRegPool::assignExt(instStream *)
+bool memRegPool::assignExt(InstructionStream * unusedStream)
 {
     return true;
 }
 
-bool memRegPool::discardDisjointExternalRegister(instStream *, RegPoolEntry *)
+bool memRegPool::discardDisjointExternalRegister(InstructionStream *, RegisterEntry * unusedRegister)
 {
     return true;
 }

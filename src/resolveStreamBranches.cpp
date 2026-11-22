@@ -8,16 +8,16 @@
 extern int errorOccurred;
 extern bool quietDiagnostics;
 void resetRange();
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 char *dupString(const char *s);
 int branchLinkTypeForFlags(int flags);
-bool fixupBtorBranch(Program *p, instStream *s, int *changed);
+bool fixupBtorBranch(Program *p, InstructionStream *s, int *changed);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 
 
 bool resolveStreamBranches(Program *program)
 {
-    instStream *currentStream;
+    InstructionStream *currentStream;
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         switch (currentStream->endType) {
         case 1: {
@@ -46,7 +46,7 @@ bool resolveStreamBranches(Program *program)
                         reportError("failed to get branch target immediate\n");
                         return false;
                     }
-                    instStream *targetStream = program->findStream(label);
+                    InstructionStream *targetStream = program->findStream(label);
                     if (!targetStream) {
                         reportUserMessage("failed to find label '%s'\n", label);
                         return false;
@@ -71,7 +71,7 @@ bool resolveStreamBranches(Program *program)
                                 *outputCursor++ = *tagTextCursor++;
                             *outputCursor = 0;
                             labelTagCursor = tagTextCursor;
-                            instStream *resolvedTargetStream = program->findStream(name);
+                            InstructionStream *resolvedTargetStream = program->findStream(name);
                             if (!resolvedTargetStream) {
                                 reportUserMessage("branch-to-register tag, failed to find label '%s'\n", name);
                                 return false;
@@ -147,7 +147,7 @@ bool resolveStreamBranches(Program *program)
     return true;
 }
 
-bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
+bool fixupBtorBranch(Program *program, InstructionStream *stream, int *changed)
 {
     *changed = 0;
     if (((stream->branchType >> 1) & 1) == 0) {
@@ -159,14 +159,14 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
         reportError("balFix-no branch!\n");
         return false;
     }
-    RegPoolEntry *registerEntry = instruction->getBranchTargetRegister();
+    RegisterEntry *registerEntry = instruction->getBranchTargetRegister();
     if (!registerEntry) {
         reportError("no target register input for btor\n");
         instruction->dumpInstructionContext();
         return false;
     }
     instruction->dumpOperandDiagnostics(false);
-    instStream *currentStream;
+    InstructionStream *currentStream;
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream)
         currentStream->visitState = 0;
     stream->visitState = 1;
@@ -177,7 +177,7 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
         for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
             if (currentStream->visitState != 1)
                 continue;
-            workTable *scheduleTable = currentStream->getTable();
+            ScheduleTable *scheduleTable = currentStream->getTable();
             Instr *previousInstruction;
             if (first) {
                 previousInstruction = instruction->linearLink.previousInstruction;
@@ -217,8 +217,8 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
                     return false;
                 }
             } else {
-                for (linkNode *incomingLink = currentStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next) {
-                    instStream *sourceStream = incomingLink->otherStream;
+                for (StreamLinkNode *incomingLink = currentStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next) {
+                    InstructionStream *sourceStream = incomingLink->otherStream;
                     if (!sourceStream) {
                         reportError("null outist\n");
                         return false;

@@ -1,14 +1,14 @@
-// Parser line entry (class name guessed), sizeof 8, no vptr. Defined in group 3.
+// Source location name and kind (source-file or macro), 8 bytes on i386.
 #ifndef LINE_H
 #define LINE_H
 
-class Line {
+class SourceLocationEntry {
 public:
     char *locationName;
     int locationKind; // 1 = source file, 2 = macro
 
-    Line();
-    ~Line();
+    SourceLocationEntry();
+    ~SourceLocationEntry();
     bool setLocation(const char *name, int kind);
     void clearLocation();
     void dumpLocation();

@@ -6,7 +6,7 @@
 #include "RegPool.h"
 #include "ol_s_inline.h"
 
-int emulateInstructionRow(Program *p, wtRow *row, int line, bool uta, bool commit);
+int emulateInstructionRow(Program *p, ScheduleRow *row, int line, bool uta, bool commit);
 bool advanceProcessorCycle(Program *p, bool flag);
 
 static inline int clampByte(int value)
@@ -14,7 +14,7 @@ static inline int clampByte(int value)
     return value > 255 ? 255 : value;
 }
 
-bool emuTable(Program *program, workTable *scheduleTable)
+bool emuTable(Program *program, ScheduleTable *scheduleTable)
 {
     if (!scheduleTable) {
         reportWarning("emu - passed a null table ptr!\n");
@@ -29,7 +29,7 @@ bool emuTable(Program *program, workTable *scheduleTable)
     case 3: {
         int skipped = 0;
         for (int line = scheduleTable->getRangeStart(); line != scheduleTable->getRangeEnd(); line++) {
-            wtRow *workRow = scheduleTable->getRowByIndex(line);
+            ScheduleRow *workRow = scheduleTable->getRowByIndex(line);
             if (workRow) {
                 if (workRow->skip) {
                     for (int entryIndex = 0; entryIndex != 2; entryIndex++)
@@ -64,7 +64,7 @@ fail:
     case 1:
     case 4: {
         Instr *currentInstruction = scheduleTable->linearInstructions.head;
-        wtRow row;
+        ScheduleRow row;
         for (; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction) {
             row.clearEntries();
             row.entries[0].instruction = currentInstruction;
@@ -92,11 +92,11 @@ static inline void reportRegRefFailure()
     reportError("failed to add reg ref\n");
 }
 
-bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
+bool emulateAndCollectRegisterUses(Program *program, InstructionStream *stream)
 {
     int count;
     Instr *currentInstruction;
-    workTable *scheduleTable;
+    ScheduleTable *scheduleTable;
 
     scheduleTable = stream->getTable();
     int linear = scheduleTable->instructionCountsByPipe[2];
@@ -114,10 +114,10 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
         count++;
         for (int operandIndex = 0; operandIndex != currentInstruction->operandCount; operandIndex++) {
             Operand *currentOperand = &currentInstruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = currentOperand->assignedRegister;
+            RegisterEntry *registerEntry = currentOperand->assignedRegister;
             if (!registerEntry)
                 continue;
-            regUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
+            RegisterUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
             if (!registerUse) {
                 registerUse = scheduleTable->registerUses.addRegisterUse(registerEntry);
                 if (!registerUse) {
@@ -162,15 +162,15 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
         reportError("icount mismatch (%d apparently in list, but %d in table?)\n", count, scheduleTable->instructionCountsByPipe[2]);
         return false;
     }
-    for (regUse *currentRegisterUse = scheduleTable->registerUses.head; currentRegisterUse; currentRegisterUse = currentRegisterUse->next) {
-        RegPoolEntry *registerEntry = currentRegisterUse->registerEntry;
+    for (RegisterUse *currentRegisterUse = scheduleTable->registerUses.head; currentRegisterUse; currentRegisterUse = currentRegisterUse->next) {
+        RegisterEntry *registerEntry = currentRegisterUse->registerEntry;
         if (!registerEntry) {
             reportError("a reg ref had no register!\n");
             return false;
         }
         for (int part = 0; part != registerEntry->partCount; part++) {
             regUseSlot *slot = &currentRegisterUse->slots[part];
-            rPart *registerPart = &registerEntry->parts[part];
+            RegisterPartState *registerPart = &registerEntry->parts[part];
             slot->timingValues[0] = registerPart->emulationTimingMetrics[4];
             slot->timingValues[1] = registerPart->emulationTimingMetrics[5];
             slot->timingValues[2] = registerPart->emulationTimingMetrics[6];
@@ -189,13 +189,13 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
             slot->throughputSums[3] = registerPart->emulationTimingMetrics[2];
             slot->throughputSums[2] = registerPart->emulationTimingMetrics[3];
             if ((currentRegisterUse->outputMask >> part) & 1) {
-                ol_s *out = &registerPart->currentLocation;
+                OperandLocation *out = &registerPart->currentLocation;
                 if (out->instruction && !slot->addOutput(out)) {
                     reportError("failed to add an output to an rrp\n");
                     return false;
                 }
                 for (int pendingLocationIndex = 0; pendingLocationIndex != 4; pendingLocationIndex++) {
-                    ol_s *location = registerPart->getPendingLocation(pendingLocationIndex);
+                    OperandLocation *location = registerPart->getPendingLocation(pendingLocationIndex);
                     if (!location) {
                         reportError("failed to get a pool entry\n");
                         return false;

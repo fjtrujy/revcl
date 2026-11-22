@@ -1,4 +1,4 @@
-// Instruction stream (owner of instructions); layout mostly unknown.
+// Instruction stream, owning scheduling state, links, labels and instructions.
 #ifndef INSTSTREAM_H
 #define INSTSTREAM_H
 
@@ -9,25 +9,25 @@
 #include "statCounts.h"
 #include "linkList.h"
 
-class workTable;
+class ScheduleTable;
 class Instr;
-struct regUse;
-class instStream;
+struct RegisterUse;
+class InstructionStream;
 struct Program;
 
-// 16-byte record in the leading table of a stream (name guessed).
-struct istRec {
+// 16-byte record of an instruction stream's optimization candidate.
+struct StreamOptimizationRecord {
     int instructionCount;
     int optimalLength;
     int mainLoopId;
     int candidateLoopId;
 };
 
-class instStream {
+class InstructionStream {
 public:
-    instStream();
+    InstructionStream();
     const char *streamName();  // stream name or default
-    workTable *getWorkTable()
+    ScheduleTable *getWorkTable()
     {
         if (workTablePtr)
             return workTablePtr;
@@ -36,7 +36,7 @@ public:
         return workTablePtr;
     }
     // Same check as getWorkTable, written as a guarded block (different code shape).
-    workTable *getTable()
+    ScheduleTable *getTable()
     {
         if (!workTablePtr) {
             reportError("work table not set in %s\n", streamName());
@@ -45,7 +45,7 @@ public:
         return workTablePtr;
     }
 
-    workTable *checkedTable(const char *msg)
+    ScheduleTable *checkedTable(const char *msg)
     {
         if (workTablePtr)
             return workTablePtr;
@@ -90,8 +90,8 @@ public:
     Instr *getBranch();
     bool removeBranch();
     char *getBranchTargetImmediate();
-    RegPoolEntry *getBranchTargetRegister();
-    ~instStream();
+    RegisterEntry *getBranchTargetRegister();
+    ~InstructionStream();
     bool reset();
     void dump(int);
     void zeroStats();
@@ -106,81 +106,81 @@ public:
     int checkStartEndStatus();          // out-of-line checkStartEnd
     bool disposeInputTable();
     bool processCmdSynth(Instr *i);
-    void copySourceRecordsFrom(instStream *sourceStream);  // copy record table from src
-    bool setOptTable(workTable *nt);
+    void copySourceRecordsFrom(InstructionStream *sourceStream);  // copy record table from src
+    bool setOptTable(ScheduleTable *nt);
 
     int optimizationRecordCount;
-    istRec optimizationRecords[16];
+    StreamOptimizationRecord optimizationRecords[16];
     Program *owningProgram;
-    instStream *nextStream;         // next in Program::completedInstructions
-    instStream *previousStream;         // previous stream (to-register branch)
+    InstructionStream *nextStream;         // next in Program::completedInstructions
+    InstructionStream *previousStream;         // previous stream (to-register branch)
     mList labels;               // name list
     char *passThroughText;               // pass thru
-    linkList inputLinks;            // input links
-    linkList outputLinks;            // output links
+    StreamLinkList inputLinks;            // input links
+    StreamLinkList outputLinks;            // output links
     char hasLoopOptimization;
-    char unk_141[3];
+    char reservedStreamFlagsAfterLoopOptimization[3];
     int appliedOptimizationMask;
-    workTable sourceTable;           // own work table
-    workTable *optimizedTable;  // opt table
-    workTable *workTablePtr;  // work table
-    workTable *emissionTable;  // tidied work table
-    workTable *savedTable;  // saved work table
+    ScheduleTable sourceTable;           // own work table
+    ScheduleTable *optimizedTable;  // opt table
+    ScheduleTable *workTablePtr;  // work table
+    ScheduleTable *emissionTable;  // tidied work table
+    ScheduleTable *savedTable;  // saved work table
     short outputLocationCount;
     unsigned char visitState;      // visit mode (0 unvisited, 1 active, 2 visited, 3 end match, 4 dead end)
     char pendingHazardBroadcast;
     char hazardFlag;               // hazard flag
     char hazardVisited;               // visited flag in hazard broadcast
-    char unk_22a[2];
+    char reservedStreamHazardBytes[2];
     int backtraceDependencyLength;                // dependency length used by back trace
     short earliestOutputLocation;
     short latestOutputLocation;
-    regUse *backtraceRegisterUse;
+    RegisterUse *backtraceRegisterUse;
     unsigned *traceStore;          // m_tStore
     int destinationKey;                // dst key
     int minimumPathLength;
-    instStream *shortestPathPredecessor;        // min-path predecessor
+    InstructionStream *shortestPathPredecessor;        // min-path predecessor
     int maximumPathLength;
-    instStream *longestPathPredecessor;        // max-path predecessor
-    instStream *nextSourceStream;
-    instStream *nextMatchedStream;
-    instStream *nextResolvedStream;
-    instStream *nextActiveStream;
+    InstructionStream *longestPathPredecessor;        // max-path predecessor
+    InstructionStream *nextSourceStream;
+    InstructionStream *nextMatchedStream;
+    InstructionStream *nextResolvedStream;
+    InstructionStream *nextActiveStream;
     char participatesInStall;      // set when stream takes part in a stall
     char allowUpwardReduction;
     char allowDownwardReduction;
     char reductionSkipped;
     char reachableFromEntry;      // reached top (accessible)
     char mergeIntoSuccessor;      // collapse into successor (tidy)
-    char unk_266[2];
+    char reservedStreamReductionBytes[2];
     int absoluteLoopCount;
     int extraLoopCount;
     int knownMinimumLoopCount;                 // known min count
     int safeMinimumLoopCount;                 // minimum safe count
-    cls0805e2e4 schedulingStatistics;
+    SchedulingStatistics schedulingStatistics;
     statCounts stats;
     short branchForwardLatencyDepth;
-    short unk_2b6;
+    short resetOnlyStreamBranchTimingSentinel;
     short savedStallReason;
     short currentStallReason;
     int physicalInstructionBudget;
     short streamId;     // stream id
     short streamSerial;     // stream serial
     short loopRegionRole;
-    short unk_2c6;
+    short resetOnlyStreamLoopShort;
     int emissionStartIndex;
     unsigned char startType;  // start type (ISTST_*)
     unsigned char endType;  // end type (ISTET_*; 2 adds 1000 to back trace dep length)
     unsigned char branchType;  // branch type
-    char unk_2cf;
+    char reservedStreamDirectiveByte;
     char *endDirectiveText;
     char leadingLabelFlags;
     char trailingLabelFlags;
     char containsBarrier;
     char mergedBarrierFlag;
-    int unk_2d8;
+    int resetOnlyStreamEmissionWord;
     char externalSchedulingPrepared;
-    char unk_2dd[3];
+    char reservedStreamEmissionBytes[3];
     int dependencyLength;       // dependency length
     int logicalLength;
 

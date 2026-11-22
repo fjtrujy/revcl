@@ -19,7 +19,7 @@ struct regUseSlot {
     short throughputSums[4];
     short timingValues[13];
     VclPtrWord assignmentPayload;
-    cls0805bcc4 registerLock;
+    OperandLock registerLock;
 
     regUseSlot();
 #ifdef VCL_REGUSESLOT_IMPL
@@ -28,11 +28,11 @@ struct regUseSlot {
     ~regUseSlot() {}
 #endif
     bool optReset();
-    bool addOutput(ol_s *ol);
+    bool addOutput(OperandLocation *ol);
     void validateOutputLocations();
     void validateInputLocations();
-    cls0805bcc4 *getRegisterLock();
-    ol_s *findPreviousOutputAtPosition(int pos, bool all);
+    OperandLock *getRegisterLock();
+    OperandLocation *findPreviousOutputAtPosition(int pos, bool all);
 };
 
 #endif

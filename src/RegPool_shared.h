@@ -7,8 +7,8 @@
 #include "VUStr.h"
 #include "workTable.h"
 
-struct iInfo;
-iInfo *findOpcodeInfoByMnemonic(const char *name, bool);
+struct OpcodeDescriptor;
+OpcodeDescriptor *findOpcodeInfoByMnemonic(const char *name, bool);
 bool asciiCaseEqual(const char *a, const char *b);
 
 #endif

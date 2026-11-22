@@ -7,7 +7,7 @@
 #include "Block.h"
 #include "wrangle.h"
 
-typedef bool (*wrangleFunc)(workTable *, int *);
+typedef bool (*wrangleFunc)(ScheduleTable *, int *);
 
 void adjustMoveCount(Block *block, Instr *mv, int n);
 extern int optimizationTimeoutSeconds;
@@ -16,25 +16,25 @@ extern volatile char mode0WatchdogExpired;
 extern int errorOccurred;
 extern bool quietDiagnostics;
 
-bool wrangleMode1Worker(workTable *wt, wrangleFunc f);
-bool dynCalcStats(workTable *wt);
+bool wrangleMode1Worker(ScheduleTable *wt, wrangleFunc f);
+bool dynCalcStats(ScheduleTable *wt);
 bool calculateEarliestDependencyRow(Instr *i, int *row);
 bool queueMoveForResolution(Block *block, Instr *mv);
-bool findInsertPosition(workTable *wt, Instr *in, int *row, int *pipe);
-bool wrangleMode0Worker(workTable *wt, wrangleFunc f);
-bool findInsertPositionMode0(workTable *wt, Instr *in, int *row, int *pipe);
-bool buildCandidateList2(workTable *wt);
-bool refineMode0InsertionCandidate(workTable *wt, wrangleCand *c);
-int checkInsert(workTable *wt, Instr *in, cls08058718 *position, int *minPos);
-bool buildCandidateList(workTable *wt);
-bool refineMode1InsertionCandidate(workTable *wt, wrangleCand *c);
-bool insertInstructionWithLocks(workTable *wt, Instr *in, cls08058718 *position);
-bool undoInstructionWithLocks(workTable *wt, Instr *in);
-int drag(workTable *wt, Instr *in, cls08058718 *position, int back, int depth);
-int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, cls08058718 *position);
-int pullLatencyWritersEarlier(workTable *wt, Instr *in, cls08058718 *position);
+bool findInsertPosition(ScheduleTable *wt, Instr *in, int *row, int *pipe);
+bool wrangleMode0Worker(ScheduleTable *wt, wrangleFunc f);
+bool findInsertPositionMode0(ScheduleTable *wt, Instr *in, int *row, int *pipe);
+bool buildCandidateList2(ScheduleTable *wt);
+bool refineMode0InsertionCandidate(ScheduleTable *wt, wrangleCand *c);
+int checkInsert(ScheduleTable *wt, Instr *in, InstructionPosition *position, int *minPos);
+bool buildCandidateList(ScheduleTable *wt);
+bool refineMode1InsertionCandidate(ScheduleTable *wt, wrangleCand *c);
+bool insertInstructionWithLocks(ScheduleTable *wt, Instr *in, InstructionPosition *position);
+bool undoInstructionWithLocks(ScheduleTable *wt, Instr *in);
+int drag(ScheduleTable *wt, Instr *in, InstructionPosition *position, int back, int depth);
+int pullSpecialRegisterWritersEarlier(ScheduleTable *wt, Instr *in, InstructionPosition *position);
+int pullLatencyWritersEarlier(ScheduleTable *wt, Instr *in, InstructionPosition *position);
 int getMove(Block *block, Instr *in, int now);
 bool undoMovesTo(Block *block, Instr *stop);
-bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
+bool resolveMovePipe(ScheduleTable *wt, Instr *mv, int pipe);
 
 #endif

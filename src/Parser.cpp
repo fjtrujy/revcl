@@ -305,7 +305,7 @@ found:
             reportError("AddLocTag: ran out of loctags\n");
             return -1;
         }
-        Line *l = &lines[locationTagCount];
+        SourceLocationEntry *l = &lines[locationTagCount];
         if (!l->setLocation(name, n)) {
             reportError("failed to set up a loc tag!\n");
             return 0;

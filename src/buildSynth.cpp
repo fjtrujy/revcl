@@ -8,7 +8,7 @@
 extern int errorOccurred;
 extern bool quietDiagnostics;
 void resetRange();
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 char *dupString(const char *s);
 
 static inline void dumpSynthInstruction(Instr *instruction)
@@ -17,9 +17,9 @@ static inline void dumpSynthInstruction(Instr *instruction)
 }
 
 
-bool buildSynth(Program *program, instStream *targetStream, DecodedLine *blocks, int count)
+bool buildSynth(Program *program, InstructionStream *targetStream, DecodedLine *blocks, int count)
 {
-    workTable *scheduleTable = &targetStream->sourceTable;
+    ScheduleTable *scheduleTable = &targetStream->sourceTable;
     if (!scheduleTable) {
         reportError("build: failed to get input table from ist\n");
         return false;

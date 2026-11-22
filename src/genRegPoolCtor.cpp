@@ -11,7 +11,7 @@ bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
 int countSetBits(unsigned int);
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 
 
 genRegPool::genRegPool()
@@ -23,7 +23,7 @@ genRegPool::~genRegPool()
 {
 }
 
-bool genRegPool::assignRegistersForWorkTable(workTable *table)
+bool genRegPool::assignRegistersForWorkTable(ScheduleTable *table)
 {
     if (!table) {
         reportError("failed to get itable in nassign - which is not really likely\n");
@@ -38,8 +38,8 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
         reportError("failed to set table range\n");
         return false;
     }
-    regUse *registerUse = table->registerUses.firstReal();
-    regUseList *list = &table->registerUses;
+    RegisterUse *registerUse = table->registerUses.firstReal();
+    RegisterUseList *list = &table->registerUses;
     for (; registerUse; registerUse = registerUse->nextReal()) {
         if (!allocateRegisterUseInTimeline(registerUse)) {
             reportError("failed to set forced register in aTab\n");
@@ -49,12 +49,12 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
             return false;
         }
     }
-    RegPoolEntry *todo = 0;
+    RegisterEntry *todo = 0;
     Instr *instruction;
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
         Operand *operand;
         for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-            RegPoolEntry *reg = operand->assignedRegister;
+            RegisterEntry *reg = operand->assignedRegister;
             if (ownsRegisterClass(reg) && reg->isVirtual && reg->assignmentCostTableSize < 0) {
                 if (!buildCandidateRegisterTimeline(reg, (1 << reg->partCount) - 1)) {
                     reportError("failed to build ttab while building todolist\n");
@@ -73,10 +73,10 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
     }
     while (todo) {
         int max = -1;
-        RegPoolEntry *best = 0;
-        RegPoolEntry *bestPrev = 0;
-        RegPoolEntry *prev = 0;
-        for (RegPoolEntry *registerEntry = todo; registerEntry; prev = registerEntry, registerEntry = registerEntry->nextPendingAssignment) {
+        RegisterEntry *best = 0;
+        RegisterEntry *bestPrev = 0;
+        RegisterEntry *prev = 0;
+        for (RegisterEntry *registerEntry = todo; registerEntry; prev = registerEntry, registerEntry = registerEntry->nextPendingAssignment) {
             if (registerEntry->assignmentCostTableSize > max) {
                 best = registerEntry;
                 bestPrev = prev;
@@ -118,7 +118,7 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
         Operand *operand;
         for (int virtualOperandIndex = 0; (operand = instruction->getOp(virtualOperandIndex)) != 0; virtualOperandIndex++) {
-            RegPoolEntry *reg = operand->assignedRegister;
+            RegisterEntry *reg = operand->assignedRegister;
             if (ownsRegisterClass(reg) && reg->isVirtual) {
                 if (!reg->assignedPhysicalRegister) {
                     reportError("notmapped!, should have been mapped by now..%s!\n",
@@ -133,7 +133,7 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
     return true;
 }
 
-bool genRegPool::assignExt(instStream *stream)
+bool genRegPool::assignExt(InstructionStream *stream)
 {
     if (!stream) {
         reportError("AssignExternalRegisters - passed a null  pointer!\n");
@@ -144,16 +144,16 @@ bool genRegPool::assignExt(instStream *stream)
         reportError("AssignExternalRegisters - stream had no owner\n");
         return false;
     }
-    workTable *table = stream->getTable();
-    for (regUse *registerUse = table->registerUses.firstVirtual(); registerUse; registerUse = registerUse->nextVirtual()) {
-        RegPoolEntry *registerEntry = registerUse->registerEntry;
+    ScheduleTable *table = stream->getTable();
+    for (RegisterUse *registerUse = table->registerUses.firstVirtual(); registerUse; registerUse = registerUse->nextVirtual()) {
+        RegisterEntry *registerEntry = registerUse->registerEntry;
         if (!registerEntry) {
             reportError("flowMon::AssignExt: register not set in rf\n");
             return false;
         }
         if (ownsRegisterClass(registerEntry) && registerUse->isExternal() && !registerEntry->assignedPhysicalRegister) {
             initRegMask(this);
-            for (instStream *currentStream = owner->streamHead; currentStream; currentStream = currentStream->nextStream) {
+            for (InstructionStream *currentStream = owner->streamHead; currentStream; currentStream = currentStream->nextStream) {
                 if (!discardDisjointExternalRegister(currentStream, registerEntry)) {
                     reportError("generic external allocator had internal error.. ret<0 for DiscardDisjoint\n");
                     return false;
@@ -179,7 +179,7 @@ bool genRegPool::assignExt(instStream *stream)
     return true;
 }
 
-bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntry *reg)
+bool genRegPool::discardDisjointExternalRegister(InstructionStream *stream, RegisterEntry *reg)
 {
     if (!reg || !ownsRegisterClass(reg)) {
         reportError("discard disjoint called, but this pool doesn't own this register!\n");
@@ -190,9 +190,9 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
                       reg->registerName());
         return false;
     }
-    workTable *table = stream->getTable();
-    regUseList *registerUseList = &table->registerUses;
-    regUse *registerUse;
+    ScheduleTable *table = stream->getTable();
+    RegisterUseList *registerUseList = &table->registerUses;
+    RegisterUse *registerUse;
     for (registerUse = registerUseList->firstVirtual(); registerUse; registerUse = registerUse->nextVirtual()) {
         if (registerUse->registerEntry == reg) {
             if (!registerUse->isExternal()) {
@@ -216,8 +216,8 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
         reportError("xiBits is outside of iBits \n");
         return false;
     }
-    for (regUse *otherRegisterUse = registerUseList->head; otherRegisterUse; otherRegisterUse = otherRegisterUse->next) {
-        RegPoolEntry *registerEntry = otherRegisterUse->registerEntry;
+    for (RegisterUse *otherRegisterUse = registerUseList->head; otherRegisterUse; otherRegisterUse = otherRegisterUse->next) {
+        RegisterEntry *registerEntry = otherRegisterUse->registerEntry;
         if (!registerEntry) {
             reportError("flowMon::discard disjoint forced regref with null reg\n");
             return false;
@@ -263,7 +263,7 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
         default:
             return false;
         }
-        RegPoolEntry *tmpr;
+        RegisterEntry *tmpr;
         if (registerEntry->isVirtual != 1)
             tmpr = registerEntry;
         else

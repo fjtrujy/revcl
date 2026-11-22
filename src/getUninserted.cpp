@@ -8,10 +8,10 @@
 int getInstructionDistanceToStreamEnd(Instr *in);
 int getInstructionDistanceFromStreamStart(Instr *in);
 
-instStream *selectUninsertedStream(Program *program)
+InstructionStream *selectUninsertedStream(Program *program)
 {
-    instStream *stream = program->streamHead;
-    instStream *best = 0;
+    InstructionStream *stream = program->streamHead;
+    InstructionStream *best = 0;
     int minIn = 1000000;
     int maxOut = -1000000;
     for (; stream; stream = stream->nextStream) {
@@ -39,7 +39,7 @@ instStream *selectUninsertedStream(Program *program)
     return best;
 }
 
-int instStream::countUnresolvedExternalInputs()
+int InstructionStream::countUnresolvedExternalInputs()
 {
     int count = 0;
     if (!workTablePtr) {
@@ -55,12 +55,12 @@ int instStream::countUnresolvedExternalInputs()
         base += schedulingStatistics.reverseLatencyDepth - instruction->schedulingStatistics.reverseLatencyDepth;
         Operand *operand;
         for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            RegisterEntry *registerEntry = registerOperand(operand, 1);
             if (!registerEntry || !operand->externalPartMask)
                 continue;
             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 if ((operand->externalPartMask >> partIndex) & 1) {
-                ol_s *operandLocation = operand->parts[partIndex].operandLocations.head;
+                OperandLocation *operandLocation = operand->parts[partIndex].operandLocations.head;
                 if (!operandLocation) {
                     reportError("no setter list found during getuninstxi!\n");
                     return -1;
@@ -89,7 +89,7 @@ int instStream::countUnresolvedExternalInputs()
     return count;
 }
 
-int instStream::countUnresolvedExternalOutputs()
+int InstructionStream::countUnresolvedExternalOutputs()
 {
     int count = 0;
     if (!workTablePtr) {
@@ -105,12 +105,12 @@ int instStream::countUnresolvedExternalOutputs()
         base += schedulingStatistics.forwardLatencyDepth - instruction->schedulingStatistics.forwardLatencyDepth;
         Operand *operand;
         for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-            RegPoolEntry *registerEntry = registerOperand(operand, 2);
+            RegisterEntry *registerEntry = registerOperand(operand, 2);
             if (!registerEntry || !operand->externalPartMask)
                 continue;
             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 if ((operand->externalPartMask >> partIndex) & 1) {
-                    for (ol_s *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                    for (OperandLocation *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                         Instr *user = operandLocation->instruction;
                         if (user->getOwningStream() == this || user->optimizedInstructionImageWord)
                             continue;
@@ -136,12 +136,12 @@ int instStream::countUnresolvedExternalOutputs()
 
 int getInstructionDistanceToStreamEnd(Instr *instruction)
 {
-    workTable *table = (workTable *)instruction->ownerTable;
+    ScheduleTable *table = (ScheduleTable *)instruction->ownerTable;
     if (!table) {
         reportError("instruction had no owner for getToEnd()\n");
         return -1;
     }
-    instStream *stream = table->ownerStream;
+    InstructionStream *stream = table->ownerStream;
     if (!stream) {
         reportError("failed to get owner owner\n");
         return -1;
@@ -157,7 +157,7 @@ int getInstructionDistanceToStreamEnd(Instr *instruction)
             reportError("our image was in different stream\n");
             return -1;
         }
-        table = (workTable *)img->ownerTable;
+        table = (ScheduleTable *)img->ownerTable;
         if (table->codeModeValue != 3) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
@@ -199,12 +199,12 @@ int getInstructionDistanceToStreamEnd(Instr *instruction)
 
 int getInstructionDistanceFromStreamStart(Instr *instruction)
 {
-    workTable *table = (workTable *)instruction->ownerTable;
+    ScheduleTable *table = (ScheduleTable *)instruction->ownerTable;
     if (!table) {
         reportError("instruction had no owner for getToEnd()\n");
         return -1;
     }
-    instStream *stream = table->ownerStream;
+    InstructionStream *stream = table->ownerStream;
     if (!stream) {
         reportError("failed to get owner owner\n");
         return -1;
@@ -220,7 +220,7 @@ int getInstructionDistanceFromStreamStart(Instr *instruction)
             reportError("our image was in different stream\n");
             return -1;
         }
-        table = (workTable *)img->ownerTable;
+        table = (ScheduleTable *)img->ownerTable;
         if (table->codeModeValue != 3) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
@@ -257,7 +257,7 @@ int getInstructionDistanceFromStreamStart(Instr *instruction)
 bool optReset(Program *p);
 bool setRange(int start, int end, int lsz);
 
-bool loadLocks(Program *program, workTable *table)
+bool loadLocks(Program *program, ScheduleTable *table)
 {
     if (!table) {
         reportError("load locks to registers - failed\n");
@@ -272,8 +272,8 @@ bool loadLocks(Program *program, workTable *table)
         return false;
     }
     setRange(table->getRangeStart(), table->getRangeEnd(), table->getLoopSize());
-    for (regUse *registerUse = table->registerUses.head; registerUse; registerUse = registerUse->next) {
-        RegPoolEntry *registerEntry = registerUse->registerEntry;
+    for (RegisterUse *registerUse = table->registerUses.head; registerUse; registerUse = registerUse->next) {
+        RegisterEntry *registerEntry = registerUse->registerEntry;
         for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
             regUseSlot *registerUseSlot = &registerUse->slots[partIndex];
             if (!registerUseSlot) {

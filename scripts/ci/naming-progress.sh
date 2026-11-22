@@ -34,6 +34,11 @@ if [ "$mode" = "--update" ]; then
   fi
   echo "Updated naming progress and lexical inventory."
 else
+  "$scratch/naming-progress" --require-complete \
+    "$scratch/identifiers.tsv" \
+    docs/naming-fields.tsv docs/naming-declarations.tsv \
+    docs/naming-manual-review.tsv docs/naming-progress-baseline.tsv \
+    > /dev/null
   if ! cmp -s "$scratch/identifiers.tsv" docs/naming-identifiers.tsv; then
     echo "Naming lexical inventory is stale: run sh scripts/ci/naming-progress.sh --update" >&2
     exit 1

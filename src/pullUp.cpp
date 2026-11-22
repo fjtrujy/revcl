@@ -6,22 +6,22 @@
 
 class Program;
 
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 bool moveLocks(Instr *i, InstructionPosition *pos);
-int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int checkPlacementInAllowedPipelines(ScheduleTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
-int earliestInsert(workTable *wt, Instr *in, bool *found);
-int checkInstructionPlacementConstraints(workTable *wt, Instr *i, InstructionPosition *pos);
+int earliestInsert(ScheduleTable *wt, Instr *in, bool *found);
+int checkInstructionPlacementConstraints(ScheduleTable *wt, Instr *i, InstructionPosition *pos);
 bool setRange(int start, int end, int lsz);
-int pullUp(workTable *wt);
-int dragDown(workTable *wt);
+int pullUp(ScheduleTable *wt);
+int dragDown(ScheduleTable *wt);
 
-static inline bool setPullUpRange(workTable *scheduleTable, int lsz)
+static inline bool setPullUpRange(ScheduleTable *scheduleTable, int lsz)
 {
     return setRange(scheduleTable->rangeStart, scheduleTable->rangeEnd, lsz);
 }
 
-int pullUp(workTable *scheduleTable)
+int pullUp(ScheduleTable *scheduleTable)
 {
     if (scheduleTable->rangeEnd == scheduleTable->rangeStart)
         return 0;
@@ -45,7 +45,7 @@ int pullUp(workTable *scheduleTable)
         moved = 0;
         mrl = scheduleTable->rangeStart;
         for (int rowIndex = scheduleTable->rangeStart; rowIndex != scheduleTable->rangeEnd; rowIndex++) {
-            wtRow *row = scheduleTable->getRowByIndex(rowIndex);
+            ScheduleRow *row = scheduleTable->getRowByIndex(rowIndex);
             for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
                 Instr *currentInstruction = row->getEntry(pipeIndex);
                 if (!currentInstruction || currentInstruction == branchInstruction || currentInstruction == lbdli)

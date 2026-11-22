@@ -21,7 +21,7 @@ static inline void wrapInputRange(int &rangeStart, int &rangeEnd)
     }
 }
 
-int cls0805c244::checkInputLock(OperandLock *operandLock, short *pos, int *minPos)
+int RegisterPartLockList::checkInputLock(OperandLock *operandLock, short *pos, int *minPos)
 {
     OperandLock *lock = outputLocks;
     int ret;
@@ -140,7 +140,7 @@ static inline void nextLoopPosition(int requestedRow, int row, int loopPeriod, i
     }
 }
 
-int cls0805c244::checkOutputLock(OperandLock *outputLock, short *pos, int *minPos)
+int RegisterPartLockList::checkOutputLock(OperandLock *outputLock, short *pos, int *minPos)
 {
     int lsz = activeLoopSize;
     int ret = checkOverlap(outputLock, pos, minPos);
@@ -257,7 +257,7 @@ int cls0805c244::checkOutputLock(OperandLock *outputLock, short *pos, int *minPo
     return ret;
 }
 
-int cls0805c244::checkOverlap(OperandLock *outputLock, short *pos, int *minPos)
+int RegisterPartLockList::checkOverlap(OperandLock *outputLock, short *pos, int *minPos)
 {
     int ret = 0;
     if (outputLock->throughputSpacing <= 1)

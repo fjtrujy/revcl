@@ -6,11 +6,11 @@
 #include "Instr.h"
 #include "ol_s.h"
 
-extern RegPoolEntry *collapseImmediateSourceRegister;
-extern mValue *collapseImmediateValue;
+extern RegisterEntry *collapseImmediateSourceRegister;
+extern TypedValue *collapseImmediateValue;
 extern int collapseImmediateOffset;
 int decodeCollapsibleMoveImmediate(Instr *in);
-int expandOneLoopIntoRegions(Program *p, instStream *s);
+int expandOneLoopIntoRegions(Program *p, InstructionStream *s);
 
 
 extern const char propagateValidMaskError[];
@@ -23,9 +23,9 @@ bool noopMovePropagationHook(Program *program)
     return true;
 }
 
-int propagateMoves(workTable *scheduleTable)
+int propagateMoves(ScheduleTable *scheduleTable)
 {
-    wtInstrList *list = &scheduleTable->linearInstructions;
+    InstructionList *list = &scheduleTable->linearInstructions;
     int count = 0;
     for (Instr *instruction = list->tail; instruction; instruction = instruction->linearLink.prev()) {
         if (instruction->normalizeZeroSources() < 0) {
@@ -35,8 +35,8 @@ int propagateMoves(workTable *scheduleTable)
         if (!instruction->abstractMoveOpcode)
             continue;
         int mask = instruction->operands[0].componentMask;
-        RegPoolEntry *destinationRegister = instruction->operands[0].assignedRegister;
-        RegPoolEntry *sourceRegister = instruction->operands[1].assignedRegister;
+        RegisterEntry *destinationRegister = instruction->operands[0].assignedRegister;
+        RegisterEntry *sourceRegister = instruction->operands[1].assignedRegister;
         int keep = 0;
         int srcWritten = 0;
         int valid = mask;
@@ -112,7 +112,7 @@ int propagateMoves(workTable *scheduleTable)
     return count;
 }
 
-int removeDeadMoves(workTable *scheduleTable)
+int removeDeadMoves(ScheduleTable *scheduleTable)
 {
     int count = 0;
     Instr *next;

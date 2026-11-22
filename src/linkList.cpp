@@ -9,7 +9,7 @@ bool isExportedSymbol(Program *p, char *name);
 const char *getUniqueName(Program *p);
 char *joinNameWithPrefix(const char *a, const char *b);
 
-static inline linkNode *findRef(linkNode *link, instStream *stream, int type)
+static inline StreamLinkNode *findRef(StreamLinkNode *link, InstructionStream *stream, int type)
 {
     while (link && !(link->otherStream == stream && link->linkType == type))
         link = link->next;
@@ -30,7 +30,7 @@ static inline int branchLinkType(unsigned int branchFlags)
     return resolvedLinkType;
 }
 
-linkNode::linkNode()
+StreamLinkNode::StreamLinkNode()
 {
     linkType = -1;
     previous = 0;
@@ -39,29 +39,29 @@ linkNode::linkNode()
     active = 1;
 }
 
-linkNode::~linkNode()
+StreamLinkNode::~StreamLinkNode()
 {
 }
 
-linkNode *linkNode::nextLinkOfType(int type)
+StreamLinkNode *StreamLinkNode::nextLinkOfType(int type)
 {
-    linkNode *link = this;
+    StreamLinkNode *link = this;
     do
         link = link->next;
     while (link && link->linkType != type);
     return link;
 }
 
-linkList::linkList()
+StreamLinkList::StreamLinkList()
 {
     head = 0;
     tail = 0;
     count = 0;
 }
 
-linkList::~linkList()
+StreamLinkList::~StreamLinkList()
 {
-    linkNode *link = head;
+    StreamLinkNode *link = head;
     while (link) {
         if (!unlink(head))
             return;
@@ -71,18 +71,18 @@ linkList::~linkList()
     }
 }
 
-linkNode *linkList::findType(int type)
+StreamLinkNode *StreamLinkList::findType(int type)
 {
-    linkNode *link = head;
+    StreamLinkNode *link = head;
     while (link && link->linkType != type)
         link = link->next;
     return link;
 }
 
-instStream *linkList::getStream(int type)
+InstructionStream *StreamLinkList::getStream(int type)
 {
-    linkNode *found = 0;
-    linkNode *link;
+    StreamLinkNode *found = 0;
+    StreamLinkNode *link;
     for (link = head; link; link = link->next) {
         if (link->linkType == type) {
             if (found) {
@@ -95,20 +95,20 @@ instStream *linkList::getStream(int type)
     if (found)
         return found->otherStream;
     reportError("istRefList: getStream - couldn't find type %d\n", type);
-    for (linkNode *currentLink = head; currentLink; currentLink = currentLink->next)
+    for (StreamLinkNode *currentLink = head; currentLink; currentLink = currentLink->next)
         ;
     return 0;
 }
 
-void linkList::dump()
+void StreamLinkList::dump()
 {
-    for (linkNode *link = head; link; link = link->next)
+    for (StreamLinkNode *link = head; link; link = link->next)
         ;
 }
 
-bool linkList::removeAll()
+bool StreamLinkList::removeAll()
 {
-    linkNode *link = head;
+    StreamLinkNode *link = head;
     while (link) {
         if (!unlink(head))
             return false;
@@ -119,7 +119,7 @@ bool linkList::removeAll()
     return true;
 }
 
-bool linkList::relink(linkNode *link)
+bool StreamLinkList::relink(StreamLinkNode *link)
 {
     if (!link) {
         reportError("istRefLit:: relink - null ptr\n");
@@ -129,8 +129,8 @@ bool linkList::relink(linkNode *link)
         reportError("istRefList :: relink - node is linked\n");
         return false;
     }
-    linkNode *existingLink = head;
-    instStream *stream = link->otherStream;
+    StreamLinkNode *existingLink = head;
+    InstructionStream *stream = link->otherStream;
     int type = link->linkType;
     while (existingLink && !(existingLink->otherStream == stream && existingLink->linkType == type))
         existingLink = existingLink->next;
@@ -148,7 +148,7 @@ bool linkList::relink(linkNode *link)
     return true;
 }
 
-bool linkList::unlink(linkNode *link)
+bool StreamLinkList::unlink(StreamLinkNode *link)
 {
     if (!link)
         return false;
@@ -166,18 +166,18 @@ bool linkList::unlink(linkNode *link)
     return true;
 }
 
-linkNode *linkList::findLinkToStream(instStream *stream, int type)
+StreamLinkNode *StreamLinkList::findLinkToStream(InstructionStream *stream, int type)
 {
     return findRef(head, stream, type);
 }
 
-bool linkList::addNewRef(instStream *stream, int type)
+bool StreamLinkList::addNewRef(InstructionStream *stream, int type)
 {
     if (findRef(head, stream, type)) {
         reportError("addNewRef - already present\n");
         return false;
     }
-    linkNode *link = new linkNode(linkNode::INIT);
+    StreamLinkNode *link = new StreamLinkNode(StreamLinkNode::INIT);
     if (!link) {
         reportError("addNewRef - new failed\n");
         return false;
@@ -194,14 +194,14 @@ bool linkList::addNewRef(instStream *stream, int type)
     return true;
 }
 
-bool linkTypeOk(instStream *stream, int type)
+bool linkTypeOk(InstructionStream *stream, int type)
 {
     if (type == 5)
         type = 2;
     return type == branchLinkType(stream->branchType) || (type == 0 && (stream->branchType & 4));
 }
 
-bool Program::linkStreams(instStream *stream, instStream *destinationStream, int type)
+bool Program::linkStreams(InstructionStream *stream, InstructionStream *destinationStream, int type)
 {
     if (!linkTypeOk(stream, type)) {
         reportError("incompatible lnktypes for %s...src=%s\n", linkTypeName(type), stream->branchTypeName());
@@ -218,7 +218,7 @@ bool Program::linkStreams(instStream *stream, instStream *destinationStream, int
     return true;
 }
 
-bool Program::areLinkedBy(instStream *sourceStream, instStream *destinationStream, int type)
+bool Program::areLinkedBy(InstructionStream *sourceStream, InstructionStream *destinationStream, int type)
 {
     bool hasSD = findRef(sourceStream->outputLinks.head, destinationStream, type) != 0;
     bool hasDS = findRef(destinationStream->inputLinks.head, sourceStream, type) != 0;
@@ -233,13 +233,13 @@ bool Program::areLinkedBy(instStream *sourceStream, instStream *destinationStrea
     return false;
 }
 
-bool Program::unlinkStreams(instStream *stream, instStream *destinationStream, int type)
+bool Program::unlinkStreams(InstructionStream *stream, InstructionStream *destinationStream, int type)
 {
-    linkNode *link = findRef(stream->outputLinks.head, destinationStream, type);
+    StreamLinkNode *link = findRef(stream->outputLinks.head, destinationStream, type);
     if (!link) {
         reportError("unLinkStreams::failed to find ref for unlink in output of %s looking for %s type %d\n",
                       stream->streamName(), destinationStream->streamName(), type);
-        for (linkNode *currentLink = stream->outputLinks.head; currentLink; currentLink = currentLink->next)
+        for (StreamLinkNode *currentLink = stream->outputLinks.head; currentLink; currentLink = currentLink->next)
             ;
         return false;
     }
@@ -250,7 +250,7 @@ bool Program::unlinkStreams(instStream *stream, instStream *destinationStream, i
     link = findRef(destinationStream->inputLinks.head, stream, type);
     if (!link) {
         reportError("unLinkStreams::failed to find ref for unlink in input of %s\n", destinationStream->streamName());
-        for (linkNode *incomingLink = destinationStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next)
+        for (StreamLinkNode *incomingLink = destinationStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next)
             ;
         return false;
     }
@@ -261,13 +261,13 @@ bool Program::unlinkStreams(instStream *stream, instStream *destinationStream, i
     return true;
 }
 
-bool Program::unLinkStreams(instStream *stream, instStream *destinationStream, int type)
+bool Program::unLinkStreams(InstructionStream *stream, InstructionStream *destinationStream, int type)
 {
-    linkNode *link = findRef(stream->outputLinks.head, destinationStream, type);
+    StreamLinkNode *link = findRef(stream->outputLinks.head, destinationStream, type);
     if (!link) {
         reportError("unLinkStreams::failed to find ref for unlink in output of %s looking for %s type %d\n",
                       stream->streamName(), destinationStream->streamName(), type);
-        for (linkNode *currentLink = stream->outputLinks.head; currentLink; currentLink = currentLink->next)
+        for (StreamLinkNode *currentLink = stream->outputLinks.head; currentLink; currentLink = currentLink->next)
             ;
         return false;
     }
@@ -275,7 +275,7 @@ bool Program::unLinkStreams(instStream *stream, instStream *destinationStream, i
     link = findRef(destinationStream->inputLinks.head, stream, type);
     if (!link) {
         reportError("unLinkStreams::failed to find ref for unlink in input of %s\n", destinationStream->streamName());
-        for (linkNode *incomingLink = destinationStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next)
+        for (StreamLinkNode *incomingLink = destinationStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next)
             ;
         return false;
     }
@@ -283,16 +283,16 @@ bool Program::unLinkStreams(instStream *stream, instStream *destinationStream, i
     return true;
 }
 
-int linkList::countMarkedLinks()
+int StreamLinkList::countMarkedLinks()
 {
     int activeCount = 0;
-    for (linkNode *link = head; link; link = link->next)
+    for (StreamLinkNode *link = head; link; link = link->next)
         if (link->active)
             activeCount++;
     return activeCount;
 }
 
-int linkNode::linkedStreamId()
+int StreamLinkNode::linkedStreamId()
 {
     return otherStream ? otherStream->streamId : -1;
 }

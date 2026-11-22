@@ -5,7 +5,7 @@
 bool initBackTrace(Program *program)
 {
     int maximumStreamId = -1;
-    instStream *currentStream;
+    InstructionStream *currentStream;
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         if (currentStream->streamId < 0) {
             reportError("flowUID<0 for g_initBackTrace\n");
@@ -45,7 +45,7 @@ bool initBackTrace(Program *program)
 bool disposeBackTrace(Program *program)
 {
     program->traceStoreWordCount = 0;
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         if (stream->traceStore)
             delete[] stream->traceStore;
         stream->traceStore = 0;
@@ -53,7 +53,7 @@ bool disposeBackTrace(Program *program)
     return true;
 }
 
-bool initializeStreamBacktrace(instStream *initialStream, int streamCount)
+bool initializeStreamBacktrace(InstructionStream *initialStream, int streamCount)
 {
     initialStream->backtraceDependencyLength = initialStream->getOrGuessDepLength();
     if (initialStream->backtraceDependencyLength < 0) {
@@ -87,7 +87,7 @@ bool initializeStreamBacktrace(instStream *initialStream, int streamCount)
     return true;
 }
 
-bool g_disposeBackTrace(instStream *stream)
+bool g_disposeBackTrace(InstructionStream *stream)
 {
     if (stream->traceStore)
         delete[] stream->traceStore;

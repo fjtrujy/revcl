@@ -16,7 +16,7 @@ const char *immediateTypeName(unsigned char immediateFlags)
     return immediateValueTypeName(decodeImmediateCategory(immediateFlags));
 }
 
-bool parseImmediate(const char *immediateText, unsigned char type, mValue *expressionValue)
+bool parseImmediate(const char *immediateText, unsigned char type, TypedValue *expressionValue)
 {
     expressionValue->clear();
     parseFloatImmediateMode = (type == 0x40);
@@ -25,7 +25,7 @@ bool parseImmediate(const char *immediateText, unsigned char type, mValue *expre
         parseFloatImmediateMode = false;
         return expressionValue->setString(immediateText);
     }
-    xpTree tree;
+    ExpressionTree tree;
     if (!tree.evalExp(immediateText)) {
         reportError(parseImmediateError, immediateText);
     } else {
@@ -54,7 +54,7 @@ fail:
     return false;
 }
 
-int maddImmediate(Operand *const operand, mValue *expressionValue, int immediateOffset)
+int maddImmediate(Operand *const operand, TypedValue *expressionValue, int immediateOffset)
 {
     if (!operand->immediateValue.isValid()) {
         reportError("madd immediate- ximm invalid\n");

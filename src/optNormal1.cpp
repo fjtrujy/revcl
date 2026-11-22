@@ -12,7 +12,7 @@ int normal2RegCost(Instr *in);
 int vuta1RegCost(Instr *in);
 
 
-bool optNormal1(workTable *scheduleTable, wrangleCand *candidate)
+bool optNormal1(ScheduleTable *scheduleTable, wrangleCand *candidate)
 {
     Instr *instruction = scheduleTable->moveListHead;
     Instr *best = 0;

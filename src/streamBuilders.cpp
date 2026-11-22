@@ -8,10 +8,10 @@
 extern int errorOccurred;
 extern bool quietDiagnostics;
 void resetRange();
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 char *dupString(const char *s);
 
-bool buildPassThru(Program *program, instStream *stream, DecodedLine *blocks, int count)
+bool buildPassThru(Program *program, InstructionStream *stream, DecodedLine *blocks, int count)
 {
     reportInfo("BLD_PASS\n");
     if (count != 1) {
@@ -20,7 +20,7 @@ bool buildPassThru(Program *program, instStream *stream, DecodedLine *blocks, in
     }
     stream->passThroughText = blocks->passThroughText;
     blocks->passThroughText = 0;
-    workTable *uta = &stream->sourceTable;
+    ScheduleTable *uta = &stream->sourceTable;
     if (!uta->init(1, 0)) {
         reportError("failed to init uta\n");
         return false;

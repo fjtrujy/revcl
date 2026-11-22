@@ -4,16 +4,16 @@
 
 bool setRange(int start, int end, int lsz);
 bool moveLocks(Instr *i, InstructionPosition *pos);
-int checkInstructionPlacementConstraints(workTable *wt, Instr *i, InstructionPosition *pos);
+int checkInstructionPlacementConstraints(ScheduleTable *wt, Instr *i, InstructionPosition *pos);
 
-static inline bool isRawMode(workTable *scheduleTable)
+static inline bool isRawMode(ScheduleTable *scheduleTable)
 {
     if (scheduleTable->codeMode() == 3)
         return true;
     return false;
 }
 
-static inline bool noReduce(workTable *scheduleTable)
+static inline bool noReduce(ScheduleTable *scheduleTable)
 {
     return isRawMode(scheduleTable) && (scheduleTable->rawSchedulingMode == 2 || scheduleTable->rawSchedulingMode == 4);
 }
@@ -26,7 +26,7 @@ extern const char fiddleGetBranchIeError[];
 extern const char fiddleGetLastIeError[];
 extern const char fiddleSmallerError[];
 
-bool adjustTrailingBranchLayout(workTable *scheduleTable)
+bool adjustTrailingBranchLayout(ScheduleTable *scheduleTable)
 {
     setRange(scheduleTable->rangeStart, scheduleTable->rangeEnd, scheduleTable->loopSize);
     if (noReduce(scheduleTable)) {
@@ -50,19 +50,19 @@ bool adjustTrailingBranchLayout(workTable *scheduleTable)
         short inputConstraint = branchInstruction->externalInputConstraint < branchInstruction->externalInputPairedConstraint ? branchInstruction->externalInputPairedConstraint : branchInstruction->externalInputConstraint;
         if (inputConstraint > extlen - 3)
             goto done;
-        wtRow *last = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 1);
+        ScheduleRow *last = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 1);
         if (!last) {
             reportError(fiddleGetLastIeError);
             return false;
         }
         if (last->countEntries())
             goto done;
-        wtRow *brow = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 2);
+        ScheduleRow *brow = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 2);
         if (!brow) {
             reportError(fiddleGetBranchIeError);
             return false;
         }
-        wtRow *prow = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 3);
+        ScheduleRow *prow = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 3);
         if (!prow) {
             reportError(fiddleGetPrevIeError);
             return false;

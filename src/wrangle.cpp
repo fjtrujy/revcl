@@ -5,7 +5,7 @@
 #include "Block.h"
 #include "wrangle.h"
 
-typedef bool (*wrangleFunc)(workTable *, int *);
+typedef bool (*wrangleFunc)(ScheduleTable *, int *);
 
 void adjustMoveCount(Block *blk, Instr *mv, int n);
 extern int optimizationTimeoutSeconds;
@@ -16,30 +16,30 @@ volatile char mode1WatchdogExpired;
 int mode0WatchdogSeconds;
 volatile char mode0WatchdogExpired;
 
-bool wrangleMode1Worker(workTable *wt, wrangleFunc f);
-bool dynCalcStats(workTable *wt);
+bool wrangleMode1Worker(ScheduleTable *wt, wrangleFunc f);
+bool dynCalcStats(ScheduleTable *wt);
 bool calculateEarliestDependencyRow(Instr *i, int *row);
 bool queueMoveForResolution(Block *blk, Instr *mv);
-bool findInsertPosition(workTable *wt, Instr *in, int *row, int *pipe);
-bool wrangleMode0Worker(workTable *wt, wrangleFunc f);
-bool findInsertPositionMode0(workTable *wt, Instr *in, int *row, int *pipe);
-bool buildCandidateList2(workTable *wt);
-bool refineMode0InsertionCandidate(workTable *wt, wrangleCand *c);
-int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos);
-bool buildCandidateList(workTable *wt);
-bool refineMode1InsertionCandidate(workTable *wt, wrangleCand *c);
-bool insertInstructionWithLocks(workTable *wt, Instr *in, InstructionPosition *pos);
-bool undoInstructionWithLocks(workTable *wt, Instr *in);
-int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth);
-int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos);
-int pullLatencyWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos);
+bool findInsertPosition(ScheduleTable *wt, Instr *in, int *row, int *pipe);
+bool wrangleMode0Worker(ScheduleTable *wt, wrangleFunc f);
+bool findInsertPositionMode0(ScheduleTable *wt, Instr *in, int *row, int *pipe);
+bool buildCandidateList2(ScheduleTable *wt);
+bool refineMode0InsertionCandidate(ScheduleTable *wt, wrangleCand *c);
+int checkInsert(ScheduleTable *wt, Instr *in, InstructionPosition *pos, int *minPos);
+bool buildCandidateList(ScheduleTable *wt);
+bool refineMode1InsertionCandidate(ScheduleTable *wt, wrangleCand *c);
+bool insertInstructionWithLocks(ScheduleTable *wt, Instr *in, InstructionPosition *pos);
+bool undoInstructionWithLocks(ScheduleTable *wt, Instr *in);
+int drag(ScheduleTable *wt, Instr *in, InstructionPosition *pos, int back, int depth);
+int pullSpecialRegisterWritersEarlier(ScheduleTable *wt, Instr *in, InstructionPosition *pos);
+int pullLatencyWritersEarlier(ScheduleTable *wt, Instr *in, InstructionPosition *pos);
 int getMove(Block *blk, Instr *in, int now);
 bool undoMovesTo(Block *blk, Instr *stop);
-bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
+bool resolveMovePipe(ScheduleTable *wt, Instr *mv, int pipe);
 extern int errorOccurred;
 extern bool quietDiagnostics;
 
-bool scheduleMidTableMode1(workTable *table, wrangleFunc candidateSelector)
+bool scheduleMidTableMode1(ScheduleTable *table, wrangleFunc candidateSelector)
 {
     allowInputLockLoopWrapping = 0;
     if (table->codeModeValue != 2) {
@@ -103,7 +103,7 @@ bool scheduleMidTableMode1(workTable *table, wrangleFunc candidateSelector)
     return schedulingSucceeded;
 }
 
-bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
+bool wrangleMode1Worker(ScheduleTable *table, wrangleFunc candidateSelector)
 {
     InstructionPosition pos;
     for (;;) {
@@ -115,7 +115,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
         Instr *pending;
         int ret;
         Instr *moveInstruction;
-        int tmp;
+        int schedulingScratchValue;
         bool inserted = false;
         earliestInsertionInstruction = 0;
         pending = 0;
@@ -123,7 +123,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
             reportError("Wrangle: failed to build candidate list!\n");
             abortAfterError();
         }
-        wtInstrList *done = &table->completedInstructions;
+        InstructionList *done = &table->completedInstructions;
         if (done->last())
             table->lastScheduledPosition.setFromLinearRow(done->last()->position.getRow());
         else
@@ -208,20 +208,20 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
             mor.candidatePipe = 0;
             if (!candidateSelector(table, (int *)&selectedCandidate))
                 goto faulted;
-            tmp = table->loopSize;
-            bool isLoop = tmp != 0;
-            int lsz = tmp;
+            schedulingScratchValue = table->loopSize;
+            bool isLoop = schedulingScratchValue != 0;
+            int lsz = schedulingScratchValue;
             if (isLoop && (moveInstruction = selectedCandidate.candidateInstruction)->abstractMoveOpcode) {
                 int pipe = selectedCandidate.candidatePipe;
                 if (moveInstruction->permittedPipelineMask == 3) {
-                    if (table->oddPipeMoveCount == tmp)
+                    if (table->oddPipeMoveCount == schedulingScratchValue)
                         pipe = 1;
-                    else if (table->evenPipeMoveCount == tmp)
+                    else if (table->evenPipeMoveCount == schedulingScratchValue)
                         pipe = 0;
                     else if (table->fallbackSchedulingActive)
                         pipe = 0;
                     else
-                        pipe = (tmp = table->oddPipeMoveCount > table->evenPipeMoveCount);
+                        pipe = (schedulingScratchValue = table->oddPipeMoveCount > table->evenPipeMoveCount);
                 }
                 if (pipe == 1 && table->evenPipeMoveCount == lsz && !table->fallbackSchedulingActive) {
                     table->fallbackSchedulingActive = 1;
@@ -295,9 +295,9 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
                     ret = checkInsert(table, selectedCandidate.candidateInstruction, &pos, &minPos);
                 if ((ret & 0x100) && !pending) {
                     Instr *cand = selectedCandidate.candidateInstruction;
-                    int v0 = mode1SchedulingPassCount;
+                    int schedulingPassSnapshot = mode1SchedulingPassCount;
                     *candidateInstructions = cand;
-                    *passCounter = v0;
+                    *passCounter = schedulingPassSnapshot;
                     pending = cand;
                     mor = selectedCandidate;
                     goto check_pending;
@@ -309,7 +309,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
                     goto faulted;
                 *(Instr **)&done->tail = d0;
             }
-            tmp = 0;
+            schedulingScratchValue = 0;
             z2 = z1 - 1;
             if (z2) *sourceInstructions = 0;
             if (selectedCandidate.candidateInstruction->abstractMoveOpcode && !table->loopSize) {
@@ -382,7 +382,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
                 earliestInsertionInstruction->dumpOperandDiagnostics(false);
             else
                 earliestInsertionInstruction = done->last();
-            for (wtInstrList *tail = done;
+            for (InstructionList *tail = done;
                  (Instr *)*(VclPtrWord *)&tail->tail != earliestInsertionInstruction;
                  tail = &table->completedInstructions) {
                 Instr *instruction = tail->last();
@@ -436,7 +436,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
 }
 
 
-bool buildCandidateList(workTable *table)
+bool buildCandidateList(ScheduleTable *table)
 {
     Instr *instruction;
     instruction = table->pendingInstructions.head;
@@ -489,7 +489,7 @@ bool buildCandidateList(workTable *table)
         }
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = operand->assignedRegister;
+            RegisterEntry *registerEntry = operand->assignedRegister;
             if (!registerEntry)
                 continue;
             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
@@ -553,7 +553,7 @@ bool buildCandidateList(workTable *table)
     return true;
 }
 
-bool refineMode1InsertionCandidate(workTable *table, wrangleCand *candidate)
+bool refineMode1InsertionCandidate(ScheduleTable *table, wrangleCand *candidate)
 {
     int pipe;
     int row = candidate->candidateRow;
@@ -575,7 +575,7 @@ bool refineMode1InsertionCandidate(workTable *table, wrangleCand *candidate)
 
 
 
-bool findInsertPosition(workTable *table, Instr *instruction, int *row, int *pipe)
+bool findInsertPosition(ScheduleTable *table, Instr *instruction, int *row, int *pipe)
 {
     bool both = false;
     if (instruction->permittedPipelineMask == 3)

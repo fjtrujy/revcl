@@ -7,17 +7,17 @@
 #include "os.h"
 
 bool unlinkFromLinearInstructions(Block *blk, Instr *n);
-bool streamExportsSymbol(Program *p, instStream *s);
-bool appendStream(Program *p, instStream *a, instStream *b);
+bool streamExportsSymbol(Program *p, InstructionStream *s);
+bool appendStream(Program *p, InstructionStream *a, InstructionStream *b);
 
-static inline void dumpRawStream(instStream *stream)
+static inline void dumpRawStream(InstructionStream *stream)
 {
     stream->dump(0);
 }
 
 bool concatenateCompatibleStreams(Program *program)
 {
-    instStream *stream = program->streamHead;
+    InstructionStream *stream = program->streamHead;
     while (stream) {
         if (stream->getCodeMode() != 4 && !stream->disposeInputTable()) {
             reportError("failed to dispose input table\n");
@@ -28,9 +28,9 @@ bool concatenateCompatibleStreams(Program *program)
             dumpRawStream(stream);
             return 0;
         }
-        instStream *followingStream = stream->nextStream;
+        InstructionStream *followingStream = stream->nextStream;
         if (followingStream && !followingStream->containsBarrier && !stream->mergedBarrierFlag) {
-        linkList *out = &stream->outputLinks;
+        StreamLinkList *out = &stream->outputLinks;
         if (out->count == 1 && followingStream->inputLinks.count == 1
             && stream->usesFreeRawLayout() && followingStream->usesFreeRawLayout()
             && stream->endType == 1 && followingStream->startType == 1
@@ -50,9 +50,9 @@ bool concatenateCompatibleStreams(Program *program)
                 reportError("there's still out ist's after unlink\n");
                 return 0;
             }
-            linkNode *outgoingLink;
+            StreamLinkNode *outgoingLink;
             while ((outgoingLink = followingStream->outputLinks.head) != 0) {
-                instStream *destinationStream = outgoingLink->otherStream;
+                InstructionStream *destinationStream = outgoingLink->otherStream;
                 int type = outgoingLink->linkType;
                 if (!program->unlinkStreams(followingStream, destinationStream, type)) {
                     reportError("failed to unlink streams\n");
@@ -77,7 +77,7 @@ bool concatenateCompatibleStreams(Program *program)
 }
 
 // workTable is passed where Block / cls_unk30 are expected (same class, not yet unified)
-bool catOnTo(workTable *t1, workTable *t2)
+bool catOnTo(ScheduleTable *t1, ScheduleTable *t2)
 {
     if (!t1 || !t2) {
         reportError("catOnTo - passed a null pointer\n");
@@ -96,7 +96,7 @@ bool catOnTo(workTable *t1, workTable *t2)
     int dst = t1->rangeEnd;
     int rowIndex;
     for (rowIndex = t2->getRangeStart(); rowIndex < t2->getRangeEnd(); dst++, rowIndex++) {
-        wtRow *src = &t2->rows[rowIndex];
+        ScheduleRow *src = &t2->rows[rowIndex];
         memcpy(&t1->rows[dst], src, 14);
         for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
             Instr *sourceInstruction = src->entries[entryIndex].instruction;
@@ -106,13 +106,13 @@ bool catOnTo(workTable *t1, workTable *t2)
                     return 0;
                 }
                 sourceInstruction->ownerTable = 0;
-                sourceInstruction->setOwner((cls_unk30 *)t1);
+                sourceInstruction->setOwner((InstructionOwnerTableView *)t1);
             }
             src->entries[entryIndex].instruction = 0;
         }
     }
     for (rowIndex = t1->rangeStart; rowIndex < t1->rangeEnd; rowIndex++) {
-        wtRow *workRow = &t1->rows[rowIndex];
+        ScheduleRow *workRow = &t1->rows[rowIndex];
         for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
             Instr *destinationInstruction = workRow->entries[pipeIndex].instruction;
             if (destinationInstruction && !unlinkFromLinearInstructions((Block *)t1, destinationInstruction)) {
@@ -135,7 +135,7 @@ bool catOnTo(workTable *t1, workTable *t2)
     return 1;
 }
 
-bool appendStream(Program *program, instStream *stream, instStream *followingStream)
+bool appendStream(Program *program, InstructionStream *stream, InstructionStream *followingStream)
 {
     if (!stream || !followingStream) {
         reportError("cat streams - passed a null pointer\n");
@@ -149,8 +149,8 @@ bool appendStream(Program *program, instStream *stream, instStream *followingStr
         reportError("dbgEnd set for ist_1 ->>>>>>>>>>>>>>please code this!\n");
         return 0;
     }
-    workTable *t1 = stream->getTable();
-    workTable *t2 = followingStream->getWorkTable();
+    ScheduleTable *t1 = stream->getTable();
+    ScheduleTable *t2 = followingStream->getWorkTable();
     if (!catOnTo(t1, t2)) {
         reportError("failed to cat table2 onto table1\n");
         return 0;

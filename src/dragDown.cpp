@@ -4,21 +4,21 @@
 #include "Block.h"
 
 bool setRange(int start, int end, int lsz);
-bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl);
+bool doLocalMove(ScheduleTable *wt, Instr *in, int s_test, int e_test, int dl);
 int unresolveMove(Block *blk, Instr *mv);
 
-static inline void refreshDragDownRange(workTable *scheduleTable, int lsz)
+static inline void refreshDragDownRange(ScheduleTable *scheduleTable, int lsz)
 {
     setRange(scheduleTable->rangeStart, scheduleTable->rangeEnd, lsz);
 }
 
-static inline void limitDragDownStart(workTable *scheduleTable, int &start)
+static inline void limitDragDownStart(ScheduleTable *scheduleTable, int &start)
 {
     if (scheduleTable->rangeEnd - start < scheduleTable->externalMinimumLength)
         start = scheduleTable->rangeEnd - scheduleTable->externalMinimumLength;
 }
 
-int dragDown(workTable *scheduleTable)
+int dragDown(ScheduleTable *scheduleTable)
 {
     if (scheduleTable->rangeEnd == scheduleTable->rangeStart)
         return 0;
@@ -36,7 +36,7 @@ int dragDown(workTable *scheduleTable)
         moved = 0;
         msl = scheduleTable->rangeEnd;
         for (int rowIndex = scheduleTable->rangeEnd - 1; rowIndex >= scheduleTable->rangeStart; rowIndex--) {
-            wtRow *row = scheduleTable->getRowByIndex(rowIndex);
+            ScheduleRow *row = scheduleTable->getRowByIndex(rowIndex);
             for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
                 Instr *instruction = row->getEntry(pipeIndex);
                 if (instruction && !instruction->branchFlags) {
@@ -50,7 +50,7 @@ int dragDown(workTable *scheduleTable)
                     int operandIndex;
                     Operand *operand;
                     for (operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-                        RegPoolEntry *registerEntry = registerOperand(operand, 2);
+                        RegisterEntry *registerEntry = registerOperand(operand, 2);
                         if (registerEntry) {
                             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                                 OpSlot *operandSlot = &operand->parts[partIndex];

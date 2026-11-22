@@ -5,19 +5,21 @@ Tracked naming-review snapshot. The **baseline** is the pre-refactor `main` sour
 | Area | Baseline | Current | Change |
 | --- | ---: | ---: | ---: |
 | Files with address-based filenames | 16 | 0 | -16 |
-| Classes with numeric names and no source alias | 4 | 1 | -3 |
-| Classes with provisional names (manual review) | 4 | 4 | +0 |
-| Structs with provisional names (manual review) | 5 | 5 | +0 |
+| Classes with numeric names and no source alias | 4 | 0 | -4 |
+| Classes with provisional names (manual review) | 4 | 0 | -4 |
+| Structs with provisional names (manual review) | 5 | 0 | -5 |
 | Functions with address-based names | 436 | 0 | -436 |
-| Fields with offset names (owner-qualified) | 614 | 60 | -554 |
-| Parameters with short/generic names (AST review) | 879 | 30 | -849 |
-| Local variables with short/generic names (AST review) | 2291 | 26 | -2265 |
+| Fields with offset names (owner-qualified) | 614 | 0 | -614 |
+| Parameters with short/generic names (AST review) | 879 | 0 | -879 |
+| Local variables with short/generic names (AST review) | 2291 | 0 | -2291 |
 | Address-suffixed globals/other identifiers | 85 | 0 | -85 |
-| Explicit numeric placeholder identifiers | 4 | 4 | +0 |
+| Explicit numeric placeholder identifiers | 4 | 0 | -4 |
 
 **Direct function naming progress:** 436 of 436 original address-based function names have been eliminated from source; 0 remain. These are genuine C++ function renames, not preprocessor aliases.
 
-**Numeric class alias coverage:** 3 of 4 have readable typedefs; 1 remain without an alias.
+**Numeric class naming:** no numeric class spellings remain in source; their replacement types are named directly.
+
+**Field evidence retained:** 59 reviewed field resolutions: 48 unreferenced layout-only fields, 10 reset/copy-only fields and 1 observed union word. These records are in [the field resolution ledger](naming-field-resolutions.tsv). A zero offset-name count means the original naming queue is closed, **not** that the proprietary purpose of all reserved storage has been proven.
 
 ## How to update this in every naming commit
 
@@ -40,6 +42,6 @@ Commit this report and any changed inventory TSVs **with the source renames**. G
 - **Parameters/local variables:** short or generic declarations in [the AST review queue](naming-declarations.tsv).
 - **Other globals/numeric placeholders:** distinct token spellings from [the lexical inventory](naming-identifiers.tsv); these can overlap the local/parameter queues, so do not sum the table into one grand total.
 
-**Important limitations:** The lexical scanner does not prove that a name is meaningless. `i` in a short loop may be fine; a plausible-looking name can still be wrong. The two declaration queues were originally extracted using Clang AST and then manually pruned: **their counts change only when those TSVs are updated**. Review affected declarations after each rename, and periodically regenerate the AST queues. Zero manually flagged structs would not prove all structures are named. The VUC reconstruction is tracked independently on its own branch; its early candidate inventory is [here](naming-vuc-identifiers.tsv).
+**Important limitations:** The lexical scanner does not prove that a name is meaningless. `i` in a short loop may be fine; a plausible-looking name can still be wrong. The two declaration queues were originally extracted using Clang AST and then manually pruned: **their counts change only when those TSVs are updated**. Review affected declarations after each rename, and periodically regenerate the AST queues. Zero manually flagged structs would not prove all structures are named. Completed original declaration reviews are retained in [the declaration resolution ledger](naming-declaration-resolutions.tsv). The VUC reconstruction is tracked independently on its own branch; its early candidate inventory is [here](naming-vuc-identifiers.tsv).
 
 For evidence, confidence levels, ABI constraints and next targets, see [the naming audit](NAMING_AUDIT.md).

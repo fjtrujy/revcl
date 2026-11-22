@@ -5,9 +5,9 @@
 #include "ol_s.h"
 #include "os.h"
 
-bool fixAddressAliases(instStream *s);
+bool fixAddressAliases(InstructionStream *s);
 bool resolveInstructionImmediateFixup(Instr *in);
-int maddImmediate(Operand *op, mValue *v, int n);
+int maddImmediate(Operand *op, TypedValue *v, int n);
 
 static inline void resetInstructionAliasMetadata(Instr *instruction)
 {
@@ -18,9 +18,9 @@ static inline void resetInstructionAliasMetadata(Instr *instruction)
     instruction->expectedAliasLoopId = -1;
 }
 
-static inline bool resetStreamAliasMetadata(instStream *stream)
+static inline bool resetStreamAliasMetadata(InstructionStream *stream)
 {
-    workTable *table = stream->getTable();
+    ScheduleTable *table = stream->getTable();
     if (!table) {
         reportError("Init_immFixup - failed to get work table\n");
         return false;
@@ -39,9 +39,9 @@ static inline void resolveInstructionFixupOrAbort(Instr *instruction)
     }
 }
 
-static inline bool resolveStreamImmediateFixups(instStream *stream)
+static inline bool resolveStreamImmediateFixups(InstructionStream *stream)
 {
-    workTable *table = stream->getTable();
+    ScheduleTable *table = stream->getTable();
     if (!table)
         return true;
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
@@ -49,7 +49,7 @@ static inline bool resolveStreamImmediateFixups(instStream *stream)
     return true;
 }
 
-static inline bool dumpFailed(instStream *stream)
+static inline bool dumpFailed(InstructionStream *stream)
 {
     stream->dump(false);
     return false;
@@ -57,7 +57,7 @@ static inline bool dumpFailed(instStream *stream)
 
 bool resolveProgramImmediateFixups(Program *program, bool init)
 {
-    instStream *stream;
+    InstructionStream *stream;
     if (init) {
         for (stream = program->streamHead; stream; stream = stream->nextStream)
             if (!resetStreamAliasMetadata(stream))
@@ -96,54 +96,54 @@ static inline bool hasAaData(Instr *instruction)
     return false;
 }
 
-static inline bool immValid(mValue *value)
+static inline bool immValid(TypedValue *value)
 {
     return value->isValid();
 }
 
-static inline regUse *firstRegUse(workTable *table) { return table->registerUses.head; }
-static inline RegPoolEntry *regUseReg(regUse *registerUse) { return registerUse->registerEntry; }
-static inline Instr *regUseInstr(regUse *registerUse) { return registerUse->definingInstruction; }
-static inline olList *regUseVisList0(regUse *registerUse) { return &registerUse->slots[0].inputLocations; }
-static inline unsigned char regUseExtIn(regUse *registerUse) { return registerUse->externalInputMask; }
-static inline unsigned char regUseExtOut(regUse *registerUse) { return registerUse->externalOutputMask; }
+static inline RegisterUse *firstRegUse(ScheduleTable *table) { return table->registerUses.head; }
+static inline RegisterEntry *regUseReg(RegisterUse *registerUse) { return registerUse->registerEntry; }
+static inline Instr *regUseInstr(RegisterUse *registerUse) { return registerUse->definingInstruction; }
+static inline olList *regUseVisList0(RegisterUse *registerUse) { return &registerUse->slots[0].inputLocations; }
+static inline unsigned char regUseExtIn(RegisterUse *registerUse) { return registerUse->externalInputMask; }
+static inline unsigned char regUseExtOut(RegisterUse *registerUse) { return registerUse->externalOutputMask; }
 static inline Operand *instrRawOp(Instr *instruction, unsigned char idx) { return &instruction->operands[idx]; }
 static inline Operand *instrRawOpS(Instr *instruction, signed char idx) { return &instruction->operands[idx]; }
-static inline RegPoolEntry *opRawReg(Operand *operand) { return operand->assignedRegister; }
+static inline RegisterEntry *opRawReg(Operand *operand) { return operand->assignedRegister; }
 static inline unsigned char opSlotMask(Operand *operand) { return operand->componentMask; }
-static inline mValue *opImmVal(Operand *operand) { return &operand->immediateValue; }
+static inline TypedValue *opImmVal(Operand *operand) { return &operand->immediateValue; }
 static inline olList *opSlotUses0(Operand *operand) { return &operand->parts[0].operandLocations; }
-static inline Instr *olInstr(ol_s *operandLocation) { return operandLocation->instruction; }
-static inline char olOpIndex(ol_s *operandLocation) { return operandLocation->operandIndex; }
-static inline mValue *instrAaImm(Instr *instruction) { return &instruction->addressImmediateValue; }
-static inline unsigned char aaOutOp(aaDesc *aliasDescriptor) { return aliasDescriptor->outputOperandIndex; }
-static inline unsigned char aaInOp(aaDesc *aliasDescriptor) { return aliasDescriptor->inputOperandIndex; }
-static inline signed char aaImmOp(aaDesc *aliasDescriptor) { return aliasDescriptor->immediateOperandIndex; }
-static inline int aaImmLit(aaDesc *aliasDescriptor) { return aliasDescriptor->literalImmediate; }
-static inline unsigned char aaUseOp(aaUse *aliasUse) { return aliasUse->operandIndex; }
+static inline Instr *olInstr(OperandLocation *operandLocation) { return operandLocation->instruction; }
+static inline char olOpIndex(OperandLocation *operandLocation) { return operandLocation->operandIndex; }
+static inline TypedValue *instrAaImm(Instr *instruction) { return &instruction->addressImmediateValue; }
+static inline unsigned char aaOutOp(AddressAliasDescriptor *aliasDescriptor) { return aliasDescriptor->outputOperandIndex; }
+static inline unsigned char aaInOp(AddressAliasDescriptor *aliasDescriptor) { return aliasDescriptor->inputOperandIndex; }
+static inline signed char aaImmOp(AddressAliasDescriptor *aliasDescriptor) { return aliasDescriptor->immediateOperandIndex; }
+static inline int aaImmLit(AddressAliasDescriptor *aliasDescriptor) { return aliasDescriptor->literalImmediate; }
+static inline unsigned char aaUseOp(AddressAliasUse *aliasUse) { return aliasUse->operandIndex; }
 
-bool fixAddressAliases(instStream *stream)
+bool fixAddressAliases(InstructionStream *stream)
 {
-    workTable *table = stream->getTable();
+    ScheduleTable *table = stream->getTable();
     if (!table) {
         reportError("Init_immFixup - failed to get work table\n");
         return false;
     }
-    for (regUse *registerUse = firstRegUse(table); registerUse; registerUse = registerUse->next) {
-        RegPoolEntry *registerEntry = regUseReg(registerUse);
+    for (RegisterUse *registerUse = firstRegUse(table); registerUse; registerUse = registerUse->next) {
+        RegisterEntry *registerEntry = regUseReg(registerUse);
         if (!registerEntry) {
             reportError("aaFixup - regref had no register\n");
             exitAfterCleanup(-1);
         }
         Instr *instruction = regUseInstr(registerUse);
         olList *vis = regUseVisList0(registerUse);
-        aaDesc *aliasDescriptor = findAddressAliasDescriptor(instruction);
+        AddressAliasDescriptor *aliasDescriptor = findAddressAliasDescriptor(instruction);
         if (!aliasDescriptor || !bit0(regUseExtIn(registerUse)) || !bit0(regUseExtOut(registerUse)) || registerUse->recordedOutputWriteCount != 1)
             continue;
-        RegPoolEntry *outReg = instruction->operands[aliasDescriptor->outputOperandIndex].assignedRegister;
+        RegisterEntry *outReg = instruction->operands[aliasDescriptor->outputOperandIndex].assignedRegister;
         if (outReg != registerEntry || opRawReg(instrRawOp(instruction, aaInOp(aliasDescriptor))) != outReg)
             continue;
-        ol_s *operandLocation;
+        OperandLocation *operandLocation;
         for (operandLocation = vis->firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation()) {
             Instr *aliasInstruction = olInstr(operandLocation);
             Operand *vop = operandAtLocation(operandLocation);
@@ -153,7 +153,7 @@ bool fixAddressAliases(instStream *stream)
                 goto bad2;
         cont:
             {
-            aaUse *aliasUse = findAddressAliasUse(aliasInstruction);
+            AddressAliasUse *aliasUse = findAddressAliasUse(aliasInstruction);
             if (aliasUse && olOpIndex(operandLocation) == aaUseOp(aliasUse) && opSlotMask(vop) == 1) {
                 if (hasAaData(aliasInstruction)) {
                     reportError("instruction already has aa data loaded .. mode before\n");
@@ -164,7 +164,7 @@ bool fixAddressAliases(instStream *stream)
                 aliasInstruction->addressAliasDirection = 1;
                 aliasInstruction->addressAliasMode = aliasDescriptor->aliasMode;
                 aliasInstruction->addressAliasOperandIndex = aliasUse->operandIndex;
-                mValue *value = instrAaImm(aliasInstruction);
+                TypedValue *value = instrAaImm(aliasInstruction);
                 if (aliasDescriptor->immediateOperandIndex >= 0) {
                     if (!value->set(opImmVal(instrRawOpS(instruction, aaImmOp(aliasDescriptor))))) {
                         reportError("failed to set xaaImm for before\n");
@@ -196,7 +196,7 @@ bool fixAddressAliases(instStream *stream)
                 reportError("failed to get instruction for visible input.. mode after\n");
                 exitAfterCleanup(-1);
             }
-            aaUse *aliasUse = findAddressAliasUse(aliasInstruction);
+            AddressAliasUse *aliasUse = findAddressAliasUse(aliasInstruction);
             if (aliasUse && olOpIndex(operandLocation) == aaUseOp(aliasUse) && opSlotMask(vop) == 1) {
                 if (hasAaData(aliasInstruction)) {
                     reportError("instruction already has aa data loaded.. mode after\n");
@@ -204,7 +204,7 @@ bool fixAddressAliases(instStream *stream)
                     immValid(instrAaImm(aliasInstruction));
                     return false;
                 }
-                mValue *value = instrAaImm(aliasInstruction);
+                TypedValue *value = instrAaImm(aliasInstruction);
                 aliasInstruction->addressAliasDirection = 2;
                 aliasInstruction->addressAliasMode = aliasDescriptor->aliasMode;
                 aliasInstruction->addressAliasOperandIndex = aliasUse->operandIndex;
@@ -221,9 +221,9 @@ bool fixAddressAliases(instStream *stream)
     return true;
 }
 
-bool tidyStream(instStream *stream)
+bool tidyStream(InstructionStream *stream)
 {
-    workTable *table = stream->getTable();
+    ScheduleTable *table = stream->getTable();
     if (!table)
         return true;
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
@@ -231,7 +231,7 @@ bool tidyStream(instStream *stream)
     return true;
 }
 
-bool tidyTable(workTable *table)
+bool tidyTable(ScheduleTable *table)
 {
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
         resolveInstructionFixupOrAbort(instruction);
@@ -240,7 +240,7 @@ bool tidyTable(workTable *table)
 
 bool tidyProgram(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream)
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream)
         if (!tidyStream(stream)) {
             reportError("failed to tidy a stream\n");
             exitAfterCleanup(-1);
@@ -264,14 +264,14 @@ bool resolveSourceEpilogueLoopId(olList *oll, int luid, int epType, int *lid)
         return false;
     }
     int nLocal = 0;
-    ol_s *operandLocation;
+    OperandLocation *operandLocation;
     for (operandLocation = oll->head; operandLocation; operandLocation = operandLocation->next) {
         Instr *instruction = operandLocation->instruction;
         if (!instruction) {
             reportError("failed to get in from ol\n");
             exitAfterCleanup(-1);
         }
-        instStream *stream = instruction->getOwningStream();
+        InstructionStream *stream = instruction->getOwningStream();
         if (!stream) {
             reportError("getSrcEpLid- failed to get owner\n");
             return false;
@@ -288,7 +288,7 @@ bool resolveSourceEpilogueLoopId(olList *oll, int luid, int epType, int *lid)
             reportError("failed to get in from ol\n");
             exitAfterCleanup(-1);
         }
-        instStream *stream = instruction->getOwningStream();
+        InstructionStream *stream = instruction->getOwningStream();
         if (!stream) {
             reportError("getSrcEpLid- failed to get owner\n");
             return false;
@@ -394,7 +394,7 @@ static inline bool isCinput(Operand *operand)
 
 bool resolveInstructionImmediateFixup(Instr *instruction)
 {
-    instStream *stream = instruction->getOwningStream();
+    InstructionStream *stream = instruction->getOwningStream();
     if (!stream) {
         reportError("failed to get owner istream from inst during immediate fixup\n");
         exitAfterCleanup(-1);
@@ -484,9 +484,9 @@ bool resolveInstructionImmediateFixup(Instr *instruction)
     return true;
 }
 
-bool initializeImmediateFixups(instStream *stream)
+bool initializeImmediateFixups(InstructionStream *stream)
 {
-    workTable *table = stream->getTable();
+    ScheduleTable *table = stream->getTable();
     if (!table) {
         reportError("Init_immFixup - failed to get work table\n");
         return false;

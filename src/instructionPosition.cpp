@@ -7,7 +7,7 @@ int activeLoopSize = -1;
 int activeSchedulingRangeStart = -2;
 int activeSchedulingRangeEnd = -3;
 
-void cls08058718::clearInstructionPosition()
+void InstructionPosition::clearInstructionPosition()
 {
     linearRow = -1;
     loopRow = -1;
@@ -15,7 +15,7 @@ void cls08058718::clearInstructionPosition()
     loopIteration = -1;
 }
 
-cls08058718::cls08058718()
+InstructionPosition::InstructionPosition()
 {
     linearRow = -1;
     loopRow = -1;
@@ -23,15 +23,15 @@ cls08058718::cls08058718()
     loopIteration = -1;
 }
 
-cls08058718::~cls08058718()
+InstructionPosition::~InstructionPosition()
 {
 }
 
-void cls08058718::noopInstructionPositionHook()
+void InstructionPosition::noopInstructionPositionHook()
 {
 }
 
-void cls08058718::setFromLinearRow(short row)
+void InstructionPosition::setFromLinearRow(short row)
 {
     int loopPeriod = activeLoopSize;
     if (loopPeriod == 0 || row < loopPeriod) {
@@ -45,7 +45,7 @@ void cls08058718::setFromLinearRow(short row)
     }
 }
 
-void cls08058718::setInstructionPipe(char pipeIndex)
+void InstructionPosition::setInstructionPipe(char pipeIndex)
 {
     pipelineIndex = pipeIndex;
 }
@@ -64,7 +64,7 @@ void resetRange()
 
 bool setRange(int start, int end, int lsz);
 
-int setRangeFrom(workTable *scheduleTable)
+int setRangeFrom(ScheduleTable *scheduleTable)
 {
     if (!scheduleTable) {
         reportError("setRangeFrom - null ptr\n");

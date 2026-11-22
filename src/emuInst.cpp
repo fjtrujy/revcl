@@ -8,17 +8,17 @@
 #include "RegPool.h"
 #include "ol_s_inline.h"
 
-int emulateInstructionRow(Program *p, wtRow *row, int line, bool uta, bool commit);
+int emulateInstructionRow(Program *p, ScheduleRow *row, int line, bool uta, bool commit);
 bool advanceProcessorCycle(Program *p, bool flag);
 
 
-int emulateInstructionRow(Program *program, wtRow *row, int line, bool uta, bool commit)
+int emulateInstructionRow(Program *program, ScheduleRow *row, int line, bool uta, bool commit)
 {
     int entryIndex;
     int stalls = 0;
     Instr *activeInstruction;
     Operand *activeOperand;
-    RegPoolEntry *registerEntry;
+    RegisterEntry *registerEntry;
     if (!row) {
         reportError("passed a null pointer to emuVSM\n");
         return -1;
@@ -59,7 +59,7 @@ int emulateInstructionRow(Program *program, wtRow *row, int line, bool uta, bool
             if (registerEntry) {
                 for (int part = 0; part != registerEntry->partCount; part++)
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *registerPart = &registerEntry->parts[part];
+                        RegisterPartState *registerPart = &registerEntry->parts[part];
                         if (registerPart->emulationTimingMetrics[4] < 0) {
                             if (uta)
                                 registerPart->emulationTimingMetrics[6] = -1;
@@ -75,10 +75,10 @@ int emulateInstructionRow(Program *program, wtRow *row, int line, bool uta, bool
             if (registerEntry && activeOperand->externalBlockModeFlag) {
                 for (int part = 0; part != registerEntry->partCount; part++)
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *inputRegisterPart = &registerEntry->parts[part];
+                        RegisterPartState *inputRegisterPart = &registerEntry->parts[part];
                         int lat;
                         if (inputRegisterPart->pendingSource && (lat = inputRegisterPart->pendingSource->cycleOffset) != 0) {
-                            ol_s temporaryLocation;
+                            OperandLocation temporaryLocation;
                             temporaryLocation.init(activeInstruction, operandIndex, part, false);
                             if (commit && !program->proc.stalls.addStall(inputRegisterPart->pendingSource, &temporaryLocation, 0, lat)) {
                                 reportError("failed to add an internal latency stall\n");
@@ -114,9 +114,9 @@ int emulateInstructionRow(Program *program, wtRow *row, int line, bool uta, bool
                 }
                 for (int part = 0; part != registerEntry->partCount; part++) {
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *inputRegisterPart = &registerEntry->parts[part];
+                        RegisterPartState *inputRegisterPart = &registerEntry->parts[part];
                         if (inputRegisterPart->issueLock) {
-                            ol_s inputPendingLocation;
+                            OperandLocation inputPendingLocation;
                             inputPendingLocation.init(activeInstruction, operandIndex, part, false);
                             if (commit) {
                                 int issueLock = inputRegisterPart->issueLock;
@@ -169,8 +169,8 @@ int emulateInstructionRow(Program *program, wtRow *row, int line, bool uta, bool
             if (registerEntry) {
                 for (int part = 0; part != registerEntry->partCount; part++) {
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *setterRegisterPart = &registerEntry->parts[part];
-                        ol_s *setter = &setterRegisterPart->currentLocation;
+                        RegisterPartState *setterRegisterPart = &registerEntry->parts[part];
+                        OperandLocation *setter = &setterRegisterPart->currentLocation;
                         Instr *sourceInstruction = setter->instruction;
                         if (!sourceInstruction) {
                             activeOperand->externalPartMask |= 1 << part;
@@ -206,7 +206,7 @@ int emulateInstructionRow(Program *program, wtRow *row, int line, bool uta, bool
             if (registerEntry) {
                 for (int part = 0; part != registerEntry->partCount; part++) {
                     if ((activeOperand->componentMask >> part) & 1) {
-                        rPart *outputRegisterPart = &registerEntry->parts[part];
+                        RegisterPartState *outputRegisterPart = &registerEntry->parts[part];
                         if (outputRegisterPart->issueLock) {
                             reportError("inconsistency detected.. issuelock still non-zero\n");
                             return -1;
@@ -216,13 +216,13 @@ int emulateInstructionRow(Program *program, wtRow *row, int line, bool uta, bool
                                 reportError("failed to flush pending outputs before a blocking output\n");
                                 return -1;
                             }
-                            ol_s *location = &outputRegisterPart->currentLocation;
+                            OperandLocation *location = &outputRegisterPart->currentLocation;
                             location->init(currentInstruction, operandIndex, part, false);
                             location->cycleOffset = clampByte(activeOperand->outputLatency);
                             outputRegisterPart->pendingSource = location;
                             outputRegisterPart->cycleAge = 0;
                         } else {
-                            ol_s *pendingLocation = outputRegisterPart->acquireFreePendingLocation();
+                            OperandLocation *pendingLocation = outputRegisterPart->acquireFreePendingLocation();
                             if (!pendingLocation) {
                                 reportError("EMU: failed to get OL\n");
                                 return -1;

@@ -3,18 +3,18 @@
 
 #include "RegPool.h"
 
-struct regUse;
+struct RegisterUse;
 
 class genRegPool : public RegPool {
 public:
     genRegPool();
     virtual ~genRegPool();
-    virtual bool assignExt(instStream *s);                        // slot 2
-    virtual bool discardDisjointExternalRegister(instStream *s, RegPoolEntry *reg); // slot 3
-    virtual bool assignRegistersForWorkTable(workTable *t);                     // slot 4
+    virtual bool assignExt(InstructionStream *s);                        // slot 2
+    virtual bool discardDisjointExternalRegister(InstructionStream *s, RegisterEntry *reg); // slot 3
+    virtual bool assignRegistersForWorkTable(ScheduleTable *t);                     // slot 4
 
     void clearRegisterAllocationMask();
-    bool buildCandidateRegisterTimeline(RegPoolEntry *registerEntry, unsigned char mask);
+    bool buildCandidateRegisterTimeline(RegisterEntry *registerEntry, unsigned char mask);
     bool initializeAllocationTimeline(int start, int end);
     void dumpCandidateRegisterTimeline();
     int countCandidateTimelineRows();
@@ -22,7 +22,7 @@ public:
     bool mergeCandidateIntoAllocationTimeline(int reg);
     void dumpRegisterAllocationTimeline();
     int chooseLowestCostRegister();
-    bool allocateRegisterUseInTimeline(regUse *ru);
+    bool allocateRegisterUseInTimeline(RegisterUse *ru);
 
     char registerPartAvailabilityMask[0x20];
 };

@@ -6,13 +6,13 @@
 #include "Block.h"
 #include "wrangle.h"
 
-typedef bool (*wrangleFunc)(workTable *, int *);
+typedef bool (*wrangleFunc)(ScheduleTable *, int *);
 
 void adjustMoveCount(Block *blk, Instr *mv, int n);
 extern int optimizationTimeoutSeconds;
 
 
-bool scheduleMidTableMode0(workTable *table, wrangleFunc candidateSelector)
+bool scheduleMidTableMode0(ScheduleTable *table, wrangleFunc candidateSelector)
 {
     allowInputLockLoopWrapping = 1;
     table->movePipeCapacityExceeded = 0;
@@ -71,12 +71,12 @@ bool scheduleMidTableMode0(workTable *table, wrangleFunc candidateSelector)
     return schedulingSucceeded;
 }
 
-bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
+bool wrangleMode0Worker(ScheduleTable *table, wrangleFunc candidateSelector)
 {
     InstructionPosition pos;
     for (;;) {
         Instr *pending;
-        VclPtrWord tmp;
+        VclPtrWord schedulingScratchWord;
         Instr *head;
         wrangleCand selectedCandidate;
         int minPos;
@@ -167,24 +167,24 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
                 goto test_after_insert;
             }
             {
-                tmp = table->loopSize;
-                bool isLoop = tmp != 0;
-                int lsz = tmp;
+                schedulingScratchWord = table->loopSize;
+                bool isLoop = schedulingScratchWord != 0;
+                int lsz = schedulingScratchWord;
                 if (isLoop && selectedCandidate.candidateInstruction->abstractMoveOpcode) {
                     int pipe = selectedCandidate.candidatePipe;
                     if (selectedCandidate.candidateInstruction->permittedPipelineMask == 3) {
-                        if (table->oddPipeMoveCount == tmp)
+                        if (table->oddPipeMoveCount == schedulingScratchWord)
                             pipe = 1;
-                        else if (table->evenPipeMoveCount == tmp)
+                        else if (table->evenPipeMoveCount == schedulingScratchWord)
                             pipe = 0;
                         else if (table->fallbackSchedulingActive)
                             pipe = 0;
                         else
-                            pipe = (tmp = table->oddPipeMoveCount > table->evenPipeMoveCount);
+                            pipe = (schedulingScratchWord = table->oddPipeMoveCount > table->evenPipeMoveCount);
                     }
                     if (pipe == 1 && table->evenPipeMoveCount == lsz && !table->fallbackSchedulingActive)
                         goto switch_pipe;
-                    if (!resolveMovePipe(table, selectedCandidate.candidateInstruction, (tmp = pipe))) {
+                    if (!resolveMovePipe(table, selectedCandidate.candidateInstruction, (schedulingScratchWord = pipe))) {
                         reportError("failed to set up a move to a pipe\n");
                         return false;
                     }
@@ -229,8 +229,8 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
                     if (z2)
                         *sourceInstructions = 0;
                     if ((ret & 0x100) && !pending) {
-                        tmp = (VclPtrWord)selectedCandidate.candidateInstruction;
-                        pending = (Instr *)tmp;
+                        schedulingScratchWord = (VclPtrWord)selectedCandidate.candidateInstruction;
+                        pending = (Instr *)schedulingScratchWord;
                         mor = selectedCandidate;
                         goto check_pending;
                     }
@@ -252,7 +252,7 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
             {
                 Instr *prev = 0, *currentInstruction;
                 for (currentInstruction = table->moveListHead; currentInstruction; prev = currentInstruction, currentInstruction = currentInstruction->nextMoveInstruction)
-                    if (currentInstruction == (Instr *)(tmp = (VclPtrWord)selectedCandidate.candidateInstruction))
+                    if (currentInstruction == (Instr *)(schedulingScratchWord = (VclPtrWord)selectedCandidate.candidateInstruction))
                         break;
                 if (currentInstruction != selectedCandidate.candidateInstruction) {
                     reportError("instruction wasn't on candidate list\n");
@@ -380,7 +380,7 @@ static inline void clearCand(Instr *instruction)
     instruction->dumpOperandDiagnostics(false);
 }
 
-bool buildCandidateList2(workTable *table)
+bool buildCandidateList2(ScheduleTable *table)
 {
     Instr *instruction;
     instruction = table->pendingInstructions.head;
@@ -431,7 +431,7 @@ bool buildCandidateList2(workTable *table)
         }
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = operand->assignedRegister;
+            RegisterEntry *registerEntry = operand->assignedRegister;
             if (!registerEntry)
                 continue;
             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
@@ -498,7 +498,7 @@ bool buildCandidateList2(workTable *table)
     return true;
 }
 
-bool refineMode0InsertionCandidate(workTable *table, wrangleCand *candidate)
+bool refineMode0InsertionCandidate(ScheduleTable *table, wrangleCand *candidate)
 {
     int pipe;
     int row = candidate->candidateRow;
@@ -518,7 +518,7 @@ bool refineMode0InsertionCandidate(workTable *table, wrangleCand *candidate)
     return false;
 }
 
-bool findInsertPositionMode0(workTable *table, Instr *instruction, int *row, int *pipe)
+bool findInsertPositionMode0(ScheduleTable *table, Instr *instruction, int *row, int *pipe)
 {
     bool both = false;
     if (instruction->permittedPipelineMask == 3)

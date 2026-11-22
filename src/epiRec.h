@@ -1,8 +1,8 @@
 #ifndef EPIREC_H
 #define EPIREC_H
 
-class instStream;
-class workTable;
+class InstructionStream;
+class ScheduleTable;
 class Instr;
 
 struct epiRec {
@@ -10,9 +10,9 @@ struct epiRec {
     int regionStartIndex;
     int loopKey;
     int sourceLoopId;
-    int unk_10;
-    instStream *stream;
-    workTable *table;
+    int reservedLoopRegionStateWord;
+    InstructionStream *stream;
+    ScheduleTable *table;
     Instr *conditionalBranch;
 
     epiRec()

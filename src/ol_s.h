@@ -5,8 +5,8 @@
 
 class Instr;
 
-struct ol_s {
-    ol_s *next;
+struct OperandLocation {
+    OperandLocation *next;
     Instr *instruction;
     int pathKey;
     int maximumPathKey;
@@ -26,16 +26,16 @@ struct ol_s {
         } flags;
     };
 
-    inline ol_s();
-    inline ~ol_s();
+    inline OperandLocation();
+    inline ~OperandLocation();
     inline void reset();
     inline bool isExt();
     inline bool isExtUsed();
     void dumpInstructionContext();
     void dumpOperandContext();
-    ol_s *nextInternalLocation();
-    ol_s *nextExternalLocation();
-    void copyLocationFrom(ol_s *src);
+    OperandLocation *nextInternalLocation();
+    OperandLocation *nextExternalLocation();
+    void copyLocationFrom(OperandLocation *src);
     void init(Instr *inst, int op, int slot, bool ext);
 };
 

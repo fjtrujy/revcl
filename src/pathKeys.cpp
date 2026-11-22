@@ -1,21 +1,21 @@
 #include "os.h"
 #include "backTrace_shared.h"
 
-bool resetStreamPathSearch(instStream *n);
+bool resetStreamPathSearch(InstructionStream *n);
 
-static inline regUseSlot *registerPart(regUse *registerUse, int part)
+static inline regUseSlot *registerPart(RegisterUse *registerUse, int part)
 {
     return &registerUse->slots[part];
 }
 
-bool initializeRegisterBacktraceLocation(instStream *stream, RegPoolEntry *registerEntry, int part)
+bool initializeRegisterBacktraceLocation(InstructionStream *stream, RegisterEntry *registerEntry, int part)
 {
-    workTable *scheduleTable = stream->getTable();
+    ScheduleTable *scheduleTable = stream->getTable();
     if (!scheduleTable) {
         reportError("failed to get work table\n");
         return 0;
     }
-    regUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
+    RegisterUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
     stream->pendingHazardBroadcast = 0;
     stream->hazardFlag = 0;
     stream->nextResolvedStream = 0;
@@ -28,14 +28,14 @@ bool initializeRegisterBacktraceLocation(instStream *stream, RegPoolEntry *regis
         } else {
             int count = registerUse->slots[part].outputLocations.count;
             stream->outputLocationCount = count;
-            ol_s *head = registerUse->slots[part].outputLocations.head;
+            OperandLocation *head = registerUse->slots[part].outputLocations.head;
             if (!head) {
                 reportError("visible outputs has no head for l_init.. but it should!\n");
                 return 0;
             }
             int earliestCycle = head->cycleOffset;
             stream->earliestOutputLocation = earliestCycle;
-            ol_s *last = registerPart(registerUse, part)->findPreviousOutputAtPosition(0, true);
+            OperandLocation *last = registerPart(registerUse, part)->findPreviousOutputAtPosition(0, true);
             if (!last) {
                 reportError("visible outputs had nothing visible at infinity\n");
                 return 0;
@@ -55,10 +55,10 @@ bool initializeRegisterBacktraceLocation(instStream *stream, RegPoolEntry *regis
     return resetStreamPathSearch(stream);
 }
 
-bool resetStreamPathSearch(instStream *stream)
+bool resetStreamPathSearch(InstructionStream *stream)
 {
     stream->visitState = 0;
-    for (linkNode *link = stream->inputLinks.head; link; link = link->next)
+    for (StreamLinkNode *link = stream->inputLinks.head; link; link = link->next)
         link->includedInPathTraversal = link->linkType != 3 && link->linkType != 4;
     stream->minimumPathLength = -1;
     stream->shortestPathPredecessor = 0;
@@ -70,7 +70,7 @@ bool resetStreamPathSearch(instStream *stream)
     return true;
 }
 
-int buildMinimumPathKey(Program *program, instStream *stream)
+int buildMinimumPathKey(Program *program, InstructionStream *stream)
 {
     VisitCache *visitCache = &program->backTraceVisitCache;
     if (!visitCache->startRecord()) {
@@ -90,7 +90,7 @@ int buildMinimumPathKey(Program *program, instStream *stream)
     return visitCache->endRecord();
 }
 
-int getMaxPathKey(Program *program, instStream *stream)
+int getMaxPathKey(Program *program, InstructionStream *stream)
 {
     VisitCache *visitCache = &program->backTraceVisitCache;
     if (!visitCache->startRecord()) {
@@ -116,7 +116,7 @@ bool isPathRaw(Program *program, int key)
         reportError("<=0 input to isPathRaw\n");
         exitAfterCleanup(-1);
     }
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         int streamId = stream->streamId;
         if (program->backTraceVisitCache.testBit(key, streamId) && stream->getCodeMode() == 1)
             return false;
@@ -126,7 +126,7 @@ bool isPathRaw(Program *program, int key)
 
 int guessKeyLen(Program *program, int key, int start, int end)
 {
-    instStream *stream = program->streamHead;
+    InstructionStream *stream = program->streamHead;
     int len = 0;
     bool foundStart = false;
     bool foundEnd = false;
@@ -153,20 +153,20 @@ int guessKeyLen(Program *program, int key, int start, int end)
     return len;
 }
 
-void dumpMinPathToTarget(instStream *stream)
+void dumpMinPathToTarget(InstructionStream *stream)
 {
     reportInfo("%s  minPathToTarget\n", stream->streamName());
     int pathDepth = 0;
-    for (instStream *predecessorStream = stream->shortestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->shortestPathPredecessor)
+    for (InstructionStream *predecessorStream = stream->shortestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->shortestPathPredecessor)
         reportInfo("    %2d:   [%3d] %s\n", ++pathDepth, predecessorStream->minimumPathLength, predecessorStream->streamName());
     reportInfo("done .. %s  minPathToTarget\n", stream->streamName());
 }
 
-void dumpMaxPathToTarget(instStream *stream)
+void dumpMaxPathToTarget(InstructionStream *stream)
 {
     reportInfo("%s  maxPathToTarget\n", stream->streamName());
     int pathDepth = 0;
-    for (instStream *predecessorStream = stream->longestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->longestPathPredecessor)
+    for (InstructionStream *predecessorStream = stream->longestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->longestPathPredecessor)
         reportInfo("    %2d:   [%3d] %s\n", ++pathDepth, predecessorStream->maximumPathLength, predecessorStream->streamName());
     reportInfo("done .. %s  maxPathToTarget\n", stream->streamName());
 }

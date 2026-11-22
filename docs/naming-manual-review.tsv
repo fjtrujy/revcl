@@ -1,10 +1,10 @@
-category	identifier	location	reason	status
-class	Line	src/Line.h	Original class identity is guessed, despite semantic fields	open
-class	mValue	src/mValue.h	Small typed-value class name is explicitly guessed	open
-class	xpNode	src/xpNode.h	Expression node class name is explicitly guessed	open
-class	xpTree	src/xpNode.h	Expression tree owner class name is explicitly guessed	open
-struct	istRec	src/instStream.h	Instruction-stream record type name is guessed	open
-struct	cls_unk30	src/Instr.h	Type of Instr embedded object remains unknown	open
-struct	aaDesc	src/Instr.h	Address-alias descriptor name is guessed	open
-struct	aaUse	src/Instr.h	Address-alias use entry name is guessed	open
-struct	ImplicitOp	src/Instr.h	Implicit operand description name is guessed	open
+category	identifier	location	reason	status	replacement
+class	Line	src/Line.h	Original class identity is guessed, despite semantic fields; resolved as SourceLocationEntry (role verified, historical original label unknown)	resolved	SourceLocationEntry
+class	mValue	src/mValue.h	Small typed-value class name is explicitly guessed; resolved as TypedValue (role verified, historical original label unknown)	resolved	TypedValue
+class	xpNode	src/xpNode.h	Expression node class name is explicitly guessed; resolved as ExpressionNode (role verified, historical original label unknown)	resolved	ExpressionNode
+class	xpTree	src/xpNode.h	Expression tree owner class name is explicitly guessed; resolved as ExpressionTree (role verified, historical original label unknown)	resolved	ExpressionTree
+struct	istRec	src/instStream.h	Instruction-stream record type name is guessed; resolved as StreamOptimizationRecord (role verified, historical original label unknown)	resolved	StreamOptimizationRecord
+struct	cls_unk30	src/Instr.h	Type of Instr embedded object remains unknown; resolved as InstructionOwnerTableView (role verified, historical original label unknown)	resolved	InstructionOwnerTableView
+struct	aaDesc	src/Instr.h	Address-alias descriptor name is guessed; resolved as AddressAliasDescriptor (role verified, historical original label unknown)	resolved	AddressAliasDescriptor
+struct	aaUse	src/Instr.h	Address-alias use entry name is guessed; resolved as AddressAliasUse (role verified, historical original label unknown)	resolved	AddressAliasUse
+struct	ImplicitOp	src/Instr.h	Implicit operand description name is guessed; resolved as ImplicitOperandDescription (role verified, historical original label unknown)	resolved	ImplicitOperandDescription

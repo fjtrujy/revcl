@@ -190,7 +190,7 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
             } while (end < count);
         }
         int streamLineCount = end - lineIndex;
-        instStream *stream = new instStream;
+        InstructionStream *stream = new InstructionStream;
         if (!stream) goto allocationOfStreamFailed;
         goto afterNHandler;
         allocationOfStreamFailed:

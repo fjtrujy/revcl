@@ -1,7 +1,7 @@
 #include "os.h"
 #include "RegPool_shared.h"
 
-bool rPart::flushPending()
+bool RegisterPartState::flushPending()
 {
     if (issueLock) {
         reportError("rPart::flushPending - issueLock was set (%d)\n", issueLock);
@@ -14,7 +14,7 @@ bool rPart::flushPending()
     return true;
 }
 
-ol_s* rPart::acquireFreePendingLocation()
+OperandLocation* RegisterPartState::acquireFreePendingLocation()
 {
     for (int locationIndex = 0; locationIndex != 4; locationIndex++) {
         if (!pendingLocations[locationIndex].cycleOffset) {
@@ -25,7 +25,7 @@ ol_s* rPart::acquireFreePendingLocation()
     return 0;
 }
 
-bool rPart::cycle(bool flag)
+bool RegisterPartState::cycle(bool flag)
 {
     if (flag) {
         issueLock = 0;
@@ -35,12 +35,12 @@ bool rPart::cycle(bool flag)
         }
         for (int locationIndex = 0; locationIndex != 4; locationIndex++)
             pendingLocations[locationIndex].reset();
-        ol_s* cur = &currentLocation;
+        OperandLocation* cur = &currentLocation;
         if (cur->cycleOffset)
             cur->cycleOffset = 0;
     } else {
         int expiredLocationCount = 0;
-        ol_s* cur = &currentLocation;
+        OperandLocation* cur = &currentLocation;
         int currentCycleOffset = cur->cycleOffset;
         if (currentCycleOffset) {
             int nextCycleOffset = currentCycleOffset - 1;
@@ -48,7 +48,7 @@ bool rPart::cycle(bool flag)
             expiredLocationCount = 1;
         }
         for (int locationIndex = 0; locationIndex != 4; locationIndex++) {
-            ol_s* location = &pendingLocations[locationIndex];
+            OperandLocation* location = &pendingLocations[locationIndex];
             int pendingCycleOffset = location->cycleOffset;
             if (!pendingCycleOffset)
                 continue;
@@ -71,7 +71,7 @@ bool rPart::cycle(bool flag)
     return true;
 }
 
-void RegPoolEntry::resetRegisterFlowState()
+void RegisterEntry::resetRegisterFlowState()
 {
     usedSlotMask = 0;
     throughputWriter = 0;
@@ -80,28 +80,28 @@ void RegPoolEntry::resetRegisterFlowState()
         parts[partIndex].resetPartFlowState();
 }
 
-void RegPoolEntry::noopRegisterFlowHook()
+void RegisterEntry::noopRegisterFlowHook()
 {
 }
 
-void RegPoolEntry::resetRegisterPartTiming()
+void RegisterEntry::resetRegisterPartTiming()
 {
     for (int partIndex = 0; partIndex != 4; partIndex++) {
-        rPart* registerPart = &parts[partIndex];
-        registerPart->unk_40 = -1;
+        RegisterPartState* registerPart = &parts[partIndex];
+        registerPart->resetOnlyRegisterPartTimingSentinel = -1;
         registerPart->earliestPendingReadCycle = -1;
         registerPart->latestPendingReadCycle = -1;
     }
 }
 
-void rPart::resetPartTiming()
+void RegisterPartState::resetPartTiming()
 {
-    unk_40 = -1;
+    resetOnlyRegisterPartTimingSentinel = -1;
     earliestPendingReadCycle = -1;
     latestPendingReadCycle = -1;
 }
 
-void RegPoolEntry::resetRegisterThroughputState()
+void RegisterEntry::resetRegisterThroughputState()
 {
     throughputWriter = 0;
     outputWriteCount = 0;
@@ -109,7 +109,7 @@ void RegPoolEntry::resetRegisterThroughputState()
         parts[partIndex].resetPartFlowState();
 }
 
-void rPart::resetPartFlowState()
+void RegisterPartState::resetPartFlowState()
 {
     emulationTimingMetrics[3] = 0;
     emulationTimingMetrics[2] = 0;
@@ -136,23 +136,23 @@ void rPart::resetPartFlowState()
         pendingLocations[locationIndex].reset();
 }
 
-void RegPoolEntry::clearRegisterPartPayloads()
+void RegisterEntry::clearRegisterPartPayloads()
 {
     for (int partIndex = 0; partIndex != 4; partIndex++)
         parts[partIndex].payload = 0;
 }
 
-void rPart::resetPartPayloadFirstPass()
+void RegisterPartState::resetPartPayloadFirstPass()
 {
     payload = 0;
 }
 
-void rPart::resetPartPayloadSecondPass()
+void RegisterPartState::resetPartPayloadSecondPass()
 {
     payload = 0;
 }
 
-bool RegPoolEntry::cycleRegisterParts(bool flag)
+bool RegisterEntry::cycleRegisterParts(bool flag)
 {
     for (int partIndex = 0; partIndex != partCount; partIndex++)
         if (!parts[partIndex].cycle(flag))
@@ -160,7 +160,7 @@ bool RegPoolEntry::cycleRegisterParts(bool flag)
     return true;
 }
 
-RegPoolEntry::RegPoolEntry()
+RegisterEntry::RegisterEntry()
 {
     previous = 0;
     next = 0;
@@ -180,13 +180,13 @@ RegPoolEntry::RegPoolEntry()
     assignedPhysicalRegister = 0;
 }
 
-rPart::rPart()
+RegisterPartState::RegisterPartState()
 {
     resetPartFlowState();
     payload = 0;
 }
 
-mNode* RegPoolEntry::addRegisterNameAlias(const char* name)
+mNode* RegisterEntry::addRegisterNameAlias(const char* name)
 {
     mNode* macroNode = nameAliases.findByExactName(name);
     if (macroNode)
@@ -194,7 +194,7 @@ mNode* RegPoolEntry::addRegisterNameAlias(const char* name)
     return nameAliases.appendNamedNode(name);
 }
 
-const char* RegPoolEntry::registerName()
+const char* RegisterEntry::registerName()
 {
     const char* name = nameAliases.firstNodeName();
     if (!name)
@@ -202,34 +202,34 @@ const char* RegPoolEntry::registerName()
     return name;
 }
 
-VclPtrWord RegPoolEntry::getPartPayload(int partIndex)
+VclPtrWord RegisterEntry::getPartPayload(int partIndex)
 {
     return parts[partIndex].payload;
 }
 
-bool RegPoolEntry::setPartPayload(int partIndex, VclPtrWord partPayload)
+bool RegisterEntry::setPartPayload(int partIndex, VclPtrWord partPayload)
 {
     parts[partIndex].payload = partPayload;
     return true;
 }
 
-VclPtrWord rPart::getPayload()
+VclPtrWord RegisterPartState::getPayload()
 {
     return payload;
 }
 
-bool rPart::setPayload(VclPtrWord newPayload)
+bool RegisterPartState::setPayload(VclPtrWord newPayload)
 {
     payload = newPayload;
     return true;
 }
 
-ol_s* rPart::getPendingLocation(int pendingIndex)
+OperandLocation* RegisterPartState::getPendingLocation(int pendingIndex)
 {
     return &pendingLocations[pendingIndex];
 }
 
-void RegPoolEntry::moveReset()
+void RegisterEntry::moveReset()
 {
     if (!moveInstruction) {
         reportError("rg..movereset called - but not move\n");
@@ -243,13 +243,13 @@ void RegPoolEntry::moveReset()
         parts[partIndex].payload = 0;
 }
 
-bool RegPoolEntry::optReset()
+bool RegisterEntry::optReset()
 {
     registerWeb = 0;
     return true;
 }
 
-bool RegPoolEntry::clearPartPayloadMarkers()
+bool RegisterEntry::clearPartPayloadMarkers()
 {
     for (int partIndex = 0; partIndex != partCount; partIndex++) {
         if (parts[partIndex].payload)
@@ -261,7 +261,7 @@ bool RegPoolEntry::clearPartPayloadMarkers()
 char regNameBuf[1024];
 int regNameBufPos;
 
-char* RegPoolEntry::maskName(int mask)
+char* RegisterEntry::maskName(int mask)
 {
     if (regNameBufPos > 512)
         regNameBufPos = 0;
@@ -277,7 +277,7 @@ char* RegPoolEntry::maskName(int mask)
     return buf;
 }
 
-int RegPoolEntry::regIndex()
+int RegisterEntry::regIndex()
 {
     if (!ownerPool)
         reportError("no reg pool set for register\n");

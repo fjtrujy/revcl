@@ -4,21 +4,21 @@
 #include "Program.h"
 #include "Instr.h"
 
-bool prepExtInfo(Program *p, instStream *s, bool b);
-int insertStreamRegisterCaps(Program *p, instStream *s);
-void initializeScheduledCycleTimes(workTable *wt);
-bool removeNops(Program *p, instStream *s);
-int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
+bool prepExtInfo(Program *p, InstructionStream *s, bool b);
+int insertStreamRegisterCaps(Program *p, InstructionStream *s);
+void initializeScheduledCycleTimes(ScheduleTable *wt);
+bool removeNops(Program *p, InstructionStream *s);
+int findCap(ScheduleTable *wt, Instr *in, int opIdx, RegisterEntry **capReg, int *capMask);
 bool insertRegisterCapInstruction(int line, int pipe, int mask);
 RegPool *getRegisterPoolByIndex(unsigned t);
 bool resetProcessorThroughput(Program *p);
-int emulateInstructionRow(Program *p, wtRow *row, int line, bool uta, bool commit);
-void splitCtime(workTable *wt, int l, int m);
+int emulateInstructionRow(Program *p, ScheduleRow *row, int line, bool uta, bool commit);
+void splitCtime(ScheduleTable *wt, int l, int m);
 
 int insertAllRegisterCaps(Program *program)
 {
     int total = 0;
-    instStream *currentStream;
+    InstructionStream *currentStream;
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         currentStream->externalSchedulingPrepared = 0;
         if (!currentStream->usesFreeRawLayout())
@@ -42,14 +42,14 @@ int insertAllRegisterCaps(Program *program)
     return total;
 }
 
-int insertStreamRegisterCaps(Program *program, instStream *stream)
+int insertStreamRegisterCaps(Program *program, InstructionStream *stream)
 {
     int added = 0;
     if (!stream->workTablePtr) {
         reportError("work table not set in %s\n", stream->streamName());
         exitAfterCleanup(-1);
     }
-    workTable *scheduleTable = stream->workTablePtr;
+    ScheduleTable *scheduleTable = stream->workTablePtr;
     if (!scheduleTable) {
         reportError("no work table \n");
         return -1;
@@ -67,7 +67,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
     }
     initializeScheduledCycleTimes(scheduleTable);
     for (int rowIndex = scheduleTable->getRangeStart(); rowIndex != scheduleTable->getRangeEnd(); rowIndex++) {
-        wtRow *row = (wtRow *)((cls_unk30 *)scheduleTable)->getIE_ck(rowIndex);
+        ScheduleRow *row = (ScheduleRow *)((InstructionOwnerTableView *)scheduleTable)->getIE_ck(rowIndex);
         int cycleTime = row->ctime();
         for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
             Instr *rowInstruction = getInstructionInPipe((Instr **)row, pipeIndex);
@@ -76,11 +76,11 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
             Operand *operand;
             for (int operandIndex = 0; operandIndex != rowInstruction->operandCount; operandIndex++) {
                 operand = &rowInstruction->operands[operandIndex];
-                RegPoolEntry *registerEntry = registerOperand(operand, 2);
-                ol_s *live = operand->parts[0].operandLocations.head;
+                RegisterEntry *registerEntry = registerOperand(operand, 2);
+                OperandLocation *live = operand->parts[0].operandLocations.head;
                 if (!registerEntry || operand->externalBlockModeFlag || !live)
                     continue;
-                RegPoolEntry *capReg = 0;
+                RegisterEntry *capReg = 0;
                 int capMask = 0;
                 int bits = findCap(scheduleTable, rowInstruction, operandIndex, &capReg, &capMask);
                 if (bits < 0) {
@@ -93,7 +93,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
                 if (registerEntry->registerIndex == 0x34 && need > 1)
                     need--;
                 int line = rowIndex + 1;
-                wtRow *workRow = row + 1;
+                ScheduleRow *workRow = row + 1;
                 int limit = need + cycleTime;
                 int bestMask = 0, bestLine = -1, bestPipe = -1, bestCount = 0, count = 0;
                 while (line < scheduleTable->getRangeEnd() && capMask) {

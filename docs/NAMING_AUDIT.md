@@ -1243,6 +1243,92 @@ passed. The unchanged reference stripped VCL SHA-256 is
 No source-file link order, ABI layout, compiler flags, or VUC code
 were changed; historic diagnostic string literals were preserved.
 
+## Naming review completion: direct types, scoped declarations and ABI storage
+
+This milestone follows merged PR #17 and closes **all ten categories** in
+[NAMING_PROGRESS.md](NAMING_PROGRESS.md), each with a current count of **zero**.
+This does **not** prove the original Sony source identifiers, every reserved
+field's behavior, or any VUC reconstruction is complete.
+
+### Direct type renames (no aliases)
+
+All four numeric classes were renamed directly:
+`OperandLock`, `RegisterPartLockList`, `InstructionPosition` and
+`SchedulingStatistics`. The earlier class typedef aliases are no longer needed.
+
+All nine manually flagged provisional types were also directly renamed:
+
+| Prior name | Semantic source name | Observable role |
+| --- | --- | --- |
+| `Line` | `SourceLocationEntry` | File or macro location name and kind |
+| `mValue` | `TypedValue` | Tagged numeric value or owned string |
+| `xpNode` | `ExpressionNode` | Expression operator/operand node |
+| `xpTree` | `ExpressionTree` | Expression tree owner and evaluator |
+| `istRec` | `StreamOptimizationRecord` | Optimizer candidate record |
+| `cls_unk30` | `InstructionOwnerTableView` | Partial view of a table owner |
+| `aaDesc` | `AddressAliasDescriptor` | Opcode alias metadata |
+| `aaUse` | `AddressAliasUse` | Alias operand slot |
+| `ImplicitOp` | `ImplicitOperandDescription` | Parsed implicit operand text |
+
+Fourteen additional extensively used types were directly renamed:
+`OpcodeDescriptor`, `OperandLocation`, `RegisterUse`, `RegisterEntry`,
+`RegisterPartState`, `InstructionStream`, `ScheduleTable`, `ScheduleRow`,
+`StreamLinkNode`, `StreamLinkList`, `RegisterUseList`, `InstructionList`,
+`InstructionGroupList` and `InstructionGroupNode`. These names reflect
+recoverable source roles, not a claim of original Sony spellings.
+
+### AST declarations, anonymous arguments and numeric placeholders
+
+The original **56** remaining AST review entries were all addressed:
+**29** actual named declarations with Clang AST-ID-checked reference edits,
+and **27** formerly unnamed but unused parameters now bearing explicit
+`unused...` names. Each has a documented resolution in
+[naming-declaration-resolutions.tsv](naming-declaration-resolutions.tsv).
+
+The final four numeric placeholders were named from observed behavior:
+`cloneAppend`'s branch-inclusion, cloned alias-loop adjustment and
+NOP-inclusion flags, plus the mode-1 scheduler's pass snapshot.
+
+### Field-name closure without concealing ABI uncertainty
+
+The source of the original field-review queue contained **60** entries:
+**58** matched declarations, and two (`Program::unk_b4` and
+`Program::unk_b8`) were stale and absent from source. Another opcode
+union member (`unk_0e_w`) was resolved beyond the tracked review queue.
+
+The complete **59** resolved field names are recorded in
+[naming-field-resolutions.tsv](naming-field-resolutions.tsv). Their
+classification is intentionally explicit:
+
+- **48 layout-only fields:** unused in the reconstructed source, retained
+  for exact layout with `reserved...` or `uninterpreted...` spelling.
+  Their original meaning is **not** asserted to be padding.
+- **10 reset/copy-only fields:** named for their observed writes or
+  copies rather than for unproven semantics.
+- **1 opcode union word:** read for scheduling/pipeline behavior and
+  renamed `pipelineAndIssueMaskWord`.
+
+The previously address-like, unreferenced preprocessor flag was also
+renamed `unusedPreprocessorCompatibilityFlag` without changing its
+original initializer or inventing a new purpose.
+
+### Persistent completion gate
+
+`scripts/ci/naming-progress.sh --check` now rejects **any nonzero**
+current metric rather than merely checking that the generated snapshot
+is up to date. Resolved provisional types must identify their **actual**
+new source declarations. The field resolution categories are validated,
+and the original baseline remains fixed.
+
+All direct type/field/identifier edits were accepted only with a modern
+macOS build, **13/13 native fixtures**, and the historical Red Hat
+9/i686 GCC 3.2.2 `exact-sha256` pass. The stripped VCL SHA-256 remains:
+
+`83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`
+
+No function `#define` aliases, layout changes, source ordering changes,
+historical message string changes, or VUC branch edits were introduced.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
@@ -1267,13 +1353,14 @@ were changed; historic diagnostic string literals were preserved.
 
 ## Next targets
 
-- Remaining owner-qualified fields in types unrelated to `LocTag`/`LocRef`:
-  inspect their use before renaming common offsets such as `unk_00`.
-- `Instr`, `instStream`, `workTable`, `Program` and `Processor`: largest
-  unresolved field clusters; investigate owner-qualified fields using the AST
-  field inventory rather than guessing from offsets.
-- No address-coded source filenames remain. When revisiting translation-unit
-  boundaries or renaming descriptive names, preserve the historical order,
-  special flags and ELF byte identity.
-- The VUC `zzzzMakeRTTIWork` method: wait for verified vtable/RTTI semantics;
-  do not assume it can be renamed without affecting its exact match.
+- The original VCL naming review queue is now complete. Further research
+  should focus on determining the **historical semantics** of layout-only
+  fields and reset-only markers. Reserved storage labels are explicit
+  placeholders for layout, not evidence of the original implementation.
+- Broader semantic audits can still identify misleading but plausible
+  names outside the heuristics of the original snapshot; do not manufacture
+  meaningless renames to inflate the progress metrics.
+- Preserve recovered translation-unit boundaries, link order, special
+  compiler flags, i386 ABI layout and historical executable SHA-256.
+- VUC remains a separate reconstruction effort, including unresolved
+  RTTI/vtables and its own byte-matching requirements.

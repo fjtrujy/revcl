@@ -56,17 +56,17 @@ char *emitFileEnd(Program *program, char *outputBuffer)
     return outputBuffer;
 }
 
-static inline unsigned char streamEndType(instStream *stream)
+static inline unsigned char streamEndType(InstructionStream *stream)
 {
     return stream->endType;
 }
 
-static inline void dumpFailedRow(wtRow *workRow)
+static inline void dumpFailedRow(ScheduleRow *workRow)
 {
     workRow->refreshInstructionOperands(-1);
 }
 
-char *workTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
+char *ScheduleTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
 {
     *p2 = 0;
     *p1 = 0;
@@ -76,7 +76,7 @@ char *workTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
         reportError("iTable::emit - not done!\n");
         return 0;
     }
-    instStream *owner = ownerStream;
+    InstructionStream *owner = ownerStream;
     if (!owner) {
         reportError("during emit - owner not set\n");
         return 0;
@@ -99,7 +99,7 @@ char *workTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
         *p2 = nulls;
     } else {
         for (int rowIndex = rangeStart; rowIndex != rangeEnd; rowIndex++) {
-            wtRow *workRow = &rows[rowIndex];
+            ScheduleRow *workRow = &rows[rowIndex];
             if (!workRow->skip)
                 (*p1)++;
             (*p2)++;
@@ -111,7 +111,7 @@ char *workTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
     }
 
     if (codeModeValue == 4) {
-        wtRow blank;
+        ScheduleRow blank;
         blank.clearEntries();
         for (int nopIndex = 0; nopIndex != nulls; nopIndex++) {
             int emissionFlags = 0;
@@ -128,7 +128,7 @@ char *workTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
             }
         }
     } else {
-        instStream *stream = ownerStream;
+        InstructionStream *stream = ownerStream;
         if (stream) {
             outputBuffer += formatIntoBuffer(outputBuffer, "; ");
             if (stream->hasLoopOptimization)
@@ -156,10 +156,10 @@ char *workTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
         int end = rangeEnd;
         if (isEnd && !hasSafeTrailingInstructions())
             end++;
-        wtRow blank;
+        ScheduleRow blank;
         blank.clearEntries();
         for (int emissionRowIndex = rangeStart; emissionRowIndex != end; emissionRowIndex++) {
-            wtRow *emissionRow = &blank;
+            ScheduleRow *emissionRow = &blank;
             if (emissionRowIndex < rangeEnd)
                 emissionRow = &rows[emissionRowIndex];
             int rowEmissionFlags = 0;
@@ -227,7 +227,7 @@ int countSetBits(unsigned int);
 char *emitNop(char *buf, int flags, int *len);
 char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b);
 
-char *wtRow::emit(char *outputBuffer, int flags, bool upper, bool unused)
+char *ScheduleRow::emit(char *outputBuffer, int flags, bool upper, bool unused)
 {
     if (!outputBuffer) {
         reportError("iEntry::emit - null pointer!\n");

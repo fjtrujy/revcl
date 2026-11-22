@@ -1,7 +1,7 @@
 #include "os.h"
 #include "lock_shared.h"
 
-bool cls0805c244::catLocks(OperandLock *firstLock, OperandLock *operandLock, int *rangeStartOut, int *rangeEndOut, int *end)
+bool RegisterPartLockList::catLocks(OperandLock *firstLock, OperandLock *operandLock, int *rangeStartOut, int *rangeEndOut, int *end)
 {
     bool found = false;
     int lsz = activeLoopSize;
@@ -37,7 +37,7 @@ static inline bool sameLockOwner(OperandLock *firstLock, OperandLock *operandLoc
     return firstLock->ownerPointer == operandLock->ownerPointer;
 }
 
-int cls0805c244::canMoveInputLock(OperandLock *operandLock, short *pos, int slotBit)
+int RegisterPartLockList::canMoveInputLock(OperandLock *operandLock, short *pos, int slotBit)
 {
     int targetLinearRow = *pos;
     OperandLock *lock = outputLocks;
@@ -126,7 +126,7 @@ int cls0805c244::canMoveInputLock(OperandLock *operandLock, short *pos, int slot
     return 0;
 }
 
-int cls0805c244::canMoveOutputLock(OperandLock *outputLock, short *pos, int slotBit)
+int RegisterPartLockList::canMoveOutputLock(OperandLock *outputLock, short *pos, int slotBit)
 {
     int ret;
     int lsz = activeLoopSize;

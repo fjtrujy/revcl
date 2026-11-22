@@ -8,44 +8,44 @@
 
 #include "ol_s.h"
 
-struct rPart {
+struct RegisterPartState {
     short emulationTimingMetrics[0x24 / 2];
-    ol_s currentLocation;
-    ol_s* pendingSource;
+    OperandLocation currentLocation;
+    OperandLocation* pendingSource;
     short cycleAge;
     short issueLock;
-    short unk_40;
+    short resetOnlyRegisterPartTimingSentinel;
     short earliestPendingReadCycle;
     short latestPendingReadCycle;
-    short unk_46;
+    short reservedRegisterPartTimingShort;
     VclPtrWord payload;
-    ol_s pendingLocations[4];
+    OperandLocation pendingLocations[4];
 
     bool flushPending();
-    ol_s* acquireFreePendingLocation();
+    OperandLocation* acquireFreePendingLocation();
     bool cycle(bool flag);
     void resetPartTiming();
     void resetPartFlowState();
     void resetPartPayloadFirstPass();
     void resetPartPayloadSecondPass();
-    rPart();
+    RegisterPartState();
     VclPtrWord getPayload();
     bool setPayload(VclPtrWord v);
-    ol_s* getPendingLocation(int i);
+    OperandLocation* getPendingLocation(int i);
 };
 
 class RegPool;
 class Instr;
 class RegWeb;
-class instStream;
-class workTable;
-struct RegPoolEntry {
+class InstructionStream;
+class ScheduleTable;
+struct RegisterEntry {
     short minimumMoveRow;
     short maximumMoveRow;
     RegPool *ownerPool;    // owning pool
-    RegPoolEntry* next;
+    RegisterEntry* next;
     const char* registerName();
-    RegPoolEntry();
+    RegisterEntry();
     void resetRegisterFlowState();
     void resetRegisterPartTiming();
     void resetRegisterThroughputState();
@@ -56,7 +56,7 @@ struct RegPoolEntry {
     bool optReset();
     char* maskName(int mask);
     int regIndex();
-    int gatherInflight(ol_s** out);
+    int gatherInflight(OperandLocation** out);
     bool isClass(int cls)
     {
         if (registerClass == cls)
@@ -67,7 +67,7 @@ struct RegPoolEntry {
     VclPtrWord getPartPayload(int i);
     bool setPartPayload(int i, VclPtrWord v);
     void moveReset();
-    rPart* getRegisterPartByIndex(int i)
+    RegisterPartState* getRegisterPartByIndex(int i)
     {
         if (i < 0 || i >= partCount) {
             reportError("getRP - asked to get out of range part %s.%d / %d\n",
@@ -77,28 +77,28 @@ struct RegPoolEntry {
         return &parts[i];
     }
 
-    RegPoolEntry* previous;
+    RegisterEntry* previous;
     int uniqueNameSerial;
     bool isVirtual;        // virtual
     bool allocatable;        // allocable
     bool enabledPhysicalRegister;
-    char unk_17;
-    RegPoolEntry* assignedPhysicalRegister;   // allocated physical register
+    char reservedRegisterAllocationByte;
+    RegisterEntry* assignedPhysicalRegister;   // allocated physical register
     char nonBlockId;
-    char unk_1d[3];
+    char reservedRegisterBindingBytes[3];
     Instr* moveInstruction;
     int registerClass;         // register class
     int partCount;         // slot count (nparts)
     bool tracksHotOutputPaths;
-    char unk_2d[3];
+    char reservedRegisterPartBytes[3];
     int registerIndex;         // register index
     char seenInputComponentMask;
     unsigned char usedSlotMask;   // used slot mask
     short outputWriteCount;
     Instr *throughputWriter;          // previous thruput writer
     int assignmentCostTableSize;
-    RegPoolEntry *nextPendingAssignment;
-    rPart parts[4];
+    RegisterEntry *nextPendingAssignment;
+    RegisterPartState parts[4];
     RegWeb *registerWeb;    // register web
     mList nameAliases;
 
@@ -109,13 +109,13 @@ class RegPool {
 public:
     RegPool();
     virtual ~RegPool();
-    virtual bool assignExt(instStream *s) = 0;                        // slot 2
-    virtual bool discardDisjointExternalRegister(instStream *s, RegPoolEntry *reg) = 0; // slot 3
-    virtual bool assignRegistersForWorkTable(workTable *t) = 0;                     // slot 4
+    virtual bool assignExt(InstructionStream *s) = 0;                        // slot 2
+    virtual bool discardDisjointExternalRegister(InstructionStream *s, RegisterEntry *reg) = 0; // slot 3
+    virtual bool assignRegistersForWorkTable(ScheduleTable *t) = 0;                     // slot 4
     bool initializeRegisterPool(VclPtrWord registerPrefix, const char* name, int cls, int virtualRegisterParts);
     void Dump();
-    RegPoolEntry* findByRegisterIndex(int index);
-    RegPoolEntry* findPhysicalByName(const char* name);
+    RegisterEntry* findByRegisterIndex(int index);
+    RegisterEntry* findPhysicalByName(const char* name);
     bool resetPoolThroughputState();
     bool resetPoolPartTiming();
     bool resetPoolFlowState();
@@ -124,32 +124,32 @@ public:
     static bool isReservedNameForClass(const char* name, int cls);
     bool cycleRegisters(bool flag);
     bool clearVirtualRegisters();
-    RegPoolEntry* findOrCreateRegister(const char* name);
-    RegPoolEntry* findVirtualByName(const char* name);
-    RegPoolEntry* createVirtualRegister(const char* name);
+    RegisterEntry* findOrCreateRegister(const char* name);
+    RegisterEntry* findVirtualByName(const char* name);
+    RegisterEntry* createVirtualRegister(const char* name);
     bool markAllocatablePhysicalRegistersUsed();
     bool clearRegisterAssignmentsFirstPass();
     bool clearRegisterAssignmentsSecondPass();
     bool resetPoolLocalAllocationState();
-    RegPoolEntry* findMoveRegister(Instr* move);
-    bool ownsRegisterClass(RegPoolEntry* e);
+    RegisterEntry* findMoveRegister(Instr* move);
+    bool ownsRegisterClass(RegisterEntry* e);
     bool optReset();
     bool emitReset();
     char* emitStats(char* outputBuffer);
     int regIndex(int reg);
     int countUsedRegisters();
     int countMarkedPhysicalRegisters();
-    int gatherInflight(ol_s** out);
+    int gatherInflight(OperandLocation** out);
 
-    RegPoolEntry* registerEntries;
+    RegisterEntry* registerEntries;
     int entryCount;
     short registerClass;
     short poolKind;
-    RegPoolEntry* zeroRegister;   // zero register
-    RegPoolEntry* externalRegister;   // ext register
+    RegisterEntry* zeroRegister;   // zero register
+    RegisterEntry* externalRegister;   // ext register
     int virtualPartCount;
-    RegPoolEntry* virtualHead;
-    RegPoolEntry* virtualTail;
+    RegisterEntry* virtualHead;
+    RegisterEntry* virtualTail;
     int virtualCount;
     VclPtrWord registerPrefix;
     const char* poolName;     // pool name

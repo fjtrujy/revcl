@@ -3,7 +3,7 @@
 #include "workTable.h"
 #include "os.h"
 
-int expandRaw(workTable *scheduleTable)
+int expandRaw(ScheduleTable *scheduleTable)
 {
     if (scheduleTable->codeModeValue != 5) {
         reportError("expand raw - table not raw!\n");
@@ -14,12 +14,12 @@ int expandRaw(workTable *scheduleTable)
 
 bool expandRawTables(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         if (!stream->workTablePtr) {
             reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *scheduleTable = stream->workTablePtr;
+        ScheduleTable *scheduleTable = stream->workTablePtr;
         if (scheduleTable->codeMode() == 3) {
             reportError("hit a raw table during expraw\n");
             return false;

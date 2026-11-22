@@ -4,7 +4,7 @@
 #include "instStream.h"
 #include "Block.h"
 
-workTable::workTable()
+ScheduleTable::ScheduleTable()
 {
     rows = 0;
     moveListHead = 0;
@@ -15,12 +15,12 @@ workTable::workTable()
     dispose();
 }
 
-workTable::~workTable()
+ScheduleTable::~ScheduleTable()
 {
     dispose();
 }
 
-bool workTable::init(unsigned char mode, int size)
+bool ScheduleTable::init(unsigned char mode, int size)
 {
     dispose();
     switch (mode) {
@@ -30,7 +30,7 @@ bool workTable::init(unsigned char mode, int size)
         size += 4;
         if (size < 4)
             size = 4;
-        rows = new wtRow[size];
+        rows = new ScheduleRow[size];
         if (!rows)
             return false;
         rowCapacity = size;
@@ -58,7 +58,7 @@ bool workTable::init(unsigned char mode, int size)
     return true;
 }
 
-bool workTable::dispose()
+bool ScheduleTable::dispose()
 {
     Instr *currentInstruction = pendingInstructions.head;
     while (currentInstruction) {
@@ -104,7 +104,7 @@ bool workTable::dispose()
     return true;
 }
 
-void workTable::dump()
+void ScheduleTable::dump()
 {
     switch (codeModeValue) {
     case 0:
@@ -117,7 +117,7 @@ void workTable::dump()
     case 3:
     case 5:
         for (int dumpRowIndex = rangeStart; dumpRowIndex < rangeEnd; dumpRowIndex++) {
-            wtRow *row = rowAt(dumpRowIndex);
+            ScheduleRow *row = rowAt(dumpRowIndex);
             if (!row)
                 abortAfterError();
             row->refreshInstructionOperands(dumpRowIndex);
@@ -130,13 +130,13 @@ void workTable::dump()
             abortAfterError();
         }
         if (!lsz && rangeEnd < 0) {
-            wtRow *row = rows;
+            ScheduleRow *row = rows;
             for (int rowIndex = rowCapacity - 1; rowIndex >= 0; rowIndex--, row++)
                 if (row->entries[0].instruction || row->entries[1].instruction)
                     break;
         }
         for (int dumpRowIndex = rangeStart; dumpRowIndex < rangeEnd; dumpRowIndex++) {
-            wtRow *row = rowAt(dumpRowIndex);
+            ScheduleRow *row = rowAt(dumpRowIndex);
             if (!row)
                 abortAfterError();
             row->refreshInstructionOperands(dumpRowIndex);
@@ -152,14 +152,14 @@ void workTable::dump()
     registerUses.dumpRegisterUses();
 }
 
-const char *workTable::ownerName()
+const char *ScheduleTable::ownerName()
 {
     if (!ownerStream)
         return "UNOWNED_TABLE";
     return ownerStream->streamName();
 }
 
-bool workTable::reserveEntry(int key, int row, int slot)
+bool ScheduleTable::reserveEntry(int key, int row, int slot)
 {
     bool even = !(key & 1);
     if (even) {
@@ -167,7 +167,7 @@ bool workTable::reserveEntry(int key, int row, int slot)
         abortAfterError();
         return false;
     }
-    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(row);
+    Instr **pipelineEntries = ((InstructionOwnerTableView *)this)->getIE_ck(row);
     if (!pipelineEntries) {
         reportError("failed to reserve instruction!\n");
         return false;
@@ -180,7 +180,7 @@ bool workTable::reserveEntry(int key, int row, int slot)
     return true;
 }
 
-int workTable::getRawOrSyntheticLogicalLength()
+int ScheduleTable::getRawOrSyntheticLogicalLength()
 {
     int len = -1;
     switch (codeModeValue) {
@@ -202,7 +202,7 @@ int workTable::getRawOrSyntheticLogicalLength()
     return len;
 }
 
-int workTable::getLogicalLen()
+int ScheduleTable::getLogicalLen()
 {
     int len = 0;
     switch (codeModeValue) {
@@ -219,7 +219,7 @@ int workTable::getLogicalLen()
     return len;
 }
 
-int workTable::getPhysicalLen()
+int ScheduleTable::getPhysicalLen()
 {
     int len = -1;
     switch (codeModeValue) {
@@ -253,7 +253,7 @@ int workTable::getPhysicalLen()
     return len;
 }
 
-Instr *workTable::getConditionalBranch()
+Instr *ScheduleTable::getConditionalBranch()
 {
     Instr *secondInstruction = getBranch();
     if (secondInstruction && ((secondInstruction->branchFlags >> 2) & 1))
@@ -261,7 +261,7 @@ Instr *workTable::getConditionalBranch()
     return 0;
 }
 
-Instr *workTable::getBranch()
+Instr *ScheduleTable::getBranch()
 {
     Instr *secondInstruction = 0;
     switch (codeModeValue) {
@@ -288,7 +288,7 @@ Instr *workTable::getBranch()
         abortAfterError();
     }
     }
-    instStream *otherStream = ownerStream;
+    InstructionStream *otherStream = ownerStream;
     if (!otherStream) {
         reportWarning("no owner set for getBranch\n");
         abortAfterError();
@@ -317,7 +317,7 @@ Instr *workTable::getBranch()
 bool unlinkFromLinearInstructions(Block *blk, Instr *n);
 bool decrementInstructionPipelineCounts(Block *blk, Instr *in);
 
-inline bool workTable::unlinkAndUnlog(Instr *instruction)
+inline bool ScheduleTable::unlinkAndUnlog(Instr *instruction)
 {
     if (pendingInstructions.count) {
         reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", pendingInstructions.count);
@@ -335,7 +335,7 @@ inline bool workTable::unlinkAndUnlog(Instr *instruction)
     return 1;
 }
 
-bool workTable::removeBranch()
+bool ScheduleTable::removeBranch()
 {
     Instr *secondInstruction = getBranch();
     if (!secondInstruction) {
@@ -350,7 +350,7 @@ bool workTable::removeBranch()
     return 1;
 }
 
-int workTable::getTerminatingConditionalLoopId()
+int ScheduleTable::getTerminatingConditionalLoopId()
 {
     int lid = -1;
     Instr *secondInstruction = getBranch();
@@ -366,24 +366,25 @@ int workTable::getTerminatingConditionalLoopId()
     return lid;
 }
 
-bool workTable::takeOut(Instr *instruction)
+bool ScheduleTable::takeOut(Instr *instruction)
 {
     InstructionPosition *position = &instruction->position;
-    wtRow *row = &rows[position->loopRow];
+    ScheduleRow *row = &rows[position->loopRow];
     row->entries[position->pipelineIndex].instruction = (Instr *)instruction->replacedInstructionWord;
     instruction->clearSlot();
     return 1;
 }
 
-bool workTable::putIn(Instr *instruction)
+bool ScheduleTable::putIn(Instr *instruction)
 {
     InstructionPosition *position = &instruction->position;
-    wtRow *row = &rows[position->loopRow];
+    ScheduleRow *row = &rows[position->loopRow];
     row->entries[position->pipelineIndex].instruction = instruction;
     return 1;
 }
 
-bool cloneAppend(workTable *from, workTable *scheduleTable, int lidS, int lidE, bool a5, bool a6, bool a7)
+bool cloneAppend(ScheduleTable *from, ScheduleTable *scheduleTable, int lidS, int lidE,
+                 bool includeBranches, bool adjustCloneAliasLoopId, bool includeNops)
 {
     if (lidE > lidS) {
         reportError("CloneAppend - lid_e>lid_s\n");
@@ -409,8 +410,8 @@ bool cloneAppend(workTable *from, workTable *scheduleTable, int lidS, int lidE, 
     }
     int rowIndex, copySourceRow;
     for (rowIndex = scheduleTable->rangeEnd, copySourceRow = from->rangeStart; copySourceRow != from->rangeEnd; copySourceRow++, rowIndex++) {
-        wtRow *sourceRow = &from->rows[copySourceRow];
-        wtRow *destinationRow = &scheduleTable->rows[rowIndex];
+        ScheduleRow *sourceRow = &from->rows[copySourceRow];
+        ScheduleRow *destinationRow = &scheduleTable->rows[rowIndex];
         for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
             Instr *cloneInstruction;
             Instr *instruction = sourceRow->getEntry(entryIndex);
@@ -424,11 +425,11 @@ bool cloneAppend(workTable *from, workTable *scheduleTable, int lidS, int lidE, 
                     reportError("no II in inst\n");
                     from->dump();
                 }
-                if (!instruction->isNop() || a7) {
+                if (!instruction->isNop() || includeNops) {
                     int lid = instruction->position.loopIteration;
                     if (lid <= lidS && lid >= lidE) {
                         unsigned char branchFlags = instruction->branchFlags;
-                        if ((branchFlags && a5) || !instruction->getBranchType()) {
+                        if ((branchFlags && includeBranches) || !instruction->getBranchType()) {
                             cloneInstruction = instruction->clone();
                             if (!cloneInstruction) {
                                 reportError("failed to clone instruction\n");
@@ -436,7 +437,7 @@ bool cloneAppend(workTable *from, workTable *scheduleTable, int lidS, int lidE, 
                             }
                             cloneInstruction->cloneImage = 0;
                             instruction->cloneImage = 0;
-                            if (a6)
+                            if (adjustCloneAliasLoopId)
                                 cloneInstruction->expectedAliasLoopId = lidS - lid;
                         }
                     }
@@ -445,7 +446,7 @@ bool cloneAppend(workTable *from, workTable *scheduleTable, int lidS, int lidE, 
             destinationRow->entries[entryIndex].instruction = cloneInstruction;
             if (cloneInstruction) {
                 InstructionPosition pos;
-                cloneInstruction->setOwner((cls_unk30 *)scheduleTable);
+                cloneInstruction->setOwner((InstructionOwnerTableView *)scheduleTable);
                 pos.setRow(rowIndex);
                 pos.pipelineIndex = entryIndex;
                 InstructionPosition *loc = &cloneInstruction->position;
@@ -460,28 +461,28 @@ bool cloneAppend(workTable *from, workTable *scheduleTable, int lidS, int lidE, 
     return 1;
 }
 
-void workTable::dumpSynthetics()
+void ScheduleTable::dumpSynthetics()
 {
     for (Instr *instruction = linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
         if (instruction->syntheticKind)
             instruction->dumpOperandDiagnostics(false);
 }
 
-bool workTable::clearClones()
+bool ScheduleTable::clearClones()
 {
     for (Instr *instruction = linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
         instruction->cloneImage = 0;
     return 1;
 }
 
-int workTable::getTableRawMode()
+int ScheduleTable::getTableRawMode()
 {
     if (codeModeValue == 3 || codeModeValue == 5)
         return rawSchedulingMode;
     return 0;
 }
 
-bool workTable::setTableRawMode(unsigned char mode)
+bool ScheduleTable::setTableRawMode(unsigned char mode)
 {
     if (codeModeValue != 3 && codeModeValue != 5 && mode) {
         int currentCodeMode = codeModeValue;
@@ -503,7 +504,7 @@ void trackEarliestInsertion(Instr *instruction)
     }
 }
 
-bool workTable::resetFlowStalls()
+bool ScheduleTable::resetFlowStalls()
 {
     declaredRawLength = -1;
     if (rows && rangeStart >= 0) {
@@ -516,13 +517,13 @@ bool workTable::resetFlowStalls()
     return 1;
 }
 
-bool workTable::hasSafeTrailingInstructions()
+bool ScheduleTable::hasSafeTrailingInstructions()
 {
     if (rangeStart < 0)
         return 0;
     if (rangeEnd <= 0)
         return 1;
-    wtRow *row = rowAt(rangeEnd - 1);
+    ScheduleRow *row = rowAt(rangeEnd - 1);
     if (!row)
         return 0;
     Instr *instruction = row->entries[1].instruction;
@@ -542,9 +543,9 @@ bool workTable::hasSafeTrailingInstructions()
     return 1;
 }
 
-Instr **cls_unk30::getIE_ck(int rowIndex)
+Instr **InstructionOwnerTableView::getIE_ck(int rowIndex)
 {
-    workTable *table = (workTable *)this;
+    ScheduleTable *table = (ScheduleTable *)this;
     if (!table->rows) {
         reportError("checkie: table not set\n");
         return 0;
@@ -568,9 +569,9 @@ Instr **cls_unk30::getIE_ck(int rowIndex)
     return (Instr **)&table->rows[rowIndex];
 }
 
-Instr *workTable::getInstr(int rowIndex, int pipelineIndex)
+Instr *ScheduleTable::getInstr(int rowIndex, int pipelineIndex)
 {
-    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rowIndex);
+    Instr **pipelineEntries = ((InstructionOwnerTableView *)this)->getIE_ck(rowIndex);
     if (!pipelineEntries)
         return 0;
     if (pipelineIndex < 0 || pipelineIndex >= 2) {
@@ -591,11 +592,11 @@ static inline Instr *getPipeInstr(Instr **pipelineEntries, int pipelineIndex)
     return pipelineEntries[pipelineIndex];
 }
 
-Instr *workTable::getInstrInRange(int rowIndex, int pipeIndex)
+Instr *ScheduleTable::getInstrInRange(int rowIndex, int pipeIndex)
 {
     if (rowIndex < rangeStart || rowIndex >= rangeEnd)
         return 0;
-    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rowIndex);
+    Instr **pipelineEntries = ((InstructionOwnerTableView *)this)->getIE_ck(rowIndex);
     return getPipeInstr(pipelineEntries, pipeIndex);
 }
 
@@ -627,7 +628,7 @@ const char *allocModeName(unsigned int mode)
     return "ALLOC_MODE_????";
 }
 
-int workTable::getPipeCount(int pipeIndex)
+int ScheduleTable::getPipeCount(int pipeIndex)
 {
     if (pipeIndex < 0 || pipeIndex > 2) {
         reportError("get pipe count - bad pipe\n");
@@ -685,7 +686,7 @@ bool decrementInstructionPipelineCounts(Block *block, Instr *instruction)
     return 1;
 }
 
-void workTable::resetCounts()
+void ScheduleTable::resetCounts()
 {
     instructionCountsByPipe[2] = 0;
     dualPipelineInstructionCount = 0;
@@ -696,7 +697,7 @@ void workTable::resetCounts()
     instructionCountsByPipe[1] = 0;
 }
 
-int workTable::getCurrentDoneSize()
+int ScheduleTable::getCurrentDoneSize()
 {
     if (loopSize)
         return loopSize;
@@ -725,7 +726,7 @@ int workTable::getCurrentDoneSize()
     return size;
 }
 
-bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1, int *minSfx2)
+bool ScheduleTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1, int *minSfx2)
 {
     Instr *instruction = completedInstructions.head;
     *maxLid = -1;
@@ -761,7 +762,7 @@ bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1,
     return 1;
 }
 
-bool workTable::grow(int rowIndex)
+bool ScheduleTable::grow(int rowIndex)
 {
     if (!rows) {
         reportError("can't grow.. there's nothing here\n");
@@ -769,7 +770,7 @@ bool workTable::grow(int rowIndex)
     }
     if (rowIndex <= rowCapacity)
         return 1;
-    wtRow *workRow = new wtRow[rowIndex];
+    ScheduleRow *workRow = new ScheduleRow[rowIndex];
     if (!workRow) {
         reportError("failed to get new tab\n");
         return 0;
@@ -784,14 +785,14 @@ bool workTable::grow(int rowIndex)
     return 1;
 }
 
-bool workTable::hasEmptyRange()
+bool ScheduleTable::hasEmptyRange()
 {
     if (!rows)
         return 1;
     return rangeEnd <= rangeStart;
 }
 
-bool workTable::setRange()
+bool ScheduleTable::setRange()
 {
     if (!rows) {
         reportError("setRange - no table!\n");
@@ -803,7 +804,7 @@ bool workTable::setRange()
     return 1;
 }
 
-bool workTable::setRange(int len)
+bool ScheduleTable::setRange(int len)
 {
     if (!rows) {
         reportError("setRange - no table!\n");
@@ -815,7 +816,7 @@ bool workTable::setRange(int len)
     return 1;
 }
 
-bool workTable::setRange(int startRow, int endRow)
+bool ScheduleTable::setRange(int startRow, int endRow)
 {
     if (!rows) {
         reportError("setRange - no table!\n");
@@ -842,7 +843,7 @@ bool workTable::setRange(int startRow, int endRow)
     return 1;
 }
 
-bool workTable::setSkip(int row, char skip)
+bool ScheduleTable::setSkip(int row, char skip)
 {
     if (row < rangeStart) {
         reportError("setskip - before start\n");
@@ -852,7 +853,7 @@ bool workTable::setSkip(int row, char skip)
         reportError("setskip >= end\n");
         return 0;
     }
-    wtRow *targetRow = rowAt(row);
+    ScheduleRow *targetRow = rowAt(row);
     if (!targetRow) {
         reportError("failed to get ie in setSkip\n");
         return 0;
@@ -861,7 +862,7 @@ bool workTable::setSkip(int row, char skip)
     return 1;
 }
 
-int workTable::getRangeStart()
+int ScheduleTable::getRangeStart()
 {
     if (!rows) {
         const char *modeName = codeModeStr(codeModeValue);
@@ -872,12 +873,12 @@ int workTable::getRangeStart()
     return rangeStart;
 }
 
-int workTable::getLoopSize()
+int ScheduleTable::getLoopSize()
 {
     return loopSize;
 }
 
-int workTable::getRangeEnd()
+int ScheduleTable::getRangeEnd()
 {
     if (!rows) {
         const char *ownerName = ownerStream ? ownerStream->streamName() : "UNOWNED_TABLE";
@@ -888,7 +889,7 @@ int workTable::getRangeEnd()
     return rangeEnd;
 }
 
-bool workTable::changeMode(unsigned char mode)
+bool ScheduleTable::changeMode(unsigned char mode)
 {
     int cur = codeModeValue;
     if (mode == (unsigned char)cur) {
@@ -938,13 +939,13 @@ bool workTable::changeMode(unsigned char mode)
 
 bool insertLinearInstructionAfter(Block *blk, Instr *after, Instr *n);
 
-bool workTable::logAddLinear_After(Instr *after, Instr *insertedInstruction)
+bool ScheduleTable::logAddLinear_After(Instr *after, Instr *insertedInstruction)
 {
     if (!insertedInstruction) {
         reportError("can't add null pointer to linear\n");
         return 0;
     }
-    if (!insertedInstruction->setOwner((cls_unk30 *)this)) {
+    if (!insertedInstruction->setOwner((InstructionOwnerTableView *)this)) {
         reportError("logAddLinear_Head: failed to set owner\n");
         return 0;
     }
@@ -961,13 +962,13 @@ bool workTable::logAddLinear_After(Instr *after, Instr *insertedInstruction)
 
 bool prependLinearInstruction(Block *blk, Instr *n);
 
-bool workTable::logAddLinear_Head(Instr *headInstruction)
+bool ScheduleTable::logAddLinear_Head(Instr *headInstruction)
 {
     if (!headInstruction) {
         reportError("can't add null pointer to linear\n");
         return 0;
     }
-    if (!headInstruction->setOwner((cls_unk30 *)this)) {
+    if (!headInstruction->setOwner((InstructionOwnerTableView *)this)) {
         reportError("logAddLinear_Head: failed to set owner\n");
         return 0;
     }
@@ -984,13 +985,13 @@ bool workTable::logAddLinear_Head(Instr *headInstruction)
 
 bool appendLinearInstruction(Block *blk, Instr *n);
 
-bool workTable::logAddLinear_Tail(Instr *tailInstruction)
+bool ScheduleTable::logAddLinear_Tail(Instr *tailInstruction)
 {
     if (!tailInstruction) {
         reportError("can't add null pointer to linear\n");
         return 0;
     }
-    if (!tailInstruction->setOwner((cls_unk30 *)this)) {
+    if (!tailInstruction->setOwner((InstructionOwnerTableView *)this)) {
         reportError("logAddLinear_Head: failed to set owner\n");
         return 0;
     }
@@ -1005,7 +1006,7 @@ bool workTable::logAddLinear_Tail(Instr *tailInstruction)
     return 1;
 }
 
-bool workTable::makeLinearList()
+bool ScheduleTable::makeLinearList()
 {
     clearLinear();
     if (rangeStart < 0 || !rows) {
@@ -1013,7 +1014,7 @@ bool workTable::makeLinearList()
         return 0;
     }
     for (int rowIndex = rangeStart; rowIndex < rangeEnd; rowIndex++) {
-        Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rowIndex);
+        Instr **pipelineEntries = ((InstructionOwnerTableView *)this)->getIE_ck(rowIndex);
         if (!pipelineEntries) {
             reportError("iTable::makeLinearList - failed to get ientry\n");
             return 0;
@@ -1030,7 +1031,7 @@ bool workTable::makeLinearList()
     return 1;
 }
 
-bool workTable::logUnlinkFromLinear(Instr *instruction)
+bool ScheduleTable::logUnlinkFromLinear(Instr *instruction)
 {
     if (pendingInstructions.count) {
         reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", pendingInstructions.count);
@@ -1048,7 +1049,7 @@ bool workTable::logUnlinkFromLinear(Instr *instruction)
     return 1;
 }
 
-bool workTable::relinkRawIt()
+bool ScheduleTable::relinkRawIt()
 {
     if (!rows) {
         reportError("relinkRawIt() -no table set\n");
@@ -1056,7 +1057,7 @@ bool workTable::relinkRawIt()
     }
     clearLinear();
     for (int rowIndex = rangeStart; rowIndex < rangeEnd; rowIndex++) {
-        wtRow *row = rowAt(rowIndex);
+        ScheduleRow *row = rowAt(rowIndex);
         if (!row) {
             reportError("iTable::makeLinearList - failed to get ientry\n");
             return 0;
@@ -1076,23 +1077,23 @@ bool workTable::relinkRawIt()
     return 1;
 }
 
-bool workTable::lockLine(InstructionPosition *line)
+bool ScheduleTable::lockLine(InstructionPosition *line)
 {
     return 1;
 }
 
-bool workTable::unlockLine(InstructionPosition *line)
+bool ScheduleTable::unlockLine(InstructionPosition *line)
 {
     return 1;
 }
 
-workTable *workTable::localClone()
+ScheduleTable *ScheduleTable::localClone()
 {
     if (codeModeValue != 1) {
         reportError("table to be locally cloned isn't uta\n");
         return 0;
     }
-    workTable *scheduleTable = new workTable;
+    ScheduleTable *scheduleTable = new ScheduleTable;
     if (!scheduleTable) {
         reportError("failed to get new table\n");
         return 0;
@@ -1108,9 +1109,9 @@ workTable *workTable::localClone()
     scheduleTable->allocationMode = allocationModeValue;
     scheduleTable->nextInsertionSerial = 0;
     scheduleTable->ownerStream = ownerStream;
-    regUseList &regs = registerUses;
-    for (regUse *recordedUse = regs.head; recordedUse; recordedUse = recordedUse->next) {
-        regUse *cloned = recordedUse->Clone();
+    RegisterUseList &regs = registerUses;
+    for (RegisterUse *recordedUse = regs.head; recordedUse; recordedUse = recordedUse->next) {
+        RegisterUse *cloned = recordedUse->Clone();
         if (!scheduleTable->registerUses.append(cloned)) {
             reportError("failed to add cloned regref to list\n");
             delete recordedUse;
@@ -1121,13 +1122,13 @@ workTable *workTable::localClone()
         Instr *cloneInstruction = instruction->clone();
         for (int operandIndex = 0; operandIndex != cloneInstruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            RegisterEntry *registerEntry = registerOperand(operand, 1);
             if (registerEntry) {
             int mask = operand->componentMask & ~operand->externalPartMask;
             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 int bit = 1 << partIndex;
                 if (mask & bit) {
-                ol_s *operandLocation = operand->parts[partIndex].operandLocations.head;
+                OperandLocation *operandLocation = operand->parts[partIndex].operandLocations.head;
                 if (!operandLocation || operandLocation->next) {
                     reportError("more or less than one oploc for non-extern input\n");
                     return 0;
@@ -1137,7 +1138,7 @@ workTable *workTable::localClone()
                     reportError("could not get setting op for setter\n");
                     return 0;
                 }
-                instStream *stream = setter->getOwningStream();
+                InstructionStream *stream = setter->getOwningStream();
                 if (stream != ownerStream) {
                     reportError("owner of setter not us %p vs %p\n", setter->ownerTable, this, stream);
                     return 0;
@@ -1167,13 +1168,13 @@ workTable *workTable::localClone()
     return scheduleTable;
 }
 
-bool workTable::replaceInstruction(Instr *old, Instr *newInstruction)
+bool ScheduleTable::replaceInstruction(Instr *old, Instr *newInstruction)
 {
-    if (old->ownerTable != (cls_unk30 *)this) {
+    if (old->ownerTable != (InstructionOwnerTableView *)this) {
         reportError("old instruction isn't in table\n");
         return 0;
     }
-    cls_unk30 *own = newInstruction->ownerTable;
+    InstructionOwnerTableView *own = newInstruction->ownerTable;
     if (own) {
         reportError("replaceInstruction - new instruction already has owner\n");
         return 0;
@@ -1218,13 +1219,13 @@ bool workTable::replaceInstruction(Instr *old, Instr *newInstruction)
             reportError("failed to take out old instruction\n");
             return 0;
         }
-        wtRow *row = &rows[position->loopRow];
+        ScheduleRow *row = &rows[position->loopRow];
         row->entries[position->pipelineIndex].instruction = newInstruction;
     }
     return 1;
 }
 
-bool workTable::destroyInstruction(Instr *&removedInstruction)
+bool ScheduleTable::destroyInstruction(Instr *&removedInstruction)
 {
     if (!logUnlinkFromLinear(removedInstruction)) {
         reportError("destroyInstruction -  failed to unlink\n");
@@ -1234,7 +1235,7 @@ bool workTable::destroyInstruction(Instr *&removedInstruction)
         InstructionPosition *position = &removedInstruction->position;
         int row = position->loopRow;
         int pipe = position->pipelineIndex;
-        Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(row);
+        Instr **pipelineEntries = ((InstructionOwnerTableView *)this)->getIE_ck(row);
         if (!pipelineEntries) {
             reportError("logUnlinkFromLinear: failed to get IE where insn ought to be (line %d.%d)\n", row, pipe);
             return 0;

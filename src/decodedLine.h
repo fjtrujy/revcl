@@ -5,7 +5,7 @@
 
 class Parser;
 class Instr;
-class instStream;
+class InstructionStream;
 struct Program;
 
 // Decoded source-line entry produced by the parser (historical sizeof 0x28).
@@ -30,7 +30,7 @@ DecodedLine *findDecodedLineByLabel(DecodedLine *blocks, int count, const char *
 int maximumDecodedLineFlowId(DecodedLine *blocks, int count);
 DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyntax, int *count);
 bool splitParserStream(Program *p, DecodedLine *blocks, int count);
-bool buildPassThru(Program *program, instStream *s, DecodedLine *blocks, int count);
-bool buildRaw(Program *program, instStream *s, DecodedLine *blocks, int count, int loopMode);
+bool buildPassThru(Program *program, InstructionStream *s, DecodedLine *blocks, int count);
+bool buildRaw(Program *program, InstructionStream *s, DecodedLine *blocks, int count, int loopMode);
 
 #endif

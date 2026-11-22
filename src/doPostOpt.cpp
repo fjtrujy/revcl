@@ -11,7 +11,7 @@
 #include "instStream.h"
 #include "Program.h"
 
-typedef bool (*wrangleFunc)(workTable *, int *);
+typedef bool (*wrangleFunc)(ScheduleTable *, int *);
 
 
 static inline void dumpOptInstruction(Instr *instruction)
@@ -38,7 +38,7 @@ static inline void assignLength(float &dst, int value)
     }
 }
 
-bool workTable::doPostOpt(int rawMode)
+bool ScheduleTable::doPostOpt(int rawMode)
 {
     if (!rows) {
         reportWarning("doPostOpt() - no attached table!\n");
@@ -58,12 +58,12 @@ bool workTable::doPostOpt(int rawMode)
             reportError("doPostOpt - but there's things still to do\n");
             return false;
         }
-        instStream *owner = ownerStream;
+        InstructionStream *owner = ownerStream;
         if (!owner) {
             reportError("doPostOpt - not get owner\n");
             return false;
         }
-        workTable *scheduleTable = owner->getTable();
+        ScheduleTable *scheduleTable = owner->getTable();
         if (!scheduleTable) {
             reportError("failed to get work table from owner\n");
             return false;
@@ -73,7 +73,7 @@ bool workTable::doPostOpt(int rawMode)
             return false;
         }
         int expected;
-        wtInstrList *lin = &linearInstructions;
+        InstructionList *lin = &linearInstructions;
         expected = lin->count;
         int count = 0;
         if (owner->getEndType() == 2) {
@@ -108,12 +108,12 @@ bool workTable::doPostOpt(int rawMode)
         }
         int rowIndex;
         for (rowIndex = rangeStart; rowIndex < rangeEnd; rowIndex++) {
-            Instr **instructionSlot = ((cls_unk30 *)this)->getIE_ck(rowIndex);
+            Instr **instructionSlot = ((InstructionOwnerTableView *)this)->getIE_ck(rowIndex);
             if (!instructionSlot) {
                 reportError("iTable::doPostOpt - failed to get ientry\n");
                 return false;
             }
-            if (((wtRow *)instructionSlot)->skip) {
+            if (((ScheduleRow *)instructionSlot)->skip) {
                 reportError("bSkip is set\n");
                 return false;
             }
@@ -157,7 +157,7 @@ bool workTable::doPostOpt(int rawMode)
                         return false;
                     }
                     if (!rowInstruction->moveRecordWord) {
-                        if (rowInstruction->ownerTable != (cls_unk30 *)this) {
+                        if (rowInstruction->ownerTable != (InstructionOwnerTableView *)this) {
                             reportError("owner not this for non-move...%p\n", rowInstruction->ownerTable);
                             dumpOptInstruction(rowInstruction);
                             return false;
@@ -236,7 +236,7 @@ bool workTable::doPostOpt(int rawMode)
         }
         resetCounts();
         for (rowIndex = rangeStart; rowIndex < rangeEnd; rowIndex++) {
-            Instr **rowInstructionSlots = ((cls_unk30 *)this)->getIE_ck(rowIndex);
+            Instr **rowInstructionSlots = ((InstructionOwnerTableView *)this)->getIE_ck(rowIndex);
             if (!rowInstructionSlots)
                 reportError("can't get ie during postopt\n");
             for (int emissionPipeIndex = 0; emissionPipeIndex != 2; emissionPipeIndex++) {
@@ -258,12 +258,12 @@ bool workTable::doPostOpt(int rawMode)
     return true;
 }
 
-static inline bool isRawTable(workTable *scheduleTable)
+static inline bool isRawTable(ScheduleTable *scheduleTable)
 {
     return scheduleTable->codeModeValue == 3;
 }
 
-bool instStream::setOptTable(workTable *scheduleTable)
+bool InstructionStream::setOptTable(ScheduleTable *scheduleTable)
 {
     if (!scheduleTable) {
         reportError("can't set opt table to null ptr - use clear\n");
@@ -273,7 +273,7 @@ bool instStream::setOptTable(workTable *scheduleTable)
         reportError("setOptTable - table not vsm\n");
         return false;
     }
-    workTable *old = getTable();
+    ScheduleTable *old = getTable();
     if (!old) {
         reportError("no old work table\n");
         return false;
@@ -312,7 +312,7 @@ bool instStream::setOptTable(workTable *scheduleTable)
                 reportError("setOptTable -  cloned image wsn't owned by us\n");
                 return false;
             }
-            workTable *owner = (workTable *)cloneInstruction->ownerTable;
+            ScheduleTable *owner = (ScheduleTable *)cloneInstruction->ownerTable;
             if (owner != getTable()) {
                 reportError("clone owner wasn't our work table\n");
                 return false;

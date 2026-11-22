@@ -11,11 +11,11 @@ int dependencyBuildCount = 0;
 bool flowReset(Program *p);
 bool recalcFlowUIDs(Program *p);
 bool resetProcessorThroughput(Program *p);
-bool emulateAndCollectRegisterUses(Program *p, instStream *s);
+bool emulateAndCollectRegisterUses(Program *p, InstructionStream *s);
 bool initBackTrace(Program *p);
 bool disposeBackTrace(Program *p);
-bool doBackTrace(Program *p, instStream *s, RegPoolEntry *reg, int part, int depth, int mode, bool hot);
-bool buildCrossStreamThroughputPairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b);
+bool doBackTrace(Program *p, InstructionStream *s, RegisterEntry *reg, int part, int depth, int mode, bool hot);
+bool buildCrossStreamThroughputPairs(Program *p, RegisterEntry *reg, int part, InstructionStream *t, void *b);
 
 bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
 {
@@ -24,7 +24,7 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
         reportError("failed to reset cpu\n");
         return false;
     }
-    instStream *streamCursor;
+    InstructionStream *streamCursor;
     for (streamCursor = program->streamHead; streamCursor; streamCursor = streamCursor->nextStream) {
         if (!streamCursor->flowReset()) {
             reportError("failed to flow reset a stream\n");
@@ -58,8 +58,8 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
         return false;
     }
     for (streamCursor = program->streamHead; streamCursor; streamCursor = streamCursor->nextStream) {
-        for (regUse *registerUse = streamCursor->getWorkTable()->registerUses.head; registerUse; registerUse = registerUse->next) {
-            RegPoolEntry *registerEntry = registerUse->registerEntry;
+        for (RegisterUse *registerUse = streamCursor->getWorkTable()->registerUses.head; registerUse; registerUse = registerUse->next) {
+            RegisterEntry *registerEntry = registerUse->registerEntry;
             if (!registerEntry) {
                 reportError("found a reg ref with no reg!\n");
                 return false;
@@ -92,7 +92,7 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
                     return false;
                 }
                 if (program->resolvedStreams) {
-                    for (instStream *resolvedStream = program->resolvedStreams; resolvedStream; resolvedStream = resolvedStream->nextResolvedStream) {
+                    for (InstructionStream *resolvedStream = program->resolvedStreams; resolvedStream; resolvedStream = resolvedStream->nextResolvedStream) {
                         if (!buildCrossStreamThroughputPairs(program, registerEntry, part, resolvedStream, streamCursor)) {
                             reportError("failed to build the tpairs\n");
                             return false;
@@ -117,7 +117,7 @@ bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
 
 bool gatherAllStreamStatistics(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         if (!stream->gatherStats()) {
             reportError("failed to gather stats for the istream\n");
             return false;

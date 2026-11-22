@@ -16,15 +16,15 @@ int countSetBits(unsigned int x);
 bool asciiCaseEqual(const char *a, const char *b);
 char *dupString(const char *s);
 int checkedStringLength(const char *s);
-bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax);
-bool parseImmediate(const char *s, unsigned char type, mValue *v);
+bool oDecodeToken(int kind, char *tok, ImplicitOperandDescription *out, bool newSyntax);
+bool parseImmediate(const char *s, unsigned char type, TypedValue *v);
 RegPool *getRegisterPoolByIndex(unsigned t);
 int expectedSyntaxDiagnosticMode = -1;
 
 Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
 {
     int copyCount;
-    ImplicitOp decodedOperand;
+    ImplicitOperandDescription decodedOperand;
     char buf[0x801];
     char nameBuf[0x400];
     char fmtBuf[0x400];
@@ -39,14 +39,14 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
     Instr *decodedInstruction = 0;
     bool bad = false;
     int mask;
-    iInfo *opcodeInfo;
+    OpcodeDescriptor *opcodeInfo;
     int mods;
     char tilde = 0;
     int operandIndex;
-    char *s = 0;
+    char *expandedRegisterNameCursor = 0;
     int mnemonicLen;
-    char *p;
-    char *q;
+    char *mnemonicCursor;
+    char *loopTagDelimiterCursor;
     bool hasMods;
 
     if (!locationTag) {
@@ -60,35 +60,35 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
     {
         char *tokenSource = locationTag->tokenTextAt(cur);
         char *bufferDestination = buf;
-        p = bufferDestination;
+        mnemonicCursor = bufferDestination;
         for (; *tokenSource && copyCount < 0x800; copyCount++)
             *bufferDestination++ = *tokenSource++;
         *bufferDestination = 0;
     }
-    mods = removeInstructionModifierGroups(p);
-    q = p;
+    mods = removeInstructionModifierGroups(mnemonicCursor);
+    loopTagDelimiterCursor = mnemonicCursor;
     if (buf[0] == '~') {
-        q = buf + 1;
+        loopTagDelimiterCursor = buf + 1;
         tilde = 1;
-        p = q;
+        mnemonicCursor = loopTagDelimiterCursor;
     }
-    while (*q && !(q[0] == '.' && q[1] == '.'))
-        q++;
-    if (*q == '.') {
-        if (*p == '+')
+    while (*loopTagDelimiterCursor && !(loopTagDelimiterCursor[0] == '.' && loopTagDelimiterCursor[1] == '.'))
+        loopTagDelimiterCursor++;
+    if (*loopTagDelimiterCursor == '.') {
+        if (*mnemonicCursor == '+')
             loopid = 0x1024;
         else {
-            loopid = parseInteger(p);
+            loopid = parseInteger(mnemonicCursor);
             if (loopid > 32) {
                 reportUserMessage("unlinkely large loopid set with instruction\n");
                 goto fail;
             }
         }
-        p = q + 2;
+        mnemonicCursor = loopTagDelimiterCursor + 2;
     }
-    opcodeInfo = findOpcodeInfoByMnemonic(p, newSyntax);
+    opcodeInfo = findOpcodeInfoByMnemonic(mnemonicCursor, newSyntax);
     if (!opcodeInfo) {
-        reportUserMessage("vcl can't find instruction '%s'\n", p);
+        reportUserMessage("vcl can't find instruction '%s'\n", mnemonicCursor);
         goto fail;
     }
     cur++;
@@ -102,7 +102,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
     decodedInstruction->tildePrefix = tilde;
     mnemonicLen = checkedStringLength(opcodeInfo->mnemonic);
     {
-        char *suffix = p + mnemonicLen;
+        char *suffix = mnemonicCursor + mnemonicLen;
         bad = false;
         hasMods = parseTrailingComponentMask(suffix, &mask, &bad);
     }
@@ -294,7 +294,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 reportError("oDecode: not find expected register ! regtype= '%d' operand = %d\n", cls, operandIndex);
                 goto fail;
             }
-            s = nameBuf;
+            expandedRegisterNameCursor = nameBuf;
             if (pool->virtualPartCount && visibilityScopes.tail && !pool->findPhysicalByName(decodedOperand.name) && decodedOperand.name[0] != '_') {
                 for (mNode *macroNode = visibilityScopes.tail; macroNode; macroNode = macroNode->previous) {
                     char *macroNameCursor = macroNode->name;
@@ -320,20 +320,20 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                         }
                     }
                     if ((found && macroNode->flags == 0) || (!found && macroNode->flags == 1)) {
-                        s += formatIntoBuffer(s, "%d", (int)(VclPtrWord)macroNode->data);
+                        expandedRegisterNameCursor += formatIntoBuffer(expandedRegisterNameCursor, "%d", (int)(VclPtrWord)macroNode->data);
                         break;
                     }
                 }
             }
-            formatIntoBuffer(s, "%s", decodedOperand.name);
+            formatIntoBuffer(expandedRegisterNameCursor, "%s", decodedOperand.name);
             char *full = dupString(nameBuf);
-            RegPoolEntry *registerEntry = pool->findOrCreateRegister(full);
+            RegisterEntry *registerEntry = pool->findOrCreateRegister(full);
             if (!registerEntry) {
                 reportUserMessage("oDecode: not find register '%s' from %s\n", full, pool->poolName);
                 goto fail;
             }
             if (decodedOperand.forcePhysicalBinding) {
-                RegPoolEntry *base = 0;
+                RegisterEntry *base = 0;
                 if (decodedOperand.physicalRegisterName[0]) {
                     base = pool->findPhysicalByName(decodedOperand.physicalRegisterName);
                     if (!base) {
@@ -361,7 +361,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 registerEntry->assignedPhysicalRegister = base;
                 opd->forcedBaseRegister = base;
             } else if (decodedOperand.physicalRegisterName[0]) {
-                RegPoolEntry *base = pool->findPhysicalByName(decodedOperand.physicalRegisterName);
+                RegisterEntry *base = pool->findPhysicalByName(decodedOperand.physicalRegisterName);
                 if (!base) {
                     reportUserMessage("failed to find base map reg '%s'\n", decodedOperand.physicalRegisterName);
                     goto fail;
@@ -372,7 +372,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 }
                 opd->forcedBaseRegister = base;
             } else if (preferExistingPhysicalRegisters) {
-                RegPoolEntry *physicalRegister = pool->findPhysicalByName(decodedOperand.name);
+                RegisterEntry *physicalRegister = pool->findPhysicalByName(decodedOperand.name);
                 if (physicalRegister && physicalRegister != physicalRegister->ownerPool->zeroRegister)
                     opd->forcedBaseRegister = physicalRegister;
             } else if (registerEntry->isVirtual != 1 && !registerEntry->enabledPhysicalRegister)

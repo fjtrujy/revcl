@@ -14,13 +14,13 @@ static inline const char *lineTypeNameInl(int kind)
     return name;
 }
 
-Line::Line()
+SourceLocationEntry::SourceLocationEntry()
 {
     locationName = 0;
     locationKind = 0;
 }
 
-Line::~Line()
+SourceLocationEntry::~SourceLocationEntry()
 {
     if (locationName)
         delete[] locationName;
@@ -28,7 +28,7 @@ Line::~Line()
     locationKind = 0;
 }
 
-bool Line::setLocation(const char *name, int kind)
+bool SourceLocationEntry::setLocation(const char *name, int kind)
 {
     if (locationName)
         delete[] locationName;
@@ -39,7 +39,7 @@ bool Line::setLocation(const char *name, int kind)
     return true;
 }
 
-void Line::clearLocation()
+void SourceLocationEntry::clearLocation()
 {
     if (locationName)
         delete[] locationName;
@@ -47,7 +47,7 @@ void Line::clearLocation()
     locationKind = 0;
 }
 
-void Line::dumpLocation()
+void SourceLocationEntry::dumpLocation()
 {
     if (locationName) {
         int kind = locationKind;
@@ -56,7 +56,7 @@ void Line::dumpLocation()
         reportMessage("[EMPTY_LOCTAG]");
 }
 
-const char *Line::typeName(int kind)
+const char *SourceLocationEntry::typeName(int kind)
 {
     return lineTypeNameInl(kind);
 }

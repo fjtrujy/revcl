@@ -9,10 +9,10 @@
 #include "os.h"
 #include "decodedLine.h"
 
-Instr *addXinFor(instStream *s, RegPoolEntry *r);
-Instr *addXoutFor(instStream *s, RegPoolEntry *r);
-bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int flag);
-RegPoolEntry *getTagRegister(RegPool *pool, char *name);
+Instr *addXinFor(InstructionStream *s, RegisterEntry *r);
+Instr *addXoutFor(InstructionStream *s, RegisterEntry *r);
+bool addNewOperand(Instr *in, RegisterEntry *r, int bits, int kind, int dir, int flag);
+RegisterEntry *getTagRegister(RegPool *pool, char *name);
 int getPoolsByClassID(int cls, RegPool **tab, int max);
 RegPool *getRegisterPoolByIndex(unsigned t);
 const char *getUniqueName(Program *p);
@@ -20,8 +20,8 @@ int checkedStringLength(const char *s);
 bool expandRawTables(Program *p);
 bool resolveStreamBranches(Program *p);
 bool recalcFlowUIDs(Program *p);
-bool buildUta(Program *program, instStream *s, DecodedLine *blocks, int count);
-bool buildSynth(Program *program, instStream *s, DecodedLine *blocks, int count);
+bool buildUta(Program *program, InstructionStream *s, DecodedLine *blocks, int count);
+bool buildSynth(Program *program, InstructionStream *s, DecodedLine *blocks, int count);
 bool bindDependencies(Program *p);
 
 #endif

@@ -156,7 +156,7 @@ static inline bool testPathBit(VisitCache *visitCache, int rec, int bit)
 void dumpBacktracePathKey(Program *program, int key)
 {
     reportInfo("dumping path key '%d'\n", key);
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         if (testPathBit(&program->backTraceVisitCache, key, stream->streamId))
             reportInfo("    %d: %s\n", stream->streamName());
     }

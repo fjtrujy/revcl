@@ -1,32 +1,32 @@
 #include "os.h"
 #include "backTrace_shared.h"
 
-static inline regUseSlot *registerPart(regUse *registerUse, int part)
+static inline regUseSlot *registerPart(RegisterUse *registerUse, int part)
 {
     return &registerUse->slots[part];
 }
 
-static inline short *thruputTimes(regUse *registerUse, int part)
+static inline short *thruputTimes(RegisterUse *registerUse, int part)
 {
     return &registerUse->slots[part].timingValues[10];
 }
 
-static inline int thruputTail(instStream *stream, regUse *registerUse, int part)
+static inline int thruputTail(InstructionStream *stream, RegisterUse *registerUse, int part)
 {
     int last = registerUse->slots[part].timingValues[10];
     int length = stream->backtraceDependencyLength;
     return length - last;
 }
 
-bool addThroughputStalls(Program *program, instStream *targetStream, RegPoolEntry *registerEntry, int part)
+bool addThroughputStalls(Program *program, InstructionStream *targetStream, RegisterEntry *registerEntry, int part)
 {
-    regUse *registerUse = targetStream->backtraceRegisterUse;
+    RegisterUse *registerUse = targetStream->backtraceRegisterUse;
     if (!registerUse) {
         reportError("bThru enabled - but no btRegRef in the target!\n");
         return false;
     }
-    for (instStream *sourceStream = program->sourceStreams; sourceStream; sourceStream = sourceStream->nextSourceStream) {
-        regUse *sourceRegisterUse = sourceStream->backtraceRegisterUse;
+    for (InstructionStream *sourceStream = program->sourceStreams; sourceStream; sourceStream = sourceStream->nextSourceStream) {
+        RegisterUse *sourceRegisterUse = sourceStream->backtraceRegisterUse;
         if (!sourceRegisterUse) {
             reportError("no btRegRef for something on the match list %s.%d target=%s stream is %s!\n",
                           registerEntry->registerName(), part, targetStream->streamName(), sourceStream->streamName());
@@ -37,11 +37,11 @@ bool addThroughputStalls(Program *program, instStream *targetStream, RegPoolEntr
             reportError("minimal path key was bad\n");
             return false;
         }
-        ol_s *location = registerPart(sourceRegisterUse, part)->sourceLocations.head;
+        OperandLocation *location = registerPart(sourceRegisterUse, part)->sourceLocations.head;
         if (!location)
             reportError("there's no local setters for thruput chase for ext setter\n");
         for (; location; location = location->next) {
-            ol_s *newInputLocation = registerUse->slots[part].externalInputLocations.copyOperandLocation(location, true);
+            OperandLocation *newInputLocation = registerUse->slots[part].externalInputLocations.copyOperandLocation(location, true);
             if (!newInputLocation) {
                 reportError("failed to add an external setter\n");
                 return false;
@@ -54,7 +54,7 @@ bool addThroughputStalls(Program *program, instStream *targetStream, RegPoolEntr
             return false;
         }
         for (; location; location = location->next) {
-            ol_s *newSourceLocation = sourceRegisterUse->slots[part].externalSourceLocations.copyOperandLocation(location, true);
+            OperandLocation *newSourceLocation = sourceRegisterUse->slots[part].externalSourceLocations.copyOperandLocation(location, true);
             if (!newSourceLocation) {
                 reportError("failed to add post setter!\n");
                 return false;
@@ -76,7 +76,7 @@ bool addThroughputStalls(Program *program, instStream *targetStream, RegPoolEntr
             last = lastAddress[1];
             if (dist < last) {
                 regUseSlot *slot = &sourceRegisterUse->slots[part];
-                ol_s *setter = slot->findPreviousOutputAtPosition(0, true);
+                OperandLocation *setter = slot->findPreviousOutputAtPosition(0, true);
                 int again = lastAddress[1];
                 if (!program->proc.stalls.addStall(setter, registerUse->slots[part].sourceLocations.head, 1,
                                         again - dist)) {

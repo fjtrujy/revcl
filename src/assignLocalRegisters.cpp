@@ -10,7 +10,7 @@ bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
 int countSetBits(unsigned int);
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 bool lockLiveRange(RegisterPartLockList *ll, OperandLock *lk, int *s, int *e);
 
 
@@ -36,7 +36,7 @@ extern const char setInATabCheckError[];
 extern const char setInATabLocalIdError[];
 extern const char setInATabVirtualError[];
 
-bool assignLocalRegisters(Program *program, workTable *table)
+bool assignLocalRegisters(Program *program, ScheduleTable *table)
 {
     int len = table->getPhysicalLen();
     if (len < 0) {
@@ -94,7 +94,7 @@ void genRegPool::clearRegisterAllocationMask()
     clearRawBytes(registerPartAvailabilityMask, 0x20);
 }
 
-bool genRegPool::buildCandidateRegisterTimeline(RegPoolEntry *registerEntry, unsigned char mask)
+bool genRegPool::buildCandidateRegisterTimeline(RegisterEntry *registerEntry, unsigned char mask)
 {
     clearRawBytes(candidateRegisterTimeline, 0x1000);
     if (!mask)
@@ -197,7 +197,7 @@ bool genRegPool::initializeAllocationTimeline(int start, int end)
         reportError(initAllocTooBigError);
         return false;
     }
-    RegPoolEntry *registerEntry = registerEntries;
+    RegisterEntry *registerEntry = registerEntries;
     if (!registerEntry) {
         reportError("RegPool:Dump - no table?\n");
         return false;
@@ -224,8 +224,8 @@ bool genRegPool::initializeAllocationTimeline(int start, int end)
 void genRegPool::dumpCandidateRegisterTimeline()
 {
     for (int timelineIndex = allocationTimelineStart; timelineIndex < allocationTimelineEnd; timelineIndex++) {
-        char c = candidateRegisterTimeline[timelineIndex];
-        if (c)
+        char candidateTimelineByte = candidateRegisterTimeline[timelineIndex];
+        if (candidateTimelineByte)
             ;
     }
 }
@@ -315,9 +315,9 @@ int genRegPool::chooseLowestCostRegister()
     return which;
 }
 
-bool genRegPool::allocateRegisterUseInTimeline(regUse *registerUse)
+bool genRegPool::allocateRegisterUseInTimeline(RegisterUse *registerUse)
 {
-    RegPoolEntry *registerEntry = registerUse->registerEntry;
+    RegisterEntry *registerEntry = registerUse->registerEntry;
     if (!registerEntry) {
         reportError("regref had no register\n");
         return false;

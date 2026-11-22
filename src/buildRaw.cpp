@@ -8,17 +8,17 @@
 extern int errorOccurred;
 extern bool quietDiagnostics;
 void resetRange();
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 char *dupString(const char *s);
 
-static inline void dumpRow(wtRow *row)
+static inline void dumpRow(ScheduleRow *row)
 {
     row->refreshInstructionOperands(-1);
 }
 
-bool buildRaw(Program *program, instStream *targetStream, DecodedLine *blocks, int count, int loopMode)
+bool buildRaw(Program *program, InstructionStream *targetStream, DecodedLine *blocks, int count, int loopMode)
 {
-    workTable *scheduleTable = &targetStream->sourceTable;
+    ScheduleTable *scheduleTable = &targetStream->sourceTable;
     if (!scheduleTable) {
         reportError("build: failed to get input table from ist\n");
         return false;
@@ -56,7 +56,7 @@ bool buildRaw(Program *program, instStream *targetStream, DecodedLine *blocks, i
             }
             continue;
         }
-        wtRow *row = scheduleTable->getRowByIndex(rows);
+        ScheduleRow *row = scheduleTable->getRowByIndex(rows);
         if (!row) {
             reportError("failed to get ied\n");
             return false;
@@ -109,7 +109,7 @@ bool buildRaw(Program *program, instStream *targetStream, DecodedLine *blocks, i
                 branch = decodedInstruction;
             }
             row->entries[instructionIndex].instruction = decodedInstruction;
-            decodedInstruction->setOwner((cls_unk30 *)scheduleTable);
+            decodedInstruction->setOwner((InstructionOwnerTableView *)scheduleTable);
             valid++;
             instructionCount++;
         }
@@ -152,7 +152,7 @@ bool buildRaw(Program *program, instStream *targetStream, DecodedLine *blocks, i
     setRangeFrom(scheduleTable);
     int maxLid = 0;
     for (decodedLineIndex = 0; decodedLineIndex != rows; decodedLineIndex++) {
-        wtRow *row = scheduleTable->getRowByIndex(decodedLineIndex);
+        ScheduleRow *row = scheduleTable->getRowByIndex(decodedLineIndex);
         if (!row) {
             reportError("failed to get ie from table\n");
             return false;

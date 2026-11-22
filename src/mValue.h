@@ -1,8 +1,8 @@
-// Small typed value: int tag + owned string (class name guessed).
+// Tagged numeric/string value, with ownership of STRING storage.
 #ifndef MVALUE_H
 #define MVALUE_H
 
-class mValue {
+class TypedValue {
 public:
     enum { NONE, UINT, INT, FLOAT, STRING };
     unsigned int type;  // STRING owns a new[] buffer
@@ -13,18 +13,18 @@ public:
         char *str;
     };
 
-    mValue();
-    mValue(unsigned int initialType)
+    TypedValue();
+    TypedValue(unsigned int initialType)
     {
         str = 0;
         type = initialType;
     }
-    ~mValue();
+    ~TypedValue();
     void clear();
     bool getFloat(float *out);
     bool getUInt(unsigned int *out);
     bool getInt(int *out);
-    bool set(mValue *src);
+    bool set(TypedValue *src);
     bool setInt(int newValue);
     bool setString(const char *s);
     bool setString(const char *s, int n);
@@ -34,10 +34,10 @@ public:
     bool isNumeric();
     bool isInt();
     bool isFloat();
-    bool negate(mValue *src);
-    bool abs(mValue *src);
-    bool logicalNot(mValue *src);
-    bool bitNot(mValue *src);
+    bool negate(TypedValue *src);
+    bool abs(TypedValue *src);
+    bool logicalNot(TypedValue *src);
+    bool bitNot(TypedValue *src);
     bool parse(const char *literalText);
     void dump();
     char *getString();
@@ -45,18 +45,18 @@ public:
     char *asChars();
 };
 
-bool addValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool subtractValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool multiplyValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool divideValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool moduloValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool shiftValuesLeft(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool shiftValuesRight(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool logicalOrValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool logicalAndValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool bitwiseAndValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool bitwiseOrValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool bitwiseXorValues(mValue *dst, mValue *leftValue, mValue *rightValue);
-bool sameImmediateValue(mValue *leftValue, mValue *rightValue);
+bool addValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool subtractValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool multiplyValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool divideValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool moduloValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool shiftValuesLeft(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool shiftValuesRight(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool logicalOrValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool logicalAndValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool bitwiseAndValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool bitwiseOrValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool bitwiseXorValues(TypedValue *dst, TypedValue *leftValue, TypedValue *rightValue);
+bool sameImmediateValue(TypedValue *leftValue, TypedValue *rightValue);
 
 #endif

@@ -4,13 +4,13 @@
 #include "Block.h"
 #include "wrangle.h"
 
-typedef bool (*wrangleFunc)(workTable *, int *);
+typedef bool (*wrangleFunc)(ScheduleTable *, int *);
 
 void adjustMoveCount(Block *blk, Instr *mv, int n);
 extern int optimizationTimeoutSeconds;
 
 
-bool selectDumbSchedulingCandidate(workTable *scheduleTable, wrangleCand *candidate)
+bool selectDumbSchedulingCandidate(ScheduleTable *scheduleTable, wrangleCand *candidate)
 {
     Instr *best = 0;
     int min = 0x7fffffff;
@@ -30,7 +30,7 @@ bool selectDumbSchedulingCandidate(workTable *scheduleTable, wrangleCand *candid
     return true;
 }
 
-bool selectLoopDumbSchedulingCandidate(workTable *scheduleTable, wrangleCand *candidate)
+bool selectLoopDumbSchedulingCandidate(ScheduleTable *scheduleTable, wrangleCand *candidate)
 {
     Instr *best = 0;
     int min = 0x7fffffff;

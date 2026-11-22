@@ -1,24 +1,24 @@
 #ifndef IGROUPLIST_H
 #define IGROUPLIST_H
 
-struct iGroupNode {
-    iGroupNode *next;
+struct InstructionGroupNode {
+    InstructionGroupNode *next;
     void *itemPointer;
     int itemSize;
 
     enum InitTag { INIT };
-    iGroupNode();
-    inline iGroupNode(InitTag);
-    ~iGroupNode();
+    InstructionGroupNode();
+    inline InstructionGroupNode(InitTag);
+    ~InstructionGroupNode();
 };
 
 // "igrouplist::init - first set!"
-class iGroupList {
+class InstructionGroupList {
 public:
-    iGroupNode *head;
+    InstructionGroupNode *head;
 
-    iGroupList();
-    ~iGroupList();
+    InstructionGroupList();
+    ~InstructionGroupList();
     void init();
     void clear();
     bool add(void *p, int sz);

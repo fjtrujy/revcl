@@ -8,49 +8,49 @@
 #include "regUseSlot.h"
 #include "wtEntry.h"
 
-struct ol_s;
-class instStream;
-struct RegPoolEntry;
+struct OperandLocation;
+class InstructionStream;
+struct RegisterEntry;
 
-struct regUse {
-    regUse *previous;
-    regUse *next;
-    RegPoolEntry *registerEntry;
+struct RegisterUse {
+    RegisterUse *previous;
+    RegisterUse *next;
+    RegisterEntry *registerEntry;
     unsigned char externalInputMask;
     unsigned char externalOutputMask;
     unsigned char inputMask;
     unsigned char outputMask;
     unsigned char throughputMask;
-    bool unk_11;
+    bool copiedRegisterUseFlag;
     unsigned char hazardMask;
     unsigned char sourcePathHazardMask;
     unsigned char hazardBroadcastMask;
     char externalBlockMode;
-    short unk_16;
+    short copiedRegisterUseMetadata;
     short recordedOutputWriteCount;
     Instr *definingInstruction;
     regUseSlot slots[4];
 
-    regUse(RegPoolEntry *reg);
-    ~regUse();
+    RegisterUse(RegisterEntry *reg);
+    ~RegisterUse();
     void validateAndDumpParts();
-    regUse *nextReal();
-    regUse *nextVirtual();
+    RegisterUse *nextReal();
+    RegisterUse *nextVirtual();
     bool optReset();
-    regUse *Clone();
+    RegisterUse *Clone();
     const char *regName();
 
     bool isExternal() { return externalInputMask || externalOutputMask || throughputMask; }
 };
 
-class regUseList {
+class RegisterUseList {
 public:
-    regUseList();
-    ~regUseList();
+    RegisterUseList();
+    ~RegisterUseList();
     bool clear();
-    regUse *addRegisterUse(RegPoolEntry *reg);
-    bool append(regUse *ru);
-    bool remove(regUse *ru);
+    RegisterUse *addRegisterUse(RegisterEntry *reg);
+    bool append(RegisterUse *ru);
+    bool remove(RegisterUse *ru);
     bool hasConsistentCount();
     bool hasEntries();
     void dumpRegisterUses();
@@ -58,16 +58,16 @@ public:
     int countUncoveredRegisterClassUses(int regClass);
     void dumpVirtualRegisterUses();
     void dumpRegisterClassAllocations(int regClass);
-    regUse *findByRegister(RegPoolEntry *reg);
-    regUse *firstReal();
-    regUse *firstVirtual();
+    RegisterUse *findByRegister(RegisterEntry *reg);
+    RegisterUse *firstReal();
+    RegisterUse *firstVirtual();
     bool optReset();
 
-    regUse *find(RegPoolEntry *reg)
+    RegisterUse *find(RegisterEntry *reg)
     {
         if (!reg)
             return 0;
-        regUse *p = head;
+        RegisterUse *p = head;
         while (p) {
             if (reg == p->registerEntry)
                 break;
@@ -77,20 +77,20 @@ public:
     }
 
     int count;
-    regUse *head;
-    regUse *tail;
+    RegisterUse *head;
+    RegisterUse *tail;
 };
 
-struct wtRow {
+struct ScheduleRow {
     wtEntryInl entries[2];
     char skip;
     unsigned char maxStallLength;
     unsigned char stallTypeMask;
-    char unk_0b;
+    char reservedWorkRowStallByte;
     short cycleTime;
 
-    wtRow();
-    ~wtRow();
+    ScheduleRow();
+    ~ScheduleRow();
     bool clearEntries();
     void refreshInstructionOperands(int);
     Instr *getEntry(int p);
@@ -100,23 +100,23 @@ struct wtRow {
     bool clearStalls();
     void resetStallMetadata();
     bool addStall(int type, int len);
-    int outputMaskFor(RegPoolEntry *registerEntry, unsigned char mask);
-    int outputMask(RegPoolEntry *reg) { return outputMaskFor(reg, 0xff); }
-    int inputMaskFor(RegPoolEntry *registerEntry, unsigned char mask);
+    int outputMaskFor(RegisterEntry *registerEntry, unsigned char mask);
+    int outputMask(RegisterEntry *reg) { return outputMaskFor(reg, 0xff); }
+    int inputMaskFor(RegisterEntry *registerEntry, unsigned char mask);
     unsigned int getMinimumExtraLatencyAge();
     char *emit(char *outputBuffer, int flags, bool upper, bool unused);
 };
 
-struct wtInstrList {
+struct InstructionList {
     Instr *head;
     Instr *tail;
     int count;
 
-    wtInstrList() { tail = 0; count = 0; head = 0; }
+    InstructionList() { tail = 0; count = 0; head = 0; }
     void reset() { tail = 0; count = 0; head = 0; }
     Instr *first() { return head; }
     Instr *last() { return tail; }
-    ~wtInstrList() { tail = 0; head = 0; count = 0; }
+    ~InstructionList() { tail = 0; head = 0; count = 0; }
 };
 
 inline const char *codeModeStr(int mode)
@@ -133,11 +133,11 @@ inline const char *codeModeStr(int mode)
     return "CODE_MODE_????";
 }
 
-class workTable {
+class ScheduleTable {
 public:
     int optimizerIndex;
     short maximumDynamicStartRow;
-    short unk_06;  // dynamic statistics high-watermark (written as a short)
+    short resetOnlyDynamicStatisticsMarker;  // dynamic statistics high-watermark (written as a short)
     char allocationMode;
     unsigned char codeModeValue;
     unsigned char rawSchedulingMode;
@@ -145,48 +145,48 @@ public:
     unsigned char codeMode() { return codeModeValue; }
     char postOptimizationPrepared;
     int declaredRawLength;
-    instStream *ownerStream;
-    regUseList registerUses;
+    InstructionStream *ownerStream;
+    RegisterUseList registerUses;
     int registerLockListCount;
-    cls0805c244 *registerLockLists;
+    RegisterPartLockList *registerLockLists;
     int rowCapacity;
-    wtRow *rows;
+    ScheduleRow *rows;
     int rangeStart;
     int rangeEnd;
     int loopSize;
     int mainLoopId;
     int nextInsertionSerial;
     int externalMinimumLength;
-    char unk_48[4];
+    char reservedWorkTableAllocationBytes[4];
     Instr *moveListHead;
     int pendingMoveCount;
-    cls08058718 lastScheduledPosition;
-    cls0805e2e4 statistics;
+    InstructionPosition lastScheduledPosition;
+    SchedulingStatistics statistics;
     short streamDependencyLength;
     short streamLogicalLength;
     short logicalInstructionLength;
     short minimumSafeLoopCount;
     short recordedMaximumBranchLoopId;
-    char unk_7e[2];
+    char reservedWorkTableLoopBytes[2];
     short fallbackAdjustedLoopLimit;
     short fallbackAbsoluteLoopLimit;
     Instr *loopBoundaryInstruction;
-    wtInstrList linearInstructions;     // linear list
-    wtInstrList pendingInstructions;
-    wtInstrList completedInstructions;
+    InstructionList linearInstructions;     // linear list
+    InstructionList pendingInstructions;
+    InstructionList completedInstructions;
     char fallbackSchedulingActive;
     char movePipeCapacityExceeded;
-    char unk_ae[2];
+    char reservedWorkTableQueueBytes[2];
     int vectorMoveCount;             // move count, class 3
     int oddPipeMoveCount;             // move count, odd class
     int evenPipeMoveCount;             // move count, even class
     int dualPipelineInstructionCount;
     int instructionCountsByPipe[3];          // per-pipe instr counts, [2] = total in table
 
-    wtRow *getRowByIndex(int i);
-    wtRow *rowAt(int i)
+    ScheduleRow *getRowByIndex(int i);
+    ScheduleRow *rowAt(int i)
     {
-        wtRow *r;
+        ScheduleRow *r;
         if (!rows)
             r = 0;
         else if (i < 0 || i >= rowCapacity)
@@ -195,8 +195,8 @@ public:
             r = &rows[i];
         return r;
     }
-    workTable();
-    ~workTable();
+    ScheduleTable();
+    ~ScheduleTable();
     Instr *getBranch();
     bool removeBranch();
     bool unlinkAndUnlog(Instr *in);
@@ -248,14 +248,14 @@ public:
     bool logAddLinear_Tail(Instr *n);
     bool makeLinearList();
     bool relinkRawIt();
-    bool lockLine(cls08058718 *line);
-    bool unlockLine(cls08058718 *line);
-    bool queueRegisterUse(regUse *ru);
-    cls0805c244 *getLockList(RegPoolEntry *reg, int part);
+    bool lockLine(InstructionPosition *line);
+    bool unlockLine(InstructionPosition *line);
+    bool queueRegisterUse(RegisterUse *ru);
+    RegisterPartLockList *getLockList(RegisterEntry *reg, int part);
     bool queueInstruction(Instr *in);
-    bool forceInsert(Instr *in, cls08058718 *position);
+    bool forceInsert(Instr *in, InstructionPosition *position);
     bool doPostOpt(int rawMode);
-    workTable *localClone();
+    ScheduleTable *localClone();
     int ctime(int l)
     {
         if (l < rangeStart || l >= rangeEnd)
@@ -279,7 +279,8 @@ const char *codeModeName(int mode);
 const char *rawModeName(int mode);
 const char *allocModeName(unsigned int mode);
 
-bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bool a6, bool a7);
+bool cloneAppend(ScheduleTable *from, ScheduleTable *to, int lidS, int lidE,
+                 bool includeBranches, bool adjustCloneAliasLoopId, bool includeNops);
 extern Instr *earliestInsertionInstruction;   // instr with smallest insertionSerial
 void trackEarliestInsertion(Instr *in);
 

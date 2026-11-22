@@ -12,7 +12,7 @@ int normal2RegCost(Instr *in);
 int vuta1RegCost(Instr *in);
 
 
-bool optVuta(workTable *scheduleTable, wrangleCand *candidate)
+bool optVuta(ScheduleTable *scheduleTable, wrangleCand *candidate)
 {
     Instr *instruction = scheduleTable->moveListHead;
     Instr *best = 0;
@@ -58,7 +58,7 @@ int vutaRegCost(Instr *instruction)
 {
     int cost = 0;
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
-        RegPoolEntry *registerEntry = instruction->operands[operandIndex].inRegOp2();
+        RegisterEntry *registerEntry = instruction->operands[operandIndex].inRegOp2();
         if (registerEntry) {
             switch (registerEntry->registerIndex) {
             case 55:

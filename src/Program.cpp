@@ -55,9 +55,9 @@ bool Program::initializeProgram(CpuDef *cpu, const char *uniqueName, bool unique
 
 bool Program::dispose()
 {
-    instStream *stream = streamHead;
+    InstructionStream *stream = streamHead;
     while (stream) {
-        instStream *next = stream->nextStream;
+        InstructionStream *next = stream->nextStream;
         stream->reset();
         delete stream;
         stream = next;
@@ -74,7 +74,7 @@ bool Program::dispose()
 }
 
 
-bool Program::addStream(instStream *stream)
+bool Program::addStream(InstructionStream *stream)
 {
     if (!stream)
         return false;
@@ -98,7 +98,7 @@ bool Program::addStream(instStream *stream)
     return true;
 }
 
-bool Program::insertStreamAfter(instStream *after, instStream *stream)
+bool Program::insertStreamAfter(InstructionStream *after, InstructionStream *stream)
 {
     if (!stream)
         return false;
@@ -125,7 +125,7 @@ bool Program::insertStreamAfter(instStream *after, instStream *stream)
     return true;
 }
 
-bool Program::removeStream(instStream *stream)
+bool Program::removeStream(InstructionStream *stream)
 {
     if (stream->owningProgram != this) {
         reportError("didn't have owner! or not us!\n");
@@ -148,42 +148,42 @@ bool Program::removeStream(instStream *stream)
 
 void dumpProgramStreamsAndRegisters(Program *program, int dumpFlags)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream)
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream)
         stream->dump(dumpFlags);
     dumpProcessorRegisterPools(program);
 }
 
-instStream *Program::findStreamById(int streamId)
+InstructionStream *Program::findStreamById(int streamId)
 {
-    instStream *stream;
+    InstructionStream *stream;
     for (stream = streamHead; stream && stream->streamId != streamId; stream = stream->nextStream)
         ;
     return stream;
 }
 
-instStream *Program::findStream(const char *name)
+InstructionStream *Program::findStream(const char *name)
 {
     if (!name)
         return 0;
-    instStream *stream;
+    InstructionStream *stream;
     for (stream = streamHead; stream && !stream->labels.findByNameIgnoreCase(name); stream = stream->nextStream)
         ;
     return stream;
 }
 
-bool Program::retarget(instStream *from, instStream *stream)
+bool Program::retarget(InstructionStream *from, InstructionStream *stream)
 {
     if (from == stream)
         return true;
-    linkNode *next;
-    for (linkNode *incomingLink = from->inputLinks.head; incomingLink; incomingLink = next) {
+    StreamLinkNode *next;
+    for (StreamLinkNode *incomingLink = from->inputLinks.head; incomingLink; incomingLink = next) {
         next = incomingLink->next;
-        instStream *predecessorStream = incomingLink->otherStream;
+        InstructionStream *predecessorStream = incomingLink->otherStream;
         if (!predecessorStream) {
             reportError("null ist pointer found on ist list\n");
             return false;
         }
-        linkNode *outgoingLink = predecessorStream->outputLinks.findLinkToStream(from, incomingLink->linkType);
+        StreamLinkNode *outgoingLink = predecessorStream->outputLinks.findLinkToStream(from, incomingLink->linkType);
         if (!outgoingLink) {
             reportError("Retarget:: failed to find matching output\n");
             return false;
@@ -255,7 +255,7 @@ bool Program::decodeAndSplitStreams(Parser *parser, int buildType, bool newSynta
 
 bool patchAllStreamLatencies(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         if (!stream->patchLatencies())
             reportError("flowMon::PatchLatencies - failed for '%s'\n", stream->streamName());
     }
@@ -264,7 +264,7 @@ bool patchAllStreamLatencies(Program *program)
 
 char *emitProgram(Program *program, char *outputBuffer, int comments)
 {
-    instStream *stream;
+    InstructionStream *stream;
     int total = 0;
     if (!outputBuffer) {
         reportError("flowMon::Emit - null output pointer\n");
@@ -329,7 +329,7 @@ const char *getUniqueName(Program *program)
 
 char *emitLabels(Program *program, char *outputBuffer)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         outputBuffer = stream->emitLabels(outputBuffer);
         if (!outputBuffer) {
             reportError("failed to emit user labels for '%s'\n", stream->streamName());
@@ -341,16 +341,16 @@ char *emitLabels(Program *program, char *outputBuffer)
 
 bool isReferencedLabel(Program *program, char *name)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         if (stream->startType == 2) {
-            linkNode *outputLink = stream->outputLinks.head;
+            StreamLinkNode *outputLink = stream->outputLinks.head;
             if (outputLink) {
-                linkNode *next = outputLink->next;
+                StreamLinkNode *next = outputLink->next;
                 if (next) {
                     reportError("found entry point with more than one exit\n");
                     exitAfterCleanup(-1);
                 }
-                instStream *targetStream = outputLink->otherStream;
+                InstructionStream *targetStream = outputLink->otherStream;
                 if (!targetStream) {
                     reportError("no stream for ir\n");
                     exitAfterCleanup(-1);
@@ -368,7 +368,7 @@ bool isReferencedLabel(Program *program, char *name)
     return program->uniqueNamePrefixes.findByExactName(name) != 0;
 }
 
-bool streamExportsSymbol(Program *program, instStream *stream)
+bool streamExportsSymbol(Program *program, InstructionStream *stream)
 {
     mList *streamLabels = &stream->labels;
     for (mNode *labelNode = streamLabels->head; labelNode; labelNode = labelNode->next) {
@@ -385,7 +385,7 @@ bool isExportedSymbol(Program *program, char *name)
 
 bool recalcFlowUIDs(Program *program)
 {
-    instStream *stream = program->streamHead;
+    InstructionStream *stream = program->streamHead;
     int streamIndex = 0;
     program->flowIdCount = -1;
     for (; stream; stream = stream->nextStream) {
@@ -405,7 +405,7 @@ bool recalcFlowUIDs(Program *program)
         delete program->streamsById;
         program->streamsById = 0;
     }
-    program->streamsById = new instStream *[size];
+    program->streamsById = new InstructionStream *[size];
     if (!program->streamsById) {
         reportError("failed to get a new linear table\n");
         return false;
@@ -421,8 +421,8 @@ bool resetProgramAllocationsForFirstPass(Program *program)
         reportError("failed to alloc reset the cpu\n");
         return false;
     }
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *table = stream->getTable();
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        ScheduleTable *table = stream->getTable();
         if (!table) {
             reportError("failed to get work table\n");
             return false;
@@ -441,19 +441,19 @@ bool resetProgramAllocationsForSecondPass(Program *program)
     return true;
 }
 
-static inline void printNamedLink(const char *fmt, linkNode *link, const char *name)
+static inline void printNamedLink(const char *fmt, StreamLinkNode *link, const char *name)
 {
     int other = link->otherStream->streamId;
     const char *type = linkTypeName(link->linkType);
     reportInfo(fmt, type, other, name);
 }
 
-static inline bool isEntryStream(instStream *stream) { return stream->startType == 2; }
-static inline bool isExitStream(instStream *stream) { return stream->endType == 3; }
+static inline bool isEntryStream(InstructionStream *stream) { return stream->startType == 2; }
+static inline bool isExitStream(InstructionStream *stream) { return stream->endType == 3; }
 
 void dumpFlow(Program *program)
 {
-    instStream *stream = program->streamHead;
+    InstructionStream *stream = program->streamHead;
     reportInfo("dumpFlow-------------------\n");
     for (; stream; stream = stream->nextStream) {
         const char *tag = "";
@@ -464,7 +464,7 @@ void dumpFlow(Program *program)
         bool fallThrough = false;
         int streamId = stream->streamId;
         reportInfo("[%5d] %s %s   <--\n", streamId, stream->streamName(), tag);
-        linkNode *link;
+        StreamLinkNode *link;
         for (link = stream->inputLinks.head; link; link = link->next) {
             if (link->linkType) {
                 const char *name = link->otherStream->streamName();

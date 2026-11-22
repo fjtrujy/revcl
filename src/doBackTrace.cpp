@@ -48,7 +48,7 @@ static inline void dumpBackTrace(Program *program)
     dumpProgramStreamsAndRegisters(program, 0);
 }
 
-bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *registerEntry, int part, int earliestUse, int ioMode, bool thruput)
+bool doBackTrace(Program *program, InstructionStream *targetStream, RegisterEntry *registerEntry, int part, int earliestUse, int ioMode, bool thruput)
 {
     if (!targetStream || !registerEntry) {
         reportError("doBackTrace - null arg\n");
@@ -76,7 +76,7 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *regis
     program->trackMaximumPathLength = latency && !blocking;
     program->traceStoreEnabled = latency && !blocking;
     program->traceTargetStream = targetStream;
-    for (instStream *initialStream = program->streamHead; initialStream; initialStream = initialStream->nextStream) {
+    for (InstructionStream *initialStream = program->streamHead; initialStream; initialStream = initialStream->nextStream) {
         if (!initializeRegisterBacktraceLocation(initialStream, registerEntry, part)) {
             reportError("failed to do a local init for the back trace\n");
             return false;
@@ -93,7 +93,7 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *regis
         reportError("failed on the initial extend\n");
         return false;
     }
-    for (instStream *activeStream = program->activeStreams; activeStream; activeStream = activeStream->nextActiveStream) {
+    for (InstructionStream *activeStream = program->activeStreams; activeStream; activeStream = activeStream->nextActiveStream) {
         if (program->traceStoreEnabled && !initializeTraceStoreInline(program, activeStream->traceStore, activeStream->streamId)) {
             reportError("clear a tstore after first init\n");
             return false;
@@ -135,7 +135,7 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *regis
         }
     }
     if (latency) {
-        for (instStream *visitedStream = program->streamHead; visitedStream; visitedStream = visitedStream->nextStream) {
+        for (InstructionStream *visitedStream = program->streamHead; visitedStream; visitedStream = visitedStream->nextStream) {
             unsigned char bit = 1 << part;
             if (visitedStream->visitState == 4) {
                 reportInfo("UBS: %s %s.%d\n", program->traceTargetStream->streamName(), registerEntry->registerName(), part);
@@ -147,10 +147,10 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *regis
         }
     }
     if (latency) {
-        for (instStream *linkedStream = program->streamHead; linkedStream; linkedStream = linkedStream->nextStream) {
+        for (InstructionStream *linkedStream = program->streamHead; linkedStream; linkedStream = linkedStream->nextStream) {
             if (linkedStream->visitState == 2 || linkedStream->visitState == 4) {
                 if (!linkedStream->backtraceRegisterUse) {
-                    workTable *scheduleTable = linkedStream->getTable();
+                    ScheduleTable *scheduleTable = linkedStream->getTable();
                     if (!scheduleTable) {
                         reportError("no work table\n");
                         return false;
@@ -166,10 +166,10 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *regis
             }
         }
         if (!blocking) {
-        for (instStream *hazardSourceStream = program->streamHead; hazardSourceStream; hazardSourceStream = hazardSourceStream->nextStream) {
+        for (InstructionStream *hazardSourceStream = program->streamHead; hazardSourceStream; hazardSourceStream = hazardSourceStream->nextStream) {
             if (!hazardSourceStream->hazardFlag)
                 continue;
-            instStream *hazardCandidateStream;
+            InstructionStream *hazardCandidateStream;
             for (hazardCandidateStream = program->streamHead; hazardCandidateStream; hazardCandidateStream = hazardCandidateStream->nextStream)
                 hazardCandidateStream->hazardVisited = 0;
             hazardSourceStream->hazardVisited = 1;
@@ -181,7 +181,7 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *regis
                         continue;
                     hazardCandidateStream->hazardVisited = 1;
                     if (testTraceStoreInline(program, hazardSourceStream->traceStore, hazardCandidateStream->streamId)) {
-                        regUse *registerUse = hazardCandidateStream->backtraceRegisterUse;
+                        RegisterUse *registerUse = hazardCandidateStream->backtraceRegisterUse;
                         if (!registerUse) {
                             reportError("couldn't get regref for hazard broadcast op for reg %s.%d in %s hazard start=%s target=%s mode=%d\n",
                                           registerEntry->registerName(), part, hazardCandidateStream->streamName(), hazardSourceStream->streamName(),
@@ -203,7 +203,7 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *regis
         }
         }
         if (!blocking) {
-        for (instStream *resolvedStreamCandidate = program->streamHead; resolvedStreamCandidate; resolvedStreamCandidate = resolvedStreamCandidate->nextStream) {
+        for (InstructionStream *resolvedStreamCandidate = program->streamHead; resolvedStreamCandidate; resolvedStreamCandidate = resolvedStreamCandidate->nextStream) {
             if (resolvedStreamCandidate->pendingHazardBroadcast) {
                 resolvedStreamCandidate->nextResolvedStream = program->resolvedStreams;
                 program->resolvedStreams = resolvedStreamCandidate;
@@ -215,7 +215,7 @@ bool doBackTrace(Program *program, instStream *targetStream, RegPoolEntry *regis
                 }
             }
         }
-        for (instStream *resolvedStream = program->resolvedStreams; resolvedStream; resolvedStream = resolvedStream->nextResolvedStream) {
+        for (InstructionStream *resolvedStream = program->resolvedStreams; resolvedStream; resolvedStream = resolvedStream->nextResolvedStream) {
             if (!buildCrossStreamThroughputPairs(program, registerEntry, part, resolvedStream, targetStream))
                 reportError("failed to build tpairs for register %s with target %s at stream %s\n",
                               registerEntry->registerName(), targetStream->streamName(), resolvedStream->streamName());

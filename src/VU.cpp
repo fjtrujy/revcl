@@ -20,7 +20,7 @@ RegDesc regDescTable[] = {
 #include "regDescTable.h"
 };
 
-iInfo vuOpcodeDescriptors[] = {
+OpcodeDescriptor vuOpcodeDescriptors[] = {
 #include "vuITable.h"
 };
 

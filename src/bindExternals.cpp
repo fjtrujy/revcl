@@ -12,8 +12,8 @@ extern const char bindExtFindRegRefError[];
 
 bool bindExternals(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *scheduleTable = stream->getTable();
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        ScheduleTable *scheduleTable = stream->getTable();
         if (!scheduleTable) {
             reportError("no worktable!\n");
             exitAfterCleanup(-1);
@@ -21,10 +21,10 @@ bool bindExternals(Program *program)
         for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
-                RegPoolEntry *registerEntry = operand->assignedRegister;
+                RegisterEntry *registerEntry = operand->assignedRegister;
                 if (!registerEntry)
                     continue;
-                regUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
+                RegisterUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
                 if (!registerUse) {
                     reportError(bindExtFindRegRefError);
                     return false;

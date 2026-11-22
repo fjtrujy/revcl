@@ -5,14 +5,14 @@ extern const char iInfoPatchedAfterPatchError[];
 #include "Block.h"
 #include "os.h"
 
-unsigned char iInfo::branchFlags()
+unsigned char OpcodeDescriptor::branchFlags()
 {
     if (kind() == 3)
         return kindData;
     return 0;
 }
 
-unsigned char iInfo::ramType()
+unsigned char OpcodeDescriptor::ramType()
 {
     if (kind() == 4) {
         unsigned char ramAccessType = kindData;
@@ -24,35 +24,35 @@ unsigned char iInfo::ramType()
     return 0;
 }
 
-int iInfo::syntheticKind()
+int OpcodeDescriptor::syntheticKind()
 {
     if (kind() == 2)
         return kindData;
     return 0;
 }
 
-bool iInfo::isRawOnly()
+bool OpcodeDescriptor::isRawOnly()
 {
     return kind() == 0;
 }
 
-char iInfo::isNop()
+char OpcodeDescriptor::isNop()
 {
     return kind() == 0 && kindData == 0;
 }
 
-void iInfo::scanOpcodeOperandDescriptors()
+void OpcodeDescriptor::scanOpcodeOperandDescriptors()
 {
     int operandIndex;
     for (operandIndex = 0; operandIndex != operandDescriptors[operandIndex].operandKind; operandIndex++)
         ;
 }
 
-void iInfo::noopOpcodeDescriptorHook()
+void OpcodeDescriptor::noopOpcodeDescriptorHook()
 {
 }
 
-bool iInfo::check()
+bool OpcodeDescriptor::check()
 {
     bool noImplicitYet = true;
     iOpDesc *operandDescriptor = operandDescriptors;
@@ -89,7 +89,7 @@ bool iInfo::check()
     return true;
 }
 
-bool checkTable(iInfo *tab, int count)
+bool checkTable(OpcodeDescriptor *tab, int count)
 {
     if (!tab) {
         reportError("checkTable - passed a null table\n");
@@ -109,25 +109,25 @@ bool checkTable(iInfo *tab, int count)
     return true;
 }
 
-int iInfo::branchFlagBit1()
+int OpcodeDescriptor::branchFlagBit1()
 {
     unsigned int branchKindBits = kind() == 3 ? kindData : 0;
     return (branchKindBits >> 1) & 1;
 }
 
-int iInfo::branchFlagBit3()
+int OpcodeDescriptor::branchFlagBit3()
 {
     unsigned int branchKindBits = kind() == 3 ? kindData : 0;
     return (branchKindBits >> 3) & 1;
 }
 
-int iInfo::branchFlagBit2()
+int OpcodeDescriptor::branchFlagBit2()
 {
     unsigned int branchKindBits = kind() == 3 ? kindData : 0;
     return (branchKindBits >> 2) & 1;
 }
 
-int iInfo::canPruneOperands()
+int OpcodeDescriptor::canPruneOperands()
 {
     int canPrune = 0;
     if (!(kindAndFlags & 0xf8)) {
@@ -166,7 +166,7 @@ int decodeImmediateCategory(unsigned char immediateFlags)
     return category;
 }
 
-int defaultImmediateFlags(unsigned char)
+int defaultImmediateFlags(unsigned char unusedImmediateKind)
 {
     return 0;
 }

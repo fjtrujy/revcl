@@ -5,7 +5,7 @@
 
 #include "xpNode.h"
 
-inline xpTree::~xpTree()
+inline ExpressionTree::~ExpressionTree()
 {
     reset();
 }
