@@ -37,8 +37,8 @@ string(JSON first_flag GET "${build_config}" cxxflags 0)
 string(JSON second_flag GET "${build_config}" cxxflags 1)
 string(JSON unit_count LENGTH "${build_config}" units)
 if(NOT flag_count EQUAL 2 OR NOT first_flag STREQUAL "-O2"
-    OR NOT second_flag STREQUAL "-frename-registers" OR NOT unit_count EQUAL 20)
-  message(FATAL_ERROR "Historical GCC flags or 20 owner-specific overrides changed")
+    OR NOT second_flag STREQUAL "-frename-registers" OR NOT unit_count EQUAL 10)
+  message(FATAL_ERROR "Historical GCC flags or 10 required owner-specific overrides changed")
 endif()
 file(READ "${REVCL_SOURCE_DIR}/tools/rh9/vcl.sha256" sha_manifest)
 if(NOT sha_manifest STREQUAL
