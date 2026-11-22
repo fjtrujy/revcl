@@ -142,7 +142,7 @@ void RegPool::Dump()
     }
 }
 
-RegPoolEntry* RegPool::func_080593e0(int index)
+RegPoolEntry* RegPool::findByRegisterIndex(int index)
 {
     if (!registerEntries)
         return 0;
@@ -152,7 +152,7 @@ RegPoolEntry* RegPool::func_080593e0(int index)
     return &registerEntries[i];
 }
 
-RegPoolEntry* RegPool::func_08059418(const char* name)
+RegPoolEntry* RegPool::findPhysicalByName(const char* name)
 {
     RegPoolEntry* e = registerEntries;
     for (int i = 0; i != entryCount; i++, e++)
@@ -209,7 +209,7 @@ bool RegPool::func_08059578()
     return true;
 }
 
-bool RegPool::func_080595d4()
+bool RegPool::clearVirtualRegistersForParse()
 {
     RegPoolEntry* p = unk_1c;
     while (p) {
@@ -227,7 +227,7 @@ bool RegPool::func_080595d4()
     return true;
 }
 
-int func_0805968c(const char* name)
+int isReservedRegisterName(const char* name)
 {
     return RegPool::isResvd(name, -123);
 }
@@ -278,7 +278,7 @@ bool RegPool::isResvd(const char* name, int cls)
     return false;
 }
 
-bool RegPool::func_08059828(bool flag)
+bool RegPool::cycleRegisters(bool flag)
 {
     RegPoolEntry* e = registerEntries;
     for (int i = 0; i != entryCount; i++, e++)
@@ -294,7 +294,7 @@ bool RegPool::func_08059828(bool flag)
     return true;
 }
 
-bool RegPool::func_080598b0()
+bool RegPool::clearVirtualRegisters()
 {
     RegPoolEntry* p = unk_1c;
     while (p) {
@@ -315,15 +315,15 @@ static inline RegPoolEntry* findVirtual(RegPoolEntry* p, const char* name)
     return p;
 }
 
-RegPoolEntry* RegPool::func_08059944(const char* name)
+RegPoolEntry* RegPool::findOrCreateRegister(const char* name)
 {
     if (!virtualPartCount) {
-        RegPoolEntry* e = func_08059418(name);
+        RegPoolEntry* e = findPhysicalByName(name);
         if (!e)
             reportError("failed to find reg, and don't allow virtuals - pool %s regname=%s\n", poolName, name);
         return e;
     }
-    RegPoolEntry* e = func_08059418(name);
+    RegPoolEntry* e = findPhysicalByName(name);
     if (e)
         return e;
     if (isResvd(name, unk_0c)) {
@@ -332,7 +332,7 @@ RegPoolEntry* RegPool::func_08059944(const char* name)
     }
     e = findVirtual(unk_1c, name);
     if (!e) {
-        e = func_08059a5c(name);
+        e = createVirtualRegister(name);
         if (!e) {
             reportError("failed to create a virtual reg\n");
             return 0;
@@ -341,12 +341,12 @@ RegPoolEntry* RegPool::func_08059944(const char* name)
     return e;
 }
 
-RegPoolEntry* RegPool::func_08059a1c(const char* name)
+RegPoolEntry* RegPool::findVirtualByName(const char* name)
 {
     return findVirtual(unk_1c, name);
 }
 
-RegPoolEntry* RegPool::func_08059a5c(const char* name)
+RegPoolEntry* RegPool::createVirtualRegister(const char* name)
 {
     if (isResvd(name, unk_0c))
         reportWarning(" name '%s' was reserved\n", name);
@@ -388,7 +388,7 @@ RegPoolEntry* RegPool::func_08059a5c(const char* name)
     return e;
 }
 
-bool RegPool::func_08059c00()
+bool RegPool::markAllocatablePhysicalRegistersUsed()
 {
     if (!registerEntries) {
         reportError("regPool: add all to use - but had no table\n");
@@ -465,7 +465,7 @@ RegPoolEntry* RegPool::getMoveReg(Instr* move)
         reportError("getMoveReg -  but no move\n");
         exitAfterCleanup(-1);
     }
-    RegPoolEntry* e = func_08059a5c(buf);
+    RegPoolEntry* e = createVirtualRegister(buf);
     if (!e) {
         reportError("failed to add a new virtual register!\n");
         exitAfterCleanup(-1);
@@ -478,7 +478,7 @@ RegPoolEntry* RegPool::getMoveReg(Instr* move)
     return e;
 }
 
-bool RegPool::func_08059e20(RegPoolEntry* e)
+bool RegPool::ownsRegisterClass(RegPoolEntry* e)
 {
     return e && e->registerClass == unk_0c;
 }
@@ -536,7 +536,7 @@ int RegPool::countUsed()
     return n;
 }
 
-int RegPool::func_08059f70()
+int RegPool::countMarkedPhysicalRegisters()
 {
     int n = 0;
     if (registerEntries) {

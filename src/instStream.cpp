@@ -102,7 +102,7 @@ void instStream::zeroStats()
         reportError("no work table set for zeroStats!\n");
         exitAfterCleanup(-1);
     }
-    for (Instr *i = workTablePtr->unk_88.unk_00; i; i = i->unk_1c.unk_00)
+    for (Instr *i = workTablePtr->unk_88.head; i; i = i->unk_1c.unk_00)
         i->unk_13f0.func_0805e340();
     unk_278.func_0805e340();
 }
@@ -129,7 +129,7 @@ bool instStream::patchLatencies()
         reportError("iStream::PatchLatencies - no work table\n");
         return false;
     }
-    for (Instr *i = wt->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
+    for (Instr *i = wt->unk_88.head; i; i = i->unk_1c.unk_00) {
         i->unk_13e4 = n;
         if (!i->func_08052f84()) {
             reportError("failed to patch latencies for instruction\n");
@@ -309,7 +309,7 @@ bool instStream::flowReset()
         reportError("iStream::flowReset() - failed to dispose regrefs\n");
         return false;
     }
-    for (Instr *i = workTablePtr->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
+    for (Instr *i = workTablePtr->unk_88.head; i; i = i->unk_1c.unk_00) {
         if (!i->func_0805417c()) {
             reportError("failed to init flow for isn\n");
             return false;

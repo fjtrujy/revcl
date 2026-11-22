@@ -63,11 +63,11 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
             unsigned char mask[32];
             int i;
             for (i = 0; i != 32; i++) {
-                RegPoolEntry *e = pool->func_080593e0(i);
+                RegPoolEntry *e = pool->findByRegisterIndex(i);
                 mask[i] = (e->unk_16 && e->allocatable) ? in->operands[0].unk_07 : 0;
             }
             mask[0] = 0;
-            for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
+            for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
                 RegPoolEntry *reg = ru->unk_08;
                 if (reg->registerClass != 9)
                     continue;
@@ -89,7 +89,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
                 int m = in->operands[0].unk_07 & mask[i];
                 int n = func_0804bf50(m);
                 if (n > best) {
-                    RegPoolEntry *e = pool->func_080593e0(i);
+                    RegPoolEntry *e = pool->findByRegisterIndex(i);
                     g_080de748 = m;
                     g_080de744 = e;
                     best = n;
@@ -154,7 +154,7 @@ bool doCap(int line, int pipe, int mask)
         g_080de740->operands[0].unk_14 = g_080de744;
         g_080de740->operands[0].unk_18 = g_080de744;
         g_080de740->operands[0].unk_10 = 0;
-        regUse *ru = g_080de73c->unk_14.func_0805b5dc(g_080de744);
+        regUse *ru = g_080de73c->unk_14.findByRegister(g_080de744);
         if (!ru) {
             ru = g_080de73c->unk_14.AddNewRegRef(g_080de744);
             if (!ru) {

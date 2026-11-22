@@ -46,7 +46,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
         bool extended = false;
         if (d > 0) {
             if (ext) {
-                if (!p->proc.unk_74.addStall(registerPart(sr, part)->unk_08.head,
+                if (!p->proc.stalls.addStall(registerPart(sr, part)->unk_08.head,
                                         registerPart(tr, part)->unk_00.head, 0, d)) {
                     reportError("failed to add an external stall\n");
                     return false;

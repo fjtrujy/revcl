@@ -58,7 +58,7 @@ bool func_08060018(Program *p, bool b)
         return false;
     }
     for (s = p->streamHead; s; s = s->nextStream) {
-        for (regUse *ru = s->getWorkTable()->unk_14.unk_04; ru; ru = ru->unk_04) {
+        for (regUse *ru = s->getWorkTable()->unk_14.head; ru; ru = ru->unk_04) {
             RegPoolEntry *reg = ru->unk_08;
             if (!reg) {
                 reportError("found a reg ref with no reg!\n");

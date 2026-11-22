@@ -789,7 +789,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
                 reportError("failed to get ie for branch insert\n");
                 return false;
             }
-            row->unk_00[1].unk_00 = b;
+            row->entries[1].unk_00 = b;
         }
         if (!e->unk_18->prepRawTable()) {
             reportError("failed to prep epi table!\n");

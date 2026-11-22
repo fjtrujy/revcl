@@ -46,7 +46,7 @@ int instStream::getUninsertedxInputs()
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = workTablePtr->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = workTablePtr->unk_88.head; in; in = in->unk_1c.unk_00) {
         int base = getFromStart(in);
         if (base < 0) {
             reportError("iStream::: getUninsertedxInputs - failed\n");
@@ -96,7 +96,7 @@ int instStream::getUninsertedxOutputs()
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = workTablePtr->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = workTablePtr->unk_88.head; in; in = in->unk_1c.unk_00) {
         int base = getToEnd(in);
         if (base < 0) {
             reportError("iStream::: getUninsertedxOutputs - failed\n");
@@ -272,7 +272,7 @@ bool loadLocks(Program *p, workTable *wt)
         return false;
     }
     setRange(wt->func_0807411c(), wt->func_080741c0(), wt->func_080741b4());
-    for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
+    for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
         for (int i = 0; i != reg->partCount; i++) {
             regUseSlot *rs = &ru->unk_20[i];

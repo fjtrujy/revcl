@@ -184,11 +184,11 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
                 t->unk_226 = 0;
                 first = false;
             } else {
-                in = wt->unk_88.unk_04;
+                in = wt->unk_88.tail;
                 t->unk_226 = 2;
             }
             for (; in; in = in->unk_1c.unk_04) {
-                if (in->func_080553b4(reg, 0xff)) {
+                if (in->outputMaskForRegister(reg, 0xff)) {
                     in->func_08054008(false);
                     break;
                 }

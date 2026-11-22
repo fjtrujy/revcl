@@ -684,7 +684,7 @@ char *Instr::func_080552a8(bool flag, char *buf, int)
     return buf;
 }
 
-int Instr::func_080553b4(RegPoolEntry *reg, int mask)
+int Instr::outputMaskForRegister(RegPoolEntry *reg, int mask)
 {
     int result = 0;
     if (reg) {
@@ -697,7 +697,7 @@ int Instr::func_080553b4(RegPoolEntry *reg, int mask)
     return result & mask;
 }
 
-int Instr::func_0805544c(RegPoolEntry *reg, int mask)
+int Instr::inputMaskForRegister(RegPoolEntry *reg, int mask)
 {
     int result = 0;
     if (reg) {

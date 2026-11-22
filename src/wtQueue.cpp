@@ -64,12 +64,12 @@ bool workTable::qRegRef(regUse *ru)
     }
     if (~c->unk_0f & c->unk_0d) {
         reportError("xobits set, but o bits not\n");
-        c->func_0805b51c();
+        c->validateAndDumpParts();
         return false;
     }
     if (~c->unk_0e & c->unk_0c) {
         reportError("xibits set, but i bits not\n");
-        c->func_0805b51c();
+        c->validateAndDumpParts();
         return false;
     }
     for (int i = 0; i != reg->partCount; i++) {
@@ -103,7 +103,7 @@ bool workTable::qRegRef(regUse *ru)
         char nb = reg->unk_1c;
         if (!nb && (c->unk_10 & (c->unk_0f | c->unk_0d))) {
             reportError("t bits set for nbid register\n");
-            c->func_0805b51c();
+            c->validateAndDumpParts();
             return false;
         }
         if (t || xi || sync) {
@@ -191,7 +191,7 @@ bool workTable::qInstruction(Instr *in)
         RegPoolEntry *reg = dst->unk_18;
         if (!reg)
             continue;
-        regUse *rr = unk_14.func_0805b5dc(reg);
+        regUse *rr = unk_14.findByRegister(reg);
         if (!rr) {
             reportError("find reg ref failed to find rr from owner.. by now - this is fatal.. register %s\n",
                           reg->registerName());
@@ -216,7 +216,7 @@ bool workTable::qInstruction(Instr *in)
                 lk->setOwner(k, c, i);
                 OperandLock *out;
                 if ((dst->unk_27 >> k) & 1) {
-                    regUse *o = unk_14.func_0805b5dc(reg);
+                    regUse *o = unk_14.findByRegister(reg);
                     if (!o) {
                         reportError("failed to find regref owner for input\n");
                         return false;

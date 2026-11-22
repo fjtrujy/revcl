@@ -162,7 +162,7 @@ bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b)
         bool hasA = false;
         bool hasB = false;
         for (int j = 0; j != 2; j++) {
-            Instr *in = row->unk_00[j].unk_00;
+            Instr *in = row->entries[j].unk_00;
             if (!in)
                 continue;
             for (int i = 0; i != in->operandCount; i++) {

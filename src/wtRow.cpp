@@ -11,10 +11,10 @@ extern const char wtRowAddStallLenError[];
 
 wtRow::wtRow()
 {
-    unk_0c = 0;
-    unk_08 = 0;
-    unk_0a = 0;
-    unk_09 = 0;
+    cycleTime = 0;
+    skip = 0;
+    stallTypeMask = 0;
+    maxStallLength = 0;
 }
 
 wtRow::~wtRow()
@@ -39,10 +39,10 @@ wtEntry::~wtEntry()
 
 static inline bool clearWtEntry(wtEntryInl *e) { e->unk_00 = 0; return 1; }
 
-bool wtRow::func_080721f8()
+bool wtRow::clearEntries()
 {
     for (int i = 0; i != 2; i++)
-        if (!clearWtEntry(&unk_00[i]))
+        if (!clearWtEntry(&entries[i]))
             return 0;
     return 1;
 }
@@ -53,10 +53,10 @@ bool wtEntry::func_08072218()
     return 1;
 }
 
-void wtRow::func_0807222c(int)
+void wtRow::refreshInstructionOperands(int)
 {
     for (int i = 0; i != 2; i++) {
-        Instr *in = unk_00[i].unk_00;
+        Instr *in = entries[i].unk_00;
         if (!in)
             continue;
         if ((VclPtrWord)in & 1)
@@ -77,7 +77,7 @@ Instr *wtRow::getEntry(int p)
         exitAfterCleanup(-1);
         return 0;
     }
-    return unk_00[p].unk_00;
+    return entries[p].unk_00;
 }
 
 Instr *GetI(Instr **ie, int p)
@@ -98,11 +98,11 @@ Instr *GetI(Instr **ie, int p)
     return in;
 }
 
-int wtRow::func_08072304()
+int wtRow::countEntries()
 {
     int n = 0;
     for (int i = 0; i != 2; i++)
-        if (unk_00[i].unk_00)
+        if (entries[i].unk_00)
             n++;
     return n;
 }
@@ -111,10 +111,10 @@ Instr *wtRow::onlyEntry()
 {
     Instr *r = 0;
     for (int i = 0; i != 2; i++) {
-        if (unk_00[i].unk_00) {
+        if (entries[i].unk_00) {
             if (r)
                 return 0;
-            r = unk_00[i].unk_00;
+            r = entries[i].unk_00;
         }
     }
     return r;
@@ -122,15 +122,15 @@ Instr *wtRow::onlyEntry()
 
 bool wtRow::clearStalls()
 {
-    unk_0a = 0;
-    unk_09 = 0;
+    stallTypeMask = 0;
+    maxStallLength = 0;
     return 1;
 }
 
-void wtRow::func_08072364()
+void wtRow::resetStallMetadata()
 {
-    unk_0a = 0;
-    unk_09 = 0;
+    stallTypeMask = 0;
+    maxStallLength = 0;
 }
 
 bool wtRow::addStall(int type, int len)
@@ -145,33 +145,33 @@ bool wtRow::addStall(int type, int len)
         reportError("bad stall type\n");
         return 0;
     }
-    unk_0a |= 1 << type;
-    if (unk_09 < len)
-        unk_09 = len;
+    stallTypeMask |= 1 << type;
+    if (maxStallLength < len)
+        maxStallLength = len;
     return 1;
 }
 
-int wtRow::func_080723ec(RegPoolEntry *reg, unsigned char mask)
+int wtRow::outputMaskFor(RegPoolEntry *reg, unsigned char mask)
 {
     int r = 0;
-    if (!unk_08) {
+    if (!skip) {
         for (int i = 0; i != 2; i++) {
-            Instr *in = GetI(&unk_00[0].unk_00, i);
+            Instr *in = GetI(&entries[0].unk_00, i);
             if (in)
-                r |= in->func_080553b4(reg, mask);
+                r |= in->outputMaskForRegister(reg, mask);
         }
     }
     return r;
 }
 
-int wtRow::func_08072440(RegPoolEntry *reg, unsigned char mask)
+int wtRow::inputMaskFor(RegPoolEntry *reg, unsigned char mask)
 {
     int r = 0;
-    if (!unk_08) {
+    if (!skip) {
         for (int i = 0; i != 2; i++) {
-            Instr *in = GetI(&unk_00[0].unk_00, i);
+            Instr *in = GetI(&entries[0].unk_00, i);
             if (in)
-                r |= in->func_0805544c(reg, mask);
+                r |= in->inputMaskForRegister(reg, mask);
         }
     }
     return r;
@@ -179,7 +179,7 @@ int wtRow::func_08072440(RegPoolEntry *reg, unsigned char mask)
 
 unsigned int wtRow::func_08072494()
 {
-    Instr *in = GetI(&unk_00[0].unk_00, 1);
+    Instr *in = GetI(&entries[0].unk_00, 1);
     unsigned int m = 0;
     if (in) {
         for (int i = 0; i != in->operandCount; i++) {

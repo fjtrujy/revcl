@@ -98,7 +98,7 @@ inline bool ExecRP_init_reg_all(RegPool *pool)
         reportError("ExecRP_init_reg_all: passed a null pool\n");
         return false;
     }
-    return pool->func_08059c00();
+    return pool->markAllocatablePhysicalRegistersUsed();
 }
 
 bool func_080511ec(Program *prog, LocTag *t)
@@ -132,7 +132,7 @@ bool func_080512a4(Program *prog, LocTag *t)
         reportError("failed to get global name\n");
         return 0;
     } else {
-        prog->proc.unk_18 = dupString(s);
+        prog->proc.globalName = dupString(s);
     }
     return 1;
 }
@@ -150,7 +150,7 @@ bool func_0805131c(Program *prog, LocTag *t)
         reportError("must specify target address for mpg mode!\n");
         return 0;
     }
-    prog->proc.unk_44 = parseInteger(s);
+    prog->proc.mpgTargetAddress = parseInteger(s);
     return 1;
 }
 
@@ -158,26 +158,26 @@ bool func_0805137c(Program *prog, LocTag *t)
 {
     char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (s)
-        prog->proc.unk_04.findOrAppendByExactName(s);
+        prog->proc.exportedSymbols.findOrAppendByExactName(s);
     return 1;
 }
 
 bool func_080513cc(Program *prog, LocTag *t)
 {
-    if (prog->proc.unk_3f) {
+    if (prog->proc.insideRawLoop) {
         reportUserMessage("hit a raw directive in a rawloop block\n");
         return 0;
     }
-    if (prog->proc.unk_3d == 3)
+    if (prog->proc.decodeMode == 3)
         reportWarning("hit a raw directive while already in a raw block\n");
-    prog->proc.unk_3d = 3;
-    prog->proc.unk_3e = 4;
+    prog->proc.decodeMode = 3;
+    prog->proc.decodeSubMode = 4;
     char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (s) {
         if (asciiCaseEqual(s, "reorder"))
-            prog->proc.unk_3e = 3;
+            prog->proc.decodeSubMode = 3;
         else if (asciiCaseEqual(s, "noreorder"))
-            prog->proc.unk_3e = 4;
+            prog->proc.decodeSubMode = 4;
         else {
             reportUserMessage("bad option '%s' to raw directive\n", s);
             return 0;
@@ -188,36 +188,36 @@ bool func_080513cc(Program *prog, LocTag *t)
 
 bool func_080514a0(Program *prog, LocTag *t)
 {
-    if (prog->proc.unk_3d == 1) {
+    if (prog->proc.decodeMode == 1) {
         reportWarning("hit an endraw directive while not in raw mode\n");
         return 0;
     }
-    if (prog->proc.unk_3f) {
+    if (prog->proc.insideRawLoop) {
         reportUserMessage("hit an endraw directive inside a rawloop\n");
         return 0;
     }
-    prog->proc.unk_3d = 1;
-    prog->proc.unk_3e = 0;
+    prog->proc.decodeMode = 1;
+    prog->proc.decodeSubMode = 0;
     return 1;
 }
 
 bool func_080514e8(Program *prog, LocTag *t)
 {
-    if (prog->proc.unk_3f) {
+    if (prog->proc.insideRawLoop) {
         reportUserMessage("encountered a .rawloop directive, while already in loop mode\n");
         return 0;
     }
-    prog->proc.unk_40++;
-    prog->proc.unk_62 = prog->proc.unk_3d;
-    prog->proc.unk_3d = 3;
-    prog->proc.unk_3e = 4;
-    prog->proc.unk_3f = true;
+    prog->proc.rawLoopId++;
+    prog->proc.savedDecodeMode = prog->proc.decodeMode;
+    prog->proc.decodeMode = 3;
+    prog->proc.decodeSubMode = 4;
+    prog->proc.insideRawLoop = true;
     char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (s) {
         if (asciiCaseEqual(s, "reorder"))
-            prog->proc.unk_3e = 3;
+            prog->proc.decodeSubMode = 3;
         else if (asciiCaseEqual(s, "noreorder"))
-            prog->proc.unk_3e = 4;
+            prog->proc.decodeSubMode = 4;
         else {
             reportUserMessage("bad option '%s' to raw loop directive\n", s);
             return 0;
@@ -228,17 +228,17 @@ bool func_080514e8(Program *prog, LocTag *t)
 
 bool func_080515a0(Program *prog, LocTag *t)
 {
-    if (!prog->proc.unk_3f) {
+    if (!prog->proc.insideRawLoop) {
         reportUserMessage("reached an .endloop directive but when wasn't in loop mode\n");
         return 0;
     }
-    if (prog->proc.unk_3d != 3) {
-        reportUserMessage("hit end raw directive, but wasn't in VSM mode..(mode is %d)?\n", prog->proc.unk_3d);
+    if (prog->proc.decodeMode != 3) {
+        reportUserMessage("hit end raw directive, but wasn't in VSM mode..(mode is %d)?\n", prog->proc.decodeMode);
         return 0;
     }
-    prog->proc.unk_3d = prog->proc.unk_62;
-    prog->proc.unk_3e = prog->proc.unk_61;
-    prog->proc.unk_3f = false;
+    prog->proc.decodeMode = prog->proc.savedDecodeMode;
+    prog->proc.decodeSubMode = prog->proc.savedDecodeSubMode;
+    prog->proc.insideRawLoop = false;
     return 1;
 }
 
@@ -346,7 +346,7 @@ bool func_08051890(Program *prog, LocTag *t)
         }
         prog->proc.setUniqueName(name);
     }
-    prog->proc.unk_60 = 1;
+    prog->proc.uniqueAll = 1;
     return 1;
 }
 
@@ -358,11 +358,11 @@ bool func_08051908(Program *prog, LocTag *t)
         return 0;
     }
     if (asciiCaseEqual(arg, "new")) {
-        prog->proc.unk_00 = true;
+        prog->proc.newSyntax = true;
         return 1;
     }
     if (asciiCaseEqual(arg, "old")) {
-        prog->proc.unk_00 = false;
+        prog->proc.newSyntax = false;
         return 1;
     }
     reportUserMessage("invalid argument to .syntax, options are 'new' or 'old'\n");
@@ -416,7 +416,7 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
         int first = -1, last;
         int j;
         for (j = 0; j <= range; j++) {
-            RegPoolEntry *r = pool->func_08059418(buf[j]);
+            RegPoolEntry *r = pool->findPhysicalByName(buf[j]);
             if (!r) {
                 reportError("not find %s\n", tok);
                 return false;
@@ -441,7 +441,7 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
             first = tmp;
         }
         for (j = first; j <= last; j++) {
-            RegPoolEntry *r = pool->func_080593e0(j);
+            RegPoolEntry *r = pool->findByRegisterIndex(j);
             if (!r) {
                 reportError("not find %s\n", tok);
                 return false;
@@ -486,7 +486,7 @@ int func_08051cb0(LocTag *t, RegPool *pool)
         reportError("ExecRP_init_reg_all: passed a null pool\n");
         return 0;
     }
-    return pool->func_08059c00();
+    return pool->markAllocatablePhysicalRegistersUsed();
 }
 
 int func_08051ce0(Program *prog, LocTag *t)
@@ -528,7 +528,7 @@ bool func_08051d6c(Program *prog, LocTag *t, int v)
         *d++ = ':';
     }
     *d = 0;
-    mNode *n = prog->proc.unk_4c.appendNamedNode(buf);
+    mNode *n = prog->proc.visibilityScopes.appendNamedNode(buf);
     if (!n) {
         reportError("failed to process  a visibility directive\n");
         return false;
@@ -544,7 +544,7 @@ inline void ExecRP_show_line(LocTag *t)
 
 bool func_08051e34(Program *prog, LocTag *t, int v)
 {
-    mNode *n = prog->proc.unk_4c.tail;
+    mNode *n = prog->proc.visibilityScopes.tail;
     if (!n) {
         reportWarning("closing visibility directive and no tail at:\n");
         int saved = errorOccurred;
@@ -561,7 +561,7 @@ bool func_08051e34(Program *prog, LocTag *t, int v)
         errorOccurred = saved;
         return false;
     }
-    if (!prog->proc.unk_4c.detachNode(n)) {
+    if (!prog->proc.visibilityScopes.detachNode(n)) {
         reportError("failed to remove tail node\n");
         return false;
     }

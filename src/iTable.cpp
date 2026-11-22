@@ -60,7 +60,7 @@ bool workTable::init(unsigned char mode, int size)
 
 bool workTable::dispose()
 {
-    Instr *p = unk_94.unk_00;
+    Instr *p = unk_94.head;
     while (p) {
         Instr *next = p->unk_24.unk_00;
         if (p->unk_13e8.unk_04 < 0)
@@ -111,7 +111,7 @@ void workTable::dump()
         break;
     case 1:
     case 4:
-        for (Instr *p = unk_88.unk_00; p; p = p->unk_1c.unk_00)
+        for (Instr *p = unk_88.head; p; p = p->unk_1c.unk_00)
             p->func_08054008(false);
         break;
     case 3:
@@ -120,7 +120,7 @@ void workTable::dump()
             wtRow *r = rowAt(i);
             if (!r)
                 abortAfterError();
-            r->func_0807222c(i);
+            r->refreshInstructionOperands(i);
         }
         break;
     case 2: {
@@ -132,16 +132,16 @@ void workTable::dump()
         if (!lsz && unk_34 < 0) {
             wtRow *r = unk_2c;
             for (int n = unk_28 - 1; n >= 0; n--, r++)
-                if (r->unk_00[0].unk_00 || r->unk_00[1].unk_00)
+                if (r->entries[0].unk_00 || r->entries[1].unk_00)
                     break;
         }
         for (int i = unk_30; i < unk_34; i++) {
             wtRow *r = rowAt(i);
             if (!r)
                 abortAfterError();
-            r->func_0807222c(i);
+            r->refreshInstructionOperands(i);
         }
-        for (Instr *p = unk_94.unk_00; p; p = p->unk_24.unk_00)
+        for (Instr *p = unk_94.head; p; p = p->unk_24.unk_00)
             p->func_08054008(false);
         break;
     }
@@ -149,7 +149,7 @@ void workTable::dump()
         reportError("unknown code mode for Dump()\n");
         abortAfterError();
     }
-    unk_14.func_0805b44c();
+    unk_14.dumpRegisterUses();
 }
 
 const char *workTable::ownerName()
@@ -278,7 +278,7 @@ Instr *workTable::getBranch()
         }
         break;
     case 1:
-        b = unk_88.unk_04;
+        b = unk_88.tail;
         break;
     case 4:
         break;
@@ -319,8 +319,8 @@ bool func_08073bb0(Block *blk, Instr *in);
 
 inline bool workTable::unlinkAndUnlog(Instr *in)
 {
-    if (unk_94.unk_08) {
-        reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", unk_94.unk_08);
+    if (unk_94.count) {
+        reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", unk_94.count);
         return 0;
     }
     if (!UnlinkFromLinear((Block *)this, in)) {
@@ -370,7 +370,7 @@ bool workTable::takeOut(Instr *i)
 {
     InstructionPosition *p = &i->unk_13e8;
     wtRow *row = &unk_2c[p->unk_04];
-    row->unk_00[p->unk_02].unk_00 = (Instr *)i->unk_1398;
+    row->entries[p->unk_02].unk_00 = (Instr *)i->unk_1398;
     i->clearSlot();
     return 1;
 }
@@ -379,7 +379,7 @@ bool workTable::putIn(Instr *i)
 {
     InstructionPosition *p = &i->unk_13e8;
     wtRow *row = &unk_2c[p->unk_04];
-    row->unk_00[p->unk_02].unk_00 = i;
+    row->entries[p->unk_02].unk_00 = i;
     return 1;
 }
 
@@ -442,7 +442,7 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
                     }
                 }
             }
-            dr->unk_00[p].unk_00 = c;
+            dr->entries[p].unk_00 = c;
             if (c) {
                 InstructionPosition pos;
                 c->setOwner((cls_unk30 *)to);
@@ -462,14 +462,14 @@ bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bo
 
 void workTable::dumpSynthetics()
 {
-    for (Instr *i = unk_88.unk_00; i; i = i->unk_1c.unk_00)
+    for (Instr *i = unk_88.head; i; i = i->unk_1c.unk_00)
         if (i->unk_13cd)
             i->func_08054008(false);
 }
 
 bool workTable::clearClones()
 {
-    for (Instr *i = unk_88.unk_00; i; i = i->unk_1c.unk_00)
+    for (Instr *i = unk_88.head; i; i = i->unk_1c.unk_00)
         i->unk_08 = 0;
     return 1;
 }
@@ -525,7 +525,7 @@ bool workTable::func_08073854()
     wtRow *r = rowAt(unk_34 - 1);
     if (!r)
         return 0;
-    Instr *in = r->unk_00[1].unk_00;
+    Instr *in = r->entries[1].unk_00;
     if (in) {
         if (in->unk_13ce || in->unk_1388)
             return 0;
@@ -536,7 +536,7 @@ bool workTable::func_08073854()
     r = rowAt(unk_34 - 2);
     if (!r)
         return 1;
-    in = r->unk_00[1].unk_00;
+    in = r->entries[1].unk_00;
     if (in && func_0806c72c(in->opcodeInfo) == 165)
         return 0;
     return 1;
@@ -701,7 +701,7 @@ int workTable::getCurrentDoneSize()
     if (unk_38)
         return unk_38;
     int size = 0;
-    for (Instr *i = unk_a0.unk_00; i; i = i->unk_24.unk_00) {
+    for (Instr *i = unk_a0.head; i; i = i->unk_24.unk_00) {
         int row = i->unk_13e8.unk_00;
         if (row < 0) {
             reportError("getCurrentDoneSize()\n");
@@ -727,7 +727,7 @@ int workTable::getCurrentDoneSize()
 
 bool workTable::getCurrentLidStats(int *maxLid, int *maxBranchLid, int *minSfx1, int *minSfx2)
 {
-    Instr *i = unk_a0.unk_00;
+    Instr *i = unk_a0.head;
     *maxLid = -1;
     *maxBranchLid = -1;
     *minSfx1 = 30000;
@@ -776,7 +776,7 @@ bool workTable::grow(int n)
     }
     for (int i = unk_30; i < unk_34; i++) {
         nt[i] = unk_2c[i];
-        unk_2c[i].func_080721f8();
+        unk_2c[i].clearEntries();
     }
     delete[] unk_2c;
     unk_2c = nt;
@@ -857,7 +857,7 @@ bool workTable::setSkip(int row, char skip)
         reportError("failed to get ie in setSkip\n");
         return 0;
     }
-    r->unk_08 = skip;
+    r->skip = skip;
     return 1;
 }
 
@@ -1032,8 +1032,8 @@ bool workTable::makeLinearList()
 
 bool workTable::logUnlinkFromLinear(Instr *in)
 {
-    if (unk_94.unk_08) {
-        reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", unk_94.unk_08);
+    if (unk_94.count) {
+        reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", unk_94.count);
         return 0;
     }
     if (!UnlinkFromLinear((Block *)this, in)) {
@@ -1062,7 +1062,7 @@ bool workTable::relinkRawIt()
             return 0;
         }
         for (int p = 0; p != 2; p++) {
-            Instr *in = r->unk_00[p].unk_00;
+            Instr *in = r->entries[p].unk_00;
             if (in) {
                 in->unk_1c.unk_04 = 0;
                 in->unk_1c.unk_00 = 0;
@@ -1109,7 +1109,7 @@ workTable *workTable::localClone()
     nt->unk_40 = 0;
     nt->unk_10 = unk_10;
     regUseList &regs = unk_14;
-    for (regUse *r = regs.unk_04; r; r = r->unk_04) {
+    for (regUse *r = regs.head; r; r = r->unk_04) {
         regUse *cloned = r->Clone();
         if (!nt->unk_14.append(cloned)) {
             reportError("failed to add cloned regref to list\n");
@@ -1117,7 +1117,7 @@ workTable *workTable::localClone()
             return 0;
         }
     }
-    for (Instr *in = unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = unk_88.head; in; in = in->unk_1c.unk_00) {
         Instr *c = in->clone();
         for (int i = 0; i != c->operandCount; i++) {
             Operand *op = &in->operands[i];
@@ -1219,7 +1219,7 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
             return 0;
         }
         wtRow *row = &unk_2c[p->unk_04];
-        row->unk_00[p->unk_02].unk_00 = nw;
+        row->entries[p->unk_02].unk_00 = nw;
     }
     return 1;
 }

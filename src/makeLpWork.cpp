@@ -41,7 +41,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         return false;
     }
     Instr *in;
-    for (in = nt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = nt->unk_88.head; in; in = in->unk_1c.unk_00) {
         int latest = 0;
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
@@ -65,7 +65,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         }
         in->unk_0c = latest;
     }
-    for (in = nt->unk_88.unk_04; in; in = in->unk_1c.unk_04) {
+    for (in = nt->unk_88.tail; in; in = in->unk_1c.unk_04) {
         int earliest = 30000;
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
@@ -95,7 +95,7 @@ bool makeLpWork(instStream *s, int maxSpread)
         }
     }
     char buf[256];
-    for (in = nt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (in = nt->unk_88.head; in; in = in->unk_1c.unk_00) {
         int lo = 30000;
         int hi = 0;
         char *p = buf;
@@ -170,26 +170,26 @@ bool lsqChain(workTable *wt)
 {
     reportError(lsqChainHopeError);
     abortAfterError();
-    for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
+    for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
         if (reg->registerClass != 8)
             continue;
         Instr *list[1024];
-        Instr *in = wt->unk_88.unk_00;
+        Instr *in = wt->unk_88.head;
         reportInfo("lsqi- scan %s\n", reg->registerName());
         int n = 0;
         bool bad = false;
         bool ok = true;
         for (; in; in = in->unk_1c.unk_00) {
             int opc = in->func_08055ac4();
-            if (in->func_080553b4(reg, 0xff)) {
+            if (in->outputMaskForRegister(reg, 0xff)) {
                 if (!(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4) || bad) {
                     ok = false;
                     break;
                 }
                 list[n++] = in;
             }
-            if (in->func_0805544c(reg, 0xff)
+            if (in->inputMaskForRegister(reg, 0xff)
                 && !(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4))
                 bad = true;
         }

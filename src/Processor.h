@@ -46,41 +46,41 @@ public:
     Processor();
     ~Processor();
     bool Init(CpuDef *cpu);
-    bool func_0806bc84();
-    void func_0806bcb8();
+    bool clearProcessorLists();
+    void dumpRegisterPools();
     int gatherInflight(ol_s **out);
     bool func_0806bd40();
     bool func_0806bd88();
-    void func_0806bdd0();
+    void validateOpcodeTableCount();
 
     bool setUniqueName(const char *name);
     const char *getUniqueName();
     Instr *getNextInstruction(LocTag *t, int *pos);
     bool decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *nOut);
 
-    bool unk_00;           // new syntax
-    mList unk_04;
-    const char *unk_18;    // global name (dupString)
-    const char *unk_1c;    // name, default "Nameless"
-    mList unk_20;
+    bool newSyntax;
+    mList exportedSymbols;
+    const char *globalName;
+    const char *cpuName;
+    mList trailingLabels;
     char *uniqueName;          // unique name (dupString), default "FLOW"
     int instructionsPerRawLine;
     char unk_3c;
-    char unk_3d;           // mode: 1 normal, 3 raw (VSM)
-    char unk_3e;           // 3 reorder, 4 noreorder
-    bool unk_3f;           // inside .rawloop
-    short unk_40;          // rawloop count
-    int unk_44;            // mpg target address, -1 = unset
+    char decodeMode;
+    char decodeSubMode;
+    bool insideRawLoop;
+    short rawLoopId;
+    int mpgTargetAddress;
     int unk_48;
-    mList unk_4c;
-    char unk_60;           // unique all
-    char unk_61;           // saved unk_3e
-    char unk_62;           // saved unk_3d
+    mList visibilityScopes;
+    char uniqueAll;
+    char savedDecodeSubMode;
+    char savedDecodeMode;
     bool unk_63;
     char unk_64;
     char unk_65;
-    ubsList unk_68;        // used-before-set list; unk_08 = count
-    stallList unk_74;      // stall list; unk_08 = count
+    ubsList usedBeforeSet;
+    stallList stalls;
 };
 
 #endif

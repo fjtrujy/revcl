@@ -71,7 +71,7 @@ bool checkOpt3(Program *p)
                 reportError("table set for abstract list\n");
                 return false;
             }
-            for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+            for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
                 if (in->unk_13e8.getPipe() != -1) {
                     reportError("pipe is set for non-inserted instruction\n");
                     return false;
@@ -134,7 +134,7 @@ bool checkOpt3(Program *p)
                     count++;
                 }
             }
-            int lcount = wt->unk_88.unk_08;
+            int lcount = wt->unk_88.count;
             if (count != lcount) {
                 reportError("linear count and itable mismatch (%d != %d) for %s\n",
                               lcount, count, s->streamName());
@@ -143,7 +143,7 @@ bool checkOpt3(Program *p)
             }
         }
 
-        for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
             for (int k = 0; k != in->operandCount; k++) {
                 Operand *op = &in->operands[k];
                 RegPoolEntry *reg;

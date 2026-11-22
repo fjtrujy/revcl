@@ -55,7 +55,7 @@ bool fiddleBDL(workTable *wt)
             reportError(fiddleGetLastIeError);
             return false;
         }
-        if (last->func_08072304())
+        if (last->countEntries())
             goto done;
         wtRow *brow = wt->func_080724f0(wt->unk_34 - 2);
         if (!brow) {
@@ -78,11 +78,11 @@ bool fiddleBDL(workTable *wt)
             row -= 2;
             posB.setRow(row);
             bool ok = true;
-            if (br != brow->unk_00[1].unk_00) {
+            if (br != brow->entries[1].unk_00) {
                 reportError(fiddleBranchPosError);
                 return false;
             }
-            Instr *prev = prow->unk_00[1].unk_00;
+            Instr *prev = prow->entries[1].unk_00;
             if (func_0805449c(prev, br))
                 return true;
 

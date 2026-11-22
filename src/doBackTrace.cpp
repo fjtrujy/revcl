@@ -139,7 +139,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
             unsigned char bit = 1 << part;
             if (s->unk_226 == 4) {
                 reportInfo("UBS: %s %s.%d\n", p->unk_d4->streamName(), reg->registerName(), part);
-                if (!p->proc.unk_68.addUBS(s, p->unk_d4, reg, bit)) {
+                if (!p->proc.usedBeforeSet.addUBS(s, p->unk_d4, reg, bit)) {
                     reportError("failed to add ubs\n");
                     return false;
                 }

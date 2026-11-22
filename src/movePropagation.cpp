@@ -27,7 +27,7 @@ int propagateMoves(workTable *t)
 {
     wtInstrList *list = &t->unk_88;
     int count = 0;
-    for (Instr *in = list->unk_04; in; in = in->unk_1c.prev()) {
+    for (Instr *in = list->tail; in; in = in->unk_1c.prev()) {
         if (in->func_080532d8() < 0) {
             reportError(propagateNormaliseError);
             return 0;
@@ -116,7 +116,7 @@ int removeDeadMoves(workTable *t)
 {
     int count = 0;
     Instr *next;
-    for (Instr *in = t->unk_88.unk_00; in; in = next) {
+    for (Instr *in = t->unk_88.head; in; in = next) {
         next = in->unk_1c.unk_00;
         if (in->unk_142c && in->operands[0].unk_18 == in->operands[1].unk_18) {
             if (!t->destroyInstruction(in)) {

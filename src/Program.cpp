@@ -5,7 +5,7 @@
 #include "decodedLine.h"
 
 void disposeBackTrace(Program *p);
-void func_0806be68(Program *p);
+void dumpProcessorRegisterPools(Program *p);
 bool parseReset(Program *p);
 const char *linkTypeName(int type);
 bool func_0804c03c(const char *a, const char *b);
@@ -45,7 +45,7 @@ bool Program::Init(CpuDef *cpu, const char *uniqueName, bool uniqueAll)
         dispose();
         return false;
     }
-    proc.unk_60 = uniqueAll;
+    proc.uniqueAll = uniqueAll;
     if (!proc.Init(cpu)) {
         reportError("flowMon::Init failed to init cpu object\n");
         return false;
@@ -150,7 +150,7 @@ void func_0806ed78(Program *p, int b)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream)
         s->dump(b);
-    func_0806be68(p);
+    dumpProcessorRegisterPools(p);
 }
 
 instStream *Program::findStreamById(int id)
@@ -372,7 +372,7 @@ bool func_0806f4a0(Program *p, instStream *s)
 {
     mList *l = &s->unk_110;
     for (mNode *n = l->head; n; n = n->next) {
-        if (p->proc.unk_04.findByExactName(n->name))
+        if (p->proc.exportedSymbols.findByExactName(n->name))
             return true;
     }
     return false;
@@ -380,7 +380,7 @@ bool func_0806f4a0(Program *p, instStream *s)
 
 bool func_0806f4e8(Program *p, char *name)
 {
-    return p->proc.unk_04.findByExactName(name) != 0;
+    return p->proc.exportedSymbols.findByExactName(name) != 0;
 }
 
 bool recalcFlowUIDs(Program *p)

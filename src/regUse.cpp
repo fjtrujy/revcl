@@ -27,25 +27,25 @@ regUse::~regUse()
 
 regUseList::regUseList()
 {
-    unk_08 = 0;
-    unk_04 = 0;
-    unk_00 = 0;
+    tail = 0;
+    head = 0;
+    count = 0;
 }
 
 regUseList::~regUseList()
 {
-    regUse *ru = unk_04;
+    regUse *ru = head;
     while (ru) {
         regUse *next = ru->unk_04;
         if (ru->unk_04)
             ru->unk_04->unk_00 = ru->unk_00;
         else
-            unk_08 = ru->unk_00;
+            tail = ru->unk_00;
         if (ru->unk_00)
             ru->unk_00->unk_04 = ru->unk_04;
         else
-            unk_04 = ru->unk_04;
-        unk_00--;
+            head = ru->unk_04;
+        count--;
         ru->unk_00 = 0;
         ru->unk_04 = 0;
         delete ru;
@@ -55,18 +55,18 @@ regUseList::~regUseList()
 
 bool regUseList::clear()
 {
-    regUse *ru = unk_04;
+    regUse *ru = head;
     while (ru) {
         regUse *next = ru->unk_04;
         if (ru->unk_04)
             ru->unk_04->unk_00 = ru->unk_00;
         else
-            unk_08 = ru->unk_00;
+            tail = ru->unk_00;
         if (ru->unk_00)
             ru->unk_00->unk_04 = ru->unk_04;
         else
-            unk_04 = ru->unk_04;
-        unk_00--;
+            head = ru->unk_04;
+        count--;
         ru->unk_00 = 0;
         ru->unk_04 = 0;
         delete ru;
@@ -90,14 +90,14 @@ regUse *regUseList::AddNewRegRef(RegPoolEntry *reg)
     }
     ru->unk_00 = 0;
     ru->unk_04 = 0;
-    if (!unk_08) {
-        unk_04 = ru;
+    if (!tail) {
+        head = ru;
     } else {
-        unk_08->unk_04 = ru;
-        ru->unk_00 = unk_08;
+        tail->unk_04 = ru;
+        ru->unk_00 = tail;
     }
-    unk_08 = ru;
-    unk_00++;
+    tail = ru;
+    count++;
     return ru;
 }
 
@@ -105,14 +105,14 @@ bool regUseList::append(regUse *ru)
 {
     ru->unk_00 = 0;
     ru->unk_04 = 0;
-    if (!unk_08) {
-        unk_04 = ru;
+    if (!tail) {
+        head = ru;
     } else {
-        unk_08->unk_04 = ru;
-        ru->unk_00 = unk_08;
+        tail->unk_04 = ru;
+        ru->unk_00 = tail;
     }
-    unk_08 = ru;
-    unk_00++;
+    tail = ru;
+    count++;
     return true;
 }
 
@@ -121,31 +121,31 @@ bool regUseList::remove(regUse *ru)
     if (ru->unk_04)
         ru->unk_04->unk_00 = ru->unk_00;
     else
-        unk_08 = ru->unk_00;
+        tail = ru->unk_00;
     if (ru->unk_00)
         ru->unk_00->unk_04 = ru->unk_04;
     else
-        unk_04 = ru->unk_04;
-    unk_00--;
+        head = ru->unk_04;
+    count--;
     ru->unk_00 = 0;
     ru->unk_04 = 0;
     return true;
 }
 
-bool regUseList::func_0805b0cc()
+bool regUseList::hasConsistentCount()
 {
     int n = 0;
-    for (regUse *ru = unk_04; ru; ru = ru->unk_04) {
+    for (regUse *ru = head; ru; ru = ru->unk_04) {
         if (!ru->unk_08)
             return false;
         n++;
     }
-    return n == unk_00;
+    return n == count;
 }
 
-bool regUseList::func_0805b0f8()
+bool regUseList::hasEntries()
 {
-    return unk_08 != 0;
+    return tail != 0;
 }
 
 regUseSlot::regUseSlot()

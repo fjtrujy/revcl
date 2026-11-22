@@ -97,10 +97,10 @@ int func_0807aaf4(Program *p, instStream *s)
                 int limit = need + id;
                 int bestMask = 0, bestLine = -1, bestPipe = -1, bestCount = 0, count = 0;
                 while (line < wt->func_080741c0() && capMask) {
-                    if (r->unk_0c >= limit) {
+                    if (r->cycleTime >= limit) {
                         for (int q = 0; q != 2; q++) {
                             if (((bits >> q) & 1) && !GetI((Instr **)r, q)) {
-                                if ((!r->func_08072304() && bestLine < 0) || r->func_08072304()) {
+                                if ((!r->countEntries() && bestLine < 0) || r->countEntries()) {
                                     bestLine = line;
                                     bestCount = count;
                                     bestPipe = q;
@@ -110,9 +110,9 @@ int func_0807aaf4(Program *p, instStream *s)
                             }
                         }
                     }
-                    if (r->func_08072440(reg, 0xff))
+                    if (r->inputMaskFor(reg, 0xff))
                         break;
-                    if (r->func_08072304())
+                    if (r->countEntries())
                         count++;
                     capMask &= ~r->outputMask(capReg);
                     line++;

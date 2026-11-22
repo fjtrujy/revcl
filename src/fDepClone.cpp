@@ -81,7 +81,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
 {
     Instr *in;
     Instr *phaseHead;
-    in = wt->unk_88.unk_00;
+    in = wt->unk_88.head;
     if (!in)
         goto finalize;
     for (; in; in = in->unk_1c.unk_00) {
@@ -98,7 +98,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
         }
     }
     {
-        phaseHead = wt->unk_88.unk_00;
+        phaseHead = wt->unk_88.head;
         in = phaseHead;
         if (!phaseHead)
             goto finalize_ready;
@@ -198,7 +198,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
         }
     }
 finalize:
-    phaseHead = wt->unk_88.unk_00;
+    phaseHead = wt->unk_88.head;
 finalize_ready:
     in = phaseHead;
     Instr *last[4] = { 0, 0, 0, 0 };
@@ -262,7 +262,7 @@ bool tagsMatch(Instr *a, Instr *b)
 bool fixupCloneFdeps(workTable *wt)
 {
     int n = 0;
-    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
         Instr *orig = in->unk_08;
         n += 8;
         in->unk_13e4 = n;

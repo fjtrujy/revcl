@@ -18,10 +18,10 @@ void dumpThru(Program *prog)
             if (!rp || !rp->virtualPartCount)
                 continue;
             reportInfo("    %s\n", rp->poolName);
-            for (regUse *u = t->unk_14.unk_04; u; u = u->unk_04) {
+            for (regUse *u = t->unk_14.head; u; u = u->unk_04) {
                 int mask = u->unk_10 & ~(u->unk_0e | u->unk_0f | u->unk_0c | u->unk_0d);
                 RegPoolEntry *reg = u->unk_08;
-                if (mask && rp->func_08059e20(reg))
+                if (mask && rp->ownsRegisterClass(reg))
                     reportInfo("        %s\n", reg->maskName(mask));
             }
         }

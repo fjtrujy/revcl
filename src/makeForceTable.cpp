@@ -39,7 +39,7 @@ workTable *makeForceTable(Program *p, instStream *s)
     int start = wt->func_0807411c();
     int end = wt->func_080741c0();
     nt->setRange(start, end);
-    for (Instr *in = nt->unk_94.unk_00; in; in = nt->unk_94.unk_00) {
+    for (Instr *in = nt->unk_94.head; in; in = nt->unk_94.head) {
         Instr *clone = in->unk_08;
         InstructionPosition pos;
         InstructionPosition *r = &clone->unk_13e8;

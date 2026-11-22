@@ -13,7 +13,7 @@ char *dupString(const char *s);
 
 static inline void dumpRow(wtRow *row)
 {
-    row->func_0807222c(-1);
+    row->refreshInstructionOperands(-1);
 }
 
 bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int loopMode)
@@ -61,7 +61,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             reportError("failed to get ied\n");
             return false;
         }
-        row->func_080721f8();
+        row->clearEntries();
         int n = 0;
         int valid = 0;
         for (int j = 0; j != 2; j++) {
@@ -108,13 +108,13 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                 branchRow = rows;
                 branch = in;
             }
-            row->unk_00[j].unk_00 = in;
+            row->entries[j].unk_00 = in;
             in->setOwner((cls_unk30 *)t);
             valid++;
             n++;
         }
         if (n) {
-            if (checkDispatchEntry(&row->unk_00[0].unk_00)) {
+            if (checkDispatchEntry(&row->entries[0].unk_00)) {
                 reportUserMessage("invalid instruction combination\n");
                 int saved = errorOccurred;
                 errorOccurred = !quiet_080bbd98;
@@ -158,7 +158,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             return false;
         }
         for (int j = 0; j != 2; j++) {
-            Instr *in = row->unk_00[j].unk_00;
+            Instr *in = row->entries[j].unk_00;
             if (!in)
                 continue;
             int lid, pos;

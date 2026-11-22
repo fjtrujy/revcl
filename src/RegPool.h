@@ -114,31 +114,31 @@ public:
     virtual bool func_08088e54(workTable *t) = 0;                     // slot 4
     bool Init(VclPtrWord registerPrefix, const char* name, int cls, int virtualRegisterParts);
     void Dump();
-    RegPoolEntry* func_080593e0(int index);
-    RegPoolEntry* func_08059418(const char* name);
+    RegPoolEntry* findByRegisterIndex(int index);
+    RegPoolEntry* findPhysicalByName(const char* name);
     bool func_08059464();
     bool func_080594c0();
     bool func_0805951c();
     bool func_08059578();
-    bool func_080595d4();
+    bool clearVirtualRegistersForParse();
     static bool isResvd(const char* name, int cls);
-    bool func_08059828(bool flag);
-    bool func_080598b0();
-    RegPoolEntry* func_08059944(const char* name);
-    RegPoolEntry* func_08059a1c(const char* name);
-    RegPoolEntry* func_08059a5c(const char* name);
-    bool func_08059c00();
+    bool cycleRegisters(bool flag);
+    bool clearVirtualRegisters();
+    RegPoolEntry* findOrCreateRegister(const char* name);
+    RegPoolEntry* findVirtualByName(const char* name);
+    RegPoolEntry* createVirtualRegister(const char* name);
+    bool markAllocatablePhysicalRegistersUsed();
     bool func_08059c4c();
     bool func_08059c94();
     bool func_08059cdc();
     RegPoolEntry* getMoveReg(Instr* move);
-    bool func_08059e20(RegPoolEntry* e);
+    bool ownsRegisterClass(RegPoolEntry* e);
     bool optReset();
     bool emitReset();
     char* emitStats(char* buf);
     int regIndex(int reg);
     int countUsed();
-    int func_08059f70();
+    int countMarkedPhysicalRegisters();
     int gatherInflight(ol_s** out);
 
     RegPoolEntry* registerEntries;
@@ -167,6 +167,6 @@ struct RegDesc {
 extern RegDesc regDescTable[];
 extern const char* regNameChars;
 
-int func_0805968c(const char* name);
+int isReservedRegisterName(const char* name);
 
 #endif

@@ -23,7 +23,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         reportError("passed a null pointer to emuVSM\n");
         return -1;
     }
-    if (row->unk_08)
+    if (row->skip)
         return 0;
     if (uta && !Cycle(p, uta)) {
         reportError("Processor::Emu - failed initial cycle for uta!\n");
@@ -31,7 +31,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     }
 
     for (k = 0; k != 2; k++) {
-        Instr *in = row->unk_00[k].unk_00;
+        Instr *in = row->entries[k].unk_00;
         if (!in)
             continue;
         if (commit && in->unk_1434) {
@@ -51,7 +51,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     }
     int maxLat = 0, maxThru = 0;
     for (k = 0; k != 2; k++) {
-        in = row->unk_00[k].unk_00;
+        in = row->entries[k].unk_00;
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
@@ -80,7 +80,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                         if (rp->unk_38 && (lat = rp->unk_38->unk_12) != 0) {
                             ol_s tmp;
                             tmp.init(in, o, part, false);
-                            if (commit && !p->proc.unk_74.addStall(rp->unk_38, &tmp, 0, lat)) {
+                            if (commit && !p->proc.stalls.addStall(rp->unk_38, &tmp, 0, lat)) {
                                 reportError("failed to add an internal latency stall\n");
                                 return -1;
                             }
@@ -120,7 +120,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             tmp.init(in, o, part, false);
                             if (commit) {
                                 int issueLock = rp->unk_3e;
-                                if (!p->proc.unk_74.addStall(rp->unk_38, &tmp, 1, issueLock)) {
+                                if (!p->proc.stalls.addStall(rp->unk_38, &tmp, 1, issueLock)) {
                                     reportError("failed to add an internal thruput stall\n");
                                     return -1;
                                 }
@@ -157,11 +157,11 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         cyc = p->unk_80;
     }
     for (k = 0; k != 2; k++)
-        if (row->unk_00[k].unk_00)
-            row->unk_00[k].unk_00->unk_1394 = cyc;
+        if (row->entries[k].unk_00)
+            row->entries[k].unk_00->unk_1394 = cyc;
 
     for (k = 0; k != 2; k++) {
-        in = row->unk_00[k].unk_00;
+        in = row->entries[k].unk_00;
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
@@ -198,7 +198,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         }
     }
     for (k = 0; k != 2; k++) {
-        Instr *in = row->unk_00[k].unk_00;
+        Instr *in = row->entries[k].unk_00;
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {

@@ -164,14 +164,14 @@ int iGroupLog::logTable(workTable *wt)
         reportError("logTable - called - but the table is already open\n");
         return 0;
     }
-    for (regUse *p = wt->unk_14.unk_04; p; p = p->unk_04) {
+    for (regUse *p = wt->unk_14.head; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         for (int i = 0; i != reg->partCount; i++) {
             if (((p->unk_0c & p->unk_0d) >> i) & 1) {
             Instr *in;
-            for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+            for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
                 in->unk_0e = 0;
-            for (Instr *cur = (in = wt->unk_88.unk_00); in; cur = (in = in->unk_1c.unk_00))
+            for (Instr *cur = (in = wt->unk_88.head); in; cur = (in = in->unk_1c.unk_00))
                 for (int j = 0; j != cur->operandCount; j++) {
                     Operand *op = &cur->operands[j];
                     RegPoolEntry *r = op->unk_18;
@@ -186,7 +186,7 @@ int iGroupLog::logTable(workTable *wt)
             bool changed;
             do {
                 changed = false;
-                for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+                for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
                     if (in->unk_0e_1)
                         for (int j = 0; j != in->operandCount; j++) {
                             Operand *op = &in->operands[j];
@@ -199,7 +199,7 @@ int iGroupLog::logTable(workTable *wt)
                                     }
                         }
                 wtInstrList *list = &wt->unk_88;
-                for (in = list->unk_04; in; in = in->unk_1c.unk_04)
+                for (in = list->tail; in; in = in->unk_1c.unk_04)
                     if (in->unk_0e_0)
                         for (int j = 0; j != in->operandCount; j++) {
                             Operand *op = &in->operands[j];
@@ -212,7 +212,7 @@ int iGroupLog::logTable(workTable *wt)
             } while (changed);
             reportInfo("  dumping scan for %s\n", reg->maskName(1 << i));
             int n = 0;
-            for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+            for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
                 if (in->unk_0e == 3) {
                     const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
                     reportInfo("  [%4d] %d %s\n", n++, in->unk_0c, name);

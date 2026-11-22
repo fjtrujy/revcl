@@ -13,7 +13,7 @@ static inline bool extendForEnd_inl(workTable *wt)
             reportError("failed to get ie for end patch\n");
             return false;
         }
-        r->func_080721f8();
+        r->clearEntries();
     } while (wt->unk_34 - wt->unk_30 < 2);
     return true;
 }
@@ -98,7 +98,7 @@ bool extendForEnd(workTable *wt)
             reportError("failed to get ie for end patch\n");
             return false;
         }
-        r->func_080721f8();
+        r->clearEntries();
     } while (wt->unk_34 - wt->unk_30 < 2);
     return true;
 }

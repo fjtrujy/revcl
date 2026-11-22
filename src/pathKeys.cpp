@@ -15,7 +15,7 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
         reportError("failed to get work table\n");
         return 0;
     }
-    regUse *u = wt->unk_14.func_0805b5dc(reg);
+    regUse *u = wt->unk_14.findByRegister(reg);
     n->unk_227 = 0;
     n->unk_228 = 0;
     n->unk_258 = 0;

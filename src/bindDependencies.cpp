@@ -43,7 +43,7 @@ bool bindDependencies(Program *p)
     }
     for (s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
-        for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
             int bits = in->getRamBits();
             if (!in->unk_139c)
                 continue;
@@ -299,9 +299,9 @@ RegPoolEntry *getTagRegister(RegPool *pool, char *name)
         reportUserMessage("can't use %s as a name for one of the %s\n", name, pool->poolName);
         return 0;
     }
-    RegPoolEntry *r = pool->func_08059a1c(name);
+    RegPoolEntry *r = pool->findVirtualByName(name);
     if (!r) {
-        r = pool->func_08059a5c(name);
+        r = pool->createVirtualRegister(name);
         if (!r) {
             reportError("failed to create a virtual reg\n");
             return 0;

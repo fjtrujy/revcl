@@ -8,9 +8,9 @@
 
 bool loadStalls(Program *p)
 {
-    infoList *st = &p->proc.unk_74;
-    for (stallNode *n = (stallNode *)st->unk_04; n; n = (stallNode *)n->unk_04) {
-        Instr *in = n->unk_18.unk_00;
+    infoList *st = &p->proc.stalls;
+    for (stallNode *n = (stallNode *)st->head; n; n = (stallNode *)n->next) {
+        Instr *in = n->user.instruction;
         if (!in) {
             reportError("no instruction in stall\n");
             return 0;
@@ -30,13 +30,13 @@ bool loadStalls(Program *p)
             reportError("couldn't get ie for instruction\n");
             return 0;
         }
-        if (ie->unk_00[loc->unk_02].unk_00 != in) {
+        if (ie->entries[loc->unk_02].unk_00 != in) {
             reportError("instruction wasn't where I thought it was\n");
             return 0;
         }
         for (int i = 0; i != 3; i++) {
-            if (n->unk_24[i]) {
-                if (!ie->addStall(i, n->unk_24[i])) {
+            if (n->stallByType[i]) {
+                if (!ie->addStall(i, n->stallByType[i])) {
                     reportError("failed to load a stall\n");
                     return 0;
                 }

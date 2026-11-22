@@ -87,7 +87,7 @@ bool initPrune(instStream *s)
         reportError("failed to get work table\n");
         return false;
     }
-    for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00)
         if (!initPrune(in)) {
             reportError("init prune failed\n");
             return false;
@@ -146,7 +146,7 @@ int tryPrune(instStream *s)
     bool raw = false;
     if (t->unk_09 == 4 || t->func_08073754() == 4)
         raw = true;
-    for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
         int r = tryPrune(in, raw);
         if (r < 0) {
             reportError("rec  prune failed for instruction\n");
@@ -263,7 +263,7 @@ bool doPrune(instStream *s)
     }
     if (t->func_08073754() == 4 || t->func_08073754() == 3)
         return true;
-    Instr *first = t->unk_88.unk_00;
+    Instr *first = t->unk_88.head;
     Instr *in = first;
     Instr *next;
     if (first) do {

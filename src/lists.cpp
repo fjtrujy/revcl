@@ -13,27 +13,27 @@ bool UnlinkFromToDo(Block *blk, Instr *n)
         reportError("UnlinkFromToDo - passed a null pointer\n");
         return false;
     }
-    if (!blk->unk_94.unk_08) {
+    if (!blk->unk_94.count) {
         reportError("UnlinkFromToDo asked to unlink - but zero count\n");
         return false;
     }
     if (n->unk_24.unk_00)
         n->unk_24.unk_00->unk_24.unk_04 = n->unk_24.unk_04;
-    else if (n == blk->unk_94.unk_04)
-        blk->unk_94.unk_04 = n->unk_24.unk_04;
+    else if (n == blk->unk_94.tail)
+        blk->unk_94.tail = n->unk_24.unk_04;
     else {
         reportError("UnlinkFromToDono next.. but not tail!\n");
         return false;
     }
     if (n->unk_24.unk_04)
         n->unk_24.unk_04->unk_24.unk_00 = n->unk_24.unk_00;
-    else if (n == blk->unk_94.unk_00)
-        blk->unk_94.unk_00 = n->unk_24.unk_00;
+    else if (n == blk->unk_94.head)
+        blk->unk_94.head = n->unk_24.unk_00;
     else {
         reportError("UnlinkFromToDono next.. but not tail!\n");
         return false;
     }
-    blk->unk_94.unk_08--;
+    blk->unk_94.count--;
     n->unk_24.unk_04 = 0;
     n->unk_24.unk_00 = 0;
     return true;
@@ -45,27 +45,27 @@ bool UnlinkFromDone(Block *blk, Instr *n)
         reportError("UnlinkFromDone - passed a null pointer\n");
         return false;
     }
-    if (!blk->unk_a0.unk_08) {
+    if (!blk->unk_a0.count) {
         reportError("UnlinkFromDone asked to unlink - but zero count\n");
         return false;
     }
     if (n->unk_24.unk_00)
         n->unk_24.unk_00->unk_24.unk_04 = n->unk_24.unk_04;
-    else if (n == blk->unk_a0.unk_04)
-        blk->unk_a0.unk_04 = n->unk_24.unk_04;
+    else if (n == blk->unk_a0.tail)
+        blk->unk_a0.tail = n->unk_24.unk_04;
     else {
         reportError("UnlinkFromDoneno next.. but not tail!\n");
         return false;
     }
     if (n->unk_24.unk_04)
         n->unk_24.unk_04->unk_24.unk_00 = n->unk_24.unk_00;
-    else if (n == blk->unk_a0.unk_00)
-        blk->unk_a0.unk_00 = n->unk_24.unk_00;
+    else if (n == blk->unk_a0.head)
+        blk->unk_a0.head = n->unk_24.unk_00;
     else {
         reportError("UnlinkFromDoneno next.. but not tail!\n");
         return false;
     }
-    blk->unk_a0.unk_08--;
+    blk->unk_a0.count--;
     n->unk_24.unk_04 = 0;
     n->unk_24.unk_00 = 0;
     return true;
@@ -77,27 +77,27 @@ bool UnlinkFromLinear(Block *blk, Instr *n)
         reportError("UnlinkFromLinear - passed a null pointer\n");
         return false;
     }
-    if (!blk->unk_88.unk_08) {
+    if (!blk->unk_88.count) {
         reportError("UnlinkFromLinear asked to unlink - but zero count\n");
         return false;
     }
     if (n->unk_1c.unk_00)
         n->unk_1c.unk_00->unk_1c.unk_04 = n->unk_1c.unk_04;
-    else if (n == blk->unk_88.unk_04)
-        blk->unk_88.unk_04 = n->unk_1c.unk_04;
+    else if (n == blk->unk_88.tail)
+        blk->unk_88.tail = n->unk_1c.unk_04;
     else {
         reportError("UnlinkFromLinearno next.. but not tail!\n");
         return false;
     }
     if (n->unk_1c.unk_04)
         n->unk_1c.unk_04->unk_1c.unk_00 = n->unk_1c.unk_00;
-    else if (n == blk->unk_88.unk_00)
-        blk->unk_88.unk_00 = n->unk_1c.unk_00;
+    else if (n == blk->unk_88.head)
+        blk->unk_88.head = n->unk_1c.unk_00;
     else {
         reportError("UnlinkFromLinearno next.. but not tail!\n");
         return false;
     }
-    blk->unk_88.unk_08--;
+    blk->unk_88.count--;
     n->unk_1c.unk_04 = 0;
     n->unk_1c.unk_00 = 0;
     return true;
@@ -113,29 +113,29 @@ bool AddToDo_Head(Block *blk, Instr *n)
         reportError("AddToDo_Head - node already appears linked\n");
         return false;
     }
-    if (blk->unk_94.unk_00) {
-        if (!blk->unk_94.unk_04) {
+    if (blk->unk_94.head) {
+        if (!blk->unk_94.tail) {
             reportError("AddToDo_Headlist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->unk_94.unk_08) {
+        if (!blk->unk_94.count) {
             reportError("AddToDo_Headlist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_24.unk_00 = blk->unk_94.unk_00;
-        blk->unk_94.unk_00->unk_24.unk_04 = n;
-        blk->unk_94.unk_00 = n;
+        n->unk_24.unk_00 = blk->unk_94.head;
+        blk->unk_94.head->unk_24.unk_04 = n;
+        blk->unk_94.head = n;
     } else {
-        if (blk->unk_94.unk_08) {
+        if (blk->unk_94.count) {
             reportError("AddToDo_Headno list head but count not zero\n");
             return false;
         }
-        blk->unk_94.unk_04 = n;
-        blk->unk_94.unk_00 = n;
+        blk->unk_94.tail = n;
+        blk->unk_94.head = n;
     }
-    blk->unk_94.unk_08++;
+    blk->unk_94.count++;
     return true;
 }
 
@@ -149,29 +149,29 @@ bool AddDone_Head(Block *blk, Instr *n)
         reportError("AddDone_Head - node already appears linked\n");
         return false;
     }
-    if (blk->unk_a0.unk_00) {
-        if (!blk->unk_a0.unk_04) {
+    if (blk->unk_a0.head) {
+        if (!blk->unk_a0.tail) {
             reportError("AddDone_Headlist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->unk_a0.unk_08) {
+        if (!blk->unk_a0.count) {
             reportError("AddDone_Headlist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_24.unk_00 = blk->unk_a0.unk_00;
-        blk->unk_a0.unk_00->unk_24.unk_04 = n;
-        blk->unk_a0.unk_00 = n;
+        n->unk_24.unk_00 = blk->unk_a0.head;
+        blk->unk_a0.head->unk_24.unk_04 = n;
+        blk->unk_a0.head = n;
     } else {
-        if (blk->unk_a0.unk_08) {
+        if (blk->unk_a0.count) {
             reportError("AddDone_Headno list head but count not zero\n");
             return false;
         }
-        blk->unk_a0.unk_04 = n;
-        blk->unk_a0.unk_00 = n;
+        blk->unk_a0.tail = n;
+        blk->unk_a0.head = n;
     }
-    blk->unk_a0.unk_08++;
+    blk->unk_a0.count++;
     return true;
 }
 
@@ -185,29 +185,29 @@ bool AddLinear_Head(Block *blk, Instr *n)
         reportError("AddLinear_Head - node already appears linked\n");
         return false;
     }
-    if (blk->unk_88.unk_00) {
-        if (!blk->unk_88.unk_04) {
+    if (blk->unk_88.head) {
+        if (!blk->unk_88.tail) {
             reportError("AddLinear_Headlist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->unk_88.unk_08) {
+        if (!blk->unk_88.count) {
             reportError("AddLinear_Headlist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_1c.unk_00 = blk->unk_88.unk_00;
-        blk->unk_88.unk_00->unk_1c.unk_04 = n;
-        blk->unk_88.unk_00 = n;
+        n->unk_1c.unk_00 = blk->unk_88.head;
+        blk->unk_88.head->unk_1c.unk_04 = n;
+        blk->unk_88.head = n;
     } else {
-        if (blk->unk_88.unk_08) {
+        if (blk->unk_88.count) {
             reportError("AddLinear_Headno list head but count not zero\n");
             return false;
         }
-        blk->unk_88.unk_04 = n;
-        blk->unk_88.unk_00 = n;
+        blk->unk_88.tail = n;
+        blk->unk_88.head = n;
     }
-    blk->unk_88.unk_08++;
+    blk->unk_88.count++;
     return true;
 }
 
@@ -221,29 +221,29 @@ bool AddToDo_Tail(Block *blk, Instr *n)
         reportError("AddToDo_Tail - node already appears linked\n");
         return false;
     }
-    if (blk->unk_94.unk_00) {
-        if (!blk->unk_94.unk_04) {
+    if (blk->unk_94.head) {
+        if (!blk->unk_94.tail) {
             reportError("AddToDo_Taillist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->unk_94.unk_08) {
+        if (!blk->unk_94.count) {
             reportError("AddToDo_Taillist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_24.unk_04 = blk->unk_94.unk_04;
-        blk->unk_94.unk_04->unk_24.unk_00 = n;
-        blk->unk_94.unk_04 = n;
+        n->unk_24.unk_04 = blk->unk_94.tail;
+        blk->unk_94.tail->unk_24.unk_00 = n;
+        blk->unk_94.tail = n;
     } else {
-        if (blk->unk_94.unk_08) {
+        if (blk->unk_94.count) {
             reportError("AddToDo_Tailno list head but count not zero\n");
             return false;
         }
-        blk->unk_94.unk_04 = n;
-        blk->unk_94.unk_00 = n;
+        blk->unk_94.tail = n;
+        blk->unk_94.head = n;
     }
-    blk->unk_94.unk_08++;
+    blk->unk_94.count++;
     return true;
 }
 
@@ -257,29 +257,29 @@ bool AddDone_Tail(Block *blk, Instr *n)
         reportError("AddDone_Tail - node already appears linked\n");
         return false;
     }
-    if (blk->unk_a0.unk_00) {
-        if (!blk->unk_a0.unk_04) {
+    if (blk->unk_a0.head) {
+        if (!blk->unk_a0.tail) {
             reportError("AddDone_Taillist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->unk_a0.unk_08) {
+        if (!blk->unk_a0.count) {
             reportError("AddDone_Taillist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_24.unk_04 = blk->unk_a0.unk_04;
-        blk->unk_a0.unk_04->unk_24.unk_00 = n;
-        blk->unk_a0.unk_04 = n;
+        n->unk_24.unk_04 = blk->unk_a0.tail;
+        blk->unk_a0.tail->unk_24.unk_00 = n;
+        blk->unk_a0.tail = n;
     } else {
-        if (blk->unk_a0.unk_08) {
+        if (blk->unk_a0.count) {
             reportError("AddDone_Tailno list head but count not zero\n");
             return false;
         }
-        blk->unk_a0.unk_04 = n;
-        blk->unk_a0.unk_00 = n;
+        blk->unk_a0.tail = n;
+        blk->unk_a0.head = n;
     }
-    blk->unk_a0.unk_08++;
+    blk->unk_a0.count++;
     return true;
 }
 
@@ -293,29 +293,29 @@ bool AddLinear_Tail(Block *blk, Instr *n)
         reportError("AddLinear_Tail - node already appears linked\n");
         return false;
     }
-    if (blk->unk_88.unk_00) {
-        if (!blk->unk_88.unk_04) {
+    if (blk->unk_88.head) {
+        if (!blk->unk_88.tail) {
             reportError("AddLinear_Taillist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->unk_88.unk_08) {
+        if (!blk->unk_88.count) {
             reportError("AddLinear_Taillist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_1c.unk_04 = blk->unk_88.unk_04;
-        blk->unk_88.unk_04->unk_1c.unk_00 = n;
-        blk->unk_88.unk_04 = n;
+        n->unk_1c.unk_04 = blk->unk_88.tail;
+        blk->unk_88.tail->unk_1c.unk_00 = n;
+        blk->unk_88.tail = n;
     } else {
-        if (blk->unk_88.unk_08) {
+        if (blk->unk_88.count) {
             reportError("AddLinear_Tailno list head but count not zero\n");
             return false;
         }
-        blk->unk_88.unk_04 = n;
-        blk->unk_88.unk_00 = n;
+        blk->unk_88.tail = n;
+        blk->unk_88.head = n;
     }
-    blk->unk_88.unk_08++;
+    blk->unk_88.count++;
     return true;
 }
 
@@ -334,14 +334,14 @@ bool AddLinear_After(Block *blk, Instr *after, Instr *n)
         n->unk_1c.unk_04 = after;
         after->unk_1c.unk_00 = n;
     } else {
-        n->unk_1c.unk_00 = blk->unk_88.unk_00;
-        blk->unk_88.unk_00 = n;
+        n->unk_1c.unk_00 = blk->unk_88.head;
+        blk->unk_88.head = n;
     }
     if (n->unk_1c.unk_00)
         n->unk_1c.unk_00->unk_1c.unk_04 = n;
     else
-        blk->unk_88.unk_04 = n;
-    blk->unk_88.unk_08++;
+        blk->unk_88.tail = n;
+    blk->unk_88.count++;
     return true;
 }
 

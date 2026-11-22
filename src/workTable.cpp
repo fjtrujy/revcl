@@ -11,25 +11,25 @@ regUseSlot::~regUseSlot()
 {
 }
 
-void regUseList::func_0805b44c()
+void regUseList::dumpRegisterUses()
 {
-    if (func_0805b0cc()) {
+    if (hasConsistentCount()) {
         for (int i = 0; i != 12; i++) {
             RegPool *rp = GetRP(i);
             if (rp)
-                func_0805b494(i);
+                dumpRegisterClassUses(i);
         }
     }
 }
 
 extern const char regUseNewFailedError[] = "AddNewRegRef() - new failed\n";
 
-int regUseList::func_0805b494(int regClass)
+int regUseList::dumpRegisterClassUses(int regClass)
 {
     int n = 0;
-    regUse *head = unk_04;
+    regUse *listHead = head;
     regUse *ru;
-    for (ru = head; ru; ru = ru->unk_04) {
+    for (ru = listHead; ru; ru = ru->unk_04) {
         RegPoolEntry *reg = ru->unk_08;
         if (!reg) {
             reportError("found reg ref with no reg!\n");
@@ -41,14 +41,14 @@ int regUseList::func_0805b494(int regClass)
     }
     if (n == 0)
         return 0;
-    for (ru = head; ru; ru = ru->unk_04) {
+    for (ru = listHead; ru; ru = ru->unk_04) {
         if (ru->unk_08->isClass(regClass))
-            ru->func_0805b51c();
+            ru->validateAndDumpParts();
     }
     return n;
 }
 
-void regUse::func_0805b51c()
+void regUse::validateAndDumpParts()
 {
     RegPoolEntry *reg = unk_08;
     int i;
@@ -70,7 +70,7 @@ void regUse::func_0805b51c()
     }
 }
 
-regUse *regUseList::func_0805b5dc(RegPoolEntry *reg)
+regUse *regUseList::findByRegister(RegPoolEntry *reg)
 {
     return find(reg);
 }
@@ -78,7 +78,7 @@ regUse *regUseList::func_0805b5dc(RegPoolEntry *reg)
 regUse *regUseList::firstReal()
 {
     regUse *p;
-    for (p = unk_04; p; p = p->unk_04) {
+    for (p = head; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         if (!reg) {
             reportError("regref has no register!\n");
@@ -108,7 +108,7 @@ regUse *regUse::nextReal()
 regUse *regUseList::firstVirtual()
 {
     regUse *p;
-    for (p = unk_04; p; p = p->unk_04) {
+    for (p = head; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         if (!reg) {
             reportError("regref has no register!\n");
@@ -137,7 +137,7 @@ regUse *regUse::nextVirtual()
 
 bool regUseList::optReset()
 {
-    for (regUse *p = unk_04; p; p = p->unk_04) {
+    for (regUse *p = head; p; p = p->unk_04) {
         for (int i = 0; i != 4; i++) {
             p->unk_20[i].unk_58 = 0;
             p->unk_20[i].unk_5c.func_0805bcc4();
@@ -261,7 +261,7 @@ ol_s *regUseSlot::func_0805ba2c(int pos, bool all)
 int regUseList::func_0805ba64(int regClass)
 {
     int n = 0;
-    for (regUse *p = unk_04; p; p = p->unk_04) {
+    for (regUse *p = head; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         if (reg->registerClass != regClass || reg == reg->ownerPool->zeroRegister)
             continue;
@@ -273,14 +273,14 @@ int regUseList::func_0805ba64(int regClass)
     return n;
 }
 
-void regUseList::func_0805bab0()
+void regUseList::dumpVirtualRegisterUses()
 {
-    if (func_0805b0cc()) {
+    if (hasConsistentCount()) {
         for (int i = 0; i != 12; i++) {
             RegPool *rp = GetRP(i);
             if (rp && rp->virtualPartCount) {
                 reportInfo("%s\n", rp->poolName);
-                func_0805bb10(i);
+                dumpRegisterClassAllocations(i);
             }
         }
     }
@@ -293,10 +293,10 @@ static inline bool isVirtualRegister(RegPoolEntry *reg)
     return false;
 }
 
-void regUseList::func_0805bb10(int regClass)
+void regUseList::dumpRegisterClassAllocations(int regClass)
 {
     regUse *p;
-    for (p = unk_04; p; p = p->unk_04) {
+    for (p = head; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         RegPoolEntry *phys = reg->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
@@ -312,7 +312,7 @@ void regUseList::func_0805bb10(int regClass)
             reportInfo(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc, thr);
         }
     }
-    for (p = unk_04; p; p = p->unk_04) {
+    for (p = head; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
         RegPoolEntry *phys = reg->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";

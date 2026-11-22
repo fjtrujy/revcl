@@ -54,7 +54,7 @@ bool workTable::doPostOpt(int rawMode)
             return false;
         }
         unk_0b = 1;
-        if (unk_94.unk_08) {
+        if (unk_94.count) {
             reportError("doPostOpt - but there's things still to do\n");
             return false;
         }
@@ -74,7 +74,7 @@ bool workTable::doPostOpt(int rawMode)
         }
         int expected;
         wtInstrList *lin = &unk_88;
-        expected = lin->unk_08;
+        expected = lin->count;
         int count = 0;
         if (owner->getEndType() == 2) {
             if (unk_34 - unk_30 <= 1)
@@ -113,7 +113,7 @@ bool workTable::doPostOpt(int rawMode)
                 reportError("iTable::doPostOpt - failed to get ientry\n");
                 return false;
             }
-            if (((wtRow *)ie)->unk_08) {
+            if (((wtRow *)ie)->skip) {
                 reportError("bSkip is set\n");
                 return false;
             }
@@ -220,11 +220,11 @@ bool workTable::doPostOpt(int rawMode)
             dump();
             return false;
         }
-        if (unk_a0.unk_08) {
+        if (unk_a0.count) {
             reportError("doPostOpt() - things remained on done list after scanning table\n");
             return false;
         }
-        if (lin->unk_08) {
+        if (lin->count) {
             reportError("doPostOpt() - things remained on Linear list after scanning table\n");
             return false;
         }
@@ -286,7 +286,7 @@ bool instStream::setOptTable(workTable *nt)
         reportError("stream already has opttable set\n");
         return false;
     }
-    for (Instr *in = nt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = nt->unk_88.head; in; in = in->unk_1c.unk_00) {
         if (in->func_08054168() != this) {
             reportError("didn't own instruction\n");
             return false;

@@ -26,7 +26,7 @@ static inline bool initStreamImm(instStream *s)
         return false;
     }
     s->unk_2c2 = 0;
-    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
         initImm(in);
     return true;
 }
@@ -44,7 +44,7 @@ static inline bool do_immFixup(instStream *s)
     workTable *wt = s->getTable();
     if (!wt)
         return true;
-    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
         fixInst(in);
     return true;
 }
@@ -101,7 +101,7 @@ static inline bool immValid(mValue *v)
     return v->isValid();
 }
 
-static inline regUse *firstRegUse(workTable *wt) { return wt->unk_14.unk_04; }
+static inline regUse *firstRegUse(workTable *wt) { return wt->unk_14.head; }
 static inline RegPoolEntry *regUseReg(regUse *ru) { return ru->unk_08; }
 static inline Instr *regUseInstr(regUse *ru) { return ru->unk_1c; }
 static inline olList *regUseVisList0(regUse *ru) { return &ru->unk_20[0].unk_00; }
@@ -226,14 +226,14 @@ bool tidyStream(instStream *s)
     workTable *wt = s->getTable();
     if (!wt)
         return true;
-    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
         fixInst(in);
     return true;
 }
 
 bool tidyTable(workTable *wt)
 {
-    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
         fixInst(in);
     return true;
 }
@@ -492,7 +492,7 @@ bool Init_immFixup(instStream *s)
         return false;
     }
     s->unk_2c2 = 0;
-    for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
         initImm(in);
     return true;
 }

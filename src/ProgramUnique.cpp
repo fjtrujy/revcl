@@ -13,7 +13,7 @@ bool Program::doUnique()
     instStream *s;
     for (s = streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
-        for (Instr *i = wt->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
+        for (Instr *i = wt->unk_88.head; i; i = i->unk_1c.unk_00) {
             if (!i->unk_1388)
                 continue;
             iInfo *ii = i->opcodeInfo;

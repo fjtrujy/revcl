@@ -43,9 +43,9 @@ bool assignLocalRegisters(Program *p, workTable *wt)
         reportError(assignLocalBadTableError);
         exitAfterCleanup(-1);
     }
-    if (wt->unk_94.unk_08) {
-        reportError(assignLocalPendingError, wt->unk_94.unk_08);
-        for (Instr *in = wt->unk_94.unk_00; in; in = in->unk_24.unk_00)
+    if (wt->unk_94.count) {
+        reportError(assignLocalPendingError, wt->unk_94.count);
+        for (Instr *in = wt->unk_94.head; in; in = in->unk_24.unk_00)
             in->func_08054008(false);
         exitAfterCleanup(-1);
     }
@@ -322,7 +322,7 @@ bool genRegPool::set_in_aTab(regUse *ru)
         reportError("regref had no register\n");
         return false;
     }
-    if (func_08059e20(reg)) {
+    if (ownsRegisterClass(reg)) {
         if (reg->isVirtual) {
             reportError(setInATabVirtualError,
                           reg->registerName());

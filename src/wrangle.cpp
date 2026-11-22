@@ -57,7 +57,7 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
     wt->unk_b0 = 0;
     wt->unk_b4 = 0;
     wt->unk_b8 = 0;
-    for (Instr *in = wt->unk_94.unk_00; in; in = in->unk_24.unk_00) {
+    for (Instr *in = wt->unk_94.head; in; in = in->unk_24.unk_00) {
         adjustMoveCount((Block *)wt, in, 1);
         if (!in->func_080558f4()) {
             reportError("failed to set loop sfx type\n");
@@ -86,9 +86,9 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
     }
     g_080de72c = 0;
     if (wt->unk_38)
-        g_080de750 = wt->unk_94.unk_08 / 40 + 3;
+        g_080de750 = wt->unk_94.count / 40 + 3;
     else
-        g_080de750 = wt->unk_94.unk_08 / 5 + 1;
+        g_080de750 = wt->unk_94.count / 5 + 1;
     if (g_080de750 < timeout_080b3010)
         g_080de750 = timeout_080b3010;
     if (!setWatchdog((char *)&g_080de754, g_080de750)) {
@@ -129,7 +129,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
         else
             wt->unk_54.func_0805874c(0);
         if (!wt->unk_4c) {
-            Instr *todo = wt->unk_94.unk_00;
+            Instr *todo = wt->unk_94.head;
             if (!todo) {
                 wt->unk_30 = 0;
                 if (!wt->unk_38) {
@@ -157,7 +157,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                         int lim2 = maxBranchLid * wt->unk_38;
                         int lim1 = (maxBranchLid - wt->unk_7a) * wt->unk_38;
                         g_080de72c = 0;
-                        for (Instr *in = wt->unk_a0.unk_00; in; in = in->unk_24.unk_00) {
+                        for (Instr *in = wt->unk_a0.head; in; in = in->unk_24.unk_00) {
                             switch ((unsigned char)in->unk_138e) {
                             case 0:
                                 break;
@@ -226,7 +226,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 if (pipe == 1 && wt->unk_b8 == lsz && !wt->unk_ac) {
                     wt->unk_ac = 1;
                     wt->unk_ad = 0;
-                    g_080de72c = wt->unk_a0.unk_00;
+                    g_080de72c = wt->unk_a0.head;
                     goto faulted;
                 }
                 if (!resolveMovePipe(wt, c.unk_00, pipe)) {
@@ -307,7 +307,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 Instr *d0 = done->last();
                 if (ret)
                     goto faulted;
-                *(Instr **)&done->unk_04 = d0;
+                *(Instr **)&done->tail = d0;
             }
             tmp = 0;
             z2 = z1 - 1;
@@ -357,7 +357,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     if (wt->unk_ad && !wt->unk_ac) {
                         wt->unk_ac = 1;
                         wt->unk_ad = 0;
-                        g_080de72c = wt->unk_a0.unk_00;
+                        g_080de72c = wt->unk_a0.head;
                     }
                     break;
                 case 2:
@@ -383,7 +383,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             else
                 g_080de72c = done->last();
             for (wtInstrList *tail = done;
-                 (Instr *)*(VclPtrWord *)&tail->unk_04 != g_080de72c;
+                 (Instr *)*(VclPtrWord *)&tail->tail != g_080de72c;
                  tail = &wt->unk_a0) {
                 Instr *in = tail->last();
                 in->func_08054214();
@@ -397,7 +397,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     abortAfterError();
                 }
             }
-            while (wt->unk_a0.unk_00) {
+            while (wt->unk_a0.head) {
                 Instr *in = wt->unk_a0.last();
                 if (!UndoInsert(wt, in)) {
                     reportError("undo insert: failed to remove done list tail\n");
@@ -439,7 +439,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
 bool buildCandidateList(workTable *wt)
 {
     Instr *in;
-    in = wt->unk_94.unk_00;
+    in = wt->unk_94.head;
     wt->unk_4c = 0;
     wt->unk_50 = 0;
     InstructionPosition pos;
@@ -473,7 +473,7 @@ bool buildCandidateList(workTable *wt)
                     abortAfterError();
                 }
             } else {
-                if (wt->unk_94.unk_08 > 1)
+                if (wt->unk_94.count > 1)
                     continue;
                 int d = wt->getCurrentDoneSize();
                 if (d < 0) {
