@@ -1,0 +1,57 @@
+file	original_line	kind	function	old_name	new_name	evidence
+src/Instr.cpp	970	local_review	expandVirtualStatOperand	a	aluStatusInputNeeded	STAT_ALU operand 55
+src/Instr.cpp	971	local_review	expandVirtualStatOperand	b	divisionStatusInputNeeded	STAT_DIV operand 56
+src/Instr.cpp	972	local_review	expandVirtualStatOperand	c	aluStatusShadowNeeded	STAT_ALU_S operand 57
+src/Instr.cpp	973	local_review	expandVirtualStatOperand	d	divisionStatusShadowNeeded	STAT_DIV_S operand 58
+src/Operand.cpp	208	local_review	diagnoseOperand	ok	operandValueValid	validation result
+src/Operand.cpp	509	local_review	oDecodeToken	m	parsedComponentMask	parsed mask compared to field
+src/Operand.cpp	512	local_review	oDecodeToken	p	closingParenCursor	backward scan for closing parenthesis
+src/Operand.cpp	513	local_review	oDecodeToken	q	openingParenCursor	backward scan for opening parenthesis
+src/Operand.cpp	514	local_review	oDecodeToken	s	sourceCursor	input source cursor
+src/Operand.cpp	515	local_review	oDecodeToken	d	destinationCursor	output text cursor
+src/Operand.cpp	523	local_review	oDecodeToken	zG	savedTokenCharacter	temporary saved char restored
+src/Operand.cpp	622	local_review	oDecodeToken	ok	componentMaskParsed	parseTrailingComponentMask result
+src/Operand.cpp	1198	local_review	oDecodeToken	zd	discardedUpperNibbleCheck	double shift yields zero
+src/RegPool.cpp	135	local_review	Dump	p	unusedOffsetIteration	no-effect offset loop
+src/assignLocalRegisters.cpp	227	local_review	dumpTTab	c	candidateTimelineByte	candidate register timeline inspection
+src/collapse.cpp	106	local_review	collapseProgramStreams	ok	canCollapseInstruction	collapse predicate
+src/externalStreamPreparation.cpp	150	local_review	removeNops	ok	canRemoveInstruction	removal predicate
+src/gatherStats.cpp	382	local_review	gatherStats	i	resourceSlotIndex	resource statistics index
+src/loopDebris.cpp	70	local_review	validateLoopDebrisName	i	unusedRegionIndex	no-effect name validation iteration
+src/makeLpWork.cpp	182	local_review	lsqChain	ok	validShiftChain	chain validator
+src/oDecode.cpp	46	local_review	getNextInstruction	s	expandedRegisterNameCursor	register name construction
+src/oDecode.cpp	48	local_review	getNextInstruction	p	mnemonicCursor	mnemonic and loop-tag parser
+src/oDecode.cpp	49	local_review	getNextInstruction	q	loopTagDelimiterCursor	loop tag delimiter scan
+src/prune.cpp	319	local_review	doPrune	m	effectiveDestinationMask	mask applied to destination
+src/wrangle.cpp	118	local_review	wrangleMode1Worker	tmp	schedulingScratchValue	value used for loop size and temporary decision
+src/wrangleCore.cpp	79	local_review	wrangleMode0Worker	tmp	schedulingScratchWord	word temporarily stores loop size and instruction pointer
+src/Instr.cpp	653	parameter_review	emitExpectedSyntax	<unnamed>	unusedFormatMode	unused parameter
+src/Operand.cpp	205	parameter_review	diagnoseOperand	<unnamed>	unusedDiagnosticMode	unused parameter
+src/Operand.cpp	243	parameter_review	Emit	<unnamed>	unusedUppercaseFlag	unused parameter
+src/Operand.cpp	453	parameter_review	buildImplicitOperand	<unnamed>	unusedSyntaxFlag	unused parameter
+src/efu_Hook.cpp	19	parameter_review	rotateInputComponentMask	<unnamed>	unusedHookContext	unused callback context
+src/efu_Hook.cpp	67	parameter_review	emitClip	<unnamed>	unusedEmissionMode	unused parameter
+src/efu_Hook.cpp	93	parameter_review	vmove_Emit	<unnamed>	unusedEmissionMode	unused parameter
+src/fDepClone.cpp	71	parameter_review	buildForwardDependencies	b	unusedDependencyMode	forwarded but unused by callee
+src/fDepClone.cpp	80	parameter_review	BuildfDepList	<unnamed>	unusedDependencyMode	unused forwarded flag
+src/fDepClone.cpp	303	parameter_review	copyCloneFdeps	<unnamed>	unusedInstruction	unused parameter
+src/flowBuildHooks.cpp	10	parameter_review	noopFlowBuildHook	<unnamed>	unusedProgram	no-op hook
+src/hwRegPool.cpp	41	parameter_review	assignRegistersForWorkTable	<unnamed>	unusedTable	unused implementation argument
+src/hwRegPool.cpp	46	parameter_review	assignExt	<unnamed>	unusedStream	unused implementation argument
+src/hwRegPool.cpp	51	parameter_review	discardDisjointExternalRegister	<unnamed>	unusedRegister	unused implementation argument
+src/iGroupList.cpp	47	parameter_review	iGroupNode	<unnamed>	unusedInitializationTag	constructor discriminator
+src/iInfo.cpp	169	parameter_review	defaultImmediateFlags	<unnamed>	unusedImmediateKind	unused opcode category
+src/infoList.cpp	114	parameter_review	infoNode	<unnamed>	unusedInitializationTag	constructor discriminator
+src/infoList.cpp	119	parameter_review	stallNode	<unnamed>	unusedInitializationTag	constructor discriminator
+src/instStream.cpp	80	parameter_review	dump	<unnamed>	unusedDumpMode	unused diagnostic mode
+src/instructionTextEmission.cpp	19	parameter_review	emitGenericInstructionText	<unnamed>	unusedEmissionMode	unused parameter
+src/instructionTextEmission.cpp	53	parameter_review	emitReversibleBranch	<unnamed>	unusedEmissionMode	unused parameter
+src/instructionTextEmission.cpp	100	parameter_review	extHook	<unnamed>	unusedHookContext	unused callback context
+src/loopDebris.cpp	46	parameter_review	init	a	requestedAllocationModeArg	assigned into requestedAllocationMode
+src/loopDebris.cpp	551	parameter_review	initDebris	a	requestedAllocationMode	assigned into requestedAllocationMode
+src/memRegPool.cpp	51	parameter_review	assignRegistersForWorkTable	<unnamed>	unusedTable	unused implementation argument
+src/memRegPool.cpp	56	parameter_review	assignExt	<unnamed>	unusedStream	unused implementation argument
+src/memRegPool.cpp	61	parameter_review	discardDisjointExternalRegister	<unnamed>	unusedRegister	unused implementation argument
+src/moveRec.cpp	16	parameter_review	getMove	<unnamed>	unusedTimingArgument	unused second argument
+src/wtRow.cpp	56	parameter_review	refreshInstructionOperands	<unnamed>	unusedRowIndex	unused diagnostic mode
+src/xpNode.cpp	614	parameter_review	xun	<unnamed>	unusedInitializationTag	constructor discriminator

@@ -56,6 +56,10 @@ struct Inventory {
     struct OpaqueName classes[256];
     int classCount;
     int classAliases;
+    long reviewedFields;
+    long layoutOnlyFields;
+    long resetOrCopyOnlyFields;
+    long observedFields;
 };
 
 static void fail(const char *reason, const char *path)
@@ -159,6 +163,38 @@ static void countRows(const char *path, struct Inventory *inv, int declarations)
     fclose(f);
 }
 
+/*
+ * A readable reserved-field name closes the lexical naming review, but it
+ * does not establish the original semantic purpose of the bytes. Retain a
+ * separate, validated record of the evidence for every such resolution.
+ */
+static void readFieldResolutions(const char *path, struct Inventory *inv)
+{
+    FILE *f = openInput(path);
+    char line[2048], *parts[8];
+    if (!fgets(line, sizeof(line), f))
+        fail("missing field resolution header", path);
+    while (fgets(line, sizeof(line), f)) {
+        int n = splitTabs(line, parts, 8);
+        if (n < 5)
+            fail("malformed field resolution", path);
+        if (!parts[0][0] || !parts[1][0] || !parts[2][0] || !parts[3][0])
+            fail("empty field resolution", path);
+        ++inv->reviewedFields;
+        if (!strcmp(parts[4], "unused-layout"))
+            ++inv->layoutOnlyFields;
+        else if (!strcmp(parts[4], "write-only") ||
+                 !strcmp(parts[4], "copy-only") ||
+                 !strcmp(parts[4], "copy-or-reset-only"))
+            ++inv->resetOrCopyOnlyFields;
+        else if (!strcmp(parts[4], "read-only-union"))
+            ++inv->observedFields;
+        else
+            fail("unsupported field evidence category", parts[4]);
+    }
+    fclose(f);
+}
+
 static int isIdentChar(int c)
 {
     return isalnum((unsigned char)c) || c == '_';
@@ -207,8 +243,14 @@ static void readManual(const char *path, struct Inventory *inv)
             fail("malformed manual review row", path);
         if (strcmp(parts[4], "open") && strcmp(parts[4], "resolved"))
             fail("expected open/resolved status", parts[1]);
-        if (strcmp(parts[4], "resolved") == 0)
+        if (strcmp(parts[4], "resolved") == 0) {
+            if (n < 6 || !parts[5][0] ||
+                !strcmp(parts[1], parts[5]) ||
+                !hasTypeDeclaration(parts[2], parts[0], parts[5]))
+                fail("resolved manual type lacks verified replacement",
+                     parts[1]);
             continue;
+        }
         if (!hasTypeDeclaration(parts[2], parts[0], parts[1]))
             fail("manual queue has no matching source type", parts[1]);
         if (!strcmp(parts[0], "class"))
@@ -337,10 +379,23 @@ static void printReport(const struct Inventory *inv,
            baseline[FUNCTIONS_UNALIASED] - inv->metrics[FUNCTIONS_UNALIASED],
            baseline[FUNCTIONS_UNALIASED],
            inv->metrics[FUNCTIONS_UNALIASED]);
-    printf("**Numeric class alias coverage:** %d of %d have readable "
-           "typedefs; %ld remain without an alias.\n\n",
-           inv->classAliases, inv->classCount,
-           inv->metrics[CLASSES_UNALIASED]);
+    if (!inv->classCount)
+        puts("**Numeric class naming:** no numeric class spellings remain "
+             "in source; their replacement types are named directly.\n");
+    else
+        printf("**Numeric class alias coverage:** %d of %d have readable "
+               "typedefs; %ld remain without an alias.\n\n",
+               inv->classAliases, inv->classCount,
+               inv->metrics[CLASSES_UNALIASED]);
+    printf("**Field evidence retained:** %ld reviewed field resolutions: "
+           "%ld unreferenced layout-only fields, %ld reset/copy-only "
+           "fields and %ld observed union word. These records are in "
+           "[the field resolution ledger](naming-field-resolutions.tsv). "
+           "A zero offset-name count means the original naming queue is "
+           "closed, **not** that the proprietary purpose of all reserved "
+           "storage has been proven.\n\n",
+           inv->reviewedFields, inv->layoutOnlyFields,
+           inv->resetOrCopyOnlyFields, inv->observedFields);
     puts("## How to update this in every naming commit\n");
     puts("Run from the repository root:\n");
     puts("```sh\nsh scripts/ci/naming-progress.sh --update\n"
@@ -378,6 +433,8 @@ static void printReport(const struct Inventory *inv,
          "are updated**. Review affected declarations after each rename, "
          "and periodically regenerate the AST queues. Zero manually "
          "flagged structs would not prove all structures are named. "
+         "Completed original declaration reviews are retained in "
+         "[the declaration resolution ledger](naming-declaration-resolutions.tsv). "
          "The VUC reconstruction is tracked independently on its own branch; "
          "its early candidate inventory is "
          "[here](naming-vuc-identifiers.tsv).\n");
@@ -390,8 +447,9 @@ int main(int argc, char **argv)
     struct Inventory inv = {0};
     long baseline[METRIC_COUNT] = {0};
     if (argc != 7 || (strcmp(argv[1], "--baseline") &&
-                      strcmp(argv[1], "--report"))) {
-        fprintf(stderr, "usage: naming-progress --baseline|--report "
+                      strcmp(argv[1], "--report") &&
+                      strcmp(argv[1], "--require-complete"))) {
+        fprintf(stderr, "usage: naming-progress --baseline|--report|--require-complete "
                 "<identifiers.tsv> <fields.tsv> <declarations.tsv> "
                 "<manual.tsv> <src-dir-or-baseline>\n");
         return 2;
@@ -400,8 +458,21 @@ int main(int argc, char **argv)
     countRows(argv[3], &inv, 0);
     countRows(argv[4], &inv, 1);
     readManual(argv[5], &inv);
+    if (strcmp(argv[1], "--baseline"))
+        readFieldResolutions("docs/naming-field-resolutions.tsv", &inv);
     /* The source directory is a fixed relative path in both modes. */
     scanClassTypedefs("src", &inv);
+    if (!strcmp(argv[1], "--require-complete")) {
+        int metric;
+        for (metric = 0; metric < METRIC_COUNT; ++metric) {
+            if (inv.metrics[metric]) {
+                fprintf(stderr, "naming-progress: %s remains at %ld, expected zero\n",
+                        metricKeys[metric], inv.metrics[metric]);
+                return 1;
+            }
+        }
+        return 0;
+    }
     if (!strcmp(argv[1], "--baseline")) {
         printBaseline(&inv);
     } else {
