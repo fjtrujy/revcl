@@ -230,7 +230,7 @@ public:
     bool addExtOutput(cls0805bcc4 *lk, bool flag);
     Instr *earliestExt();
     int countFlaggedOutputLocks();
-    bool setRepReg(RegPoolEntry *rg);
+    bool setRepReg(RegPoolEntry *selectedRegister);
     int checkInputLock(cls0805bcc4 *in, short *pos, int *minPos);
     int checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos);
     int checkOverlap(cls0805bcc4 *out, short *pos, int *minPos);

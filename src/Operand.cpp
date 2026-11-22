@@ -230,11 +230,11 @@ void Operand::diagnoseOperand(int)
     }
 }
 
-static inline int operandZeroValue(Operand *op)
+static inline int operandZeroValue(Operand *operand)
 {
     int z = 0;
-    if (op->assignedRegister) {
-        if (op->assignedRegister == op->assignedRegister->ownerPool->zeroRegister)
+    if (operand->assignedRegister) {
+        if (operand->assignedRegister == operand->assignedRegister->ownerPool->zeroRegister)
             z = 1;
     }
     return z;
@@ -442,10 +442,10 @@ static inline bool resetOperandLock(OperandLock *lock)
 bool Operand::resetOptimizationSlots()
 {
     for (int i = 0; i != 4; i++) {
-        OpSlot *s = &parts[i];
-        resetOperandLock(s);
-        s->conflictingOutputLockCount = 0;
-        s->outputConflictMarked[0] = 0;
+        OpSlot *slot = &parts[i];
+        resetOperandLock(slot);
+        slot->conflictingOutputLockCount = 0;
+        slot->outputConflictMarked[0] = 0;
     }
     return true;
 }
@@ -1334,12 +1334,12 @@ Instr *Operand::getOwner()
     Instr *owner = 0;
     if (operandIndex >= 0) {
         VclPtrWord off = (VclPtrWord)&((Instr *)0)->operands[operandIndex];
-        Instr *p = (Instr *)((char *)this - off);
-        if (p->operandCount < operandIndex) {
+        Instr *containingInstruction = (Instr *)((char *)this - off);
+        if (containingInstruction->operandCount < operandIndex) {
             reportError("operand: getOwner - bad instruction?\n");
             exitAfterCleanup(-1);
         }
-        owner = p;
+        owner = containingInstruction;
     }
     return owner;
 }

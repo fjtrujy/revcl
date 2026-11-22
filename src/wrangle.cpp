@@ -39,44 +39,44 @@ bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
 extern int errorOccurred;
 extern bool quietDiagnostics;
 
-bool scheduleMidTableMode1(workTable *wt, wrangleFunc f)
+bool scheduleMidTableMode1(workTable *table, wrangleFunc f)
 {
     allowInputLockLoopWrapping = 0;
-    if (wt->codeModeValue != 2) {
+    if (table->codeModeValue != 2) {
         reportError("can't wrangle a non MID table\n");
         abortAfterError();
     }
     mode1SchedulingPassCount = 0;
-    wt->unk_ad = 0;
-    wt->fallbackSchedulingActive = 0;
+    table->unk_ad = 0;
+    table->fallbackSchedulingActive = 0;
     fatalReadBeforeReady = 1;
-    wt->loopBoundaryInstruction = 0;
-    wt->recordedMaximumBranchLoopId = -1;
-    wt->fallbackAdjustedLoopLimit = 0;
-    wt->fallbackAbsoluteLoopLimit = 0;
-    wt->vectorMoveCount = 0;
-    wt->oddPipeMoveCount = 0;
-    wt->evenPipeMoveCount = 0;
-    for (Instr *in = wt->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
-        adjustMoveCount((Block *)wt, in, 1);
-        if (!in->classifySchedulingCategory()) {
+    table->loopBoundaryInstruction = 0;
+    table->recordedMaximumBranchLoopId = -1;
+    table->fallbackAdjustedLoopLimit = 0;
+    table->fallbackAbsoluteLoopLimit = 0;
+    table->vectorMoveCount = 0;
+    table->oddPipeMoveCount = 0;
+    table->evenPipeMoveCount = 0;
+    for (Instr *instruction = table->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction) {
+        adjustMoveCount((Block *)table, instruction, 1);
+        if (!instruction->classifySchedulingCategory()) {
             reportError("failed to set loop sfx type\n");
             abortAfterError();
         }
     }
-    if (wt->loopSize) {
-        int row = wt->rangeStart;
-        if (row != 0 || wt->rangeEnd != wt->loopSize) {
+    if (table->loopSize) {
+        int row = table->rangeStart;
+        if (row != 0 || table->rangeEnd != table->loopSize) {
             row = false;
             reportError("wrangle : loop not set up in correctly [%d,%d) vs %d\n",
-                          wt->rangeStart, wt->rangeEnd, wt->loopSize);
+                          table->rangeStart, table->rangeEnd, table->loopSize);
             return false;
         }
     } else {
-        int row = wt->rangeStart;
-        if (row != 0 || wt->rangeEnd >= 0) {
+        int row = table->rangeStart;
+        if (row != 0 || table->rangeEnd >= 0) {
             row = false;
-            reportError("wrangle - non loop set up correctly [%d,%d)\n", wt->rangeStart, wt->rangeEnd);
+            reportError("wrangle - non loop set up correctly [%d,%d)\n", table->rangeStart, table->rangeEnd);
             return false;
         }
     }
@@ -85,17 +85,17 @@ bool scheduleMidTableMode1(workTable *wt, wrangleFunc f)
         return false;
     }
     earliestInsertionInstruction = 0;
-    if (wt->loopSize)
-        mode1WatchdogSeconds = wt->pendingInstructions.count / 40 + 3;
+    if (table->loopSize)
+        mode1WatchdogSeconds = table->pendingInstructions.count / 40 + 3;
     else
-        mode1WatchdogSeconds = wt->pendingInstructions.count / 5 + 1;
+        mode1WatchdogSeconds = table->pendingInstructions.count / 5 + 1;
     if (mode1WatchdogSeconds < optimizationTimeoutSeconds)
         mode1WatchdogSeconds = optimizationTimeoutSeconds;
     if (!setWatchdog((char *)&mode1WatchdogExpired, mode1WatchdogSeconds)) {
         reportError("failed to set OS_setWatchdog\n");
         return false;
     }
-    bool r = wrangleMode1Worker(wt, f);
+    bool r = wrangleMode1Worker(table, f);
     if (!clearWatchdog()) {
         reportError("failed to clear watchdog timer\n");
         return false;
@@ -103,7 +103,7 @@ bool scheduleMidTableMode1(workTable *wt, wrangleFunc f)
     return r;
 }
 
-bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
+bool wrangleMode1Worker(workTable *table, wrangleFunc f)
 {
     InstructionPosition pos;
     for (;;) {
@@ -114,64 +114,64 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
         bool bFaulted = false;
         Instr *pending;
         int ret;
-        Instr *m;
+        Instr *moveInstruction;
         int tmp;
         bool inserted = false;
         earliestInsertionInstruction = 0;
         pending = 0;
-        if (!buildCandidateList(wt)) {
+        if (!buildCandidateList(table)) {
             reportError("Wrangle: failed to build candidate list!\n");
             abortAfterError();
         }
-        wtInstrList *done = &wt->completedInstructions;
+        wtInstrList *done = &table->completedInstructions;
         if (done->last())
-            wt->lastScheduledPosition.setFromLinearRow(done->last()->position.getRow());
+            table->lastScheduledPosition.setFromLinearRow(done->last()->position.getRow());
         else
-            wt->lastScheduledPosition.setFromLinearRow(0);
-        if (!wt->moveListHead) {
-            Instr *todo = wt->pendingInstructions.head;
+            table->lastScheduledPosition.setFromLinearRow(0);
+        if (!table->moveListHead) {
+            Instr *todo = table->pendingInstructions.head;
             if (!todo) {
-                wt->rangeStart = 0;
-                if (!wt->loopSize) {
-                    int sz = wt->getCurrentDoneSize();
+                table->rangeStart = 0;
+                if (!table->loopSize) {
+                    int sz = table->getCurrentDoneSize();
                     if (sz < 0) {
                         reportError("error getting current done size\n");
                         abortAfterError();
                         return false;
                     }
-                    wt->rangeEnd = sz;
+                    table->rangeEnd = sz;
                 } else {
-                    wt->rangeEnd = wt->loopSize;
+                    table->rangeEnd = table->loopSize;
                     int maxLid = 0;
                     int maxBranchLid = 0;
                     int minSfx2 = 0;
                     int minSfx1 = 0;
-                    if (!wt->getCurrentLidStats(&maxLid, &maxBranchLid, &minSfx1, &minSfx2)) {
+                    if (!table->getCurrentLidStats(&maxLid, &maxBranchLid, &minSfx1, &minSfx2)) {
                         reportError("failed to lid stats ?\n");
                         return false;
                     }
                     bool b2 = minSfx2 >= 0 && minSfx2 < maxBranchLid;
-                    bool b1 = minSfx1 >= 0 && minSfx1 < maxBranchLid - wt->minimumSafeLoopCount;
+                    bool b1 = minSfx1 >= 0 && minSfx1 < maxBranchLid - table->minimumSafeLoopCount;
                     if (b2 || b1) {
-                        wt->recordedMaximumBranchLoopId = maxBranchLid;
-                        int lim2 = maxBranchLid * wt->loopSize;
-                        int lim1 = (maxBranchLid - wt->minimumSafeLoopCount) * wt->loopSize;
+                        table->recordedMaximumBranchLoopId = maxBranchLid;
+                        int lim2 = maxBranchLid * table->loopSize;
+                        int lim1 = (maxBranchLid - table->minimumSafeLoopCount) * table->loopSize;
                         earliestInsertionInstruction = 0;
-                        for (Instr *in = wt->completedInstructions.head; in; in = in->pendingLink.nextInstruction) {
-                            switch ((unsigned char)in->schedulerCategory) {
+                        for (Instr *instruction = table->completedInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction) {
+                            switch ((unsigned char)instruction->schedulerCategory) {
                             case 0:
                                 break;
                             case 1:
-                                if (in->position.linearRow < lim1)
-                                    trackEarliestInsertion(in);
+                                if (instruction->position.linearRow < lim1)
+                                    trackEarliestInsertion(instruction);
                                 break;
                             case 2:
-                                if (in->position.linearRow < lim2) {
+                                if (instruction->position.linearRow < lim2) {
                                     int saved = errorOccurred;
                                     errorOccurred = !quietDiagnostics;
-                                    in->leDump();
+                                    instruction->leDump();
                                     errorOccurred = saved;
-                                    trackEarliestInsertion(in);
+                                    trackEarliestInsertion(instruction);
                                 }
                                 break;
                             default:
@@ -186,15 +186,15 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                         goto faulted;
                     }
                 }
-                if (!wt->changeMode(3)) {
+                if (!table->changeMode(3)) {
                     reportError("failed to change code mode to raw\n");
                     abortAfterError();
                 }
                 return true;
             } else {
-                wt->dump();
+                table->dump();
                 bFaulted = true;
-                wt->moveListHead = 0;
+                table->moveListHead = 0;
                 goto check_faulted;
             }
         } else {
@@ -206,37 +206,37 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             mor.candidateInstruction = 0;
             mor.candidateRow = -1;
             mor.candidatePipe = 0;
-            if (!f(wt, (int *)&c))
+            if (!f(table, (int *)&c))
                 goto faulted;
-            tmp = wt->loopSize;
+            tmp = table->loopSize;
             bool isLoop = tmp != 0;
             int lsz = tmp;
-            if (isLoop && (m = c.candidateInstruction)->abstractMoveOpcode) {
+            if (isLoop && (moveInstruction = c.candidateInstruction)->abstractMoveOpcode) {
                 int pipe = c.candidatePipe;
-                if (m->permittedPipelineMask == 3) {
-                    if (wt->oddPipeMoveCount == tmp)
+                if (moveInstruction->permittedPipelineMask == 3) {
+                    if (table->oddPipeMoveCount == tmp)
                         pipe = 1;
-                    else if (wt->evenPipeMoveCount == tmp)
+                    else if (table->evenPipeMoveCount == tmp)
                         pipe = 0;
-                    else if (wt->fallbackSchedulingActive)
+                    else if (table->fallbackSchedulingActive)
                         pipe = 0;
                     else
-                        pipe = (tmp = wt->oddPipeMoveCount > wt->evenPipeMoveCount);
+                        pipe = (tmp = table->oddPipeMoveCount > table->evenPipeMoveCount);
                 }
-                if (pipe == 1 && wt->evenPipeMoveCount == lsz && !wt->fallbackSchedulingActive) {
-                    wt->fallbackSchedulingActive = 1;
-                    wt->unk_ad = 0;
-                    earliestInsertionInstruction = wt->completedInstructions.head;
+                if (pipe == 1 && table->evenPipeMoveCount == lsz && !table->fallbackSchedulingActive) {
+                    table->fallbackSchedulingActive = 1;
+                    table->unk_ad = 0;
+                    earliestInsertionInstruction = table->completedInstructions.head;
                     goto faulted;
                 }
-                if (!resolveMovePipe(wt, c.candidateInstruction, pipe)) {
+                if (!resolveMovePipe(table, c.candidateInstruction, pipe)) {
                     reportError("failed to set up a move to a pipe\n");
                     abortAfterError();
                 }
             }
-            if (!refineMode1InsertionCandidate(wt, &c)) {
+            if (!refineMode1InsertionCandidate(table, &c)) {
                 c.candidateRow = c.candidateInstruction->candidateBaseRow;
-                if (!refineMode1InsertionCandidate(wt, &c))
+                if (!refineMode1InsertionCandidate(table, &c))
                     goto faulted;
             }
             if (!c.candidateInstruction)
@@ -245,32 +245,32 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             pos.setInstructionPipe(c.candidatePipe);
             int minPos = c.candidateRow;
             earliestInsertionInstruction = 0;
-            if (!wt->lockLine(&pos)) {
+            if (!table->lockLine(&pos)) {
                 reportError("failed to lock a line\n");
                 abortAfterError();
             }
-            if (wt->loopSize) {
-                Instr *in = c.candidateInstruction;
-                if (!in->requiresFullLoopMoveDrag)
-                    drag(wt, in, &pos, wt->loopSize >> 1, 0);
+            if (table->loopSize) {
+                Instr *instruction = c.candidateInstruction;
+                if (!instruction->requiresFullLoopMoveDrag)
+                    drag(table, instruction, &pos, table->loopSize >> 1, 0);
                 else
-                    drag(wt, in, &pos, wt->loopSize, 0);
+                    drag(table, instruction, &pos, table->loopSize, 0);
             } else {
-                pullSpecialRegisterWritersEarlier(wt, c.candidateInstruction, &pos);
-                pullLatencyWritersEarlier(wt, c.candidateInstruction, &pos);
+                pullSpecialRegisterWritersEarlier(table, c.candidateInstruction, &pos);
+                pullLatencyWritersEarlier(table, c.candidateInstruction, &pos);
             }
-            if (!wt->unlockLine(&pos)) {
+            if (!table->unlockLine(&pos)) {
                 reportError("failed to unlock a line\n");
                 abortAfterError();
             }
             earliestInsertionInstruction = 0;
-            ret = checkInsert(wt, c.candidateInstruction, &pos, &minPos);
-            Instr **ps = &pending;
-            Instr **pc = &c.candidateInstruction;
+            ret = checkInsert(table, c.candidateInstruction, &pos, &minPos);
+            Instr **sourceInstructions = &pending;
+            Instr **candidateInstructions = &c.candidateInstruction;
             int *pg = &mode1SchedulingPassCount;
             if (earliestInsertionInstruction) {
-                ps = &earliestInsertionInstruction;
-                pc = &earliestInsertionInstruction;
+                sourceInstructions = &earliestInsertionInstruction;
+                candidateInstructions = &earliestInsertionInstruction;
                 pg = &errorOccurred;
                 goto faulted;
             }
@@ -278,12 +278,12 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             int z1 = 1;
             int z2;
             if (ret & 0x100) {
-                if (!wt->lockLine(&pos)) {
+                if (!table->lockLine(&pos)) {
                     reportError("failed to lock line again\n");
                     abortAfterError();
                 }
-                int n = drag(wt, c.candidateInstruction, &pos, wt->loopSize, 4);
-                if (!wt->unlockLine(&pos)) {
+                int n = drag(table, c.candidateInstruction, &pos, table->loopSize, 4);
+                if (!table->unlockLine(&pos)) {
                     reportError("failed to unlock line again\n");
                     abortAfterError();
                 }
@@ -292,11 +292,11 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     abortAfterError();
                 }
                 if (n)
-                    ret = checkInsert(wt, c.candidateInstruction, &pos, &minPos);
+                    ret = checkInsert(table, c.candidateInstruction, &pos, &minPos);
                 if ((ret & 0x100) && !pending) {
                     Instr *cand = c.candidateInstruction;
                     int v0 = mode1SchedulingPassCount;
-                    *pc = cand;
+                    *candidateInstructions = cand;
                     *pg = v0;
                     pending = cand;
                     mor = c;
@@ -311,16 +311,16 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             }
             tmp = 0;
             z2 = z1 - 1;
-            if (z2) *ps = 0;
-            if (c.candidateInstruction->abstractMoveOpcode && !wt->loopSize) {
-                if (!resolveMovePipe(wt, c.candidateInstruction, c.candidatePipe)) {
+            if (z2) *sourceInstructions = 0;
+            if (c.candidateInstruction->abstractMoveOpcode && !table->loopSize) {
+                if (!resolveMovePipe(table, c.candidateInstruction, c.candidatePipe)) {
                     reportError("failed to assign a move to a pipe\n");
                     abortAfterError();
                 }
             }
-            if (!DoInsert(wt, c.candidateInstruction, &pos)) {
+            if (!DoInsert(table, c.candidateInstruction, &pos)) {
                 reportError("was ok to insert..but failed!\n");
-                wt->dump();
+                table->dump();
                 abortAfterError();
             } else
                 inserted = true;
@@ -339,7 +339,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     reportError("no instruction set in mOR\n");
                     abortAfterError();
                 }
-                int r = getMove((Block *)wt, c.candidateInstruction, c.candidateRow);
+                int r = getMove((Block *)table, c.candidateInstruction, c.candidateRow);
                 switch (r) {
                 case 0:
                     if (earliestInsertionInstruction) {
@@ -350,14 +350,14 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 case -1:
                 default:
                     reportError("oh no genmove failed .. return code %d!\n", r);
-                    wt->dump();
+                    table->dump();
                     abortAfterError();
                     break;
                 case 1:
-                    if (wt->unk_ad && !wt->fallbackSchedulingActive) {
-                        wt->fallbackSchedulingActive = 1;
-                        wt->unk_ad = 0;
-                        earliestInsertionInstruction = wt->completedInstructions.head;
+                    if (table->unk_ad && !table->fallbackSchedulingActive) {
+                        table->fallbackSchedulingActive = 1;
+                        table->unk_ad = 0;
+                        earliestInsertionInstruction = table->completedInstructions.head;
                     }
                     break;
                 case 2:
@@ -375,7 +375,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
         goto check_faulted;
     faulted:
         bFaulted = true;
-        wt->moveListHead = 0;
+        table->moveListHead = 0;
     check_faulted:
         if (bFaulted) {
             if (earliestInsertionInstruction)
@@ -384,50 +384,50 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 earliestInsertionInstruction = done->last();
             for (wtInstrList *tail = done;
                  (Instr *)*(VclPtrWord *)&tail->tail != earliestInsertionInstruction;
-                 tail = &wt->completedInstructions) {
-                Instr *in = tail->last();
-                in->clearTransientFlags();
-                if (!UndoInsert(wt, in)) {
+                 tail = &table->completedInstructions) {
+                Instr *instruction = tail->last();
+                instruction->clearTransientFlags();
+                if (!UndoInsert(table, instruction)) {
                     reportError("in finst track..undoinsert failed\n");
                     abortAfterError();
                     return false;
                 }
-                if (in->moveRecordWord && !undoMovesTo((Block *)wt, in)) {
+                if (instruction->moveRecordWord && !undoMovesTo((Block *)table, instruction)) {
                     reportError("failed to undo move\n");
                     abortAfterError();
                 }
             }
-            while (wt->completedInstructions.head) {
-                Instr *in = wt->completedInstructions.last();
-                if (!UndoInsert(wt, in)) {
+            while (table->completedInstructions.head) {
+                Instr *instruction = table->completedInstructions.last();
+                if (!UndoInsert(table, instruction)) {
                     reportError("undo insert: failed to remove done list tail\n");
                     abortAfterError();
                     return false;
                 }
-                in->candidateCostOffset++;
-                if (++in->candidateAttemptCount <= in->candidateAttemptLimit)
+                instruction->candidateCostOffset++;
+                if (++instruction->candidateAttemptCount <= instruction->candidateAttemptLimit)
                     break;
-                in->clearTransientFlags();
-                if (in->moveRecordWord) {
-                    if (!undoMovesTo((Block *)wt, in)) {
+                instruction->clearTransientFlags();
+                if (instruction->moveRecordWord) {
+                    if (!undoMovesTo((Block *)table, instruction)) {
                         reportError("failed to undo move\n");
                         abortAfterError();
                     }
-                    in = 0;
+                    instruction = 0;
                 }
-                if (in) {
-                    in->candidateAttemptCount = 0;
-                    in->candidateAttemptLimit++;
-                    if (wt->loopSize && in->candidateAttemptLimit > wt->loopSize * 16) {
-                        if (in->moveRecordWord) {
-                            if (!undoMovesTo((Block *)wt, in)) {
+                if (instruction) {
+                    instruction->candidateAttemptCount = 0;
+                    instruction->candidateAttemptLimit++;
+                    if (table->loopSize && instruction->candidateAttemptLimit > table->loopSize * 16) {
+                        if (instruction->moveRecordWord) {
+                            if (!undoMovesTo((Block *)table, instruction)) {
                                 reportError("failed to undo move\n");
                                 abortAfterError();
                             }
-                            in = 0;
+                            instruction = 0;
                         }
-                        if (in)
-                            in->candidateAttemptLimit = wt->loopSize * 16;
+                        if (instruction)
+                            instruction->candidateAttemptLimit = table->loopSize * 16;
                     }
                 }
             }
@@ -436,36 +436,36 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
 }
 
 
-bool buildCandidateList(workTable *wt)
+bool buildCandidateList(workTable *table)
 {
-    Instr *in;
-    in = wt->pendingInstructions.head;
-    wt->moveListHead = 0;
-    wt->pendingMoveCount = 0;
+    Instr *instruction;
+    instruction = table->pendingInstructions.head;
+    table->moveListHead = 0;
+    table->pendingMoveCount = 0;
     InstructionPosition pos;
     int earliest;
     int pipe = 0;
     int row = 0;
-    wt->dump();
-    dynCalcStats(wt);
+    table->dump();
+    dynCalcStats(table);
     mode1SchedulingPassCount++;
-    for (; in; in = in->pendingLink.nextInstruction) {
-        short m = in->externalInputConstraint;
-        if (m < in->externalInputPairedConstraint)
-            m = in->externalInputPairedConstraint;
+    for (; instruction; instruction = instruction->pendingLink.nextInstruction) {
+        short m = instruction->externalInputConstraint;
+        if (m < instruction->externalInputPairedConstraint)
+            m = instruction->externalInputPairedConstraint;
         int minRow = m;
         earliest = 0;
-        if (!calculateEarliestDependencyRow(in, &earliest)) {
+        if (!calculateEarliestDependencyRow(instruction, &earliest)) {
             reportError("failed check cand\n");
             abortAfterError();
         }
         if (earliest < 0) {
-            in->dumpOperandDiagnostics(false);
+            instruction->dumpOperandDiagnostics(false);
             continue;
         }
-        if (!in->hasExtraPredecessors && minRow < earliest)
+        if (!instruction->hasExtraPredecessors && minRow < earliest)
             minRow = earliest;
-        if (in->branchFlags) {
+        if (instruction->branchFlags) {
             if (activeLoopSize) {
                 minRow = activeLoopSize - 2;
                 if (minRow < 0) {
@@ -473,9 +473,9 @@ bool buildCandidateList(workTable *wt)
                     abortAfterError();
                 }
             } else {
-                if (wt->pendingInstructions.count > 1)
+                if (table->pendingInstructions.count > 1)
                     continue;
-                int d = wt->getCurrentDoneSize();
+                int d = table->getCurrentDoneSize();
                 if (d < 0) {
                     reportError("failed to get current done size\n");
                     return false;
@@ -487,51 +487,51 @@ bool buildCandidateList(workTable *wt)
                     minRow = 0;
             }
         }
-        for (int i = 0; i != in->operandCount; i++) {
-            Operand *op = &in->operands[i];
-            RegPoolEntry *r = op->assignedRegister;
-            if (!r)
+        for (int i = 0; i != instruction->operandCount; i++) {
+            Operand *operand = &instruction->operands[i];
+            RegPoolEntry *registerEntry = operand->assignedRegister;
+            if (!registerEntry)
                 continue;
-            for (int j = 0; j != r->partCount; j++) {
-                if ((op->componentMask >> j) & 1) {
-                    if (isRegisterOperand(op, 1)) {
-                        OpSlot *s = &op->parts[j];
-                        OperandLock *p = s->getParent();
-                        if (!p) {
+            for (int j = 0; j != registerEntry->partCount; j++) {
+                if ((operand->componentMask >> j) & 1) {
+                    if (isRegisterOperand(operand, 1)) {
+                        OpSlot *slot = &operand->parts[j];
+                        OperandLock *operandLock = slot->getParent();
+                        if (!operandLock) {
                             reportError("input had no link\n");
                             abortAfterError();
                             return false;
                         }
-                        if (!p->insertedIntoLockList)
+                        if (!operandLock->insertedIntoLockList)
                             goto next;
-                        if (s->operandStatusCode != 2) {
-                            int t = p->linearRow + p->issueLatency + s->issueLatency;
+                        if (slot->operandStatusCode != 2) {
+                            int t = operandLock->linearRow + operandLock->issueLatency + slot->issueLatency;
                             if (t > minRow)
                                 minRow = t;
                         }
                     }
                 }
             }
-            if (r->moveInstruction && in != r->moveInstruction && r->moveInstruction->position.loopRow < 0)
+            if (registerEntry->moveInstruction && instruction != registerEntry->moveInstruction && registerEntry->moveInstruction->position.loopRow < 0)
                 goto next;
         }
-        if (wt->loopSize) {
-            int type = (unsigned char)in->schedulerCategory;
+        if (table->loopSize) {
+            int type = (unsigned char)instruction->schedulerCategory;
             int lim = 0;
             switch (type) {
             case 0:
                 break;
             case 1:
-                if (wt->loopBoundaryInstruction)
-                    lim = (wt->loopBoundaryInstruction->position.loopIteration - wt->minimumSafeLoopCount) * wt->loopSize;
+                if (table->loopBoundaryInstruction)
+                    lim = (table->loopBoundaryInstruction->position.loopIteration - table->minimumSafeLoopCount) * table->loopSize;
                 else
-                    lim = wt->fallbackAdjustedLoopLimit;
+                    lim = table->fallbackAdjustedLoopLimit;
                 break;
             case 2:
-                if (wt->loopBoundaryInstruction)
-                    lim = wt->loopBoundaryInstruction->position.loopIteration * wt->loopSize;
+                if (table->loopBoundaryInstruction)
+                    lim = table->loopBoundaryInstruction->position.loopIteration * table->loopSize;
                 else
-                    lim = wt->fallbackAbsoluteLoopLimit;
+                    lim = table->fallbackAbsoluteLoopLimit;
                 break;
             }
             if (minRow < lim)
@@ -539,35 +539,35 @@ bool buildCandidateList(workTable *wt)
         }
         row = minRow;
         pipe = 0;
-        if (findInsertPosition(wt, in, &row, &pipe)) {
-            in->candidateBaseRow = row;
-            if (!queueMoveForResolution((Block *)wt, in)) {
+        if (findInsertPosition(table, instruction, &row, &pipe)) {
+            instruction->candidateBaseRow = row;
+            if (!queueMoveForResolution((Block *)table, instruction)) {
                 reportError("failed to add candidate\n");
                 return false;
             }
         }
-        if (!wt->loopSize && wt->pendingMoveCount > 16)
+        if (!table->loopSize && table->pendingMoveCount > 16)
             break;
     next:;
     }
     return true;
 }
 
-bool refineMode1InsertionCandidate(workTable *wt, wrangleCand *c)
+bool refineMode1InsertionCandidate(workTable *table, wrangleCand *candidate)
 {
     int pipe;
-    int row = c->candidateRow;
-    Instr *in = c->candidateInstruction;
+    int row = candidate->candidateRow;
+    Instr *instruction = candidate->candidateInstruction;
     pipe = 0;
-    if (in->branchFlags)
-        row = in->candidateBaseRow;
-    if (in->permittedPipelineMask == 3)
-        pipe = c->candidatePipe & 1;
+    if (instruction->branchFlags)
+        row = instruction->candidateBaseRow;
+    if (instruction->permittedPipelineMask == 3)
+        pipe = candidate->candidatePipe & 1;
     else
-        pipe = in->permittedPipelineMask != 1;
-    if (findInsertPosition(wt, in, &row, &pipe)) {
-        c->candidateRow = row;
-        c->candidatePipe = pipe;
+        pipe = instruction->permittedPipelineMask != 1;
+    if (findInsertPosition(table, instruction, &row, &pipe)) {
+        candidate->candidateRow = row;
+        candidate->candidatePipe = pipe;
         return true;
     }
     return false;
@@ -575,10 +575,10 @@ bool refineMode1InsertionCandidate(workTable *wt, wrangleCand *c)
 
 
 
-bool findInsertPosition(workTable *wt, Instr *in, int *row, int *pipe)
+bool findInsertPosition(workTable *table, Instr *instruction, int *row, int *pipe)
 {
     bool both = false;
-    if (in->permittedPipelineMask == 3)
+    if (instruction->permittedPipelineMask == 3)
         both = true;
     InstructionPosition pos;
     if (both) {
@@ -592,7 +592,7 @@ bool findInsertPosition(workTable *wt, Instr *in, int *row, int *pipe)
                 r = *row;
                 pos.setInstructionPipe(p);
                 pos.setFromLinearRow(r);
-                if (checkInsert(wt, in, &pos, &r) & ~0x100) {
+                if (checkInsert(table, instruction, &pos, &r) & ~0x100) {
                     if (r < best)
                         best = r;
                 } else {
@@ -611,10 +611,10 @@ bool findInsertPosition(workTable *wt, Instr *in, int *row, int *pipe)
             *pipe = 0;
         }
     } else {
-        *pipe = in->permittedPipelineMask != 1;
+        *pipe = instruction->permittedPipelineMask != 1;
         pos.setFromLinearRow(*row);
         pos.setInstructionPipe(*pipe);
-        while (checkInsert(wt, in, &pos, row) & ~0x100) {
+        while (checkInsert(table, instruction, &pos, row) & ~0x100) {
             if (*row >= 30000)
                 return false;
             pos.setFromLinearRow(*row);

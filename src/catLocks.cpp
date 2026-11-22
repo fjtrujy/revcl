@@ -1,14 +1,14 @@
 #include "os.h"
 #include "lock_shared.h"
 
-bool cls0805c244::catLocks(OperandLock *a, OperandLock *b, int *s, int *e, int *end)
+bool cls0805c244::catLocks(OperandLock *firstLock, OperandLock *b, int *s, int *e, int *end)
 {
     bool found = false;
     int lsz = activeLoopSize;
-    if (a->scheduledConsumerCount) {
-        *s = a->earliestReadyCycle + lsz;
-        *e = a->fullLatencyReadyCycle + lsz;
-        *end = a->latestReadyCycle + lsz;
+    if (firstLock->scheduledConsumerCount) {
+        *s = firstLock->earliestReadyCycle + lsz;
+        *e = firstLock->fullLatencyReadyCycle + lsz;
+        *end = firstLock->latestReadyCycle + lsz;
         found = true;
     }
     int bs = b->earliestReadyCycle;
@@ -32,15 +32,15 @@ static inline bool isAAInputLock(OperandLock *in)
     return in->operandStatusCode == 2;
 }
 
-static inline bool sameLockOwner(OperandLock *a, OperandLock *b)
+static inline bool sameLockOwner(OperandLock *firstLock, OperandLock *b)
 {
-    return a->ownerPointer == b->ownerPointer;
+    return firstLock->ownerPointer == b->ownerPointer;
 }
 
 int cls0805c244::canMoveInputLock(OperandLock *in, short *pos, int slotBit)
 {
     int p = *pos;
-    OperandLock *lk = outputLocks;
+    OperandLock *lock = outputLocks;
     int lsz = activeLoopSize;
     if (calculateLoopStats)
         return 0;
@@ -105,23 +105,23 @@ int cls0805c244::canMoveInputLock(OperandLock *in, short *pos, int slotBit)
             return 0x40000;
         int ws = s, we = end;
         wrapRangeLocal(ws, we);
-        if (lk) do {
-            lk->print();
-            if (lk == par)
+        if (lock) do {
+            lock->print();
+            if (lock == par)
                 continue;
-            if (sameLockOwner(lk, in))
+            if (sameLockOwner(lock, in))
                 continue;
-            if (cat && isRegLock(lk))
+            if (cat && isRegLock(lock))
                 continue;
-            int ls = lk->adjustedEarliestReadyCycle;
-            int le = lk->adjustedLatestReadyCycle;
+            int ls = lock->adjustedEarliestReadyCycle;
+            int le = lock->adjustedLatestReadyCycle;
             wrapRangeLocal(ls, le);
-            if (lk->activeReferenceCount) {
+            if (lock->activeReferenceCount) {
                 if (ws < le && we >= ls)
                     return 0x10;
             } else if (lockRangesOverlap(ws, we, ls, le))
                 return 0x20;
-        } while ((lk = lk->nextSibling) != 0);
+        } while ((lock = lock->nextSibling) != 0);
     }
     return 0;
 }
@@ -167,10 +167,10 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
 
     bool ext = false;
     if (out->externalOutputSlotPlusOne) {
-        for (OperandLock *lk = outputLocks; lk; lk = lk->nextSibling) {
-            if (lk == out)
+        for (OperandLock *lock = outputLocks; lock; lock = lock->nextSibling) {
+            if (lock == out)
                 continue;
-            if (first <= lk->latestReadyCycle)
+            if (first <= lock->latestReadyCycle)
                 return 0x1000;
         }
         if (lsz && containsRegisterOutput) {
@@ -199,13 +199,13 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
     int s = sz - p + first;
     int e = sz - p + lim;
     wrapRangeLocal(s, e);
-    for (OperandLock *lk = outputLocks; lk; lk = lk->nextSibling) {
-        if (lk == out)
+    for (OperandLock *lock = outputLocks; lock; lock = lock->nextSibling) {
+        if (lock == out)
             continue;
-        if (ext && lk->ownerType == 2)
+        if (ext && lock->ownerType == 2)
             continue;
-        int ls = lk->adjustedEarliestReadyCycle;
-        int le = lk->adjustedLatestReadyCycle;
+        int ls = lock->adjustedEarliestReadyCycle;
+        int le = lock->adjustedLatestReadyCycle;
         wrapRangeLocal(ls, le);
         if (lockRangesOverlap(s, e, ls, le))
             return 2;

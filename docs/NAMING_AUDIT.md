@@ -864,6 +864,88 @@ generated naming inventory consistency check. The reference stripped ELF
 SHA-256 is
 `83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
 
+## Core pipeline scoped naming: registers, dependencies and scheduling
+
+Following the merged directive/flow/value naming PR, this milestone expands
+the review to **29 VCL implementation files** and performs **595 direct
+function-scoped identifier renames**. The reviewed files cover instruction
+decoding and manipulation, register-pool management, lock propagation, operand
+dependencies, immediate fixups, stream/loop bookkeeping, scheduling candidate
+selection, and final work-table emission. The fixed AST review queue shrinks
+by **184 parameter entries** and **511 local-variable entries** (695 reviewed
+declarations, because some original names occurred in multiple lexical
+scopes). No numeric or alias-style function definitions are introduced.
+
+### Source-backed terminology
+
+- **Instructions, operands and register pools:** `Instr`, `Operand`,
+  `RegPool`, and related code now distinguishes `instruction`, `operand`,
+  `registerEntry`, `cloneInstruction`, `branchInstruction`,
+  `sourceOperand`, `destinationOperand`, and `opcodeInfo` where supported by
+  the types, register lookup and link structure. These changes affect local
+  declarations and call sites, not the classes' binary layouts.
+- **Dependency and lock analysis:** `setLocks`, `checkInputLock`, `catLocks`,
+  `fDepClone`, `gatherStats`, and `lock` now identify `lock`, `lockList`,
+  `registerUse`, `operandLocation`, `inputSlot`, `outputSlot`,
+  `sourceInstructions` and `pipelineEntries`. The names reflect physical
+  inputs/outputs, tracked register uses and lock-list ownership.
+- **Instruction streams and loop transformations:** `iTable`, `instStream`,
+  `loopDebris`, `iGroupList`, `prune`, `collapse`, `makeLpWork`,
+  `getUninserted`, and `immFixup` distinguish stream/table owners, prologue
+  and epilogue regions, pipeline entries, candidate rows, source locations,
+  alias descriptors and immediate values. Distinct variables that refer to
+  different rows or regions remain distinct even if their original short
+  names were reused in adjacent scopes.
+- **Scheduling, resource timing and allocation:** `wrangle`, `wrangleCore`,
+  `wtQueue`, `dynCalcStats`, `externalStreamPreparation`,
+  `assignLocalRegisters` and `genRegPoolCtor` identify candidate instructions,
+  insertion tables, locks, register parts, dependency rows and the source
+  instruction stream. Simple loop indexes with already clear meaning are
+  intentionally retained unless a more specific role is established.
+
+### Historical compiler-sensitive name collisions
+
+This review used direct identifier replacement **within a specific C++
+function**, rather than replacing short names globally. Even scoped renames
+can silently change C++ meaning if the proposed local name shadows a member
+or an enclosing local. The modern compiler alone cannot detect these bugs.
+The historical RH9/GCC 3.2 `exact-sha256` check exposed several such cases,
+which were isolated by compiling individual changed translation units:
+
+- The `Instr::getBranchTargetImmediate` and `getBranchTargetRegister`
+  temporary opcode metadata pointer is `branchOpcodeInfo`, not
+  `opcodeInfo`: the latter is the original owning field.
+- `cls0805c244::setRepReg` uses `selectedRegister` for the argument,
+  preserving checks and writes to the separate `registerEntry` field.
+- `iGroupLog::logTable` uses `sourceTable` for its incoming work table,
+  preserving the independent class `table` field used for an existing-state
+  guard.
+- `externalStreamPreparation::removeNops` uses separate `followingRow`,
+  `scannedRow`, `candidateRow`, and `sampledRow` cursors. In particular, an
+  existing distance check intentionally reads the *outer* `row` while the
+  inner instruction lookup uses `sampledRow`. Conflating these two produced
+  a compiling but byte-different program.
+- `workTable::setSkip` uses `targetRow`, avoiding collision with its integer
+  `row` argument; `instStream::gatherStats` uses `streamStats` for the
+  temporary pointer without shadowing `schedulingStatistics`.
+
+The first ten files were tested individually, then the 19-file follow-up
+was bisected and its remaining candidates also checked individually.
+Finally the complete 29-file change set was compiled together. Both the
+modern build and the historical byte-exact gate pass, with the reference
+stripped SHA-256 preserved as
+`83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
+
+### Queue and remaining work
+
+The fixed-baseline review now contains **550** flagged short/generic
+parameters and **1,592** flagged local variables, down from 734 and 2,103
+immediately before this milestone. The **64** owner-qualified offset fields
+remain untouched pending positive evidence; a zero address-coded function
+count is unchanged. These are manual review metrics, not a claim that the
+original compiler's source is perfectly recovered. The separate VUC branch
+and original historical translation-unit ordering were not changed.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout

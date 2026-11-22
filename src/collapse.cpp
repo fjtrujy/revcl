@@ -28,15 +28,15 @@ static inline bool fitsUnsigned(int v, int bits)
 }
 bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc);
 
-bool pushImmediate(ol_s *ol)
+bool pushImmediate(ol_s *operandLocation)
 {
-    for (; ol; ol = ol->next) {
-        Instr *in = ol->instruction;
+    for (; operandLocation; operandLocation = operandLocation->next) {
+        Instr *instruction = operandLocation->instruction;
         int val = 0;
         int srcOp = -1;
         int immOp = -1;
         int opc = 0;
-        if (!immCalc(in, &srcOp, &immOp, &val, &opc)) {
+        if (!immCalc(instruction, &srcOp, &immOp, &val, &opc)) {
             reportError("imm_calc failed during push\n");
             return false;
         }
@@ -47,9 +47,9 @@ bool pushImmediate(ol_s *ol)
             nopc = 0x6e;
         if (opc != nopc) {
             val = -val;
-            in->opcodeInfo = getOpcodeInfoById(nopc);
+            instruction->opcodeInfo = getOpcodeInfoById(nopc);
         }
-        if (!in->operands[immOp].immediateValue.setInt(val)) {
+        if (!instruction->operands[immOp].immediateValue.setInt(val)) {
             reportError("failed to set new immediate value\n");
             return false;
         }
@@ -57,19 +57,19 @@ bool pushImmediate(ol_s *ol)
     return true;
 }
 
-bool collapseProgramStreams(Program *p)
+bool collapseProgramStreams(Program *program)
 {
     bool changed = false;
-    instStream *s;
-    for (s = p->streamHead; s; s = s->nextStream) {
-        workTable *t = s->getTable();
-        for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-            if (__builtin_expect(in->opcodeId() != 0x6d, 1))
+    instStream *stream;
+    for (stream = program->streamHead; stream; stream = stream->nextStream) {
+        workTable *table = stream->getTable();
+        for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+            if (__builtin_expect(instruction->opcodeId() != 0x6d, 1))
                 continue;
-            mValue *v = &in->operands[2].immediateValue;
-            if (v->type != mValue::STRING) {
+            mValue *value = &instruction->operands[2].immediateValue;
+            if (value->type != mValue::STRING) {
                 int val = 0;
-                if (!v->getInt(&val)) {
+                if (!value->getInt(&val)) {
                     reportError("failed to get immediate value for an iaddi\n");
                     return false;
                 }
@@ -79,12 +79,12 @@ bool collapseProgramStreams(Program *p)
                     opc = 0x70;
                 } else
                     opc = 0x6e;
-                in->opcodeInfo = getOpcodeInfoById(opc);
-                if (!in->opcodeInfo) {
+                instruction->opcodeInfo = getOpcodeInfoById(opc);
+                if (!instruction->opcodeInfo) {
                     reportError("couldn't find replacement instruction\n");
                     return false;
                 }
-                if (!v->setInt(val)) {
+                if (!value->setInt(val)) {
                     reportError("failed to set new val\n");
                     return false;
                 }
@@ -93,10 +93,10 @@ bool collapseProgramStreams(Program *p)
     }
     do {
         changed = false;
-        for (s = p->streamHead; s; s = s->nextStream) {
-            workTable *t = s->getTable();
-            for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-                int k = decodeCollapsibleMoveImmediate(in);
+        for (stream = program->streamHead; stream; stream = stream->nextStream) {
+            workTable *table = stream->getTable();
+            for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+                int k = decodeCollapsibleMoveImmediate(instruction);
                 if (k == -2) {
                     reportError("an immediate is wrong someplace\n");
                     return false;
@@ -104,15 +104,15 @@ bool collapseProgramStreams(Program *p)
                 if (k < 0)
                     continue;
                 bool ok = true;
-                ol_s *list = in->operands[k].parts[0].operandLocations.head;
-                for (ol_s *ol = list; ol && ok; ol = ol->next) {
-                    Instr *user = ol->instruction;
-                    Operand *op = operandAtLocation(ol);
-                    if (user == in) {
+                ol_s *list = instruction->operands[k].parts[0].operandLocations.head;
+                for (ol_s *operandLocation = list; operandLocation && ok; operandLocation = operandLocation->next) {
+                    Instr *user = operandLocation->instruction;
+                    Operand *operand = operandAtLocation(operandLocation);
+                    if (user == instruction) {
                         ok = false;
                         break;
                     }
-                    int idx = ol->operandIndex;
+                    int idx = operandLocation->operandIndex;
                     int immOp = -1;
                     int srcOp = -1;
                     int val;
@@ -126,8 +126,8 @@ bool collapseProgramStreams(Program *p)
                         ok = false;
                         break;
                     }
-                    for (ol_s *u = op->parts[0].operandLocations.head; u; u = u->next)
-                        if (u->instruction != in) {
+                    for (ol_s *userLocation = operand->parts[0].operandLocations.head; userLocation; userLocation = userLocation->next)
+                        if (userLocation->instruction != instruction) {
                             ok = false;
                             break;
                         }
@@ -146,14 +146,14 @@ bool collapseProgramStreams(Program *p)
     return true;
 }
 
-static inline bool isStringValue(mValue *v)
+static inline bool isStringValue(mValue *value)
 {
-    return v->type == mValue::STRING;
+    return value->type == mValue::STRING;
 }
 
-int decodeCollapsibleMoveImmediate(Instr *in)
+int decodeCollapsibleMoveImmediate(Instr *instruction)
 {
-    int opc = in->opcodeId();
+    int opc = instruction->opcodeId();
     int bits = 0;
     int idx = -1;
     bool neg = false;
@@ -166,14 +166,14 @@ int decodeCollapsibleMoveImmediate(Instr *in)
         bits = 15;
         idx = 0;
         isSigned = false;
-        collapseImmediateSourceRegister = in->operands[1].assignedRegister;
-        collapseImmediateValue = &in->operands[2].immediateValue;
+        collapseImmediateSourceRegister = instruction->operands[1].assignedRegister;
+        collapseImmediateValue = &instruction->operands[2].immediateValue;
         break;
     case 0x70:
         bits = 15;
         isSigned = false;
-        collapseImmediateSourceRegister = in->operands[1].assignedRegister;
-        collapseImmediateValue = &in->operands[2].immediateValue;
+        collapseImmediateSourceRegister = instruction->operands[1].assignedRegister;
+        collapseImmediateValue = &instruction->operands[2].immediateValue;
         idx = 0;
         neg = true;
         break;
@@ -209,11 +209,11 @@ static inline int immFitsUnsigned(int v, int bits)
     return r;
 }
 
-bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc)
+bool immCalc(Instr *instruction, int *srcOp, int *immOp, int *val, int *opc)
 {
     *srcOp = -1;
     *immOp = -1;
-    *opc = in->opcodeId();
+    *opc = instruction->opcodeId();
     bool sgn = false;
     bool sub = false;
     switch (*opc) {
@@ -237,11 +237,11 @@ bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc)
     default:
         return false;
     }
-    mValue *v = &in->operands[*immOp].immediateValue;
-    if (isStringValue(v))
+    mValue *value = &instruction->operands[*immOp].immediateValue;
+    if (isStringValue(value))
         return false;
     int x = 0;
-    if (!v->getInt(&x)) {
+    if (!value->getInt(&x)) {
         reportError("failed to get immediate value\n");
         return false;
     }

@@ -15,23 +15,23 @@ bool doPrune(instStream *s);
 int doPrune(Instr *in);
 int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp);
 
-static inline bool initPrune_p(Program *p)
+static inline bool initPrune_p(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream)
-        if (!initPrune(s)) {
-            reportError("failed to init prune for %s\n", s->streamName());
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream)
+        if (!initPrune(stream)) {
+            reportError("failed to init prune for %s\n", stream->streamName());
             return false;
         }
     return true;
 }
 
-static inline int tryPrune_p(Program *p)
+static inline int tryPrune_p(Program *program)
 {
     int n = 0;
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        int r = tryPrune(s);
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        int r = tryPrune(stream);
         if (r < 0) {
-            reportError("flowMon: failed to  tryPrune %s\n", s->streamName());
+            reportError("flowMon: failed to  tryPrune %s\n", stream->streamName());
             return -1;
         }
         n += r;
@@ -39,31 +39,31 @@ static inline int tryPrune_p(Program *p)
     return n;
 }
 
-static inline bool doPrune_p(Program *p)
+static inline bool doPrune_p(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream)
-        if (!doPrune(s)) {
-            reportError("failed to do prune for %s\n", s->streamName());
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream)
+        if (!doPrune(stream)) {
+            reportError("failed to do prune for %s\n", stream->streamName());
             return false;
         }
     return true;
 }
 
-bool Prune(Program *p)
+bool Prune(Program *program)
 {
-    if (!initPrune_p(p)) {
+    if (!initPrune_p(program)) {
         reportError("failed to init prune!\n");
         return false;
     }
     int n;
     do {
-        n = tryPrune_p(p);
+        n = tryPrune_p(program);
         if (n < 0) {
             reportError("flowMon::Prune - an error occured\n");
             exitAfterCleanup(-1);
         }
     } while (n);
-    if (!doPrune_p(p)) {
+    if (!doPrune_p(program)) {
         reportError("failed to do prune!\n");
         return false;
     }
@@ -130,9 +130,9 @@ int tryPrune(Program *p)
     return n;
 }
 
-static inline void dumpPruneInstruction(Instr *in)
+static inline void dumpPruneInstruction(Instr *instruction)
 {
-    in->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
 }
 
 int tryPrune(instStream *s)

@@ -18,41 +18,41 @@ int pullLatencyWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos
 int countSetBits(unsigned int x);
 extern bool staggerMemoryAccess;
 
-static inline void dumpLockInstruction(Instr *in)
+static inline void dumpLockInstruction(Instr *instruction)
 {
-    in->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
 }
 
-bool setLocks(Instr *in)
+bool setLocks(Instr *instruction)
 {
-    for (int i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *r = op->assignedRegister;
-        if (!r)
+    for (int i = 0; i != instruction->operandCount; i++) {
+        Operand *operand = &instruction->operands[i];
+        RegPoolEntry *registerEntry = operand->assignedRegister;
+        if (!registerEntry)
             continue;
-        if (isRegisterOperand(op, 2)) {
-            for (int p = 0; p != r->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *s = &op->parts[p];
-                    RegisterPartLockList *ll = s->ownerLockList;
-                    s->setFrom(&in->position);
-                    if (!ll->addOutputLock(s)) {
+        if (isRegisterOperand(operand, 2)) {
+            for (int p = 0; p != registerEntry->partCount; p++) {
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
+                    RegisterPartLockList *lockList = slot->ownerLockList;
+                    slot->setFrom(&instruction->position);
+                    if (!lockList->addOutputLock(slot)) {
                         reportError("oh no - add output lock failed %d.%d\n", i, p);
-                        dumpLockInstruction(in);
+                        dumpLockInstruction(instruction);
                         return false;
                     }
                 }
             }
         }
-        if (isRegisterOperand(op, 1)) {
-            for (int p = 0; p != r->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *s = &op->parts[p];
-                    RegisterPartLockList *ll = s->ownerLockList;
-                    s->setFrom(&in->position);
-                    if (!ll->addInputLock(s)) {
+        if (isRegisterOperand(operand, 1)) {
+            for (int p = 0; p != registerEntry->partCount; p++) {
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
+                    RegisterPartLockList *lockList = slot->ownerLockList;
+                    slot->setFrom(&instruction->position);
+                    if (!lockList->addInputLock(slot)) {
                         reportError("SetLocks: oh no - add input lock failed %d.%d\n", i, p);
-                        dumpLockInstruction(in);
+                        dumpLockInstruction(instruction);
                         return false;
                     }
                 }
@@ -62,28 +62,28 @@ bool setLocks(Instr *in)
     return true;
 }
 
-bool undoLocks(Instr *in)
+bool undoLocks(Instr *instruction)
 {
-    for (int i = in->operandCount - 1; i >= 0; i--) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *r = op->assignedRegister;
-        if (!r)
+    for (int i = instruction->operandCount - 1; i >= 0; i--) {
+        Operand *operand = &instruction->operands[i];
+        RegPoolEntry *registerEntry = operand->assignedRegister;
+        if (!registerEntry)
             continue;
-        if (isRegisterOperand(op, 2)) {
-            for (int p = 0; p != r->partCount; p++) {
-                op->parts[p].outputConflictMarked[0] = 0;
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *s = &op->parts[p];
-                    if (!s->ownerLockList->undoOutputLock(s))
+        if (isRegisterOperand(operand, 2)) {
+            for (int p = 0; p != registerEntry->partCount; p++) {
+                operand->parts[p].outputConflictMarked[0] = 0;
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
+                    if (!slot->ownerLockList->undoOutputLock(slot))
                         return false;
                 }
             }
         }
-        if (isRegisterOperand(op, 1)) {
-            for (int p = 0; p != r->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *s = &op->parts[p];
-                    if (!s->ownerLockList->undoInputLock(s))
+        if (isRegisterOperand(operand, 1)) {
+            for (int p = 0; p != registerEntry->partCount; p++) {
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
+                    if (!slot->ownerLockList->undoInputLock(slot))
                         return false;
                 }
             }
@@ -92,47 +92,47 @@ bool undoLocks(Instr *in)
     return true;
 }
 
-int checkLocks(Instr *in, short *pos, int *minPos)
+int checkLocks(Instr *instruction, short *pos, int *minPos)
 {
     OperandLock *saved[64];
     int ret = 0;
     int i;
     int n = 0;
 
-    for (i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *r = isRegisterOperand(op, 1) ? op->assignedRegister : 0;
-        if (!r)
+    for (i = 0; i != instruction->operandCount; i++) {
+        Operand *operand = &instruction->operands[i];
+        RegPoolEntry *registerEntry = isRegisterOperand(operand, 1) ? operand->assignedRegister : 0;
+        if (!registerEntry)
             continue;
-        for (int p = 0; p != r->partCount; p++) {
-            if ((op->componentMask >> p) & 1) {
-                OpSlot *s = &op->parts[p];
-                RegisterPartLockList *ll = s->ownerLockList;
-                if (*minPos < ll->loopWrapMinimumRow) {
+        for (int p = 0; p != registerEntry->partCount; p++) {
+            if ((operand->componentMask >> p) & 1) {
+                OpSlot *slot = &operand->parts[p];
+                RegisterPartLockList *lockList = slot->ownerLockList;
+                if (*minPos < lockList->loopWrapMinimumRow) {
                     ret |= 0x80000;
-                    *minPos = ll->loopWrapMinimumRow;
+                    *minPos = lockList->loopWrapMinimumRow;
                     goto done;
                 }
-                int rc = ll->checkInputLock(s, pos, minPos);
+                int rc = lockList->checkInputLock(slot, pos, minPos);
                 ret |= rc;
                 if (rc & 0x430) {
-                    OperandLock *par = s->getParent();
-                    Operand *o = par->ownerOperand();
-                    if (o) {
-                        Instr *oi = par->ownerInstr();
-                        if (!o->parts[p].outputConflictMarked[0]) {
-                            o->parts[p].outputConflictMarked[0] = 1;
-                            o->parts[p].conflictingOutputLockCount++;
+                    OperandLock *par = slot->getParent();
+                    Operand *otherOperand = par->ownerOperand();
+                    if (otherOperand) {
+                        Instr *otherInstruction = par->ownerInstr();
+                        if (!otherOperand->parts[p].outputConflictMarked[0]) {
+                            otherOperand->parts[p].outputConflictMarked[0] = 1;
+                            otherOperand->parts[p].conflictingOutputLockCount++;
                         }
-                        trackEarliestInsertion(oi);
-                        oi->dumpOperandDiagnostics(false);
+                        trackEarliestInsertion(otherInstruction);
+                        otherInstruction->dumpOperandDiagnostics(false);
                     } else
                         reportWarning("failed to get setting operand .. so it's a regref??\n");
                     *minPos = 30000;
                     goto done;
                 }
-                if (s->pairedLock) {
-                    OperandLock *par = s->getParent();
+                if (slot->pairedLock) {
+                    OperandLock *par = slot->getParent();
                     if (!par)
                         exitAfterCleanup(0);
                     par->decRef();
@@ -141,42 +141,42 @@ int checkLocks(Instr *in, short *pos, int *minPos)
             }
         }
     }
-    for (i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *r = isRegisterOperand(op, 2) ? op->assignedRegister : 0;
-        if (!r)
+    for (i = 0; i != instruction->operandCount; i++) {
+        Operand *operand = &instruction->operands[i];
+        RegPoolEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
+        if (!registerEntry)
             continue;
-        for (int p = 0; p != r->partCount; p++) {
-            if ((op->componentMask >> p) & 1) {
-                OpSlot *s = &op->parts[p];
-                RegisterPartLockList *ll = op->parts[p].ownerLockList;
-                if (op->parts[p].conflictingOutputLockCount) {
-                    int v = ll->maxConstraintOfFirstOutputs(op->parts[p].conflictingOutputLockCount);
+        for (int p = 0; p != registerEntry->partCount; p++) {
+            if ((operand->componentMask >> p) & 1) {
+                OpSlot *slot = &operand->parts[p];
+                RegisterPartLockList *lockList = operand->parts[p].ownerLockList;
+                if (operand->parts[p].conflictingOutputLockCount) {
+                    int v = lockList->maxConstraintOfFirstOutputs(operand->parts[p].conflictingOutputLockCount);
                     if (v > *minPos) {
                         ret |= 0x80000;
                         *minPos = v;
                         goto done;
                     }
                 }
-                int rc = ll->checkOutputLock(s, pos, minPos);
+                int rc = lockList->checkOutputLock(slot, pos, minPos);
                 ret |= rc;
                 if (rc & 0x22000) {
                     if (!activeLoopSize) {
                         reportError("late extern, loop overrun, but no loop\n");
                         abortAfterError();
                     }
-                    int d = *pos + s->issueLatency - activeLoopSize;
+                    int d = *pos + slot->issueLatency - activeLoopSize;
                     if (d > 0) {
-                        ll->loopWrapMinimumRow = d;
-                        Instr *e = ll->earliestExt();
-                        if (!e) {
+                        lockList->loopWrapMinimumRow = d;
+                        Instr *endInstruction = lockList->earliestExt();
+                        if (!endInstruction) {
                             reportWarning("failed to get earliest in ret=%x\n", rc);
-                            ll->checkCounts();
+                            lockList->checkCounts();
                             reportError("this instruction is\n");
-                            in->leDump(i, p);
+                            instruction->leDump(i, p);
                             abortAfterError();
                         } else
-                            trackEarliestInsertion(e);
+                            trackEarliestInsertion(endInstruction);
                         *minPos = 30000;
                         goto done;
                     }
@@ -190,22 +190,22 @@ done:
     return ret;
 }
 
-int canMoveLocks(Instr *in, short *pos)
+int canMoveLocks(Instr *instruction, short *pos)
 {
     OperandLock *saved[64];
     int ret = 0;
     int i;
     int n = 0;
 
-    for (i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *r = registerOperand(op, 1);
-        if (!r)
+    for (i = 0; i != instruction->operandCount; i++) {
+        Operand *operand = &instruction->operands[i];
+        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        if (!registerEntry)
             continue;
-        for (int p = 0; p != r->partCount; p++) {
-            if ((op->componentMask >> p) & 1) {
-                OperandLock *par = op->parts[p].getParent();
-                if (!par->calcStats(in)) {
+        for (int p = 0; p != registerEntry->partCount; p++) {
+            if ((operand->componentMask >> p) & 1) {
+                OperandLock *par = operand->parts[p].getParent();
+                if (!par->calcStats(instruction)) {
                     reportError("failed to recalc stats ignoring instruction\n");
                     abortAfterError();
                 }
@@ -213,25 +213,25 @@ int canMoveLocks(Instr *in, short *pos)
             }
         }
     }
-    for (i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *r = registerOperand(op, 1);
-        if (r) {
-            for (int p = 0; p != r->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *s = &op->parts[p];
-                    ret |= s->ownerLockList->canMoveInputLock(s, pos, (op->componentMask >> p) & 1);
+    for (i = 0; i != instruction->operandCount; i++) {
+        Operand *operand = &instruction->operands[i];
+        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        if (registerEntry) {
+            for (int p = 0; p != registerEntry->partCount; p++) {
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
+                    ret |= slot->ownerLockList->canMoveInputLock(slot, pos, (operand->componentMask >> p) & 1);
                     if (ret)
                         goto done;
                 }
             }
         }
-        r = registerOperand(op, 2);
-        if (r) {
-            for (int p = 0; p != r->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *s = &op->parts[p];
-                    ret |= s->ownerLockList->canMoveOutputLock(s, pos, (op->componentMask >> p) & 1);
+        registerEntry = registerOperand(operand, 2);
+        if (registerEntry) {
+            for (int p = 0; p != registerEntry->partCount; p++) {
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
+                    ret |= slot->ownerLockList->canMoveOutputLock(slot, pos, (operand->componentMask >> p) & 1);
                     if (ret)
                         goto done;
                 }
@@ -250,23 +250,23 @@ done:
 
 bool moveLocks(Instr *const in, InstructionPosition *pos)
 {
-    InstructionPosition *d = &in->position;
-    d->linearRow = pos->linearRow;
-    d->loopRow = pos->loopRow;
-    d->loopIteration = pos->loopIteration;
-    d->pipelineIndex = pos->pipelineIndex;
+    InstructionPosition *position = &in->position;
+    position->linearRow = pos->linearRow;
+    position->loopRow = pos->loopRow;
+    position->loopIteration = pos->loopIteration;
+    position->pipelineIndex = pos->pipelineIndex;
     for (int i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *r = op->assignedRegister;
-        if (!r)
+        Operand *operand = &in->operands[i];
+        RegPoolEntry *registerEntry = operand->assignedRegister;
+        if (!registerEntry)
             continue;
-        if (isRegisterOperand(op, 2)) {
-            for (int p = 0; p != r->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *s = &op->parts[p];
-                    RegisterPartLockList *ll = s->ownerLockList;
-                    s->setFrom(&in->position);
-                    if (!ll->moveOutputLock(s)) {
+        if (isRegisterOperand(operand, 2)) {
+            for (int p = 0; p != registerEntry->partCount; p++) {
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
+                    RegisterPartLockList *lockList = slot->ownerLockList;
+                    slot->setFrom(&in->position);
+                    if (!lockList->moveOutputLock(slot)) {
                         reportError("oh no - move output lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
                         abortAfterError();
@@ -275,13 +275,13 @@ bool moveLocks(Instr *const in, InstructionPosition *pos)
                 }
             }
         }
-        if (isRegisterOperand(op, 1)) {
-            for (int p = 0; p != r->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *s = &op->parts[p];
-                    RegisterPartLockList *ll = s->ownerLockList;
-                    s->setFrom(&in->position);
-                    if (!ll->moveInputLock(s)) {
+        if (isRegisterOperand(operand, 1)) {
+            for (int p = 0; p != registerEntry->partCount; p++) {
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
+                    RegisterPartLockList *lockList = slot->ownerLockList;
+                    slot->setFrom(&in->position);
+                    if (!lockList->moveInputLock(slot)) {
                         reportError("oh no - move input lock failed %d.%d\n", i, p);
                         dumpLockInstruction(in);
                         abortAfterError();
@@ -294,38 +294,38 @@ bool moveLocks(Instr *const in, InstructionPosition *pos)
     return true;
 }
 
-bool setPipeBits(Instr *in)
+bool setPipeBits(Instr *instruction)
 {
     int i;
-    for (i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        if (op->assignedRegister)
-            op->assignedRegister->seenInputComponentMask = 0;
+    for (i = 0; i != instruction->operandCount; i++) {
+        Operand *operand = &instruction->operands[i];
+        if (operand->assignedRegister)
+            operand->assignedRegister->seenInputComponentMask = 0;
     }
-    for (i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *r = op->inputRegister();
-        if (!r)
+    for (i = 0; i != instruction->operandCount; i++) {
+        Operand *operand = &instruction->operands[i];
+        RegPoolEntry *registerEntry = operand->inputRegister();
+        if (!registerEntry)
             continue;
-        for (int p = 0; p != r->partCount; p++) {
-            if ((op->componentMask >> p) & 1) {
-                OpSlot *s = &op->parts[p];
-                s->upperPipeInputDemand = 0;
-                s->lowerPipeInputDemand = 0;
-                s->eitherPipeInputDemand = 0;
-                if (!(((unsigned char)r->seenInputComponentMask >> p) & 1)) {
-                    switch ((unsigned char)in->permittedPipelineMask) {
+        for (int p = 0; p != registerEntry->partCount; p++) {
+            if ((operand->componentMask >> p) & 1) {
+                OpSlot *slot = &operand->parts[p];
+                slot->upperPipeInputDemand = 0;
+                slot->lowerPipeInputDemand = 0;
+                slot->eitherPipeInputDemand = 0;
+                if (!(((unsigned char)registerEntry->seenInputComponentMask >> p) & 1)) {
+                    switch ((unsigned char)instruction->permittedPipelineMask) {
                     case 0:
                         reportError("no physical pipe bits!\n");
                         return false;
                     case 1:
-                        s->upperPipeInputDemand = 1;
+                        slot->upperPipeInputDemand = 1;
                         break;
                     case 2:
-                        s->lowerPipeInputDemand = 1;
+                        slot->lowerPipeInputDemand = 1;
                         break;
                     case 3:
-                        s->eitherPipeInputDemand = 1;
+                        slot->eitherPipeInputDemand = 1;
                         break;
                     default:
                         reportError("unknown pipe request\n");
@@ -334,12 +334,12 @@ bool setPipeBits(Instr *in)
                 }
             }
         }
-        r->seenInputComponentMask |= op->componentMask;
+        registerEntry->seenInputComponentMask |= operand->componentMask;
     }
     return true;
 }
 
-int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
+int checkInsert(workTable *table, Instr *instruction, InstructionPosition *pos, int *minPos)
 {
     int row = pos->linearRow;
     int pipe = pos->pipelineIndex;
@@ -348,9 +348,9 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
     if (*minPos < row)
         *minPos = row;
 
-    short e = in->externalInputConstraint;
-    if (e < in->externalInputPairedConstraint)
-        e = in->externalInputPairedConstraint;
+    short e = instruction->externalInputConstraint;
+    if (e < instruction->externalInputPairedConstraint)
+        e = instruction->externalInputPairedConstraint;
     int v = e;
     if (r4 < v + activeSchedulingRangeStart) {
         int m = *minPos;
@@ -368,31 +368,31 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
         return 0x10000;
     }
 
-    short l = in->externalOutputConstraint;
-    if (l < in->externalOutputPairedConstraint)
-        l = in->externalOutputPairedConstraint;
+    short l = instruction->externalOutputConstraint;
+    if (l < instruction->externalOutputPairedConstraint)
+        l = instruction->externalOutputPairedConstraint;
     if (l && activeSchedulingRangeEnd >= 0 && activeSchedulingRangeEnd - r4 <= l) {
         *minPos = 30000;
         return 0x10000;
     }
-    if (staggerMemoryAccess && in->ramAccessType && (bool)(r4 & 1)) {
+    if (staggerMemoryAccess && instruction->ramAccessType && (bool)(r4 & 1)) {
         *minPos = row + 1;
         return 0x10000;
     }
 
-    if (wt->loopSize) {
-        if (row / wt->loopSize > 16) {
+    if (table->loopSize) {
+        if (row / table->loopSize > 16) {
             *minPos = 30000;
             return 0x8000;
         }
-    } else if (row >= wt->rowCapacity) {
+    } else if (row >= table->rowCapacity) {
         *minPos = 30000;
         return 0x8000;
     }
 
     int fr = 0;
-    if (!in->hasExtraPredecessors) {
-        if (!calculateEarliestDependencyRow(in, &fr)) {
+    if (!instruction->hasExtraPredecessors) {
+        if (!calculateEarliestDependencyRow(instruction, &fr)) {
             reportError("check fdeps failed\n");
             exitAfterCleanup(-1);
             return 0x80000000;
@@ -407,22 +407,22 @@ int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos)
         }
     }
 
-    Instr **ie = ((cls_unk30 *)wt)->getIE_ck(pos->loopRow);
-    if (ie[pipe] != (Instr *)in->replacedInstructionWord) {
+    Instr **pipelineEntries = ((cls_unk30 *)table)->getIE_ck(pos->loopRow);
+    if (pipelineEntries[pipe] != (Instr *)instruction->replacedInstructionWord) {
         *minPos = row + 1;
         return 0x40;
     }
-    if (!wouldPair(ie, in, pipe)) {
+    if (!wouldPair(pipelineEntries, instruction, pipe)) {
         (*minPos)++;
         return 0x80;
     }
-    return checkLocks(in, &pos->linearRow, minPos);
+    return checkLocks(instruction, &pos->linearRow, minPos);
 }
 
-bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
+bool DoInsert(workTable *const wt, Instr *instruction, InstructionPosition *pos)
 {
-    short b = in->abstractMoveOpcode;
-    if (__builtin_expect(b != 0, 1) && !(b = in->concreteMoveOpcode)) {
+    short b = instruction->abstractMoveOpcode;
+    if (__builtin_expect(b != 0, 1) && !(b = instruction->concreteMoveOpcode)) {
         reportError("undo insert currmuid not set\n");
         return false;
     }
@@ -437,7 +437,7 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
     }
     r = pos->loopRow;
     wtRow *row = &wt->rows[r];
-    InstructionPosition *s = &in->position;
+    InstructionPosition *s = &instruction->position;
     b = pos->linearRow;
     s->loopRow = r;
     char a = pos->loopIteration;
@@ -445,22 +445,22 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
     p = pos->getPipe();
     s->linearRow = b;
     s->pipelineIndex = p;
-    row->entries[p].instruction = in;
-    b = setLocks(in);
+    row->entries[p].instruction = instruction;
+    b = setLocks(instruction);
     if (!(char)b) {
         reportError("DoInsert: failed to set locks in instruction insert\n");
         return false;
     }
     int zt;
     do {
-        in->insertionSerial = wt->nextInsertionSerial;
+        instruction->insertionSerial = wt->nextInsertionSerial;
         wt->nextInsertionSerial++;
-        b = UnlinkFromToDo((Block *)wt, in);
+        b = UnlinkFromToDo((Block *)wt, instruction);
         if (!(char)b) {
             reportError("failed to unlink from to do list\n");
             abortAfterError();
         }
-        a = AddDone_Tail((Block *)wt, in);
+        a = AddDone_Tail((Block *)wt, instruction);
         if (!a) {
             reportError("failed to add to done\n");
             abortAfterError();
@@ -472,75 +472,75 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
     return true;
 }
 
-bool UndoInsert(workTable *wt, Instr *in)
+bool UndoInsert(workTable *table, Instr *instruction)
 {
-    if (in->branchFlags)
-        wt->loopBoundaryInstruction = 0;
-    if (in->abstractMoveOpcode) {
-        if (!in->concreteMoveOpcode) {
+    if (instruction->branchFlags)
+        table->loopBoundaryInstruction = 0;
+    if (instruction->abstractMoveOpcode) {
+        if (!instruction->concreteMoveOpcode) {
             reportError("undo insert currmuid not set\n");
             return false;
         }
-        if (!unresolveMove((Block *)wt, in)) {
+        if (!unresolveMove((Block *)table, instruction)) {
             reportError("failed to unresolve move\n");
             abortAfterError();
         }
     }
-    if (!wt->takeOut(in)) {
+    if (!table->takeOut(instruction)) {
         reportError("failed to take out instruction!\n");
         abortAfterError();
     }
-    if (!undoLocks(in)) {
+    if (!undoLocks(instruction)) {
         reportError("UndoInsert:: undo locks - failed\n");
         abortAfterError();
         return false;
     }
-    wt->nextInsertionSerial--;
-    in->insertionSerial = -1;
-    if (!UnlinkFromDone((Block *)wt, in)) {
+    table->nextInsertionSerial--;
+    instruction->insertionSerial = -1;
+    if (!UnlinkFromDone((Block *)table, instruction)) {
         reportError("failed to unlink from done list\n");
         abortAfterError();
     }
-    if (!AddToDo_Head((Block *)wt, in)) {
+    if (!AddToDo_Head((Block *)table, instruction)) {
         reportError("failed to relink to todo list\n");
         abortAfterError();
     }
     return true;
 }
 
-bool reduceExtents(workTable *wt)
+bool reduceExtents(workTable *table)
 {
-    setRange(wt->rangeStart, wt->rangeEnd, wt->loopSize);
+    setRange(table->rangeStart, table->rangeEnd, table->loopSize);
     int moved;
     do {
         moved = 0;
-        for (int r = wt->rangeStart; __builtin_expect(r != wt->rangeEnd, 1); r++) {
-            wtRow *row = wt->getRowByIndex(r);
+        for (int r = table->rangeStart; __builtin_expect(r != table->rangeEnd, 1); r++) {
+            wtRow *row = table->getRowByIndex(r);
             for (int p = 0; p != 2; p++) {
-                Instr *in = row->getEntry(p);
-                if (!in)
+                Instr *instruction = row->getEntry(p);
+                if (!instruction)
                     continue;
-                int lo = in->position.linearRow;
+                int lo = instruction->position.linearRow;
                 int cnt = 0;
                 int minEnd = 30000;
-                Operand *op;
-                for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-                    RegPoolEntry *reg = registerOperand(op, 2);
+                Operand *operand;
+                for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+                    RegPoolEntry *reg = registerOperand(operand, 2);
                     if (reg) {
                         for (int k = 0; k != reg->partCount; k++) {
-                            if ((op->componentMask >> k) & 1) {
+                            if ((operand->componentMask >> k) & 1) {
                                 cnt++;
-                                OpSlot *s = &op->parts[k];
-                                if (s->getRefCount() != 0) {
-                                    int e = s->earliestConsumerFreeCycle;
+                                OpSlot *slot = &operand->parts[k];
+                                if (slot->getRefCount() != 0) {
+                                    int e = slot->earliestConsumerFreeCycle;
                                     if (e < minEnd)
                                         minEnd = e;
                                 }
                             }
                         }
                     }
-                    if (registerOperand(op, 1))
-                        cnt -= countSetBits(op->componentMask);
+                    if (registerOperand(operand, 1))
+                        cnt -= countSetBits(operand->componentMask);
                 }
                 if (minEnd < 30000 && __builtin_expect(cnt >= 0, 1)) {
                     int t = minEnd;
@@ -548,21 +548,21 @@ bool reduceExtents(workTable *wt)
                     bool found = false;
                     for (; t > lo; t--) {
                         pos.setFromLinearRow(t);
-                        if (!checkPlacementInAllowedPipelines(wt, in, &pos, false)) {
+                        if (!checkPlacementInAllowedPipelines(table, instruction, &pos, false)) {
                             found = true;
                             break;
                         }
                     }
                     if (found) {
-                        if (!wt->takeOut(in)) {
+                        if (!table->takeOut(instruction)) {
                             reportError("failed to take out instruction\n");
                             abortAfterError();
                         }
-                        if (!moveLocks(in, &pos)) {
+                        if (!moveLocks(instruction, &pos)) {
                             reportError("failed to move !\n");
                             abortAfterError();
                         }
-                        if (!wt->putIn(in)) {
+                        if (!table->putIn(instruction)) {
                             reportError("failed to put in back in\n");
                             abortAfterError();
                         }
@@ -575,44 +575,44 @@ bool reduceExtents(workTable *wt)
     return true;
 }
 
-int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth)
+int drag(workTable *table, Instr *instruction, InstructionPosition *pos, int back, int depth)
 {
-    if (!wt->loopSize)
+    if (!table->loopSize)
         return 0;
-    pullSpecialRegisterWritersEarlier(wt, in, pos);
-    pullLatencyWritersEarlier(wt, in, pos);
+    pullSpecialRegisterWritersEarlier(table, instruction, pos);
+    pullLatencyWritersEarlier(table, instruction, pos);
     int total = 0;
     int n;
     do {
         n = 0;
-        Operand *op;
-        for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-            RegPoolEntry *r = registerOperand(op, 1);
-            if (!r)
+        Operand *operand;
+        for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            if (!registerEntry)
                 continue;
-            for (int p = 0; p != r->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                OpSlot *s = &op->parts[p];
-                OperandLock *par = s->getParent();
-                Instr *oi = par->ownerInstr();
-                if (!oi)
+            for (int p = 0; p != registerEntry->partCount; p++) {
+                if ((operand->componentMask >> p) & 1) {
+                OpSlot *slot = &operand->parts[p];
+                OperandLock *par = slot->getParent();
+                Instr *otherInstruction = par->ownerInstr();
+                if (!otherInstruction)
                     continue;
-                int maxPos = pos->linearRow - par->issueLatency - s->issueLatency;
+                int maxPos = pos->linearRow - par->issueLatency - slot->issueLatency;
                 int start = pos->linearRow - back;
                 if (!back)
-                    start = oi->position.linearRow + 1;
+                    start = otherInstruction->position.linearRow + 1;
                 if (!par->latencyModeFlag)
                     start -= par->issueLatency;
                 bool single = true;
-                if (oi->requiresFullLoopMoveDrag) {
-                    start = oi->position.linearRow + 1;
-                    if (maxPos > wt->loopSize + oi->position.linearRow)
-                        maxPos = wt->loopSize + oi->position.linearRow;
-                    if (maxPos > oi->moveRowOffset)
-                        maxPos = oi->moveRowOffset;
+                if (otherInstruction->requiresFullLoopMoveDrag) {
+                    start = otherInstruction->position.linearRow + 1;
+                    if (maxPos > table->loopSize + otherInstruction->position.linearRow)
+                        maxPos = table->loopSize + otherInstruction->position.linearRow;
+                    if (maxPos > otherInstruction->moveRowOffset)
+                        maxPos = otherInstruction->moveRowOffset;
                     single = false;
                 }
-                InstructionPosition *opos = &oi->position;
+                InstructionPosition *opos = &otherInstruction->position;
                 if (start <= opos->linearRow)
                     continue;
                 if (start > maxPos)
@@ -624,10 +624,10 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 np.setFromLinearRow(start);
                 if (depth <= 3) {
                     int b = back;
-                    if (oi->requiresFullLoopMoveDrag)
-                        b = wt->loopSize;
+                    if (otherInstruction->requiresFullLoopMoveDrag)
+                        b = table->loopSize;
                     InstructionPosition tmp;
-                    n += drag(wt, oi, &np, b, depth + 1);
+                    n += drag(table, otherInstruction, &np, b, depth + 1);
                 }
                 InstructionPosition cur;
                 cur.linearRow = np.linearRow;
@@ -636,7 +636,7 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 cur.pipelineIndex = np.pipelineIndex;
                 for (; start <= maxPos; start++) {
                     cur.setFromLinearRow(start);
-                    if (!checkPlacementInAllowedPipelines(wt, oi, &cur, false)) {
+                    if (!checkPlacementInAllowedPipelines(table, otherInstruction, &cur, false)) {
                         np.linearRow = cur.linearRow;
                         np.loopRow = cur.loopRow;
                         np.loopIteration = cur.loopIteration;
@@ -647,15 +647,15 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                     }
                 }
                 if (moved) {
-                    if (!wt->takeOut(oi)) {
+                    if (!table->takeOut(otherInstruction)) {
                         reportError("drag: failed to take in from table\n");
                         abortAfterError();
                     }
-                    if (!moveLocks(oi, &np)) {
+                    if (!moveLocks(otherInstruction, &np)) {
                         reportError("failed to move !\n");
                         abortAfterError();
                     }
-                    if (!wt->putIn(oi)) {
+                    if (!table->putIn(otherInstruction)) {
                         reportError("failed to put in dragged instruction\n");
                         abortAfterError();
                     }
@@ -671,54 +671,54 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
 
 RegisterPartLockList *workTable::getLockList(RegPoolEntry *reg, int part)
 {
-    RegisterPartLockList *ll = findLockList(registerLockLists, reg, part);
-    if (ll)
-        return ll;
-    ll = new RegisterPartLockList(registerLockLists);
-    if (!ll) {
+    RegisterPartLockList *lockList = findLockList(registerLockLists, reg, part);
+    if (lockList)
+        return lockList;
+    lockList = new RegisterPartLockList(registerLockLists);
+    if (!lockList) {
         reportError("failed to get new locklist\n");
         abortAfterError();
     }
     registerLockListCount++;
-    registerLockLists = ll;
-    if (!ll->setRepReg(reg)) {
+    registerLockLists = lockList;
+    if (!lockList->setRepReg(reg)) {
         reportError("failed to set representative reg\n");
         return 0;
     }
-    ll->componentIndex = part;
-    return ll;
+    lockList->componentIndex = part;
+    return lockList;
 }
 
-int checkInstructionPlacementConstraints(workTable *wt, Instr *in, InstructionPosition *pos)
+int checkInstructionPlacementConstraints(workTable *table, Instr *instruction, InstructionPosition *pos)
 {
     int row = pos->linearRow;
     int pipe = pos->pipelineIndex;
     int r4 = pos->loopRow;
 
-    short e = in->externalInputConstraint;
-    if (e < in->externalInputPairedConstraint)
-        e = in->externalInputPairedConstraint;
+    short e = instruction->externalInputConstraint;
+    if (e < instruction->externalInputPairedConstraint)
+        e = instruction->externalInputPairedConstraint;
     if (r4 < e + activeSchedulingRangeStart)
         return 0x10000;
 
-    short l = in->externalOutputConstraint;
-    if (l < in->externalOutputPairedConstraint)
-        l = in->externalOutputPairedConstraint;
+    short l = instruction->externalOutputConstraint;
+    if (l < instruction->externalOutputPairedConstraint)
+        l = instruction->externalOutputPairedConstraint;
     if (l && activeSchedulingRangeEnd >= 0 && activeSchedulingRangeEnd - r4 <= l)
         return 0x10000;
-    if (staggerMemoryAccess && in->ramAccessType && (bool)(r4 & 1))
+    if (staggerMemoryAccess && instruction->ramAccessType && (bool)(r4 & 1))
         return 0x10000;
 
-    if (wt->loopSize) {
-        if (row / wt->loopSize > 16)
+    if (table->loopSize) {
+        if (row / table->loopSize > 16)
             return 0x8000;
-    } else if (row >= wt->rowCapacity) {
+    } else if (row >= table->rowCapacity) {
         return 0x8000;
     }
 
-    if (!in->hasExtraPredecessors) {
+    if (!instruction->hasExtraPredecessors) {
         int fr = 0;
-        if (!calculateEarliestDependencyRow(in, &fr)) {
+        if (!calculateEarliestDependencyRow(instruction, &fr)) {
             reportError("check fdeps failed\n");
             exitAfterCleanup(-1);
             return 0x80000000;
@@ -727,7 +727,7 @@ int checkInstructionPlacementConstraints(workTable *wt, Instr *in, InstructionPo
             return 0x100000;
     }
     int lr = 30000;
-    if (!calculateLatestDependencyRow(in, &lr)) {
+    if (!calculateLatestDependencyRow(instruction, &lr)) {
         reportError("check fdeps failed\n");
         exitAfterCleanup(-1);
         return 0x80000000;
@@ -735,38 +735,38 @@ int checkInstructionPlacementConstraints(workTable *wt, Instr *in, InstructionPo
     if (lr <= row)
         return 0x100000;
 
-    Instr **ie = ((cls_unk30 *)wt)->getIE_ck(pos->loopRow);
-    if (ie[pipe] != (Instr *)in->replacedInstructionWord && ie[pipe] != in)
+    Instr **pipelineEntries = ((cls_unk30 *)table)->getIE_ck(pos->loopRow);
+    if (pipelineEntries[pipe] != (Instr *)instruction->replacedInstructionWord && pipelineEntries[pipe] != instruction)
         return 0x40;
-    if (!wouldPair(ie, in, pipe))
+    if (!wouldPair(pipelineEntries, instruction, pipe))
         return 0x80;
-    return canMoveLocks(in, &pos->linearRow);
+    return canMoveLocks(instruction, &pos->linearRow);
 }
 
-int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos)
+int pullSpecialRegisterWritersEarlier(workTable *table, Instr *instruction, InstructionPosition *pos)
 {
-    int row = in->position.getRow() < 0 ? pos->getRow() : in->position.getRow();
+    int row = instruction->position.getRow() < 0 ? pos->getRow() : instruction->position.getRow();
     if (row < 0) {
         reportError("inst not inserted\n");
         abortAfterError();
     }
-    Operand *op;
-    for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *reg = registerOperand(op, 1);
+    Operand *operand;
+    for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+        RegPoolEntry *reg = registerOperand(operand, 1);
         if (!reg)
             continue;
         for (int k = 0; k != reg->partCount; k++) {
-            if ((op->componentMask >> k) & 1) {
-                OpSlot *s = &op->parts[k];
-                OperandLock *par = s->getParent();
+            if ((operand->componentMask >> k) & 1) {
+                OpSlot *slot = &operand->parts[k];
+                OperandLock *par = slot->getParent();
                 int idx = reg->registerIndex;
                 if (idx != 48 && idx != 49 && idx != 59)
                     continue;
-                Instr *oi = par->ownerInstr();
-                if (!oi)
+                Instr *otherInstruction = par->ownerInstr();
+                if (!otherInstruction)
                     continue;
-                int t = in->position.linearRow - par->issueLatency - s->issueLatency;
-                int oiRow = oi->position.linearRow;
+                int t = instruction->position.linearRow - par->issueLatency - slot->issueLatency;
+                int oiRow = otherInstruction->position.linearRow;
                 if (t <= oiRow)
                     continue;
                 bool found = false;
@@ -775,7 +775,7 @@ int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, InstructionPosit
                 dest.setFromLinearRow(t);
                 for (; oiRow < t; t--) {
                     trial.setFromLinearRow(t);
-                    if (!checkPlacementInAllowedPipelines(wt, oi, &trial, true)) {
+                    if (!checkPlacementInAllowedPipelines(table, otherInstruction, &trial, true)) {
                         dest.linearRow = trial.linearRow;
                         dest.loopRow = trial.loopRow;
                         dest.loopIteration = trial.loopIteration;
@@ -785,15 +785,15 @@ int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, InstructionPosit
                     }
                 }
                 if (found) {
-                    if (!wt->takeOut(oi)) {
+                    if (!table->takeOut(otherInstruction)) {
                         reportError("drag: failed to take in from table\n");
                         abortAfterError();
                     }
-                    if (!moveLocks(oi, &dest)) {
+                    if (!moveLocks(otherInstruction, &dest)) {
                         reportError("failed to move !\n");
                         abortAfterError();
                     }
-                    if (!wt->putIn(oi)) {
+                    if (!table->putIn(otherInstruction)) {
                         reportError("failed to put in dragged instruction\n");
                         abortAfterError();
                     }
@@ -804,14 +804,14 @@ int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, InstructionPosit
     return 1;
 }
 
-int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards)
+int checkPlacementInAllowedPipelines(workTable *table, Instr *instruction, InstructionPosition *pos, bool upwards)
 {
     int result = 0;
-    if (in->permittedPipelineMask == 3) {
+    if (instruction->permittedPipelineMask == 3) {
         if (upwards) {
             for (int i = 0; i != 2; i++) {
                 pos->setInstructionPipe(i);
-                int r = checkInstructionPlacementConstraints(wt, in, pos);
+                int r = checkInstructionPlacementConstraints(table, instruction, pos);
                 if (!r)
                     return 0;
                 result |= r;
@@ -819,7 +819,7 @@ int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPositi
         } else {
             for (int i = 1; i >= 0; i--) {
                 pos->setInstructionPipe(i);
-                int r = checkInstructionPlacementConstraints(wt, in, pos);
+                int r = checkInstructionPlacementConstraints(table, instruction, pos);
                 if (!r)
                     return 0;
                 result |= r;
@@ -827,35 +827,35 @@ int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPositi
         }
         return result;
     }
-    pos->setInstructionPipe(in->position.getPipe());
-    return checkInstructionPlacementConstraints(wt, in, pos);
+    pos->setInstructionPipe(instruction->position.getPipe());
+    return checkInstructionPlacementConstraints(table, instruction, pos);
 }
 
-int pullLatencyWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos)
+int pullLatencyWritersEarlier(workTable *table, Instr *instruction, InstructionPosition *pos)
 {
-    int row = in->position.getRow() < 0 ? pos->getRow() : in->position.getRow();
+    int row = instruction->position.getRow() < 0 ? pos->getRow() : instruction->position.getRow();
     if (row < 0) {
         reportError("inst not inserted\n");
         abortAfterError();
     }
-    Operand *op;
-    for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *reg = registerOperand(op, 1);
+    Operand *operand;
+    for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+        RegPoolEntry *reg = registerOperand(operand, 1);
         if (!reg)
             continue;
         for (int k = 0; k != reg->partCount; k++) {
-            if ((op->componentMask >> k) & 1) {
-                OpSlot *s = &op->parts[k];
-                OperandLock *par = s->getParent();
+            if ((operand->componentMask >> k) & 1) {
+                OpSlot *slot = &operand->parts[k];
+                OperandLock *par = slot->getParent();
                 if (par->activeReferenceCount != 0)
                     continue;
-                Instr *oi = par->ownerInstr();
-                if (!oi)
+                Instr *otherInstruction = par->ownerInstr();
+                if (!otherInstruction)
                     continue;
-                if (oi->ramAccessType != 1 && oi->schedulingStatistics.forwardLatencyDepth != 0)
+                if (otherInstruction->ramAccessType != 1 && otherInstruction->schedulingStatistics.forwardLatencyDepth != 0)
                     continue;
-                int t = in->position.linearRow - par->issueLatency - s->issueLatency;
-                int oiRow = oi->position.linearRow;
+                int t = instruction->position.linearRow - par->issueLatency - slot->issueLatency;
+                int oiRow = otherInstruction->position.linearRow;
                 if (t <= oiRow)
                     continue;
                 bool found = false;
@@ -864,7 +864,7 @@ int pullLatencyWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos
                 dest.setFromLinearRow(t);
                 for (; oiRow < t; t--) {
                     trial.setFromLinearRow(t);
-                    if (!checkPlacementInAllowedPipelines(wt, oi, &trial, true)) {
+                    if (!checkPlacementInAllowedPipelines(table, otherInstruction, &trial, true)) {
                         dest.linearRow = trial.linearRow;
                         dest.loopRow = trial.loopRow;
                         dest.loopIteration = trial.loopIteration;
@@ -874,15 +874,15 @@ int pullLatencyWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos
                     }
                 }
                 if (found) {
-                    if (!wt->takeOut(oi)) {
+                    if (!table->takeOut(otherInstruction)) {
                         reportError("drag: failed to take in from table\n");
                         abortAfterError();
                     }
-                    if (!moveLocks(oi, &dest)) {
+                    if (!moveLocks(otherInstruction, &dest)) {
                         reportError("failed to move !\n");
                         abortAfterError();
                     }
-                    if (!wt->putIn(oi)) {
+                    if (!table->putIn(otherInstruction)) {
                         reportError("failed to put in dragged instruction\n");
                         abortAfterError();
                     }

@@ -5,25 +5,25 @@
 
 char *dupString(const char *s);
 
-static inline epiRec *ld_getProRec_inl(loopDebris *ld, int i)
+static inline epiRec *ld_getProRec_inl(loopDebris *loopRecord, int i)
 {
-    if (i < 0 || i >= ld->m_nPro)
+    if (i < 0 || i >= loopRecord->m_nPro)
         return 0;
-    return &ld->m_pro[i];
+    return &loopRecord->m_pro[i];
 }
 
-static inline epiRec *ld_getEpiRec_inl(loopDebris *ld, int i)
+static inline epiRec *ld_getEpiRec_inl(loopDebris *loopRecord, int i)
 {
-    if (i < 0 || i >= ld->m_nEpi)
+    if (i < 0 || i >= loopRecord->m_nEpi)
         return 0;
-    return &ld->m_epi[i];
+    return &loopRecord->m_epi[i];
 }
 
-static inline epiRec *ld_findEpi_inl(loopDebris *ld, int key)
+static inline epiRec *ld_findEpi_inl(loopDebris *loopRecord, int key)
 {
-    for (int i = 0; i != ld->m_nEpi; i++)
-        if (ld->m_epi[i].loopKey == key)
-            return &ld->m_epi[i];
+    for (int i = 0; i != loopRecord->m_nEpi; i++)
+        if (loopRecord->m_epi[i].loopKey == key)
+            return &loopRecord->m_epi[i];
     return 0;
 }
 
@@ -80,115 +80,115 @@ void loopDebris::validateLoopDebrisName()
 
 instStream *loopDebris::getEnterStream()
 {
-    epiRec *r = &m_enter;
-    if (!r) {
+    epiRec *region = &m_enter;
+    if (!region) {
         reportError("failed to get enter epirec\n");
         return 0;
     }
-    return r->stream;
+    return region->stream;
 }
 
 instStream *loopDebris::getExitStream()
 {
-    epiRec *r = &m_exit;
-    if (!r) {
+    epiRec *region = &m_exit;
+    if (!region) {
         reportError("failed to get exit epirec\n");
         return 0;
     }
-    return r->stream;
+    return region->stream;
 }
 
 instStream *loopDebris::getMainStream()
 {
-    epiRec *r = &m_main;
-    if (!r) {
+    epiRec *region = &m_main;
+    if (!region) {
         reportError("failed to get main epirec\n");
         return 0;
     }
-    return r->stream;
+    return region->stream;
 }
 
 instStream *loopDebris::getProStream(int i)
 {
-    epiRec *r = ld_getProRec_inl(this, i);
-    if (!r) {
+    epiRec *region = ld_getProRec_inl(this, i);
+    if (!region) {
         reportError("failed to get pro epirec\n");
         return 0;
     }
-    return r->stream;
+    return region->stream;
 }
 
 instStream *loopDebris::getEpiStream(int i)
 {
-    epiRec *r = ld_getEpiRec_inl(this, i);
-    if (!r) {
+    epiRec *region = ld_getEpiRec_inl(this, i);
+    if (!region) {
         reportError("failed to get pro epirec\n");
         return 0;
     }
-    return r->stream;
+    return region->stream;
 }
 
-static inline void setDebrisMode(workTable *wt, unsigned char mode)
+static inline void setDebrisMode(workTable *table, unsigned char mode)
 {
-    wt->setTableRawMode(mode);
+    table->setTableRawMode(mode);
 }
 
 epiRec *loopDebris::allocPro(int size)
 {
     char buf[4096];
-    epiRec *r = 0;
+    epiRec *region = 0;
     if (m_nPro < 16) {
         const char *name = "NOTSET";
         if (m_baseName)
             name = m_baseName;
         formatIntoBuffer(buf, "%s_PRO%d", name, m_nPro);
-        r = &m_pro[m_nPro];
-        r->reset();
-        if (!r->init(size, buf)) {
+        region = &m_pro[m_nPro];
+        region->reset();
+        if (!region->init(size, buf)) {
             reportError("failed to init for pro\n");
             return 0;
         }
-        r->stream->loopRegionRole = 2;
+        region->stream->loopRegionRole = 2;
         if (preserveAllocationMode) {
-            setDebrisMode(r->table, 2);
-            r->table->allocationMode = requestedAllocationMode;
+            setDebrisMode(region->table, 2);
+            region->table->allocationMode = requestedAllocationMode;
         } else {
-            setDebrisMode(r->table, 1);
-            r->table->allocationMode = 2;
+            setDebrisMode(region->table, 1);
+            region->table->allocationMode = 2;
         }
         m_nPro++;
     } else
         reportError("allocPro: overrun\n");
-    return r;
+    return region;
 }
 
 epiRec *loopDebris::allocEpi(int size)
 {
     char buf[4096];
-    epiRec *r = 0;
+    epiRec *region = 0;
     if (m_nEpi < 16) {
         const char *name = "NOTSET";
         if (m_baseName)
             name = m_baseName;
         formatIntoBuffer(buf, "%s_EPI%d", name, m_nEpi);
-        r = &m_epi[m_nEpi];
-        r->reset();
-        if (!r->init(size, buf)) {
+        region = &m_epi[m_nEpi];
+        region->reset();
+        if (!region->init(size, buf)) {
             reportError("failed to init for epi\n");
             return 0;
         }
-        r->stream->loopRegionRole = 3;
+        region->stream->loopRegionRole = 3;
         if (preserveAllocationMode) {
-            setDebrisMode(r->table, 2);
-            r->table->allocationMode = requestedAllocationMode;
+            setDebrisMode(region->table, 2);
+            region->table->allocationMode = requestedAllocationMode;
         } else {
-            setDebrisMode(r->table, 1);
-            r->table->allocationMode = 2;
+            setDebrisMode(region->table, 1);
+            region->table->allocationMode = 2;
         }
         m_nEpi++;
     } else
         reportError("getEpi: overrun\n");
-    return r;
+    return region;
 }
 
 epiRec *loopDebris::allocMain(int size)
@@ -282,21 +282,21 @@ inline int loopDebris::getNumEpi()
     return m_nEpi;
 }
 
-static inline instStream *checkedProStream(loopDebris *ld, int i)
+static inline instStream *checkedProStream(loopDebris *loopRecord, int i)
 {
-    epiRec *r = ld_getProRec_inl(ld, i);
-    if (!r) {
+    epiRec *region = ld_getProRec_inl(loopRecord, i);
+    if (!region) {
         reportError("failed to get pro epirec\n");
         return 0;
     }
-    return r->stream;
+    return region->stream;
 }
 
-static inline epiRec *proRecord(loopDebris *ld, int i, int count)
+static inline epiRec *proRecord(loopDebris *loopRecord, int i, int count)
 {
     if (i < 0 || i >= count)
         return 0;
-    return &ld->m_pro[i];
+    return &loopRecord->m_pro[i];
 }
 
 bool epiRec::init(int size, const char *name)
@@ -337,23 +337,23 @@ const char *epiRec::getName()
     return stream->streamName();
 }
 
-int expandOneLoopIntoRegions(Program *p, instStream *s)
+int expandOneLoopIntoRegions(Program *program, instStream *stream)
 {
-    workTable *wt = s->getTable();
-    if (!wt->getLoopSize()) {
+    workTable *table = stream->getTable();
+    if (!table->getLoopSize()) {
         reportError("BuildEP - loopsize not set in input stream\n");
         return -1;
     }
-    if (wt->codeModeValue != 3) {
+    if (table->codeModeValue != 3) {
         reportError("intput table is not vsm\n");
         return -1;
     }
     int i;
     loopDebris ld;
     char buf[4096];
-    formatIntoBuffer(buf, "EXPL_%s_%s_", getUniqueName(p), s->streamName());
-    if (!explodeLoop(s, &ld, buf)) {
-        reportError("BuildEPSTreams - failed to explode %s\n", s->streamName());
+    formatIntoBuffer(buf, "EXPL_%s_%s_", getUniqueName(program), stream->streamName());
+    if (!explodeLoop(stream, &ld, buf)) {
+        reportError("BuildEPSTreams - failed to explode %s\n", stream->streamName());
         exitAfterCleanup(-1);
     }
     instStream *enter = ld.m_enter.stream;
@@ -366,61 +366,61 @@ int expandOneLoopIntoRegions(Program *p, instStream *s)
         reportError("had no exit istream\n");
         exitAfterCleanup(-1);
     }
-    instStream *fall = s->outputLinks.getStream(0);
+    instStream *fall = stream->outputLinks.getStream(0);
     if (!fall) {
         reportError("epipro:failed to get default output stream\n");
         return -1;
     }
-    if (fall != s->nextStream) {
+    if (fall != stream->nextStream) {
         reportError("exit stream not same as loopback successor\n");
         return -1;
     }
-    if (!p->unlinkStreams(s, s, 1)) {
+    if (!program->unlinkStreams(stream, stream, 1)) {
         reportError("failed to unlink original loopback\n");
         return -1;
     }
-    if (!p->unlinkStreams(s, fall, 0)) {
+    if (!program->unlinkStreams(stream, fall, 0)) {
         reportError("failed to unlink original to exit\n");
         return -1;
     }
-    if (!p->retarget(s, enter)) {
+    if (!program->retarget(stream, enter)) {
         reportError("failed to retarget!\n");
         exitAfterCleanup(-1);
     }
 
     instStream *prev = enter;
-    epiRec *r;
-    loopDebris *d;
-    for (i = 0; i != (d = &ld)->getNumPro(); i++) {
-        epiRec *pr = proRecord(d, i, ld.getNumPro());
-        if (!pr) {
+    epiRec *region;
+    loopDebris *loopRecord;
+    for (i = 0; i != (loopRecord = &ld)->getNumPro(); i++) {
+        epiRec *prologueRegion = proRecord(loopRecord, i, ld.getNumPro());
+        if (!prologueRegion) {
             reportError("failed to get prologue\n");
             return -1;
         }
-        instStream *ps = pr->stream;
-        if (!ps) {
+        instStream *prologueStream = prologueRegion->stream;
+        if (!prologueStream) {
             reportError("failed to get stream for prologue\n");
             return -1;
         }
         if (prev) {
-            if (!p->linkStreams(prev, ps, 0)) {
+            if (!program->linkStreams(prev, prologueStream, 0)) {
                 reportError("failed to link enter to first prologue\n");
                 return -1;
             }
             prev = 0;
         }
-        if (pr->conditionalBranch) {
-            epiRec *er = ld_findEpi_inl(&ld, pr->sourceLoopId + 1);
-            if (!er) {
+        if (prologueRegion->conditionalBranch) {
+            epiRec *epilogueRegion = ld_findEpi_inl(&ld, prologueRegion->sourceLoopId + 1);
+            if (!epilogueRegion) {
                 reportError("failed to find epilogue\n");
                 return -1;
             }
-            instStream *es = er->stream;
-            if (!es) {
+            instStream *epilogueStream = epilogueRegion->stream;
+            if (!epilogueStream) {
                 reportError("failed to find epi for a prologue\n");
                 return -1;
             }
-            if (!p->linkStreams(ps, es, 1)) {
+            if (!program->linkStreams(prologueStream, epilogueStream, 1)) {
                 reportError("failed to link prologue to epilogue\n");
                 return -1;
             }
@@ -438,7 +438,7 @@ int expandOneLoopIntoRegions(Program *p, instStream *s)
             reportError("failed to get next stream for a prologue\n");
             return -1;
         }
-        if (!p->linkStreams(ps, next, 0)) {
+        if (!program->linkStreams(prologueStream, next, 0)) {
             reportError("failed to link prologue to fall through\n");
             return -1;
         }
@@ -449,11 +449,11 @@ int expandOneLoopIntoRegions(Program *p, instStream *s)
         reportError("not find new main!\n");
         return -1;
     }
-    if (prev && !p->linkStreams(prev, main, 0)) {
+    if (prev && !program->linkStreams(prev, main, 0)) {
         reportError("failed to link enter to main\n");
         return -1;
     }
-    if (!p->linkStreams(main, main, 1)) {
+    if (!program->linkStreams(main, main, 1)) {
         reportError("failed to link loop to itself\n");
         return -1;
     }
@@ -471,107 +471,107 @@ int expandOneLoopIntoRegions(Program *p, instStream *s)
         reportError("no stream for epi0\n");
         return -1;
     }
-    if (!p->linkStreams(main, succ, 0)) {
+    if (!program->linkStreams(main, succ, 0)) {
         reportError("failed to link main stream to successor\n");
         return -1;
     }
 
     for (i = 0; i != ld.getNumEpi(); i++) {
-        r = ld_getEpiRec_inl(&ld, i);
-        if (!r) {
+        region = ld_getEpiRec_inl(&ld, i);
+        if (!region) {
             reportError("failed to get epi \n");
             return -1;
         }
-        instStream *es = r->stream;
-        if (!es) {
+        instStream *epilogueStream = region->stream;
+        if (!epilogueStream) {
             reportError("failed to get istream epi\n");
             return -1;
         }
         int type = 0;
-        if (r->conditionalBranch) {
-            if (!r->conditionalBranch->changeBranchImmediate(ld.m_exitName)) {
+        if (region->conditionalBranch) {
+            if (!region->conditionalBranch->changeBranchImmediate(ld.m_exitName)) {
                 reportError("failed to change immediate\n");
                 exitAfterCleanup(-1);
             }
             type = 1;
         }
-        if (!p->linkStreams(es, exit, type)) {
+        if (!program->linkStreams(epilogueStream, exit, type)) {
             reportError("failed to link xref from epi to exit\n");
             exitAfterCleanup(-1);
         }
     }
-    if (!p->linkStreams(exit, fall, 0)) {
+    if (!program->linkStreams(exit, fall, 0)) {
         reportError("failed to link exit to old fall\n");
         return -1;
     }
 
-    instStream *last = s->previousStream;
-    if (!p->removeStream(s)) {
+    instStream *last = stream->previousStream;
+    if (!program->removeStream(stream)) {
         reportError("failed to unlink istream\n");
         exitAfterCleanup(-1);
     }
-    if (!p->insertStreamAfter(last, enter)) {
+    if (!program->insertStreamAfter(last, enter)) {
         reportError("failed to add enter after initial  prev\n");
         exitAfterCleanup(-1);
     }
 
     last = enter;
     for (i = 0; i != ld.getNumPro(); i++) {
-        r = ld_getProRec_inl(&ld, i);
-        if (!p->insertStreamAfter(last, r->stream)) {
+        region = ld_getProRec_inl(&ld, i);
+        if (!program->insertStreamAfter(last, region->stream)) {
             reportError("failed to add after\n");
             exitAfterCleanup(-1);
         }
-        last = r->stream;
+        last = region->stream;
     }
-    if (!p->insertStreamAfter(last, main)) {
+    if (!program->insertStreamAfter(last, main)) {
         reportError("failed to add after\n");
         exitAfterCleanup(-1);
     }
     last = main;
     for (i = 0; i != ld.getNumEpi(); i++) {
-        r = ld_getEpiRec_inl(&ld, i);
-        if (!p->insertStreamAfter(last, r->stream)) {
+        region = ld_getEpiRec_inl(&ld, i);
+        if (!program->insertStreamAfter(last, region->stream)) {
             reportError("failed to add after\n");
             exitAfterCleanup(-1);
         }
-        last = r->stream;
+        last = region->stream;
     }
-    if (!p->insertStreamAfter(last, exit)) {
+    if (!program->insertStreamAfter(last, exit)) {
         reportError("failed to add after\n");
         exitAfterCleanup(-1);
     }
-    if (!enter->labels.transferNodesFrom(&s->labels)) {
+    if (!enter->labels.transferNodesFrom(&stream->labels)) {
         reportError("failed to grab names from the source stream during epipro\n");
         exitAfterCleanup(-1);
     }
     return ld.getNumPro() + ld.getNumEpi() + 3;
 }
 
-static inline void initDebris(loopDebris *ld, const char *baseName, int a, bool flag)
+static inline void initDebris(loopDebris *loopRecord, const char *baseName, int a, bool flag)
 {
     char buf[4096];
     if (!baseName) {
         reportError("loopDebris:: init - no base name set!\n");
         return;
     }
-    ld->m_entryName = 0;
-    ld->m_exitName = 0;
-    ld->sourceWorkTable = 0;
-    ld->preserveAllocationMode = flag;
-    ld->m_nPro = 0;
-    ld->m_nEpi = 0;
-    ld->requestedAllocationMode = a;
-    ld->m_baseName = baseName;
+    loopRecord->m_entryName = 0;
+    loopRecord->m_exitName = 0;
+    loopRecord->sourceWorkTable = 0;
+    loopRecord->preserveAllocationMode = flag;
+    loopRecord->m_nPro = 0;
+    loopRecord->m_nEpi = 0;
+    loopRecord->requestedAllocationMode = a;
+    loopRecord->m_baseName = baseName;
     formatIntoBuffer(buf, "%s_ENTRY_POINT", baseName);
-    ld->m_entryName = dupString(buf);
+    loopRecord->m_entryName = dupString(buf);
     formatIntoBuffer(buf, "%s_EXIT_POINT", baseName);
-    ld->m_exitName = dupString(buf);
+    loopRecord->m_exitName = dupString(buf);
 }
 
-static inline const char *recName(epiRec *e)
+static inline const char *recName(epiRec *epilogueRegion)
 {
-    VclPtrWord name = (VclPtrWord)e->stream;
+    VclPtrWord name = (VclPtrWord)epilogueRegion->stream;
     if (!name)
         name = (VclPtrWord)"!UNNAMED!";
     else
@@ -579,34 +579,34 @@ static inline const char *recName(epiRec *e)
     return (const char *)name;
 }
 
-static inline epiRec &mainRec(loopDebris *ld)
+static inline epiRec &mainRec(loopDebris *loopRecord)
 {
-    return ld->m_main;
+    return loopRecord->m_main;
 }
 
-bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
+bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseName)
 {
     if (!baseName) {
         reportError("ExplodeLoop - basename not set\n");
         exitAfterCleanup(-1);
     }
     g_streamSerial++;
-    workTable *wt = s->getTable();
+    workTable *wt = stream->getTable();
     if (!wt->getLoopSize()) {
         reportError("work table is not looping!\n");
         return false;
     }
-    int count = s->knownMinimumLoopCount;
-    if (count <= 0 || (count = s->safeMinimumLoopCount) < 0) {
+    int count = stream->knownMinimumLoopCount;
+    if (count <= 0 || (count = stream->safeMinimumLoopCount) < 0) {
         reportError("ExplodeLoop - called - but - known min/ known safe is bad (%d,%d)\n",
-                      s->knownMinimumLoopCount, s->safeMinimumLoopCount);
+                      stream->knownMinimumLoopCount, stream->safeMinimumLoopCount);
         return false;
     }
     int mlid = wt->mainLoopId;
     int clid = wt->getCondLid();
     int lsz = wt->getLoopSize();
     bool userFixed = wt->getTableRawMode() == 4;
-    initDebris(ld, baseName, (unsigned char)wt->allocationMode, userFixed);
+    initDebris(loopRecord, baseName, (unsigned char)wt->allocationMode, userFixed);
     Instr *cond = wt->getConditionalBranch();
     if (mlid < 0 || clid < 0 || clid > mlid || !cond) {
         reportError("iTable::BuildEPStreams - well - mlid or clid or no conditional ? something was wrong [clid=%d mlid=%d] %x\n",
@@ -614,18 +614,18 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         wt->dump();
         return false;
     }
-    ld->sourceWorkTable = wt;
-    epiRec *r = ld->allocEnter(0);
-    if (!r) {
+    loopRecord->sourceWorkTable = wt;
+    epiRec *region = loopRecord->allocEnter(0);
+    if (!region) {
         reportError("failed to get enter part\n");
         return false;
     }
-    if (!r->table->prepRawTable()) {
+    if (!region->table->prepRawTable()) {
         reportError("failed to prep enter table\n");
         return false;
     }
 
-    count = s->knownMinimumLoopCount;
+    count = stream->knownMinimumLoopCount;
     --count;
     int last = count + clid;
     if (last >= mlid)
@@ -633,7 +633,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     epiRec *pro = 0;
     for (int i = 0; i != mlid; i++) {
         if (!pro) {
-            pro = ld->allocPro(lsz * (last - i + 1));
+            pro = loopRecord->allocPro(lsz * (last - i + 1));
             if (!pro) {
                 reportError("failed to get pro\n");
                 exitAfterCleanup(-1);
@@ -654,58 +654,58 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
             pro->regionStartIndex = i - clid + 1;
             if (i == last)
                 pro->stream->branchType = 5;
-            Instr *c = pro->table->getConditionalBranch();
-            pro->conditionalBranch = c;
-            if (c) {
+            Instr *cloneInstruction = pro->table->getConditionalBranch();
+            pro->conditionalBranch = cloneInstruction;
+            if (cloneInstruction) {
                 pro->stream->branchType = 5;
-                c->reverseBranchSense = 1;
+                cloneInstruction->reverseBranchSense = 1;
             }
             last = i + 1;
             pro = 0;
         }
     }
 
-    epiRec *m = ld->allocMain(lsz);
-    if (!m) {
+    epiRec *mainRegion = loopRecord->allocMain(lsz);
+    if (!mainRegion) {
         reportError("failed to get main part\n");
         exitAfterCleanup(-1);
     }
-    if (!cloneAppend(wt, m->table, mlid, 0, true, true, true)) {
+    if (!cloneAppend(wt, mainRegion->table, mlid, 0, true, true, true)) {
         reportError("failed to clone/append main table to loop table\n");
         exitAfterCleanup(-1);
     }
-    if (!m->table->prepRawTable()) {
+    if (!mainRegion->table->prepRawTable()) {
         reportError("failed to prep main table!\n");
         return false;
     }
-    m->loopKey = 0;
-    m->sourceLoopId = mlid;
-    m->regionEndIndex = mlid + 1;
-    m->regionStartIndex = mlid + 1;
-    m->stream->branchType = 5;
-    m->stream->appliedOptimizationMask = s->appliedOptimizationMask;
-    m->stream->hasLoopOptimization = s->hasLoopOptimization;
-    m->stream->copySourceRecordsFrom(s);
-    m->conditionalBranch = m->table->getConditionalBranch();
-    if (!m->conditionalBranch) {
+    mainRegion->loopKey = 0;
+    mainRegion->sourceLoopId = mlid;
+    mainRegion->regionEndIndex = mlid + 1;
+    mainRegion->regionStartIndex = mlid + 1;
+    mainRegion->stream->branchType = 5;
+    mainRegion->stream->appliedOptimizationMask = stream->appliedOptimizationMask;
+    mainRegion->stream->hasLoopOptimization = stream->hasLoopOptimization;
+    mainRegion->stream->copySourceRecordsFrom(stream);
+    mainRegion->conditionalBranch = mainRegion->table->getConditionalBranch();
+    if (!mainRegion->conditionalBranch) {
         reportError("mainloop had no conditional\n");
         exitAfterCleanup(-1);
     }
 
     int n = lsz * (mlid - clid);
     if (n) {
-        for (int j = ld->m_nPro - 1; j >= 0; j--) {
-            epiRec *p = ld_getProRec_inl(ld, j);
-            if (!p) {
+        for (int j = loopRecord->m_nPro - 1; j >= 0; j--) {
+            epiRec *prologueRegion = ld_getProRec_inl(loopRecord, j);
+            if (!prologueRegion) {
                 reportError("failed to get pro %d\n", j);
                 exitAfterCleanup(-1);
             }
-            epiRec *e = ld->allocEpi(n);
-            e->loopKey = p->sourceLoopId + 1;
-            int proBase = p->regionStartIndex;
-            int lid = e->loopKey;
+            epiRec *epilogueRegion = loopRecord->allocEpi(n);
+            epilogueRegion->loopKey = prologueRegion->sourceLoopId + 1;
+            int proBase = prologueRegion->regionStartIndex;
+            int lid = epilogueRegion->loopKey;
             for (int k = clid + 1; k <= mlid; k++, lid++) {
-                if (!cloneAppend(wt, e->table, lid, lid - proBase + 1, false, true, false)) {
+                if (!cloneAppend(wt, epilogueRegion->table, lid, lid - proBase + 1, false, true, false)) {
                     reportError("failed to attach to epi sequence!\n");
                     return false;
                 }
@@ -713,96 +713,96 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         }
     }
 
-    ld->validateLoopDebrisName();
-    for (int i = 0; i != ld->m_nPro; i++) {
-        epiRec *p = ld_getProRec_inl(ld, i);
-        epiRec *next = (i == ld->m_nPro - 1) ? &mainRec(ld) : ld_getProRec_inl(ld, i + 1);
+    loopRecord->validateLoopDebrisName();
+    for (int i = 0; i != loopRecord->m_nPro; i++) {
+        epiRec *prologueRegion = ld_getProRec_inl(loopRecord, i);
+        epiRec *next = (i == loopRecord->m_nPro - 1) ? &mainRec(loopRecord) : ld_getProRec_inl(loopRecord, i + 1);
         if (!next) {
             reportError("failed to get next\n");
             exitAfterCleanup(-1);
         }
         instStream *nextStream = next->stream;
-        instStream *proStream = p->stream;
+        instStream *proStream = prologueRegion->stream;
         if (!proStream || !nextStream) {
             reportError("no istream set for prologue or next\n");
             exitAfterCleanup(-1);
         }
-        Instr *br = p->conditionalBranch;
-        if (br) {
-            epiRec *e = ld_findEpi_inl(ld, p->sourceLoopId + 1);
-            if (!e) {
+        Instr *branchInstruction = prologueRegion->conditionalBranch;
+        if (branchInstruction) {
+            epiRec *epilogueRegion = ld_findEpi_inl(loopRecord, prologueRegion->sourceLoopId + 1);
+            if (!epilogueRegion) {
                 reportError("failed to find epilogue\n");
                 exitAfterCleanup(-1);
             }
-            if (!br->changeBranchImmediate(recName(e))) {
+            if (!branchInstruction->changeBranchImmediate(recName(epilogueRegion))) {
                 reportError("failed to change immediate field of main branch\n");
                 return false;
             }
         }
     }
 
-    epiRec *mr = &ld->m_main;
-    Instr *mc = mr->conditionalBranch;
-    if (!mc) {
+    epiRec *mr = &loopRecord->m_main;
+    Instr *moveCloneInstruction = mr->conditionalBranch;
+    if (!moveCloneInstruction) {
         reportError("main had no conditional\n");
         exitAfterCleanup(-1);
     }
-    if (!mc->changeBranchImmediate(recName(mr))) {
+    if (!moveCloneInstruction->changeBranchImmediate(recName(mr))) {
         reportError("failed to change conditional target\n");
         exitAfterCleanup(-1);
     }
 
-    int nEpi = ld->m_nEpi;
+    int nEpi = loopRecord->m_nEpi;
     for (int i = 0; i != nEpi; i++) {
-        epiRec *e = ld_getEpiRec_inl(ld, i);
-        if (!e) {
+        epiRec *epilogueRegion = ld_getEpiRec_inl(loopRecord, i);
+        if (!epilogueRegion) {
             reportError("failed to get epi\n");
             exitAfterCleanup(-1);
         }
-        instStream *ist = e->stream;
+        instStream *ist = epilogueRegion->stream;
         if (!ist) {
             reportError("failed to get ist\n");
             exitAfterCleanup(-1);
         }
-        workTable *t = e->table;
-        if (!t) {
+        workTable *table = epilogueRegion->table;
+        if (!table) {
             reportError("no itable for e\n");
             exitAfterCleanup(-1);
         }
         if (i != nEpi - 1) {
             ist->branchType = 1;
-            Instr *b = new Instr(findOpcodeInfoByMnemonic("b", false));
-            if (!b) {
+            Instr *secondInstruction = new Instr(findOpcodeInfoByMnemonic("b", false));
+            if (!secondInstruction) {
                 reportError("failed to get branch\n");
                 return false;
             }
-            if (!b->changeBranchImmediate("UNRESOLVED")) {
+            if (!secondInstruction->changeBranchImmediate("UNRESOLVED")) {
                 reportError("failed to change immediate\n");
                 return false;
             }
-            b->position.loopIteration = 0;
-            b->parsedLoopId = -1;
-            b->setOwner((cls_unk30 *)t);
-            e->conditionalBranch = b;
-            wtRow *row = t->getRowByIndex(t->getRangeEnd() - 2);
+            secondInstruction->position.loopIteration = 0;
+            secondInstruction->parsedLoopId = -1;
+            secondInstruction->setOwner((cls_unk30 *)table);
+            epilogueRegion->conditionalBranch = secondInstruction;
+            wtRow *row = table->getRowByIndex(table->getRangeEnd() - 2);
             if (!row) {
                 reportError("failed to get ie for branch insert\n");
                 return false;
             }
-            row->entries[1].instruction = b;
+            row->entries[1].instruction = secondInstruction;
         }
-        if (!e->table->prepRawTable()) {
+        if (!epilogueRegion->table->prepRawTable()) {
             reportError("failed to prep epi table!\n");
             return false;
         }
     }
 
-    epiRec *x = ld->allocExit(0);
-    if (!x) {
+    epiRec *otherRegion = loopRecord->allocExit(0);
+    if (!otherRegion) {
         reportError("failed to get exit part\n");
         return false;
     }
-    if (!x->table->prepRawTable()) {
+    if (!otherRegion->table->prepRawTable()) {
         reportError("failed to prep exit table\n");
         return false;
     }

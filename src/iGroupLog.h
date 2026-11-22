@@ -16,7 +16,7 @@ public:
     static int init();
     static int reset();
     static int add(Instr *ins);
-    static int logTable(workTable *wt);
+    static int logTable(workTable *sourceTable);
 };
 
 #endif

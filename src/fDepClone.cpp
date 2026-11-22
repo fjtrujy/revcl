@@ -30,11 +30,11 @@ static inline bool fdep_LinkInline(Instr *pre, Instr *post)
 }
 
 
-bool calculateEarliestDependencyRow(Instr *i, int *row)
+bool calculateEarliestDependencyRow(Instr *instruction, int *row)
 {
     *row = 0;
-    for (ol_s *o = i->predecessorDependencies.head; o; o = o->next) {
-        Instr *in = o->instruction;
+    for (ol_s *operandLocation = instruction->predecessorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
+        Instr *in = operandLocation->instruction;
         if (!in) {
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
@@ -52,11 +52,11 @@ bool calculateEarliestDependencyRow(Instr *i, int *row)
 
 
 
-bool calculateLatestDependencyRow(Instr *i, int *row)
+bool calculateLatestDependencyRow(Instr *instruction, int *row)
 {
     *row = 30000;
-    for (ol_s *o = i->successorDependencies.head; o; o = o->next) {
-        Instr *in = o->instruction;
+    for (ol_s *operandLocation = instruction->successorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
+        Instr *in = operandLocation->instruction;
         if (!in) {
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
@@ -77,29 +77,29 @@ bool instStream::buildForwardDependencies(bool a, bool b)
     return BuildfDepList(workTablePtr, a, b);
 }
 
-bool BuildfDepList(workTable *wt, bool force, bool)
+bool BuildfDepList(workTable *table, bool force, bool)
 {
-    Instr *in;
+    Instr *instruction;
     Instr *phaseHead;
-    in = wt->linearInstructions.head;
-    if (!in)
+    instruction = table->linearInstructions.head;
+    if (!instruction)
         goto finalize;
-    for (; in; in = in->linearLink.nextInstruction) {
-        in->hasExtraPredecessors = 0;
-        in->specialRegisterReadMask = 0;
-        in->specialRegisterWriteMask = 0;
-        if (!in->predecessorDependencies.clear()) {
+    for (; instruction; instruction = instruction->linearLink.nextInstruction) {
+        instruction->hasExtraPredecessors = 0;
+        instruction->specialRegisterReadMask = 0;
+        instruction->specialRegisterWriteMask = 0;
+        if (!instruction->predecessorDependencies.clear()) {
             reportError("failed to dispose of existing prefdeplist\n");
             return false;
         }
-        if (!in->successorDependencies.clear()) {
+        if (!instruction->successorDependencies.clear()) {
             reportError("failed to dispose of existing postfdeplist\n");
             return false;
         }
     }
     {
-        phaseHead = wt->linearInstructions.head;
-        in = phaseHead;
+        phaseHead = table->linearInstructions.head;
+        instruction = phaseHead;
         if (!phaseHead)
             goto finalize_ready;
         int haveInstruction = phaseHead != 0;
@@ -107,133 +107,133 @@ bool BuildfDepList(workTable *wt, bool force, bool)
             bool b40 = false;
             bool b10 = false;
             int ramBits = 0;
-            Operand *ea = 0;
+            Operand *addressOperand = 0;
             bool b20 = false;
-            if (in->opcodeFlags & 0x08) {
+            if (instruction->opcodeFlags & 0x08) {
                 reportError("found an instruction barrier fdep - this should be done with --barrier fixup!\n");
-                in->leDump();
+                instruction->leDump();
                 return false;
             }
-            if (in->opcodeFlags & 0x10)
+            if (instruction->opcodeFlags & 0x10)
                 b10 = true;
-            if (in->opcodeFlags & 0x20)
+            if (instruction->opcodeFlags & 0x20)
                 b20 = true;
-            if (in->opcodeFlags & 0x40)
+            if (instruction->opcodeFlags & 0x40)
                 b40 = true;
-            if (in->ramAccessType == 2) {
-                ea = getEA(in);
-                if (!ea) {
+            if (instruction->ramAccessType == 2) {
+                addressOperand = getEA(instruction);
+                if (!addressOperand) {
                     reportError("failed to get ea op for store\n");
                     return false;
                 }
                 b10 = true;
                 b20 = true;
-                ramBits = in->getRamBits();
+                ramBits = instruction->getRamBits();
                 if (!ramBits)
                     reportWarning("found store instruction with no ram bits\n");
             }
-            if (in->ramAccessType == 1) {
-                ea = getEA(in);
-                if (!ea) {
+            if (instruction->ramAccessType == 1) {
+                addressOperand = getEA(instruction);
+                if (!addressOperand) {
                     reportError("failed to get ea op for load\n");
                     return false;
                 }
                 b20 = true;
-                ramBits = in->getRamBits();
+                ramBits = instruction->getRamBits();
                 if (!ramBits)
                     reportWarning("found load instruction with no ram bits\n");
             }
             if (b20 || b10 || b40) {
-                for (Instr *o = in->linearLink.previousInstruction; o; o = o->linearLink.previousInstruction) {
+                for (Instr *otherInstruction = instruction->linearLink.previousInstruction; otherInstruction; otherInstruction = otherInstruction->linearLink.previousInstruction) {
                     bool dep = false;
-                    int type = (unsigned char)o->ramAccessType;
+                    int type = (unsigned char)otherInstruction->ramAccessType;
                     if (((b20 && type == 2) || (b10 && type == 1))
-                        && (!ea || ((o->getRamBits() & ramBits)
-                                    && (force || tagsMatch(o, in) || sameEA(in, o)))))
+                        && (!addressOperand || ((otherInstruction->getRamBits() & ramBits)
+                                    && (force || tagsMatch(otherInstruction, instruction) || sameEA(instruction, otherInstruction)))))
                         dep = true;
-                    else if (b40 && (o->opcodeFlags & 0x40)) {
+                    else if (b40 && (otherInstruction->opcodeFlags & 0x40)) {
                         b40 = false;
                         dep = true;
                     } else {
-                        if (in->ramAccessType == 2 && (o->opcodeFlags & 0x20))
+                        if (instruction->ramAccessType == 2 && (otherInstruction->opcodeFlags & 0x20))
                             dep = true;
-                        if (in->ramAccessType == 1 && (o->opcodeFlags & 0x10))
+                        if (instruction->ramAccessType == 1 && (otherInstruction->opcodeFlags & 0x10))
                             dep = true;
                     }
                     if (dep) {
-                        if (!fdep_LinkInline(o, in)) {
+                        if (!fdep_LinkInline(otherInstruction, instruction)) {
                             reportError("failed to add ol for fdeps \n");
                             exitAfterCleanup(-1);
                         }
                     }
                 }
-            } else if (in->branchLabelTags) {
+            } else if (instruction->branchLabelTags) {
                 reportError("tag string, but no match criteria set\n");
                 return false;
             }
-            for (int k = 0; k != in->operandCount; k++) {
-                Operand *op = &in->operands[k];
-                if (op) {
-                    RegPoolEntry *r = registerOperand(op, 2);
-                    if (r) {
-                        if (r->registerIndex == 48)
-                            in->specialRegisterWriteMask = op->componentMask;
-                        if (r->registerIndex == 48 || r->registerIndex == 49) {
-                            for (int p = 0; p != r->partCount; p++)
-                                if ((op->componentMask >> p) & 1)
-                                    for (ol_s *l = op->parts[p].operandLocations.head; l; l = l->next) {
-                                        Instr *x = l->instruction;
-                                        if (x)
-                                            addAdditionalClonePredecessors(in, x);
+            for (int k = 0; k != instruction->operandCount; k++) {
+                Operand *operand = &instruction->operands[k];
+                if (operand) {
+                    RegPoolEntry *registerEntry = registerOperand(operand, 2);
+                    if (registerEntry) {
+                        if (registerEntry->registerIndex == 48)
+                            instruction->specialRegisterWriteMask = operand->componentMask;
+                        if (registerEntry->registerIndex == 48 || registerEntry->registerIndex == 49) {
+                            for (int p = 0; p != registerEntry->partCount; p++)
+                                if ((operand->componentMask >> p) & 1)
+                                    for (ol_s *operandLocation = operand->parts[p].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                                        Instr *linkedInstruction = operandLocation->instruction;
+                                        if (linkedInstruction)
+                                            addAdditionalClonePredecessors(instruction, linkedInstruction);
                                     }
                         }
                     }
-                    r = registerOperand(op, 1);
-                    if (r && r->registerIndex == 48)
-                        in->specialRegisterReadMask = op->componentMask;
+                    registerEntry = registerOperand(operand, 1);
+                    if (registerEntry && registerEntry->registerIndex == 48)
+                        instruction->specialRegisterReadMask = operand->componentMask;
                 }
             }
-            in = in->linearLink.nextInstruction;
-            haveInstruction = in != 0;
+            instruction = instruction->linearLink.nextInstruction;
+            haveInstruction = instruction != 0;
         }
     }
 finalize:
-    phaseHead = wt->linearInstructions.head;
+    phaseHead = table->linearInstructions.head;
 finalize_ready:
-    in = phaseHead;
+    instruction = phaseHead;
     Instr *last[4] = { 0, 0, 0, 0 };
     // After entry, phaseHead is only a non-null continuation flag.
-    for (; phaseHead; phaseHead = (Instr *)((in = in->linearLink.nextInstruction) != 0)) {
+    for (; phaseHead; phaseHead = (Instr *)((instruction = instruction->linearLink.nextInstruction) != 0)) {
         int p;
         for (p = 0; p != 4; p++)
-            if (((in->specialRegisterWriteMask >> p) & 1) && !((in->specialRegisterReadMask >> p) & 1))
-                last[p] = in;
+            if (((instruction->specialRegisterWriteMask >> p) & 1) && !((instruction->specialRegisterReadMask >> p) & 1))
+                last[p] = instruction;
         for (p = 0; p != 4; p++) {
-            if ((in->specialRegisterReadMask >> p) & 1) {
-                Instr *w = last[p];
-                if (w)
-                    for (ol_s *l = in->predecessorDependencies.head; l; l = l->next) {
-                        Instr *pre = l->instruction;
-                        if (pre->linearOrderIndex < w->linearOrderIndex) {
-                            w->hasExtraPredecessors = 1;
-                            w->predecessorDependencies.addInstructionLocation(pre);
+            if ((instruction->specialRegisterReadMask >> p) & 1) {
+                Instr *writerInstruction = last[p];
+                if (writerInstruction)
+                    for (ol_s *operandLocation = instruction->predecessorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
+                        Instr *pre = operandLocation->instruction;
+                        if (pre->linearOrderIndex < writerInstruction->linearOrderIndex) {
+                            writerInstruction->hasExtraPredecessors = 1;
+                            writerInstruction->predecessorDependencies.addInstructionLocation(pre);
                         }
                     }
             }
         }
-        in->dumpOperandDiagnostics(false);
-        in->predecessorDependencies.validateOperandLocations();
-        in->successorDependencies.validateOperandLocations();
+        instruction->dumpOperandDiagnostics(false);
+        instruction->predecessorDependencies.validateOperandLocations();
+        instruction->successorDependencies.validateOperandLocations();
     }
     return true;
 }
 
-bool tagsMatch(Instr *a, Instr *b)
+bool tagsMatch(Instr *a, Instr *secondInstruction)
 {
     char *p = a->branchLabelTags;
     if (!p)
         return false;
-    char *q0 = b->branchLabelTags;
+    char *q0 = secondInstruction->branchLabelTags;
     if (!q0)
         return false;
     while (*p) {
@@ -259,23 +259,23 @@ bool tagsMatch(Instr *a, Instr *b)
     return false;
 }
 
-bool fixupCloneFdeps(workTable *wt)
+bool fixupCloneFdeps(workTable *table)
 {
     int n = 0;
-    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-        Instr *orig = in->cloneImage;
+    for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+        Instr *orig = instruction->cloneImage;
         n += 8;
-        in->linearOrderIndex = n;
+        instruction->linearOrderIndex = n;
         if (!orig) {
             reportError("no original set\n");
             exitAfterCleanup(-1);
         }
-        in->hasExtraPredecessors = orig->hasExtraPredecessors;
-        if (!copyCloneFdeps(in, orig->predecessorDependencies.head, &in->predecessorDependencies)) {
+        instruction->hasExtraPredecessors = orig->hasExtraPredecessors;
+        if (!copyCloneFdeps(instruction, orig->predecessorDependencies.head, &instruction->predecessorDependencies)) {
             reportError("failed to fixup the pre fdep list\n");
             return false;
         }
-        if (!copyCloneFdeps(in, orig->successorDependencies.head, &in->successorDependencies)) {
+        if (!copyCloneFdeps(instruction, orig->successorDependencies.head, &instruction->successorDependencies)) {
             reportError("failed to fix the post fdeps\n");
             return false;
         }
@@ -300,15 +300,15 @@ bool fdep_Link(Instr *pre, Instr *post)
     return true;
 }
 
-bool copyCloneFdeps(Instr *, ol_s *o, olList *dst)
+bool copyCloneFdeps(Instr *, ol_s *operandLocation, olList *dst)
 {
-    for (; o; o = o->next) {
-        Instr *in = o->instruction;
-        if (!in) {
+    for (; operandLocation; operandLocation = operandLocation->next) {
+        Instr *instruction = operandLocation->instruction;
+        if (!instruction) {
             reportError("qInstruction.. fDepList in_f not set in ol\n");
             return false;
         }
-        Instr *clone = in->cloneImage;
+        Instr *clone = instruction->cloneImage;
         if (!clone) {
             reportError("qInstruction - fdep list - clone image not set during rebuild\n");
             return false;
@@ -321,25 +321,25 @@ bool copyCloneFdeps(Instr *, ol_s *o, olList *dst)
     return true;
 }
 
-bool addAdditionalClonePredecessors(Instr *in, Instr *other)
+bool addAdditionalClonePredecessors(Instr *instruction, Instr *other)
 {
-    in->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
     other->dumpOperandDiagnostics(false);
     for (int k = 0; k != other->operandCount; k++) {
-        Operand *op = &other->operands[k];
-        RegPoolEntry *r = registerOperand(op, 1);
-        if (r) {
-            for (int p = 0; p != r->partCount; p++)
-                if ((op->componentMask >> p) & 1)
-                    for (ol_s *l = op->parts[p].operandLocations.head; l; l = l->next) {
-                        Instr *x = l->instruction;
-                        if (x && x != in && x->linearOrderIndex < in->linearOrderIndex) {
-                            in->hasExtraPredecessors = 1;
-                            if (!in->predecessorDependencies.addInstructionLocation(x)) {
+        Operand *operand = &other->operands[k];
+        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        if (registerEntry) {
+            for (int p = 0; p != registerEntry->partCount; p++)
+                if ((operand->componentMask >> p) & 1)
+                    for (ol_s *operandLocation = operand->parts[p].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                        Instr *linkedInstruction = operandLocation->instruction;
+                        if (linkedInstruction && linkedInstruction != instruction && linkedInstruction->linearOrderIndex < instruction->linearOrderIndex) {
+                            instruction->hasExtraPredecessors = 1;
+                            if (!instruction->predecessorDependencies.addInstructionLocation(linkedInstruction)) {
                                 reportError("failed to add\n");
                                 exitAfterCleanup(-1);
                             }
-                            x->dumpOperandDiagnostics(false);
+                            linkedInstruction->dumpOperandDiagnostics(false);
                         }
                     }
         }

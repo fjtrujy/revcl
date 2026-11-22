@@ -83,21 +83,21 @@ Instr::Instr(iInfo *info)
     syntheticKind = info->syntheticKind();
     for (int i = 0; info->operandDescriptors[i].operandKind; i++) {
         operandCount++;
-        Operand *op = &operands[i];
-        iOpDesc *d = &info->operandDescriptors[i];
-        op->operandKind = d->operandKind;
-        op->operandIndex = i;
-        op->externalBlockModeFlag = d->externalBlockModeFlag != 0;
-        op->direction = d->direction;
-        op->isImplicit = d->isImplicit != 0;
-        op->immediateDataType = d->immediateDataType;
-        op->pairedOperandIndexPlusOne = d->patchedOutputIndexPlusOne;
-        if (op->pairedOperandIndexPlusOne)
-            operands[op->pairedOperandIndexPlusOne - 1].pairedOperandIndexPlusOne = i + 1;
-        if (d->direction == 2)
-            op->outputLatency = d->outputLatency;
+        Operand *operand = &operands[i];
+        iOpDesc *descriptor = &info->operandDescriptors[i];
+        operand->operandKind = descriptor->operandKind;
+        operand->operandIndex = i;
+        operand->externalBlockModeFlag = descriptor->externalBlockModeFlag != 0;
+        operand->direction = descriptor->direction;
+        operand->isImplicit = descriptor->isImplicit != 0;
+        operand->immediateDataType = descriptor->immediateDataType;
+        operand->pairedOperandIndexPlusOne = descriptor->patchedOutputIndexPlusOne;
+        if (operand->pairedOperandIndexPlusOne)
+            operands[operand->pairedOperandIndexPlusOne - 1].pairedOperandIndexPlusOne = i + 1;
+        if (descriptor->direction == 2)
+            operand->outputLatency = descriptor->outputLatency;
         else
-            op->outputLatency = 0;
+            operand->outputLatency = 0;
     }
 }
 
@@ -145,12 +145,12 @@ void Instr::dumpOperandDiagnostics(int flags)
         }
         if (flags & 1) {
             for (int j = 0; j != operandCount; j++) {
-                Operand *op = &operands[j];
-                RegPoolEntry *r = op->assignedRegister;
-                if (r && r->isVirtual)
-                    for (int k = 0; k != r->partCount; k++)
-                        if ((op->componentMask >> k) & 1)
-                            op->parts[k].operandLocations.validateOperandLocations();
+                Operand *operand = &operands[j];
+                RegPoolEntry *registerEntry = operand->assignedRegister;
+                if (registerEntry && registerEntry->isVirtual)
+                    for (int k = 0; k != registerEntry->partCount; k++)
+                        if ((operand->componentMask >> k) & 1)
+                            operand->parts[k].operandLocations.validateOperandLocations();
             }
         }
     }
@@ -190,9 +190,9 @@ bool Instr::clearTransientFlags()
     candidateAttemptCount = 0;
     candidateCostOffset = 0;
     for (int i = 0; i != operandCount; i++) {
-        Operand *op = &operands[i];
+        Operand *operand = &operands[i];
         for (int k = 0; k != 4; k++)
-            op->parts[k].conflictingOutputLockCount = 0;
+            operand->parts[k].conflictingOutputLockCount = 0;
     }
     return true;
 }
@@ -236,39 +236,39 @@ void Instr::leDump(int opnd, int mask)
     errorOccurred = saved;
 }
 
-bool hasDirectOperandDependency(Instr *a, Instr *b)
+bool hasDirectOperandDependency(Instr *a, Instr *secondInstruction)
 {
-    if (!a || !b)
+    if (!a || !secondInstruction)
         return false;
-    for (int i = 0; i != b->operandCount; i++) {
-        Operand *op = &b->operands[i];
-        RegPoolEntry *r = registerOperand(op, 1);
-        if (r) {
-            int n = r->partCount;
+    for (int i = 0; i != secondInstruction->operandCount; i++) {
+        Operand *operand = &secondInstruction->operands[i];
+        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        if (registerEntry) {
+            int n = registerEntry->partCount;
             for (int k = 0; k != n; k++)
-                if (((op->componentMask & ~op->externalPartMask) >> k) & 1)
-                    for (ol_s *p = op->parts[k].operandLocations.head; p; p = p->next)
-                        if (p->instruction == a)
+                if (((operand->componentMask & ~operand->externalPartMask) >> k) & 1)
+                    for (ol_s *currentLocation = operand->parts[k].operandLocations.head; currentLocation; currentLocation = currentLocation->next)
+                        if (currentLocation->instruction == a)
                             return true;
         }
     }
     return false;
 }
 
-bool writesInputRegisterOf(Instr *a, Instr *b)
+bool writesInputRegisterOf(Instr *a, Instr *secondInstruction)
 {
-    if (!a || !b)
+    if (!a || !secondInstruction)
         return false;
-    for (int i = 0; i != b->operandCount; i++) {
-        Operand *op = &b->operands[i];
-        RegPoolEntry *r = registerOperand(op, 1);
-        if (r) {
-            int want = op->componentMask;
+    for (int i = 0; i != secondInstruction->operandCount; i++) {
+        Operand *operand = &secondInstruction->operands[i];
+        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        if (registerEntry) {
+            int want = operand->componentMask;
             int mask = 0;
-            Instr *in = a;
-            for (int j = 0; j != in->operandCount; j++)
-                if (registerOperand(&in->operands[j], 2) == r)
-                    mask |= in->operands[j].componentMask;
+            Instr *instruction = a;
+            for (int j = 0; j != instruction->operandCount; j++)
+                if (registerOperand(&instruction->operands[j], 2) == registerEntry)
+                    mask |= instruction->operands[j].componentMask;
             if (mask & want)
                 return true;
         }
@@ -285,87 +285,87 @@ Instr *Instr::clone()
     iInfo *info = opcodeInfo;
     if (!info)
         return 0;
-    Instr *c = new Instr(info);
-    if (!c) {
+    Instr *cloneInstruction = new Instr(info);
+    if (!cloneInstruction) {
         reportError("failed to get a new instruction during clone!\n");
         exitAfterCleanup(-1);
     }
-    if (!c->resetOptimizationState()) {
+    if (!cloneInstruction->resetOptimizationState()) {
         reportError("failed to opt reset cloned instruction\n");
         exitAfterCleanup(-1);
     }
-    c->destinationMask = destinationMask;
-    c->rawOnly = rawOnly;
-    c->moveRecordWord = 0;
-    c->instructionModifierBits = instructionModifierBits;
-    c->abstractMoveOpcode = abstractMoveOpcode;
-    c->concreteMoveOpcode = concreteMoveOpcode;
-    c->originalPipelineMask = originalPipelineMask;
-    c->schedulingStatistics.copyCountersFrom(&schedulingStatistics);
-    c->linearOrderIndex = linearOrderIndex;
-    c->instructionSerial = instructionSerial;
-    c->candidateAttemptLimit = candidateAttemptLimit;
-    c->parsedLoopId = parsedLoopId;
-    c->tildePrefix = tildePrefix;
-    c->reverseBranchSense = reverseBranchSense;
-    c->sourceTag = sourceTag;
-    c->sourceTokenStartIndex = sourceTokenStartIndex;
-    c->sourceTokenEndIndex = sourceTokenEndIndex;
-    c->addressAliasMode = addressAliasMode;
-    c->addressAliasDirection = addressAliasDirection;
-    c->addressAliasOperandIndex = addressAliasOperandIndex;
+    cloneInstruction->destinationMask = destinationMask;
+    cloneInstruction->rawOnly = rawOnly;
+    cloneInstruction->moveRecordWord = 0;
+    cloneInstruction->instructionModifierBits = instructionModifierBits;
+    cloneInstruction->abstractMoveOpcode = abstractMoveOpcode;
+    cloneInstruction->concreteMoveOpcode = concreteMoveOpcode;
+    cloneInstruction->originalPipelineMask = originalPipelineMask;
+    cloneInstruction->schedulingStatistics.copyCountersFrom(&schedulingStatistics);
+    cloneInstruction->linearOrderIndex = linearOrderIndex;
+    cloneInstruction->instructionSerial = instructionSerial;
+    cloneInstruction->candidateAttemptLimit = candidateAttemptLimit;
+    cloneInstruction->parsedLoopId = parsedLoopId;
+    cloneInstruction->tildePrefix = tildePrefix;
+    cloneInstruction->reverseBranchSense = reverseBranchSense;
+    cloneInstruction->sourceTag = sourceTag;
+    cloneInstruction->sourceTokenStartIndex = sourceTokenStartIndex;
+    cloneInstruction->sourceTokenEndIndex = sourceTokenEndIndex;
+    cloneInstruction->addressAliasMode = addressAliasMode;
+    cloneInstruction->addressAliasDirection = addressAliasDirection;
+    cloneInstruction->addressAliasOperandIndex = addressAliasOperandIndex;
     if (addressImmediateValue.isValid())
-        c->addressImmediateValue.set(&addressImmediateValue);
-    c->expectedAliasLoopId = expectedAliasLoopId;
+        cloneInstruction->addressImmediateValue.set(&addressImmediateValue);
+    cloneInstruction->expectedAliasLoopId = expectedAliasLoopId;
     if (cloneImage) {
         reportError("during instruction clone - tmpClone was already set!\n");
-        delete c;
+        delete cloneInstruction;
         return 0;
     }
-    cloneImage = c;
-    c->cloneImage = this;
+    cloneImage = cloneInstruction;
+    cloneInstruction->cloneImage = this;
     if (branchLabelTags)
-        c->branchLabelTags = dupString(branchLabelTags);
-    c->operandCount = operandCount;
-    Operand *s;
-    for (int i = 0; (s = getOp(i)) != 0; i++) {
-        Operand *d = c->getOp(i);
-        if (d == 0) {
+        cloneInstruction->branchLabelTags = dupString(branchLabelTags);
+    cloneInstruction->operandCount = operandCount;
+    Operand *sourceOperand;
+    for (int i = 0; (sourceOperand = getOp(i)) != 0; i++) {
+        Operand *destinationOperand = cloneInstruction->getOp(i);
+        if (destinationOperand == 0) {
             reportError("fatal error, couldn't get operand during clone\n");
             exitAfterCleanup(-1);
         }
-        if (s->operandIndex != i) {
+        if (sourceOperand->operandIndex != i) {
             reportError("bad index in operand for clone\n");
             exitAfterCleanup(-1);
         }
-        d->operandIndex = s->operandIndex;
-        d->operandKind = s->operandKind;
-        d->direction = s->direction;
-        d->outputLatency = s->outputLatency;
-        d->immediateDataType = s->immediateDataType;
-        d->externalBlockModeFlag = s->externalBlockModeFlag;
-        d->assignedRegister = s->assignedRegister;
-        d->componentMask = s->componentMask;
-        d->addressComponentMask = s->addressComponentMask;
-        d->pairedOperandIndexPlusOne = s->pairedOperandIndexPlusOne;
-        d->isImplicit = s->isImplicit;
-        d->originalRegister = s->originalRegister;
-        d->forcedBaseRegister = s->forcedBaseRegister;
-        if (s->immediateValue.isValid()) {
-            if (!d->immediateValue.set(&s->immediateValue)) {
+        destinationOperand->operandIndex = sourceOperand->operandIndex;
+        destinationOperand->operandKind = sourceOperand->operandKind;
+        destinationOperand->direction = sourceOperand->direction;
+        destinationOperand->outputLatency = sourceOperand->outputLatency;
+        destinationOperand->immediateDataType = sourceOperand->immediateDataType;
+        destinationOperand->externalBlockModeFlag = sourceOperand->externalBlockModeFlag;
+        destinationOperand->assignedRegister = sourceOperand->assignedRegister;
+        destinationOperand->componentMask = sourceOperand->componentMask;
+        destinationOperand->addressComponentMask = sourceOperand->addressComponentMask;
+        destinationOperand->pairedOperandIndexPlusOne = sourceOperand->pairedOperandIndexPlusOne;
+        destinationOperand->isImplicit = sourceOperand->isImplicit;
+        destinationOperand->originalRegister = sourceOperand->originalRegister;
+        destinationOperand->forcedBaseRegister = sourceOperand->forcedBaseRegister;
+        if (sourceOperand->immediateValue.isValid()) {
+            if (!destinationOperand->immediateValue.set(&sourceOperand->immediateValue)) {
                 reportError("failed to clone immediate\n");
                 exitAfterCleanup(-1);
             }
         }
-        d->sourceTokenStartIndex = s->sourceTokenStartIndex;
-        d->sourceTokenEndIndex = s->sourceTokenEndIndex;
-        d->additionalLatency = s->additionalLatency;
-        d->externalPartMask = s->externalPartMask;
-        d->operandStatus = 0;
-        d->externalComponentMask = s->externalComponentMask;
-        d->reductionHazardMask = s->reductionHazardMask;
+        destinationOperand->sourceTokenStartIndex = sourceOperand->sourceTokenStartIndex;
+        destinationOperand->sourceTokenEndIndex = sourceOperand->sourceTokenEndIndex;
+        destinationOperand->additionalLatency = sourceOperand->additionalLatency;
+        destinationOperand->externalPartMask = sourceOperand->externalPartMask;
+        destinationOperand->operandStatus = 0;
+        destinationOperand->externalComponentMask = sourceOperand->externalComponentMask;
+        destinationOperand->reductionHazardMask = sourceOperand->reductionHazardMask;
     }
-    return c;
+    return cloneInstruction;
 }
 
 
@@ -391,14 +391,14 @@ int Instr::getRamBits()
             memset(&r, 0, sizeof(r));
             return r;
         case 3: {
-            Operand *op = getOp(1);
-            if (!op) {
+            Operand *operand = getOp(1);
+            if (!operand) {
                 reportError("failed to get op1 for mod_1 ram test\n");
                 exitAfterCleanup(-1);
             }
-            if (!op->addressComponentMask)
+            if (!operand->addressComponentMask)
                 reportWarning("mb was 0 failed to get xmod bits for mod 1 inst\n");
-            r = op->addressComponentMask;
+            r = operand->addressComponentMask;
             break;
         }
         case 0:
@@ -433,16 +433,16 @@ int Instr::collectOutputRegisterMask(RegPoolEntry *reg, bool *paired)
 {
     int mask = 0;
     *paired = false;
-    Operand *op;
-    for (int i = 0; (op = getOp(i)) != 0; i++) {
-        RegPoolEntry *r;
-        if (op->isOutput())
-            r = op->assignedRegister;
+    Operand *operand;
+    for (int i = 0; (operand = getOp(i)) != 0; i++) {
+        RegPoolEntry *registerEntry;
+        if (operand->isOutput())
+            registerEntry = operand->assignedRegister;
         else
-            r = 0;
-        if (reg == r) {
-            *paired = *paired || op->pairedOperandIndexPlusOne;
-            mask |= op->componentMask;
+            registerEntry = 0;
+        if (reg == registerEntry) {
+            *paired = *paired || operand->pairedOperandIndexPlusOne;
+            mask |= operand->componentMask;
         }
     }
     return mask;
@@ -452,16 +452,16 @@ int Instr::collectInputRegisterMask(RegPoolEntry *reg, bool *paired)
 {
     int mask = 0;
     *paired = false;
-    Operand *op;
-    for (int i = 0; (op = getOp(i)) != 0; i++) {
-        RegPoolEntry *r;
-        if (op->isInput())
-            r = op->assignedRegister;
+    Operand *operand;
+    for (int i = 0; (operand = getOp(i)) != 0; i++) {
+        RegPoolEntry *registerEntry;
+        if (operand->isInput())
+            registerEntry = operand->assignedRegister;
         else
-            r = 0;
-        if (reg == r) {
-            *paired = *paired || op->pairedOperandIndexPlusOne;
-            mask |= op->componentMask;
+            registerEntry = 0;
+        if (reg == registerEntry) {
+            *paired = *paired || operand->pairedOperandIndexPlusOne;
+            mask |= operand->componentMask;
         }
     }
     return mask;
@@ -470,12 +470,12 @@ int Instr::collectInputRegisterMask(RegPoolEntry *reg, bool *paired)
 
 bool Instr::getImmediateOperand(int n, int *out)
 {
-    Operand *op = getOp(n);
-    if (!op) {
+    Operand *operand = getOp(n);
+    if (!operand) {
         reportError("failed to get operand %d\n", n);
         return false;
     }
-    return op->immediateValue.getInt(out);
+    return operand->immediateValue.getInt(out);
 }
 
 
@@ -499,12 +499,12 @@ bool Instr::changeBranchImmediate(const char *s)
         reportError("getBranchTargetImmediate - branch target operand not set\n");
         exitAfterCleanup(-1);
     }
-    Operand *op = &operands[n - 1];
-    if (op->operandKind != 0x1b) {
+    Operand *operand = &operands[n - 1];
+    if (operand->operandKind != 0x1b) {
         reportError("changeBranchImmediate::target operand isn't immediate!\n");
         exitAfterCleanup(-1);
     }
-    return op->immediateValue.setString(s);
+    return operand->immediateValue.setString(s);
 }
 
 bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
@@ -533,9 +533,9 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
     return false;
 }
 
-static inline void dumpLinkOperand(Operand *op)
+static inline void dumpLinkOperand(Operand *operand)
 {
-    op->diagnoseOperand(0);
+    operand->diagnoseOperand(0);
 }
 
 bool link_oParts(ol_s *o, ol_s *i, int x, int y)
@@ -689,9 +689,9 @@ int Instr::outputMaskForRegister(RegPoolEntry *reg, int mask)
     int result = 0;
     if (reg) {
         for (int i = 0; i != operandCount; i++) {
-            Operand *op = &operands[i];
-            if (op->outRegZ() == reg)
-                result |= op->componentMask;
+            Operand *operand = &operands[i];
+            if (operand->outRegZ() == reg)
+                result |= operand->componentMask;
         }
     }
     return result & mask;
@@ -702,9 +702,9 @@ int Instr::inputMaskForRegister(RegPoolEntry *reg, int mask)
     int result = 0;
     if (reg) {
         for (int i = 0; i != operandCount; i++) {
-            Operand *op = &operands[i];
-            if (op->inRegOp2() == reg)
-                result |= op->componentMask;
+            Operand *operand = &operands[i];
+            if (operand->inRegOp2() == reg)
+                result |= operand->componentMask;
         }
     }
     return result & mask;
@@ -740,55 +740,55 @@ bool Instr::hasRawTableOrImmediateToken()
 
 char *Instr::getBranchTargetImmediate()
 {
-    iInfo *ii = opcodeInfo;
+    iInfo *branchOpcodeInfo = opcodeInfo;
     if (!branchFlags)
         return 0;
-    if (!ii) {
+    if (!branchOpcodeInfo) {
         reportError("branch type set - but no ii\n");
         exitAfterCleanup(-1);
     }
-    int n = ii->branchTargetOperandSelector;
+    int n = branchOpcodeInfo->branchTargetOperandSelector;
     if (!n) {
         reportError("getBranchTargetImmediate - branch target operand not set\n");
         exitAfterCleanup(-1);
     }
-    Operand *op = &operands[n - 1];
-    if (!op->isInput()) {
+    Operand *operand = &operands[n - 1];
+    if (!operand->isInput()) {
         reportError("alleged branch target immediate wasn't an input\n");
         exitAfterCleanup(-1);
     }
-    if (op->operandKind == 0x1b)
-        return op->immediateValue.getString();
+    if (operand->operandKind == 0x1b)
+        return operand->immediateValue.getString();
     return 0;
 }
 
 RegPoolEntry *Instr::getBranchTargetRegister()
 {
-    iInfo *ii = opcodeInfo;
+    iInfo *branchOpcodeInfo = opcodeInfo;
     if (!(branchFlags & 2))
         return 0;
-    if (!ii) {
+    if (!branchOpcodeInfo) {
         reportError("branch type set - but no ii\n");
         exitAfterCleanup(-1);
     }
-    int n = ii->branchTargetOperandSelector;
+    int n = branchOpcodeInfo->branchTargetOperandSelector;
     if (!n) {
         reportError("getBranchTargetRegister - branch target operand not set\n");
         exitAfterCleanup(-1);
     }
-    Operand *op = &operands[n - 1];
-    if (!op->isInput()) {
+    Operand *operand = &operands[n - 1];
+    if (!operand->isInput()) {
         reportError("alleged branch target register wasn't an input\n");
         exitAfterCleanup(-1);
     }
-    if (op->operandKind == 0x1b)
+    if (operand->operandKind == 0x1b)
         return 0;
-    RegPoolEntry *r = op->assignedRegister;
-    if (!r) {
+    RegPoolEntry *registerEntry = operand->assignedRegister;
+    if (!registerEntry) {
         reportError("branch target register wasn't set\n");
         exitAfterCleanup(-1);
     }
-    return r;
+    return registerEntry;
 }
 
 int Instr::constantZeroInstructionHook()
@@ -799,9 +799,9 @@ int Instr::constantZeroInstructionHook()
 Operand *Instr::findInputOperand(RegPoolEntry *reg, int mask)
 {
     for (int i = 0; i != operandCount; i++) {
-        Operand *op = &operands[i];
-        if (op->inRegOp2() == reg && (op->componentMask & mask))
-            return op;
+        Operand *operand = &operands[i];
+        if (operand->inRegOp2() == reg && (operand->componentMask & mask))
+            return operand;
     }
     return 0;
 }
@@ -809,9 +809,9 @@ Operand *Instr::findInputOperand(RegPoolEntry *reg, int mask)
 Operand *Instr::findOutputOperand(RegPoolEntry *reg, int mask)
 {
     for (int i = 0; i != operandCount; i++) {
-        Operand *op = &operands[i];
-        if (op->outRegZ() == reg && (op->componentMask & mask))
-            return op;
+        Operand *operand = &operands[i];
+        if (operand->outRegZ() == reg && (operand->componentMask & mask))
+            return operand;
     }
     return 0;
 }
@@ -821,13 +821,13 @@ bool Instr::hasLinkedOutputFrom(unsigned int n)
     if (!opcodeInfo)
         return false;
     for (; n < operandCount; n++) {
-        Operand *op = &operands[n];
-        RegPoolEntry *r = registerOperand(op, 2);
-        if (r) {
-            if (op->externalPartMask)
+        Operand *operand = &operands[n];
+        RegPoolEntry *registerEntry = registerOperand(operand, 2);
+        if (registerEntry) {
+            if (operand->externalPartMask)
                 return true;
-            for (int j = 0; j != r->partCount; j++)
-                if (((op->componentMask >> j) & 1) && op->parts[j].operandLocations.count)
+            for (int j = 0; j != registerEntry->partCount; j++)
+                if (((operand->componentMask >> j) & 1) && operand->parts[j].operandLocations.count)
                     return true;
         }
     }
@@ -845,8 +845,8 @@ bool Instr::classifySchedulingCategory()
         return true;
     }
     for (int i = 0; i != operandCount; i++) {
-        Operand *op = &operands[i];
-        if (isRegisterOperand(op, 2) && op->externalComponentMask) {
+        Operand *operand = &operands[i];
+        if (isRegisterOperand(operand, 2) && operand->externalComponentMask) {
             schedulerCategory = 2;
             return true;
         }
@@ -863,24 +863,24 @@ Instr **Instr::getIE()
         return 0;
     }
     InstructionPosition *pos = &position;
-    Instr **ie = table->getIE_ck(pos->linearRow);
-    if (!ie) {
+    Instr **pipelineEntries = table->getIE_ck(pos->linearRow);
+    if (!pipelineEntries) {
         reportError("failed to get ie from table for in::getIE()\n");
         return 0;
     }
-    if (ie[pos->pipelineIndex] != this) {
+    if (pipelineEntries[pos->pipelineIndex] != this) {
         reportError("we aren't where we thought we were for in::getIE\n");
         return 0;
     }
-    return ie;
+    return pipelineEntries;
 }
 
 int Instr::getFirstOutputLatency()
 {
     for (int i = 0; i != operandCount; i++) {
-        Operand *op = &operands[i];
-        if (op->outRegZ() && !op->externalBlockModeFlag)
-            return op->outputLatency;
+        Operand *operand = &operands[i];
+        if (operand->outRegZ() && !operand->externalBlockModeFlag)
+            return operand->outputLatency;
     }
     return 0;
 }
@@ -906,61 +906,61 @@ int Instr::opcodeId()
     return getOpcodeId(opcodeInfo);
 }
 
-static inline bool isLiteral(mValue *v)
+static inline bool isLiteral(mValue *value)
 {
-    return v->type == mValue::STRING;
+    return value->type == mValue::STRING;
 }
 
 bool Instr::expandVirtualStatOperand()
 {
     for (int i = 0; i != operandCount; i++) {
-        Operand *op = &operands[i];
-        if (op->operandKind < 22 || op->operandKind > 25)
+        Operand *operand = &operands[i];
+        if (operand->operandKind < 22 || operand->operandKind > 25)
             continue;
         if (i != operandCount - 1) {
             reportError("virtual stat operand not final\n");
             return false;
         }
         operandCount--;
-        switch (op->operandKind) {
+        switch (operand->operandKind) {
         case 23:
-            op->isImplicit = 1;
-            op->operandKind = 21;
-            op->direction = 2;
-            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(55);
-            op->componentMask = 1;
-            op->outputLatency = 4;
-            op->externalBlockModeFlag = 0;
-            op->operandIndex = operandCount++;
-            op = &operands[i + 1];
-            op->isImplicit = 1;
-            op->operandKind = 18;
-            op->direction = 1;
-            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
-            op->componentMask = 1;
-            op->outputLatency = -1;
-            op->externalBlockModeFlag = 1;
-            op->operandIndex = operandCount++;
+            operand->isImplicit = 1;
+            operand->operandKind = 21;
+            operand->direction = 2;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(55);
+            operand->componentMask = 1;
+            operand->outputLatency = 4;
+            operand->externalBlockModeFlag = 0;
+            operand->operandIndex = operandCount++;
+            operand = &operands[i + 1];
+            operand->isImplicit = 1;
+            operand->operandKind = 18;
+            operand->direction = 1;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(57);
+            operand->componentMask = 1;
+            operand->outputLatency = -1;
+            operand->externalBlockModeFlag = 1;
+            operand->operandIndex = operandCount++;
             break;
         case 22:
-            op->isImplicit = 1;
-            op->operandKind = 20;
-            op->direction = 2;
-            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(56);
-            op->componentMask = 1;
-            op->outputLatency = operands[0].outputLatency;
-            op->externalBlockModeFlag = 0;
-            op->operandIndex = operandCount;
-            op = &operands[i + 1];
+            operand->isImplicit = 1;
+            operand->operandKind = 20;
+            operand->direction = 2;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(56);
+            operand->componentMask = 1;
+            operand->outputLatency = operands[0].outputLatency;
+            operand->externalBlockModeFlag = 0;
+            operand->operandIndex = operandCount;
+            operand = &operands[i + 1];
             operandCount++;
-            op->isImplicit = 1;
-            op->operandKind = 19;
-            op->direction = 1;
-            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
-            op->componentMask = 1;
-            op->outputLatency = -1;
-            op->externalBlockModeFlag = 1;
-            op->operandIndex = operandCount++;
+            operand->isImplicit = 1;
+            operand->operandKind = 19;
+            operand->direction = 1;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(58);
+            operand->componentMask = 1;
+            operand->outputLatency = -1;
+            operand->externalBlockModeFlag = 1;
+            operand->operandIndex = operandCount++;
             break;
         case 24: {
             if (operands[i - 1].operandKind != 27) {
@@ -971,11 +971,11 @@ bool Instr::expandVirtualStatOperand()
             bool b = true;
             bool c = true;
             bool d = true;
-            mValue *v = &operands[i - 1].immediateValue;
+            mValue *value = &operands[i - 1].immediateValue;
             unsigned int imm;
-            if (isLiteral(v)) {
+            if (isLiteral(value)) {
                 reportWarning("fsop has literals - so assuming the worst - if it were numerical vcl could figure out dependencies better\n");
-            } else if (v->getUInt(&imm)) {
+            } else if (value->getUInt(&imm)) {
                 unsigned int bits;
                 int id = -1;
                 if (opcodeInfo)
@@ -1005,92 +1005,92 @@ bool Instr::expandVirtualStatOperand()
             a = a | c;
             b = b | d;
             if (a) {
-                op->isImplicit = 1;
-                op->operandKind = 21;
-                op->direction = 1;
-                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(55);
-                op->componentMask = 1;
-                op->outputLatency = -1;
-                op->externalBlockModeFlag = 0;
-                op->operandIndex = operandCount;
-                op++;
+                operand->isImplicit = 1;
+                operand->operandKind = 21;
+                operand->direction = 1;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(55);
+                operand->componentMask = 1;
+                operand->outputLatency = -1;
+                operand->externalBlockModeFlag = 0;
+                operand->operandIndex = operandCount;
+                operand++;
                 operandCount++;
             }
             if (b) {
-                op->isImplicit = 1;
-                op->operandKind = 20;
-                op->direction = 1;
-                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(56);
-                op->componentMask = 1;
-                op->outputLatency = -1;
-                op->externalBlockModeFlag = 0;
-                op->operandIndex = operandCount;
-                op++;
+                operand->isImplicit = 1;
+                operand->operandKind = 20;
+                operand->direction = 1;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(56);
+                operand->componentMask = 1;
+                operand->outputLatency = -1;
+                operand->externalBlockModeFlag = 0;
+                operand->operandIndex = operandCount;
+                operand++;
                 operandCount++;
             }
             if (c) {
-                op->isImplicit = 1;
-                op->operandKind = 18;
-                op->direction = 1;
-                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
-                op->componentMask = 1;
-                op->outputLatency = -1;
-                op->externalBlockModeFlag = 1;
-                op->operandIndex = operandCount;
-                op++;
+                operand->isImplicit = 1;
+                operand->operandKind = 18;
+                operand->direction = 1;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(57);
+                operand->componentMask = 1;
+                operand->outputLatency = -1;
+                operand->externalBlockModeFlag = 1;
+                operand->operandIndex = operandCount;
+                operand++;
                 operandCount++;
-                op->isImplicit = 1;
-                op->operandKind = 18;
-                op->direction = 2;
-                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
-                op->componentMask = 1;
-                op->outputLatency = 1;
-                op->externalBlockModeFlag = 1;
-                op->operandIndex = operandCount;
-                op++;
+                operand->isImplicit = 1;
+                operand->operandKind = 18;
+                operand->direction = 2;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(57);
+                operand->componentMask = 1;
+                operand->outputLatency = 1;
+                operand->externalBlockModeFlag = 1;
+                operand->operandIndex = operandCount;
+                operand++;
                 operandCount++;
             }
             if (d) {
-                op->isImplicit = 1;
-                op->operandKind = 19;
-                op->direction = 1;
-                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
-                op->componentMask = 1;
-                op->outputLatency = -1;
-                op->externalBlockModeFlag = 1;
-                op->operandIndex = operandCount;
-                op++;
+                operand->isImplicit = 1;
+                operand->operandKind = 19;
+                operand->direction = 1;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(58);
+                operand->componentMask = 1;
+                operand->outputLatency = -1;
+                operand->externalBlockModeFlag = 1;
+                operand->operandIndex = operandCount;
+                operand++;
                 operandCount++;
-                op->isImplicit = 1;
-                op->operandKind = 19;
-                op->direction = 2;
-                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
-                op->componentMask = 1;
-                op->outputLatency = 1;
-                op->externalBlockModeFlag = 1;
-                op->operandIndex = operandCount++;
+                operand->isImplicit = 1;
+                operand->operandKind = 19;
+                operand->direction = 2;
+                operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(58);
+                operand->componentMask = 1;
+                operand->outputLatency = 1;
+                operand->externalBlockModeFlag = 1;
+                operand->operandIndex = operandCount++;
             }
             break;
         }
         case 25:
-            op->isImplicit = 1;
-            op->operandKind = 18;
-            op->direction = 2;
-            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
-            op->componentMask = 1;
-            op->outputLatency = 1;
-            op->externalBlockModeFlag = 1;
-            op->operandIndex = operandCount;
-            op = &operands[i + 1];
+            operand->isImplicit = 1;
+            operand->operandKind = 18;
+            operand->direction = 2;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(57);
+            operand->componentMask = 1;
+            operand->outputLatency = 1;
+            operand->externalBlockModeFlag = 1;
+            operand->operandIndex = operandCount;
+            operand = &operands[i + 1];
             operandCount++;
-            op->isImplicit = 1;
-            op->operandKind = 19;
-            op->direction = 2;
-            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
-            op->componentMask = 1;
-            op->outputLatency = 1;
-            op->externalBlockModeFlag = 1;
-            op->operandIndex = operandCount++;
+            operand->isImplicit = 1;
+            operand->operandKind = 19;
+            operand->direction = 2;
+            operand->originalRegister = operand->assignedRegister = findRegisterByGlobalIndex(58);
+            operand->componentMask = 1;
+            operand->outputLatency = 1;
+            operand->externalBlockModeFlag = 1;
+            operand->operandIndex = operandCount++;
             break;
         }
     }

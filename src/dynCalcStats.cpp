@@ -1,16 +1,16 @@
 #include "os.h"
 #include "lock_shared.h"
 
-static inline void resetInstrDyn(Instr *in)
+static inline void resetInstrDyn(Instr *instruction)
 {
-    in->dynamicUpperBound = 30000;
-    in->dynamicEarliestStart = -1;
-    in->dynamicReverseStart = 0;
-    in->dynamicReverseEnd = 0;
-    for (int i = 0; i != in->operandCount; i++) {
-        RegPoolEntry *r = in->operands[i].assignedRegister;
-        if (r)
-            r->resetRegisterPartTiming();
+    instruction->dynamicUpperBound = 30000;
+    instruction->dynamicEarliestStart = -1;
+    instruction->dynamicReverseStart = 0;
+    instruction->dynamicReverseEnd = 0;
+    for (int i = 0; i != instruction->operandCount; i++) {
+        RegPoolEntry *registerEntry = instruction->operands[i].assignedRegister;
+        if (registerEntry)
+            registerEntry->resetRegisterPartTiming();
     }
 }
 
@@ -21,20 +21,20 @@ void Instr::resetDynamicSchedulingStats()
     dynamicReverseStart = 0;
     dynamicReverseEnd = 0;
     for (int i = 0; i != operandCount; i++) {
-        RegPoolEntry *r = operands[i].assignedRegister;
-        if (r)
-            r->resetRegisterPartTiming();
+        RegPoolEntry *registerEntry = operands[i].assignedRegister;
+        if (registerEntry)
+            registerEntry->resetRegisterPartTiming();
     }
 }
 
-bool resetBlockDynamicStats(Block *b)
+bool resetBlockDynamicStats(Block *block)
 {
-    b->maximumDynamicStartRow = -1;
-    b->unk_06 = -1;
-    for (Instr *in = b->completedInstructions.head; in; in = in->pendingLink.nextInstruction)
-        resetInstrDyn(in);
-    for (Instr *in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction)
-        resetInstrDyn(in);
+    block->maximumDynamicStartRow = -1;
+    block->unk_06 = -1;
+    for (Instr *instruction = block->completedInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction)
+        resetInstrDyn(instruction);
+    for (Instr *instruction = block->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction)
+        resetInstrDyn(instruction);
     return true;
 }
 
@@ -49,34 +49,34 @@ static inline int lockLatency(OperandLock *input, OperandLock *parent)
     return input->issueLatency + parent->issueLatency;
 }
 
-bool dynCalcStats(workTable *wt)
+bool dynCalcStats(workTable *table)
 {
-    Block *b = (Block *)wt;
+    Block *block = (Block *)table;
     int i;
-    Instr *in;
-    resetBlockDynamicStats(b);
+    Instr *instruction;
+    resetBlockDynamicStats(block);
 
-    for (in = b->completedInstructions.head; in; in = in->pendingLink.nextInstruction) {
-        int v = in->position.linearRow;
-        in->dynamicReverseStart = v;
-        in->dynamicEarliestStart = v;
-        if (v > b->maximumDynamicStartRow)
-            b->maximumDynamicStartRow = v;
+    for (instruction = block->completedInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction) {
+        int v = instruction->position.linearRow;
+        instruction->dynamicReverseStart = v;
+        instruction->dynamicEarliestStart = v;
+        if (v > block->maximumDynamicStartRow)
+            block->maximumDynamicStartRow = v;
     }
 
-    for (in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
-        Operand *op;
+    for (instruction = block->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction) {
+        Operand *operand;
         int h = 0;
-        for (i = 0; i != in->operandCount; i++) {
-            op = &in->operands[i];
-            RegPoolEntry *reg = registerOperand(op, 1);
+        for (i = 0; i != instruction->operandCount; i++) {
+            operand = &instruction->operands[i];
+            RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
                 for (int p = 0; p != reg->partCount; p++) {
-                    OpSlot *s = &op->parts[p];
-                    bool bit = (op->componentMask >> p) & 1;
-                    if (bit && !isAAInputLock(s)) {
-                        OperandLock *par = s->getParent();
-                        int lat = lockLatency(s, par);
+                    OpSlot *slot = &operand->parts[p];
+                    bool bit = (operand->componentMask >> p) & 1;
+                    if (bit && !isAAInputLock(slot)) {
+                        OperandLock *par = slot->getParent();
+                        int lat = lockLatency(slot, par);
                         int t = 0;
                         if (!isRegLock(par))
                             t = par->ownerInstr()->dynamicEarliestStart + lat;
@@ -86,89 +86,89 @@ bool dynCalcStats(workTable *wt)
                 }
             }
         }
-        for (i = 0; i != in->operandCount; i++) {
-            op = &in->operands[i];
-            RegPoolEntry *reg = registerOperand(op, 2);
+        for (i = 0; i != instruction->operandCount; i++) {
+            operand = &instruction->operands[i];
+            RegPoolEntry *reg = registerOperand(operand, 2);
             if (reg) {
                 for (int p = 0; p != reg->partCount; p++) {
-                    rPart *rp = reg->getRP(p);
-                    if (in->inputMaskForRegister(reg, 1 << p) && rp->latestPendingReadCycle != -1) {
-                        int v = rp->latestPendingReadCycle;
-                        if (op->externalBlockModeFlag)
+                    rPart *registerPart = reg->getRP(p);
+                    if (instruction->inputMaskForRegister(reg, 1 << p) && registerPart->latestPendingReadCycle != -1) {
+                        int v = registerPart->latestPendingReadCycle;
+                        if (operand->externalBlockModeFlag)
                             v = v - 1;
                         else
-                            v = v - op->outputLatency;
+                            v = v - operand->outputLatency;
                         if (h <= v)
                             h = v + 1;
                     }
                 }
             }
         }
-        in->dynamicEarliestStart = h;
-        if (h > b->maximumDynamicStartRow)
-            b->maximumDynamicStartRow = h;
-        for (i = 0; i != in->operandCount; i++) {
-            op = &in->operands[i];
-            RegPoolEntry *reg = registerOperand(op, 1);
+        instruction->dynamicEarliestStart = h;
+        if (h > block->maximumDynamicStartRow)
+            block->maximumDynamicStartRow = h;
+        for (i = 0; i != instruction->operandCount; i++) {
+            operand = &instruction->operands[i];
+            RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
                 for (int p = 0; p != reg->partCount; p++) {
-                    bool bit = (op->componentMask >> p) & 1;
+                    bool bit = (operand->componentMask >> p) & 1;
                     if (bit) {
-                        OpSlot *s = &op->parts[p];
-                        rPart *rp = reg->getRP(p);
-                        if (!isAAInputLock(s)) {
-                            if (rp->earliestPendingReadCycle == -1) {
-                                rp->earliestPendingReadCycle = in->dynamicEarliestStart;
-                                rp->latestPendingReadCycle = in->dynamicEarliestStart;
+                        OpSlot *slot = &operand->parts[p];
+                        rPart *registerPart = reg->getRP(p);
+                        if (!isAAInputLock(slot)) {
+                            if (registerPart->earliestPendingReadCycle == -1) {
+                                registerPart->earliestPendingReadCycle = instruction->dynamicEarliestStart;
+                                registerPart->latestPendingReadCycle = instruction->dynamicEarliestStart;
                             } else {
-                                if (rp->earliestPendingReadCycle > in->dynamicEarliestStart)
-                                    rp->earliestPendingReadCycle = in->dynamicEarliestStart;
-                                if (rp->latestPendingReadCycle < in->dynamicEarliestStart)
-                                    rp->latestPendingReadCycle = in->dynamicEarliestStart;
+                                if (registerPart->earliestPendingReadCycle > instruction->dynamicEarliestStart)
+                                    registerPart->earliestPendingReadCycle = instruction->dynamicEarliestStart;
+                                if (registerPart->latestPendingReadCycle < instruction->dynamicEarliestStart)
+                                    registerPart->latestPendingReadCycle = instruction->dynamicEarliestStart;
                             }
                         }
                     }
                 }
             }
         }
-        for (i = 0; i != in->operandCount; i++) {
-            op = &in->operands[i];
-            RegPoolEntry *reg = registerOperand(op, 2);
+        for (i = 0; i != instruction->operandCount; i++) {
+            operand = &instruction->operands[i];
+            RegPoolEntry *reg = registerOperand(operand, 2);
             if (reg) {
                 for (int p = 0; p != reg->partCount; p++) {
-                    bool bit = (op->componentMask >> p) & 1;
+                    bool bit = (operand->componentMask >> p) & 1;
                     if (bit) {
-                        rPart *rp = reg->getRP(p);
-                        rp->earliestPendingReadCycle = -1;
-                        rp->latestPendingReadCycle = -1;
+                        rPart *registerPart = reg->getRP(p);
+                        registerPart->earliestPendingReadCycle = -1;
+                        registerPart->latestPendingReadCycle = -1;
                     }
                 }
             }
         }
     }
 
-    for (in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction)
-        in->dynamicReverseStart = b->maximumDynamicStartRow;
+    for (instruction = block->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction)
+        instruction->dynamicReverseStart = block->maximumDynamicStartRow;
 
-    for (in = b->pendingInstructions.tail; in; in = in->pendingLink.previousInstruction) {
-        for (i = 0; i != in->operandCount; i++) {
-            Operand *op = &in->operands[i];
-            RegPoolEntry *reg = registerOperand(op, 1);
+    for (instruction = block->pendingInstructions.tail; instruction; instruction = instruction->pendingLink.previousInstruction) {
+        for (i = 0; i != instruction->operandCount; i++) {
+            Operand *operand = &instruction->operands[i];
+            RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
                 for (int p = 0; p != reg->partCount; p++) {
-                    OpSlot *s = &op->parts[p];
-                    bool bit = (op->componentMask >> p) & 1;
-                    if (bit && !isAAInputLock(s)) {
-                        OperandLock *par = s->getParent();
+                    OpSlot *slot = &operand->parts[p];
+                    bool bit = (operand->componentMask >> p) & 1;
+                    if (bit && !isAAInputLock(slot)) {
+                        OperandLock *par = slot->getParent();
                         if (!isRegLock(par)) {
                             Instr *pi = par->ownerInstr();
-                            int lat = lockLatency(s, par);
-                            int v = in->dynamicEarliestStart - lat;
+                            int lat = lockLatency(slot, par);
+                            int v = instruction->dynamicEarliestStart - lat;
                             if (v < 0) {
                                 reportError("-ve ip?\n");
-                                in->dumpOperandDiagnostics(false);
-                                wt->dump();
-                                in->dumpOperandDiagnostics(false);
+                                instruction->dumpOperandDiagnostics(false);
+                                table->dump();
+                                instruction->dumpOperandDiagnostics(false);
                                 exitAfterCleanup(-1);
                             }
                             if (pi->dynamicReverseStart > v)
@@ -180,27 +180,27 @@ bool dynCalcStats(workTable *wt)
         }
     }
 
-    for (in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
-        for (i = 0; i != in->operandCount; i++) {
-            Operand *op = &in->operands[i];
-            RegPoolEntry *reg = registerOperand(op, 1);
+    for (instruction = block->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction) {
+        for (i = 0; i != instruction->operandCount; i++) {
+            Operand *operand = &instruction->operands[i];
+            RegPoolEntry *reg = registerOperand(operand, 1);
             if (reg) {
                 for (int p = 0; p != reg->partCount; p++) {
-                    OpSlot *s = &op->parts[p];
-                    bool bit = (op->componentMask >> p) & 1;
-                    if (bit && !isAAInputLock(s)) {
-                        OperandLock *par = s->getParent();
+                    OpSlot *slot = &operand->parts[p];
+                    bool bit = (operand->componentMask >> p) & 1;
+                    if (bit && !isAAInputLock(slot)) {
+                        OperandLock *par = slot->getParent();
                         if (!isRegLock(par)) {
                             Instr *pi = par->ownerInstr();
                             int lat;
-                            if (s->latencyModeFlag)
+                            if (slot->latencyModeFlag)
                                 lat = 1;
                             else
                                 lat = par->issueLatency;
                             int v = pi->dynamicReverseStart + lat;
-                            if (v < in->dynamicUpperBound)
-                                in->dynamicUpperBound = v;
-                            v = in->dynamicEarliestStart - lat;
+                            if (v < instruction->dynamicUpperBound)
+                                instruction->dynamicUpperBound = v;
+                            v = instruction->dynamicEarliestStart - lat;
                             if (v > pi->dynamicReverseEnd)
                                 pi->dynamicReverseEnd = v;
                         }
@@ -210,31 +210,31 @@ bool dynCalcStats(workTable *wt)
         }
     }
 
-    for (in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
-        in->schedulingStatistics.forwardLatencyDepth = in->dynamicEarliestStart;
-        in->schedulingStatistics.reverseLatencyDepth = b->maximumDynamicStartRow - in->dynamicReverseStart;
+    for (instruction = block->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction) {
+        instruction->schedulingStatistics.forwardLatencyDepth = instruction->dynamicEarliestStart;
+        instruction->schedulingStatistics.reverseLatencyDepth = block->maximumDynamicStartRow - instruction->dynamicReverseStart;
     }
     return true;
 }
 
-void dynDumpStats(Block *b)
+void dynDumpStats(Block *block)
 {
     int saved = errorOccurred;
     errorOccurred = !quietDiagnostics;
     reportInfo("dynDumpStats - start\n");
     int n = 0;
-    for (Instr *in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
+    for (Instr *instruction = block->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction) {
         const char *mark = "    ";
-        int s = in->dynamicEarliestStart;
-        int e = in->dynamicUpperBound;
-        int dep = b->loopSize;
+        int s = instruction->dynamicEarliestStart;
+        int e = instruction->dynamicUpperBound;
+        int dep = block->loopSize;
         if (s - e > dep)
             mark = "****";
-        int ht = b->maximumDynamicStartRow - in->schedulingStatistics.reverseLatencyDepth;
-        dep = in->schedulingStatistics.forwardLatencyDepth;
+        int ht = block->maximumDynamicStartRow - instruction->schedulingStatistics.reverseLatencyDepth;
+        dep = instruction->schedulingStatistics.forwardLatencyDepth;
         reportInfo("[%3d]:%3d [%5d %5d %5d %5d ]%s dep=%2d ht=%2d  %s\n",
-                      n, b->loopSize, e, s, in->dynamicReverseStart, in->dynamicReverseEnd, mark,
-                      dep, ht, in->opcodeInfo->mnemonic);
+                      n, block->loopSize, e, s, instruction->dynamicReverseStart, instruction->dynamicReverseEnd, mark,
+                      dep, ht, instruction->opcodeInfo->mnemonic);
         n++;
     }
     reportInfo("dyDuumpStats - end\n");
