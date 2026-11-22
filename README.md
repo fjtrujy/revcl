@@ -36,16 +36,17 @@ Progress (matched bytes / file size):
 **482,736 / 482,736 bytes (100.00%)** of `vcl_14beta7_x86` matched — code 268,717 / 268,717 (1192 / 1192 functions exact, 268,717 bytes), verified inter-function padding 1,975 bytes, data 151,250 bytes, unwind tables 48,741 bytes, linker/runtime 12,053 bytes
 <!-- progress:end -->
 
-Build and verify on Linux (or in an Ubuntu environment with Docker):
+Build and verify with the original GNU Make/GCC environment (on Linux with
+Docker, or on macOS with an Ubuntu container for RPM extraction):
 
 ```sh
 sudo apt-get install -y rpm2cpio cpio curl ca-certificates
 bash scripts/ci/bootstrap_rh9.sh       # download + SHA-verify historical RPMs
 docker build --platform linux/386 -t revcl-rh9 tools/rh9
-python3 -m venv .venv
-.venv/bin/pip install -r scripts/requirements.txt
-.venv/bin/python scripts/score.py --quiet
-.venv/bin/python scripts/ci/verify_vcl_sha.py
+docker run --rm --platform linux/386 \
+  --mount type=bind,src="$PWD",dst=/work -w /work \
+  revcl-rh9 make -j2
+make verify-sha                     # run on the host, not inside RH9
 ```
 
 ### Byte-exact CI
@@ -55,15 +56,18 @@ pushes to `main` or `ci/**`, pull requests and manual dispatches. A fresh Linux 
 downloads the original Red Hat Linux 9 GCC 3.2.2-5 toolchain and the
 **glibc 2.3.2-27.9.7 i686** update, verifies each RPM against the pinned
 SHA-256 manifest in `tools/rh9/rpms.sha256`, builds the historic Docker image,
-then recompiles and links the entire VCL source tree. It also runs the VCL
-unit tests.
-The CI check runs `scripts/ci/verify_vcl_sha.py`, requiring **both** the
-native linked and stripped ELF (`tmp/build/link/vcl.stripped`) and the
-reconstructed output (`tmp/build/rebuilt.bin`) to match the archived ELF's
-**exact SHA-256**:
+then uses **GNU Make 3.79.1** to compile and link the entire C++ source tree.
+The historical compiler flags are in `Makefile`, the recovered original
+object-file order is in `config/vcl-link-order.mk`, and the fixed GNU ld
+script is in `tools/rh9/vcl.ld`.
+The CI check runs `make verify-sha` on the host, requiring the
+**native linked and stripped ELF** (`tmp/native/vcl.stripped`) to match the
+archived ELF's **exact SHA-256**:
 `83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
-It also requires 1,192/1,192 exact functions, full byte coverage and
-zero build or relocation errors.
+Neither `scripts/score.py` nor the archived original ELF is used as a build
+input. `scripts/score.py` remains available for decompilation diagnostics,
+including per-function byte matching, coverage, and a separate
+`tmp/build/rebuilt.bin`. Tests run independently in the modern compiler CI.
 
 The glibc i686 update is essential: using the i386 glibc from the base
 Red Hat 9 RPMs produces 21 different `.dynsym` bytes (external imported
@@ -88,9 +92,13 @@ newlines inside quoted strings. They have been normalized to standard
 `\n` escapes to satisfy modern compilers; verification with GCC 3.2.2
 confirmed this does not change the original SHA-256.
 
-After completing the setup above:
+For optional reverse-engineering diagnostics, install the Python tooling
+separately; it is **not needed** for the native Makefile build:
 
 ```sh
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/requirements.txt
+make test                              # 112 Python unit tests on the host
 scripts/decomp status                  # full score and coverage
 scripts/decomp diff 0x08058dd8         # compare a function with the original
 scripts/decomp lab 0x08080460          # editable source / original ASM workbench
