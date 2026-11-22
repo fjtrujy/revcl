@@ -117,6 +117,25 @@ On failure, build, link and comparison logs are uploaded as an artifact.
 The RPM download cache is keyed to the SHA-256 manifest; cached RPMs are
 **still checked before extraction**.
 
+The separate [modern compiler workflow](../.github/workflows/vcl-modern.yml)
+builds and links the full 131-source reconstruction using both GCC 13 and
+Clang 18 with a 32-bit Linux target and C++98 language mode, runs the Python
+unit tests, and tests the two resulting executables against the eleven
+self-contained VCL fixture cases. The 12th historical oracle case
+`archived_basic` additionally requires the external MASP preprocessor,
+so it remains in the dedicated [oracle instructions](../reverse/oracle/README.md).
+The browser-based Assembly Workbench integration tests also require their
+own historical compiler/browser environment. Neither is falsely reported
+as run by the modern compiler workflow.
+
+In modern Clang, the original GCC 3.2-only `#pragma implementation`
+used for deferred inline `RegWeb` functions is not supported; the modern
+Clang build makes the existing inline header visible to the `main.cpp`
+translation unit. This does not modify the byte-exact historical build.
+The original source's multiline diagnostic string literals are normalized
+to `\n` escapes, a change independently verified to preserve the original
+ELF SHA-256.
+
 The local end-to-end proof compiled **131 source units**, matched all 1,192
 functions, and passed **109 unit tests**. Negative checks confirmed that
 changing one byte in either output, including a former `.dynsym` difference,

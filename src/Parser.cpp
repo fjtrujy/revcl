@@ -266,8 +266,7 @@ bool func_080501d4(char c)
 void Parser::Dump()
 {
     if (!unk_1009c) {
-        func_0804ad38("Parse::Dump() - line table was not set
-");
+        func_0804ad38("Parse::Dump() - line table was not set\n");
         return;
     }
     for (int i = 0; i != unk_10098; i++)
@@ -303,8 +302,7 @@ int Parser::func_0805030c(const char *name, int n)
 found:
     if (idx < 0) {
         if (unk_10000 >= 0x2000) {
-            func_0804ad38("AddLocTag: ran out of loctags
-");
+            func_0804ad38("AddLocTag: ran out of loctags\n");
             return -1;
         }
         Line *l = &lines[unk_10000];
@@ -352,8 +350,7 @@ bool Parser::func_0805041c(char *line)
             return false;
         }
         if (depth > 15) {
-            func_0804ad38("exceeded maximum depth for the loctag stack
-");
+            func_0804ad38("exceeded maximum depth for the loctag stack\n");
             return false;
         }
         stack[depth++] = n;
@@ -370,8 +367,7 @@ bool Parser::func_0805041c(char *line)
     if (depth != unk_1008c) {
         int d = depth - unk_1008c;
         if (d > 1) {
-            func_0804ad38("jumped too far  in gasp depth
-");
+            func_0804ad38("jumped too far  in gasp depth\n");
             return false;
         }
         if (d == 1) {
@@ -381,13 +377,11 @@ bool Parser::func_0805041c(char *line)
             else if (unk_10004)
                 idx = func_0805030c(unk_10004, 1);
             else {
-                func_0804ad38("neither previous include or previous macro set
-");
+                func_0804ad38("neither previous include or previous macro set\n");
                 return false;
             }
             if (idx < 0) {
-                func_0804ad38("failed to add loc tag for include directive
-");
+                func_0804ad38("failed to add loc tag for include directive\n");
                 return false;
             }
             unk_1000c[depth - 1].unk_00 = &lines[idx];

@@ -112,8 +112,7 @@ int getMove(Block *blk, Instr *in, int now)
                             z >>= 4;
                             z >>= 4;
                             if (z <= 0) {
-                                func_0804ad38("parent not inserted during move
-");
+                                func_0804ad38("parent not inserted during move\n");
                                 func_0804aeb0();
                             }
                         }
@@ -125,8 +124,7 @@ int getMove(Block *blk, Instr *in, int now)
                             reg->unk_02 = hi;
                         int d = now - lo;
                         if (d < 0) {
-                            func_0804ad38("dff was <0
-");
+                            func_0804ad38("dff was <0\n");
                             func_0804aeb0();
                         }
                         RegPoolEntry *uA = op2->unk_10;
@@ -155,14 +153,12 @@ int getMove(Block *blk, Instr *in, int now)
     }
     op = 0;
     if (!bestReg) {
-        func_0804ac7c("getMove: didn't set rg_old during pass
-");
+        func_0804ac7c("getMove: didn't set rg_old during pass\n");
         return 4;
     }
     cls0805bcc4 *parent = bestLk->getParent();
     if (!parent) {
-        func_0804ad38("getMove: failed to get parent for something I wanted to move!
-");
+        func_0804ad38("getMove: failed to get parent for something I wanted to move!\n");
         return -1;
     }
     Instr *owner = parent->ownerInstr();
@@ -223,16 +219,14 @@ int getMove(Block *blk, Instr *in, int now)
                     bool stale = false;
                     if (op->unk_2b != 1) {
                         if (op->unk_07 & newBits) {
-                            func_0804ad38("cant age input - but the old register status is now invalid
-");
+                            func_0804ad38("cant age input - but the old register status is now invalid\n");
                             func_0804aeb0();
                         }
                         stale = true;
                     }
                     if (op->unk_07 & oldBits) {
                         if (op->unk_07 & newBits) {
-                            func_0804ad38("neither old new bits are valid - valid register state is spread over too many different registers
-");
+                            func_0804ad38("neither old new bits are valid - valid register state is spread over too many different registers\n");
                             func_0804aeb0();
                         }
                         stale = true;
@@ -252,57 +246,48 @@ int getMove(Block *blk, Instr *in, int now)
                                 if (!((moved >> p) & 1)) {
                                     cls0805bcc4 *moveInLock = &mvIn->unk_2c[p];
                                     if (!moveInLock->setOwner(p, mv, 1)) {
-                                        func_0804ad38("getMove : failed to set owner for input
-");
+                                        func_0804ad38("getMove : failed to set owner for input\n");
                                         return -1;
                                     }
                                     if (!out->unk_2c[p].setOwner(p, mv, 0)) {
-                                        func_0804ad38("getMove :failed to set owner for output
-");
+                                        func_0804ad38("getMove :failed to set owner for output\n");
                                         return -1;
                                     }
                                     cls0805bcc4 *moveOutLock = &out->unk_2c[p];
                                     if (!oldL->addInput(oldOut, moveInLock, mvIn->unk_29, mvIn->unk_0b)) {
-                                        func_0804ad38("failed to register input from move instruction to old output
-");
+                                        func_0804ad38("failed to register input from move instruction to old output\n");
                                         return -1;
                                     }
                                     moveInLock->unk_19 = mvIn->getStatus();
                                     if (!newL->addOutput(moveOutLock, mv->unk_13cf, out->unk_0a, out->unk_0b)) {
-                                        func_0804ad38("getMove : failed to register output lock for move
-");
+                                        func_0804ad38("getMove : failed to register output lock for move\n");
                                         return -1;
                                     }
                                     moveOutLock->unk_19 = out->getStatus();
                                 }
                                 moved |= 1 << p;
                                 if (!oldL->removeInput(lk)) {
-                                    func_0804ad38("failed to deregister an input during move create
-");
+                                    func_0804ad38("failed to deregister an input during move create\n");
                                     return -1;
                                 }
                                 if (!newL->addInput(&out->unk_2c[p], lk, op->unk_29, op->unk_0b)) {
-                                    func_0804ad38("failed to register input to a moves output
-");
+                                    func_0804ad38("failed to register input to a moves output\n");
                                     return -1;
                                 }
                                 op->unk_18 = newReg;
                             } else {
                                 if (par->unk_04 == newL) {
                                     if (!oldL->removeInput(lk)) {
-                                        func_0804ad38("failed to deregister an input during move create
-");
+                                        func_0804ad38("failed to deregister an input during move create\n");
                                         return -1;
                                     }
                                     if (!newL->addInput(par, lk, op->unk_29, op->unk_0b)) {
-                                        func_0804ad38("failed to register an input during move create
-");
+                                        func_0804ad38("failed to register an input during move create\n");
                                         return -1;
                                     }
                                     op->unk_18 = newReg;
                                 } else {
-                                    func_0804ad38("hmm candidate for moving wasn't one after all
-");
+                                    func_0804ad38("hmm candidate for moving wasn't one after all\n");
                                     func_0804aeb0();
                                 }
                             }
@@ -324,13 +309,11 @@ int getMove(Block *blk, Instr *in, int now)
                                 cls0805c244 *oldL = (cls0805c244 *)bestReg->func_0805a908(p);
                                 cls0805c244 *newL = (cls0805c244 *)newReg->func_0805a908(p);
                                 if (!oldL->removeOutput(&op->unk_2c[p])) {
-                                    func_0804ad38("retargetOutputOperands: failed to deregister output
-");
+                                    func_0804ad38("retargetOutputOperands: failed to deregister output\n");
                                     return -1;
                                 }
                                 if (!newL->addOutput(&op->unk_2c[p], it->unk_13cf, op->unk_0a, op->unk_0b)) {
-                                    func_0804ad38("retargetOutputOperands : failed to reregister output
-");
+                                    func_0804ad38("retargetOutputOperands : failed to reregister output\n");
                                     return -1;
                                 }
                                 op->unk_18 = newReg;
@@ -365,8 +348,7 @@ int getMove(Block *blk, Instr *in, int now)
         mvIn->unk_07 = moved;
         out->unk_07 = moved;
         if (!AddToDo_Head(blk, mv)) {
-            func_0804ad38("getMove : failed to add move to the head of the to todo list
-");
+            func_0804ad38("getMove : failed to add move to the head of the to todo list\n");
             return -1;
         }
         logInstr(blk, mv);
@@ -388,8 +370,7 @@ bool undoMove(Block *blk, Instr *mv)
     RegPoolEntry *orig = in->unk_18;
     RegPoolEntry *dup = out->unk_18;
     if (!UnlinkFromToDo(blk, mv))
-        func_0804ad38("failed to unlink from todolist!
-");
+        func_0804ad38("failed to unlink from todolist!\n");
     for (Instr *i = blk->unk_94; i; i = (Instr *)i->unk_24.unk_00) {
         for (int n = 0; n != i->unk_138b; n++) {
             Operand *op = &i->unk_38[n];
@@ -406,13 +387,11 @@ bool undoMove(Block *blk, Instr *mv)
                             if ((bool)((out->unk_07 >> p) & 1) && parent == &out->unk_2c[p])
                                 parent = in->unk_2c[p].getParent();
                             if (!oldList->removeInput(lk)) {
-                                func_0804ad38("failed to deregister input lock for undo move
-");
+                                func_0804ad38("failed to deregister input lock for undo move\n");
                                 return true;
                             }
                             if (!newList->addInput(parent, lk, op->unk_29, op->unk_0b)) {
-                                func_0804ad38("undo move - failed to register input
-");
+                                func_0804ad38("undo move - failed to register input\n");
                                 return true;
                             }
                         }
@@ -424,13 +403,11 @@ bool undoMove(Block *blk, Instr *mv)
                             cls0805c244 *newList = (cls0805c244 *)orig->func_0805a908(p);
                             cls0805c244 *oldList = (cls0805c244 *)dup->func_0805a908(p);
                             if (!oldList->removeOutput(&op->unk_2c[p])) {
-                                func_0804ad38("failed to deregister output lock for undo move
-");
+                                func_0804ad38("failed to deregister output lock for undo move\n");
                                 return true;
                             }
                             if (!newList->addOutput(&op->unk_2c[p], i->unk_13cf, op->unk_0a, op->unk_0b)) {
-                                func_0804ad38("undo move - failed to register output
-");
+                                func_0804ad38("undo move - failed to register output\n");
                                 return true;
                             }
                         }
@@ -443,18 +420,15 @@ bool undoMove(Block *blk, Instr *mv)
         if ((bool)((in->unk_07 >> p) & 1)) {
             cls0805c244 *l = (cls0805c244 *)orig->func_0805a908(p);
             if (!l) {
-                func_0804ad38("failed to get lock list for old reg in move undo
-");
+                func_0804ad38("failed to get lock list for old reg in move undo\n");
                 func_0804aeb0();
             }
             if (!in->unk_2c[p].getParent()) {
-                func_0804ad38("undoMove: failed to get parent for old lock!
-");
+                func_0804ad38("undoMove: failed to get parent for old lock!\n");
                 func_0804aeb0();
             }
             if (!l->removeInput(&in->unk_2c[p])) {
-                func_0804ad38("undoMove : failed to register input lock
-");
+                func_0804ad38("undoMove : failed to register input lock\n");
                 func_0804aeb0();
             }
         }
