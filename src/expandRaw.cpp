@@ -14,12 +14,12 @@ int expandRaw(workTable *wt)
 
 bool expandRawTables(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
-        if (!s->unk_218) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
+        if (!s->workTablePtr) {
             reportError("work table not set in %s\n", s->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *wt = s->unk_218;
+        workTable *wt = s->workTablePtr;
         if (wt->codeMode() == 3) {
             reportError("hit a raw table during expraw\n");
             return false;

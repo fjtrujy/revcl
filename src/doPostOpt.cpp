@@ -339,7 +339,7 @@ bool instStream::setOptTable(workTable *nt)
     }
     nt->clearClones();
     old->clearClones();
-    unk_218 = nt;
+    workTablePtr = nt;
     unk_214 = nt;
     if (nt->unk_00 >= 0)
         unk_144 |= 1 << nt->unk_00;

@@ -147,7 +147,7 @@ void Instr::func_08054008(int flags)
             for (int j = 0; j != operandCount; j++) {
                 Operand *op = &operands[j];
                 RegPoolEntry *r = op->unk_18;
-                if (r && r->unk_14)
+                if (r && r->isVirtual)
                     for (int k = 0; k != r->partCount; k++)
                         if ((op->unk_07 >> k) & 1)
                             op->unk_2c[k].unk_54.func_08057e9c();

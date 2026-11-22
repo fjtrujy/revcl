@@ -41,7 +41,7 @@ bool bindDependencies(Program *p)
         reportError("bindDependencies() - Processor failed to enumerate hardware register classes\n");
         return false;
     }
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         for (Instr *in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
             int bits = in->getRamBits();
@@ -99,7 +99,7 @@ bool bindDependencies(Program *p)
             in->unk_139c = 0;
         }
     }
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         bool xin = s->unk_2cc == 2;
         bool xout = s->unk_2cd == 3;
         if (xin) {
@@ -117,9 +117,9 @@ bool bindDependencies(Program *p)
         if (xin || xout) {
             for (int i = 0; i != n; i++) {
                 RegPool *rp = pools[i];
-                RegPoolEntry *ext = rp->unk_14;
+                RegPoolEntry *ext = rp->externalRegister;
                 if (!ext) {
-                    reportError("failed to get EXT for pool %s\n", rp->unk_2c);
+                    reportError("failed to get EXT for pool %s\n", rp->poolName);
                     return false;
                 }
                 if (xin && !addXinFor(s, ext)) {
@@ -296,7 +296,7 @@ bool addNewOutput(Instr *in, RegPoolEntry *r, int bits, int flag)
 RegPoolEntry *getTagRegister(RegPool *pool, char *name)
 {
     if (RegPool::isResvd(name, pool->unk_0c)) {
-        reportUserMessage("can't use %s as a name for one of the %s\n", name, pool->unk_2c);
+        reportUserMessage("can't use %s as a name for one of the %s\n", name, pool->poolName);
         return 0;
     }
     RegPoolEntry *r = pool->func_08059a1c(name);
@@ -307,7 +307,7 @@ RegPoolEntry *getTagRegister(RegPool *pool, char *name)
             return 0;
         }
     }
-    r->unk_14 = false;
+    r->isVirtual = false;
     r->partCount = 4;
     return r;
 }

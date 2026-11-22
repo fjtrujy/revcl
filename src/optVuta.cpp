@@ -60,7 +60,7 @@ int vutaRegCost(Instr *in)
     for (int i = 0; i != in->operandCount; i++) {
         RegPoolEntry *r = in->operands[i].inRegOp2();
         if (r) {
-            switch (r->unk_30) {
+            switch (r->registerIndex) {
             case 55:
             case 56:
             case 59:

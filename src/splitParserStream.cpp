@@ -56,7 +56,7 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
                         ((Instr *)in)->leDump(-1);
                         return false;
                     }
-                    if (!p->unk_88.func_0804b234(buf) && !p->unk_88.func_0804b2d4(buf)) {
+                    if (!p->uniqueNamePrefixes.func_0804b234(buf) && !p->uniqueNamePrefixes.func_0804b2d4(buf)) {
                         reportError("failed to add tag name '%s' to the global tag list\n", buf);
                         return false;
                     }
@@ -161,7 +161,7 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
         }
         b->unk_08 = id;
     }
-    p->unk_ac = uid;
+    p->flowIdCount = uid;
 
     mList unused;
     i = 0;
@@ -259,7 +259,7 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
             blocks[i + k].func_080842f0();
         if (!p->addStream(s))
             goto streamError;
-        s->unk_218 = &s->unk_148;
+        s->workTablePtr = &s->unk_148;
         i = end;
         goto afterSHandler;
         streamError:

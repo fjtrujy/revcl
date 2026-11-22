@@ -295,7 +295,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 goto fail;
             }
             s = nameBuf;
-            if (pool->unk_18 && unk_4c.unk_10 && !pool->func_08059418(op.name) && op.name[0] != '_') {
+            if (pool->virtualPartCount && unk_4c.unk_10 && !pool->func_08059418(op.name) && op.name[0] != '_') {
                 for (mNode *n = unk_4c.unk_10; n; n = n->unk_08) {
                     char *np = n->unk_14;
                     if (!np) {
@@ -329,7 +329,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             char *full = dupString(nameBuf);
             RegPoolEntry *r = pool->func_08059944(full);
             if (!r) {
-                reportUserMessage("oDecode: not find register '%s' from %s\n", full, pool->unk_2c);
+                reportUserMessage("oDecode: not find register '%s' from %s\n", full, pool->poolName);
                 goto fail;
             }
             if (op.unk_200c) {
@@ -340,25 +340,25 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                         reportUserMessage("request to bing non-base register\n");
                         goto fail;
                     }
-                    if (r->unk_18 && r->unk_18 != base)
+                    if (r->assignedPhysicalRegister && r->assignedPhysicalRegister != base)
                         reportWarning("changing binding for %s from %s to %s\n",
-                                      r->registerName(), r->unk_18->registerName(),
+                                      r->registerName(), r->assignedPhysicalRegister->registerName(),
                                       base->registerName());
-                } else if (r->unk_18)
-                    base = r->unk_18;
-                else if (r->unk_14 != 1)
+                } else if (r->assignedPhysicalRegister)
+                    base = r->assignedPhysicalRegister;
+                else if (r->isVirtual != 1)
                     base = r;
                 if (!base) {
                     reportUserMessage(" can't figure out which base register to map %s to\n",
                                   r->registerName());
                     goto fail;
                 }
-                if (base->unk_14 == 1) {
+                if (base->isVirtual == 1) {
                     reportError("what I thought was a base register isn't (%s maps to %s?)\n",
                                   base->registerName(), r->registerName());
                     goto fail;
                 }
-                r->unk_18 = base;
+                r->assignedPhysicalRegister = base;
                 opd->unk_10 = base;
             } else if (op.unk_800[0]) {
                 RegPoolEntry *base = pool->func_08059418(op.unk_800);
@@ -366,16 +366,16 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     reportUserMessage("failed to find base map reg '%s'\n", op.unk_800);
                     goto fail;
                 }
-                if (r->unk_14 != 1 && base != r) {
+                if (r->isVirtual != 1 && base != r) {
                     reportUserMessage("base registers not the same\n");
                     goto fail;
                 }
                 opd->unk_10 = base;
             } else if (unk_65) {
                 RegPoolEntry *e = pool->func_08059418(op.name);
-                if (e && e != e->unk_04->unk_10)
+                if (e && e != e->ownerPool->zeroRegister)
                     opd->unk_10 = e;
-            } else if (r->unk_14 != 1 && !r->unk_16)
+            } else if (r->isVirtual != 1 && !r->unk_16)
                 opd->unk_10 = r;
             opd->unk_18 = r;
             opd->unk_14 = r;

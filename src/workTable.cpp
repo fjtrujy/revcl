@@ -84,7 +84,7 @@ regUse *regUseList::firstReal()
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
         }
-        if (!reg->unk_14)
+        if (!reg->isVirtual)
             break;
     }
     return p;
@@ -99,7 +99,7 @@ regUse *regUse::nextReal()
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
         }
-        if (!reg->unk_14)
+        if (!reg->isVirtual)
             break;
     }
     return p;
@@ -114,7 +114,7 @@ regUse *regUseList::firstVirtual()
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
         }
-        if (reg->unk_14)
+        if (reg->isVirtual)
             break;
     }
     return p;
@@ -129,7 +129,7 @@ regUse *regUse::nextVirtual()
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
         }
-        if (reg->unk_14)
+        if (reg->isVirtual)
             break;
     }
     return p;
@@ -263,7 +263,7 @@ int regUseList::func_0805ba64(int regClass)
     int n = 0;
     for (regUse *p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
-        if (reg->registerClass != regClass || reg == reg->unk_04->unk_10)
+        if (reg->registerClass != regClass || reg == reg->ownerPool->zeroRegister)
             continue;
         if (~p->unk_0e & p->unk_10)
             n++;
@@ -278,8 +278,8 @@ void regUseList::func_0805bab0()
     if (func_0805b0cc()) {
         for (int i = 0; i != 12; i++) {
             RegPool *rp = GetRP(i);
-            if (rp && rp->unk_18) {
-                reportInfo("%s\n", rp->unk_2c);
+            if (rp && rp->virtualPartCount) {
+                reportInfo("%s\n", rp->poolName);
                 func_0805bb10(i);
             }
         }
@@ -288,7 +288,7 @@ void regUseList::func_0805bab0()
 
 static inline bool isVirtualRegister(RegPoolEntry *reg)
 {
-    if (reg->unk_14 == true)
+    if (reg->isVirtual == true)
         return true;
     return false;
 }
@@ -298,14 +298,14 @@ void regUseList::func_0805bb10(int regClass)
     regUse *p;
     for (p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
-        RegPoolEntry *phys = reg->unk_18;
+        RegPoolEntry *phys = reg->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();
         if (!isVirtualRegister(reg))
             alloc = reg->registerName();
         int mask = p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d | p->unk_10;
-        if (reg->registerClass == regClass && reg != reg->unk_04->unk_10 && p->isExternal()) {
+        if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && p->isExternal()) {
             const char *thr = "";
             if (p->unk_10 & ~(p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d))
                 thr = "-THR";
@@ -314,14 +314,14 @@ void regUseList::func_0805bb10(int regClass)
     }
     for (p = unk_04; p; p = p->unk_04) {
         RegPoolEntry *reg = p->unk_08;
-        RegPoolEntry *phys = reg->unk_18;
+        RegPoolEntry *phys = reg->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();
         if (!isVirtualRegister(reg))
             alloc = reg->registerName();
         int mask = p->unk_0e | p->unk_0f | p->unk_0c | p->unk_0d | p->unk_10;
-        if (reg->registerClass == regClass && reg != reg->unk_04->unk_10 && !p->isExternal())
+        if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && !p->isExternal())
             reportInfo(" LOCAL : %20s - %s\n", reg->maskName(mask), alloc);
     }
 }

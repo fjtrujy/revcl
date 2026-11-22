@@ -6,7 +6,7 @@ bool initBackTrace(Program *p)
 {
     int mx = -1;
     instStream *s;
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_2c0 < 0) {
             reportError("flowUID<0 for g_initBackTrace\n");
             return false;
@@ -19,22 +19,22 @@ bool initBackTrace(Program *p)
         return false;
     }
     int n = mx + 1;
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (!g_initBackTrace(s, n)) {
             reportError("[Depend] failed to g_initBackTrace a stream\n");
             return false;
         }
     }
     p->unk_b8 = (n + 31) >> 2;
-    if (!p->unk_bc.init(n)) {
+    if (!p->backTraceVisitCache.init(n)) {
         reportError("flowMin::flowReset - failed to init visit cache\n");
         return false;
     }
-    if (!p->unk_bc.startRecord()) {
+    if (!p->backTraceVisitCache.startRecord()) {
         reportError("flowReset: failed to start record\n");
         return false;
     }
-    int key = p->unk_bc.endRecord();
+    int key = p->backTraceVisitCache.endRecord();
     if (key != 0) {
         reportError("flowMon::flowReset - got an unexpected key back for null bit vector (%d)\n", key);
         return false;
@@ -45,7 +45,7 @@ bool initBackTrace(Program *p)
 bool disposeBackTrace(Program *p)
 {
     p->unk_b8 = 0;
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_238)
             delete[] s->unk_238;
         s->unk_238 = 0;

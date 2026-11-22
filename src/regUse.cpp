@@ -18,7 +18,7 @@ regUse::regUse(RegPoolEntry *reg)
     unk_00 = 0;
     unk_04 = 0;
     unk_18 = reg->unk_36;
-    unk_1c = reg->unk_38;
+    unk_1c = reg->throughputWriter;
 }
 
 regUse::~regUse()

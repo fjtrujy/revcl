@@ -492,7 +492,7 @@ int instStream::func_0805f354()
 
 int instStream::getOrGuessLogicalLength()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (!wt)
         wt = getWorkTable();
     if (!wt) {

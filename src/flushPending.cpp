@@ -73,8 +73,8 @@ bool rPart::cycle(bool flag)
 
 void RegPoolEntry::func_0805a300()
 {
-    unk_35 = 0;
-    unk_38 = 0;
+    usedSlotMask = 0;
+    throughputWriter = 0;
     unk_36 = 0;
     for (int i = 0; i != 4; i++)
         unk_44[i].func_0805a3cc();
@@ -103,7 +103,7 @@ void rPart::func_0805a374()
 
 void RegPoolEntry::func_0805a390()
 {
-    unk_38 = 0;
+    throughputWriter = 0;
     unk_36 = 0;
     for (int i = 0; i != 4; i++)
         unk_44[i].func_0805a3cc();
@@ -166,18 +166,18 @@ RegPoolEntry::RegPoolEntry()
     next = 0;
     registerClass = 0;
     partCount = 0;
-    unk_15 = false;
+    allocatable = false;
     unk_20 = 0;
-    unk_30 = 0;
-    unk_14 = false;
-    unk_04 = 0;
-    unk_2b4 = 0;
+    registerIndex = 0;
+    isVirtual = false;
+    ownerPool = 0;
+    registerWeb = 0;
     unk_10 = 0;
     unk_16 = false;
-    unk_35 = 0;
+    usedSlotMask = 0;
     unk_1c = 0;
     unk_2c = false;
-    unk_18 = 0;
+    assignedPhysicalRegister = 0;
 }
 
 rPart::rPart()
@@ -236,8 +236,8 @@ void RegPoolEntry::moveReset()
         exitAfterCleanup(-1);
     }
     unk_3c = -1;
-    unk_15 = false;
-    unk_2b4 = 0;
+    allocatable = false;
+    registerWeb = 0;
     unk_10 = 0;
     for (int i = 0; i != partCount; i++)
         unk_44[i].unk_48 = 0;
@@ -245,7 +245,7 @@ void RegPoolEntry::moveReset()
 
 bool RegPoolEntry::optReset()
 {
-    unk_2b4 = 0;
+    registerWeb = 0;
     return true;
 }
 
@@ -279,7 +279,7 @@ char* RegPoolEntry::maskName(int mask)
 
 int RegPoolEntry::regIndex()
 {
-    if (!unk_04)
+    if (!ownerPool)
         reportError("no reg pool set for register\n");
-    return unk_04->regIndex(unk_30);
+    return ownerPool->regIndex(registerIndex);
 }

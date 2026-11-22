@@ -18,14 +18,14 @@ void func_0806ed78(Program *p, int a);
 bool resolveStreamBranches(Program *p)
 {
     instStream *s;
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         switch (s->unk_2cd) {
         case 1: {
             unsigned char bt = s->unk_2ce;
             int headFlags = bt;
             if (!(unsigned char)headFlags || (unsigned char)(headFlags & 4)) {
-                if (s->unk_108) {
-                    if (!p->linkStreams(s, s->unk_108, 0)) {
+                if (s->nextStream) {
+                    if (!p->linkStreams(s, s->nextStream, 0)) {
                         reportError("failed to link streams together\n");
                         return false;
                     }
@@ -103,11 +103,11 @@ bool resolveStreamBranches(Program *p)
                 reportError("branchtype not null for end / cont\n");
                 return false;
             }
-            if (!s->unk_108) {
+            if (!s->nextStream) {
                 reportUserMessage("fell off the bottom of code! .. last stream should either end in END or be a branch\n");
                 return false;
             }
-            if (!p->linkStreams(s, s->unk_108, 0)) {
+            if (!p->linkStreams(s, s->nextStream, 0)) {
                 reportError("failed to link streams together\n");
                 return false;
             }
@@ -121,7 +121,7 @@ bool resolveStreamBranches(Program *p)
     bool again;
     do {
         again = false;
-        for (s = p->streamHead; s; s = s->unk_108) {
+        for (s = p->streamHead; s; s = s->nextStream) {
             int btorMask = 1;
             int btor = (s->unk_2ce >> 1) & btorMask;
             if ((unsigned char)btor) {
@@ -137,7 +137,7 @@ bool resolveStreamBranches(Program *p)
     } while (again);
 
     func_0806ed78(p, 0);
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         Instr *br = s->getBranch();
         if (br && br->unk_139c) {
             delete[] br->unk_139c;
@@ -167,14 +167,14 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
     }
     br->func_08054008(false);
     instStream *t;
-    for (t = p->streamHead; t; t = t->unk_108)
+    for (t = p->streamHead; t; t = t->nextStream)
         t->unk_226 = 0;
     s->unk_226 = 1;
     bool first = true;
     bool again;
     do {
         again = false;
-        for (t = p->streamHead; t; t = t->unk_108) {
+        for (t = p->streamHead; t; t = t->nextStream) {
             if (t->unk_226 != 1)
                 continue;
             workTable *wt = t->getTable();
@@ -195,12 +195,12 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
             }
             if (in) {
                 if ((in->unk_1388 >> 3) & 1) {
-                    if (!t->unk_108) {
+                    if (!t->nextStream) {
                         reportUserMessage("no physical successor to a branch+link\n");
                         return false;
                     }
-                    if (!p->areLinkedBy(s, t->unk_108, 2)) {
-                        if (!p->linkStreams(s, t->unk_108, 2)) {
+                    if (!p->areLinkedBy(s, t->nextStream, 2)) {
+                        if (!p->linkStreams(s, t->nextStream, 2)) {
                             reportError("failed to fixup a branch to register\n");
                             return false;
                         }

@@ -156,8 +156,8 @@ static inline bool testPathBit(VisitCache *vc, int rec, int bit)
 void dumpPathKey(Program *p, int key)
 {
     reportInfo("dumping path key '%d'\n", key);
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
-        if (testPathBit(&p->unk_bc, key, s->unk_2c0))
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
+        if (testPathBit(&p->backTraceVisitCache, key, s->unk_2c0))
             reportInfo("    %d: %s\n", s->streamName());
     }
     reportInfo(" done dumping path key '%d'\n", key);

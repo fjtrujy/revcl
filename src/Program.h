@@ -24,20 +24,20 @@ struct Program {
     Processor proc;
     int unk_80;         // emulated length
     char unk_84[4];
-    mList unk_88;       // names prefixed by doUnique
+    mList uniqueNamePrefixes;       // names prefixed by doUnique
     bool unk_9c;        // ctor arg
     char unk_9d[3];
     instStream *streamHead; // all streams, chained via unk_108
     instStream *streamTail; // stream list tail
     int streamCount;         // stream count
-    short unk_ac;       // flow UID count
+    short flowIdCount;       // flow UID count
     char unk_ae[2];
-    instStream **unk_b0; // linear table indexed by stream id
+    instStream **streamsById; // linear table indexed by stream id
     bool unk_b4;        // logmax: also compute max path key
     char unk_b5;
     char unk_b6[2];
     int unk_b8;
-    VisitCache unk_bc;  // back-trace visit cache
+    VisitCache backTraceVisitCache;  // back-trace visit cache
     instStream *unk_d4; // t target
     instStream *unk_d8; // new match list, chained via unk_254
     instStream *unk_dc; // sources, chained via unk_250

@@ -101,7 +101,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
     p->unk_e4 = 0;
     p->unk_b5 = 0;
     p->unk_b4 = 0;
-    for (instStream *i = p->streamHead; i; i = i->unk_108) {
+    for (instStream *i = p->streamHead; i; i = i->nextStream) {
         if (!func_08061c34(i)) {
             reportError("failed to do a local init for the back trace\n");
             return false;

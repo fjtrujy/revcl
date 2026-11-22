@@ -13,7 +13,7 @@ int func_0806e530(int flags);
 bool globalPrune(Program *p)
 {
     instStream *s;
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_2cc == 2) {
             s->unk_264 = 1;
             s->unk_226 = 1;
@@ -30,7 +30,7 @@ bool globalPrune(Program *p)
     bool changed;
     do {
         changed = false;
-        for (s = p->streamHead; s; s = s->unk_108) {
+        for (s = p->streamHead; s; s = s->nextStream) {
             if (s->unk_226 == 1) {
                 s->unk_226 = 2;
                 for (linkNode *l = s->unk_134.unk_00; l; l = l->unk_08) {
@@ -51,7 +51,7 @@ bool globalPrune(Program *p)
 
     instStream *next;
     for (s = p->streamHead; s; s = next) {
-        next = s->unk_108;
+        next = s->nextStream;
         if (s->unk_264)
             continue;
         reportInfo("prune inaccessible stream %s\n", s->streamName());
@@ -86,7 +86,7 @@ bool globalPrune(Program *p)
 
     instStream *follow;
     for (s = p->streamHead; s; s = follow) {
-        follow = s->unk_108;
+        follow = s->nextStream;
         instStream *next = follow;
         if (next && s->unk_2ce && s->func_0806d968() != 4) {
             bool keepLink = false;

@@ -17,7 +17,7 @@ bool explodeRaw(Program *p)
 {
     instStream *next;
     for (instStream *s = p->streamHead; s; s = next) {
-        next = s->unk_108;
+        next = s->nextStream;
         workTable *t = s->getTable();
         if (!t) {
             reportError("floBuild - there's no work table!\n");

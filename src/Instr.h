@@ -304,13 +304,13 @@ struct Operand {
     RegWeb *GetWeb();
     bool isForwardable()
     {
-        return unk_18 && unk_18->unk_04->unk_18 && unk_18 != unk_18->unk_04->unk_10;
+        return unk_18 && unk_18->ownerPool->virtualPartCount && unk_18 != unk_18->ownerPool->zeroRegister;
     }
     bool isZero()
     {
         int z = 0;
         if (unk_18) {
-            if (unk_18 == unk_18->unk_04->unk_10)
+            if (unk_18 == unk_18->ownerPool->zeroRegister)
                 z = 1;
         }
         return z;
@@ -327,7 +327,7 @@ struct Operand {
     {
         bool z = false;
         if (unk_18) {
-            if (unk_18 == unk_18->unk_04->unk_10)
+            if (unk_18 == unk_18->ownerPool->zeroRegister)
                 z = true;
         }
         return z;
@@ -448,7 +448,7 @@ struct Operand {
     {
         bool z = false;
         if (unk_18) {
-            int delta = (char *)unk_18 - (char *)unk_18->unk_04->unk_10;
+            int delta = (char *)unk_18 - (char *)unk_18->ownerPool->zeroRegister;
             if (!delta)
                 z = true;
         }
@@ -471,7 +471,7 @@ struct Operand {
     bool isZeroB()
     {
         int z = 0;
-        if (unk_18 && unk_18 == unk_18->unk_04->unk_10)
+        if (unk_18 && unk_18 == unk_18->ownerPool->zeroRegister)
             z = 1;
         return z;
     }
@@ -496,12 +496,12 @@ struct Operand {
             r = true;
         return r ? unk_18 : 0;
     }
-    bool isZeroC() { return unk_18 && unk_18 == unk_18->unk_04->unk_10; }
+    bool isZeroC() { return unk_18 && unk_18 == unk_18->ownerPool->zeroRegister; }
     bool isInRegC() { return unk_09 == 1 && !isZeroC(); }
     bool isOutRegC() { return unk_09 == 2 && !isZeroC(); }
     bool isHardZero()
     {
-        if (unk_18 && unk_18 == unk_18->unk_04->unk_10)
+        if (unk_18 && unk_18 == unk_18->ownerPool->zeroRegister)
             return true;
         return false;
     }
@@ -540,7 +540,7 @@ class Instr;
 
 static inline bool isZeroRegister(RegPoolEntry *reg)
 {
-    return reg == reg->unk_04->unk_10;
+    return reg == reg->ownerPool->zeroRegister;
 }
 
 static inline bool isZeroOperand(Operand *op)

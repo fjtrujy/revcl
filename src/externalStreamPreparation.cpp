@@ -20,9 +20,9 @@ void splitCtime(workTable *wt, int l, int m);
 bool func_0807aee4(Program *p)
 {
     instStream *s;
-    for (s = p->streamHead; s; s = s->unk_108)
+    for (s = p->streamHead; s; s = s->nextStream)
         s->unk_2dc = s->func_0806d9a0() ? 0 : 1;
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_2dc)
             continue;
         if (!prepExtInfo(p, s, 0)) {
@@ -40,11 +40,11 @@ bool func_0807aee4(Program *p)
 
 bool removeNops(Program *p, instStream *s)
 {
-    if (!s->unk_218) {
+    if (!s->workTablePtr) {
         reportError("work table not set in %s\n", s->streamName());
         exitAfterCleanup(-1);
     }
-    workTable *wt = s->unk_218;
+    workTable *wt = s->workTablePtr;
     if (!wt) {
         reportError("no work table \n");
         return false;
@@ -107,9 +107,9 @@ bool removeNops(Program *p, instStream *s)
                     if (tv <= 6)
                         exitWithError("bad throught value in register\n");
                     int thr = lat;
-                    if (reg->unk_30 == 0x34)
+                    if (reg->registerIndex == 0x34)
                         thr--;
-                    else if (reg->unk_30 != 0x32)
+                    else if (reg->registerIndex != 0x32)
                         exitWithError("non p-q has throughput?\n");
                     int l = rl + 1;
                     wtRow *r = row;

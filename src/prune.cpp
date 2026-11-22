@@ -17,7 +17,7 @@ int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp);
 
 static inline bool initPrune_p(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108)
+    for (instStream *s = p->streamHead; s; s = s->nextStream)
         if (!initPrune(s)) {
             reportError("failed to init prune for %s\n", s->streamName());
             return false;
@@ -28,7 +28,7 @@ static inline bool initPrune_p(Program *p)
 static inline int tryPrune_p(Program *p)
 {
     int n = 0;
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         int r = tryPrune(s);
         if (r < 0) {
             reportError("flowMon: failed to  tryPrune %s\n", s->streamName());
@@ -41,7 +41,7 @@ static inline int tryPrune_p(Program *p)
 
 static inline bool doPrune_p(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108)
+    for (instStream *s = p->streamHead; s; s = s->nextStream)
         if (!doPrune(s)) {
             reportError("failed to do prune for %s\n", s->streamName());
             return false;
@@ -72,7 +72,7 @@ bool Prune(Program *p)
 
 bool initPrune(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108)
+    for (instStream *s = p->streamHead; s; s = s->nextStream)
         if (!initPrune(s)) {
             reportError("failed to init prune for %s\n", s->streamName());
             return false;
@@ -119,7 +119,7 @@ bool initPrune(Instr *in)
 int tryPrune(Program *p)
 {
     int n = 0;
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         int r = tryPrune(s);
         if (r < 0) {
             reportError("flowMon: failed to  tryPrune %s\n", s->streamName());
@@ -243,7 +243,7 @@ int tryPrune(Instr *in, bool raw)
 
 bool doPrune(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108)
+    for (instStream *s = p->streamHead; s; s = s->nextStream)
         if (!doPrune(s)) {
             reportError("failed to do prune for %s\n", s->streamName());
             return false;
@@ -381,20 +381,20 @@ int doPrune(Instr *in)
     }
     for (i = 0; (op = in->getOp(i)) != 0; i++) {
         RegPoolEntry *r = registerOperand(op, 2);
-        if (!r || op->unk_2a || !r->unk_14)
+        if (!r || op->unk_2a || !r->isVirtual)
             continue;
-        RegPool *pool = r->unk_04;
+        RegPool *pool = r->ownerPool;
         if (!pool) {
             reportError("register had no regpool\n");
             return -1;
         }
-        if (pool->unk_10 && !op->unk_0d) {
+        if (pool->zeroRegister && !op->unk_0d) {
             reportVerboseInfo("ZERO FIX   : ");
             int saved = errorOccurred;
             errorOccurred = quiet_080bbd98;
             in->leDump(i);
             errorOccurred = saved;
-            op->unk_18 = pool->unk_10;
+            op->unk_18 = pool->zeroRegister;
         }
     }
     return 1;

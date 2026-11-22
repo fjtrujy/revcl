@@ -11,7 +11,7 @@ char *mprefix_del(const char *a, const char *b);
 bool Program::doUnique()
 {
     instStream *s;
-    for (s = streamHead; s; s = s->unk_108) {
+    for (s = streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         for (Instr *i = wt->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
             if (!i->unk_1388)
@@ -56,7 +56,7 @@ bool Program::doUnique()
             }
         }
     }
-    for (s = streamHead; s; s = s->unk_108) {
+    for (s = streamHead; s; s = s->nextStream) {
         for (mNode *n = s->unk_110.unk_0c; n; n = n->unk_04) {
             if (!func_0806f4e8(this, n->unk_14)) {
                 char *nn = mprefix_del(getUniqueName(this), n->unk_14);
@@ -71,7 +71,7 @@ bool Program::doUnique()
             }
         }
     }
-    for (mNode *n = unk_88.unk_0c; n; n = n->unk_04) {
+    for (mNode *n = uniqueNamePrefixes.unk_0c; n; n = n->unk_04) {
         if (!func_0806f4e8(this, n->unk_14)) {
             char *nn = mprefix_del(getUniqueName(this), n->unk_14);
             if (!nn) {
@@ -89,7 +89,7 @@ bool Program::doUnique()
 
 bool Program::func_0806e878(const char *name)
 {
-    for (instStream *s = streamHead; s; s = s->unk_108) {
+    for (instStream *s = streamHead; s; s = s->nextStream) {
         if (s->unk_110.func_0804b284(name))
             return true;
     }

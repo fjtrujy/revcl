@@ -259,14 +259,14 @@ void ubsNode::dump()
     reportInfo("Used before set : ");
     n = 0;
     instStream *use = unk_14;
-    workTable *wt = use->unk_218;
+    workTable *wt = use->workTablePtr;
     bool haveTable = wt != 0;
     if (!haveTable) {
         reportError("work table not set in %s\n", use->streamName());
         exitAfterCleanup(-1);
     }
     if (!haveTable)
-        wt = use->unk_218;
+        wt = use->workTablePtr;
     regUse *ru;
     if (wt && (ru = wt->unk_14.func_0805b5dc(unk_08))) {
         reportInfo("register %s is used before set at instruction(s) :\n",

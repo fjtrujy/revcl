@@ -421,18 +421,18 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
                 reportError("not find %s\n", tok);
                 return false;
             }
-            if (!r->unk_15) {
+            if (!r->allocatable) {
                 reportError("init_reg: %s is not allocable\n", r->registerName());
                 return false;
             }
-            if (r->unk_14) {
+            if (r->isVirtual) {
                 reportError("init_reg: reg is virtual! %s\n", r->registerName());
                 return false;
             }
             if (j == 0)
-                first = last = r->unk_30;
+                first = last = r->registerIndex;
             else
-                last = r->unk_30;
+                last = r->registerIndex;
         }
         if (last < first) {
             reportWarning("range %s decreasing\n", tok);
@@ -446,11 +446,11 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
                 reportError("not find %s\n", tok);
                 return false;
             }
-            if (!r->unk_15) {
+            if (!r->allocatable) {
                 reportError("init_reg: %s is not allocable\n", r->registerName());
                 return false;
             }
-            if (r->unk_14) {
+            if (r->isVirtual) {
                 reportError("init_reg: reg is virtual! %s\n", r->registerName());
                 return false;
             }

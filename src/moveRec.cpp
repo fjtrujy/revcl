@@ -196,7 +196,7 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     case 0x44:
         if (in->func_08055828(1))
             return false;
-        if (in->operands[2].unk_18->unk_30 != 0)
+        if (in->operands[2].unk_18->registerIndex != 0)
             return false;
         opc = 0xb4;
     setOps:
@@ -205,7 +205,7 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
         break;
     case 0x6c:
     case 0x6f:
-        if (in->operands[2].unk_18->unk_30 != 32)
+        if (in->operands[2].unk_18->registerIndex != 32)
             return false;
         opc = 0xb2;
         goto setOps;

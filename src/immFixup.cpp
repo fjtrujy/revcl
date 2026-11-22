@@ -59,17 +59,17 @@ bool func_08069324(Program *p, bool init)
 {
     instStream *s;
     if (init) {
-        for (s = p->streamHead; s; s = s->unk_108)
+        for (s = p->streamHead; s; s = s->nextStream)
             if (!initStreamImm(s))
                 return false;
-        for (s = p->streamHead; s; s = s->unk_108)
+        for (s = p->streamHead; s; s = s->nextStream)
             if (!aaFixup(s))
                 return dumpFailed(s);
     } else {
-        for (s = p->streamHead; s; s = s->unk_108)
+        for (s = p->streamHead; s; s = s->nextStream)
             if (!do_immFixup(s))
                 return false;
-        for (s = p->streamHead; s; s = s->unk_108)
+        for (s = p->streamHead; s; s = s->nextStream)
             if (!initStreamImm(s))
                 return false;
     }
@@ -240,7 +240,7 @@ bool tidyTable(workTable *wt)
 
 bool tidyProgram(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108)
+    for (instStream *s = p->streamHead; s; s = s->nextStream)
         if (!tidyStream(s)) {
             reportError("failed to tidy a stream\n");
             exitAfterCleanup(-1);

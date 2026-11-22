@@ -197,25 +197,25 @@ bool genRegPool::initAlloc(int start, int end)
         reportError(initAllocTooBigError);
         return false;
     }
-    RegPoolEntry *e = unk_04;
+    RegPoolEntry *e = registerEntries;
     if (!e) {
         reportError("RegPool:Dump - no table?\n");
         return false;
     }
-    if (unk_08 > 0x20) {
+    if (entryCount > 0x20) {
         reportError(initAllocMaxDevError);
         return false;
     }
-    nRegs_080bce24 = unk_08;
+    nRegs_080bce24 = entryCount;
     maxParts_080bce20 = 0;
     int i = 0;
-    int count = unk_08;
+    int count = entryCount;
     for (; i != count; i++, e++) {
         if (e->unk_16)
             unk_30[i] = (1 << e->partCount) - 1;
         if (e->partCount > maxParts_080bce20) {
             maxParts_080bce20 = e->partCount;
-            count = unk_08;
+            count = entryCount;
         }
     }
     return true;
@@ -323,7 +323,7 @@ bool genRegPool::set_in_aTab(regUse *ru)
         return false;
     }
     if (func_08059e20(reg)) {
-        if (reg->unk_14) {
+        if (reg->isVirtual) {
             reportError(setInATabVirtualError,
                           reg->registerName());
             exitAfterCleanup(-1);

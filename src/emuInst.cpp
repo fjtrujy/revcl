@@ -103,13 +103,13 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                                 reportError("multiple set for prevThruput\n");
                                 return -1;
                             }
-                            in->unk_1434 = reg->unk_38;
-                        } else if (reg->unk_38 != in->unk_1434) {
+                            in->unk_1434 = reg->throughputWriter;
+                        } else if (reg->throughputWriter != in->unk_1434) {
                             reportError("unexpected value found in prev thru write\n");
                             return -1;
                         }
                     }
-                    reg->unk_38 = in;
+                    reg->throughputWriter = in;
                     reg->unk_36++;
                 }
                 for (int part = 0; part != reg->partCount; part++) {

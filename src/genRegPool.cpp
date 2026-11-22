@@ -26,10 +26,10 @@ void clearRegMask()
 
 bool initRegMask(RegPool *pool)
 {
-    RegPoolEntry *e = pool->unk_04;
+    RegPoolEntry *e = pool->registerEntries;
     int *mp = &maxParts_080bce20;
     func_0804c220(regMask_080dde40, 32);
-    for (int i = 0; i != pool->unk_08; i++, e++) {
+    for (int i = 0; i != pool->entryCount; i++, e++) {
         if (!e->unk_16)
             regMask_080dde40[i] = (1 << e->partCount) - 1;
         if (e->partCount > *mp)
@@ -40,7 +40,7 @@ bool initRegMask(RegPool *pool)
 
 int firstEmptyMask(RegPool *pool)
 {
-    for (int i = 0; i != pool->unk_08; i++)
+    for (int i = 0; i != pool->entryCount; i++)
         if (!regMask_080dde40[i])
             return i;
     return -1;
@@ -52,7 +52,7 @@ bool assignExtRegisters(Program *p)
         reportError("failed to allocReset before ext assign\n");
         return false;
     }
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         unsigned int mode = (unsigned char)wt->unk_08;
         if ((char)mode != 1) {
@@ -64,7 +64,7 @@ bool assignExtRegisters(Program *p)
         for (unsigned i = 0; i != 12; i++) {
             RegPool *rp = GetRP(i);
             if (rp && !rp->assignExt(s)) {
-                reportError("flowMon::AssignExt registers failed for pool %s\n", rp->unk_2c);
+                reportError("flowMon::AssignExt registers failed for pool %s\n", rp->poolName);
                 return false;
             }
         }
@@ -72,19 +72,19 @@ bool assignExtRegisters(Program *p)
             for (int j = 0; j != in->operandCount; j++) {
                 Operand *op = &in->operands[j];
                 RegPoolEntry *reg = op->unk_18;
-                if (reg && reg->unk_14) {
+                if (reg && reg->isVirtual) {
                     regUse *ru = wt->unk_14.func_0805b5dc(reg);
                     if (!ru) {
                         reportError("failed to find reg ref associated with reg\n");
                         return false;
                     }
                     if (ru->isExternal()) {
-                        RegPoolEntry *ext = reg->unk_18;
+                        RegPoolEntry *ext = reg->assignedPhysicalRegister;
                         if (!ext) {
                             reportError("no ext mapping on register\n");
                             return false;
                         }
-                        if (ext->unk_14) {
+                        if (ext->isVirtual) {
                             reportError("alloc tmp is virtual in ext assign\n");
                             return false;
                         }

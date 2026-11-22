@@ -25,7 +25,7 @@ static inline void dumpMove(Instr *in)
 
 bool detectMoves(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (wt->unk_09 == 1 || isPipeMode(wt)) {
             Instr *next;
@@ -53,7 +53,7 @@ bool detectMoves(Program *p)
                 mv->unk_142e = 0;
                 Operand *sr = &mv->operands[1];
                 Operand *d = &mv->operands[0];
-                if (dstReg == dstReg->unk_04->unk_10) {
+                if (dstReg == dstReg->ownerPool->zeroRegister) {
                     reportError("found a move to a const zero register\n");
                     dumpMove(in);
                     return false;

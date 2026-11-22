@@ -28,7 +28,7 @@ bool func_08063154(Program *p)
             dumpRawStream(s);
             return 0;
         }
-        instStream *n = s->unk_108;
+        instStream *n = s->nextStream;
         if (n && !n->unk_2d6 && !s->unk_2d7) {
         linkList *out = &s->unk_134;
         if (out->unk_08 == 1 && n->unk_128.unk_08 == 1
@@ -71,7 +71,7 @@ bool func_08063154(Program *p)
             continue;
         }
         }
-        s = s->unk_108;
+        s = s->nextStream;
     }
     return 1;
 }

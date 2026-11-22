@@ -166,7 +166,7 @@ static inline const char *loopStallReason(instStream *s)
 
 bool doLoop(Program *p, int smart)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         int i;
         if (!s->canLoop() || !s->unk_270)
             continue;
@@ -287,7 +287,7 @@ bool doLoop(Program *p, int smart)
 
 bool doRawAndSynth(Program *p, int smart)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (s->func_0806d908() == 3) {
             if (!prepExtInfo(p, s, 0)) {
                 reportError("failed to prep external info for stream\n");
@@ -350,7 +350,7 @@ bool doRawAndSynth(Program *p, int smart)
 
 bool relaxOpt(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         switch (s->func_0806d908()) {
         case 3: {
             workTable *opt = s->unk_214;
@@ -387,7 +387,7 @@ bool relaxOpt(Program *p)
 
 bool func_08079fdc(Program *p, int smart, bool sizeReduce)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (s->func_0806d908() == 3) {
             if (!prepExtInfo(p, s, 0)) {
                 reportError("failed to prep external info for stream\n");

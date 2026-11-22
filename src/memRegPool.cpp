@@ -24,14 +24,14 @@ bool func_08088f20(RegPool *pool, const char *base, int size)
         return false;
     }
     RegPoolEntry *tab = new RegPoolEntry[size];
-    pool->unk_04 = tab;
+    pool->registerEntries = tab;
     if (!tab) {
         extern const char memRegPoolAllocError[];
         reportError(memRegPoolAllocError);
         return false;
     }
     RegPoolEntry *e = tab;
-    pool->unk_08 = size;
+    pool->entryCount = size;
     int idx = 10000;
     for (int i = 0; i != size; i++, e++, idx++) {
         formatIntoBuffer(buf, "(%s+%d)(vi00)", base, i);
@@ -39,10 +39,10 @@ bool func_08088f20(RegPool *pool, const char *base, int size)
             reportError("init mem area: failed to add register %s\n", buf);
             return false;
         }
-        e->unk_15 = true;
-        e->unk_30 = idx;
+        e->allocatable = true;
+        e->registerIndex = idx;
         e->registerClass = 11;
-        e->unk_04 = pool;
+        e->ownerPool = pool;
         e->partCount = 4;
     }
     return true;

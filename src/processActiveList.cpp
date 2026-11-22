@@ -64,7 +64,7 @@ bool extendBackTrace(Program *p, instStream *n)
     for (l = n->unk_128.unk_00; l; l = l->unk_08) {
         int branch = l->unk_14 == 2 || l->unk_14 == 4 || l->unk_14 == 5;
         if ((char)branch) {
-            instStream *prev = n->unk_10c;
+            instStream *prev = n->previousStream;
             if (!prev) {
                 reportError("to register branch had no previous\n");
                 return false;
@@ -197,7 +197,7 @@ bool addNewActive(Program *p, instStream *n, instStream *from)
 
 bool recalcMinTraceLengths(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (!s->unk_226)
             continue;
         int len = 0;
@@ -215,7 +215,7 @@ bool recalcMinTraceLengths(Program *p)
 
 bool recalcMaxTraceLengths(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (!s->unk_226)
             continue;
         int len = 0;

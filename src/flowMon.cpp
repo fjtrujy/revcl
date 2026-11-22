@@ -25,7 +25,7 @@ bool func_08060018(Program *p, bool b)
         return false;
     }
     instStream *s;
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (!s->flowReset()) {
             reportError("failed to flow reset a stream\n");
             return false;
@@ -35,7 +35,7 @@ bool func_08060018(Program *p, bool b)
         reportError("flowMon::flowReset: failed to recalculate flow UIDs\n");
         return false;
     }
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (!func_0806c0f8(p)) {
             reportError("flowInit - failed for stream %s\n", s->streamName());
             return false;
@@ -57,7 +57,7 @@ bool func_08060018(Program *p, bool b)
         reportError("flowMon:: failed to init back trace\n");
         return false;
     }
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         for (regUse *ru = s->getWorkTable()->unk_14.unk_04; ru; ru = ru->unk_04) {
             RegPoolEntry *reg = ru->unk_08;
             if (!reg) {
@@ -106,7 +106,7 @@ bool func_08060018(Program *p, bool b)
         reportError("faield to dispose of the backtrace info\n");
         return false;
     }
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (!s->gatherStats()) {
             reportError("failed to gather stats for the istream\n");
             return false;
@@ -117,7 +117,7 @@ bool func_08060018(Program *p, bool b)
 
 bool func_080603bc(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (!s->gatherStats()) {
             reportError("failed to gather stats for the istream\n");
             return false;

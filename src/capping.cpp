@@ -19,12 +19,12 @@ int func_0807aa28(Program *p)
 {
     int total = 0;
     instStream *s;
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         s->unk_2dc = 0;
         if (!s->func_0806d9a0())
             s->unk_2dc = 1;
     }
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_2dc)
             continue;
         if (!prepExtInfo(p, s, 0)) {
@@ -45,11 +45,11 @@ int func_0807aa28(Program *p)
 int func_0807aaf4(Program *p, instStream *s)
 {
     int added = 0;
-    if (!s->unk_218) {
+    if (!s->workTablePtr) {
         reportError("work table not set in %s\n", s->streamName());
         exitAfterCleanup(-1);
     }
-    workTable *wt = s->unk_218;
+    workTable *wt = s->workTablePtr;
     if (!wt) {
         reportError("no work table \n");
         return -1;
@@ -90,7 +90,7 @@ int func_0807aaf4(Program *p, instStream *s)
                 if (!bits)
                     continue;
                 int need = op->unk_0a;
-                if (reg->unk_30 == 0x34 && need > 1)
+                if (reg->registerIndex == 0x34 && need > 1)
                     need--;
                 int line = rl + 1;
                 wtRow *r = row + 1;

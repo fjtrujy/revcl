@@ -101,7 +101,7 @@ bool Processor::Init(CpuDef *cpu)
                 delete pool;
                 return false;
             }
-            pool->unk_10 = e;
+            pool->zeroRegister = e;
         }
         if (poolDefinition->extReg) {
             RegPoolEntry *e = pool->func_08059418(poolDefinition->extReg);
@@ -110,7 +110,7 @@ bool Processor::Init(CpuDef *cpu)
                 delete pool;
                 return false;
             }
-            pool->unk_14 = e;
+            pool->externalRegister = e;
         }
         if (g_080de6e0[poolDefinition->cls]) {
             reportError("already initialised reg type %d\n", poolDefinition->cls);
@@ -223,7 +223,7 @@ bool parseReset(Program *p)
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_080595d4()) {
             reportError("Processor::parseReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -234,7 +234,7 @@ bool statReset(Program *p)
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_080594c0()) {
             reportError("Processor::statReset() - failed to stat %s\n",
-                          g_080de6e0[i]->unk_2c);
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -285,7 +285,7 @@ bool optReset(Program *p)
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_08059578()) {
             reportError("Processor::optReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -297,7 +297,7 @@ bool Cycle(Program *p, bool flag)
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_08059828(flag)) {
             reportError("Processor::Cycle() - failed to cycle %s\n",
-                          g_080de6e0[i]->unk_2c);
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -309,7 +309,7 @@ bool func_0806c0f8(Program *p)
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_08059464()) {
             reportError("Processor::emuReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -363,7 +363,7 @@ RegPoolEntry *getOperandZeroReg(int kind)
         reportError("getRP failed for operand getZeroReg\n");
         exitAfterCleanup(-1);
     }
-    return pool->unk_10;
+    return pool->zeroRegister;
 }
 
 RegPoolEntry *getZeroReg(unsigned type)
@@ -373,7 +373,7 @@ RegPoolEntry *getZeroReg(unsigned type)
         reportError("getRP failed getZeroReg\n");
         exitAfterCleanup(-1);
     }
-    return pool->unk_10;
+    return pool->zeroRegister;
 }
 
 RegPool *GetRP(unsigned t)
@@ -392,7 +392,7 @@ bool flowReset(Program *p)
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->func_0805951c()) {
             reportError("Processor::flowReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -494,7 +494,7 @@ bool func_0806c6dc(Program *p)
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->optReset()) {
             reportError("Processor::optReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -575,7 +575,7 @@ bool emitReset(Program *p)
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->emitReset()) {
             reportError("Processor::emitReset() - failed to reset %s\n",
-                          g_080de6e0[i]->unk_2c);
+                          g_080de6e0[i]->poolName);
             return false;
         }
     return true;
@@ -585,11 +585,11 @@ char *emitStats(Program *p, char *buf)
 {
     buf += formatIntoBuffer(buf, "; register stats:\n");
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && g_080de6e0[i]->unk_18) {
+        if (g_080de6e0[i] && g_080de6e0[i]->virtualPartCount) {
             buf = g_080de6e0[i]->emitStats(buf);
             if (!buf) {
                 reportError("Processor::emitStats() - failed to emit stats for %s\n",
-                              g_080de6e0[i]->unk_2c);
+                              g_080de6e0[i]->poolName);
                 return 0;
             }
         }

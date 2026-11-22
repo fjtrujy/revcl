@@ -759,7 +759,7 @@ int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
             if ((op->unk_07 >> k) & 1) {
                 OpSlot *s = &op->unk_2c[k];
                 OperandLock *par = s->getParent();
-                int idx = reg->unk_30;
+                int idx = reg->registerIndex;
                 if (idx != 48 && idx != 49 && idx != 59)
                     continue;
                 Instr *oi = par->ownerInstr();

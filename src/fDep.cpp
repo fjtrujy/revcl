@@ -59,9 +59,9 @@ bool sameEA(Instr *a, Instr *b)
         return false;
     RegPoolEntry *r1 = ea1->unk_18;
     RegPoolEntry *r2 = ea2->unk_18;
-    if (r1 && r1 == r1->unk_04->unk_10)
+    if (r1 && r1 == r1->ownerPool->zeroRegister)
         r1 = 0;
-    if (r2 && r2 == r2->unk_04->unk_10)
+    if (r2 && r2 == r2->ownerPool->zeroRegister)
         r2 = 0;
     if (r1 != r2)
         return false;

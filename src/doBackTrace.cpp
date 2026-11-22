@@ -76,7 +76,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
     p->unk_b4 = latency && !blocking;
     p->unk_b5 = latency && !blocking;
     p->unk_d4 = t;
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (!func_08061ab0(s, reg, part)) {
             reportError("failed to do a local init for the back trace\n");
             return false;
@@ -135,7 +135,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
         }
     }
     if (latency) {
-        for (instStream *s = p->streamHead; s; s = s->unk_108) {
+        for (instStream *s = p->streamHead; s; s = s->nextStream) {
             unsigned char bit = 1 << part;
             if (s->unk_226 == 4) {
                 reportInfo("UBS: %s %s.%d\n", p->unk_d4->streamName(), reg->registerName(), part);
@@ -147,7 +147,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
         }
     }
     if (latency) {
-        for (instStream *s = p->streamHead; s; s = s->unk_108) {
+        for (instStream *s = p->streamHead; s; s = s->nextStream) {
             if (s->unk_226 == 2 || s->unk_226 == 4) {
                 if (!s->unk_234) {
                     workTable *wt = s->getTable();
@@ -166,17 +166,17 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
             }
         }
         if (!blocking) {
-        for (instStream *k = p->streamHead; k; k = k->unk_108) {
+        for (instStream *k = p->streamHead; k; k = k->nextStream) {
             if (!k->unk_228)
                 continue;
             instStream *n;
-            for (n = p->streamHead; n; n = n->unk_108)
+            for (n = p->streamHead; n; n = n->nextStream)
                 n->unk_229 = 0;
             k->unk_229 = 1;
             bool changed;
             do {
                 changed = false;
-                for (n = p->streamHead; n; n = n->unk_108) {
+                for (n = p->streamHead; n; n = n->nextStream) {
                     if (n->unk_229)
                         continue;
                     n->unk_229 = 1;
@@ -203,7 +203,7 @@ bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int ear
         }
         }
         if (!blocking) {
-        for (instStream *s = p->streamHead; s; s = s->unk_108) {
+        for (instStream *s = p->streamHead; s; s = s->nextStream) {
             if (s->unk_227) {
                 s->unk_258 = p->unk_e0;
                 p->unk_e0 = s;

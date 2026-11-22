@@ -24,13 +24,13 @@ instStream::instStream()
     unk_2c8 = -1;
     unk_238 = 0;
     unk_2d0 = 0;
-    unk_108 = 0;
-    unk_10c = 0;
+    nextStream = 0;
+    previousStream = 0;
     unk_2c0 = 0;
     unk_2c2 = 0;
     unk_2c6 = 0;
-    unk_104 = 0;
-    unk_218 = 0;
+    owningProgram = 0;
+    workTablePtr = 0;
     unk_220 = 0;
     unk_214 = 0;
     unk_21c = 0;
@@ -61,7 +61,7 @@ bool instStream::reset()
     unk_2ba = 0;
     unk_110.func_0804b1b0();
     unk_2c0 = -1;
-    unk_104 = 0;
+    owningProgram = 0;
     unk_2ce = 0;
     if (unk_238)
         delete[] unk_238;
@@ -82,7 +82,7 @@ void instStream::dump(int)
     unk_110.func_0804b534();
     unk_128.dump();
     canLoop();
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (!wt) {
         reportWarning("iStream:: dump - null work table - defaulting to inputTable\n");
         wt = &unk_148;
@@ -98,11 +98,11 @@ void instStream::dump(int)
 
 void instStream::zeroStats()
 {
-    if (!unk_218) {
+    if (!workTablePtr) {
         reportError("no work table set for zeroStats!\n");
         exitAfterCleanup(-1);
     }
-    for (Instr *i = unk_218->unk_88.unk_00; i; i = i->unk_1c.unk_00)
+    for (Instr *i = workTablePtr->unk_88.unk_00; i; i = i->unk_1c.unk_00)
         i->unk_13f0.func_0805e340();
     unk_278.func_0805e340();
 }
@@ -123,7 +123,7 @@ bool instStream::iOwn(Instr *i)
 
 bool instStream::patchLatencies()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     int n = 0;
     if (!wt) {
         reportError("iStream::PatchLatencies - no work table\n");
@@ -271,8 +271,8 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
         return buf;
     }
     for (mNode *n = unk_110.unk_0c; n; n = n->unk_04) {
-        if (n->unk_14 && (isReferencedLabel(unk_104, n->unk_14)
-                          || func_0806f4e8(unk_104, n->unk_14) || n->unk_18))
+        if (n->unk_14 && (isReferencedLabel(owningProgram, n->unk_14)
+                          || func_0806f4e8(owningProgram, n->unk_14) || n->unk_18))
             buf += formatIntoBuffer(buf, "%s:\n", n->unk_14);
     }
     if (unk_124) {
@@ -301,21 +301,21 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
 
 bool instStream::flowReset()
 {
-    if (!unk_218) {
+    if (!workTablePtr) {
         reportError("work table not set\n");
         return false;
     }
-    if (!unk_218->unk_14.clear()) {
+    if (!workTablePtr->unk_14.clear()) {
         reportError("iStream::flowReset() - failed to dispose regrefs\n");
         return false;
     }
-    for (Instr *i = unk_218->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
+    for (Instr *i = workTablePtr->unk_88.unk_00; i; i = i->unk_1c.unk_00) {
         if (!i->func_0805417c()) {
             reportError("failed to init flow for isn\n");
             return false;
         }
     }
-    if (!unk_218->func_080737e4()) {
+    if (!workTablePtr->func_080737e4()) {
         reportError("failed to flow reset the iEntries for a work table\n");
         return false;
     }
@@ -364,7 +364,7 @@ Instr *instStream::getBranch()
 bool instStream::removeBranch()
 {
     requireTable("getBranch  - no work table!\n");
-    if (!unk_218->removeBranch()) {
+    if (!workTablePtr->removeBranch()) {
         reportError("failed to delete branch from work table\n");
         return false;
     }
@@ -376,7 +376,7 @@ char *instStream::getBranchTargetImmediate()
 {
     char *r = 0;
     requireTable("getBranch  - no work table!\n");
-    Instr *br = unk_218->getBranch();
+    Instr *br = workTablePtr->getBranch();
     if (br)
         r = br->getBranchTargetImmediate();
     else
@@ -388,7 +388,7 @@ RegPoolEntry *instStream::getBranchTargetRegister()
 {
     RegPoolEntry *r = 0;
     requireTable("getBranch  - no work table!\n");
-    Instr *br = unk_218->getBranch();
+    Instr *br = workTablePtr->getBranch();
     if (br)
         r = br->getBranchTargetRegister();
     else
@@ -398,7 +398,7 @@ RegPoolEntry *instStream::getBranchTargetRegister()
 
 unsigned char instStream::func_0806d908()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt)
         return wt->unk_09;
     reportError("getCodeMode - work table not set\n");
@@ -407,7 +407,7 @@ unsigned char instStream::func_0806d908()
 
 const char *instStream::getCodeModeName()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt)
         return codeModeName(wt->unk_09);
     reportError("getCodeMode - work table not set\n");
@@ -416,7 +416,7 @@ const char *instStream::getCodeModeName()
 
 unsigned char instStream::func_0806d968()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt)
         return wt->func_08073754();
     reportError("getCodeMode - work table not set\n");
@@ -435,7 +435,7 @@ static inline bool isFreeRawTable(workTable *wt)
 
 bool instStream::func_0806d9a0()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (!wt)
         return false;
     return isFreeRawTable(wt);
@@ -448,7 +448,7 @@ static inline bool isFixedRawTable(workTable *wt)
 
 bool instStream::func_0806d9d4()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (!wt)
         return false;
     return isFixedRawTable(wt);
@@ -456,7 +456,7 @@ bool instStream::func_0806d9d4()
 
 unsigned char instStream::getAllocMode()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt)
         return wt->unk_08;
     reportError("getAllocMode - work table not set\n");
@@ -465,7 +465,7 @@ unsigned char instStream::getAllocMode()
 
 bool instStream::func_0806da34()
 {
-    workTable *wt = unk_218;
+    workTable *wt = workTablePtr;
     if (wt && wt->unk_09 == 3)
         return false;
     return true;
@@ -473,8 +473,8 @@ bool instStream::func_0806da34()
 
 bool instStream::func_0806da58()
 {
-    if (unk_218)
-        return unk_218->func_08073854();
+    if (workTablePtr)
+        return workTablePtr->func_08073854();
     return false;
 }
 
@@ -561,7 +561,7 @@ bool instStream::processCmdSynth(Instr *i)
 bool instStream::disposeInputTable()
 {
     workTable *t = &unk_148;
-    if (t == unk_218) {
+    if (t == workTablePtr) {
         reportError("can't dispose of input table while it's the work table\n");
         abortAfterError();
     }

@@ -14,7 +14,7 @@ instStream *selectUninsertedStream(Program *p)
     instStream *best = 0;
     int minIn = 1000000;
     int maxOut = -1000000;
-    for (; s; s = s->unk_108) {
+    for (; s; s = s->nextStream) {
         if (s->func_0806d908() == 1) {
             int in = s->getUninsertedxInputs();
             int out = s->getUninsertedxOutputs();
@@ -42,11 +42,11 @@ instStream *selectUninsertedStream(Program *p)
 int instStream::getUninsertedxInputs()
 {
     int count = 0;
-    if (!unk_218) {
+    if (!workTablePtr) {
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = unk_218->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = workTablePtr->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
         int base = getFromStart(in);
         if (base < 0) {
             reportError("iStream::: getUninsertedxInputs - failed\n");
@@ -92,11 +92,11 @@ int instStream::getUninsertedxInputs()
 int instStream::getUninsertedxOutputs()
 {
     int count = 0;
-    if (!unk_218) {
+    if (!workTablePtr) {
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = unk_218->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = workTablePtr->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
         int base = getToEnd(in);
         if (base < 0) {
             reportError("iStream::: getUninsertedxOutputs - failed\n");

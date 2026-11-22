@@ -21,12 +21,12 @@ static inline bool extendForEnd_inl(workTable *wt)
 bool func_08062a88(Program *p)
 {
     instStream *s;
-    for (s = p->streamHead; s; s = s->unk_108) {
-        if (!s->unk_218) {
+    for (s = p->streamHead; s; s = s->nextStream) {
+        if (!s->workTablePtr) {
             reportError("work table not set in %s\n", s->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *wt = s->unk_218;
+        workTable *wt = s->workTablePtr;
         switch (wt->unk_09) {
         case 1:
             reportError("work table code mode is uta..%s\n", s->streamName());
@@ -53,7 +53,7 @@ bool func_08062a88(Program *p)
             n = n->unk_08;
         }
     }
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (!s->unk_265)
             continue;
         linkNode *n = s->unk_134.unk_00;
@@ -70,11 +70,11 @@ bool func_08062a88(Program *p)
             b->unk_1392 = 1;
         s->unk_2ce = 0;
         s->unk_2cd = 3;
-        if (!s->unk_218) {
+        if (!s->workTablePtr) {
             reportError("work table not set in %s\n", s->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *wt = s->unk_218;
+        workTable *wt = s->workTablePtr;
         if (wt->unk_09 == 4)
             continue;
         if (wt->func_0807411c() < 0)

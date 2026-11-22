@@ -53,7 +53,7 @@ int vuta1RegCost(Instr *in)
     int cost = 0;
     for (int i = 0; i != in->operandCount; i++) {
         RegPoolEntry *r = in->operands[i].inRegOp2();
-        if (r && r->unk_30 == 59)
+        if (r && r->registerIndex == 59)
             cost += 400;
     }
     return cost;

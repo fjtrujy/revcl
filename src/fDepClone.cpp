@@ -70,11 +70,11 @@ bool func_080655e8(Instr *i, int *row)
 
 bool instStream::func_0806563c(bool a, bool b)
 {
-    if (!unk_218) {
+    if (!workTablePtr) {
         reportWarning("BuildfDepList - no work table set for %s!\n", streamName());
         return false;
     }
-    return BuildfDepList(unk_218, a, b);
+    return BuildfDepList(workTablePtr, a, b);
 }
 
 bool BuildfDepList(workTable *wt, bool force, bool)
@@ -176,9 +176,9 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                 if (op) {
                     RegPoolEntry *r = registerOperand(op, 2);
                     if (r) {
-                        if (r->unk_30 == 48)
+                        if (r->registerIndex == 48)
                             in->unk_1414 = op->unk_07;
-                        if (r->unk_30 == 48 || r->unk_30 == 49) {
+                        if (r->registerIndex == 48 || r->registerIndex == 49) {
                             for (int p = 0; p != r->partCount; p++)
                                 if ((op->unk_07 >> p) & 1)
                                     for (ol_s *l = op->unk_2c[p].unk_54.unk_00; l; l = l->unk_00) {
@@ -189,7 +189,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                         }
                     }
                     r = registerOperand(op, 1);
-                    if (r && r->unk_30 == 48)
+                    if (r && r->registerIndex == 48)
                         in->unk_1412 = op->unk_07;
                 }
             }

@@ -8,16 +8,16 @@ RegPool *GetRP(unsigned t);
 void dumpThru(Program *prog)
 {
     reportInfo("dump through registers ==============================================\n");
-    for (instStream *s = prog->streamHead; s; s = s->unk_108) {
+    for (instStream *s = prog->streamHead; s; s = s->nextStream) {
         int i;
         RegPool *rp;
         workTable *t = s->getTable();
         reportInfo("%s:\n", s->streamName());
         for (i = 0; i != 12; i++) {
             rp = GetRP(i);
-            if (!rp || !rp->unk_18)
+            if (!rp || !rp->virtualPartCount)
                 continue;
-            reportInfo("    %s\n", rp->unk_2c);
+            reportInfo("    %s\n", rp->poolName);
             for (regUse *u = t->unk_14.unk_04; u; u = u->unk_04) {
                 int mask = u->unk_10 & ~(u->unk_0e | u->unk_0f | u->unk_0c | u->unk_0d);
                 RegPoolEntry *reg = u->unk_08;

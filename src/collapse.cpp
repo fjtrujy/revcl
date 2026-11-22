@@ -61,7 +61,7 @@ bool func_0806a74c(Program *p)
 {
     bool changed = false;
     instStream *s;
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         workTable *t = s->getTable();
         for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
             if (__builtin_expect(in->func_08055ac4() != 0x6d, 1))
@@ -93,7 +93,7 @@ bool func_0806a74c(Program *p)
     }
     do {
         changed = false;
-        for (s = p->streamHead; s; s = s->unk_108) {
+        for (s = p->streamHead; s; s = s->nextStream) {
             workTable *t = s->getTable();
             for (Instr *in = t->unk_88.unk_00; in; in = in->unk_1c.unk_00) {
                 int k = func_0806aa54(in);

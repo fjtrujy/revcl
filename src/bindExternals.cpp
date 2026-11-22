@@ -12,7 +12,7 @@ extern const char bindExtFindRegRefError[];
 
 bool bindExternals(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (!wt) {
             reportError("no worktable!\n");
@@ -30,7 +30,7 @@ bool bindExternals(Program *p)
                     return false;
                 }
                 if (ru->isExternal() || wt->unk_08 == 3) {
-                    if (reg->unk_14) {
+                    if (reg->isVirtual) {
                         reportError(bindExtVirtualRegError);
                         return false;
                     }

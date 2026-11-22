@@ -72,7 +72,7 @@ bool func_08061c34(instStream *n)
 
 int func_08061cb0(Program *p, instStream *n)
 {
-    VisitCache *vc = &p->unk_bc;
+    VisitCache *vc = &p->backTraceVisitCache;
     if (!vc->startRecord()) {
         reportError("failed to start a record\n");
         return 0;
@@ -92,7 +92,7 @@ int func_08061cb0(Program *p, instStream *n)
 
 int getMaxPathKey(Program *p, instStream *n)
 {
-    VisitCache *vc = &p->unk_bc;
+    VisitCache *vc = &p->backTraceVisitCache;
     if (!vc->startRecord()) {
         reportError("failed to start a record\n");
         return 0;
@@ -116,9 +116,9 @@ bool isPathRaw(Program *p, int key)
         reportError("<=0 input to isPathRaw\n");
         exitAfterCleanup(-1);
     }
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         int id = s->unk_2c0;
-        if (p->unk_bc.testBit(key, id) && s->func_0806d908() == 1)
+        if (p->backTraceVisitCache.testBit(key, id) && s->func_0806d908() == 1)
             return false;
     }
     return true;
@@ -130,9 +130,9 @@ int guessKeyLen(Program *p, int key, int start, int end)
     int len = 0;
     bool foundStart = false;
     bool foundEnd = false;
-    for (; s; s = s->unk_108) {
+    for (; s; s = s->nextStream) {
         int id = s->unk_2c0;
-        if (p->unk_bc.testBit(key, id)) {
+        if (p->backTraceVisitCache.testBit(key, id)) {
             bool hit = false;
             if (id == start) {
                 foundStart = true;

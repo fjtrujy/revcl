@@ -21,7 +21,7 @@ Program::Program(bool symbolic)
     streamTail = 0;
     streamHead = 0;
     streamCount = 0;
-    unk_b0 = 0;
+    streamsById = 0;
 }
 
 Program::~Program()
@@ -57,7 +57,7 @@ bool Program::dispose()
 {
     instStream *s = streamHead;
     while (s) {
-        instStream *next = s->unk_108;
+        instStream *next = s->nextStream;
         s->reset();
         delete s;
         s = next;
@@ -65,11 +65,11 @@ bool Program::dispose()
     streamTail = 0;
     streamHead = 0;
     streamCount = 0;
-    if (unk_b0)
-        delete[] unk_b0;
-    unk_b0 = 0;
+    if (streamsById)
+        delete[] streamsById;
+    streamsById = 0;
     disposeBackTrace(this);
-    unk_88.func_0804b1b0();
+    uniqueNamePrefixes.func_0804b1b0();
     return true;
 }
 
@@ -78,22 +78,22 @@ bool Program::addStream(instStream *s)
 {
     if (!s)
         return false;
-    if (s->unk_104) {
+    if (s->owningProgram) {
         reportError("addistream - owner already set\n");
         return false;
     }
     if (streamHead) {
-        streamTail->unk_108 = s;
-        s->unk_10c = streamTail;
-        s->unk_108 = 0;
+        streamTail->nextStream = s;
+        s->previousStream = streamTail;
+        s->nextStream = 0;
         streamTail = s;
     } else {
         streamHead = s;
         streamTail = s;
-        s->unk_108 = 0;
-        s->unk_10c = 0;
+        s->nextStream = 0;
+        s->previousStream = 0;
     }
-    s->unk_104 = this;
+    s->owningProgram = this;
     streamCount++;
     return true;
 }
@@ -102,53 +102,53 @@ bool Program::insertStreamAfter(instStream *after, instStream *s)
 {
     if (!s)
         return false;
-    if (s->unk_104) {
+    if (s->owningProgram) {
         reportError("addistream - owner already set\n");
         return false;
     }
-    s->unk_10c = after;
+    s->previousStream = after;
     if (after) {
-        s->unk_108 = after->unk_108;
-        if (after->unk_108)
-            after->unk_108->unk_10c = s;
+        s->nextStream = after->nextStream;
+        if (after->nextStream)
+            after->nextStream->previousStream = s;
         else
             streamTail = s;
-        after->unk_108 = s;
+        after->nextStream = s;
     } else {
-        s->unk_108 = streamHead;
+        s->nextStream = streamHead;
         if (streamHead)
-            streamHead->unk_10c = s;
+            streamHead->previousStream = s;
         streamHead = s;
     }
-    s->unk_104 = this;
+    s->owningProgram = this;
     streamCount++;
     return true;
 }
 
 bool Program::removeStream(instStream *s)
 {
-    if (s->unk_104 != this) {
+    if (s->owningProgram != this) {
         reportError("didn't have owner! or not us!\n");
         return false;
     }
-    if (s->unk_108)
-        s->unk_108->unk_10c = s->unk_10c;
+    if (s->nextStream)
+        s->nextStream->previousStream = s->previousStream;
     else
-        streamTail = s->unk_10c;
-    if (s->unk_10c)
-        s->unk_10c->unk_108 = s->unk_108;
+        streamTail = s->previousStream;
+    if (s->previousStream)
+        s->previousStream->nextStream = s->nextStream;
     else
-        streamHead = s->unk_108;
-    s->unk_104 = 0;
-    s->unk_108 = 0;
-    s->unk_10c = 0;
+        streamHead = s->nextStream;
+    s->owningProgram = 0;
+    s->nextStream = 0;
+    s->previousStream = 0;
     streamCount--;
     return true;
 }
 
 void func_0806ed78(Program *p, int b)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108)
+    for (instStream *s = p->streamHead; s; s = s->nextStream)
         s->dump(b);
     func_0806be68(p);
 }
@@ -156,7 +156,7 @@ void func_0806ed78(Program *p, int b)
 instStream *Program::findStreamById(int id)
 {
     instStream *s;
-    for (s = streamHead; s && s->unk_2c0 != id; s = s->unk_108)
+    for (s = streamHead; s && s->unk_2c0 != id; s = s->nextStream)
         ;
     return s;
 }
@@ -166,7 +166,7 @@ instStream *Program::findStream(const char *name)
     if (!name)
         return 0;
     instStream *s;
-    for (s = streamHead; s && !s->unk_110.func_0804b284(name); s = s->unk_108)
+    for (s = streamHead; s && !s->unk_110.func_0804b284(name); s = s->nextStream)
         ;
     return s;
 }
@@ -255,7 +255,7 @@ bool Program::func_0806efc4(Parser *parser, int a, bool newSyntax)
 
 bool func_0806f0e8(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (!s->patchLatencies())
             reportError("flowMon::PatchLatencies - failed for '%s'\n", s->streamName());
     }
@@ -271,7 +271,7 @@ char *emitProgram(Program *p, char *out, int comments)
         return 0;
     }
     char *buf = out;
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_00) {
             buf += formatIntoBuffer(buf, "; === __LP__ %s:\n", s->streamName());
             for (int i = 0; i != s->unk_00; i++) {
@@ -292,7 +292,7 @@ char *emitProgram(Program *p, char *out, int comments)
         reportError("failed to emit the start of the source file\n");
         return 0;
     }
-    for (s = p->streamHead; s; s = s->unk_108) {
+    for (s = p->streamHead; s; s = s->nextStream) {
         s->dump(0);
         int n = 0, m = 0;
         s->unk_2c8 = total;
@@ -329,7 +329,7 @@ const char *getUniqueName(Program *p)
 
 char *emitLabels(Program *p, char *buf)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         buf = s->emitLabels(buf);
         if (!buf) {
             reportError("failed to emit user labels for '%s'\n", s->streamName());
@@ -341,7 +341,7 @@ char *emitLabels(Program *p, char *buf)
 
 bool isReferencedLabel(Program *p, char *name)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_2cc == 2) {
             linkNode *l = s->unk_134.unk_00;
             if (l) {
@@ -365,7 +365,7 @@ bool isReferencedLabel(Program *p, char *name)
                 return true;
         }
     }
-    return p->unk_88.func_0804b234(name) != 0;
+    return p->uniqueNamePrefixes.func_0804b234(name) != 0;
 }
 
 bool func_0806f4a0(Program *p, instStream *s)
@@ -387,8 +387,8 @@ bool recalcFlowUIDs(Program *p)
 {
     instStream *s = p->streamHead;
     int n = 0;
-    p->unk_ac = -1;
-    for (; s; s = s->unk_108) {
+    p->flowIdCount = -1;
+    for (; s; s = s->nextStream) {
         if (!s->func_0806d908()) {
             reportError("recalcFlowUIDs - found bad code mode at %s\n", s->streamName());
             return false;
@@ -399,19 +399,19 @@ bool recalcFlowUIDs(Program *p)
         reportError("recalcFlowUIDs - there was a hole somewhere?\n");
         return false;
     }
-    p->unk_ac = n;
-    int size = p->unk_ac + 1;
-    if (p->unk_b0) {
-        delete p->unk_b0;
-        p->unk_b0 = 0;
+    p->flowIdCount = n;
+    int size = p->flowIdCount + 1;
+    if (p->streamsById) {
+        delete p->streamsById;
+        p->streamsById = 0;
     }
-    p->unk_b0 = new instStream *[size];
-    if (!p->unk_b0) {
+    p->streamsById = new instStream *[size];
+    if (!p->streamsById) {
         reportError("failed to get a new linear table\n");
         return false;
     }
-    for (s = p->streamHead; s; s = s->unk_108)
-        p->unk_b0[s->unk_2c0] = s;
+    for (s = p->streamHead; s; s = s->nextStream)
+        p->streamsById[s->unk_2c0] = s;
     return true;
 }
 
@@ -421,7 +421,7 @@ bool func_0806f610(Program *p)
         reportError("failed to alloc reset the cpu\n");
         return false;
     }
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (!wt) {
             reportError("failed to get work table\n");
@@ -455,7 +455,7 @@ void dumpFlow(Program *p)
 {
     instStream *s = p->streamHead;
     reportInfo("dumpFlow-------------------\n");
-    for (; s; s = s->unk_108) {
+    for (; s; s = s->nextStream) {
         const char *tag = "";
         if (isEntryStream(s))
             tag = " ---ENTRY";

@@ -322,7 +322,7 @@ bool epiRec::init(int size, const char *name)
     unk_18 = wt;
     s->unk_2c2 = serial;
     wt->unk_10 = unk_14;
-    unk_14->unk_218 = &unk_14->unk_148;
+    unk_14->workTablePtr = &unk_14->unk_148;
     return true;
 }
 
@@ -371,7 +371,7 @@ int func_08067e18(Program *p, instStream *s)
         reportError("epipro:failed to get default output stream\n");
         return -1;
     }
-    if (fall != s->unk_108) {
+    if (fall != s->nextStream) {
         reportError("exit stream not same as loopback successor\n");
         return -1;
     }
@@ -505,7 +505,7 @@ int func_08067e18(Program *p, instStream *s)
         return -1;
     }
 
-    instStream *last = s->unk_10c;
+    instStream *last = s->previousStream;
     if (!p->removeStream(s)) {
         reportError("failed to unlink istream\n");
         exitAfterCleanup(-1);

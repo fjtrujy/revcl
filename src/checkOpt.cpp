@@ -9,7 +9,7 @@
 
 bool checkOpt1(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (!wt) {
             reportError("null work table\n");
@@ -26,7 +26,7 @@ bool checkOpt1(Program *p)
 
 bool checkOpt2(Program *p)
 {
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (!wt) {
             reportError("null work table\n");
@@ -59,7 +59,7 @@ bool checkOpt3(Program *p)
 {
     reportInfo("checkOpt2()\n");
     reportInfo("OLL free count = %d\n", func_080586c4());
-    for (instStream *s = p->streamHead; s; s = s->unk_108) {
+    for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (!wt) {
             reportError("null work table\n");
@@ -161,7 +161,7 @@ bool checkOpt3(Program *p)
                 } else
                     reg = in->operands[k].unk_18;
                 RegPoolEntry *mreg = (RegPoolEntry *)in->operands[k].unk_10;
-                if (reg && reg->unk_14 && !in->operands[k].unk_14) {
+                if (reg && reg->isVirtual && !in->operands[k].unk_14) {
                     reportError("original reg not set\n");
                     return false;
                 }
@@ -170,12 +170,12 @@ bool checkOpt3(Program *p)
                         reportError("original reg not set, but mapped base reg is\n");
                         return false;
                     }
-                    if (mreg->unk_14) {
+                    if (mreg->isVirtual) {
                         reportError("mapped base reg is set - but it's virtual\n");
                         return false;
                     }
                 }
-                if (reg && reg->unk_14 != 1 && mreg && reg != mreg) {
+                if (reg && reg->isVirtual != 1 && mreg && reg != mreg) {
                     reportError("register is base, but mapped base register, it isn't.. reg=%s mreg=%s\n",
                                   reg->registerName(), mreg->registerName());
                     return false;

@@ -23,7 +23,7 @@ extern const char lsqChainNewInstrError[];
 
 bool makeLpWork(instStream *s, int maxSpread)
 {
-    workTable *wt = s->unk_218;
+    workTable *wt = s->workTablePtr;
     if (!wt) {
         reportError(lpWorkNoTableError);
         return false;
@@ -33,9 +33,9 @@ bool makeLpWork(instStream *s, int maxSpread)
         return false;
     }
     s->unk_220 = wt;
-    s->unk_218 = 0;
+    s->workTablePtr = 0;
     workTable *nt = wt->localClone();
-    s->unk_218 = nt;
+    s->workTablePtr = nt;
     if (!nt) {
         reportError(lpWorkCloneTableError);
         return false;
@@ -144,16 +144,16 @@ bool makeLpWork(instStream *s, int maxSpread)
 
 bool disposeLpWork(instStream *s)
 {
-    if (s->unk_218 == 0) {
+    if (s->workTablePtr == 0) {
         reportError(lpWorkDisposeNoTableError);
         return false;
     }
-    delete s->unk_218;
+    delete s->workTablePtr;
     if (s->unk_220 == 0) {
         reportError(lpWorkDisposeNoSavedError);
         return false;
     }
-    s->unk_218 = s->unk_220;
+    s->workTablePtr = s->unk_220;
     s->unk_220 = 0;
     return true;
 }

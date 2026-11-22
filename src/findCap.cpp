@@ -20,7 +20,7 @@ static inline RegPoolEntry *outR(Operand *o)
         return o->unk_18;
     return 0;
 }
-static inline bool isPoolZero(RegPool *p, RegPoolEntry *r) { return r == p->unk_10; }
+static inline bool isPoolZero(RegPool *p, RegPoolEntry *r) { return r == p->zeroRegister; }
 
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask)
 {
@@ -36,7 +36,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     g_080de740 = 0;
 
     RegPoolEntry *reg = isRegisterOperand(op, 2) ? op->unk_18 : 0;
-    switch (reg->unk_30) {
+    switch (reg->registerIndex) {
     case 52:
         cap = 0x73;
         g_080de744 = func_0806c224(51);
@@ -58,25 +58,25 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
         }
         if (r0->registerClass != 9)
             break;
-        RegPool *pool = r0->unk_04;
+        RegPool *pool = r0->ownerPool;
         if (isPoolZero(pool, r0)) {
             unsigned char mask[32];
             int i;
             for (i = 0; i != 32; i++) {
                 RegPoolEntry *e = pool->func_080593e0(i);
-                mask[i] = (e->unk_16 && e->unk_15) ? in->operands[0].unk_07 : 0;
+                mask[i] = (e->unk_16 && e->allocatable) ? in->operands[0].unk_07 : 0;
             }
             mask[0] = 0;
             for (regUse *ru = wt->unk_14.unk_04; ru; ru = ru->unk_04) {
                 RegPoolEntry *reg = ru->unk_08;
                 if (reg->registerClass != 9)
                     continue;
-                if (reg->unk_14 == 1) {
+                if (reg->isVirtual == 1) {
                     reportError("register isn't base!\n");
                     return -1;
                 }
                 unsigned char m = ru->unk_0e | ru->unk_0f | ru->unk_10;
-                int idx = pool->regIndex(reg->unk_30);
+                int idx = pool->regIndex(reg->registerIndex);
                 if (idx < 0) {
                     reportError("failed to get local id\n");
                     return -1;

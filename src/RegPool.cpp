@@ -27,16 +27,16 @@ const char *regTypeName(int type)
 RegPool::RegPool()
 {
     unk_28 = 0;
-    unk_2c = 0;
-    unk_04 = 0;
-    unk_08 = 0;
+    poolName = 0;
+    registerEntries = 0;
+    entryCount = 0;
     unk_0c = 0;
-    unk_18 = 0;
+    virtualPartCount = 0;
     unk_20 = 0;
     unk_1c = 0;
     unk_24 = 0;
-    unk_10 = 0;
-    unk_14 = 0;
+    zeroRegister = 0;
+    externalRegister = 0;
     unk_0e = 0;
 }
 
@@ -50,16 +50,16 @@ RegPool::~RegPool()
     }
     unk_1c = unk_20 = 0;
     unk_24 = 0;
-    delete[] unk_04;
+    delete[] registerEntries;
 }
 
 bool RegPool::Init(VclPtrWord registerPrefix, const char* name, int cls, int virtualRegisterParts)
 {
     unk_28 = registerPrefix;
-    unk_18 = virtualRegisterParts;
-    unk_2c = name;
-    unk_04 = 0;
-    unk_08 = 0;
+    virtualPartCount = virtualRegisterParts;
+    poolName = name;
+    registerEntries = 0;
+    entryCount = 0;
     unk_20 = 0;
     unk_1c = 0;
     unk_24 = 0;
@@ -76,13 +76,13 @@ bool RegPool::Init(VclPtrWord registerPrefix, const char* name, int cls, int vir
         return true;
 
     RegPoolEntry* tab = new RegPoolEntry[registerCount];
-    unk_04 = tab;
+    registerEntries = tab;
     if (!tab) {
         reportError("RegPool::Init - couldn't allocate table\n");
         return false;
     }
     entry = tab;
-    unk_08 = registerCount;
+    entryCount = registerCount;
 
     descriptor = regDescTable;
     descriptorIndex = 0;
@@ -104,9 +104,9 @@ bool RegPool::Init(VclPtrWord registerPrefix, const char* name, int cls, int vir
                 return false;
             }
         }
-        entry->unk_15 = descriptor->allocatable != 0;
+        entry->allocatable = descriptor->allocatable != 0;
         entry->registerClass = descriptor->registerClass;
-        entry->unk_04 = this;
+        entry->ownerPool = this;
         entry->partCount = descriptor->partCount;
         entry->unk_2c = descriptor->unk_14 != 0;
         entry->unk_1c = descriptor->nonBlockId;
@@ -114,7 +114,7 @@ bool RegPool::Init(VclPtrWord registerPrefix, const char* name, int cls, int vir
             reportError("nonblockid is set, but nparts!=1.. register is %s\n", entry->registerName());
             return false;
         }
-        entry->unk_30 = descriptorIndex;
+        entry->registerIndex = descriptorIndex;
         entry++;
     }
     return true;
@@ -122,20 +122,20 @@ bool RegPool::Init(VclPtrWord registerPrefix, const char* name, int cls, int vir
 
 void RegPool::Dump()
 {
-    if (!unk_2c) {
+    if (!poolName) {
         reportError("RegPool::Dump() POOL_WITH_NO_NAME\n");
         return;
     }
     int current = 0;
-    if (unk_04) {
+    if (registerEntries) {
         int i = 0;
-        for (; current != unk_08; current = ++i) {
-            RegPoolEntry* e = &unk_04[i];
-            int offset = (char*)e - (char*)unk_04;
+        for (; current != entryCount; current = ++i) {
+            RegPoolEntry* e = &registerEntries[i];
+            int offset = (char*)e - (char*)registerEntries;
             for (int p = offset; p; p = 0)
                 ;
         }
-        if (unk_18) {
+        if (virtualPartCount) {
             for (RegPoolEntry* p = unk_1c; p; p = p->next)
                 ;
         }
@@ -144,18 +144,18 @@ void RegPool::Dump()
 
 RegPoolEntry* RegPool::func_080593e0(int index)
 {
-    if (!unk_04)
+    if (!registerEntries)
         return 0;
-    int i = index - unk_04->unk_30;
-    if (i < 0 || i >= unk_08)
+    int i = index - registerEntries->registerIndex;
+    if (i < 0 || i >= entryCount)
         return 0;
-    return &unk_04[i];
+    return &registerEntries[i];
 }
 
 RegPoolEntry* RegPool::func_08059418(const char* name)
 {
-    RegPoolEntry* e = unk_04;
-    for (int i = 0; i != unk_08; i++, e++)
+    RegPoolEntry* e = registerEntries;
+    for (int i = 0; i != entryCount; i++, e++)
         if (e->unk_2b8.func_0804b284(name))
             return e;
     return 0;
@@ -163,9 +163,9 @@ RegPoolEntry* RegPool::func_08059418(const char* name)
 
 bool RegPool::func_08059464()
 {
-    if (unk_04) {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++)
+    if (registerEntries) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++)
             e->func_0805a390();
         for (RegPoolEntry* p = unk_1c; p; p = p->next)
             p->func_0805a390();
@@ -175,9 +175,9 @@ bool RegPool::func_08059464()
 
 bool RegPool::func_080594c0()
 {
-    if (unk_04) {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++)
+    if (registerEntries) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++)
             e->func_0805a348();
         for (RegPoolEntry* p = unk_1c; p; p = p->next)
             p->func_0805a348();
@@ -187,9 +187,9 @@ bool RegPool::func_080594c0()
 
 bool RegPool::func_0805951c()
 {
-    if (unk_04) {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++)
+    if (registerEntries) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++)
             e->func_0805a300();
     }
     for (RegPoolEntry* p = unk_1c; p; p = p->next)
@@ -199,9 +199,9 @@ bool RegPool::func_0805951c()
 
 bool RegPool::func_08059578()
 {
-    if (unk_04) {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++)
+    if (registerEntries) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++)
             e->func_0805a4b4();
         for (RegPoolEntry* p = unk_1c; p; p = p->next)
             p->func_0805a4b4();
@@ -219,10 +219,10 @@ bool RegPool::func_080595d4()
     }
     unk_1c = unk_20 = 0;
     unk_24 = 0;
-    RegPoolEntry* e = unk_04;
-    for (int i = 0; i != unk_08; i++, e++) {
+    RegPoolEntry* e = registerEntries;
+    for (int i = 0; i != entryCount; i++, e++) {
         e->unk_16 = false;
-        e->unk_14 = false;
+        e->isVirtual = false;
     }
     return true;
 }
@@ -280,8 +280,8 @@ bool RegPool::isResvd(const char* name, int cls)
 
 bool RegPool::func_08059828(bool flag)
 {
-    RegPoolEntry* e = unk_04;
-    for (int i = 0; i != unk_08; i++, e++)
+    RegPoolEntry* e = registerEntries;
+    for (int i = 0; i != entryCount; i++, e++)
         if (!e->func_0805a4f4(flag)) {
             reportError("cycle: fail for %s\n", e->registerName());
             return false;
@@ -317,17 +317,17 @@ static inline RegPoolEntry* findVirtual(RegPoolEntry* p, const char* name)
 
 RegPoolEntry* RegPool::func_08059944(const char* name)
 {
-    if (!unk_18) {
+    if (!virtualPartCount) {
         RegPoolEntry* e = func_08059418(name);
         if (!e)
-            reportError("failed to find reg, and don't allow virtuals - pool %s regname=%s\n", unk_2c, name);
+            reportError("failed to find reg, and don't allow virtuals - pool %s regname=%s\n", poolName, name);
         return e;
     }
     RegPoolEntry* e = func_08059418(name);
     if (e)
         return e;
     if (isResvd(name, unk_0c)) {
-        reportUserMessage("can't use %s as a name for one of the %s\n", name, unk_2c);
+        reportUserMessage("can't use %s as a name for one of the %s\n", name, poolName);
         return 0;
     }
     e = findVirtual(unk_1c, name);
@@ -363,13 +363,13 @@ RegPoolEntry* RegPool::func_08059a5c(const char* name)
         reportError("failed to get a new virtual register\n");
         return 0;
     }
-    e->unk_04 = this;
+    e->ownerPool = this;
     e->registerClass = unk_0c;
     e->unk_0c = 0;
     e->next = 0;
-    e->partCount = unk_18;
-    e->unk_30 = unk_0c * 2000 + unk_24;
-    e->unk_14 = true;
+    e->partCount = virtualPartCount;
+    e->registerIndex = unk_0c * 2000 + unk_24;
+    e->isVirtual = true;
     e->unk_1c = 0;
     if (!e->func_0805a8a4(name)) {
         reportError("failed to christen name to register %s \n", name);
@@ -390,38 +390,38 @@ RegPoolEntry* RegPool::func_08059a5c(const char* name)
 
 bool RegPool::func_08059c00()
 {
-    if (!unk_04) {
+    if (!registerEntries) {
         reportError("regPool: add all to use - but had no table\n");
         return false;
     }
-    RegPoolEntry* e = unk_04;
-    for (int i = 0; i != unk_08; i++, e++)
-        if (e->unk_15)
+    RegPoolEntry* e = registerEntries;
+    for (int i = 0; i != entryCount; i++, e++)
+        if (e->allocatable)
             e->unk_16 = true;
     return true;
 }
 
 bool RegPool::func_08059c4c()
 {
-    if (unk_04) {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++)
-            e->unk_18 = 0;
+    if (registerEntries) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++)
+            e->assignedPhysicalRegister = 0;
     }
     for (RegPoolEntry* p = unk_1c; p; p = p->next)
-        p->unk_18 = 0;
+        p->assignedPhysicalRegister = 0;
     return true;
 }
 
 bool RegPool::func_08059c94()
 {
-    if (unk_04) {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++)
-            e->unk_18 = 0;
+    if (registerEntries) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++)
+            e->assignedPhysicalRegister = 0;
     }
     for (RegPoolEntry* p = unk_1c; p; p = p->next)
-        p->unk_18 = 0;
+        p->assignedPhysicalRegister = 0;
     return true;
 }
 
@@ -430,15 +430,15 @@ bool RegPool::func_08059cdc()
     for (RegPoolEntry* p = unk_1c; p; p = p->next) {
         if (!p->func_0805aa00())
             goto fail;
-        p->unk_18 = 0;
+        p->assignedPhysicalRegister = 0;
         p->unk_3c = -1;
     }
     {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++) {
             if (!e->func_0805aa00())
                 goto fail;
-            e->unk_18 = 0;
+            e->assignedPhysicalRegister = 0;
         }
     }
     return true;
@@ -485,9 +485,9 @@ bool RegPool::func_08059e20(RegPoolEntry* e)
 
 bool RegPool::optReset()
 {
-    if (unk_04) {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++)
+    if (registerEntries) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++)
             e->optReset();
         for (RegPoolEntry* p = unk_1c; p; p = p->next)
             p->optReset();
@@ -497,28 +497,28 @@ bool RegPool::optReset()
 
 bool RegPool::emitReset()
 {
-    if (unk_04) {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++)
-            e->unk_35 = 0;
+    if (registerEntries) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++)
+            e->usedSlotMask = 0;
         for (RegPoolEntry* p = unk_1c; p; p = p->next)
-            p->unk_35 = 0;
+            p->usedSlotMask = 0;
     }
     return true;
 }
 
 char* RegPool::emitStats(char* buf)
 {
-    buf += formatIntoBuffer(buf, "; %3d %s\n", countUsed(), unk_2c);
+    buf += formatIntoBuffer(buf, "; %3d %s\n", countUsed(), poolName);
     return buf;
 }
 
 int RegPool::regIndex(int reg)
 {
     int r = -1;
-    if (unk_04) {
-        reg -= unk_04->unk_30;
-        if (reg >= 0 && reg < unk_08)
+    if (registerEntries) {
+        reg -= registerEntries->registerIndex;
+        if (reg >= 0 && reg < entryCount)
             r = reg;
     }
     return r;
@@ -527,10 +527,10 @@ int RegPool::regIndex(int reg)
 int RegPool::countUsed()
 {
     int n = 0;
-    if (unk_04) {
-        RegPoolEntry* e = unk_04;
-        for (int i = 0; i != unk_08; i++, e++)
-            if (e->unk_35)
+    if (registerEntries) {
+        RegPoolEntry* e = registerEntries;
+        for (int i = 0; i != entryCount; i++, e++)
+            if (e->usedSlotMask)
                 n++;
     }
     return n;
@@ -539,9 +539,9 @@ int RegPool::countUsed()
 int RegPool::func_08059f70()
 {
     int n = 0;
-    if (unk_04) {
-        for (int i = 0; i != unk_08; i++)
-            if (unk_04[i].unk_16)
+    if (registerEntries) {
+        for (int i = 0; i != entryCount; i++)
+            if (registerEntries[i].unk_16)
                 n++;
     }
     return n;
@@ -568,8 +568,8 @@ int RegPoolEntry::gatherInflight(ol_s** out)
 int RegPool::gatherInflight(ol_s** out)
 {
     int n = 0;
-    for (int i = 0; i != unk_08; i++) {
-        RegPoolEntry* e = &unk_04[i];
+    for (int i = 0; i != entryCount; i++) {
+        RegPoolEntry* e = &registerEntries[i];
         int r = e->gatherInflight(out + n);
         if (r < 0)
             return -1;

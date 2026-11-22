@@ -21,7 +21,7 @@ bool Instr::func_08052f84()
             }
             for (int j = 0; j != in->operandCount; j++) {
                 RegPoolEntry *r = registerOperand(&in->operands[j], 1);
-                if (r && (unsigned)(r->unk_30 - 54) <= 5) {
+                if (r && (unsigned)(r->registerIndex - 54) <= 5) {
                     found = true;
                     break;
                 }
@@ -54,7 +54,7 @@ int Instr::func_08053104()
         RegPoolEntry *r = operands[0].unk_18;
         if (!r)
             return -1;
-        if (r->unk_30 == 0x20) {
+        if (r->registerIndex == 0x20) {
             if (id == 0xa8)
                 return 0;
             if (id == 0xa9)

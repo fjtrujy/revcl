@@ -234,7 +234,7 @@ static inline int operandZeroValue(Operand *op)
 {
     int z = 0;
     if (op->unk_18) {
-        if (op->unk_18 == op->unk_18->unk_04->unk_10)
+        if (op->unk_18 == op->unk_18->ownerPool->zeroRegister)
             z = 1;
     }
     return z;
@@ -248,7 +248,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     if (!func_080563f8())
         return 0;
     if (unk_18) {
-        int z = unk_18 == unk_18->unk_04->unk_10;
+        int z = unk_18 == unk_18->ownerPool->zeroRegister;
         if ((char)z != (char)operandZeroValue(this)) {
             reportError("Operand::Emit - zero mismatch..%s but %d\n", unk_18->registerName(), operandZeroValue(this));
             return 0;
@@ -265,12 +265,12 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     } else {
         RegPoolEntry *reg = unk_18;
         if (reg) {
-            if (reg->unk_14) {
+            if (reg->isVirtual) {
                 reportError("non symbolic emit.. but found a virtual register in an operand!\n");
                 return 0;
             }
             rn = reg->registerName();
-            reg->unk_35 |= unk_07;
+            reg->usedSlotMask |= unk_07;
         }
     }
     switch (unk_04) {

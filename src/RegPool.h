@@ -45,7 +45,7 @@ class workTable;
 struct RegPoolEntry {
     short unk_00;       // min row (getMove)
     short unk_02;       // max row (getMove)
-    RegPool *unk_04;    // owning pool
+    RegPool *ownerPool;    // owning pool
     RegPoolEntry* next;
     const char* registerName();
     RegPoolEntry();
@@ -82,11 +82,11 @@ struct RegPoolEntry {
 
     RegPoolEntry* unk_0c;   // prev
     int unk_10;
-    bool unk_14;        // virtual
-    bool unk_15;        // allocable
+    bool isVirtual;        // virtual
+    bool allocatable;        // allocable
     bool unk_16;
     char unk_17;
-    RegPoolEntry* unk_18;   // allocated physical register
+    RegPoolEntry* assignedPhysicalRegister;   // allocated physical register
     char unk_1c;        // nonblockid
     char unk_1d[3];
     Instr* unk_20;      // move instruction
@@ -94,15 +94,15 @@ struct RegPoolEntry {
     int partCount;         // slot count (nparts)
     bool unk_2c;
     char unk_2d[3];
-    int unk_30;         // register index
+    int registerIndex;         // register index
     char unk_34;
-    unsigned char unk_35;   // used slot mask
+    unsigned char usedSlotMask;   // used slot mask
     short unk_36;
-    Instr *unk_38;          // previous thruput writer
+    Instr *throughputWriter;          // previous thruput writer
     int unk_3c;             // ttab size (nassign cost)
     RegPoolEntry *unk_40;   // next in nassign todo list
     rPart unk_44[4];
-    RegWeb *unk_2b4;    // register web
+    RegWeb *registerWeb;    // register web
     mList unk_2b8;
 
     RegWeb *GetWeb();
@@ -144,18 +144,18 @@ public:
     int func_08059f70();
     int gatherInflight(ol_s** out);
 
-    RegPoolEntry* unk_04;
-    int unk_08;
+    RegPoolEntry* registerEntries;
+    int entryCount;
     short unk_0c;
     short unk_0e;
-    RegPoolEntry* unk_10;   // zero register
-    RegPoolEntry* unk_14;   // ext register
-    int unk_18;
+    RegPoolEntry* zeroRegister;   // zero register
+    RegPoolEntry* externalRegister;   // ext register
+    int virtualPartCount;
     RegPoolEntry* unk_1c;
     RegPoolEntry* unk_20;
     int unk_24;
     VclPtrWord unk_28;
-    const char* unk_2c;     // pool name
+    const char* poolName;     // pool name
 };
 
 struct RegDesc {
