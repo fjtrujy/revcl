@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.23)
 
 option(REVCL_HISTORICAL "Reproduce the original VCL binary with RH9 GCC 3.2.2" OFF)
-option(REVCL_MODERN_32BIT "Compile modern VCL for the original 32-bit x86 ABI" OFF)
 project(REVCL LANGUAGES CXX)
 include(CTest)
 include(config/vcl-link-order.cmake)
@@ -64,13 +63,14 @@ if(REVCL_HISTORICAL)
       -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VerifySha.cmake")
   endif()
 else()
-  # The reconstructed source builds natively on 64-bit Linux and macOS.
-  # The optional 32-bit switch retains the existing Linux i386 test targets.
-  target_compile_options(vcl PRIVATE -std=gnu++98 -O2 -Wno-write-strings)
-  if(REVCL_MODERN_32BIT)
-    target_compile_options(vcl PRIVATE -m32)
-    target_link_options(vcl PRIVATE -m32)
+  # Modern builds follow the native 64-bit host ABI. The sole 32-bit
+  # configuration is the historical GCC 3.2.2 Docker reproduction above.
+  if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(FATAL_ERROR
+      "Modern VCL requires a 64-bit target. Use the historical Docker "
+      "toolchain to reproduce the original 32-bit Linux executable.")
   endif()
+  target_compile_options(vcl PRIVATE -std=gnu++98 -O2 -Wno-write-strings)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(vcl PRIVATE -fpermissive)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
