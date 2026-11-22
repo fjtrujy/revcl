@@ -64,13 +64,13 @@ bool resolveStreamBranches(Program *program)
                     if (br->branchLabelTags) {
                         int type = branchLinkTypeForFlags(s->branchType);
                         char name[2064];
-                        for (char *q = br->branchLabelTags; *q; q++) {
-                            char *r = q;
-                            char *d = name;
-                            while (*r != ':')
-                                *d++ = *r++;
-                            *d = 0;
-                            q = r;
+                        for (char *labelTagCursor = br->branchLabelTags; *labelTagCursor; labelTagCursor++) {
+                            char *tagTextCursor = labelTagCursor;
+                            char *outputCursor = name;
+                            while (*tagTextCursor != ':')
+                                *outputCursor++ = *tagTextCursor++;
+                            *outputCursor = 0;
+                            labelTagCursor = tagTextCursor;
                             instStream *t = program->findStream(name);
                             if (!t) {
                                 reportUserMessage("branch-to-register tag, failed to find label '%s'\n", name);
@@ -177,14 +177,14 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
         for (t = program->streamHead; t; t = t->nextStream) {
             if (t->visitState != 1)
                 continue;
-            workTable *wt = t->getTable();
+            workTable *scheduleTable = t->getTable();
             Instr *in;
             if (first) {
                 in = instruction->linearLink.previousInstruction;
                 t->visitState = 0;
                 first = false;
             } else {
-                in = wt->linearInstructions.tail;
+                in = scheduleTable->linearInstructions.tail;
                 t->visitState = 2;
             }
             for (; in; in = in->linearLink.previousInstruction) {

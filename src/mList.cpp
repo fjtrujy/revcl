@@ -8,10 +8,10 @@ bool equalExactStrings(const char *a, const char *b);
 char *dupString(const char *s);
 int mstrlen(const char *s);
 
-static inline bool mNode_detach_inl(mNode *n)
+static inline bool mNode_detach_inl(mNode *macroNode)
 {
-    if (n->ownerList)
-        return n->ownerList->detachNode(n);
+    if (macroNode->ownerList)
+        return macroNode->ownerList->detachNode(macroNode);
     return false;
 }
 

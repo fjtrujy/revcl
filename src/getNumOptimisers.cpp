@@ -67,21 +67,21 @@ bool doLinear(Program *program, int smart)
             reportError("failed to prep external info for stream\n");
             return false;
         }
-        workTable *wt = s->getTable();
-        if (!wt) {
+        workTable *scheduleTable = s->getTable();
+        if (!scheduleTable) {
             reportError("flowMon::Optimise() - couldn't get work table for %s!\n", s->streamName());
             return false;
         }
-        if (wt->getLoopSize()) {
+        if (scheduleTable->getLoopSize()) {
             reportError("loop size set for linear table opt %s\n", s->streamName());
             return false;
         }
         workTable *best = 0;
         int i = smart ? 10 : 0;
         for (; i >= 0 && (i != 0 || !best); i--) {
-            optimiser *o = &optTable[i];
-            if (o->flags & 2) {
-                currentOptimizerName = o->name;
+            optimiser *optimizer = &optTable[i];
+            if (optimizer->flags & 2) {
+                currentOptimizerName = optimizer->name;
                 workTable *nt = prepUta(program, s, 0, 1);
                 if (!nt) {
                     reportError("failed to prepUta istream\n");
@@ -97,19 +97,19 @@ bool doLinear(Program *program, int smart)
                     return false;
                 }
                 bool ok = false;
-                switch (o->wmode) {
+                switch (optimizer->wmode) {
                 case 0:
-                    ok = scheduleMidTableMode0(nt, o->func);
+                    ok = scheduleMidTableMode0(nt, optimizer->func);
                     break;
                 case 1:
-                    ok = scheduleMidTableMode1(nt, o->func);
+                    ok = scheduleMidTableMode1(nt, optimizer->func);
                     break;
                 default:
                     reportError("bad wmode\n");
                     abortAfterError();
                 }
                 if (!ok)
-                    reportWarning(" WARNING: failed to %s via %s\n", o->name, s->streamName());
+                    reportWarning(" WARNING: failed to %s via %s\n", optimizer->name, s->streamName());
                 else {
                     if (!reduceExtents(nt)) {
                         reportError("failed to reduce extents for code!\n");
@@ -201,17 +201,17 @@ bool doLoop(Program *program, int smart)
                     const char *why = loopStallReason(s);
                     reportInfo("lpgen[%d](limit: %s) - '%s' flow %s\n",
                                   size, why, optTable[i].name, s->streamName());
-                    workTable *nt = prepUta(program, s, size, 1);
-                    if (!nt) {
+                    workTable *scheduleTable = prepUta(program, s, size, 1);
+                    if (!scheduleTable) {
                         reportError("failed to prepUta istream\n");
                         return false;
                     }
-                    nt->optimizerIndex = i;
+                    scheduleTable->optimizerIndex = i;
                     if (!statReset(program)) {
                         reportError("failed to reset stats for cpu\n");
                         return false;
                     }
-                    if (!dynCalcStats(nt)) {
+                    if (!dynCalcStats(scheduleTable)) {
                         reportError("failed to calc stats for loop\n");
                         return false;
                     }
@@ -220,45 +220,45 @@ bool doLoop(Program *program, int smart)
                     bool ok = false;
                     switch (optTable[i].wmode) {
                     case 0:
-                        ok = scheduleMidTableMode0(nt, optTable[i].func);
+                        ok = scheduleMidTableMode0(scheduleTable, optTable[i].func);
                         break;
                     case 1:
-                        ok = scheduleMidTableMode1(nt, optTable[i].func);
+                        ok = scheduleMidTableMode1(scheduleTable, optTable[i].func);
                         break;
                     default:
                         reportError("bad wmode\n");
                         abortAfterError();
                     }
                     if (ok) {
-                        if (!reduceExtents(nt)) {
+                        if (!reduceExtents(scheduleTable)) {
                             reportError("failed to reduce extents for code!\n");
                             exitAfterCleanup(-1);
                         }
-                        if (!nt->doPostOpt(2)) {
+                        if (!scheduleTable->doPostOpt(2)) {
                             reportError("failed to validate/patch moves - so continue\n");
                             exitAfterCleanup(-1);
                         }
-                        if (!assignLocalRegisters(program, nt))
-                            reportWarning("failed to assign reg size would be %d!\n", nt->getLoopSize());
+                        if (!assignLocalRegisters(program, scheduleTable))
+                            reportWarning("failed to assign reg size would be %d!\n", scheduleTable->getLoopSize());
                         else {
                             s->optimizationRecords[i].optimalLength = s->getRecordedLogicalLength();
-                            s->optimizationRecords[i].mainLoopId = nt->mainLoopId;
-                            s->optimizationRecords[i].candidateLoopId = nt->getCondLid();
-                            s->optimizationRecords[i].instructionCount = nt->getLoopSize();
-                            if (best && best->mainLoopId < nt->mainLoopId) {
-                                delete nt;
-                                nt = 0;
+                            s->optimizationRecords[i].mainLoopId = scheduleTable->mainLoopId;
+                            s->optimizationRecords[i].candidateLoopId = scheduleTable->getCondLid();
+                            s->optimizationRecords[i].instructionCount = scheduleTable->getLoopSize();
+                            if (best && best->mainLoopId < scheduleTable->mainLoopId) {
+                                delete scheduleTable;
+                                scheduleTable = 0;
                             }
-                            if (nt) {
+                            if (scheduleTable) {
                                 if (best)
                                     delete best;
                                 found = true;
-                                best = nt;
+                                best = scheduleTable;
                             }
                             continue;
                         }
                     }
-                    delete nt;
+                    delete scheduleTable;
                 }
             }
             if (!found) {
@@ -301,23 +301,23 @@ bool doRawAndSynth(Program *program, int smart)
                 reportError("failed to optReset cpu\n");
                 exitAfterCleanup(-1);
             }
-            workTable *wt = makeForceTable(program, s);
-            if (!wt) {
+            workTable *scheduleTable = makeForceTable(program, s);
+            if (!scheduleTable) {
                 s->dump(0);
                 reportError("failed to prepUta istream\n");
                 return false;
             }
-            if (!wt->doPostOpt(s->getRawSchedulingMode())) {
+            if (!scheduleTable->doPostOpt(s->getRawSchedulingMode())) {
                 reportError("failed to post opt after makeForce\n");
                 return false;
             }
-            if (wt->getPhysicalLen() < 0) {
+            if (scheduleTable->getPhysicalLen() < 0) {
                 reportError("optTable was bad size\n");
                 return false;
             }
-            switch ((unsigned char)wt->allocationMode) {
+            switch ((unsigned char)scheduleTable->allocationMode) {
             case 2:
-                if (!assignLocalRegisters(program, wt)) {
+                if (!assignLocalRegisters(program, scheduleTable)) {
                     reportError("failed to assign reg for vsm table!\n");
                     dumpProgramStreamsAndRegisters(program, 0);
                     reportError("here is %s\n", s->streamName());
@@ -325,7 +325,7 @@ bool doRawAndSynth(Program *program, int smart)
                 }
                 /* fall through */
             case 3:
-                if (!s->setOptTable(wt)) {
+                if (!s->setOptTable(scheduleTable)) {
                     reportError("set opt table - failed \n");
                     return false;
                 }
@@ -358,12 +358,12 @@ bool relaxOpt(Program *program)
                 reportError("relaxopt - no opt for %s\n", stream->streamName());
                 return false;
             }
-            workTable *wt = stream->getTable();
-            if (opt != wt) {
+            workTable *scheduleTable = stream->getTable();
+            if (opt != scheduleTable) {
                 reportError("relaxOpt - work and opt not same\n");
                 return false;
             }
-            wt->dump();
+            scheduleTable->dump();
             for (Instr *instruction = stream->getTable()->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
                 instruction->optimizedInstructionImageWord = 0;
                 instruction->cloneImage = 0;
@@ -397,31 +397,31 @@ bool optimizeProgramScheduling(Program *program, int smart, bool sizeReduce)
                 reportError("failed to optReset cpu\n");
                 exitAfterCleanup(-1);
             }
-            workTable *wt = makeForceTable(program, s);
-            if (!wt) {
+            workTable *scheduleTable = makeForceTable(program, s);
+            if (!scheduleTable) {
                 reportError("failed to prepUta istream\n");
                 return false;
             }
-            if (!prepareReductionCandidates(program, s, wt)) {
+            if (!prepareReductionCandidates(program, s, scheduleTable)) {
                 reportError("failed to do initial reduction test\n");
                 return false;
             }
             if (s->usesFreeRawLayout()) {
-                if (!reduceLinearSchedule(program, wt, s->allowUpwardReduction, s->allowDownwardReduction)) {
+                if (!reduceLinearSchedule(program, scheduleTable, s->allowUpwardReduction, s->allowDownwardReduction)) {
                     reportError("failed to linear reduce table\n");
                     return false;
                 }
-                if (!sredTable(wt)) {
+                if (!sredTable(scheduleTable)) {
                     reportError("failed to prep for sred for %s\n", s->streamName());
                     return false;
                 }
             }
-            if (!wt->doPostOpt(s->getRawSchedulingMode())) {
-                wt->dump();
+            if (!scheduleTable->doPostOpt(s->getRawSchedulingMode())) {
+                scheduleTable->dump();
                 reportError("failed to post opt after makeForce\n");
                 return false;
             }
-            if (!s->setOptTable(wt)) {
+            if (!s->setOptTable(scheduleTable)) {
                 reportError("set opt table - failed \n");
                 return false;
             }

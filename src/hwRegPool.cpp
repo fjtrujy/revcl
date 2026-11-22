@@ -11,14 +11,14 @@ void dumpThru(Program *prog)
     for (instStream *stream = prog->streamHead; stream; stream = stream->nextStream) {
         int i;
         RegPool *registerPool;
-        workTable *t = stream->getTable();
+        workTable *scheduleTable = stream->getTable();
         reportInfo("%s:\n", stream->streamName());
         for (i = 0; i != 12; i++) {
             registerPool = GetRP(i);
             if (!registerPool || !registerPool->virtualPartCount)
                 continue;
             reportInfo("    %s\n", registerPool->poolName);
-            for (regUse *registerUse = t->registerUses.head; registerUse; registerUse = registerUse->next) {
+            for (regUse *registerUse = scheduleTable->registerUses.head; registerUse; registerUse = registerUse->next) {
                 int mask = registerUse->throughputMask & ~(registerUse->inputMask | registerUse->outputMask | registerUse->externalInputMask | registerUse->externalOutputMask);
                 RegPoolEntry *reg = registerUse->registerEntry;
                 if (mask && registerPool->ownsRegisterClass(reg))

@@ -8,14 +8,14 @@
 
 bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
 
-static inline bool isRawTable(workTable *wt)
+static inline bool isRawTable(workTable *scheduleTable)
 {
-    return wt->codeModeValue == 3;
+    return scheduleTable->codeModeValue == 3;
 }
 
-static inline bool isPipeMode(workTable *wt)
+static inline bool isPipeMode(workTable *scheduleTable)
 {
-    return isRawTable(wt) && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
+    return isRawTable(scheduleTable) && (scheduleTable->rawSchedulingMode == 1 || scheduleTable->rawSchedulingMode == 3);
 }
 
 static inline void dumpMove(Instr *instruction)
@@ -26,10 +26,10 @@ static inline void dumpMove(Instr *instruction)
 bool detectMoves(Program *program)
 {
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *wt = stream->getTable();
-        if (wt->codeModeValue == 1 || isPipeMode(wt)) {
+        workTable *scheduleTable = stream->getTable();
+        if (scheduleTable->codeModeValue == 1 || isPipeMode(scheduleTable)) {
             Instr *next;
-            for (Instr *in = wt->linearInstructions.head; in; in = next) {
+            for (Instr *in = scheduleTable->linearInstructions.head; in; in = next) {
                 next = in->linearLink.nextInstruction;
                 int opc;
                 unsigned char mask;
@@ -67,14 +67,14 @@ bool detectMoves(Program *program)
                 d->originalRegister = in->operands[dstOp].originalRegister;
                 operand->forcedBaseRegister = in->operands[srcOp].forcedBaseRegister;
                 d->forcedBaseRegister = in->operands[dstOp].forcedBaseRegister;
-                if (isRawTable(wt)) {
+                if (isRawTable(scheduleTable)) {
                     int pipe = in->position.pipelineIndex;
-                    if (!resolveMovePipe(wt, mv, pipe)) {
+                    if (!resolveMovePipe(scheduleTable, mv, pipe)) {
                         reportError("failed to resolve a detected move for the pipe I found it in\n");
                         return false;
                     }
                 }
-                if (!wt->replaceInstruction(in, mv)) {
+                if (!scheduleTable->replaceInstruction(in, mv)) {
                     reportError("failed to replace instruction!\n");
                     return false;
                 }

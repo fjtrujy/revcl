@@ -37,12 +37,12 @@ wtEntry::~wtEntry()
     instruction = 0;
 }
 
-static inline bool clearWtEntry(wtEntryInl *e) { e->instruction = 0; return 1; }
+static inline bool clearWtEntry(wtEntryInl *rowEntry) { rowEntry->instruction = 0; return 1; }
 
 bool wtRow::clearEntries()
 {
-    for (int i = 0; i != 2; i++)
-        if (!clearWtEntry(&entries[i]))
+    for (int entryIndex = 0; entryIndex != 2; entryIndex++)
+        if (!clearWtEntry(&entries[entryIndex]))
             return 0;
     return 1;
 }
@@ -55,8 +55,8 @@ bool wtEntry::clearInstruction()
 
 void wtRow::refreshInstructionOperands(int)
 {
-    for (int i = 0; i != 2; i++) {
-        Instr *in = entries[i].instruction;
+    for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
+        Instr *in = entries[entryIndex].instruction;
         if (!in)
             continue;
         if ((VclPtrWord)in & 1)
@@ -65,22 +65,22 @@ void wtRow::refreshInstructionOperands(int)
     }
 }
 
-Instr *wtRow::getEntry(int p)
+Instr *wtRow::getEntry(int entryIndex)
 {
-    if (p < 0) {
+    if (entryIndex < 0) {
         reportError("iEntry::GetI() - p<0\n");
         exitAfterCleanup(-1);
         return 0;
     }
-    if (p >= 2) {
+    if (entryIndex >= 2) {
         reportError(wtRowGetIPMaxError);
         exitAfterCleanup(-1);
         return 0;
     }
-    return entries[p].instruction;
+    return entries[entryIndex].instruction;
 }
 
-Instr *GetI(Instr **ie, int p)
+Instr *GetI(Instr **instructionSlot, int p)
 {
     if (p < 0) {
         reportError("iEntry::GetI() - p<0\n");
@@ -92,7 +92,7 @@ Instr *GetI(Instr **ie, int p)
         exitAfterCleanup(-1);
         return 0;
     }
-    Instr *instruction = ie[p];
+    Instr *instruction = instructionSlot[p];
     if ((VclPtrWord)instruction & 1)
         return 0;
     return instruction;
@@ -101,8 +101,8 @@ Instr *GetI(Instr **ie, int p)
 int wtRow::countEntries()
 {
     int n = 0;
-    for (int i = 0; i != 2; i++)
-        if (entries[i].instruction)
+    for (int entryIndex = 0; entryIndex != 2; entryIndex++)
+        if (entries[entryIndex].instruction)
             n++;
     return n;
 }
@@ -110,11 +110,11 @@ int wtRow::countEntries()
 Instr *wtRow::onlyEntry()
 {
     Instr *r = 0;
-    for (int i = 0; i != 2; i++) {
-        if (entries[i].instruction) {
+    for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
+        if (entries[entryIndex].instruction) {
             if (r)
                 return 0;
-            r = entries[i].instruction;
+            r = entries[entryIndex].instruction;
         }
     }
     return r;
@@ -182,9 +182,9 @@ unsigned int wtRow::getMinimumExtraLatencyAge()
     Instr *in = GetI(&entries[0].instruction, 1);
     unsigned int m = 0;
     if (in) {
-        for (int i = 0; i != in->operandCount; i++) {
-            if (in->operands[i].additionalLatency) {
-                unsigned int a = (unsigned short)in->operands[i].assignedRegister->parts[0].cycleAge;
+        for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
+            if (in->operands[operandIndex].additionalLatency) {
+                unsigned int a = (unsigned short)in->operands[operandIndex].assignedRegister->parts[0].cycleAge;
                 if (!m || a < m)
                     m = a;
             }

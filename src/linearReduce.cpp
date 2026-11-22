@@ -14,10 +14,10 @@ bool setRange(int start, int end, int lsz);
 int pullUp(workTable *wt);
 int dragDown(workTable *wt);
 
-static inline bool isPipeMode(workTable *wt)
+static inline bool isPipeMode(workTable *scheduleTable)
 {
-    int mode = wt->codeModeValue - 3;
-    return !mode && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
+    int mode = scheduleTable->codeModeValue - 3;
+    return !mode && (scheduleTable->rawSchedulingMode == 1 || scheduleTable->rawSchedulingMode == 3);
 }
 
 static inline void dumpLinearReduce(Program *program)
@@ -25,26 +25,26 @@ static inline void dumpLinearReduce(Program *program)
     dumpProgramStreamsAndRegisters(program, 0);
 }
 
-bool reduceLinearSchedule(Program *program, workTable *wt, unsigned char up, unsigned char down)
+bool reduceLinearSchedule(Program *program, workTable *scheduleTable, unsigned char up, unsigned char down)
 {
-    if (!isPipeMode(wt))
+    if (!isPipeMode(scheduleTable))
         return true;
-    if (wt->getLoopSize())
+    if (scheduleTable->getLoopSize())
         return true;
 
     int passes = up != 0;
     if (down)
         passes++;
 
-    wt->getRangeStart();
-    wt->getRangeEnd();
-    setRangeFrom(wt);
+    scheduleTable->getRangeStart();
+    scheduleTable->getRangeEnd();
+    setRangeFrom(scheduleTable);
 
     int count = passes;
     while (count) {
         count--;
         if (up) {
-            int r = pullUp(wt);
+            int r = pullUp(scheduleTable);
             if (r < 0) {
                 reportError("failed to pull up\n");
                 dumpLinearReduce(program);
@@ -54,7 +54,7 @@ bool reduceLinearSchedule(Program *program, workTable *wt, unsigned char up, uns
                 count = passes;
         }
         if (down) {
-            int r = dragDown(wt);
+            int r = dragDown(scheduleTable);
             if (r < 0) {
                 reportError("failed drag down\n");
                 return false;
@@ -66,7 +66,7 @@ bool reduceLinearSchedule(Program *program, workTable *wt, unsigned char up, uns
     return true;
 }
 
-bool doLocalMove(workTable *wt, Instr *instruction, int s_test, int e_test, int dl)
+bool doLocalMove(workTable *scheduleTable, Instr *instruction, int s_test, int e_test, int dl)
 {
     InstructionPosition pos;
     bool found = false;
@@ -91,14 +91,14 @@ bool doLocalMove(workTable *wt, Instr *instruction, int s_test, int e_test, int 
 
     for (; s_test != e_test; s_test += dl) {
         pos.setFromLinearRow(s_test);
-        if (!checkPlacementInAllowedPipelines(wt, instruction, &pos, upwards)) {
+        if (!checkPlacementInAllowedPipelines(scheduleTable, instruction, &pos, upwards)) {
             found = true;
             break;
         }
     }
 
     if (found) {
-        if (!wt->takeOut(instruction)) {
+        if (!scheduleTable->takeOut(instruction)) {
             extern const char linearReduceTakeOutError[];
             reportError(linearReduceTakeOutError);
             return false;
@@ -107,7 +107,7 @@ bool doLocalMove(workTable *wt, Instr *instruction, int s_test, int e_test, int 
             reportError("failed to move !\n");
             return false;
         }
-        if (!wt->putIn(instruction)) {
+        if (!scheduleTable->putIn(instruction)) {
             reportError("failed to put in back in\n");
             return false;
         }

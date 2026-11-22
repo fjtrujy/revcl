@@ -12,10 +12,10 @@ int maximumDecodedLineFlowId(DecodedLine *blocks, int count)
 
 bool DecodedLine::hasFlowStartSynthetic()
 {
-    for (int i = 0; i != 2; i++) {
-        Instr *in = instructions[i];
-        if (in) {
-            char t = in->syntheticKind;
+    for (int instructionIndex = 0; instructionIndex != 2; instructionIndex++) {
+        Instr *instruction = instructions[instructionIndex];
+        if (instruction) {
+            char t = instruction->syntheticKind;
             if (t == 11 || t == 3 || t == 1)
                 return true;
         }

@@ -176,8 +176,8 @@ bool removeNops(Program *program, instStream *stream)
                         Instr *instruction = scannedRow->getEntry(pp);
                         if (!instruction)
                             continue;
-                        for (int i = 0; i != instruction->operandCount; i++) {
-                            Operand *otherOperand = &instruction->operands[i];
+                        for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+                            Operand *otherOperand = &instruction->operands[operandIndex];
                             RegPoolEntry *writerRegister = registerOperand(otherOperand, 2);
                             if (otherOperand->reductionHazardMask)
                                 ok = false;
@@ -302,23 +302,23 @@ void initializeScheduledCycleTimes(workTable *table)
     }
 }
 
-void splitCtime(workTable *table, int l, int m)
+void splitCtime(workTable *table, int rowIndex, int m)
 {
-    if (l < table->rangeStart || l >= table->rangeEnd)
+    if (rowIndex < table->rangeStart || rowIndex >= table->rangeEnd)
         exitWithError("nop line is bad\n");
-    if (m <= l)
+    if (m <= rowIndex)
         exitWithError("m<l for splitCtime()\n");
     if (m > table->rangeEnd)
         m = table->rangeEnd;
-    wtRow *row = &table->rows[l];
-    for (; l < m; l++, row++)
+    wtRow *row = &table->rows[rowIndex];
+    for (; rowIndex < m; rowIndex++, row++)
         row->cycleTime--;
 }
 
-int getCtime(workTable *table, int l)
+int getCtime(workTable *table, int rowIndex)
 {
-    if (l < table->rangeStart || l >= table->rangeEnd)
+    if (rowIndex < table->rangeStart || rowIndex >= table->rangeEnd)
         exitWithError("nop line is bad\n");
-    return table->rows[l].cycleTime;
+    return table->rows[rowIndex].cycleTime;
 }
 

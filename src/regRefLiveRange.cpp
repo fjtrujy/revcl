@@ -147,26 +147,26 @@ bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *out, in
     return true;
 }
 
-bool hack_slo(workTable *wt, RegPoolEntry *registerEntry, RegPoolEntry *b)
+bool hack_slo(workTable *scheduleTable, RegPoolEntry *registerEntry, RegPoolEntry *b)
 {
-    if (wt->codeModeValue != 3) {
+    if (scheduleTable->codeModeValue != 3) {
         reportError("hack_slo - called - but table not raw\n");
         return false;
     }
-    if (!wt->rows) {
+    if (!scheduleTable->rows) {
         reportError("hack_slo - called - but table ptr is null\n");
         return false;
     }
-    for (int r = wt->rangeStart; r < wt->rangeEnd; r++) {
-        wtRow *row = &wt->rows[r];
+    for (int rowIndex = scheduleTable->rangeStart; rowIndex < scheduleTable->rangeEnd; rowIndex++) {
+        wtRow *row = &scheduleTable->rows[rowIndex];
         bool hasA = false;
         bool hasB = false;
-        for (int j = 0; j != 2; j++) {
-            Instr *in = row->entries[j].instruction;
+        for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
+            Instr *in = row->entries[entryIndex].instruction;
             if (!in)
                 continue;
-            for (int i = 0; i != in->operandCount; i++) {
-                Operand *operand = &in->operands[i];
+            for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
+                Operand *operand = &in->operands[operandIndex];
                 if (isRegisterOperand(operand, 2)) {
                     if (operand->assignedRegister == registerEntry)
                         hasA = true;

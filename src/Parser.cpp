@@ -84,14 +84,14 @@ void Parser::reset()
     }
 }
 
-static inline bool isEol(char c)
+static inline bool isEol(char character)
 {
-    return c == '\n' || c == '\r';
+    return character == '\n' || character == '\r';
 }
 
-static inline bool isNewline(char c)
+static inline bool isNewline(char character)
 {
-    return c == '\n';
+    return character == '\n';
 }
 
 static inline void dumpLineEntry(LocTag *entry, int highlight)
@@ -233,12 +233,12 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
     return true;
 }
 
-static inline bool isWhite(const char *s)
+static inline bool isWhite(const char *text)
 {
-    const char *q = tokenizerCharacterSet;
-    while (*q && *q != *s)
-        q++;
-    return *q != 0;
+    const char *allowedCharacter = tokenizerCharacterSet;
+    while (*allowedCharacter && *allowedCharacter != *text)
+        allowedCharacter++;
+    return *allowedCharacter != 0;
 }
 
 int Parser::getParsedLineCount()
@@ -253,14 +253,14 @@ LocTag *Parser::getParsedLine(int i)
     return &parsedLines[i];
 }
 
-bool isLineFeedAt(const char *p)
+bool isLineFeedAt(const char *text)
 {
-    return *p == '\n';
+    return *text == '\n';
 }
 
-bool isLineEndingCharacter(char c)
+bool isLineEndingCharacter(char character)
 {
-    return c == '\n' || c == '\r';
+    return character == '\n' || character == '\r';
 }
 
 void Parser::Dump()
@@ -269,8 +269,8 @@ void Parser::Dump()
         reportError("Parse::Dump() - line table was not set\n");
         return;
     }
-    for (int i = 0; i != parsedLineCount; i++)
-        parsedLines[i].dumpSourceLine(-1);
+    for (int lineIndex = 0; lineIndex != parsedLineCount; lineIndex++)
+        parsedLines[lineIndex].dumpSourceLine(-1);
     reportMessage("parser::DumpLocTags..\n");
     for (int i = 0; i != locationTagCount; i++) {
         reportMessage("%4d : ", i);
@@ -282,9 +282,9 @@ void Parser::Dump()
 void Parser::DumpLocTags()
 {
     reportMessage("parser::DumpLocTags..\n");
-    for (int i = 0; i != locationTagCount; i++) {
-        reportMessage("%4d : ", i);
-        lines[i].dumpLocation();
+    for (int lineIndex = 0; lineIndex != locationTagCount; lineIndex++) {
+        reportMessage("%4d : ", lineIndex);
+        lines[lineIndex].dumpLocation();
         reportMessage("\n");
     }
 }
@@ -317,16 +317,16 @@ found:
 
 int Parser::FindLocTag(const char *name, int n)
 {
-    for (int i = 0; i < locationTagCount; i++)
-        if (lines[i].locationKind == n && equalExactStrings(lines[i].locationName, name))
-            return i;
+    for (int lineIndex = 0; lineIndex < locationTagCount; lineIndex++)
+        if (lines[lineIndex].locationKind == n && equalExactStrings(lines[lineIndex].locationName, name))
+            return lineIndex;
     return -1;
 }
 
 static inline bool isGaspDigit(unsigned char c)
 {
-    for (const char *q = gaspLineNumberCharacters; *q; q++)
-        if ((unsigned char)*q == c)
+    for (const char *allowedCharacter = gaspLineNumberCharacters; *allowedCharacter; allowedCharacter++)
+        if ((unsigned char)*allowedCharacter == c)
             return true;
     return false;
 }
@@ -421,22 +421,22 @@ bool Parser::decodeGaspLine(char *line)
     return true;
 }
 
-bool hasTrailingLabelColon(const char *s)
+bool hasTrailingLabelColon(const char *text)
 {
-    if (!s || !*s)
+    if (!text || !*text)
         return false;
-    while (*s)
-        s++;
-    return s[-1] == ':';
+    while (*text)
+        text++;
+    return text[-1] == ':';
 }
 
-bool isTokenSeparatorCharacter(char c)
+bool isTokenSeparatorCharacter(char character)
 {
-    const char *q = tokenizerCharacterSet;
-    char ch;
-    while ((ch = *q) && ch != c)
-        q++;
-    return *q != 0;
+    const char *separatorCursor = tokenizerCharacterSet;
+    char separatorCharacter;
+    while ((separatorCharacter = *separatorCursor) && separatorCharacter != character)
+        separatorCursor++;
+    return *separatorCursor != 0;
 }
 
 bool Parser::isAssignmentLine(int i)
@@ -451,29 +451,29 @@ bool Parser::isAssignmentLine(int i)
     return false;
 }
 
-bool matchesLeadingKeyword(const char *s, const char *kw)
+bool matchesLeadingKeyword(const char *text, const char *keyword)
 {
-    if (s) {
-        while (*s && !isWhite(s) && *s != '\n')
-            s++;
-        while (*kw && *s && *s == *kw) {
-            s++;
-            kw++;
+    if (text) {
+        while (*text && !isWhite(text) && *text != '\n')
+            text++;
+        while (*keyword && *text && *text == *keyword) {
+            text++;
+            keyword++;
         }
-        if (!*kw)
+        if (!*keyword)
             return true;
     }
     return false;
 }
 
-bool matchesFirstSpecialKeyword(const char *s)
+bool matchesFirstSpecialKeyword(const char *text)
 {
-    return matchesLeadingKeyword(s, blockStartKeyword);
+    return matchesLeadingKeyword(text, blockStartKeyword);
 }
 
-bool matchesSecondSpecialKeyword(const char *s)
+bool matchesSecondSpecialKeyword(const char *text)
 {
-    return matchesLeadingKeyword(s, blockEndKeyword);
+    return matchesLeadingKeyword(text, blockEndKeyword);
 }
 
 extern const char locTagInvalidCommentError[] = "invalid comment mode at start of lineEntry::Tokenise\n";

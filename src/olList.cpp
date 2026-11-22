@@ -7,7 +7,7 @@
 
 void olList::validateOperandLocations()
 {
-    int n = 0;
+    int visitedCount = 0;
     ol_s *location = head;
     if (count != 0) {
         for (; location; location = location->next) {
@@ -15,13 +15,13 @@ void olList::validateOperandLocations()
                 location->instruction->getOwningStream();
                 location->instruction->dumpOperandDiagnostics(false);
             }
-            n++;
+            visitedCount++;
         }
     } else if (location) {
         reportError("opLocList - had zero count, but non empty head\n");
         abortAfterError();
     }
-    if (n != count) {
+    if (visitedCount != count) {
         reportError("oploc list - bad list not nent\n");
         abortAfterError();
     }
@@ -29,7 +29,7 @@ void olList::validateOperandLocations()
 
 void olList::dumpOperandLocations()
 {
-    int n = 0;
+    int visitedCount = 0;
     ol_s *location = head;
     if (count != 0) {
         for (; location; location = location->next) {
@@ -37,12 +37,12 @@ void olList::dumpOperandLocations()
                 location->instruction->getOwningStream();
                 location->instruction->leDump(location->operandIndex, 1 << location->componentIndex);
             }
-            n++;
+            visitedCount++;
         }
     } else if (location) {
         exitWithError("opLocList - had zero count, but non empty head\n");
     }
-    if (n != count)
+    if (visitedCount != count)
         exitWithError("oploc list - bad list not nent\n");
 }
 

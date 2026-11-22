@@ -129,8 +129,8 @@ bool Instr::validateOperands()
 {
     if (!opcodeInfo)
         return false;
-    for (int i = 0; i != operandCount; i++)
-        if (!operands[i].validateKindAndMask())
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++)
+        if (!operands[operandIndex].validateKindAndMask())
             return false;
     return true;
 }
@@ -139,8 +139,8 @@ void Instr::dumpOperandDiagnostics(int flags)
 {
     if (isValid()) {
         int count = operandCount;
-        for (int i = 0; i != count; i++) {
-            operands[i].diagnoseOperand(0);
+        for (int operandIndex = 0; operandIndex != count; operandIndex++) {
+            operands[operandIndex].diagnoseOperand(0);
             count = operandCount;
         }
         if (flags & 1) {
@@ -148,9 +148,9 @@ void Instr::dumpOperandDiagnostics(int flags)
                 Operand *operand = &operands[j];
                 RegPoolEntry *registerEntry = operand->assignedRegister;
                 if (registerEntry && registerEntry->isVirtual)
-                    for (int k = 0; k != registerEntry->partCount; k++)
-                        if ((operand->componentMask >> k) & 1)
-                            operand->parts[k].operandLocations.validateOperandLocations();
+                    for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++)
+                        if ((operand->componentMask >> partIndex) & 1)
+                            operand->parts[partIndex].operandLocations.validateOperandLocations();
             }
         }
     }
@@ -173,8 +173,8 @@ bool Instr::resetFlowDependencies()
     predecessorDependencies.clear();
     successorDependencies.clear();
     scheduledCycle = -1;
-    for (int i = 0; i != operandCount; i++)
-        if (!operands[i].resetFlowState())
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++)
+        if (!operands[operandIndex].resetFlowState())
             return false;
     previousThroughputWriter = 0;
     return true;
@@ -189,10 +189,10 @@ bool Instr::clearTransientFlags()
 {
     candidateAttemptCount = 0;
     candidateCostOffset = 0;
-    for (int i = 0; i != operandCount; i++) {
-        Operand *operand = &operands[i];
-        for (int k = 0; k != 4; k++)
-            operand->parts[k].conflictingOutputLockCount = 0;
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+        Operand *operand = &operands[operandIndex];
+        for (int partIndex = 0; partIndex != 4; partIndex++)
+            operand->parts[partIndex].conflictingOutputLockCount = 0;
     }
     return true;
 }
@@ -240,14 +240,14 @@ bool hasDirectOperandDependency(Instr *a, Instr *secondInstruction)
 {
     if (!a || !secondInstruction)
         return false;
-    for (int i = 0; i != secondInstruction->operandCount; i++) {
-        Operand *operand = &secondInstruction->operands[i];
+    for (int operandIndex = 0; operandIndex != secondInstruction->operandCount; operandIndex++) {
+        Operand *operand = &secondInstruction->operands[operandIndex];
         RegPoolEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
-            int n = registerEntry->partCount;
-            for (int k = 0; k != n; k++)
-                if (((operand->componentMask & ~operand->externalPartMask) >> k) & 1)
-                    for (ol_s *currentLocation = operand->parts[k].operandLocations.head; currentLocation; currentLocation = currentLocation->next)
+            int registerPartCount = registerEntry->partCount;
+            for (int partIndex = 0; partIndex != registerPartCount; partIndex++)
+                if (((operand->componentMask & ~operand->externalPartMask) >> partIndex) & 1)
+                    for (ol_s *currentLocation = operand->parts[partIndex].operandLocations.head; currentLocation; currentLocation = currentLocation->next)
                         if (currentLocation->instruction == a)
                             return true;
         }
@@ -259,16 +259,16 @@ bool writesInputRegisterOf(Instr *a, Instr *secondInstruction)
 {
     if (!a || !secondInstruction)
         return false;
-    for (int i = 0; i != secondInstruction->operandCount; i++) {
-        Operand *operand = &secondInstruction->operands[i];
+    for (int readerOperandIndex = 0; readerOperandIndex != secondInstruction->operandCount; readerOperandIndex++) {
+        Operand *operand = &secondInstruction->operands[readerOperandIndex];
         RegPoolEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
             int want = operand->componentMask;
             int mask = 0;
             Instr *instruction = a;
-            for (int j = 0; j != instruction->operandCount; j++)
-                if (registerOperand(&instruction->operands[j], 2) == registerEntry)
-                    mask |= instruction->operands[j].componentMask;
+            for (int writerOperandIndex = 0; writerOperandIndex != instruction->operandCount; writerOperandIndex++)
+                if (registerOperand(&instruction->operands[writerOperandIndex], 2) == registerEntry)
+                    mask |= instruction->operands[writerOperandIndex].componentMask;
             if (mask & want)
                 return true;
         }
@@ -420,9 +420,9 @@ bool Instr::resetOptimizationState()
     candidateAttemptCount = 0;
     replacedInstructionWord = 0;
     candidateCostOffset = 0;
-    for (int i = 0; i != operandCount; i++) {
-        if (!operands[i].resetOptimizationSlots()) {
-            reportError("failed to optReset operand  %d\n", i);
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+        if (!operands[operandIndex].resetOptimizationSlots()) {
+            reportError("failed to optReset operand  %d\n", operandIndex);
             return false;
         }
     }
@@ -484,7 +484,7 @@ bool Instr::getImmediateOperand(int n, int *out)
 
 
 
-bool Instr::changeBranchImmediate(const char *s)
+bool Instr::changeBranchImmediate(const char *immediateText)
 {
     if (!branchFlags || !opcodeInfo) {
         reportError("changeBranchImmediate: not a branch\n");
@@ -494,17 +494,17 @@ bool Instr::changeBranchImmediate(const char *s)
         reportError("changeBranchImmediate: target is register!\n");
         return false;
     }
-    int n = opcodeInfo->branchTargetOperandSelector;
-    if (!n) {
+    int targetOperandSelector = opcodeInfo->branchTargetOperandSelector;
+    if (!targetOperandSelector) {
         reportError("getBranchTargetImmediate - branch target operand not set\n");
         exitAfterCleanup(-1);
     }
-    Operand *operand = &operands[n - 1];
+    Operand *operand = &operands[targetOperandSelector - 1];
     if (operand->operandKind != 0x1b) {
         reportError("changeBranchImmediate::target operand isn't immediate!\n");
         exitAfterCleanup(-1);
     }
-    return operand->immediateValue.setString(s);
+    return operand->immediateValue.setString(immediateText);
 }
 
 bool link_oParts(Instr *instruction, int aOp, int slot, Instr *b, int bOp, int bSlot)
@@ -517,13 +517,13 @@ bool link_oParts(Instr *instruction, int aOp, int slot, Instr *b, int bOp, int b
         reportError("swizzle detected for ps2 ?\n");
         return false;
     }
-    OpSlot *sa = &instruction->operands[aOp].parts[slot];
-    OpSlot *sb = &b->operands[bOp].parts[slot];
-    ol_s *location = sa->operandLocations.addOperandLocation(b, bOp, slot, false);
+    OpSlot *firstOperandSlot = &instruction->operands[aOp].parts[slot];
+    OpSlot *secondOperandSlot = &b->operands[bOp].parts[slot];
+    ol_s *location = firstOperandSlot->operandLocations.addOperandLocation(b, bOp, slot, false);
     if (location) {
-        olList *locationList = &sb->operandLocations;
-        ol_s *ob = locationList->addOperandLocation(instruction, aOp, slot, false);
-        if (!ob) {
+        olList *locationList = &secondOperandSlot->operandLocations;
+        ol_s *reciprocalLocation = locationList->addOperandLocation(instruction, aOp, slot, false);
+        if (!reciprocalLocation) {
             reportError("failed to add ol\n");
             return false;
         }
@@ -538,13 +538,13 @@ static inline void dumpLinkOperand(Operand *operand)
     operand->diagnoseOperand(0);
 }
 
-bool link_oParts(ol_s *location, ol_s *i, int x, int y)
+bool link_oParts(ol_s *location, ol_s *inputLocation, int x, int y)
 {
     if (!location) {
         reportError("link_oParts, null arg pointer2!\n");
         return false;
     }
-    if (!i) {
+    if (!inputLocation) {
         reportError("link_oParts, null arg pointer2!\n");
         return false;
     }
@@ -558,7 +558,7 @@ bool link_oParts(ol_s *location, ol_s *i, int x, int y)
         dumpLinkOperand(out);
         return false;
     }
-    Operand *operand = operandAtLocation(i);
+    Operand *operand = operandAtLocation(inputLocation);
     if (!operand) {
         reportError("link_oParts(2) - input not set \n");
         return false;
@@ -567,52 +567,52 @@ bool link_oParts(ol_s *location, ol_s *i, int x, int y)
         reportError("link_oParts - input was not input\n");
         return false;
     }
-    int to = location->componentIndex;
-    int ti = i->componentIndex;
-    if (!((out->componentMask >> to) & 1)) {
+    int outputComponentIndex = location->componentIndex;
+    int inputComponentIndex = inputLocation->componentIndex;
+    if (!((out->componentMask >> outputComponentIndex) & 1)) {
         reportError("link_oParts - mod bit not set for output\n");
         return false;
     }
-    if (!((operand->componentMask >> ti) & 1)) {
+    if (!((operand->componentMask >> inputComponentIndex) & 1)) {
         reportError("link_oParts - mod bit not set for input\n");
         return false;
     }
-    if (!((operand->externalPartMask >> ti) & 1)) {
+    if (!((operand->externalPartMask >> inputComponentIndex) & 1)) {
         reportError("link_oParts_ext - external bit not set for input\n");
         return false;
     }
-    out->externalPartMask |= 1 << to;
-    if (locationOwningStream(location) != locationOwningStream(i)) {
+    out->externalPartMask |= 1 << outputComponentIndex;
+    if (locationOwningStream(location) != locationOwningStream(inputLocation)) {
         out->externalComponentMask |= 1 << location->componentIndex;
-        operand->externalComponentMask |= 1 << i->componentIndex;
+        operand->externalComponentMask |= 1 << inputLocation->componentIndex;
     }
-    if (to != ti) {
-        reportError("link_oParts - not a bug, but should not happen for this cpu, t_o!=t_i (%d!=%d)\n", to, ti);
+    if (outputComponentIndex != inputComponentIndex) {
+        reportError("link_oParts - not a bug, but should not happen for this cpu, t_o!=t_i (%d!=%d)\n", outputComponentIndex, inputComponentIndex);
         return false;
     }
-    OpSlot *so = out->parts + ti;
-    OpSlot *si = operand->parts + ti;
-    olList *locationList = &so->operandLocations;
-    ol_s *a = locationList->copyOperandLocation(i, true);
-    if (!a) {
+    OpSlot *outputOperandSlot = out->parts + inputComponentIndex;
+    OpSlot *inputOperandSlot = operand->parts + inputComponentIndex;
+    olList *locationList = &outputOperandSlot->operandLocations;
+    ol_s *linkedInputLocation = locationList->copyOperandLocation(inputLocation, true);
+    if (!linkedInputLocation) {
         reportError("failed to add ol_input to output\n");
         return false;
     }
-    olList *li = &si->operandLocations;
-    ol_s *b = li->copyOperandLocation(location, true);
-    if (!b) {
+    olList *inputLocationList = &inputOperandSlot->operandLocations;
+    ol_s *linkedOutputLocation = inputLocationList->copyOperandLocation(location, true);
+    if (!linkedOutputLocation) {
         reportError("failed to add ol_ouput to input\n");
         return false;
     }
-    int s = location->cycleOffset;
-    if (s > 0xff)
-        s = 0xff;
-    a->cycleOffset = s;
-    a->pathKey = x;
-    a->maximumPathKey = y;
-    b->cycleOffset = 0;
-    b->pathKey = x;
-    b->maximumPathKey = y;
+    int clampedCycleOffset = location->cycleOffset;
+    if (clampedCycleOffset > 0xff)
+        clampedCycleOffset = 0xff;
+    linkedInputLocation->cycleOffset = clampedCycleOffset;
+    linkedInputLocation->pathKey = x;
+    linkedInputLocation->maximumPathKey = y;
+    linkedOutputLocation->cycleOffset = 0;
+    linkedOutputLocation->pathKey = x;
+    linkedOutputLocation->maximumPathKey = y;
     return true;
 }
 
@@ -672,12 +672,12 @@ char *Instr::emitExpectedSyntax(bool flag, char *buf, int)
         buf += formatIntoBuffer(buf, "nop");
     }
     buf += formatIntoBuffer(buf, "\t");
-    for (int n = 0; n != operandCount; n++) {
-        if (operands[n].isImplicit)
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+        if (operands[operandIndex].isImplicit)
             break;
-        if (n)
+        if (operandIndex)
             buf += formatIntoBuffer(buf, ",");
-        buf = operands[n].emitExpectedOperandType(flag, buf);
+        buf = operands[operandIndex].emitExpectedOperandType(flag, buf);
         if (!buf)
             break;
     }
@@ -688,8 +688,8 @@ int Instr::outputMaskForRegister(RegPoolEntry *reg, int mask)
 {
     int result = 0;
     if (reg) {
-        for (int i = 0; i != operandCount; i++) {
-            Operand *operand = &operands[i];
+        for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+            Operand *operand = &operands[operandIndex];
             if (operand->outRegZ() == reg)
                 result |= operand->componentMask;
         }
@@ -701,8 +701,8 @@ int Instr::inputMaskForRegister(RegPoolEntry *reg, int mask)
 {
     int result = 0;
     if (reg) {
-        for (int i = 0; i != operandCount; i++) {
-            Operand *operand = &operands[i];
+        for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+            Operand *operand = &operands[operandIndex];
             if (operand->inRegOp2() == reg)
                 result |= operand->componentMask;
         }
@@ -712,21 +712,21 @@ int Instr::inputMaskForRegister(RegPoolEntry *reg, int mask)
 
 const char *syntheticTypeName(int t)
 {
-    const char *s = "SYNTH_UNKNOWN";
+    const char *syntheticName = "SYNTH_UNKNOWN";
     switch (t) {
-    case 0: s = "SYNTH_NULL"; break;
-    case 1: s = "SYNTH_ENTER"; break;
-    case 2: s = "SYNTH_ENDENTER"; break;
-    case 3: s = "SYNTH_EXIT"; break;
-    case 4: s = "SYNTH_ENDEXIT"; break;
-    case 5: s = "SYNTH_CONT"; break;
-    case 6: s = "SYNTH_XINPUT"; break;
-    case 7: s = "SYNTH_XOUTPUT"; break;
-    case 8: s = "SYNTH_LOOP_MINSAFE"; break;
-    case 9: s = "SYNTH_LOOP_EXTRA"; break;
-    case 10: s = "SYNTH_BARRIER"; break;
+    case 0: syntheticName = "SYNTH_NULL"; break;
+    case 1: syntheticName = "SYNTH_ENTER"; break;
+    case 2: syntheticName = "SYNTH_ENDENTER"; break;
+    case 3: syntheticName = "SYNTH_EXIT"; break;
+    case 4: syntheticName = "SYNTH_ENDEXIT"; break;
+    case 5: syntheticName = "SYNTH_CONT"; break;
+    case 6: syntheticName = "SYNTH_XINPUT"; break;
+    case 7: syntheticName = "SYNTH_XOUTPUT"; break;
+    case 8: syntheticName = "SYNTH_LOOP_MINSAFE"; break;
+    case 9: syntheticName = "SYNTH_LOOP_EXTRA"; break;
+    case 10: syntheticName = "SYNTH_BARRIER"; break;
     }
-    return s;
+    return syntheticName;
 }
 
 bool Instr::hasRawTableOrImmediateToken()
@@ -747,12 +747,12 @@ char *Instr::getBranchTargetImmediate()
         reportError("branch type set - but no ii\n");
         exitAfterCleanup(-1);
     }
-    int n = branchOpcodeInfo->branchTargetOperandSelector;
-    if (!n) {
+    int targetOperandSelector = branchOpcodeInfo->branchTargetOperandSelector;
+    if (!targetOperandSelector) {
         reportError("getBranchTargetImmediate - branch target operand not set\n");
         exitAfterCleanup(-1);
     }
-    Operand *operand = &operands[n - 1];
+    Operand *operand = &operands[targetOperandSelector - 1];
     if (!operand->isInput()) {
         reportError("alleged branch target immediate wasn't an input\n");
         exitAfterCleanup(-1);
@@ -771,12 +771,12 @@ RegPoolEntry *Instr::getBranchTargetRegister()
         reportError("branch type set - but no ii\n");
         exitAfterCleanup(-1);
     }
-    int n = branchOpcodeInfo->branchTargetOperandSelector;
-    if (!n) {
+    int targetOperandSelector = branchOpcodeInfo->branchTargetOperandSelector;
+    if (!targetOperandSelector) {
         reportError("getBranchTargetRegister - branch target operand not set\n");
         exitAfterCleanup(-1);
     }
-    Operand *operand = &operands[n - 1];
+    Operand *operand = &operands[targetOperandSelector - 1];
     if (!operand->isInput()) {
         reportError("alleged branch target register wasn't an input\n");
         exitAfterCleanup(-1);
@@ -798,8 +798,8 @@ int Instr::constantZeroInstructionHook()
 
 Operand *Instr::findInputOperand(RegPoolEntry *reg, int mask)
 {
-    for (int i = 0; i != operandCount; i++) {
-        Operand *operand = &operands[i];
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+        Operand *operand = &operands[operandIndex];
         if (operand->inRegOp2() == reg && (operand->componentMask & mask))
             return operand;
     }
@@ -808,8 +808,8 @@ Operand *Instr::findInputOperand(RegPoolEntry *reg, int mask)
 
 Operand *Instr::findOutputOperand(RegPoolEntry *reg, int mask)
 {
-    for (int i = 0; i != operandCount; i++) {
-        Operand *operand = &operands[i];
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+        Operand *operand = &operands[operandIndex];
         if (operand->outRegZ() == reg && (operand->componentMask & mask))
             return operand;
     }
@@ -826,8 +826,8 @@ bool Instr::hasLinkedOutputFrom(unsigned int n)
         if (registerEntry) {
             if (operand->externalPartMask)
                 return true;
-            for (int j = 0; j != registerEntry->partCount; j++)
-                if (((operand->componentMask >> j) & 1) && operand->parts[j].operandLocations.count)
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++)
+                if (((operand->componentMask >> partIndex) & 1) && operand->parts[partIndex].operandLocations.count)
                     return true;
         }
     }
@@ -844,8 +844,8 @@ bool Instr::classifySchedulingCategory()
         schedulerCategory = 2;
         return true;
     }
-    for (int i = 0; i != operandCount; i++) {
-        Operand *operand = &operands[i];
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+        Operand *operand = &operands[operandIndex];
         if (isRegisterOperand(operand, 2) && operand->externalComponentMask) {
             schedulerCategory = 2;
             return true;
@@ -877,8 +877,8 @@ Instr **Instr::getIE()
 
 int Instr::getFirstOutputLatency()
 {
-    for (int i = 0; i != operandCount; i++) {
-        Operand *operand = &operands[i];
+    for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
+        Operand *operand = &operands[operandIndex];
         if (operand->outRegZ() && !operand->externalBlockModeFlag)
             return operand->outputLatency;
     }

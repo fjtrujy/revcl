@@ -12,9 +12,9 @@ int normal2RegCost(Instr *in);
 int vuta1RegCost(Instr *in);
 
 
-bool optHDown(workTable *wt, wrangleCand *c)
+bool optHDown(workTable *scheduleTable, wrangleCand *candidate)
 {
-    Instr *instruction = wt->moveListHead;
+    Instr *instruction = scheduleTable->moveListHead;
     int bestA = 0x80000000;
     Instr *best = 0;
     int bestB = 0x80000000, bestC = 0x80000000, bestD = 0x7fffffff;
@@ -51,17 +51,17 @@ bool optHDown(workTable *wt, wrangleCand *c)
     }
     if (!best)
         return false;
-    c->candidateInstruction = best;
-    c->candidateRow = best->candidateBaseRow + best->candidateCostOffset;
-    c->candidatePipe = best->candidateAttemptCount & 1;
+    candidate->candidateInstruction = best;
+    candidate->candidateRow = best->candidateBaseRow + best->candidateCostOffset;
+    candidate->candidatePipe = best->candidateAttemptCount & 1;
     return true;
 }
 
 int hDownRegCost(Instr *instruction)
 {
     int cost = 0;
-    for (int i = 0; i != instruction->operandCount; i++) {
-        RegPoolEntry *registerEntry = instruction->operands[i].inRegOp2();
+    for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        RegPoolEntry *registerEntry = instruction->operands[operandIndex].inRegOp2();
         if (registerEntry) {
             switch (registerEntry->registerIndex) {
             case 55:
@@ -74,9 +74,9 @@ int hDownRegCost(Instr *instruction)
     return cost;
 }
 
-bool optDUp(workTable *wt, wrangleCand *c)
+bool optDUp(workTable *scheduleTable, wrangleCand *candidate)
 {
-    Instr *instruction = wt->moveListHead;
+    Instr *instruction = scheduleTable->moveListHead;
     Instr *best = 0;
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;
@@ -109,8 +109,8 @@ bool optDUp(workTable *wt, wrangleCand *c)
     }
     if (!best)
         return false;
-    c->candidateInstruction = best;
-    c->candidateRow = best->candidateBaseRow + best->candidateCostOffset;
-    c->candidatePipe = best->candidateAttemptCount & 1;
+    candidate->candidateInstruction = best;
+    candidate->candidateRow = best->candidateBaseRow + best->candidateCostOffset;
+    candidate->candidatePipe = best->candidateAttemptCount & 1;
     return true;
 }

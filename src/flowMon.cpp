@@ -17,7 +17,7 @@ bool disposeBackTrace(Program *p);
 bool doBackTrace(Program *p, instStream *s, RegPoolEntry *reg, int part, int depth, int mode, bool hot);
 bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b);
 
-bool rebuildFlowDependencies(Program *program, bool b)
+bool rebuildFlowDependencies(Program *program, bool forceDependencyChecks)
 {
     dependencyBuildCount++;
     if (!flowReset(program)) {
@@ -44,7 +44,7 @@ bool rebuildFlowDependencies(Program *program, bool b)
             reportError("build dependency - failed to %s stream..\n", s->getCodeModeName());
             return false;
         }
-        if (!s->buildForwardDependencies(b, true)) {
+        if (!s->buildForwardDependencies(forceDependencyChecks, true)) {
             reportError("failed to build memory dependencies for ist\n");
             return false;
         }

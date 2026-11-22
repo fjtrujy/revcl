@@ -11,24 +11,24 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
-bool buildPassThru(Program *prog, instStream *s, DecodedLine *blocks, int count)
+bool buildPassThru(Program *prog, instStream *stream, DecodedLine *blocks, int count)
 {
     reportInfo("BLD_PASS\n");
     if (count != 1) {
         reportError("cnum isn't one for pass thru case.. it's %d\n", count);
         return false;
     }
-    s->passThroughText = blocks->passThroughText;
+    stream->passThroughText = blocks->passThroughText;
     blocks->passThroughText = 0;
-    workTable *uta = &s->sourceTable;
+    workTable *uta = &stream->sourceTable;
     if (!uta->init(1, 0)) {
         reportError("failed to init uta\n");
         return false;
     }
-    uta->ownerStream = s;
-    s->branchType = 0;
-    s->containsBarrier = 1;
-    s->mergedBarrierFlag = 1;
+    uta->ownerStream = stream;
+    stream->branchType = 0;
+    stream->containsBarrier = 1;
+    stream->mergedBarrierFlag = 1;
     return true;
 }
 

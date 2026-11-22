@@ -14,26 +14,26 @@ static inline int clampByte(int v)
     return v > 255 ? 255 : v;
 }
 
-bool emuTable(Program *program, workTable *wt)
+bool emuTable(Program *program, workTable *scheduleTable)
 {
-    if (!wt) {
+    if (!scheduleTable) {
         reportWarning("emu - passed a null table ptr!\n");
         return true;
     }
-    if (wt->getLoopSize() || wt->mainLoopId) {
+    if (scheduleTable->getLoopSize() || scheduleTable->mainLoopId) {
         reportError("mlid is set, or loop size is set for emu..which is now kinda tricky..\n");
         return false;
     }
-    wt->declaredRawLength = -1;
-    switch (wt->codeModeValue) {
+    scheduleTable->declaredRawLength = -1;
+    switch (scheduleTable->codeModeValue) {
     case 3: {
         int skipped = 0;
-        for (int line = wt->getRangeStart(); line != wt->getRangeEnd(); line++) {
-            wtRow *workRow = wt->getRowByIndex(line);
+        for (int line = scheduleTable->getRangeStart(); line != scheduleTable->getRangeEnd(); line++) {
+            wtRow *workRow = scheduleTable->getRowByIndex(line);
             if (workRow) {
                 if (workRow->skip) {
-                    for (int k = 0; k != 2; k++)
-                        if (workRow->entries[k].instruction) {
+                    for (int entryIndex = 0; entryIndex != 2; entryIndex++)
+                        if (workRow->entries[entryIndex].instruction) {
                             reportError("m_bSkip set .. but line contains instructions\n");
                             return false;
                         }
@@ -50,11 +50,11 @@ bool emuTable(Program *program, workTable *wt)
                 return false;
             }
         }
-        wt->declaredRawLength = program->emulatedCycleCount;
+        scheduleTable->declaredRawLength = program->emulatedCycleCount;
         skipped += program->emulatedCycleCount;
-        if (skipped < wt->getPhysicalLen()) {
-            reportError("logical len < physical len.. %d<%d!\n", program->emulatedCycleCount, wt->getPhysicalLen());
-            wt->dump();
+        if (skipped < scheduleTable->getPhysicalLen()) {
+            reportError("logical len < physical len.. %d<%d!\n", program->emulatedCycleCount, scheduleTable->getPhysicalLen());
+            scheduleTable->dump();
             return false;
         }
         break;
@@ -63,7 +63,7 @@ fail:
     return false;
     case 1:
     case 4: {
-        Instr *i = wt->linearInstructions.head;
+        Instr *i = scheduleTable->linearInstructions.head;
         wtRow row;
         for (; i; i = i->linearLink.nextInstruction) {
             row.clearEntries();
@@ -79,9 +79,9 @@ fail:
         break;
     }
     default:
-        const char *modeName = codeModeName(wt->codeModeValue);
+        const char *modeName = codeModeName(scheduleTable->codeModeValue);
         reportError("emu - can't emu table from %s of type %s\n",
-                      wt->ownerName(), modeName);
+                      scheduleTable->ownerName(), modeName);
         break;
     }
     return true;
@@ -96,30 +96,30 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
 {
     int count;
     Instr *i;
-    workTable *wt;
+    workTable *scheduleTable;
 
-    wt = stream->getTable();
-    int linear = wt->instructionCountsByPipe[2];
-    int iCount = wt->linearInstructions.count;
+    scheduleTable = stream->getTable();
+    int linear = scheduleTable->instructionCountsByPipe[2];
+    int iCount = scheduleTable->linearInstructions.count;
     if (linear != iCount) {
         reportError("linear count not same as iCount %d!=%d\n", linear, iCount);
         return false;
     }
-    if (!emuTable(program, wt)) {
+    if (!emuTable(program, scheduleTable)) {
         reportError("Processor : failed to emu itable from '%s'\n", stream->streamName());
         return false;
     }
     count = 0;
-    for (i = wt->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
+    for (i = scheduleTable->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
         count++;
-        for (int op = 0; op != i->operandCount; op++) {
-            Operand *o = &i->operands[op];
+        for (int operandIndex = 0; operandIndex != i->operandCount; operandIndex++) {
+            Operand *o = &i->operands[operandIndex];
             RegPoolEntry *reg = o->assignedRegister;
             if (!reg)
                 continue;
-            regUse *registerUse = wt->registerUses.findByRegister(reg);
+            regUse *registerUse = scheduleTable->registerUses.findByRegister(reg);
             if (!registerUse) {
-                registerUse = wt->registerUses.AddNewRegRef(reg);
+                registerUse = scheduleTable->registerUses.AddNewRegRef(reg);
                 if (!registerUse) {
                     reportRegRefFailure();
                     return false;
@@ -136,20 +136,20 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
                 }
             }
             registerUse->externalInputMask |= o->externalPartMask;
-            for (int k = 0; k != reg->partCount; k++) {
-                if ((o->externalPartMask >> k) & 1) {
+            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                if ((o->externalPartMask >> partIndex) & 1) {
                     if (registerUse->externalBlockMode == -1)
                         registerUse->externalBlockMode = o->externalBlockModeFlag;
                     else if (registerUse->externalBlockMode != (unsigned char)o->externalBlockModeFlag)
                         reportWarning("differing block modes for external input for %s..taking first encountered\n",
                                       reg->registerName());
-                    if (!registerUse->slots[k].inputLocations.addOperandLocation(i, op, k, false)) {
+                    if (!registerUse->slots[partIndex].inputLocations.addOperandLocation(i, operandIndex, partIndex, false)) {
                         reportError("failed to add oploc user!\n");
                         return false;
                     }
                 }
-                if (((o->componentMask >> k) & 1) && reg->tracksHotOutputPaths && isRegisterOperand(o, 2)) {
-                    if (!registerUse->slots[k].sourceLocations.addOperandLocation(i, op, k, false)) {
+                if (((o->componentMask >> partIndex) & 1) && reg->tracksHotOutputPaths && isRegisterOperand(o, 2)) {
+                    if (!registerUse->slots[partIndex].sourceLocations.addOperandLocation(i, operandIndex, partIndex, false)) {
                         reportError("failed to add a local setter for a thruput check\n");
                         reportError("register is %s\n", reg->registerName());
                         return false;
@@ -158,11 +158,11 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
             }
         }
     }
-    if (count != wt->instructionCountsByPipe[2]) {
-        reportError("icount mismatch (%d apparently in list, but %d in table?)\n", count, wt->instructionCountsByPipe[2]);
+    if (count != scheduleTable->instructionCountsByPipe[2]) {
+        reportError("icount mismatch (%d apparently in list, but %d in table?)\n", count, scheduleTable->instructionCountsByPipe[2]);
         return false;
     }
-    for (regUse *ru = wt->registerUses.head; ru; ru = ru->next) {
+    for (regUse *ru = scheduleTable->registerUses.head; ru; ru = ru->next) {
         RegPoolEntry *reg = ru->registerEntry;
         if (!reg) {
             reportError("a reg ref had no register!\n");

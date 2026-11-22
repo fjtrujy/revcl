@@ -13,23 +13,23 @@ extern const char bindExtFindRegRefError[];
 bool bindExternals(Program *program)
 {
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *wt = stream->getTable();
-        if (!wt) {
+        workTable *scheduleTable = stream->getTable();
+        if (!scheduleTable) {
             reportError("no worktable!\n");
             exitAfterCleanup(-1);
         }
-        for (Instr *instruction = wt->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-            for (int i = 0; i != instruction->operandCount; i++) {
-                Operand *operand = &instruction->operands[i];
+        for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+            for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+                Operand *operand = &instruction->operands[operandIndex];
                 RegPoolEntry *reg = operand->assignedRegister;
                 if (!reg)
                     continue;
-                regUse *registerUse = wt->registerUses.findByRegister(reg);
+                regUse *registerUse = scheduleTable->registerUses.findByRegister(reg);
                 if (!registerUse) {
                     reportError(bindExtFindRegRefError);
                     return false;
                 }
-                if (registerUse->isExternal() || wt->allocationMode == 3) {
+                if (registerUse->isExternal() || scheduleTable->allocationMode == 3) {
                     if (reg->isVirtual) {
                         reportError(bindExtVirtualRegError);
                         return false;

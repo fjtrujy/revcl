@@ -142,22 +142,22 @@ bool instStream::patchLatencies()
 
 const char *istEndTypeName(int t)
 {
-    const char *s = "ISTET_BAD";
+    const char *endTypeNameText = "ISTET_BAD";
     switch (t) {
     case 1:
-        s = "ISTET_NULL";
+        endTypeNameText = "ISTET_NULL";
         break;
     case 2:
-        s = "ISTET_END_CONT";
+        endTypeNameText = "ISTET_END_CONT";
         break;
     case 3:
-        s = "ISTET_END_END";
+        endTypeNameText = "ISTET_END_END";
         break;
     case 4:
-        s = "ISTET_END_MACRO";
+        endTypeNameText = "ISTET_END_MACRO";
         break;
     }
-    return s;
+    return endTypeNameText;
 }
 
 const char *istBranchTypeName(int t)
@@ -172,57 +172,57 @@ const char *instStream::branchTypeName()
 
 const char *istStartTypeName(int t)
 {
-    const char *s;
+    const char *startTypeNameText;
     switch (t) {
     case 1:
-        s = "ISTST_NULL";
+        startTypeNameText = "ISTST_NULL";
         break;
     case 2:
-        s = "ISTST_ENTRY";
+        startTypeNameText = "ISTST_ENTRY";
         break;
     default:
-        s = "ISTST???\n";
+        startTypeNameText = "ISTST???\n";
         break;
     }
-    return s;
+    return startTypeNameText;
 }
 
 const char *instStream::endTypeName()
 {
     int t = endType;
-    const char *s = "ISTET_BAD";
+    const char *endTypeNameText = "ISTET_BAD";
     switch (t) {
     case 1:
-        s = "ISTET_NULL";
+        endTypeNameText = "ISTET_NULL";
         break;
     case 2:
-        s = "ISTET_END_CONT";
+        endTypeNameText = "ISTET_END_CONT";
         break;
     case 3:
-        s = "ISTET_END_END";
+        endTypeNameText = "ISTET_END_END";
         break;
     case 4:
-        s = "ISTET_END_MACRO";
+        endTypeNameText = "ISTET_END_MACRO";
         break;
     }
-    return s;
+    return endTypeNameText;
 }
 
 const char *instStream::startTypeName()
 {
-    const char *s;
+    const char *startTypeNameText;
     switch (startType) {
     case 1:
-        s = "ISTST_NULL";
+        startTypeNameText = "ISTST_NULL";
         break;
     case 2:
-        s = "ISTST_ENTRY";
+        startTypeNameText = "ISTST_ENTRY";
         break;
     default:
-        s = "ISTST???\n";
+        startTypeNameText = "ISTST???\n";
         break;
     }
-    return s;
+    return startTypeNameText;
 }
 
 bool instStream::canLoop()
@@ -342,13 +342,13 @@ char *instStream::emitLabels(char *buf)
     if (emissionStartIndex >= 0) {
         for (mNode *node = labels.head; node; node = node->next) {
             if (node->name) {
-                const char *p = "__v_";
-                const char *s = node->name;
-                while (*p && *s && *p == *s) {
-                    p++;
-                    s++;
+                const char *prefixCursor = "__v_";
+                const char *labelCursor = node->name;
+                while (*prefixCursor && *labelCursor && *prefixCursor == *labelCursor) {
+                    prefixCursor++;
+                    labelCursor++;
                 }
-                if (*p)
+                if (*prefixCursor)
                     buf += formatIntoBuffer(buf, "%-40s = %d\n", node->name, emissionStartIndex);
             }
         }
@@ -535,11 +535,11 @@ bool instStream::processCmdSynth(Instr *instruction)
         break;
     case 10:
         if (containsBarrier) {
-            const char *s = labels.firstNodeName();
-            const char *n = "UNNAMED_ISTREAM";
-            if (s)
-                n = s;
-            reportError("multiple barriers in one flow..%s?\n", n);
+            const char *labelName = labels.firstNodeName();
+            const char *streamNameText = "UNNAMED_ISTREAM";
+            if (labelName)
+                streamNameText = labelName;
+            reportError("multiple barriers in one flow..%s?\n", streamNameText);
             return false;
         }
         containsBarrier = 1;

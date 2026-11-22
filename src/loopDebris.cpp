@@ -312,16 +312,16 @@ bool epiRec::init(int size, const char *name)
         reportError("failed to add a name to iStream\n");
         exitAfterCleanup(-1);
     }
-    workTable *wt = &stream->sourceTable;
-    if (!wt->init(3, size)) {
+    workTable *scheduleTable = &stream->sourceTable;
+    if (!scheduleTable->init(3, size)) {
         reportError("failed to init it_pro for size %d\n", size);
         exitAfterCleanup(-1);
     }
     instStream *s = stream;
     int serial = g_streamSerial;
-    table = wt;
+    table = scheduleTable;
     s->streamSerial = serial;
-    wt->ownerStream = stream;
+    scheduleTable->ownerStream = stream;
     stream->workTablePtr = &stream->sourceTable;
     return true;
 }
@@ -591,8 +591,8 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
         exitAfterCleanup(-1);
     }
     g_streamSerial++;
-    workTable *wt = stream->getTable();
-    if (!wt->getLoopSize()) {
+    workTable *scheduleTable = stream->getTable();
+    if (!scheduleTable->getLoopSize()) {
         reportError("work table is not looping!\n");
         return false;
     }
@@ -602,19 +602,19 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
                       stream->knownMinimumLoopCount, stream->safeMinimumLoopCount);
         return false;
     }
-    int mlid = wt->mainLoopId;
-    int clid = wt->getCondLid();
-    int lsz = wt->getLoopSize();
-    bool userFixed = wt->getTableRawMode() == 4;
-    initDebris(loopRecord, baseName, (unsigned char)wt->allocationMode, userFixed);
-    Instr *cond = wt->getConditionalBranch();
+    int mlid = scheduleTable->mainLoopId;
+    int clid = scheduleTable->getCondLid();
+    int lsz = scheduleTable->getLoopSize();
+    bool userFixed = scheduleTable->getTableRawMode() == 4;
+    initDebris(loopRecord, baseName, (unsigned char)scheduleTable->allocationMode, userFixed);
+    Instr *cond = scheduleTable->getConditionalBranch();
     if (mlid < 0 || clid < 0 || clid > mlid || !cond) {
         reportError("iTable::BuildEPStreams - well - mlid or clid or no conditional ? something was wrong [clid=%d mlid=%d] %x\n",
                       clid, mlid, cond);
-        wt->dump();
+        scheduleTable->dump();
         return false;
     }
-    loopRecord->sourceWorkTable = wt;
+    loopRecord->sourceWorkTable = scheduleTable;
     epiRec *region = loopRecord->allocEnter(0);
     if (!region) {
         reportError("failed to get enter part\n");
@@ -639,7 +639,7 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
                 exitAfterCleanup(-1);
             }
         }
-        if (!cloneAppend(wt, pro->table, i, 0, i >= last, true, false)) {
+        if (!cloneAppend(scheduleTable, pro->table, i, 0, i >= last, true, false)) {
             reportError("failed to clone/append main table to prologue table\n");
             exitAfterCleanup(-1);
         }
@@ -670,7 +670,7 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
         reportError("failed to get main part\n");
         exitAfterCleanup(-1);
     }
-    if (!cloneAppend(wt, mainRegion->table, mlid, 0, true, true, true)) {
+    if (!cloneAppend(scheduleTable, mainRegion->table, mlid, 0, true, true, true)) {
         reportError("failed to clone/append main table to loop table\n");
         exitAfterCleanup(-1);
     }
@@ -705,7 +705,7 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
             int proBase = prologueRegion->regionStartIndex;
             int lid = epilogueRegion->loopKey;
             for (int k = clid + 1; k <= mlid; k++, lid++) {
-                if (!cloneAppend(wt, epilogueRegion->table, lid, lid - proBase + 1, false, true, false)) {
+                if (!cloneAppend(scheduleTable, epilogueRegion->table, lid, lid - proBase + 1, false, true, false)) {
                     reportError("failed to attach to epi sequence!\n");
                     return false;
                 }
@@ -741,13 +741,13 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
         }
     }
 
-    epiRec *mr = &loopRecord->m_main;
-    Instr *moveCloneInstruction = mr->conditionalBranch;
+    epiRec *epilogueRecord = &loopRecord->m_main;
+    Instr *moveCloneInstruction = epilogueRecord->conditionalBranch;
     if (!moveCloneInstruction) {
         reportError("main had no conditional\n");
         exitAfterCleanup(-1);
     }
-    if (!moveCloneInstruction->changeBranchImmediate(recName(mr))) {
+    if (!moveCloneInstruction->changeBranchImmediate(recName(epilogueRecord))) {
         reportError("failed to change conditional target\n");
         exitAfterCleanup(-1);
     }

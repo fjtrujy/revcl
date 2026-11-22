@@ -29,9 +29,9 @@ bool initRegMask(RegPool *pool)
     RegPoolEntry *registerEntry = pool->registerEntries;
     int *mp = &maximumAllocationParts;
     clearRawBytes(allocationRegisterMask, 32);
-    for (int i = 0; i != pool->entryCount; i++, registerEntry++) {
+    for (int entryIndex = 0; entryIndex != pool->entryCount; entryIndex++, registerEntry++) {
         if (!registerEntry->enabledPhysicalRegister)
-            allocationRegisterMask[i] = (1 << registerEntry->partCount) - 1;
+            allocationRegisterMask[entryIndex] = (1 << registerEntry->partCount) - 1;
         if (registerEntry->partCount > *mp)
             *mp = registerEntry->partCount;
     }
@@ -40,9 +40,9 @@ bool initRegMask(RegPool *pool)
 
 int firstEmptyMask(RegPool *pool)
 {
-    for (int i = 0; i != pool->entryCount; i++)
-        if (!allocationRegisterMask[i])
-            return i;
+    for (int entryIndex = 0; entryIndex != pool->entryCount; entryIndex++)
+        if (!allocationRegisterMask[entryIndex])
+            return entryIndex;
     return -1;
 }
 
@@ -53,8 +53,8 @@ bool assignExtRegisters(Program *program)
         return false;
     }
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *wt = stream->getTable();
-        unsigned int mode = (unsigned char)wt->allocationMode;
+        workTable *scheduleTable = stream->getTable();
+        unsigned int mode = (unsigned char)scheduleTable->allocationMode;
         if ((char)mode != 1) {
             const char *modeName = allocModeName(mode);
             reportError("AssignExtRegisters - alloc mode not NONE for %s mode %s!\n",
@@ -68,12 +68,12 @@ bool assignExtRegisters(Program *program)
                 return false;
             }
         }
-        for (Instr *instruction = wt->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-            for (int j = 0; j != instruction->operandCount; j++) {
-                Operand *operand = &instruction->operands[j];
+        for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+            for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+                Operand *operand = &instruction->operands[operandIndex];
                 RegPoolEntry *reg = operand->assignedRegister;
                 if (reg && reg->isVirtual) {
-                    regUse *registerUse = wt->registerUses.findByRegister(reg);
+                    regUse *registerUse = scheduleTable->registerUses.findByRegister(reg);
                     if (!registerUse) {
                         reportError("failed to find reg ref associated with reg\n");
                         return false;
@@ -93,7 +93,7 @@ bool assignExtRegisters(Program *program)
                 }
             }
         }
-        wt->allocationMode = 2;
+        scheduleTable->allocationMode = 2;
     }
     if (!resetProgramAllocationsForSecondPass(program)) {
         reportError("failed to clean up after global alloc\n");

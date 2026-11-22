@@ -3,13 +3,13 @@
 #include "workTable.h"
 #include "os.h"
 
-int expandRaw(workTable *wt)
+int expandRaw(workTable *scheduleTable)
 {
-    if (wt->codeModeValue != 5) {
+    if (scheduleTable->codeModeValue != 5) {
         reportError("expand raw - table not raw!\n");
         return 0;
     }
-    return wt->changeMode(3);
+    return scheduleTable->changeMode(3);
 }
 
 bool expandRawTables(Program *program)
@@ -19,12 +19,12 @@ bool expandRawTables(Program *program)
             reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *wt = stream->workTablePtr;
-        if (wt->codeMode() == 3) {
+        workTable *scheduleTable = stream->workTablePtr;
+        if (scheduleTable->codeMode() == 3) {
             reportError("hit a raw table during expraw\n");
             return false;
         }
-        if (wt->codeMode() == 5 && !wt->changeMode(3)) {
+        if (scheduleTable->codeMode() == 5 && !scheduleTable->changeMode(3)) {
             reportError("processor failed to expand raw table\n");
             return false;
         }

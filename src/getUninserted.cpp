@@ -58,9 +58,9 @@ int instStream::getUninsertedxInputs()
             RegPoolEntry *reg = registerOperand(operand, 1);
             if (!reg || !operand->externalPartMask)
                 continue;
-            for (int k = 0; k != reg->partCount; k++) {
-                if ((operand->externalPartMask >> k) & 1) {
-                ol_s *operandLocation = operand->parts[k].operandLocations.head;
+            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                if ((operand->externalPartMask >> partIndex) & 1) {
+                ol_s *operandLocation = operand->parts[partIndex].operandLocations.head;
                 if (!operandLocation) {
                     reportError("no setter list found during getuninstxi!\n");
                     return -1;
@@ -108,9 +108,9 @@ int instStream::getUninsertedxOutputs()
             RegPoolEntry *reg = registerOperand(operand, 2);
             if (!reg || !operand->externalPartMask)
                 continue;
-            for (int k = 0; k != reg->partCount; k++) {
-                if ((operand->externalPartMask >> k) & 1) {
-                    for (ol_s *operandLocation = operand->parts[k].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                if ((operand->externalPartMask >> partIndex) & 1) {
+                    for (ol_s *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                         Instr *user = operandLocation->instruction;
                         if (user->getOwningStream() == this || user->optimizedInstructionImageWord)
                             continue;
@@ -274,8 +274,8 @@ bool loadLocks(Program *program, workTable *table)
     setRange(table->getRangeStart(), table->getRangeEnd(), table->getLoopSize());
     for (regUse *registerUse = table->registerUses.head; registerUse; registerUse = registerUse->next) {
         RegPoolEntry *reg = registerUse->registerEntry;
-        for (int i = 0; i != reg->partCount; i++) {
-            regUseSlot *registerUseSlot = &registerUse->slots[i];
+        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            regUseSlot *registerUseSlot = &registerUse->slots[partIndex];
             if (!registerUseSlot) {
                 reportError("failed to get rrp\n");
                 exitAfterCleanup(-1);
@@ -285,9 +285,9 @@ bool loadLocks(Program *program, workTable *table)
                 reportError("no rll set in regref\n");
                 exitAfterCleanup(-1);
             }
-            RegisterPartLockList *cur = (RegisterPartLockList *)reg->getPartPayload(i);
+            RegisterPartLockList *cur = (RegisterPartLockList *)reg->getPartPayload(partIndex);
             if (!cur)
-                reg->setPartPayload(i, (VclPtrWord)rll);
+                reg->setPartPayload(partIndex, (VclPtrWord)rll);
             else if (rll != cur) {
                 reportError("rll mismatch\n");
                 exitAfterCleanup(-1);

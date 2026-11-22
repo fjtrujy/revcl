@@ -4,17 +4,17 @@
 #include "Instr.h"
 #include "os.h"
 
-static inline bool extendForEnd_inl(workTable *wt)
+static inline bool extendForEnd_inl(workTable *scheduleTable)
 {
     do {
-        int i = wt->rangeEnd++;
-        wtRow *workRow = wt->getRowByIndex(i);
+        int i = scheduleTable->rangeEnd++;
+        wtRow *workRow = scheduleTable->getRowByIndex(i);
         if (!workRow) {
             reportError("failed to get ie for end patch\n");
             return false;
         }
         workRow->clearEntries();
-    } while (wt->rangeEnd - wt->rangeStart < 2);
+    } while (scheduleTable->rangeEnd - scheduleTable->rangeStart < 2);
     return true;
 }
 
@@ -26,14 +26,14 @@ bool tidyProgramStreams(Program *program)
             reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *wt = stream->workTablePtr;
-        switch (wt->codeModeValue) {
+        workTable *scheduleTable = stream->workTablePtr;
+        switch (scheduleTable->codeModeValue) {
         case 1:
             reportError("work table code mode is uta..%s\n", stream->streamName());
             break;
         case 3:
         case 4:
-            stream->emissionTable = wt;
+            stream->emissionTable = scheduleTable;
             break;
         default:
             reportError("bad code mode for Tidy\n");
@@ -89,17 +89,17 @@ bool tidyProgramStreams(Program *program)
     return true;
 }
 
-bool extendForEnd(workTable *wt)
+bool extendForEnd(workTable *scheduleTable)
 {
     do {
-        int i = wt->rangeEnd++;
-        wtRow *workRow = wt->getRowByIndex(i);
+        int i = scheduleTable->rangeEnd++;
+        wtRow *workRow = scheduleTable->getRowByIndex(i);
         if (!workRow) {
             reportError("failed to get ie for end patch\n");
             return false;
         }
         workRow->clearEntries();
-    } while (wt->rangeEnd - wt->rangeStart < 2);
+    } while (scheduleTable->rangeEnd - scheduleTable->rangeStart < 2);
     return true;
 }
 

@@ -118,8 +118,8 @@ inline infoNode::infoNode(InitTag)
 
 inline stallNode::stallNode(InitTag) : infoNode(infoNode::INIT)
 {
-    for (int i = 0; i != 3; i++)
-        stallByType[i] = 0;
+    for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++)
+        stallByType[stallTypeIndex] = 0;
 }
 
 bool infoList::addStall(ol_s *location, ol_s *b, int x, int val)
@@ -164,8 +164,8 @@ infoNode::~infoNode()
 
 stallNode::stallNode() : infoNode(infoNode::INIT)
 {
-    for (int i = 0; i != 3; i++)
-        stallByType[i] = 0;
+    for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++)
+        stallByType[stallTypeIndex] = 0;
 }
 
 stallNode::~stallNode()
@@ -175,22 +175,22 @@ stallNode::~stallNode()
 void stallNode::dump()
 {
     char buf[512];
-    char *p = buf;
-    p += formatIntoBuffer(p, "STALL");
+    char *outputCursor = buf;
+    outputCursor += formatIntoBuffer(outputCursor, "STALL");
     int max = 0;
-    for (int i = 0; i != 3; i++) {
-        unsigned short stallDuration = stallByType[i];
+    for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++) {
+        unsigned short stallDuration = stallByType[stallTypeIndex];
         if (stallDuration > max)
             max = stallDuration;
         if (stallDuration)
-            p += formatIntoBuffer(p, "_%s(%d)", stallTypeNames[i], stallDuration);
+            outputCursor += formatIntoBuffer(outputCursor, "_%s(%d)", stallTypeNames[stallTypeIndex], stallDuration);
     }
-    p += formatIntoBuffer(p, " maxVal %d ", max);
+    outputCursor += formatIntoBuffer(outputCursor, " maxVal %d ", max);
     if (isLocal)
-        p += formatIntoBuffer(p, ": local");
+        outputCursor += formatIntoBuffer(outputCursor, ": local");
     else
-        p += formatIntoBuffer(p, " inter-stream");
-    *p = 0;
+        outputCursor += formatIntoBuffer(outputCursor, " inter-stream");
+    *outputCursor = 0;
     reportInfo("%s\n", buf);
     reportInfo("    setter is : ");
     setter.dump();
@@ -259,21 +259,21 @@ void ubsNode::dump()
     reportInfo("Used before set : ");
     n = 0;
     instStream *use = useStream;
-    workTable *wt = use->workTablePtr;
-    bool haveTable = wt != 0;
+    workTable *scheduleTable = use->workTablePtr;
+    bool haveTable = scheduleTable != 0;
     if (!haveTable) {
         reportError("work table not set in %s\n", use->streamName());
         exitAfterCleanup(-1);
     }
     if (!haveTable)
-        wt = use->workTablePtr;
+        scheduleTable = use->workTablePtr;
     regUse *registerUse;
-    if (wt && (registerUse = wt->registerUses.findByRegister(reg))) {
+    if (scheduleTable && (registerUse = scheduleTable->registerUses.findByRegister(reg))) {
         reportInfo("register %s is used before set at instruction(s) :\n",
                       reg->registerName());
-        for (int i = 0; i != reg->partCount; i++) {
-            if ((slotMask >> i) & 1) {
-                for (ol_s *location = registerUse->slots[i].inputLocations.head; location; location = location->next) {
+        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            if ((slotMask >> partIndex) & 1) {
+                for (ol_s *location = registerUse->slots[partIndex].inputLocations.head; location; location = location->next) {
                     Instr *inst = location->instruction;
                     int bit = location->componentIndex;
                     int opnd = location->operandIndex;
@@ -282,18 +282,18 @@ void ubsNode::dump()
                     for (j = 0; j < n &&
                          (list[j].inst != inst || list[j].opnd != opnd); j++)
                         ;
-                    ubsEntry *e = 0;
+                    ubsEntry *usedBeforeSetEntry = 0;
                     if (j == n) {
                         if (n < 64) {
-                            e = &list[n];
-                            e->mask = 0;
+                            usedBeforeSetEntry = &list[n];
+                            usedBeforeSetEntry->mask = 0;
                             n++;
                         }
                     } else
-                        e = &list[j];
-                    e->inst = inst;
-                    e->mask |= bit;
-                    e->opnd = opnd;
+                        usedBeforeSetEntry = &list[j];
+                    usedBeforeSetEntry->inst = inst;
+                    usedBeforeSetEntry->mask |= bit;
+                    usedBeforeSetEntry->opnd = opnd;
                 }
             }
         }

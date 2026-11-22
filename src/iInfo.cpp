@@ -43,8 +43,8 @@ char iInfo::isNop()
 
 void iInfo::scanOpcodeOperandDescriptors()
 {
-    int i;
-    for (i = 0; i != operandDescriptors[i].operandKind; i++)
+    int operandIndex;
+    for (operandIndex = 0; operandIndex != operandDescriptors[operandIndex].operandKind; operandIndex++)
         ;
 }
 
@@ -55,31 +55,31 @@ void iInfo::noopOpcodeDescriptorHook()
 bool iInfo::check()
 {
     bool noImplicitYet = true;
-    iOpDesc *d = operandDescriptors;
-    for (int i = 0; d->operandKind; i++, d++) {
-        if (d->patchedOutputIndexPlusOne) {
-            if (!d->isImplicit) {
+    iOpDesc *operandDescriptor = operandDescriptors;
+    for (int i = 0; operandDescriptor->operandKind; i++, operandDescriptor++) {
+        if (operandDescriptor->patchedOutputIndexPlusOne) {
+            if (!operandDescriptor->isImplicit) {
                 reportError("implicit web patch set on explicit operand\n");
                 return false;
             }
-            if (d->direction != 1) {
-                reportError("iInfo: check - patch set on non-input (%d)\n", d->operandKind);
+            if (operandDescriptor->direction != 1) {
+                reportError("iInfo: check - patch set on non-input (%d)\n", operandDescriptor->operandKind);
                 return false;
             }
-            if (operandDescriptors[d->patchedOutputIndexPlusOne - 1].direction != 2) {
+            if (operandDescriptors[operandDescriptor->patchedOutputIndexPlusOne - 1].direction != 2) {
                 reportError("iInfo: check patch not point to output\n");
                 return false;
             }
-            if (operandDescriptors[d->patchedOutputIndexPlusOne - 1].isImplicit) {
+            if (operandDescriptors[operandDescriptor->patchedOutputIndexPlusOne - 1].isImplicit) {
                 reportError("implicit web patch links to implicit operand\n");
                 return false;
             }
-            if (d->patchedOutputIndexPlusOne - 1 > i) {
+            if (operandDescriptor->patchedOutputIndexPlusOne - 1 > i) {
                 reportError(iInfoPatchedAfterPatchError);
                 return false;
             }
         }
-        if (d->isImplicit)
+        if (operandDescriptor->isImplicit)
             noImplicitYet = false;
         else if (!noImplicitYet) {
             reportError(iInfoExplicitAfterImplicitError);

@@ -11,34 +11,34 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
-static inline void dumpUtaInstruction(Instr *in)
+static inline void dumpUtaInstruction(Instr *instruction)
 {
-    in->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
 }
 
 
 bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
 {
-    workTable *t = &s->sourceTable;
-    if (!t) {
+    workTable *scheduleTable = &s->sourceTable;
+    if (!scheduleTable) {
         reportError("build: failed to get input table from ist\n");
         return false;
     }
-    if (!t->init(1, 0)) {
+    if (!scheduleTable->init(1, 0)) {
         reportError("failed to init uta table for '%s'\n", s->streamName());
         return false;
     }
-    t->ownerStream = s;
+    scheduleTable->ownerStream = s;
     int flags = 0;
     int branch = -1;
     for (int i = 0; i != count; i++) {
-        DecodedLine *b = &blocks[i];
-        if (b->labels.combinedFlags()) {
+        DecodedLine *decodedLine = &blocks[i];
+        if (decodedLine->labels.combinedFlags()) {
             reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
         }
-        b->labels.clearNodes();
-        Instr *in = b->instructions[0];
+        decodedLine->labels.clearNodes();
+        Instr *in = decodedLine->instructions[0];
         if (!in)
             continue;
         if (in->parsedLoopId > 0) {
@@ -57,8 +57,8 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
             }
             flags |= in->instructionModifierBits;
         } else {
-            b->instructions[0] = 0;
-            if (!t->logAddLinear_Tail(in)) {
+            decodedLine->instructions[0] = 0;
+            if (!scheduleTable->logAddLinear_Tail(in)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
             }

@@ -23,8 +23,8 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
 
     for (; i != count; i++) {
         DecodedLine *decodedLine = &blocks[i];
-        for (int k = 0; k != 2; k++) {
-            VclPtrWord in = (VclPtrWord)decodedLine->instructions[k];
+        for (int instructionIndex = 0; instructionIndex != 2; instructionIndex++) {
+            VclPtrWord in = (VclPtrWord)decodedLine->instructions[instructionIndex];
             if (!in || !((Instr *)in)->branchFlags)
                 continue;
             char *target = ((Instr *)in)->getBranchTargetImmediate();
@@ -46,10 +46,10 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
                 do {
                     char buf[2064];
                     char *scan = tag;
-                    char *d = buf;
+                    char *outputCursor = buf;
                     while (*scan != ':')
-                        *d++ = *scan++;
-                    *d = 0;
+                        *outputCursor++ = *scan++;
+                    *outputCursor = 0;
                     DecodedLine *f = findDecodedLineByLabel(blocks, count, buf);
                     if (!f) {
                         reportError("failed to find a tagged label '%s' attached to branch:\n", buf);

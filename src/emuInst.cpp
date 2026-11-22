@@ -14,7 +14,7 @@ bool Cycle(Program *p, bool flag);
 
 int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
 {
-    int k;
+    int entryIndex;
     int stalls = 0;
     Instr *in;
     Operand *op;
@@ -30,8 +30,8 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         return -1;
     }
 
-    for (k = 0; k != 2; k++) {
-        Instr *in = row->entries[k].instruction;
+    for (entryIndex = 0; entryIndex != 2; entryIndex++) {
+        Instr *in = row->entries[entryIndex].instruction;
         if (!in)
             continue;
         if (commit && in->previousThroughputWriter) {
@@ -50,8 +50,8 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         }
     }
     int maxLat = 0, maxThru = 0;
-    for (k = 0; k != 2; k++) {
-        in = row->entries[k].instruction;
+    for (entryIndex = 0; entryIndex != 2; entryIndex++) {
+        in = row->entries[entryIndex].instruction;
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
@@ -66,10 +66,10 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
                             else
                                 registerPart->emulationTimingMetrics[6] = program->emulatedCycleCount;
                             registerPart->emulationTimingMetrics[4] = line;
-                            registerPart->emulationTimingMetrics[5] = k;
+                            registerPart->emulationTimingMetrics[5] = entryIndex;
                         }
                         registerPart->emulationTimingMetrics[7] = line;
-                        registerPart->emulationTimingMetrics[8] = k;
+                        registerPart->emulationTimingMetrics[8] = entryIndex;
                     }
             }
             if (reg && op->externalBlockModeFlag) {
@@ -156,12 +156,12 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
         }
         cyc = program->emulatedCycleCount;
     }
-    for (k = 0; k != 2; k++)
-        if (row->entries[k].instruction)
-            row->entries[k].instruction->scheduledCycle = cyc;
+    for (entryIndex = 0; entryIndex != 2; entryIndex++)
+        if (row->entries[entryIndex].instruction)
+            row->entries[entryIndex].instruction->scheduledCycle = cyc;
 
-    for (k = 0; k != 2; k++) {
-        in = row->entries[k].instruction;
+    for (entryIndex = 0; entryIndex != 2; entryIndex++) {
+        in = row->entries[entryIndex].instruction;
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
@@ -197,8 +197,8 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
             }
         }
     }
-    for (k = 0; k != 2; k++) {
-        Instr *in = row->entries[k].instruction;
+    for (entryIndex = 0; entryIndex != 2; entryIndex++) {
+        Instr *in = row->entries[entryIndex].instruction;
         if (!in)
             continue;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
@@ -241,14 +241,14 @@ int emuInst(Program *program, wtRow *row, int line, bool uta, bool commit)
                             rp->emulationTimingMetrics[2] = tp;
                         if (rp->emulationTimingMetrics[9] < 0) {
                             rp->emulationTimingMetrics[9] = line;
-                            rp->emulationTimingMetrics[10] = k;
+                            rp->emulationTimingMetrics[10] = entryIndex;
                             if (uta)
                                 rp->emulationTimingMetrics[11] = -1;
                             else
                                 rp->emulationTimingMetrics[11] = program->emulatedCycleCount;
                         }
                         rp->emulationTimingMetrics[12] = line;
-                        rp->emulationTimingMetrics[13] = k;
+                        rp->emulationTimingMetrics[13] = entryIndex;
                         if (uta)
                             rp->emulationTimingMetrics[14] = -1;
                         else

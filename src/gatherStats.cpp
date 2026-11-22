@@ -43,57 +43,57 @@ void cls0805e2e4::copyCountersFrom(cls0805e2e4 *src)
     independentLatencyDepth = src->independentLatencyDepth;
 }
 
-void cls0805e2e4::mergeMaximumCounters(cls0805e2e4 *o)
+void cls0805e2e4::mergeMaximumCounters(cls0805e2e4 *statistics)
 {
-    if (o->reverseLatencyDepth > reverseLatencyDepth) reverseLatencyDepth = o->reverseLatencyDepth;
-    if (o->reverseDependencyHeight > reverseDependencyHeight) reverseDependencyHeight = o->reverseDependencyHeight;
-    if (o->forwardLatencyDepth > forwardLatencyDepth) forwardLatencyDepth = o->forwardLatencyDepth;
-    if (o->forwardDependencyHeight > forwardDependencyHeight) forwardDependencyHeight = o->forwardDependencyHeight;
-    if (o->moveCount > moveCount) moveCount = o->moveCount;
-    if (o->moveChainLength > moveChainLength) moveChainLength = o->moveChainLength;
-    if (o->moveDistance > moveDistance) moveDistance = o->moveDistance;
-    if (o->independentLatencyDepth > independentLatencyDepth) independentLatencyDepth = o->independentLatencyDepth;
+    if (statistics->reverseLatencyDepth > reverseLatencyDepth) reverseLatencyDepth = statistics->reverseLatencyDepth;
+    if (statistics->reverseDependencyHeight > reverseDependencyHeight) reverseDependencyHeight = statistics->reverseDependencyHeight;
+    if (statistics->forwardLatencyDepth > forwardLatencyDepth) forwardLatencyDepth = statistics->forwardLatencyDepth;
+    if (statistics->forwardDependencyHeight > forwardDependencyHeight) forwardDependencyHeight = statistics->forwardDependencyHeight;
+    if (statistics->moveCount > moveCount) moveCount = statistics->moveCount;
+    if (statistics->moveChainLength > moveChainLength) moveChainLength = statistics->moveChainLength;
+    if (statistics->moveDistance > moveDistance) moveDistance = statistics->moveDistance;
+    if (statistics->independentLatencyDepth > independentLatencyDepth) independentLatencyDepth = statistics->independentLatencyDepth;
 }
 
 char stallReasonTextBuffer[1024];  // stall reason text buffer
 
 const char *stallReasonStr(short why)
 {
-    const char *s = "dunno why";
+    const char *reasonName = "dunno why";
     switch (why & 0xff) {
     case 1:
-        s = "instruction latency";
+        reasonName = "instruction latency";
         break;
     case 2:
-        s = "instruction thruput";
+        reasonName = "instruction thruput";
         break;
     case 3:
-        s = "number of upper instructions";
+        reasonName = "number of upper instructions";
         break;
     case 4:
-        s = "number of lower instructions";
+        reasonName = "number of lower instructions";
         break;
     case 5:
-        s = "can't loop";
+        reasonName = "can't loop";
         break;
     case 6:
-        s = "dependency chain depth";
+        reasonName = "dependency chain depth";
         break;
     case 7:
-        s = "dependency chain height";
+        reasonName = "dependency chain height";
         break;
     case 8:
-        s = "branch instruction dependency chain height";
+        reasonName = "branch instruction dependency chain height";
         break;
     case 9:
         formatIntoBuffer(stallReasonTextBuffer, "issue pressure on %s", deviceNameByIndex((char)((why & 0xff00) >> 8)));
-        s = stallReasonTextBuffer;
+        reasonName = stallReasonTextBuffer;
         break;
     case 10:
-        s = "circular dependency chain";
+        reasonName = "circular dependency chain";
         break;
     }
-    return s;
+    return reasonName;
 }
 
 bool instStream::gatherStats()
@@ -130,8 +130,8 @@ bool instStream::gatherStats()
         int logged = 0;
         if (instruction) {
             for (int j = 0; j != 9; j++) {
-                bool b = (instruction->opcodeResourceMask >> j) & 1;
-                if (b)
+                bool resourceEnabled = (instruction->opcodeResourceMask >> j) & 1;
+                if (resourceEnabled)
                     statistics->resourceInstructionCounts[j] += 2;
             }
             logged = 1;
@@ -143,13 +143,13 @@ bool instStream::gatherStats()
     }
 
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-        for (int i = 0; i != instruction->operandCount; i++) {
-            Operand *operand = &instruction->operands[i];
+        for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+            Operand *operand = &instruction->operands[operandIndex];
             RegPoolEntry *registerEntry = (isRegisterOperand(operand, 1) && operand->operandStatus != 2) ? operand->assignedRegister : 0;
             if (registerEntry) {
-                for (int p = 0; p != registerEntry->partCount; p++) {
-                    if ((operand->componentMask >> p) & 1) {
-                        for (ol_s *operandLocation = operand->parts[p].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+                    if ((operand->componentMask >> partIndex) & 1) {
+                        for (ol_s *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                             if (!operandLocation->instruction) {
                                 reportError("failed to get setting instruction!\n");
                                 return false;
@@ -276,10 +276,10 @@ bool instStream::gatherStats()
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
         if (instruction->branchFlags)
             branchForwardLatencyDepth = instruction->schedulingStatistics.forwardLatencyDepth;
-        char c = instruction->permittedPipelineMask;
-        if (c == 3)
+        char pipelineMask = instruction->permittedPipelineMask;
+        if (pipelineMask == 3)
             both++;
-        else if (c & 2)
+        else if (pipelineMask & 2)
             lower++;
         else
             upper++;
@@ -513,8 +513,8 @@ bool statCounts::add(Instr *instruction)
     if (!instruction)
         return false;
     for (int i = 0; i != 9; i++) {
-        bool b = (instruction->opcodeResourceMask >> i) & 1;
-        if (b)
+        bool resourceEnabled = (instruction->opcodeResourceMask >> i) & 1;
+        if (resourceEnabled)
             resourceInstructionCounts[i] += 2;
     }
     return true;

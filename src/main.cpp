@@ -564,55 +564,55 @@ void markInputError()
     errorOccurred = 1;
 }
 
-static inline void reportErrors(Program *p)
+static inline void reportErrors(Program *program)
 {
     reportUserMessage("vcl thinks it found problem(s) in the input source:\n");
-    reportUBS(p);
+    reportUBS(program);
 }
 
-static inline void reportWarnings(Program *p)
+static inline void reportWarnings(Program *program)
 {
     reportWarning("vcl thinks it found problem(s) in the input source:\n");
-    reportStalls(p);
+    reportStalls(program);
 }
 
-bool validateFlowDependenciesAndHazards(Program *p, bool a, bool b, bool c)
+bool validateFlowDependenciesAndHazards(Program *program, bool a, bool b, bool c)
 {
-    if (!rebuildFlowDependencies(p, a)) {
+    if (!rebuildFlowDependencies(program, a)) {
         reportError("vcl found a bug in itself while chasing dependencies\n");
         return false;
     }
-    if (p->proc.usedBeforeSet.count) {
+    if (program->proc.usedBeforeSet.count) {
         if (!c) {
-            reportErrors(p);
+            reportErrors(program);
             return false;
         }
         reportInfo("on the final pass, was detected, but , it should be ok\n");
     }
-    if (b && p->proc.stalls.count)
-        reportWarnings(p);
+    if (b && program->proc.stalls.count)
+        reportWarnings(program);
     return true;
 }
 
-bool analyzeAndPropagateMoves(Program *p)
+bool analyzeAndPropagateMoves(Program *program)
 {
-    if (enableInstructionCollapse && !collapseProgramStreams(p)) {
+    if (enableInstructionCollapse && !collapseProgramStreams(program)) {
         reportError("failed to collapse instructions\n");
         return false;
     }
-    if (!detectMoves(p)) {
+    if (!detectMoves(program)) {
         reportError("failed to detect moves!\n");
         return false;
     }
-    if (!validateFlowDependenciesAndHazards(p, cautiousMemoryAccessMode, false, false)) {
+    if (!validateFlowDependenciesAndHazards(program, cautiousMemoryAccessMode, false, false)) {
         reportError("generic dependency code decided to die\n");
         return false;
     }
-    if (!noopMovePropagationHook(p)) {
+    if (!noopMovePropagationHook(program)) {
         reportError("failed to prune moves\n");
         return false;
     }
-    if (!validateFlowDependenciesAndHazards(p, cautiousMemoryAccessMode, false, false))
+    if (!validateFlowDependenciesAndHazards(program, cautiousMemoryAccessMode, false, false))
         return false;
     return true;
 }

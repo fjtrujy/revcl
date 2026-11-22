@@ -2,20 +2,20 @@
 #include "VUStr.h"
 #include "os.h"
 
-bool parseTrailingComponentMask(const char *s, int *mask, bool *bad)
+bool parseTrailingComponentMask(const char *componentText, int *mask, bool *bad)
 {
-    const char *p = s;
+    const char *componentCursor = componentText;
     *mask = 0;
     *bad = false;
-    if (!s || !*s)
+    if (!componentText || !*componentText)
         return false;
-    while (*p)
-        p++;
-    p--;
-    while (p != s && *p != '.')
-        p--;
-    if (*p == '.') {
-        int m = decodeComponentMaskLetters(p + 1);
+    while (*componentCursor)
+        componentCursor++;
+    componentCursor--;
+    while (componentCursor != componentText && *componentCursor != '.')
+        componentCursor--;
+    if (*componentCursor == '.') {
+        int m = decodeComponentMaskLetters(componentCursor + 1);
         *mask = m;
         if (m == -1) {
             *bad = true;
@@ -26,21 +26,21 @@ bool parseTrailingComponentMask(const char *s, int *mask, bool *bad)
     return false;
 }
 
-bool parseBracketedComponentMask(const char *s, int *mask)
+bool parseBracketedComponentMask(const char *componentText, int *mask)
 {
     *mask = 0;
-    const char *p = s;
-    if (!s || !*s)
+    const char *componentCursor = componentText;
+    if (!componentText || !*componentText)
         return false;
-    while (*p)
-        p++;
-    p--;
-    if (*p != ']')
+    while (*componentCursor)
+        componentCursor++;
+    componentCursor--;
+    if (*componentCursor != ']')
         return false;
-    p--;
+    componentCursor--;
     *mask = 0;
-    for (; p != s && *p != '['; p--) {
-        switch (*p) {
+    for (; componentCursor != componentText && *componentCursor != '['; componentCursor--) {
+        switch (*componentCursor) {
         case 'x': case 'X': *mask |= 1; break;
         case 'y': case 'Y': *mask |= 2; break;
         case 'z': case 'Z': *mask |= 4; break;
@@ -51,22 +51,22 @@ bool parseBracketedComponentMask(const char *s, int *mask)
     return true;
 }
 
-int decodeComponentMaskLetters(const char *s)
+int decodeComponentMaskLetters(const char *componentText)
 {
     int mask = 0;
-    while (*s) {
-        char c = *s;
+    while (*componentText) {
+        char componentLetter = *componentText;
         int bit = 0;
-        if (c == 'x' || c == 'X') bit = 1;
-        if (c == 'y' || c == 'Y') bit = 2;
-        if (c == 'z' || c == 'Z') bit = 4;
-        if (c == 'w' || c == 'W') bit = 8;
+        if (componentLetter == 'x' || componentLetter == 'X') bit = 1;
+        if (componentLetter == 'y' || componentLetter == 'Y') bit = 2;
+        if (componentLetter == 'z' || componentLetter == 'Z') bit = 4;
+        if (componentLetter == 'w' || componentLetter == 'W') bit = 8;
         if (!bit)
             return -1;
         if (mask & bit)
             return -1;
         mask |= bit;
-        s++;
+        componentText++;
     }
     return mask;
 }
@@ -80,13 +80,13 @@ char *formatComponentMaskLetters(int mask)
     if (componentMaskStringOffset > 24)
         componentMaskStringOffset = 0;
     char *start = componentMaskTextBuffer + componentMaskStringOffset;
-    char *p = start;
-    if (mask & 1) *p++ = 'X';
-    if (mask & 2) *p++ = 'Y';
-    if (mask & 4) *p++ = 'Z';
-    if (mask & 8) *p++ = 'W';
-    *p = 0;
-    componentMaskStringOffset = p - componentMaskTextBuffer + 1;
+    char *outputCursor = start;
+    if (mask & 1) *outputCursor++ = 'X';
+    if (mask & 2) *outputCursor++ = 'Y';
+    if (mask & 4) *outputCursor++ = 'Z';
+    if (mask & 8) *outputCursor++ = 'W';
+    *outputCursor = 0;
+    componentMaskStringOffset = outputCursor - componentMaskTextBuffer + 1;
     return start;
 }
 
@@ -102,21 +102,21 @@ char *formatDottedComponentMask(int mask)
     return VUStr_dot_mask(dottedComponentMaskBuffer, mask);
 }
 
-int readTrailingComponentMask(const char *s)
+int readTrailingComponentMask(const char *componentText)
 {
     int mask = 0;
-    if (!s || !*s)
+    if (!componentText || !*componentText)
         return 0;
-    const char *p = s;
-    while (*p)
-        p++;
-    for (p--; p != s - 1; p--) {
-        char c = *p;
+    const char *componentCursor = componentText;
+    while (*componentCursor)
+        componentCursor++;
+    for (componentCursor--; componentCursor != componentText - 1; componentCursor--) {
+        char componentLetter = *componentCursor;
         int bit = 0;
-        if (c == 'x' || c == 'X') bit = 1;
-        if (c == 'y' || c == 'Y') bit = 2;
-        if (c == 'z' || c == 'Z') bit = 4;
-        if (c == 'w' || c == 'W') bit = 8;
+        if (componentLetter == 'x' || componentLetter == 'X') bit = 1;
+        if (componentLetter == 'y' || componentLetter == 'Y') bit = 2;
+        if (componentLetter == 'z' || componentLetter == 'Z') bit = 4;
+        if (componentLetter == 'w' || componentLetter == 'W') bit = 8;
         if (!bit)
             return mask;
         if (mask & bit) {
@@ -128,15 +128,15 @@ int readTrailingComponentMask(const char *s)
     return mask;
 }
 
-int lastComponentBit(const char *s)
+int lastComponentBit(const char *componentText)
 {
     int r = 0;
-    if (!s || !*s)
+    if (!componentText || !*componentText)
         return 0;
-    const char *p = s;
-    while (*p)
-        p++;
-    switch (p[-1]) {
+    const char *componentCursor = componentText;
+    while (*componentCursor)
+        componentCursor++;
+    switch (componentCursor[-1]) {
     case 'x': case 'X': r = 1; break;
     case 'y': case 'Y': r = 2; break;
     case 'z': case 'Z': r = 4; break;
@@ -145,12 +145,12 @@ int lastComponentBit(const char *s)
     return r;
 }
 
-int removeInstructionModifierGroups(char *s)
+int removeInstructionModifierGroups(char *modifierText)
 {
     int mods = 0;
-    if (s) {
-        char *dst = s;
-        char *src = s;
+    if (modifierText) {
+        char *dst = modifierText;
+        char *src = modifierText;
         while (*src) {
             while (*src) {
                 if (*src == '[')
@@ -158,24 +158,24 @@ int removeInstructionModifierGroups(char *s)
                 *dst++ = *src++;
             }
             if (*src == '[') {
-                char *p = src + 1;
+                char *modifierCursor = src + 1;
                 int m = 0;
                 bool ok = true;
-                while (*p && *p != ']') {
-                    switch (*p) {
+                while (*modifierCursor && *modifierCursor != ']') {
+                    switch (*modifierCursor) {
                     case 'E': case 'e': m |= 2; break;
                     case 'D': case 'd': m |= 4; break;
                     case 'M': case 'm': m |= 1; break;
                     case 'T': case 't': m |= 8; break;
                     default: ok = false; break;
                     }
-                    p++;
+                    modifierCursor++;
                 }
-                if (*p != ']')
+                if (*modifierCursor != ']')
                     ok = false;
                 if (ok) {
                     mods |= m;
-                    src = p + 1;
+                    src = modifierCursor + 1;
                 } else {
                     reportWarning("possibly misformed instruction modifier detected\n");
                     *dst++ = *src++;
@@ -208,15 +208,15 @@ char instructionModifierTextBuffer[32];
 
 char *formatInstructionModifiers(int mods)
 {
-    char *p = instructionModifierTextBuffer;
+    char *outputCursor = instructionModifierTextBuffer;
     if (mods)
-        *p++ = '[';
-    if (mods & 4) *p++ = 'D';
-    if (mods & 2) *p++ = 'E';
-    if (mods & 8) *p++ = 'T';
-    if (mods & 1) *p++ = 'M';
-    if (mods & ~15) *p++ = '?';
-    if (mods) *p++ = ']';
-    *p = 0;
+        *outputCursor++ = '[';
+    if (mods & 4) *outputCursor++ = 'D';
+    if (mods & 2) *outputCursor++ = 'E';
+    if (mods & 8) *outputCursor++ = 'T';
+    if (mods & 1) *outputCursor++ = 'M';
+    if (mods & ~15) *outputCursor++ = '?';
+    if (mods) *outputCursor++ = ']';
+    *outputCursor = 0;
     return instructionModifierTextBuffer;
 }

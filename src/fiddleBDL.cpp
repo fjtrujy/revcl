@@ -6,16 +6,16 @@ bool setRange(int start, int end, int lsz);
 bool moveLocks(Instr *i, InstructionPosition *pos);
 int checkInstructionPlacementConstraints(workTable *wt, Instr *i, InstructionPosition *pos);
 
-static inline bool isRawMode(workTable *wt)
+static inline bool isRawMode(workTable *scheduleTable)
 {
-    if (wt->codeMode() == 3)
+    if (scheduleTable->codeMode() == 3)
         return true;
     return false;
 }
 
-static inline bool noReduce(workTable *wt)
+static inline bool noReduce(workTable *scheduleTable)
 {
-    return isRawMode(wt) && (wt->rawSchedulingMode == 2 || wt->rawSchedulingMode == 4);
+    return isRawMode(scheduleTable) && (scheduleTable->rawSchedulingMode == 2 || scheduleTable->rawSchedulingMode == 4);
 }
 
 extern const char fiddleBranchPosError[];
@@ -26,43 +26,43 @@ extern const char fiddleGetBranchIeError[];
 extern const char fiddleGetLastIeError[];
 extern const char fiddleSmallerError[];
 
-bool fiddleBDL(workTable *wt)
+bool fiddleBDL(workTable *scheduleTable)
 {
-    setRange(wt->rangeStart, wt->rangeEnd, wt->loopSize);
-    if (noReduce(wt)) {
+    setRange(scheduleTable->rangeStart, scheduleTable->rangeEnd, scheduleTable->loopSize);
+    if (noReduce(scheduleTable)) {
         return true;
     } else {
-        int len = wt->rangeEnd - wt->rangeStart;
-        if (len < wt->externalMinimumLength) {
+        int len = scheduleTable->rangeEnd - scheduleTable->rangeStart;
+        if (len < scheduleTable->externalMinimumLength) {
             reportError(fiddleSmallerError);
             return false;
         }
-        if (len == wt->externalMinimumLength)
+        if (len == scheduleTable->externalMinimumLength)
             return true;
-        if (wt->loopSize)
+        if (scheduleTable->loopSize)
             goto done;
 
         // reduceExt
-        Instr *br = wt->getBranch();
-        int extlen = wt->rangeEnd - wt->rangeStart;
+        Instr *br = scheduleTable->getBranch();
+        int extlen = scheduleTable->rangeEnd - scheduleTable->rangeStart;
         if (extlen <= 2 || !br)
             goto done;
         short m = br->externalInputConstraint < br->externalInputPairedConstraint ? br->externalInputPairedConstraint : br->externalInputConstraint;
         if (m > extlen - 3)
             goto done;
-        wtRow *last = wt->getRowByIndex(wt->rangeEnd - 1);
+        wtRow *last = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 1);
         if (!last) {
             reportError(fiddleGetLastIeError);
             return false;
         }
         if (last->countEntries())
             goto done;
-        wtRow *brow = wt->getRowByIndex(wt->rangeEnd - 2);
+        wtRow *brow = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 2);
         if (!brow) {
             reportError(fiddleGetBranchIeError);
             return false;
         }
-        wtRow *prow = wt->getRowByIndex(wt->rangeEnd - 3);
+        wtRow *prow = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 3);
         if (!prow) {
             reportError(fiddleGetPrevIeError);
             return false;
@@ -71,10 +71,10 @@ bool fiddleBDL(workTable *wt)
         InstructionPosition posP;
         {
             InstructionPosition posB;
-            short row = wt->rangeEnd;
+            short row = scheduleTable->rangeEnd;
             row -= 3;
             posP.setRow(row);
-            row = wt->rangeEnd;
+            row = scheduleTable->rangeEnd;
             row -= 2;
             posB.setRow(row);
             bool ok = true;
@@ -86,18 +86,18 @@ bool fiddleBDL(workTable *wt)
             if (writesInputRegisterOf(prev, br))
                 return true;
 
-            if (prev && !wt->takeOut(prev)) {
+            if (prev && !scheduleTable->takeOut(prev)) {
                 reportError("failed to takeout in_p\n");
                 return false;
             }
-            if (checkInstructionPlacementConstraints(wt, br, &posP))
+            if (checkInstructionPlacementConstraints(scheduleTable, br, &posP))
                 ok = false;
             if (prev) {
                 if (!moveLocks(prev, &posP)) {
                     reportError("failed to undo takeout\n");
                     return false;
                 }
-                if (!wt->putIn(prev)) {
+                if (!scheduleTable->putIn(prev)) {
                     reportError("failed to takeout in_p\n");
                     return false;
                 }
@@ -106,11 +106,11 @@ bool fiddleBDL(workTable *wt)
                 goto success;
 
             if (prev) {
-                if (!wt->takeOut(br)) {
+                if (!scheduleTable->takeOut(br)) {
                     reportError("failed to takeout in_b\n");
                     return false;
                 }
-                if (checkInstructionPlacementConstraints(wt, prev, &posB))
+                if (checkInstructionPlacementConstraints(scheduleTable, prev, &posB))
                     ok = false;
                 int m2 = prev->externalOutputConstraint < prev->externalOutputPairedConstraint ? prev->externalOutputPairedConstraint : prev->externalOutputConstraint;
                 if ((short)m2)
@@ -119,7 +119,7 @@ bool fiddleBDL(workTable *wt)
                     reportError("failed to undo branch\n");
                     return false;
                 }
-                if (!wt->putIn(br)) {
+                if (!scheduleTable->putIn(br)) {
                     reportError("failed to put branch back in\n");
                     return false;
                 }
@@ -127,11 +127,11 @@ bool fiddleBDL(workTable *wt)
             if (!ok)
                 goto success;
 
-            if (!wt->takeOut(br)) {
+            if (!scheduleTable->takeOut(br)) {
                 reportError("failed to takeout in_b\n");
                 return false;
             }
-            if (prev && !wt->takeOut(prev)) {
+            if (prev && !scheduleTable->takeOut(prev)) {
                 reportError("failed to takeout in_p\n");
                 return false;
             }
@@ -144,16 +144,16 @@ bool fiddleBDL(workTable *wt)
                     reportError(fiddleFailedPrevError);
                     return false;
                 }
-                if (!wt->putIn(prev)) {
+                if (!scheduleTable->putIn(prev)) {
                     reportError("failed to put prev back in\n");
                     return false;
                 }
             }
-            if (!wt->putIn(br)) {
+            if (!scheduleTable->putIn(br)) {
                 reportError("failed to put branch back in\n");
                 return false;
             }
-            wt->rangeEnd--;
+            scheduleTable->rangeEnd--;
 success:
             ;
         }

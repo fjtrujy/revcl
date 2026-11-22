@@ -19,10 +19,10 @@ void DecodedLine::refreshInstructionOperands(int index)
     mList *labelList = &labels;
     if (labelList->nodeCount)
         labelList->noopListTraversal();
-    for (int i = 0; i != 2; i++) {
-        if (instructions[i]) {
-            Instr *in = instructions[i];
-            in->dumpOperandDiagnostics(false);
+    for (int instructionIndex = 0; instructionIndex != 2; instructionIndex++) {
+        if (instructions[instructionIndex]) {
+            Instr *instruction = instructions[instructionIndex];
+            instruction->dumpOperandDiagnostics(false);
         }
     }
 }
@@ -40,10 +40,10 @@ void DecodedLine::releaseContents()
     if (passThroughText)
         delete[] passThroughText;
     passThroughText = 0;
-    for (int i = 0; i != 2; i++) {
-        if (instructions[i])
-            delete instructions[i];
-        instructions[i] = 0;
+    for (int instructionIndex = 0; instructionIndex != 2; instructionIndex++) {
+        if (instructions[instructionIndex])
+            delete instructions[instructionIndex];
+        instructions[instructionIndex] = 0;
     }
 }
 

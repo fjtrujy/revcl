@@ -10,12 +10,12 @@
 bool checkOpt1(Program *program)
 {
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *wt = stream->getTable();
-        if (!wt) {
+        workTable *scheduleTable = stream->getTable();
+        if (!scheduleTable) {
             reportError("null work table\n");
             return false;
         }
-        if (wt != &stream->sourceTable) {
+        if (scheduleTable != &stream->sourceTable) {
             reportError("work table isn't input table\n");
             return false;
         }
@@ -27,8 +27,8 @@ bool checkOpt1(Program *program)
 bool checkOpt2(Program *program)
 {
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *wt = stream->getTable();
-        if (!wt) {
+        workTable *scheduleTable = stream->getTable();
+        if (!scheduleTable) {
             reportError("null work table\n");
             return false;
         }
@@ -37,7 +37,7 @@ bool checkOpt2(Program *program)
                 reportError("work table isn't opt table\n");
                 return false;
             }
-            if (!wt->postOptimizationPrepared) {
+            if (!scheduleTable->postOptimizationPrepared) {
                 reportError("locks aren't valid for opt table\n");
                 return false;
             }
@@ -60,18 +60,18 @@ bool checkOpt3(Program *program)
     reportInfo("checkOpt2()\n");
     reportInfo("OLL free count = %d\n", countFreeLocationNodes());
     for (instStream *s = program->streamHead; s; s = s->nextStream) {
-        workTable *wt = s->getTable();
-        if (!wt) {
+        workTable *scheduleTable = s->getTable();
+        if (!scheduleTable) {
             reportError("null work table\n");
             return false;
         }
 
-        if (wt->isAbstract()) {
-            if (wt->rows) {
+        if (scheduleTable->isAbstract()) {
+            if (scheduleTable->rows) {
                 reportError("table set for abstract list\n");
                 return false;
             }
-            for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
+            for (Instr *in = scheduleTable->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
                 if (in->position.getPipe() != -1) {
                     reportError("pipe is set for non-inserted instruction\n");
                     return false;
@@ -86,9 +86,9 @@ bool checkOpt3(Program *program)
                 }
             }
         }
-        if (wt->codeModeValue == 3) {
-            int start = wt->getRangeStart();
-            int end = wt->getRangeEnd();
+        if (scheduleTable->codeModeValue == 3) {
+            int start = scheduleTable->getRangeStart();
+            int end = scheduleTable->getRangeEnd();
             if (start < 0 || end < start) {
                 reportError("invalid table range\n");
                 return false;
@@ -96,13 +96,13 @@ bool checkOpt3(Program *program)
             int count = 0;
             Instr *prev = 0;
             for (int i = start; i != end; i++) {
-                Instr **ie = ((cls_unk30 *)wt)->getIE_ck(i);
-                if (!ie) {
+                Instr **instructionSlot = ((cls_unk30 *)scheduleTable)->getIE_ck(i);
+                if (!instructionSlot) {
                     reportError("failed to get ientry from table\n");
                     return false;
                 }
                 for (int j = 0; j != 2; j++) {
-                    Instr *in = ie[j];
+                    Instr *in = instructionSlot[j];
                     if (!in)
                         continue;
                     if (((VclPtrWord)in & 1) == 1) {
@@ -115,7 +115,7 @@ bool checkOpt3(Program *program)
                             name = in->opcodeInfo->mnemonic;
                         reportError("linear list isn't in order at guid=%d %s prev=%p\n",
                                       in->instructionSerial, name, in->linearLink.previousInstruction);
-                        wt->dump();
+                        scheduleTable->dump();
                         return false;
                     }
                     prev = in;
@@ -134,34 +134,34 @@ bool checkOpt3(Program *program)
                     count++;
                 }
             }
-            int lcount = wt->linearInstructions.count;
+            int lcount = scheduleTable->linearInstructions.count;
             if (count != lcount) {
                 reportError("linear count and itable mismatch (%d != %d) for %s\n",
                               lcount, count, s->streamName());
-                wt->dump();
+                scheduleTable->dump();
                 return false;
             }
         }
 
-        for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-            for (int k = 0; k != in->operandCount; k++) {
-                Operand *operand = &in->operands[k];
+        for (Instr *in = scheduleTable->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
+            for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
+                Operand *operand = &in->operands[operandIndex];
                 RegPoolEntry *reg;
-                if (in->operands[k].pairedOperandIndexPlusOne) {
-                    Operand *po = &in->operands[in->operands[k].pairedOperandIndexPlusOne - 1];
-                    if (po->pairedOperandIndexPlusOne - 1 != k) {
+                if (in->operands[operandIndex].pairedOperandIndexPlusOne) {
+                    Operand *po = &in->operands[in->operands[operandIndex].pairedOperandIndexPlusOne - 1];
+                    if (po->pairedOperandIndexPlusOne - 1 != operandIndex) {
                         reportError("badly linked web patch\n");
                         return false;
                     }
-                    reg = in->operands[k].assignedRegister;
+                    reg = in->operands[operandIndex].assignedRegister;
                     if (reg != po->assignedRegister) {
                         reportError("not same reg for iwp\n");
                         return false;
                     }
                 } else
-                    reg = in->operands[k].assignedRegister;
-                RegPoolEntry *mreg = (RegPoolEntry *)in->operands[k].forcedBaseRegister;
-                if (reg && reg->isVirtual && !in->operands[k].originalRegister) {
+                    reg = in->operands[operandIndex].assignedRegister;
+                RegPoolEntry *mreg = (RegPoolEntry *)in->operands[operandIndex].forcedBaseRegister;
+                if (reg && reg->isVirtual && !in->operands[operandIndex].originalRegister) {
                     reportError("original reg not set\n");
                     return false;
                 }
@@ -210,7 +210,7 @@ bool checkOpt3(Program *program)
                                     reportError("internal oploc but instruction not from this stream\n");
                                     return false;
                                 }
-                                if (wt->codeModeValue == 3) {
+                                if (scheduleTable->codeModeValue == 3) {
                                     if (__builtin_expect(oi->position.getRow() < last, 0)) {
                                         reportError("local oplocs  aren't in order\n");
                                         return false;

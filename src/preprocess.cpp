@@ -22,14 +22,14 @@ static inline char lowerCase(char c)
 
 static inline bool startsWith(const char *s, const char *prefix)
 {
-    const char *p = prefix;
-    while (*p && lowerCase(*p) == lowerCase(*s)) {
+    const char *prefixCursor = prefix;
+    while (*prefixCursor && lowerCase(*prefixCursor) == lowerCase(*s)) {
         s++;
-        p++;
+        prefixCursor++;
     }
-    if (*p == 0)
+    if (*prefixCursor == 0)
         matchedDirective = prefix;
-    return *p == 0;
+    return *prefixCursor == 0;
 }
 
 bool warnAboutMissingPreprocessing(const char *buf)
@@ -38,22 +38,22 @@ bool warnAboutMissingPreprocessing(const char *buf)
         reportUserMessage("Input was a null pointer?\n");
         return false;
     }
-    const char *p = buf;
+    const char *inputCursor = buf;
     bool inComment = false;
-    for (; *p; p++) {
-        if (*p == ';')
+    for (; *inputCursor; inputCursor++) {
+        if (*inputCursor == ';')
             inComment = true;
-        if (*p == '\n')
+        if (*inputCursor == '\n')
             inComment = false;
-        if (*p == '\r')
+        if (*inputCursor == '\r')
             inComment = false;
         if (!inComment) {
-            if (startsWith(p, ".mac") || startsWith(p, ".inc")) {
+            if (startsWith(inputCursor, ".mac") || startsWith(inputCursor, ".inc")) {
                 reportUserMessage("The input seems to include directives that should be processed by gasp, not vcl ('%s...')\n", matchedDirective);
                 reportUserMessage("Try adding '-g' to the command line\n");
                 return false;
             }
-            if (startsWith(p, "#def") || startsWith(p, "#inc")) {
+            if (startsWith(inputCursor, "#def") || startsWith(inputCursor, "#inc")) {
                 reportUserMessage("The input seems to include directives that should be processed by gcc, not vcl ('%s..')\n", matchedDirective);
                 reportUserMessage("Try adding '-G' to the command line\n");
                 return false;

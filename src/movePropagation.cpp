@@ -18,33 +18,33 @@ extern const char propagateValidDetailError[];
 extern const char propagateTwoWritesError[];
 extern const char propagateNormaliseError[];
 
-bool noopMovePropagationHook(Program *p)
+bool noopMovePropagationHook(Program *program)
 {
     return true;
 }
 
-int propagateMoves(workTable *t)
+int propagateMoves(workTable *scheduleTable)
 {
-    wtInstrList *list = &t->linearInstructions;
+    wtInstrList *list = &scheduleTable->linearInstructions;
     int count = 0;
-    for (Instr *in = list->tail; in; in = in->linearLink.prev()) {
-        if (in->normalizeZeroSources() < 0) {
+    for (Instr *instruction = list->tail; instruction; instruction = instruction->linearLink.prev()) {
+        if (instruction->normalizeZeroSources() < 0) {
             reportError(propagateNormaliseError);
             return 0;
         }
-        if (!in->abstractMoveOpcode)
+        if (!instruction->abstractMoveOpcode)
             continue;
-        int mask = in->operands[0].componentMask;
-        RegPoolEntry *dst = in->operands[0].assignedRegister;
-        RegPoolEntry *src = in->operands[1].assignedRegister;
+        int mask = instruction->operands[0].componentMask;
+        RegPoolEntry *dst = instruction->operands[0].assignedRegister;
+        RegPoolEntry *src = instruction->operands[1].assignedRegister;
         int keep = 0;
         int srcWritten = 0;
         int valid = mask;
-        int row = in->position.linearRow;
-        Instr *n = in->linearLink.next();
+        int row = instruction->position.linearRow;
+        Instr *n = instruction->linearLink.next();
         Instr *cur = n;
         if (row >= 0) {
-            Instr *p = in->linearLink.prev();
+            Instr *p = instruction->linearLink.prev();
             if (p && p->position.linearRow == row) {
                 bool a;
                 if (p->collectOutputRegisterMask(dst, &a)) {
@@ -79,10 +79,10 @@ int propagateMoves(workTable *t)
             int used = cur->collectInputRegisterMask(dst, &paired);
             if (used) {
                 if (!(used & ~valid) && !(used & srcWritten) && !paired)
-                    for (int i = 0; i != cur->operandCount; i++) {
-                        Operand *op = &cur->operands[i];
-                        if (registerOperand(op, 1) == dst)
-                            op->getRegFrom(&in->operands[1]);
+                    for (int operandIndex = 0; operandIndex != cur->operandCount; operandIndex++) {
+                        Operand *operand = &cur->operands[operandIndex];
+                        if (registerOperand(operand, 1) == dst)
+                            operand->getRegFrom(&instruction->operands[1]);
                         count++;
                     }
                 else
@@ -95,31 +95,31 @@ int propagateMoves(workTable *t)
             cur = cur->linearLink.nextInstruction;
             row = r;
         }
-        if (~valid & in->operands[0].externalPartMask) {
+        if (~valid & instruction->operands[0].externalPartMask) {
             reportError(propagateValidMaskError,
                           dst->registerName(), src->registerName());
             reportError(propagateValidDetailError,
-                          valid, in->operands[0].externalPartMask);
+                          valid, instruction->operands[0].externalPartMask);
             return -1;
         }
-        keep |= in->operands[0].externalPartMask;
+        keep |= instruction->operands[0].externalPartMask;
         if (!keep)
-            in->operands[0].assignedRegister = in->operands[1].assignedRegister;
-        in->destinationMask = keep;
-        in->operands[0].componentMask = keep;
-        in->operands[1].componentMask = keep;
+            instruction->operands[0].assignedRegister = instruction->operands[1].assignedRegister;
+        instruction->destinationMask = keep;
+        instruction->operands[0].componentMask = keep;
+        instruction->operands[1].componentMask = keep;
     }
     return count;
 }
 
-int removeDeadMoves(workTable *t)
+int removeDeadMoves(workTable *scheduleTable)
 {
     int count = 0;
     Instr *next;
-    for (Instr *in = t->linearInstructions.head; in; in = next) {
-        next = in->linearLink.nextInstruction;
-        if (in->abstractMoveOpcode && in->operands[0].assignedRegister == in->operands[1].assignedRegister) {
-            if (!t->destroyInstruction(in)) {
+    for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = next) {
+        next = instruction->linearLink.nextInstruction;
+        if (instruction->abstractMoveOpcode && instruction->operands[0].assignedRegister == instruction->operands[1].assignedRegister) {
+            if (!scheduleTable->destroyInstruction(instruction)) {
                 reportError("failed to destroy a move\n");
                 return -1;
             }

@@ -18,17 +18,17 @@ static inline void dumpRow(wtRow *row)
 
 bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int loopMode)
 {
-    workTable *t = &s->sourceTable;
-    if (!t) {
+    workTable *scheduleTable = &s->sourceTable;
+    if (!scheduleTable) {
         reportError("build: failed to get input table from ist\n");
         return false;
     }
-    if (!t->init(5, count)) {
+    if (!scheduleTable->init(5, count)) {
         reportError("failed to init raw table for '%s' with %d entries\n", s->streamName(), count);
         return false;
     }
-    t->ownerStream = s;
-    if (!t->setTableRawMode(loopMode)) {
+    scheduleTable->ownerStream = s;
+    if (!scheduleTable->setTableRawMode(loopMode)) {
         reportError("failed to set sub mode\n");
         return false;
     }
@@ -56,7 +56,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             }
             continue;
         }
-        wtRow *row = t->getRowByIndex(rows);
+        wtRow *row = scheduleTable->getRowByIndex(rows);
         if (!row) {
             reportError("failed to get ied\n");
             return false;
@@ -73,7 +73,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                 return false;
             }
             decodedLine->instructions[j] = 0;
-            if (!t->logAddLinear_Tail(in)) {
+            if (!scheduleTable->logAddLinear_Tail(in)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
             }
@@ -109,7 +109,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                 branch = in;
             }
             row->entries[j].instruction = in;
-            in->setOwner((cls_unk30 *)t);
+            in->setOwner((cls_unk30 *)scheduleTable);
             valid++;
             n++;
         }
@@ -146,19 +146,19 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         }
     }
     if (looped)
-        t->setRange(rows);
+        scheduleTable->setRange(rows);
     else
-        t->setRange(0, rows);
-    setRangeFrom(t);
+        scheduleTable->setRange(0, rows);
+    setRangeFrom(scheduleTable);
     int maxLid = 0;
     for (i = 0; i != rows; i++) {
-        wtRow *row = t->getRowByIndex(i);
+        wtRow *row = scheduleTable->getRowByIndex(i);
         if (!row) {
             reportError("failed to get ie from table\n");
             return false;
         }
-        for (int j = 0; j != 2; j++) {
-            Instr *in = row->entries[j].instruction;
+        for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
+            Instr *in = row->entries[entryIndex].instruction;
             if (!in)
                 continue;
             int lid, pos;
@@ -172,7 +172,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             in->parsedLoopId = -1;
             if (lid > maxLid)
                 maxLid = lid;
-            in->position.setInstructionPipe(j);
+            in->position.setInstructionPipe(entryIndex);
             in->position.setFromLinearRow(pos);
         }
     }
@@ -184,7 +184,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
         reportUserMessage("max lid not zero and not in a loop\n");
         return false;
     }
-    t->mainLoopId = maxLid;
+    scheduleTable->mainLoopId = maxLid;
     resetRange();
     return true;
 }

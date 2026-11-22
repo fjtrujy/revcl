@@ -22,9 +22,9 @@ static inline RegPoolEntry *outR(Operand *operand)
 }
 static inline bool isPoolZero(RegPool *registerPool, RegPoolEntry *registerEntry) { return registerEntry == registerPool->zeroRegister; }
 
-int findCap(workTable *wt, Instr *instruction, int opIdx, RegPoolEntry **capReg, int *capMask)
+int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntry **capReg, int *capMask)
 {
-    capInsertionWorkTable = wt;
+    capInsertionWorkTable = scheduleTable;
     selectedCapRegister = 0;
     *capReg = 0;
     Operand *operand = &instruction->operands[opIdx];
@@ -67,7 +67,7 @@ int findCap(workTable *wt, Instr *instruction, int opIdx, RegPoolEntry **capReg,
                 mask[i] = (e->enabledPhysicalRegister && e->allocatable) ? instruction->operands[0].componentMask : 0;
             }
             mask[0] = 0;
-            for (regUse *registerUse = wt->registerUses.head; registerUse; registerUse = registerUse->next) {
+            for (regUse *registerUse = scheduleTable->registerUses.head; registerUse; registerUse = registerUse->next) {
                 RegPoolEntry *reg = registerUse->registerEntry;
                 if (reg->registerClass != 9)
                     continue;
@@ -140,8 +140,8 @@ bool doCap(int line, int pipe, int mask)
         return false;
     }
     ci->destinationMask = mask;
-    for (int i = 0; i != ci->operandCount; i++)
-        ci->operands[i].componentMask = mask;
+    for (int operandIndex = 0; operandIndex != ci->operandCount; operandIndex++)
+        ci->operands[operandIndex].componentMask = mask;
 
     if (selectedCapRegister->registerClass == 9) {
         RegPoolEntry *registerEntry = getZeroReg(9);

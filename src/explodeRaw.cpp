@@ -13,19 +13,19 @@ int decodeCollapsibleMoveImmediate(Instr *in);
 int expandOneLoopIntoRegions(Program *p, instStream *s);
 
 
-bool explodeRaw(Program *p)
+bool explodeRaw(Program *program)
 {
     instStream *next;
-    for (instStream *s = p->streamHead; s; s = next) {
+    for (instStream *s = program->streamHead; s; s = next) {
         next = s->nextStream;
-        workTable *t = s->getTable();
-        if (!t) {
+        workTable *scheduleTable = s->getTable();
+        if (!scheduleTable) {
             reportError("floBuild - there's no work table!\n");
             return false;
         }
-        if (!t->getLoopSize())
+        if (!scheduleTable->getLoopSize())
             continue;
-        if (t->codeModeValue != 3) {
+        if (scheduleTable->codeModeValue != 3) {
             reportError("explodeRaw: a non raw stream has a loop size set\n");
             return false;
         }
@@ -37,7 +37,7 @@ bool explodeRaw(Program *p)
             reportWarning("setting minimum safe count to 1000 for %s\n", s->streamName());
             s->safeMinimumLoopCount = 10000;
         }
-        int r = expandOneLoopIntoRegions(p, s);
+        int r = expandOneLoopIntoRegions(program, s);
         if (r < 0) {
             reportError("failed to construct epilogue/prologues\n");
             return false;

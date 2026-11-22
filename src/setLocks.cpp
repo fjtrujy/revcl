@@ -25,19 +25,19 @@ static inline void dumpLockInstruction(Instr *instruction)
 
 bool setLocks(Instr *instruction)
 {
-    for (int i = 0; i != instruction->operandCount; i++) {
-        Operand *operand = &instruction->operands[i];
+    for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *operand = &instruction->operands[operandIndex];
         RegPoolEntry *registerEntry = operand->assignedRegister;
         if (!registerEntry)
             continue;
         if (isRegisterOperand(operand, 2)) {
-            for (int p = 0; p != registerEntry->partCount; p++) {
-                if ((operand->componentMask >> p) & 1) {
-                    OpSlot *slot = &operand->parts[p];
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+                if ((operand->componentMask >> partIndex) & 1) {
+                    OpSlot *slot = &operand->parts[partIndex];
                     RegisterPartLockList *lockList = slot->ownerLockList;
                     slot->setFrom(&instruction->position);
                     if (!lockList->addOutputLock(slot)) {
-                        reportError("oh no - add output lock failed %d.%d\n", i, p);
+                        reportError("oh no - add output lock failed %d.%d\n", operandIndex, partIndex);
                         dumpLockInstruction(instruction);
                         return false;
                     }
@@ -51,7 +51,7 @@ bool setLocks(Instr *instruction)
                     RegisterPartLockList *lockList = slot->ownerLockList;
                     slot->setFrom(&instruction->position);
                     if (!lockList->addInputLock(slot)) {
-                        reportError("SetLocks: oh no - add input lock failed %d.%d\n", i, p);
+                        reportError("SetLocks: oh no - add input lock failed %d.%d\n", operandIndex, p);
                         dumpLockInstruction(instruction);
                         return false;
                     }
@@ -64,16 +64,16 @@ bool setLocks(Instr *instruction)
 
 bool undoLocks(Instr *instruction)
 {
-    for (int i = instruction->operandCount - 1; i >= 0; i--) {
-        Operand *operand = &instruction->operands[i];
+    for (int operandIndex = instruction->operandCount - 1; operandIndex >= 0; operandIndex--) {
+        Operand *operand = &instruction->operands[operandIndex];
         RegPoolEntry *registerEntry = operand->assignedRegister;
         if (!registerEntry)
             continue;
         if (isRegisterOperand(operand, 2)) {
-            for (int p = 0; p != registerEntry->partCount; p++) {
-                operand->parts[p].outputConflictMarked[0] = 0;
-                if ((operand->componentMask >> p) & 1) {
-                    OpSlot *slot = &operand->parts[p];
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+                operand->parts[partIndex].outputConflictMarked[0] = 0;
+                if ((operand->componentMask >> partIndex) & 1) {
+                    OpSlot *slot = &operand->parts[partIndex];
                     if (!slot->ownerLockList->undoOutputLock(slot))
                         return false;
                 }
@@ -96,17 +96,17 @@ int checkLocks(Instr *instruction, short *pos, int *minPos)
 {
     OperandLock *saved[64];
     int ret = 0;
-    int i;
+    int operandIndex;
     int n = 0;
 
-    for (i = 0; i != instruction->operandCount; i++) {
-        Operand *operand = &instruction->operands[i];
+    for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *operand = &instruction->operands[operandIndex];
         RegPoolEntry *registerEntry = isRegisterOperand(operand, 1) ? operand->assignedRegister : 0;
         if (!registerEntry)
             continue;
-        for (int p = 0; p != registerEntry->partCount; p++) {
-            if ((operand->componentMask >> p) & 1) {
-                OpSlot *slot = &operand->parts[p];
+        for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+            if ((operand->componentMask >> partIndex) & 1) {
+                OpSlot *slot = &operand->parts[partIndex];
                 RegisterPartLockList *lockList = slot->ownerLockList;
                 if (*minPos < lockList->loopWrapMinimumRow) {
                     ret |= 0x80000;
@@ -120,9 +120,9 @@ int checkLocks(Instr *instruction, short *pos, int *minPos)
                     Operand *otherOperand = par->ownerOperand();
                     if (otherOperand) {
                         Instr *otherInstruction = par->ownerInstr();
-                        if (!otherOperand->parts[p].outputConflictMarked[0]) {
-                            otherOperand->parts[p].outputConflictMarked[0] = 1;
-                            otherOperand->parts[p].conflictingOutputLockCount++;
+                        if (!otherOperand->parts[partIndex].outputConflictMarked[0]) {
+                            otherOperand->parts[partIndex].outputConflictMarked[0] = 1;
+                            otherOperand->parts[partIndex].conflictingOutputLockCount++;
                         }
                         trackEarliestInsertion(otherInstruction);
                         otherInstruction->dumpOperandDiagnostics(false);
@@ -141,8 +141,8 @@ int checkLocks(Instr *instruction, short *pos, int *minPos)
             }
         }
     }
-    for (i = 0; i != instruction->operandCount; i++) {
-        Operand *operand = &instruction->operands[i];
+    for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *operand = &instruction->operands[operandIndex];
         RegPoolEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
         if (!registerEntry)
             continue;
@@ -173,7 +173,7 @@ int checkLocks(Instr *instruction, short *pos, int *minPos)
                             reportWarning("failed to get earliest in ret=%x\n", rc);
                             lockList->checkCounts();
                             reportError("this instruction is\n");
-                            instruction->leDump(i, p);
+                            instruction->leDump(operandIndex, p);
                             abortAfterError();
                         } else
                             trackEarliestInsertion(endInstruction);
@@ -194,17 +194,17 @@ int canMoveLocks(Instr *instruction, short *pos)
 {
     OperandLock *saved[64];
     int ret = 0;
-    int i;
+    int operandIndex;
     int n = 0;
 
-    for (i = 0; i != instruction->operandCount; i++) {
-        Operand *operand = &instruction->operands[i];
+    for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *operand = &instruction->operands[operandIndex];
         RegPoolEntry *registerEntry = registerOperand(operand, 1);
         if (!registerEntry)
             continue;
-        for (int p = 0; p != registerEntry->partCount; p++) {
-            if ((operand->componentMask >> p) & 1) {
-                OperandLock *par = operand->parts[p].getParent();
+        for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+            if ((operand->componentMask >> partIndex) & 1) {
+                OperandLock *par = operand->parts[partIndex].getParent();
                 if (!par->calcStats(instruction)) {
                     reportError("failed to recalc stats ignoring instruction\n");
                     abortAfterError();
@@ -213,8 +213,8 @@ int canMoveLocks(Instr *instruction, short *pos)
             }
         }
     }
-    for (i = 0; i != instruction->operandCount; i++) {
-        Operand *operand = &instruction->operands[i];
+    for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *operand = &instruction->operands[operandIndex];
         RegPoolEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
             for (int p = 0; p != registerEntry->partCount; p++) {
@@ -255,19 +255,19 @@ bool moveLocks(Instr *const in, InstructionPosition *pos)
     position->loopRow = pos->loopRow;
     position->loopIteration = pos->loopIteration;
     position->pipelineIndex = pos->pipelineIndex;
-    for (int i = 0; i != in->operandCount; i++) {
-        Operand *operand = &in->operands[i];
+    for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
+        Operand *operand = &in->operands[operandIndex];
         RegPoolEntry *registerEntry = operand->assignedRegister;
         if (!registerEntry)
             continue;
         if (isRegisterOperand(operand, 2)) {
-            for (int p = 0; p != registerEntry->partCount; p++) {
-                if ((operand->componentMask >> p) & 1) {
-                    OpSlot *slot = &operand->parts[p];
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+                if ((operand->componentMask >> partIndex) & 1) {
+                    OpSlot *slot = &operand->parts[partIndex];
                     RegisterPartLockList *lockList = slot->ownerLockList;
                     slot->setFrom(&in->position);
                     if (!lockList->moveOutputLock(slot)) {
-                        reportError("oh no - move output lock failed %d.%d\n", i, p);
+                        reportError("oh no - move output lock failed %d.%d\n", operandIndex, partIndex);
                         dumpLockInstruction(in);
                         abortAfterError();
                         return false;
@@ -282,7 +282,7 @@ bool moveLocks(Instr *const in, InstructionPosition *pos)
                     RegisterPartLockList *lockList = slot->ownerLockList;
                     slot->setFrom(&in->position);
                     if (!lockList->moveInputLock(slot)) {
-                        reportError("oh no - move input lock failed %d.%d\n", i, p);
+                        reportError("oh no - move input lock failed %d.%d\n", operandIndex, p);
                         dumpLockInstruction(in);
                         abortAfterError();
                         return false;
@@ -296,24 +296,24 @@ bool moveLocks(Instr *const in, InstructionPosition *pos)
 
 bool setPipeBits(Instr *instruction)
 {
-    int i;
-    for (i = 0; i != instruction->operandCount; i++) {
-        Operand *operand = &instruction->operands[i];
+    int operandIndex;
+    for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *operand = &instruction->operands[operandIndex];
         if (operand->assignedRegister)
             operand->assignedRegister->seenInputComponentMask = 0;
     }
-    for (i = 0; i != instruction->operandCount; i++) {
-        Operand *operand = &instruction->operands[i];
+    for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *operand = &instruction->operands[operandIndex];
         RegPoolEntry *registerEntry = operand->inputRegister();
         if (!registerEntry)
             continue;
-        for (int p = 0; p != registerEntry->partCount; p++) {
-            if ((operand->componentMask >> p) & 1) {
-                OpSlot *slot = &operand->parts[p];
+        for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+            if ((operand->componentMask >> partIndex) & 1) {
+                OpSlot *slot = &operand->parts[partIndex];
                 slot->upperPipeInputDemand = 0;
                 slot->lowerPipeInputDemand = 0;
                 slot->eitherPipeInputDemand = 0;
-                if (!(((unsigned char)registerEntry->seenInputComponentMask >> p) & 1)) {
+                if (!(((unsigned char)registerEntry->seenInputComponentMask >> partIndex) & 1)) {
                     switch ((unsigned char)instruction->permittedPipelineMask) {
                     case 0:
                         reportError("no physical pipe bits!\n");
@@ -527,10 +527,10 @@ bool reduceExtents(workTable *table)
                 for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
                     RegPoolEntry *reg = registerOperand(operand, 2);
                     if (reg) {
-                        for (int k = 0; k != reg->partCount; k++) {
-                            if ((operand->componentMask >> k) & 1) {
+                        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+                            if ((operand->componentMask >> partIndex) & 1) {
                                 cnt++;
-                                OpSlot *slot = &operand->parts[k];
+                                OpSlot *slot = &operand->parts[partIndex];
                                 if (slot->getRefCount() != 0) {
                                     int e = slot->earliestConsumerFreeCycle;
                                     if (e < minEnd)
@@ -590,9 +590,9 @@ int drag(workTable *table, Instr *instruction, InstructionPosition *pos, int bac
             RegPoolEntry *registerEntry = registerOperand(operand, 1);
             if (!registerEntry)
                 continue;
-            for (int p = 0; p != registerEntry->partCount; p++) {
-                if ((operand->componentMask >> p) & 1) {
-                OpSlot *slot = &operand->parts[p];
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+                if ((operand->componentMask >> partIndex) & 1) {
+                OpSlot *slot = &operand->parts[partIndex];
                 OperandLock *par = slot->getParent();
                 Instr *otherInstruction = par->ownerInstr();
                 if (!otherInstruction)
@@ -755,9 +755,9 @@ int pullSpecialRegisterWritersEarlier(workTable *table, Instr *instruction, Inst
         RegPoolEntry *reg = registerOperand(operand, 1);
         if (!reg)
             continue;
-        for (int k = 0; k != reg->partCount; k++) {
-            if ((operand->componentMask >> k) & 1) {
-                OpSlot *slot = &operand->parts[k];
+        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            if ((operand->componentMask >> partIndex) & 1) {
+                OpSlot *slot = &operand->parts[partIndex];
                 OperandLock *par = slot->getParent();
                 int idx = reg->registerIndex;
                 if (idx != 48 && idx != 49 && idx != 59)
@@ -843,9 +843,9 @@ int pullLatencyWritersEarlier(workTable *table, Instr *instruction, InstructionP
         RegPoolEntry *reg = registerOperand(operand, 1);
         if (!reg)
             continue;
-        for (int k = 0; k != reg->partCount; k++) {
-            if ((operand->componentMask >> k) & 1) {
-                OpSlot *slot = &operand->parts[k];
+        for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            if ((operand->componentMask >> partIndex) & 1) {
+                OpSlot *slot = &operand->parts[partIndex];
                 OperandLock *par = slot->getParent();
                 if (par->activeReferenceCount != 0)
                     continue;

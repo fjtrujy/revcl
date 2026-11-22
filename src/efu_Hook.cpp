@@ -68,18 +68,18 @@ char *emitClip(char *buf, Instr *instruction, bool upper, char *mods, bool b, in
 {
     bool comma = false;
     int len = formatIntoBuffer(buf, "clipw%s.xyz", mods);
-    char *p = buf + len;
-    for (int n = p - buf; n < 14; n++)
-        *p++ = ' ';
-    for (int i = 0; i != instruction->operandCount; i++) {
-        Operand *op = &instruction->operands[i];
+    char *outputCursor = buf + len;
+    for (int n = outputCursor - buf; n < 14; n++)
+        *outputCursor++ = ' ';
+    for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *op = &instruction->operands[operandIndex];
         if (op->isImplicit)
             continue;
         if (comma)
-            *p++ = ',';
+            *outputCursor++ = ',';
         comma = true;
-        p = op->Emit(p, upper, b);
-        if (!p) {
+        outputCursor = op->Emit(outputCursor, upper, b);
+        if (!outputCursor) {
             reportError("failed to emit operand\n");
             op->diagnoseOperand(0);
             reportError("from\n");
@@ -87,7 +87,7 @@ char *emitClip(char *buf, Instr *instruction, bool upper, char *mods, bool b, in
             return 0;
         }
     }
-    return p;
+    return outputCursor;
 }
 
 char *vmove_Emit(char *buf, Instr *instruction, bool upper, char *mods, bool b, int)
@@ -174,13 +174,13 @@ bool semSynth(void *p, Instr *in)
 {
     iInfo *info = (iInfo *)p;
     char name[32];
-    char *d = name;
-    const char *s = info->mnemonic;
-    while (*s)
-        *d++ = *s++;
+    char *nameDestination = name;
+    const char *mnemonicSource = info->mnemonic;
+    while (*mnemonicSource)
+        *nameDestination++ = *mnemonicSource++;
     if (in->operands[0].operandKind == 9) {
-        if (d[-1] != 'a' && d[-1] != 'A') {
-            *d++ = 'a';
+        if (nameDestination[-1] != 'a' && nameDestination[-1] != 'A') {
+            *nameDestination++ = 'a';
             in->operands[0].outputLatency = 1;
         }
     } else
@@ -188,25 +188,25 @@ bool semSynth(void *p, Instr *in)
     char k = in->operands[2].operandKind;
     if (k == 4) {
         in->operands[2].externalBlockModeFlag = 1;
-        *d++ = 'i';
+        *nameDestination++ = 'i';
     }
     if (k == 7) {
-        *d++ = 'q';
+        *nameDestination++ = 'q';
         in->operands[2].externalBlockModeFlag = 0;
     }
     if (k == 3) {
         unsigned char m = in->operands[2].componentMask;
         int n = 0;
-        if (m == 1) { *d++ = 'x'; n++; }
-        if (m == 2) { *d++ = 'y'; n++; }
-        if (m == 4) { *d++ = 'z'; n++; }
-        if (m == 8) { *d++ = 'w'; n++; }
+        if (m == 1) { *nameDestination++ = 'x'; n++; }
+        if (m == 2) { *nameDestination++ = 'y'; n++; }
+        if (m == 4) { *nameDestination++ = 'z'; n++; }
+        if (m == 8) { *nameDestination++ = 'w'; n++; }
         if (n != 1) {
             reportError("semSynth - bad FL1 bits\n");
             return 0;
         }
     }
-    *d = 0;
+    *nameDestination = 0;
     iInfo *instructionInfo = findOpcodeInfoByMnemonic(name, false);
     if (!instructionInfo) {
         reportError("failed to find derived instruction type '%s'\n", name);

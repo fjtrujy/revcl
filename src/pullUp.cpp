@@ -16,36 +16,36 @@ bool setRange(int start, int end, int lsz);
 int pullUp(workTable *wt);
 int dragDown(workTable *wt);
 
-static inline bool setPullUpRange(workTable *wt, int lsz)
+static inline bool setPullUpRange(workTable *scheduleTable, int lsz)
 {
-    return setRange(wt->rangeStart, wt->rangeEnd, lsz);
+    return setRange(scheduleTable->rangeStart, scheduleTable->rangeEnd, lsz);
 }
 
-int pullUp(workTable *wt)
+int pullUp(workTable *scheduleTable)
 {
-    if (wt->rangeEnd == wt->rangeStart)
+    if (scheduleTable->rangeEnd == scheduleTable->rangeStart)
         return 0;
-    if (wt->loopSize) {
+    if (scheduleTable->loopSize) {
         reportError("raw_PullUp it has loop\n");
         return -1;
     }
-    setRangeFrom(wt);
+    setRangeFrom(scheduleTable);
 
     int moved;
     int mrl;
     Instr *lbdli = 0;
-    Instr *br = wt->getBranch();
+    Instr *br = scheduleTable->getBranch();
     if (br) {
-        lbdli = wt->rows[wt->rangeEnd - 1].entries[1].instruction;
+        lbdli = scheduleTable->rows[scheduleTable->rangeEnd - 1].entries[1].instruction;
         if (lbdli)
             lbdli = writesInputRegisterOf(lbdli, br) ? lbdli : 0;
     }
 
     do {
         moved = 0;
-        mrl = wt->rangeStart;
-        for (int l = wt->rangeStart; l != wt->rangeEnd; l++) {
-            wtRow *row = wt->getRowByIndex(l);
+        mrl = scheduleTable->rangeStart;
+        for (int l = scheduleTable->rangeStart; l != scheduleTable->rangeEnd; l++) {
+            wtRow *row = scheduleTable->getRowByIndex(l);
             for (int p = 0; p != 2; p++) {
                 Instr *in = row->getEntry(p);
                 if (!in || in == br || in == lbdli)
@@ -55,9 +55,9 @@ int pullUp(workTable *wt)
                     reportError("rl not l!\n");
                     exitAfterCleanup(-1);
                 }
-                int e = earliestInsert(wt, in, 0);
+                int e = earliestInsert(scheduleTable, in, 0);
                 if (e < rl) {
-                    if (!doLocalMove(wt, in, e, rl, 1)) {
+                    if (!doLocalMove(scheduleTable, in, e, rl, 1)) {
                         reportError("failed to do local move for raw up\n");
                         return -1;
                     }
@@ -68,9 +68,9 @@ int pullUp(workTable *wt)
                 int end = in->position.getRow() + mte;
                 if (end > mrl)
                     mrl = end;
-                if (mrl >= wt->rangeEnd) {
-                    reportError("mRline would be pushed after m_iEnd..%d, %d\n", mrl, wt->rangeEnd);
-                    wt->dump();
+                if (mrl >= scheduleTable->rangeEnd) {
+                    reportError("mRline would be pushed after m_iEnd..%d, %d\n", mrl, scheduleTable->rangeEnd);
+                    scheduleTable->dump();
                     int diagnosticMte = in->externalOutputConstraint < in->externalOutputPairedConstraint ? in->externalOutputPairedConstraint : in->externalOutputConstraint;
                     reportError("faulting instruction is (mte=%d):\n", diagnosticMte);
                     in->leDump();
@@ -80,27 +80,27 @@ int pullUp(workTable *wt)
         }
     } while (moved);
 
-    if (mrl - wt->rangeStart + 1 < wt->externalMinimumLength)
-        mrl = wt->rangeStart + wt->externalMinimumLength - 1;
+    if (mrl - scheduleTable->rangeStart + 1 < scheduleTable->externalMinimumLength)
+        mrl = scheduleTable->rangeStart + scheduleTable->externalMinimumLength - 1;
 
     int branchPresent = br != 0;
     if (branchPresent) {
         int l = mrl - 1;
         bool done = false;
-        if (l < wt->rangeStart)
-            l = wt->rangeStart;
+        if (l < scheduleTable->rangeStart)
+            l = scheduleTable->rangeStart;
         while (!done) {
-            if (l >= wt->rangeEnd) {
+            if (l >= scheduleTable->rangeEnd) {
                 reportError("branch line overrun\n");
                 return -1;
             }
             InstructionPosition pos;
             pos.setInstructionPipe(br->position.pipelineIndex);
             pos.setFromLinearRow(l);
-            if (checkInstructionPlacementConstraints(wt, br, &pos)) {
+            if (checkInstructionPlacementConstraints(scheduleTable, br, &pos)) {
                 l++;
             } else {
-                if (!wt->takeOut(br)) {
+                if (!scheduleTable->takeOut(br)) {
                     reportError("failed to take out instruction\n");
                     exitAfterCleanup(-1);
                 }
@@ -108,7 +108,7 @@ int pullUp(workTable *wt)
                     reportError("failed to move !\n");
                     exitAfterCleanup(-1);
                 }
-                if (!wt->putIn(br)) {
+                if (!scheduleTable->putIn(br)) {
                     reportError("failed to put in back in\n");
                     exitAfterCleanup(-1);
                 }
@@ -118,13 +118,13 @@ int pullUp(workTable *wt)
                 if (lbdli) {
                     pos.setFromLinearRow(l);
                     pos.setInstructionPipe(lbdli->position.pipelineIndex);
-                    if (l >= wt->rangeEnd) {
+                    if (l >= scheduleTable->rangeEnd) {
                         reportError("over run for bdli\n");
                         return -1;
                     }
-                    if (checkInstructionPlacementConstraints(wt, lbdli, &pos))
+                    if (checkInstructionPlacementConstraints(scheduleTable, lbdli, &pos))
                         continue;
-                    if (!wt->takeOut(lbdli)) {
+                    if (!scheduleTable->takeOut(lbdli)) {
                         reportError("failed to take out lbdli instruction\n");
                         exitAfterCleanup(-1);
                     }
@@ -132,7 +132,7 @@ int pullUp(workTable *wt)
                         reportError("failed to move lbdli !\n");
                         exitAfterCleanup(-1);
                     }
-                    if (!wt->putIn(lbdli)) {
+                    if (!scheduleTable->putIn(lbdli)) {
                         reportError("failed to put in back in lbdli\n");
                         exitAfterCleanup(-1);
                     }
@@ -144,15 +144,15 @@ int pullUp(workTable *wt)
         }
     }
 
-    int ret = wt->rangeEnd - mrl - 1;
+    int ret = scheduleTable->rangeEnd - mrl - 1;
     int end = mrl + 1;
-    if (end > wt->rangeEnd) {
-        reportError("table would grow ! mrl=%d..m_iE=%d\n", mrl, wt->rangeEnd);
-        wt->dump();
+    if (end > scheduleTable->rangeEnd) {
+        reportError("table would grow ! mrl=%d..m_iE=%d\n", mrl, scheduleTable->rangeEnd);
+        scheduleTable->dump();
         return -1;
     }
-    wt->rangeEnd = end;
-    end = wt->loopSize;
-    setPullUpRange(wt, end);
+    scheduleTable->rangeEnd = end;
+    end = scheduleTable->loopSize;
+    setPullUpRange(scheduleTable, end);
     return ret;
 }

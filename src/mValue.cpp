@@ -174,13 +174,13 @@ bool mValue::setString(const char *s, int n)
         type = NONE;
         return false;
     }
-    const char *p = s;
-    char *d = str;
-    while (n && *p) {
-        *d++ = *p++;
+    const char *sourceCursor = s;
+    char *destinationCursor = str;
+    while (n && *sourceCursor) {
+        *destinationCursor++ = *sourceCursor++;
         n--;
     }
-    *d = 0;
+    *destinationCursor = 0;
     return true;
 }
 
@@ -860,12 +860,12 @@ bool mValue::parse(const char *literalText)
         printf("badly formed literal %s\n", literalText);
         return false;
     }
-    for (const char *p = start; *p; p++) {
-        char c = *p;
-        if (c >= 'A' && c <= 'Z')
-            c += 32;
+    for (const char *characterCursor = start; *characterCursor; characterCursor++) {
+        char character = *characterCursor;
+        if (character >= 'A' && character <= 'Z')
+            character += 32;
         if (base == 0) {
-            if (c == '.') {
+            if (character == '.') {
                 dots++;
                 if (isFlt) {
                     printf("error in floating point expression '%s'\n", literalText);
@@ -881,7 +881,7 @@ bool mValue::parse(const char *literalText)
                 digits = 0;
                 skip = 1;
             }
-            if (c == 'e' && (p[1] == '+' || p[1] == '-')) {
+            if (character == 'e' && (characterCursor[1] == '+' || characterCursor[1] == '-')) {
                 rtype = FLOAT;
                 if (expSign) {
                     printf("already found exponent in %s\n", literalText);
@@ -899,20 +899,20 @@ bool mValue::parse(const char *literalText)
                 }
                 value = 0;
                 digits = 0;
-                expSign = (p[1] == '+') ? 1 : -1;
+                expSign = (characterCursor[1] == '+') ? 1 : -1;
                 skip = 2;
             }
         }
-        if (c == '_')
+        if (character == '_')
             skip = 1;
         if (!skip) {
-            const char *d = immediateLiteralDigitsByBase[base];
+            const char *digitCursor = immediateLiteralDigitsByBase[base];
             int idx;
-            char ch;
-            for (idx = 0; (ch = *d) != 0; d++, idx++)
-                if (c == ch)
+            char digitCharacter;
+            for (idx = 0; (digitCharacter = *digitCursor) != 0; digitCursor++, idx++)
+                if (character == digitCharacter)
                     break;
-            if (!ch)
+            if (!digitCharacter)
                 return false;
             value = value * radix + idx;
         }
