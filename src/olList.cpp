@@ -8,16 +8,16 @@
 void olList::validateOperandLocations()
 {
     int n = 0;
-    ol_s *p = head;
+    ol_s *location = head;
     if (count != 0) {
-        for (; p; p = p->next) {
-            if (p->instruction) {
-                p->instruction->getOwningStream();
-                p->instruction->dumpOperandDiagnostics(false);
+        for (; location; location = location->next) {
+            if (location->instruction) {
+                location->instruction->getOwningStream();
+                location->instruction->dumpOperandDiagnostics(false);
             }
             n++;
         }
-    } else if (p) {
+    } else if (location) {
         reportError("opLocList - had zero count, but non empty head\n");
         abortAfterError();
     }
@@ -30,16 +30,16 @@ void olList::validateOperandLocations()
 void olList::dumpOperandLocations()
 {
     int n = 0;
-    ol_s *p = head;
+    ol_s *location = head;
     if (count != 0) {
-        for (; p; p = p->next) {
-            if (p->instruction) {
-                p->instruction->getOwningStream();
-                p->instruction->leDump(p->operandIndex, 1 << p->componentIndex);
+        for (; location; location = location->next) {
+            if (location->instruction) {
+                location->instruction->getOwningStream();
+                location->instruction->leDump(location->operandIndex, 1 << location->componentIndex);
             }
             n++;
         }
-    } else if (p) {
+    } else if (location) {
         exitWithError("opLocList - had zero count, but non empty head\n");
     }
     if (n != count)
@@ -62,10 +62,10 @@ void ol_s::dumpOperandContext()
     }
 }
 
-Operand *operandAtLocation(ol_s *ol)
+Operand *operandAtLocation(ol_s *location)
 {
-    if (ol->instruction)
-        return &ol->instruction->operands[ol->operandIndex];
+    if (location->instruction)
+        return &location->instruction->operands[location->operandIndex];
     return 0;
 }
 
@@ -93,14 +93,14 @@ void ol_s::copyLocationFrom(ol_s *src)
     }
 }
 
-static inline void ol_s_init_inl(ol_s *o, Instr *inst, int op, int slot, bool ext)
+static inline void ol_s_init_inl(ol_s *location, Instr *inst, int op, int slot, bool ext)
 {
-    o->reset();
+    location->reset();
     if (ext)
-        o->stateFlags = 1;
-    o->instruction = inst;
-    o->operandIndex = op;
-    o->componentIndex = slot;
+        location->stateFlags = 1;
+    location->instruction = inst;
+    location->operandIndex = op;
+    location->componentIndex = slot;
 }
 
 void ol_s::init(Instr *inst, int op, int slot, bool ext)
@@ -115,109 +115,109 @@ void ol_s::init(Instr *inst, int op, int slot, bool ext)
 
 static inline ol_s *allocOL()
 {
-    ol_s *p = olFreeList;
-    if (!p) {
-        p = new ol_s;
+    ol_s *location = olFreeList;
+    if (!location) {
+        location = new ol_s;
     } else {
-        olFreeList = p->next;
-        p->reset();
+        olFreeList = location->next;
+        location->reset();
     }
-    return p;
+    return location;
 }
 
 ol_s *olList::addOperandLocation(Instr *inst, int op, int slot, bool ext)
 {
     ol_s *prev = 0;
-    ol_s *p;
-    for (p = head; p; p = p->next) {
-        if (inst == p->instruction && op == p->operandIndex && slot == p->componentIndex) {
-            if (ext != p->isExt()) {
+    ol_s *location;
+    for (location = head; location; location = location->next) {
+        if (inst == location->instruction && op == location->operandIndex && slot == location->componentIndex) {
+            if (ext != location->isExt()) {
                 reportError("addOL: inst external state mismatch bExt=%d\n", ext);
-                p->dumpInstructionContext();
+                location->dumpInstructionContext();
                 abortAfterError();
             }
             exitWithError("matched oploc\n");
-            return p;
+            return location;
         }
-        prev = p;
+        prev = location;
     }
-    p = allocOL();
-    ol_s_init_inl(p, inst, op, slot, ext);
+    location = allocOL();
+    ol_s_init_inl(location, inst, op, slot, ext);
     if (prev)
-        prev->next = p;
+        prev->next = location;
     else
-        head = p;
+        head = location;
     count++;
-    return p;
+    return location;
 }
 
 ol_s *olList::addInstructionLocation(Instr *inst)
 {
     ol_s *prev = 0;
-    ol_s *p;
-    for (p = head; p; p = p->next) {
-        if (inst == p->instruction)
-            return p;
-        prev = p;
+    ol_s *location;
+    for (location = head; location; location = location->next) {
+        if (inst == location->instruction)
+            return location;
+        prev = location;
     }
-    p = allocOL();
-    ol_s_init_inl(p, inst, 0, 0, false);
+    location = allocOL();
+    ol_s_init_inl(location, inst, 0, 0, false);
     if (prev)
-        prev->next = p;
+        prev->next = location;
     else
-        head = p;
+        head = location;
     count++;
-    return p;
+    return location;
 }
 
-ol_s *olList::copyOperandLocation(ol_s *ol, bool ext)
+ol_s *olList::copyOperandLocation(ol_s *location, bool ext)
 {
-    return addOperandLocation(ol->instruction, ol->operandIndex, ol->componentIndex, ext);
+    return addOperandLocation(location->instruction, location->operandIndex, location->componentIndex, ext);
 }
 
 ol_s *olList::firstInternalLocation()
 {
-    ol_s *p = head;
-    if (p && p->isExt()) {
-        p = p->next;
-        while (p && p->isExt())
-            p = p->next;
+    ol_s *location = head;
+    if (location && location->isExt()) {
+        location = location->next;
+        while (location && location->isExt())
+            location = location->next;
     }
-    return p;
+    return location;
 }
 
 ol_s *ol_s::nextInternalLocation()
 {
-    ol_s *p = next;
-    while (p && p->isExt())
-        p = p->next;
-    return p;
+    ol_s *location = next;
+    while (location && location->isExt())
+        location = location->next;
+    return location;
 }
 
 ol_s *olList::firstExternalLocation()
 {
-    ol_s *p = head;
-    if (p && !p->isExt()) {
-        p = p->next;
-        while (p && !p->isExt())
-            p = p->next;
+    ol_s *location = head;
+    if (location && !location->isExt()) {
+        location = location->next;
+        while (location && !location->isExt())
+            location = location->next;
     }
-    return p;
+    return location;
 }
 
 ol_s *ol_s::nextExternalLocation()
 {
-    ol_s *p = next;
-    while (p && !p->isExt())
-        p = p->next;
-    return p;
+    ol_s *location = next;
+    while (location && !location->isExt())
+        location = location->next;
+    return location;
 }
 
-RegPoolEntry *registerAtLocation(ol_s *ol)
+RegPoolEntry *registerAtLocation(ol_s *location)
 {
-    Operand *op = ol->instruction ? &ol->instruction->operands[ol->operandIndex] : 0;
-    if (op)
-        return op->assignedRegister;
+    Operand *operand = location->instruction ? &location->instruction->operands[location->operandIndex] : 0;
+    if (operand)
+        return operand->assignedRegister;
     exitWithError("no register!\n");
     return 0;
 }
@@ -225,16 +225,16 @@ RegPoolEntry *registerAtLocation(ol_s *ol)
 ol_s *olList::insertExternalLocation(ol_s *src)
 {
     ol_s *prev = 0;
-    ol_s *p;
-    for (p = head; p; p = p->next) {
-        if (src->cycleOffset < p->cycleOffset)
+    ol_s *location;
+    for (location = head; location; location = location->next) {
+        if (src->cycleOffset < location->cycleOffset)
             break;
-        prev = p;
+        prev = location;
     }
     ol_s *n = allocOL();
     ol_s_copy_inl(n, src);
     n->stateFlags |= 1;
-    n->next = p;
+    n->next = location;
     if (prev)
         prev->next = n;
     else
@@ -243,36 +243,36 @@ ol_s *olList::insertExternalLocation(ol_s *src)
     return n;
 }
 
-void markLocationExternallyUsed(ol_s *ol)
+void markLocationExternallyUsed(ol_s *location)
 {
-    ol->stateFlags |= 2;
+    location->stateFlags |= 2;
 }
 
-int hasRawOrImmediateInstructionAtLocation(ol_s *ol)
+int hasRawOrImmediateInstructionAtLocation(ol_s *location)
 {
-    return ol->instruction->hasRawTableOrImmediateToken();
+    return location->instruction->hasRawTableOrImmediateToken();
 }
 
-int instructionSerialAtLocation(ol_s *ol)
+int instructionSerialAtLocation(ol_s *location)
 {
-    return ol->instruction->instructionSerial;
+    return location->instruction->instructionSerial;
 }
 
-bool sameOperandLocation(ol_s *a, ol_s *b)
+bool sameOperandLocation(ol_s *location, ol_s *b)
 {
-    if (a && b)
-        return a->instruction == b->instruction && a->packedOperandComponent == b->packedOperandComponent;
-    return a == b;
+    if (location && b)
+        return location->instruction == b->instruction && location->packedOperandComponent == b->packedOperandComponent;
+    return location == b;
 }
 
-instStream *locationOwningStream(ol_s *ol)
+instStream *locationOwningStream(ol_s *location)
 {
-    return ol->instruction->getOwningStream();
+    return location->instruction->getOwningStream();
 }
 
-int locationRow(ol_s *ol)
+int locationRow(ol_s *location)
 {
-    return ol->instruction->position.linearRow;
+    return location->instruction->position.linearRow;
 }
 
 ol_s *allocateLocationNode()
@@ -282,10 +282,10 @@ ol_s *allocateLocationNode()
 
 int countFreeLocationNodes()
 {
-    int n = 0;
-    for (ol_s *p = olFreeList; p; p = p->next)
-        n++;
-    return n;
+    int freeCount = 0;
+    for (ol_s *location = olFreeList; location; location = location->next)
+        freeCount++;
+    return freeCount;
 }
 
 ol_s *olFreeList = 0;

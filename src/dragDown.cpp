@@ -38,23 +38,23 @@ int dragDown(workTable *wt)
         for (int l = wt->rangeEnd - 1; l >= wt->rangeStart; l--) {
             wtRow *row = wt->getRowByIndex(l);
             for (int p = 0; p != 2; p++) {
-                Instr *in = row->getEntry(p);
-                if (in && !in->branchFlags) {
-                    int rl = in->position.getRow();
-                    short mte = in->externalOutputConstraint < in->externalOutputPairedConstraint ? in->externalOutputPairedConstraint : in->externalOutputConstraint;
+                Instr *instruction = row->getEntry(p);
+                if (instruction && !instruction->branchFlags) {
+                    int rl = instruction->position.getRow();
+                    short mte = instruction->externalOutputConstraint < instruction->externalOutputPairedConstraint ? instruction->externalOutputPairedConstraint : instruction->externalOutputConstraint;
                     int mn = wt->rangeEnd - mte - 1;
                     if (rl != l) {
                         reportError("rl not l!\n");
                         exitAfterCleanup(-1);
                     }
                     int k;
-                    Operand *op;
-                    for (k = 0; (op = in->getOp(k)) != 0; k++) {
-                        RegPoolEntry *reg = registerOperand(op, 2);
+                    Operand *operand;
+                    for (k = 0; (operand = instruction->getOp(k)) != 0; k++) {
+                        RegPoolEntry *reg = registerOperand(operand, 2);
                         if (reg) {
                             for (int j = 0; j != reg->partCount; j++) {
-                                OpSlot *sl = &op->parts[j];
-                                if ((op->componentMask >> j) & 1) {
+                                OpSlot *sl = &operand->parts[j];
+                                if ((operand->componentMask >> j) & 1) {
                                     int e = wt->rangeEnd - 1;
                                     if (sl->scheduledConsumerCount)
                                         e = sl->earliestConsumerFreeCycle - sl->issueLatency;
@@ -63,30 +63,30 @@ int dragDown(workTable *wt)
                                 }
                             }
                         }
-                        if (registerOperand(op, 1) && op->reductionHazardMask)
+                        if (registerOperand(operand, 1) && operand->reductionHazardMask)
                             mn = rl;
                     }
                     if (mn > rl) {
-                        if (!doLocalMove(wt, in, mn, rl, -1)) {
+                        if (!doLocalMove(wt, instruction, mn, rl, -1)) {
                             reportError("failed to do local move for raw down\n");
                             return -1;
                         }
-                        if (in->position.getRow() != rl)
+                        if (instruction->position.getRow() != rl)
                             moved++;
                     }
                 }
-                if (in) {
-                    int s = in->position.getRow()
-                          - (in->externalInputConstraint < in->externalInputPairedConstraint ? in->externalInputPairedConstraint : in->externalInputConstraint);
+                if (instruction) {
+                    int s = instruction->position.getRow()
+                          - (instruction->externalInputConstraint < instruction->externalInputPairedConstraint ? instruction->externalInputPairedConstraint : instruction->externalInputConstraint);
                     if (s < msl)
                         msl = s;
                     if (msl < oStart) {
-                        short mfs = in->externalInputConstraint < in->externalInputPairedConstraint ? in->externalInputPairedConstraint : in->externalInputConstraint;
+                        short mfs = instruction->externalInputConstraint < instruction->externalInputPairedConstraint ? instruction->externalInputPairedConstraint : instruction->externalInputConstraint;
                         reportWarning("%s %d-%d < mSline=%d [%d,%d]\n",
-                                      in->opcodeInfo->mnemonic, in->position.getRow(),
+                                      instruction->opcodeInfo->mnemonic, instruction->position.getRow(),
                                       mfs,
                                       msl, wt->rangeStart, wt->rangeEnd);
-                        const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
+                        const char *name = instruction->opcodeInfo ? instruction->opcodeInfo->mnemonic : "NO_BASE_INST";
                         reportWarning("%s: fixing mSline<oStart.. oStart=%d mSline=%d\n",
                                       name,
                                       oStart, msl);

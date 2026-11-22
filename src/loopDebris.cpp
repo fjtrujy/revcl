@@ -307,8 +307,8 @@ bool epiRec::init(int size, const char *name)
         reportError("setup: failed to get iStream\n");
         exitAfterCleanup(-1);
     }
-    mNode *n = stream->labels.findOrAppendByExactName(name);
-    if (!n) {
+    mNode *macroNode = stream->labels.findOrAppendByExactName(name);
+    if (!macroNode) {
         reportError("failed to add a name to iStream\n");
         exitAfterCleanup(-1);
     }

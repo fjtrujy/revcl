@@ -20,12 +20,12 @@ static inline bool isPipeMode(workTable *wt)
     return !mode && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
 }
 
-static inline void dumpLinearReduce(Program *p)
+static inline void dumpLinearReduce(Program *program)
 {
-    dumpProgramStreamsAndRegisters(p, 0);
+    dumpProgramStreamsAndRegisters(program, 0);
 }
 
-bool reduceLinearSchedule(Program *p, workTable *wt, unsigned char up, unsigned char down)
+bool reduceLinearSchedule(Program *program, workTable *wt, unsigned char up, unsigned char down)
 {
     if (!isPipeMode(wt))
         return true;
@@ -47,7 +47,7 @@ bool reduceLinearSchedule(Program *p, workTable *wt, unsigned char up, unsigned 
             int r = pullUp(wt);
             if (r < 0) {
                 reportError("failed to pull up\n");
-                dumpLinearReduce(p);
+                dumpLinearReduce(program);
                 return false;
             }
             if (r)
@@ -66,7 +66,7 @@ bool reduceLinearSchedule(Program *p, workTable *wt, unsigned char up, unsigned 
     return true;
 }
 
-bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl)
+bool doLocalMove(workTable *wt, Instr *instruction, int s_test, int e_test, int dl)
 {
     InstructionPosition pos;
     bool found = false;
@@ -91,23 +91,23 @@ bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl)
 
     for (; s_test != e_test; s_test += dl) {
         pos.setFromLinearRow(s_test);
-        if (!checkPlacementInAllowedPipelines(wt, in, &pos, upwards)) {
+        if (!checkPlacementInAllowedPipelines(wt, instruction, &pos, upwards)) {
             found = true;
             break;
         }
     }
 
     if (found) {
-        if (!wt->takeOut(in)) {
+        if (!wt->takeOut(instruction)) {
             extern const char linearReduceTakeOutError[];
             reportError(linearReduceTakeOutError);
             return false;
         }
-        if (!moveLocks(in, &pos)) {
+        if (!moveLocks(instruction, &pos)) {
             reportError("failed to move !\n");
             return false;
         }
-        if (!wt->putIn(in)) {
+        if (!wt->putIn(instruction)) {
             reportError("failed to put in back in\n");
             return false;
         }

@@ -8,62 +8,62 @@ extern bool disableOutputAlignment;
 int getNumOptimisers();
 const char *getOptimiserName(int id);
 
-char *emitFileStart(Program *p, char *buf)
+char *emitFileStart(Program *program, char *buf)
 {
-    if ((!p->proc.newSyntax || p->proc.vuDirectiveSeen) && p->proc.mpgTargetAddress < 0)
+    if ((!program->proc.newSyntax || program->proc.vuDirectiveSeen) && program->proc.mpgTargetAddress < 0)
         buf += formatIntoBuffer(buf, "\t\t.vu\n");
     if (!disableOutputAlignment)
         buf += formatIntoBuffer(buf, "\t\t.align 4\n");
-    if (p->proc.globalName && *p->proc.globalName) {
-        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeStart\n", p->proc.globalName);
-        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeEnd\n", p->proc.globalName);
+    if (program->proc.globalName && *program->proc.globalName) {
+        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeStart\n", program->proc.globalName);
+        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeEnd\n", program->proc.globalName);
     }
-    if (p->proc.mpgTargetAddress >= 0) {
-        if (p->proc.globalName && *p->proc.globalName) {
-            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaTag\n", p->proc.globalName);
-            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaEnd\n", p->proc.globalName);
+    if (program->proc.mpgTargetAddress >= 0) {
+        if (program->proc.globalName && *program->proc.globalName) {
+            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaTag\n", program->proc.globalName);
+            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaEnd\n", program->proc.globalName);
             buf += formatIntoBuffer(buf, "\n");
-            buf += formatIntoBuffer(buf, "%s_DmaTag:\n", p->proc.globalName);
+            buf += formatIntoBuffer(buf, "%s_DmaTag:\n", program->proc.globalName);
         }
         buf += formatIntoBuffer(buf, "\t\tDMAret\t*\n");
         buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
         buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
         buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
-        buf += formatIntoBuffer(buf, "\t\tMPG\t%d,*\n", p->proc.mpgTargetAddress);
+        buf += formatIntoBuffer(buf, "\t\tMPG\t%d,*\n", program->proc.mpgTargetAddress);
     }
-    for (mNode *n = p->proc.exportedSymbols.head; n; n = n->next)
-        buf += formatIntoBuffer(buf, "\t\t.global\t%s\n", n->name);
-    if (p->proc.globalName && *p->proc.globalName)
-        buf += formatIntoBuffer(buf, "%s_CodeStart:\n", p->proc.globalName);
+    for (mNode *macroNode = program->proc.exportedSymbols.head; macroNode; macroNode = macroNode->next)
+        buf += formatIntoBuffer(buf, "\t\t.global\t%s\n", macroNode->name);
+    if (program->proc.globalName && *program->proc.globalName)
+        buf += formatIntoBuffer(buf, "%s_CodeStart:\n", program->proc.globalName);
     return buf;
 }
 
-char *emitFileEnd(Program *p, char *buf)
+char *emitFileEnd(Program *program, char *buf)
 {
     if (!disableOutputAlignment)
         buf += formatIntoBuffer(buf, "\t\t.align 4\n");
-    if (p->proc.globalName && *p->proc.globalName)
-        buf += formatIntoBuffer(buf, "%s_CodeEnd:\n", p->proc.globalName);
-    for (mNode *n = p->proc.trailingLabels.head; n; n = n->next)
-        if (n->name)
-            buf += formatIntoBuffer(buf, "%s:\n", n->name);
-    if (p->proc.mpgTargetAddress >= 0) {
+    if (program->proc.globalName && *program->proc.globalName)
+        buf += formatIntoBuffer(buf, "%s_CodeEnd:\n", program->proc.globalName);
+    for (mNode *macroNode = program->proc.trailingLabels.head; macroNode; macroNode = macroNode->next)
+        if (macroNode->name)
+            buf += formatIntoBuffer(buf, "%s:\n", macroNode->name);
+    if (program->proc.mpgTargetAddress >= 0) {
         buf += formatIntoBuffer(buf, "\t.EndMPG\n");
         buf += formatIntoBuffer(buf, "\t.EndDmaData\n");
     }
-    if (p->proc.globalName && *p->proc.globalName && p->proc.mpgTargetAddress >= 0)
-        buf += formatIntoBuffer(buf, "%s_DmaEnd:\n", p->proc.globalName);
+    if (program->proc.globalName && *program->proc.globalName && program->proc.mpgTargetAddress >= 0)
+        buf += formatIntoBuffer(buf, "%s_DmaEnd:\n", program->proc.globalName);
     return buf;
 }
 
-static inline unsigned char streamEndType(instStream *s)
+static inline unsigned char streamEndType(instStream *stream)
 {
-    return s->endType;
+    return stream->endType;
 }
 
-static inline void dumpFailedRow(wtRow *r)
+static inline void dumpFailedRow(wtRow *workRow)
 {
-    r->refreshInstructionOperands(-1);
+    workRow->refreshInstructionOperands(-1);
 }
 
 char *workTable::emit(char *buf, int mode, int *p1, int *p2)
@@ -99,8 +99,8 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         *p2 = nulls;
     } else {
         for (int i = rangeStart; i != rangeEnd; i++) {
-            wtRow *r = &rows[i];
-            if (!r->skip)
+            wtRow *workRow = &rows[i];
+            if (!workRow->skip)
                 (*p1)++;
             (*p2)++;
         }
@@ -128,27 +128,27 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             }
         }
     } else {
-        instStream *s = ownerStream;
-        if (s) {
+        instStream *stream = ownerStream;
+        if (stream) {
             buf += formatIntoBuffer(buf, "; ");
-            if (s->hasLoopOptimization)
+            if (stream->hasLoopOptimization)
                 buf += formatIntoBuffer(buf, "_LPOPT_");
             else
                 buf += formatIntoBuffer(buf, "_LNOPT_");
             buf += formatIntoBuffer(buf, "w=[ ");
-            if (s->appliedOptimizationMask) {
+            if (stream->appliedOptimizationMask) {
                 for (int i = 0; i != getNumOptimisers(); i++) {
                     int bit = 1 << i;
-                    if (s->appliedOptimizationMask & bit)
+                    if (stream->appliedOptimizationMask & bit)
                         buf += formatIntoBuffer(buf, "%s ", getOptimiserName(i));
                 }
             }
             buf += formatIntoBuffer(buf, "] %d [%d %d] %d   [%s]\n",
-                                 *p1, streamDependencyLength, streamLogicalLength, *p2, s->streamName());
+                                 *p1, streamDependencyLength, streamLogicalLength, *p2, stream->streamName());
         }
         if (len < nulls) {
             reportError("iTable: not fall. and too small a table\n");
-            s->dump(0);
+            stream->dump(0);
             goto fail;
         }
         *p1 = 0;
@@ -168,11 +168,11 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             (*p2)++;
             if (isEnd) {
                 if (i == end - 2) {
-                    f = (unsigned char)(s->trailingLabelFlags | 2);
+                    f = (unsigned char)(stream->trailingLabelFlags | 2);
                     done = 1;
                 }
             } else if (i == rangeEnd - 1)
-                f = (unsigned char)s->trailingLabelFlags;
+                f = (unsigned char)stream->trailingLabelFlags;
             f |= top;
             top = 0;
             switch (mode) {
@@ -281,18 +281,18 @@ char *emitNop(char *buf, int flags, int *len)
 {
     char line[320];
     char mods[16];
-    char *p = line;
+    char *lineCursor = line;
     if (disableEndBits)
         flags &= ~2;
-    char *s = formatInstructionModifiers(flags);
-    char *d = mods;
-    while (*s)
-        *d++ = *s++;
-    *d = 0;
-    p += formatIntoBuffer(p, "NOP%s", mods);
-    for (int n = p - line; n < 50; n++)
-        *p++ = ' ';
-    *p = 0;
+    char *modifierSource = formatInstructionModifiers(flags);
+    char *modifierDestination = mods;
+    while (*modifierSource)
+        *modifierDestination++ = *modifierSource++;
+    *modifierDestination = 0;
+    lineCursor += formatIntoBuffer(lineCursor, "NOP%s", mods);
+    for (int paddingIndex = lineCursor - line; paddingIndex < 50; paddingIndex++)
+        *lineCursor++ = ' ';
+    *lineCursor = 0;
     buf += formatIntoBuffer(buf, "%s", line);
     return buf;
 }
@@ -301,32 +301,32 @@ char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b)
 {
     char line[320];
     char mods[16];
-    char *s = formatInstructionModifiers(flags);
-    char *p = line;
-    char *d = mods;
-    while (*s)
-        *d++ = *s++;
-    *d = 0;
+    char *modifierSource = formatInstructionModifiers(flags);
+    char *lineCursor = line;
+    char *modifierDestination = mods;
+    while (*modifierSource)
+        *modifierDestination++ = *modifierSource++;
+    *modifierDestination = 0;
     if (in->tildePrefix || !in->opcodeInfo)
-        p += formatIntoBuffer(p, "nop%s", mods);
+        lineCursor += formatIntoBuffer(lineCursor, "nop%s", mods);
     else {
         if (in->opcodeInfo->emitHook) {
-            p = in->opcodeInfo->emitHook(line, in, upper, mods, b, 0);
-            if (!p) {
+            lineCursor = in->opcodeInfo->emitHook(line, in, upper, mods, b, 0);
+            if (!lineCursor) {
                 reportError("emit hook failed for an instruction\n");
                 return 0;
             }
         } else {
-            p = emitGenericInstructionText(line, in, upper, mods, b, 0);
-            if (!p) {
+            lineCursor = emitGenericInstructionText(line, in, upper, mods, b, 0);
+            if (!lineCursor) {
                 reportError("generic emit hook failed for an instruction\n");
                 return 0;
             }
         }
     }
-    for (int n = p - line; n < 50; n++)
-        *p++ = ' ';
-    *p = 0;
+    for (int paddingIndex = lineCursor - line; paddingIndex < 50; paddingIndex++)
+        *lineCursor++ = ' ';
+    *lineCursor = 0;
     return buf + formatIntoBuffer(buf, "%s", line);
 }
 

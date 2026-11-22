@@ -39,9 +39,9 @@ bool resetBlockDynamicStats(Block *block)
 }
 
 
-static inline bool isAAInputLock(OperandLock *in)
+static inline bool isAAInputLock(OperandLock *operandLock)
 {
-    return in->operandStatusCode == 2;
+    return operandLock->operandStatusCode == 2;
 }
 
 static inline int lockLatency(OperandLock *input, OperandLock *parent)

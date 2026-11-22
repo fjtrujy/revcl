@@ -18,15 +18,15 @@ static inline bool isPipeMode(workTable *wt)
     return isRawTable(wt) && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
 }
 
-static inline void dumpMove(Instr *in)
+static inline void dumpMove(Instr *instruction)
 {
-    in->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
 }
 
-bool detectMoves(Program *p)
+bool detectMoves(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        workTable *wt = s->getTable();
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        workTable *wt = stream->getTable();
         if (wt->codeModeValue == 1 || isPipeMode(wt)) {
             Instr *next;
             for (Instr *in = wt->linearInstructions.head; in; in = next) {
@@ -51,21 +51,21 @@ bool detectMoves(Program *p)
                 }
                 mv->abstractMoveOpcode = opc;
                 mv->concreteMoveOpcode = 0;
-                Operand *sr = &mv->operands[1];
+                Operand *operand = &mv->operands[1];
                 Operand *d = &mv->operands[0];
                 if (dstReg == dstReg->ownerPool->zeroRegister) {
                     reportError("found a move to a const zero register\n");
                     dumpMove(in);
                     return false;
                 }
-                sr->assignedRegister = srcReg;
+                operand->assignedRegister = srcReg;
                 d->assignedRegister = dstReg;
                 mv->destinationMask = mask;
-                sr->componentMask = mask;
+                operand->componentMask = mask;
                 d->componentMask = mask;
-                sr->originalRegister = in->operands[srcOp].originalRegister;
+                operand->originalRegister = in->operands[srcOp].originalRegister;
                 d->originalRegister = in->operands[dstOp].originalRegister;
-                sr->forcedBaseRegister = in->operands[srcOp].forcedBaseRegister;
+                operand->forcedBaseRegister = in->operands[srcOp].forcedBaseRegister;
                 d->forcedBaseRegister = in->operands[dstOp].forcedBaseRegister;
                 if (isRawTable(wt)) {
                     int pipe = in->position.pipelineIndex;

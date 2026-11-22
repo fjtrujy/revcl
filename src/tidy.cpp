@@ -8,73 +8,73 @@ static inline bool extendForEnd_inl(workTable *wt)
 {
     do {
         int i = wt->rangeEnd++;
-        wtRow *r = wt->getRowByIndex(i);
-        if (!r) {
+        wtRow *workRow = wt->getRowByIndex(i);
+        if (!workRow) {
             reportError("failed to get ie for end patch\n");
             return false;
         }
-        r->clearEntries();
+        workRow->clearEntries();
     } while (wt->rangeEnd - wt->rangeStart < 2);
     return true;
 }
 
-bool tidyProgramStreams(Program *p)
+bool tidyProgramStreams(Program *program)
 {
-    instStream *s;
-    for (s = p->streamHead; s; s = s->nextStream) {
-        if (!s->workTablePtr) {
-            reportError("work table not set in %s\n", s->streamName());
+    instStream *stream;
+    for (stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (!stream->workTablePtr) {
+            reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *wt = s->workTablePtr;
+        workTable *wt = stream->workTablePtr;
         switch (wt->codeModeValue) {
         case 1:
-            reportError("work table code mode is uta..%s\n", s->streamName());
+            reportError("work table code mode is uta..%s\n", stream->streamName());
             break;
         case 3:
         case 4:
-            s->emissionTable = wt;
+            stream->emissionTable = wt;
             break;
         default:
             reportError("bad code mode for Tidy\n");
             return false;
         }
-        s->mergeIntoSuccessor = 1;
-        if (s->endType != 1)
-            s->mergeIntoSuccessor = 0;
-        linkNode *n = s->outputLinks.head;
-        if (!n)
-            s->mergeIntoSuccessor = 0;
-        while (n) {
-            if (n->otherStream->endType != 3) {
-                s->mergeIntoSuccessor = 0;
+        stream->mergeIntoSuccessor = 1;
+        if (stream->endType != 1)
+            stream->mergeIntoSuccessor = 0;
+        linkNode *link = stream->outputLinks.head;
+        if (!link)
+            stream->mergeIntoSuccessor = 0;
+        while (link) {
+            if (link->otherStream->endType != 3) {
+                stream->mergeIntoSuccessor = 0;
                 break;
             }
-            n = n->next;
+            link = link->next;
         }
     }
-    for (s = p->streamHead; s; s = s->nextStream) {
-        if (!s->mergeIntoSuccessor)
+    for (stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (!stream->mergeIntoSuccessor)
             continue;
-        linkNode *n = s->outputLinks.head;
+        linkNode *n = stream->outputLinks.head;
         while (n) {
             linkNode *next = n->next;
-            if (!p->unLinkStreams(s, n->otherStream, n->linkType)) {
+            if (!program->unLinkStreams(stream, n->otherStream, n->linkType)) {
                 reportError("failed disappear linkage\n");
                 return false;
             }
             n = next;
         }
-        Instr *b = s->getBranch();
-        if (b)
-            b->tildePrefix = 1;
-        s->branchType = 0;
-        s->endType = 3;
-        if (!s->workTablePtr) {
-            reportError("work table not set in %s\n", s->streamName());
+        Instr *instruction = stream->getBranch();
+        if (instruction)
+            instruction->tildePrefix = 1;
+        stream->branchType = 0;
+        stream->endType = 3;
+        if (!stream->workTablePtr) {
+            reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *wt = s->workTablePtr;
+        workTable *wt = stream->workTablePtr;
         if (wt->codeModeValue == 4)
             continue;
         if (wt->getRangeStart() < 0)
@@ -93,12 +93,12 @@ bool extendForEnd(workTable *wt)
 {
     do {
         int i = wt->rangeEnd++;
-        wtRow *r = wt->getRowByIndex(i);
-        if (!r) {
+        wtRow *workRow = wt->getRowByIndex(i);
+        if (!workRow) {
             reportError("failed to get ie for end patch\n");
             return false;
         }
-        r->clearEntries();
+        workRow->clearEntries();
     } while (wt->rangeEnd - wt->rangeStart < 2);
     return true;
 }

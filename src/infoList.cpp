@@ -16,23 +16,23 @@ inline iHolder::iHolder()
     componentMask = 0;
 }
 
-static inline int iHolderMatches(iHolder *h, ol_s *ol)
+static inline int iHolderMatches(iHolder *holder, ol_s *location)
 {
-    if (!ol || !h->instruction)
+    if (!location || !holder->instruction)
         return 0;
-    int r = 0;
-    Instr *i = ol->instruction;
-    if (h->instruction == i) {
-        int idx = ol->operandIndex;
-        if (h->operandIndex == idx)
-            r = 1;
+    int matches = 0;
+    Instr *i = location->instruction;
+    if (holder->instruction == i) {
+        int idx = location->operandIndex;
+        if (holder->operandIndex == idx)
+            matches = 1;
     }
-    return r;
+    return matches;
 }
 
-int iHolder::matchesOperandLocation(ol_s *ol)
+int iHolder::matchesOperandLocation(ol_s *location)
 {
-    return iHolderMatches(this, ol);
+    return iHolderMatches(this, location);
 }
 
 void iHolder::dumpOperandLocation()
@@ -51,26 +51,26 @@ inline void iHolder::dump()
         reportMessage(" UNSET_INST\n");
 }
 
-bool iHolder::catInit(ol_s *ol)
+bool iHolder::catInit(ol_s *location)
 {
-    if (!ol) {
+    if (!location) {
         reportError("iHolder - passed a null ol\n");
         return false;
     }
     if (!instruction) {
-        Instr *in = ol->instruction;
+        Instr *in = location->instruction;
         if (!in) {
             reportError("iHolder:: init called, but ol_s not inst\n");
             return false;
         }
         instruction = in;
-        operandIndex = ol->operandIndex;
+        operandIndex = location->operandIndex;
         componentMask = 0;
-    } else if (instruction != ol->instruction || operandIndex != ol->operandIndex) {
+    } else if (instruction != location->instruction || operandIndex != location->operandIndex) {
         reportError("iHolder::catInit - mismatch adding to an existing object\n");
         return false;
     }
-    componentMask |= 1 << ol->componentIndex;
+    componentMask |= 1 << location->componentIndex;
     return true;
 }
 
@@ -122,10 +122,10 @@ inline stallNode::stallNode(InitTag) : infoNode(infoNode::INIT)
         stallByType[i] = 0;
 }
 
-bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
+bool infoList::addStall(ol_s *location, ol_s *b, int x, int val)
 {
     stallNode *p = (stallNode *)head;
-    if (!a || !b) {
+    if (!location || !b) {
         reportError("infoList:: addStall - null input ptr\n");
         return false;
     }
@@ -134,7 +134,7 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
         return false;
     }
     for (; p; p = (stallNode *)p->next)
-        if ((char)iHolderMatches(&p->setter, a) && (char)iHolderMatches(&p->user, b))
+        if ((char)iHolderMatches(&p->setter, location) && (char)iHolderMatches(&p->user, b))
             break;
     if (!p) {
         p = new stallNode(stallNode::INIT);
@@ -146,7 +146,7 @@ bool infoList::addStall(ol_s *a, ol_s *b, int x, int val)
         count++;
         head = p;
     }
-    if (!p->catStall(a, b, x, val)) {
+    if (!p->catStall(location, b, x, val)) {
         reportError("infoList::addStall - failed to cat a stall\n");
         return false;
     }
@@ -179,11 +179,11 @@ void stallNode::dump()
     p += formatIntoBuffer(p, "STALL");
     int max = 0;
     for (int i = 0; i != 3; i++) {
-        unsigned short v = stallByType[i];
-        if (v > max)
-            max = v;
-        if (v)
-            p += formatIntoBuffer(p, "_%s(%d)", stallTypeNames[i], v);
+        unsigned short stallDuration = stallByType[i];
+        if (stallDuration > max)
+            max = stallDuration;
+        if (stallDuration)
+            p += formatIntoBuffer(p, "_%s(%d)", stallTypeNames[i], stallDuration);
     }
     p += formatIntoBuffer(p, " maxVal %d ", max);
     if (isLocal)
@@ -198,31 +198,31 @@ void stallNode::dump()
     user.dump();
 }
 
-bool stallNode::catStall(ol_s *a, ol_s *b, int type, int val)
+bool stallNode::catStall(ol_s *location, ol_s *b, int type, int val)
 {
-    if (!a || !b) {
+    if (!location || !b) {
         reportWarning("stallNode - init called with a null input\n");
         return false;
     }
-    if (!setter.catInit(a)) {
+    if (!setter.catInit(location)) {
         reportError("stallInit - failed to add in a source loc\n");
         return false;
     }
-    Instr *ia = a->instruction;
+    Instr *ia = location->instruction;
     Instr *ib = b->instruction;
     if (!ia || !ib) {
         reportError("can't determine - at least one of instructions in stall pair\n");
         return false;
     }
-    instStream *sa = ia->getOwningStream();
+    instStream *stream = ia->getOwningStream();
     instStream *sb = ib->getOwningStream();
-    sa->participatesInStall = 1;
+    stream->participatesInStall = 1;
     sb->participatesInStall = 1;
-    if (!sa || !sb) {
+    if (!stream || !sb) {
         reportError("can't determine owner ist for one of inputs to stall\n");
         return false;
     }
-    isLocal = sa->streamId == sb->streamId;
+    isLocal = stream->streamId == sb->streamId;
     if (!user.catInit(b)) {
         reportError("stallInit - failed to add in a user loc\n");
         return false;
@@ -267,16 +267,16 @@ void ubsNode::dump()
     }
     if (!haveTable)
         wt = use->workTablePtr;
-    regUse *ru;
-    if (wt && (ru = wt->registerUses.findByRegister(reg))) {
+    regUse *registerUse;
+    if (wt && (registerUse = wt->registerUses.findByRegister(reg))) {
         reportInfo("register %s is used before set at instruction(s) :\n",
                       reg->registerName());
         for (int i = 0; i != reg->partCount; i++) {
             if ((slotMask >> i) & 1) {
-                for (ol_s *p = ru->slots[i].inputLocations.head; p; p = p->next) {
-                    Instr *inst = p->instruction;
-                    int bit = p->componentIndex;
-                    int opnd = p->operandIndex;
+                for (ol_s *location = registerUse->slots[i].inputLocations.head; location; location = location->next) {
+                    Instr *inst = location->instruction;
+                    int bit = location->componentIndex;
+                    int opnd = location->operandIndex;
                     bit = 1 << bit;
                     int j;
                     for (j = 0; j < n &&
@@ -334,25 +334,25 @@ bool ubsNode::catInit(instStream *entry, instStream *use, RegPoolEntry *reg, uns
 
 bool ubsList::addUBS(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits)
 {
-    ubsNode *p = (ubsNode *)head;
+    ubsNode *usedBeforeSetNode = (ubsNode *)head;
     if (!entry || !use || !reg || !bits) {
         reportError("ubsList: addUBS - passed bad args\n");
         return false;
     }
-    for (; p; p = (ubsNode *)p->next)
-        if (reg == p->reg && entry == p->entryStream && use == p->useStream)
+    for (; usedBeforeSetNode; usedBeforeSetNode = (ubsNode *)usedBeforeSetNode->next)
+        if (reg == usedBeforeSetNode->reg && entry == usedBeforeSetNode->entryStream && use == usedBeforeSetNode->useStream)
             break;
-    if (!p) {
-        p = new ubsNode;
-        if (!p) {
+    if (!usedBeforeSetNode) {
+        usedBeforeSetNode = new ubsNode;
+        if (!usedBeforeSetNode) {
             reportError("infoList::addStall - failed to get new ubs\n");
             return false;
         }
         count++;
-        p->next = head;
-        head = p;
+        usedBeforeSetNode->next = head;
+        head = usedBeforeSetNode;
     }
-    if (!p->catInit(entry, use, reg, bits)) {
+    if (!usedBeforeSetNode->catInit(entry, use, reg, bits)) {
         reportError("failed to cat init a used-before-set operand\n");
         return false;
     }

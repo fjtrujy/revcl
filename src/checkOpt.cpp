@@ -7,33 +7,33 @@
 #include "ol_s.h"
 #include "ol_s_inline.h"
 
-bool checkOpt1(Program *p)
+bool checkOpt1(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        workTable *wt = s->getTable();
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        workTable *wt = stream->getTable();
         if (!wt) {
             reportError("null work table\n");
             return false;
         }
-        if (wt != &s->sourceTable) {
+        if (wt != &stream->sourceTable) {
             reportError("work table isn't input table\n");
             return false;
         }
-        s->getAllocMode();
+        stream->getAllocMode();
     }
     return true;
 }
 
-bool checkOpt2(Program *p)
+bool checkOpt2(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        workTable *wt = s->getTable();
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        workTable *wt = stream->getTable();
         if (!wt) {
             reportError("null work table\n");
             return false;
         }
-        if (s->getCodeMode() != 4) {
-            if (s->getTable() != s->optimizedTable) {
+        if (stream->getCodeMode() != 4) {
+            if (stream->getTable() != stream->optimizedTable) {
                 reportError("work table isn't opt table\n");
                 return false;
             }
@@ -42,24 +42,24 @@ bool checkOpt2(Program *p)
                 return false;
             }
         } else {
-            if (s->getTable() != &s->sourceTable) {
+            if (stream->getTable() != &stream->sourceTable) {
                 reportError("checkopt2 - synth table wasn't input\n");
                 return false;
             }
         }
-        if (s->getAllocMode() != 3) {
-            reportError("table %s didn't have external alloc\n", s->streamName());
+        if (stream->getAllocMode() != 3) {
+            reportError("table %s didn't have external alloc\n", stream->streamName());
             return false;
         }
     }
     return true;
 }
 
-bool checkOpt3(Program *p)
+bool checkOpt3(Program *program)
 {
     reportInfo("checkOpt2()\n");
     reportInfo("OLL free count = %d\n", countFreeLocationNodes());
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
+    for (instStream *s = program->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
         if (!wt) {
             reportError("null work table\n");
@@ -145,7 +145,7 @@ bool checkOpt3(Program *p)
 
         for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
             for (int k = 0; k != in->operandCount; k++) {
-                Operand *op = &in->operands[k];
+                Operand *operand = &in->operands[k];
                 RegPoolEntry *reg;
                 if (in->operands[k].pairedOperandIndexPlusOne) {
                     Operand *po = &in->operands[in->operands[k].pairedOperandIndexPlusOne - 1];
@@ -182,21 +182,21 @@ bool checkOpt3(Program *p)
                 }
                 if (reg) {
                     for (unsigned n = 0; n != (unsigned)reg->partCount; n++) {
-                        OpSlot *slot = op->getPart(n);
+                        OpSlot *slot = operand->getPart(n);
                         if (!slot)
                             continue;
-                        ol_s *o = slot->operandLocations.head;
+                        ol_s *location = slot->operandLocations.head;
                         bool seenExt = false;
                         int last = -1000;
-                        for (; o; o = o->next) {
-                            if (o->isExt()) {
+                        for (; location; location = location->next) {
+                            if (location->isExt()) {
                                 if (!seenExt)
                                     seenExt = true;
                             } else if (seenExt) {
                                 reportError("found an internal oploc after an external one\n");
                                 return false;
                             }
-                            Instr *oi = o->instruction;
+                            Instr *oi = location->instruction;
                             if (!oi) {
                                 reportError("oploc not tied to instruction in checkopt3\n");
                                 return false;
@@ -205,7 +205,7 @@ bool checkOpt3(Program *p)
                                 reportError("oploc instruction doesnt have ist set\n");
                                 return false;
                             }
-                            if (!o->isExt()) {
+                            if (!location->isExt()) {
                                 if (oi->getOwningStream() != s) {
                                     reportError("internal oploc but instruction not from this stream\n");
                                     return false;

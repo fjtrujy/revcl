@@ -228,9 +228,9 @@ finalize_ready:
     return true;
 }
 
-bool tagsMatch(Instr *a, Instr *secondInstruction)
+bool tagsMatch(Instr *instruction, Instr *secondInstruction)
 {
-    char *p = a->branchLabelTags;
+    char *p = instruction->branchLabelTags;
     if (!p)
         return false;
     char *q0 = secondInstruction->branchLabelTags;

@@ -4,28 +4,28 @@
 #include "os.h"
 #include "VisitCache.h"
 
-static inline bool vc_release_inl(VisitCache *vc)
+static inline bool vc_release_inl(VisitCache *visitCache)
 {
-    if (vc->recordData)
-        free(vc->recordData);
-    vc->recordData = 0;
-    vc->wordsPerRecord = 0;
-    vc->bitsPerRecord = 0;
-    vc->recordCapacity = 0;
-    vc->recordCount = 0;
+    if (visitCache->recordData)
+        free(visitCache->recordData);
+    visitCache->recordData = 0;
+    visitCache->wordsPerRecord = 0;
+    visitCache->bitsPerRecord = 0;
+    visitCache->recordCapacity = 0;
+    visitCache->recordCount = 0;
     return true;
 }
 
-static inline bool vc_extend_inl(VisitCache *vc, int rows)
+static inline bool vc_extend_inl(VisitCache *visitCache, int rows)
 {
-    unsigned *p = (unsigned *)realloc(vc->recordData, rows * vc->wordsPerRecord * sizeof(unsigned));
+    unsigned *p = (unsigned *)realloc(visitCache->recordData, rows * visitCache->wordsPerRecord * sizeof(unsigned));
     if (!p) {
         reportError("VisitCache::Extend.. failed to realloc\n");
-        vc_release_inl(vc);
+        vc_release_inl(visitCache);
         return false;
     }
-    vc->recordData = p;
-    vc->recordCapacity = rows;
+    visitCache->recordData = p;
+    visitCache->recordCapacity = rows;
     return true;
 }
 
@@ -147,18 +147,18 @@ void VisitCache::Dump()
     reportInfo("VisitCache:: %d records\n", recordCount);
 }
 
-static inline bool testPathBit(VisitCache *vc, int rec, int bit)
+static inline bool testPathBit(VisitCache *visitCache, int rec, int bit)
 {
-    unsigned *row = vc->recordData + rec * vc->wordsPerRecord;
+    unsigned *row = visitCache->recordData + rec * visitCache->wordsPerRecord;
     return (row[bit / 32] & (1 << (bit & 31))) != 0;
 }
 
-void dumpPathKey(Program *p, int key)
+void dumpPathKey(Program *program, int key)
 {
     reportInfo("dumping path key '%d'\n", key);
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (testPathBit(&p->backTraceVisitCache, key, s->streamId))
-            reportInfo("    %d: %s\n", s->streamName());
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (testPathBit(&program->backTraceVisitCache, key, stream->streamId))
+            reportInfo("    %d: %s\n", stream->streamName());
     }
     reportInfo(" done dumping path key '%d'\n", key);
 }

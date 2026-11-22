@@ -10,8 +10,8 @@ Tracked naming-review snapshot. The **baseline** is the pre-refactor `main` sour
 | Structs with provisional names (manual review) | 5 | 5 | +0 |
 | Functions with address-based names | 436 | 0 | -436 |
 | Fields with offset names (owner-qualified) | 614 | 64 | -550 |
-| Parameters with short/generic names (AST review) | 879 | 550 | -329 |
-| Local variables with short/generic names (AST review) | 2291 | 1592 | -699 |
+| Parameters with short/generic names (AST review) | 879 | 343 | -536 |
+| Local variables with short/generic names (AST review) | 2291 | 1350 | -941 |
 | Address-suffixed globals/other identifiers | 85 | 0 | -85 |
 | Explicit numeric placeholder identifiers | 4 | 4 | +0 |
 

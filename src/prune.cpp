@@ -70,45 +70,45 @@ bool Prune(Program *program)
     return true;
 }
 
-bool initPrune(Program *p)
+bool initPrune(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream)
-        if (!initPrune(s)) {
-            reportError("failed to init prune for %s\n", s->streamName());
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream)
+        if (!initPrune(stream)) {
+            reportError("failed to init prune for %s\n", stream->streamName());
             return false;
         }
     return true;
 }
 
-bool initPrune(instStream *s)
+bool initPrune(instStream *stream)
 {
-    workTable *t = s->getTable();
+    workTable *t = stream->getTable();
     if (!t) {
         reportError("failed to get work table\n");
         return false;
     }
-    for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-        if (!initPrune(in)) {
+    for (Instr *instruction = t->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+        if (!initPrune(instruction)) {
             reportError("init prune failed\n");
             return false;
         }
     return true;
 }
 
-bool initPrune(Instr *in)
+bool initPrune(Instr *instruction)
 {
-    in->pruningRestricted = 0;
-    if (in->opcodeInfo) {
-        char ok = in->opcodeInfo->canPruneOperands();
+    instruction->pruningRestricted = 0;
+    if (instruction->opcodeInfo) {
+        char ok = instruction->opcodeInfo->canPruneOperands();
         if (!ok)
-            in->pruningRestricted = 1;
+            instruction->pruningRestricted = 1;
         for (int i = 0;; i++) {
-            Operand *op = in->getOp(i);
-            if (!op)
+            Operand *operand = instruction->getOp(i);
+            if (!operand)
                 break;
-            op->pruneMask = 0;
-            if (op->isInput() && in->pruningRestricted)
-                op->pruneMask = op->componentMask;
+            operand->pruneMask = 0;
+            if (operand->isInput() && instruction->pruningRestricted)
+                operand->pruneMask = operand->componentMask;
         }
         return true;
     }
@@ -116,13 +116,13 @@ bool initPrune(Instr *in)
     return false;
 }
 
-int tryPrune(Program *p)
+int tryPrune(Program *program)
 {
     int n = 0;
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        int r = tryPrune(s);
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        int r = tryPrune(stream);
         if (r < 0) {
-            reportError("flowMon: failed to  tryPrune %s\n", s->streamName());
+            reportError("flowMon: failed to  tryPrune %s\n", stream->streamName());
             return -1;
         }
         n += r;
@@ -135,10 +135,10 @@ static inline void dumpPruneInstruction(Instr *instruction)
     instruction->dumpOperandDiagnostics(false);
 }
 
-int tryPrune(instStream *s)
+int tryPrune(instStream *stream)
 {
     int n = 0;
-    workTable *t = s->getTable();
+    workTable *t = stream->getTable();
     if (!t) {
         reportError("failed to get work table\n");
         return 0;
@@ -158,16 +158,16 @@ int tryPrune(instStream *s)
     return n;
 }
 
-int tryPrune(Instr *in, bool raw)
+int tryPrune(Instr *instruction, bool raw)
 {
     int n = 0;
-    if (!in->opcodeInfo)
+    if (!instruction->opcodeInfo)
         return 0;
     if (raw) {
         Operand *r, *op, *lookup;
         for (int i = 0;
-             ((i < 0 ? (lookup = in->getOp(i)) :
-                       (lookup = i < in->operandCount ? &in->operands[i] : 0)),
+             ((i < 0 ? (lookup = instruction->getOp(i)) :
+                       (lookup = i < instruction->operandCount ? &instruction->operands[i] : 0)),
               r = lookup, op = lookup, lookup = 0, op) != 0; i++) {
             if (r->isInput())
                 (RegPoolEntry *&)r = r->assignedRegister;
@@ -178,7 +178,7 @@ int tryPrune(Instr *in, bool raw)
         }
     }
     Operand *out;
-    for (int o = 0; (out = in->getOp(o)) != 0; o++) {
+    for (int o = 0; (out = instruction->getOp(o)) != 0; o++) {
         int isOut = out->direction == 2;
         RegPoolEntry *reg = isOut ? out->assignedRegister : 0;
         if (!reg)
@@ -186,13 +186,13 @@ int tryPrune(Instr *in, bool raw)
         int cnt = 0;
         for (int s = 0; s != reg->partCount; s++) {
             if ((out->componentMask >> s) & 1)
-            for (ol_s *ol = out->parts[s].operandLocations.head; ol; ol = ol->next) {
-                Operand *src = operandAtLocation(ol);
+            for (ol_s *location = out->parts[s].operandLocations.head; location; location = location->next) {
+                Operand *src = operandAtLocation(location);
                 if (!src) {
                     reportError("failed to get an operand from an oploc\n");
                     return -1;
                 }
-                int sw = ol->componentIndex;
+                int sw = location->componentIndex;
                 if (src->assignedRegister != reg) {
                     reportError("there was a reg mismatch\n");
                     return -1;
@@ -217,12 +217,12 @@ int tryPrune(Instr *in, bool raw)
         if (out->operandKind == 10 || out->operandKind == 11)
             out->pruneMask = out->componentMask;
         Operand *ip;
-        for (int k = 0; (ip = in->getOp(k)) != 0; k++) {
+        for (int k = 0; (ip = instruction->getOp(k)) != 0; k++) {
             int isIn = ip->direction == 1;
-            RegPoolEntry *r = isIn ? ip->assignedRegister : 0;
-            if (!r)
+            RegPoolEntry *registerEntry = isIn ? ip->assignedRegister : 0;
+            if (!registerEntry)
                 continue;
-            int bits = hackIOmask(in, o, out->pruneMask, k);
+            int bits = hackIOmask(instruction, o, out->pruneMask, k);
             if (bits < 0) {
                 reportError("lprune: failed to deduce which inputs affected which outputs\n");
                 return -1;
@@ -232,7 +232,7 @@ int tryPrune(Instr *in, bool raw)
                 reportError("OUTPUT(%d) INPUT(%d) inst : \n", o, k);
                 reportError("A_BITS=%x .. INPUT_MODBITS=%x : \n", bits, ip->componentMask);
                 reportError("otype is opt->m_oType=%d\n", ip->operandKind);
-                dumpPruneInstruction(in);
+                dumpPruneInstruction(instruction);
                 return -1;
             }
             ip->pruneMask |= bits;
@@ -241,11 +241,11 @@ int tryPrune(Instr *in, bool raw)
     return n;
 }
 
-bool doPrune(Program *p)
+bool doPrune(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream)
-        if (!doPrune(s)) {
-            reportError("failed to do prune for %s\n", s->streamName());
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream)
+        if (!doPrune(stream)) {
+            reportError("failed to do prune for %s\n", stream->streamName());
             return false;
         }
     return true;
@@ -254,9 +254,9 @@ bool doPrune(Program *p)
 extern int errorOccurred;
 extern bool quietDiagnostics;
 
-bool doPrune(instStream *s)
+bool doPrune(instStream *stream)
 {
-    workTable *t = s->getTable();
+    workTable *t = stream->getTable();
     if (!t) {
         reportError("failed to get work table\n");
         return false;
@@ -380,10 +380,10 @@ int doPrune(Instr *in)
             in->operands[1].componentMask = (((m & 8) >> 3) | (m << 1)) & 0xf;
     }
     for (i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *r = registerOperand(op, 2);
-        if (!r || op->pruneMask || !r->isVirtual)
+        RegPoolEntry *registerEntry = registerOperand(op, 2);
+        if (!registerEntry || op->pruneMask || !registerEntry->isVirtual)
             continue;
-        RegPool *pool = r->ownerPool;
+        RegPool *pool = registerEntry->ownerPool;
         if (!pool) {
             reportError("register had no regpool\n");
             return -1;

@@ -8,20 +8,20 @@ RegPool *GetRP(unsigned t);
 void dumpThru(Program *prog)
 {
     reportInfo("dump through registers ==============================================\n");
-    for (instStream *s = prog->streamHead; s; s = s->nextStream) {
+    for (instStream *stream = prog->streamHead; stream; stream = stream->nextStream) {
         int i;
-        RegPool *rp;
-        workTable *t = s->getTable();
-        reportInfo("%s:\n", s->streamName());
+        RegPool *registerPool;
+        workTable *t = stream->getTable();
+        reportInfo("%s:\n", stream->streamName());
         for (i = 0; i != 12; i++) {
-            rp = GetRP(i);
-            if (!rp || !rp->virtualPartCount)
+            registerPool = GetRP(i);
+            if (!registerPool || !registerPool->virtualPartCount)
                 continue;
-            reportInfo("    %s\n", rp->poolName);
-            for (regUse *u = t->registerUses.head; u; u = u->next) {
-                int mask = u->throughputMask & ~(u->inputMask | u->outputMask | u->externalInputMask | u->externalOutputMask);
-                RegPoolEntry *reg = u->registerEntry;
-                if (mask && rp->ownsRegisterClass(reg))
+            reportInfo("    %s\n", registerPool->poolName);
+            for (regUse *registerUse = t->registerUses.head; registerUse; registerUse = registerUse->next) {
+                int mask = registerUse->throughputMask & ~(registerUse->inputMask | registerUse->outputMask | registerUse->externalInputMask | registerUse->externalOutputMask);
+                RegPoolEntry *reg = registerUse->registerEntry;
+                if (mask && registerPool->ownsRegisterClass(reg))
                     reportInfo("        %s\n", reg->maskName(mask));
             }
         }

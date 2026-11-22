@@ -9,33 +9,33 @@ int vuta1RegCost(Instr *in);
 
 bool optNormal2(workTable *wt, wrangleCand *c)
 {
-    Instr *in = wt->moveListHead;
+    Instr *instruction = wt->moveListHead;
     Instr *best = 0;
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;
-    for (; in; in = in->nextMoveInstruction) {
-        normal2RegCost(in);
-        int d = in->schedulingStatistics.reverseLatencyDepth - in->candidateAttemptCount;
+    for (; instruction; instruction = instruction->nextMoveInstruction) {
+        normal2RegCost(instruction);
+        int d = instruction->schedulingStatistics.reverseLatencyDepth - instruction->candidateAttemptCount;
         if (d > bestA) {
-            best = in;
+            best = instruction;
             bestA = d;
-            bestB = -in->linearOrderIndex;
-            bestC = in->schedulingStatistics.reverseLatencyDepth;
+            bestB = -instruction->linearOrderIndex;
+            bestC = instruction->schedulingStatistics.reverseLatencyDepth;
         } else if (d == bestA) {
-            int e = -in->linearOrderIndex;
+            int e = -instruction->linearOrderIndex;
             if (e > bestB) {
                 bestB = e;
-                bestC = in->schedulingStatistics.reverseLatencyDepth;
-                best = in;
+                bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                best = instruction;
             } else if (e == bestB) {
-                int f = in->candidateBaseRow + (in->candidateAttemptCount >> 2);
+                int f = instruction->candidateBaseRow + (instruction->candidateAttemptCount >> 2);
                 if (f < bestD) {
                     bestD = f;
-                    bestC = in->schedulingStatistics.reverseLatencyDepth;
-                    best = in;
-                } else if (f == bestD && in->schedulingStatistics.reverseDependencyHeight > bestC) {
-                    bestC = in->schedulingStatistics.reverseDependencyHeight;
-                    best = in;
+                    bestC = instruction->schedulingStatistics.reverseLatencyDepth;
+                    best = instruction;
+                } else if (f == bestD && instruction->schedulingStatistics.reverseDependencyHeight > bestC) {
+                    bestC = instruction->schedulingStatistics.reverseDependencyHeight;
+                    best = instruction;
                 }
             }
         }
@@ -48,13 +48,13 @@ bool optNormal2(workTable *wt, wrangleCand *c)
     return true;
 }
 
-int normal2RegCost(Instr *in)
+int normal2RegCost(Instr *instruction)
 {
     int cost = 0;
-    for (int i = 0; i != in->operandCount; i++) {
-        RegPoolEntry *r = in->operands[i].inRegOp2();
-        if (r) {
-            switch (r->registerIndex) {
+    for (int i = 0; i != instruction->operandCount; i++) {
+        RegPoolEntry *registerEntry = instruction->operands[i].inRegOp2();
+        if (registerEntry) {
+            switch (registerEntry->registerIndex) {
             case 55:
             case 56:
             case 59:

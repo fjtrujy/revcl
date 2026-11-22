@@ -27,28 +27,28 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
     for (registerUse = ul->head; registerUse; registerUse = registerUse->next) {
         RegPoolEntry *reg = registerUse->registerEntry;
         for (int k = 0; k != reg->partCount; k++) {
-            regUseSlot *sl = &registerUse->slots[k];
-            if (!sl) {
+            regUseSlot *registerUseSlot = &registerUse->slots[k];
+            if (!registerUseSlot) {
                 reportError("failed to get rrp\n");
                 return 0;
             }
-            sl->earliestExternalCycle = 0;
-            sl->latestExternalCycle = 30000;
-            for (ol_s *operandLocation = sl->inputLocations.head; operandLocation; operandLocation = operandLocation->next) {
+            registerUseSlot->earliestExternalCycle = 0;
+            registerUseSlot->latestExternalCycle = 30000;
+            for (ol_s *operandLocation = registerUseSlot->inputLocations.head; operandLocation; operandLocation = operandLocation->next) {
                 Instr *instruction = operandLocation->instruction;
                 Operand *operand = &instruction->operands[operandLocation->operandIndex];
                 OpSlot *part = operand->getPart(operandLocation->componentIndex);
                 short best = 0;
-                ol_s *e = part->operandLocations.head;
-                if (e) {
-                    for (; e; e = e->next) {
-                        int key = e->pathKey;
+                ol_s *location = part->operandLocations.head;
+                if (location) {
+                    for (; location; location = location->next) {
+                        int key = location->pathKey;
                         if (!key) {
                             reportError("can't have a null minkey for ext\n");
                             return 0;
                         }
-                        Instr *setter = e->instruction;
-                        Operand *src = operandAtLocation(e);
+                        Instr *setter = location->instruction;
+                        Operand *src = operandAtLocation(location);
                         instStream *ss = setter->getOwningStream();
                         if (!ss) {
                             reportError("failed to get the setters ist\n");
@@ -81,7 +81,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                     return 0;
                 }
             }
-            for (ol_s *operandLocation = sl->outputLocations.head; operandLocation; operandLocation = operandLocation->next) {
+            for (ol_s *operandLocation = registerUseSlot->outputLocations.head; operandLocation; operandLocation = operandLocation->next) {
                 Instr *instruction = operandLocation->instruction;
                 if (!instruction) {
                     reportError("not get visible output\n");
@@ -89,8 +89,8 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                 }
                 short best = 0;
                 Operand *operand = &instruction->operands[operandLocation->operandIndex];
-                olList *xl = &operand->getPart(operandLocation->componentIndex)->operandLocations;
-                ol_s *e = xl->firstExternalLocation();
+                olList *locationList = &operand->getPart(operandLocation->componentIndex)->operandLocations;
+                ol_s *e = locationList->firstExternalLocation();
                 if (!operandLocation->isExtUsed() || e) {
                     if (!e || operandLocation->isExtUsed()) {
                         for (; e; e = e->nextExternalLocation()) {
@@ -132,7 +132,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                     } else {
                         reportError("operand doesn't think there's any external users, but - there's an entry on it's ext list\n");
                         operandLocation->dumpOperandContext();
-                        xl->validateOperandLocations();
+                        locationList->validateOperandLocations();
                         return 0;
                     }
                 } else {
@@ -143,7 +143,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
             }
             if (reg->tracksHotOutputPaths && !noExt) {
                 ol_s *operandLocation;
-                for (operandLocation = sl->externalInputLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                for (operandLocation = registerUseSlot->externalInputLocations.head; operandLocation; operandLocation = operandLocation->next) {
                     int key = operandLocation->pathKey;
                     if (!key) {
                         reportError("can't have a null minkey for ext\n");
@@ -172,12 +172,12 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                     }
                     int total = te + kl;
                     int d = instruction->baseIssueSpacing - total - 1;
-                    if (instruction->hasRawTableOrImmediateToken() && d > sl->earliestExternalCycle) {
+                    if (instruction->hasRawTableOrImmediateToken() && d > registerUseSlot->earliestExternalCycle) {
                         changed = 1;
-                        sl->earliestExternalCycle = d;
+                        registerUseSlot->earliestExternalCycle = d;
                     }
                 }
-                for (operandLocation = sl->externalSourceLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                for (operandLocation = registerUseSlot->externalSourceLocations.head; operandLocation; operandLocation = operandLocation->next) {
                     int key = operandLocation->pathKey;
                     if (!key) {
                         reportError("can't have a null minkey for ext\n");
@@ -204,13 +204,13 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         return 0;
                     }
                     int d = fs + kl + 1;
-                    if (instruction->hasRawTableOrImmediateToken() && d < sl->latestExternalCycle) {
+                    if (instruction->hasRawTableOrImmediateToken() && d < registerUseSlot->latestExternalCycle) {
                         changed = 1;
-                        sl->latestExternalCycle = d;
+                        registerUseSlot->latestExternalCycle = d;
                     }
                 }
             }
-            for (tPair *tp = sl->throughputPairs.head; tp; tp = tp->next) {
+            for (tPair *tp = registerUseSlot->throughputPairs.head; tp; tp = tp->next) {
                 instStream *a = (instStream *)tp->a;
                 instStream *b = (instStream *)tp->b;
                 if (!a || !b) {

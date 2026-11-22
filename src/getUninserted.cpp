@@ -275,12 +275,12 @@ bool loadLocks(Program *program, workTable *table)
     for (regUse *registerUse = table->registerUses.head; registerUse; registerUse = registerUse->next) {
         RegPoolEntry *reg = registerUse->registerEntry;
         for (int i = 0; i != reg->partCount; i++) {
-            regUseSlot *rs = &registerUse->slots[i];
-            if (!rs) {
+            regUseSlot *registerUseSlot = &registerUse->slots[i];
+            if (!registerUseSlot) {
                 reportError("failed to get rrp\n");
                 exitAfterCleanup(-1);
             }
-            RegisterPartLockList *rll = (RegisterPartLockList *)rs->assignmentPayload;
+            RegisterPartLockList *rll = (RegisterPartLockList *)registerUseSlot->assignmentPayload;
             if (!rll) {
                 reportError("no rll set in regref\n");
                 exitAfterCleanup(-1);

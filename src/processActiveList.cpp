@@ -2,47 +2,47 @@
 
 #include "backTrace_shared.h"
 
-bool processActiveList(Program *p)
+bool processActiveList(Program *program)
 {
-    p->matchedStreams = 0;
-    while (p->activeStreams) {
-        instStream *s = p->activeStreams;
-        p->activeStreams = s->nextActiveStream;
-        if (s->visitState != 1) {
+    program->matchedStreams = 0;
+    while (program->activeStreams) {
+        instStream *stream = program->activeStreams;
+        program->activeStreams = stream->nextActiveStream;
+        if (stream->visitState != 1) {
             reportError("an inconsistency in the active list?\n");
             return false;
         }
-        if (s->outputLocationCount != 0) {
-            s->visitState = 3;
-            if (s->nextMatchedStream) {
+        if (stream->outputLocationCount != 0) {
+            stream->visitState = 3;
+            if (stream->nextMatchedStream) {
                 reportError("new match is already set\n");
                 return false;
             }
-            s->nextMatchedStream = p->matchedStreams;
-            p->matchedStreams = s;
-            if (s->nextSourceStream) {
+            stream->nextMatchedStream = program->matchedStreams;
+            program->matchedStreams = stream;
+            if (stream->nextSourceStream) {
                 reportError("new match is already set\n");
                 return false;
             }
-            s->nextSourceStream = p->sourceStreams;
-            p->sourceStreams = s;
+            stream->nextSourceStream = program->sourceStreams;
+            program->sourceStreams = stream;
         } else {
-            linkNode *head = s->inputLinks.head;
+            linkNode *head = stream->inputLinks.head;
             if (head) {
-                s->visitState = 2;
-                if (!extendBackTrace(p, s)) {
-                    reportError("failed to extend back trace at %s\n", s->streamName());
+                stream->visitState = 2;
+                if (!extendBackTrace(program, stream)) {
+                    reportError("failed to extend back trace at %s\n", stream->streamName());
                     return false;
                 }
             } else {
-                s->visitState = 4;
+                stream->visitState = 4;
             }
         }
     }
     return true;
 }
 
-bool extendBackTrace(Program *p, instStream *n)
+bool extendBackTrace(Program *program, instStream *n)
 {
     int cnt = 0;
     if (n->visitState != 2 && n->visitState != 0) {
@@ -77,11 +77,11 @@ bool extendBackTrace(Program *p, instStream *n)
                     return false;
                 }
                 if (d->visitState == 2 && prev->visitState == 0) {
-                    if (!addNewActive(p, prev, n)) {
+                    if (!addNewActive(program, prev, n)) {
                         reportError("failed to add a new active node for predecessor in bal case\n");
                         return false;
                     }
-                    if (p->traceStoreEnabled && mergeTstores(p, prev->traceStore, n->traceStore) < 0) {
+                    if (program->traceStoreEnabled && mergeTstores(program, prev->traceStore, n->traceStore) < 0) {
                         reportError("failed to merge tstores\n");
                         return false;
                     }
@@ -101,13 +101,13 @@ bool extendBackTrace(Program *p, instStream *n)
                 reportError("can't get input stream for ir during trace\n");
                 return false;
             }
-            if (p->traceStoreEnabled && mergeTstores(p, o->traceStore, n->traceStore) < 0) {
+            if (program->traceStoreEnabled && mergeTstores(program, o->traceStore, n->traceStore) < 0) {
                 reportError("failed to merge tstores\n");
                 return false;
             }
             switch (o->visitState) {
             case 0:
-                if (!addNewActive(p, o, n)) {
+                if (!addNewActive(program, o, n)) {
                     reportError("failedt to add a new active\n");
                     return false;
                 }
@@ -124,7 +124,7 @@ bool extendBackTrace(Program *p, instStream *n)
                 int len = n->minimumPathLength + n->backtraceDependencyLength;
                 if (len < dmin) {
                     o->shortestPathPredecessor = n;
-                    if (!recalcMinTraceLengths(p)) {
+                    if (!recalcMinTraceLengths(program)) {
                         reportError("failed to recalc trace lengths\n");
                         return false;
                     }
@@ -133,7 +133,7 @@ bool extendBackTrace(Program *p, instStream *n)
                         return false;
                     }
                 }
-                if (p->trackMaximumPathLength) {
+                if (program->trackMaximumPathLength) {
                     int dmax = o->maximumPathLength;
                     if (dmax < 0) {
                         reportError("think I've already been here, but there's no maximal distance to target\n");
@@ -150,7 +150,7 @@ bool extendBackTrace(Program *p, instStream *n)
                         int len2 = n->maximumPathLength + n->backtraceDependencyLength;
                         if (len2 > dmax) {
                             o->longestPathPredecessor = n;
-                            if (!recalcMaxTraceLengths(p)) {
+                            if (!recalcMaxTraceLengths(program)) {
                                 reportError("failed to recalc trace lengths\n");
                                 return false;
                             }
@@ -172,61 +172,61 @@ bool extendBackTrace(Program *p, instStream *n)
     return true;
 }
 
-bool addNewActive(Program *p, instStream *n, instStream *from)
+bool addNewActive(Program *program, instStream *stream, instStream *from)
 {
-    if (n->visitState) {
+    if (stream->visitState) {
         reportError("addNewActive called - but ist_n(%s) is not unvisited.ist_o is %s\n",
-                      n->streamName(), from->streamName());
+                      stream->streamName(), from->streamName());
         return false;
     }
-    if (n->nextActiveStream) {
+    if (stream->nextActiveStream) {
         reportError("can't add to active list\n");
         return false;
     }
-    n->nextActiveStream = p->activeStreams;
-    p->activeStreams = n;
-    n->visitState = 1;
-    n->shortestPathPredecessor = from;
-    n->minimumPathLength = from->minimumPathLength + from->backtraceDependencyLength;
-    if (p->trackMaximumPathLength) {
-        n->longestPathPredecessor = from;
-        n->maximumPathLength = from->maximumPathLength + from->backtraceDependencyLength;
+    stream->nextActiveStream = program->activeStreams;
+    program->activeStreams = stream;
+    stream->visitState = 1;
+    stream->shortestPathPredecessor = from;
+    stream->minimumPathLength = from->minimumPathLength + from->backtraceDependencyLength;
+    if (program->trackMaximumPathLength) {
+        stream->longestPathPredecessor = from;
+        stream->maximumPathLength = from->maximumPathLength + from->backtraceDependencyLength;
     }
     return true;
 }
 
-bool recalcMinTraceLengths(Program *p)
+bool recalcMinTraceLengths(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (!s->visitState)
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (!stream->visitState)
             continue;
         int len = 0;
-        for (instStream *q = s->shortestPathPredecessor; q; q = q->shortestPathPredecessor)
+        for (instStream *q = stream->shortestPathPredecessor; q; q = q->shortestPathPredecessor)
             len += q->backtraceDependencyLength;
-        if (s->minimumPathLength < len) {
+        if (stream->minimumPathLength < len) {
             reportError("recalcPaths - code produced a longer path.. but should be tracking shortest ..path is %s nLen=%d, but old length was %d!\n",
-                          s->streamName(), len, s->minimumPathLength);
+                          stream->streamName(), len, stream->minimumPathLength);
             return false;
         }
-        s->minimumPathLength = len;
+        stream->minimumPathLength = len;
     }
     return true;
 }
 
-bool recalcMaxTraceLengths(Program *p)
+bool recalcMaxTraceLengths(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (!s->visitState)
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (!stream->visitState)
             continue;
         int len = 0;
-        for (instStream *q = s->longestPathPredecessor; q; q = q->longestPathPredecessor)
+        for (instStream *q = stream->longestPathPredecessor; q; q = q->longestPathPredecessor)
             len += q->backtraceDependencyLength;
-        if (s->maximumPathLength > len) {
+        if (stream->maximumPathLength > len) {
             reportError("recalcPaths - code produced a shorter maximal path.. but should be tracking longest ..path is %s nLen=%d, but old length was %d!\n",
-                          s->streamName(), len, s->maximumPathLength);
+                          stream->streamName(), len, stream->maximumPathLength);
             return false;
         }
-        s->maximumPathLength = len;
+        stream->maximumPathLength = len;
     }
     return true;
 }

@@ -43,15 +43,15 @@ Instr *getMove(int type, int)
         in->operands[0].assignedRegister = mr->moveRegister;
         mr->moveRegister->moveReset();
         for (int i = 0; i != mr->moveRegister->partCount; i++) {
-            RegisterPartLockList *l = &mr->partLocks[i];
-            if (!l) {
+            RegisterPartLockList *registerPartLocks = &mr->partLocks[i];
+            if (!registerPartLocks) {
                 reportError(moveRecNullRllError);
                 abortAfterError();
             }
-            l->nextLockList = 0;
-            l->reset();
-            l->calculateLoopStats = 0;
-            mr->moveRegister->setPartPayload(i, (VclPtrWord)l);
+            registerPartLocks->nextLockList = 0;
+            registerPartLocks->reset();
+            registerPartLocks->calculateLoopStats = 0;
+            mr->moveRegister->setPartPayload(i, (VclPtrWord)registerPartLocks);
         }
         in->nextMoveInstruction = 0;
         in->pendingLink.previousInstruction = 0;
@@ -70,23 +70,23 @@ Instr *getMove(int type, int)
         exitAfterCleanup(-1);
     }
     short opc = -1;
-    RegPool *rp = 0;
+    RegPool *registerPool = 0;
     if (type == 1) {
         opc = 0xb2;
-        rp = GetRP(8);
+        registerPool = GetRP(8);
     } else if (type == 2) {
         opc = 0xb4;
-        rp = GetRP(9);
+        registerPool = GetRP(9);
     } else {
         reportError("bad move type\n");
         exitAfterCleanup(-1);
     }
-    iInfo *ii = getOpcodeInfoById(opc);
-    if (!ii) {
+    iInfo *instructionInfo = getOpcodeInfoById(opc);
+    if (!instructionInfo) {
         reportError("got here - no ii\n");
         exitAfterCleanup(-1);
     }
-    Instr *in = new Instr(ii);
+    Instr *in = new Instr(instructionInfo);
     if (!in) {
         reportError(moveRecNewInstrError);
         exitAfterCleanup(-1);
@@ -95,18 +95,18 @@ Instr *getMove(int type, int)
     in->instructionSerial = serial;
     in->abstractMoveOpcode = opc;
     in->concreteMoveOpcode = 0;
-    RegPoolEntry *reg = rp->getMoveReg(in);
+    RegPoolEntry *reg = registerPool->getMoveReg(in);
     if (!reg) {
         reportError("failed to get move reg\n");
         exitAfterCleanup(-1);
     }
     in->moveRecordWord = (VclPtrWord)mr;
-    Operand *op = in->getOp(0);
-    if (!op) {
+    Operand *operand = in->getOp(0);
+    if (!operand) {
         reportError("failed to get move output!\n");
         exitAfterCleanup(1);
     }
-    op->assignedRegister = reg;
+    operand->assignedRegister = reg;
     if (in->operandCount != 2) {
         reportError(moveRecSidefxError);
         exitAfterCleanup(-1);
@@ -141,9 +141,9 @@ bool addFreeMove(Instr *in)
     }
     reg->moveReset();
     for (int i = 0; i != reg->partCount; i++) {
-        RegisterPartLockList *l = &mr->partLocks[i];
-        l->nextLockList = 0;
-        l->reset();
+        RegisterPartLockList *registerPartLocks = &mr->partLocks[i];
+        registerPartLocks->nextLockList = 0;
+        registerPartLocks->reset();
     }
     if (in != mr->instruction) {
         reportError("no instruction set in mr\n");
@@ -160,23 +160,23 @@ bool addFreeMove(Instr *in)
         reportError(moveRecBaseMuidError);
         return false;
     }
-    iInfo *ii = getOpcodeInfoById(in->abstractMoveOpcode);
+    iInfo *instructionInfo = getOpcodeInfoById(in->abstractMoveOpcode);
     in->concreteMoveOpcode = 0;
-    in->opcodeInfo = ii;
-    in->permittedPipelineMask = ii->pipelineMask;
-    in->opcodeResourceMask = ii->resourceMask;
+    in->opcodeInfo = instructionInfo;
+    in->permittedPipelineMask = instructionInfo->pipelineMask;
+    in->opcodeResourceMask = instructionInfo->resourceMask;
     mr->nextFree = (moveRec *)freeMoveRecordsByType[mr->moveType];
     freeMoveRecordsByType[mr->moveType] = (VclPtrWord)mr;
     return true;
 }
 
-bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp)
+bool detectMove(Instr *instruction, int &opc, unsigned char &mask, int &dstOp, int &srcOp)
 {
     opc = -1;
     mask = 0;
-    if (!in)
+    if (!instruction)
         return false;
-    int id = getOpcodeId(in->opcodeInfo);
+    int id = getOpcodeId(instruction->opcodeInfo);
     srcOp = -1;
     dstOp = -1;
     unsigned int v;
@@ -188,15 +188,15 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
         break;
     case 0x22:
     case 0x30:
-        if (in->destinationMask & 8)
+        if (instruction->destinationMask & 8)
             return false;
     case 0x25:
     case 0x26:
     case 0x27:
     case 0x44:
-        if (in->hasLinkedOutputFrom(1))
+        if (instruction->hasLinkedOutputFrom(1))
             return false;
-        if (in->operands[2].assignedRegister->registerIndex != 0)
+        if (instruction->operands[2].assignedRegister->registerIndex != 0)
             return false;
         opc = 0xb4;
     setOps:
@@ -205,14 +205,14 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
         break;
     case 0x6c:
     case 0x6f:
-        if (in->operands[2].assignedRegister->registerIndex != 32)
+        if (instruction->operands[2].assignedRegister->registerIndex != 32)
             return false;
         opc = 0xb2;
         goto setOps;
     case 0x6d:
     case 0x6e:
     case 0x70:
-        if (!in->operands[2].immediateValue.getUInt(&v))
+        if (!instruction->operands[2].immediateValue.getUInt(&v))
             return false;
         if (v)
             return false;
@@ -223,14 +223,14 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     default:
         return false;
     }
-    RegPoolEntry *s = in->operands[srcOp].assignedRegister;
-    RegPoolEntry *d = in->operands[dstOp].assignedRegister;
-    if (!s || !d) {
+    RegPoolEntry *registerEntry = instruction->operands[srcOp].assignedRegister;
+    RegPoolEntry *d = instruction->operands[dstOp].assignedRegister;
+    if (!registerEntry || !d) {
         reportError(moveDetectNoRegError);
         exitAfterCleanup(-1);
         return false;
     }
-    if (s->registerClass != d->registerClass) {
+    if (registerEntry->registerClass != d->registerClass) {
         reportError("move detect - bad types\n");
         exitAfterCleanup(-1);
         return false;
@@ -240,11 +240,11 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
         exitAfterCleanup(-1);
         return false;
     }
-    if (in->operands[srcOp].componentMask != in->operands[dstOp].componentMask) {
+    if (instruction->operands[srcOp].componentMask != instruction->operands[dstOp].componentMask) {
         reportError("bad mod bits for a move\n");
         exitAfterCleanup(-1);
     }
-    mask = in->operands[srcOp].componentMask;
+    mask = instruction->operands[srcOp].componentMask;
     if (!mask) {
         reportWarning("modbits 0 for move..avoiding\n");
         return false;
@@ -252,63 +252,63 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     return true;
 }
 
-bool resolveMovePipe(workTable *wt, Instr *mv, int pipe)
+bool resolveMovePipe(workTable *wt, Instr *instruction, int pipe)
 {
-    if (mv->abstractMoveOpcode == 0xb2)
-        mv->concreteMoveOpcode = 0xb3;
-    else if (mv->abstractMoveOpcode == 0xb4)
-        mv->concreteMoveOpcode = pipe ? 0xb5 : 0xb6;
+    if (instruction->abstractMoveOpcode == 0xb2)
+        instruction->concreteMoveOpcode = 0xb3;
+    else if (instruction->abstractMoveOpcode == 0xb4)
+        instruction->concreteMoveOpcode = pipe ? 0xb5 : 0xb6;
     else {
         reportError("resolve move: bad baseMuid\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (mv->permittedPipelineMask == 3)
+    if (instruction->permittedPipelineMask == 3)
         wt->vectorMoveCount--;
-    else if (mv->permittedPipelineMask & 1)
+    else if (instruction->permittedPipelineMask & 1)
         wt->oddPipeMoveCount--;
     else
         wt->evenPipeMoveCount--;
-    iInfo *ii = getOpcodeInfoById(mv->concreteMoveOpcode);
-    mv->opcodeInfo = ii;
-    mv->permittedPipelineMask = ii->pipelineMask;
-    mv->opcodeResourceMask = ii->resourceMask;
-    if (mv->permittedPipelineMask == 3)
+    iInfo *instructionInfo = getOpcodeInfoById(instruction->concreteMoveOpcode);
+    instruction->opcodeInfo = instructionInfo;
+    instruction->permittedPipelineMask = instructionInfo->pipelineMask;
+    instruction->opcodeResourceMask = instructionInfo->resourceMask;
+    if (instruction->permittedPipelineMask == 3)
         wt->vectorMoveCount++;
-    else if (mv->permittedPipelineMask & 1)
+    else if (instruction->permittedPipelineMask & 1)
         wt->oddPipeMoveCount++;
     else
         wt->evenPipeMoveCount++;
     return true;
 }
 
-int unresolveMove(Block *blk, Instr *mv)
+int unresolveMove(Block *blk, Instr *instruction)
 {
-    iInfo *ii = getOpcodeInfoById(mv->abstractMoveOpcode);
-    if (mv->permittedPipelineMask == 3)
+    iInfo *instructionInfo = getOpcodeInfoById(instruction->abstractMoveOpcode);
+    if (instruction->permittedPipelineMask == 3)
         blk->vectorMoveCount--;
-    else if (mv->permittedPipelineMask & 1)
+    else if (instruction->permittedPipelineMask & 1)
         blk->oddPipeMoveCount--;
     else
         blk->evenPipeMoveCount--;
-    mv->concreteMoveOpcode = 0;
-    mv->opcodeInfo = ii;
-    mv->permittedPipelineMask = ii->pipelineMask;
-    mv->opcodeResourceMask = ii->resourceMask;
-    if (mv->permittedPipelineMask == 3)
+    instruction->concreteMoveOpcode = 0;
+    instruction->opcodeInfo = instructionInfo;
+    instruction->permittedPipelineMask = instructionInfo->pipelineMask;
+    instruction->opcodeResourceMask = instructionInfo->resourceMask;
+    if (instruction->permittedPipelineMask == 3)
         blk->vectorMoveCount++;
-    else if (mv->permittedPipelineMask & 1)
+    else if (instruction->permittedPipelineMask & 1)
         blk->oddPipeMoveCount++;
     else
         blk->evenPipeMoveCount++;
     return 1;
 }
 
-void adjustMoveCount(Block *blk, Instr *mv, int n)
+void adjustMoveCount(Block *blk, Instr *instruction, int n)
 {
-    if (mv->permittedPipelineMask == 3)
+    if (instruction->permittedPipelineMask == 3)
         blk->vectorMoveCount += n;
-    else if (mv->permittedPipelineMask & 1)
+    else if (instruction->permittedPipelineMask & 1)
         blk->oddPipeMoveCount += n;
     else
         blk->evenPipeMoveCount += n;

@@ -11,9 +11,9 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
-static inline void dumpSynthInstruction(Instr *in)
+static inline void dumpSynthInstruction(Instr *instruction)
 {
-    in->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
 }
 
 
@@ -35,13 +35,13 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
     inSynth = 0;
     stype = 0;
     for (int i = 0; i != count; i++) {
-        DecodedLine *b = &blocks[i];
-        if (b->labels.combinedFlags()) {
+        DecodedLine *decodedLine = &blocks[i];
+        if (decodedLine->labels.combinedFlags()) {
             reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
         }
-        b->labels.clearNodes();
-        Instr *in = b->instructions[0];
+        decodedLine->labels.clearNodes();
+        Instr *in = decodedLine->instructions[0];
         if (!in)
             continue;
         bool isIO = false;
@@ -120,7 +120,7 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
             return false;
         }
         if (isIO) {
-            b->instructions[0] = 0;
+            decodedLine->instructions[0] = 0;
             if (!t->logAddLinear_Tail(in)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;

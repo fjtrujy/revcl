@@ -19,50 +19,50 @@ static inline bool validPipe(int p)
     return p == 0 || p == 1;
 }
 
-bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always)
+bool regRefLiveRange(regUse *registerUse, int part, int *s, int *e, bool *always)
 {
     *s = -4;
     *e = -3;
     *always = false;
-    regUseSlot *sl = &ru->slots[part];
-    if ((char)bitSet(ru->inputMask, part)) {
-        if (sl->timingValues[0] < 0 || !validPipe(sl->timingValues[1]) ||
-            sl->timingValues[3] < 0 || !validPipe(sl->timingValues[4])) {
+    regUseSlot *registerUseSlot = &registerUse->slots[part];
+    if ((char)bitSet(registerUse->inputMask, part)) {
+        if (registerUseSlot->timingValues[0] < 0 || !validPipe(registerUseSlot->timingValues[1]) ||
+            registerUseSlot->timingValues[3] < 0 || !validPipe(registerUseSlot->timingValues[4])) {
             reportError("firstInput<0.. but iBit set\n");
             exitAfterCleanup(-1);
         }
     }
-    if ((char)bitSet(ru->outputMask, part)) {
-        if (sl->timingValues[5] < 0 || !validPipe(sl->timingValues[6]) ||
-            sl->timingValues[8] < 0 || !validPipe(sl->timingValues[9])) {
+    if ((char)bitSet(registerUse->outputMask, part)) {
+        if (registerUseSlot->timingValues[5] < 0 || !validPipe(registerUseSlot->timingValues[6]) ||
+            registerUseSlot->timingValues[8] < 0 || !validPipe(registerUseSlot->timingValues[9])) {
             reportError("firstInput<0.. but iBit set\n");
             exitAfterCleanup(-1);
         }
     }
-    if ((char)bitSet(ru->throughputMask & ~(ru->outputMask | ru->inputMask), part)) {
+    if ((char)bitSet(registerUse->throughputMask & ~(registerUse->outputMask | registerUse->inputMask), part)) {
         *s = -1;
         *e = 30000;
         *always = true;
         return true;
     }
-    if ((char)bitSet(ru->externalInputMask, part)) {
+    if ((char)bitSet(registerUse->externalInputMask, part)) {
         *s = -1;
     } else {
-        if ((char)bitSet(ru->inputMask, part) && sl->timingValues[0] <= sl->timingValues[5]) {
+        if ((char)bitSet(registerUse->inputMask, part) && registerUseSlot->timingValues[0] <= registerUseSlot->timingValues[5]) {
             reportError("first input before first output.. but not xi %d,%d!\n",
-                          sl->timingValues[0], sl->timingValues[5]);
+                          registerUseSlot->timingValues[0], registerUseSlot->timingValues[5]);
             exitAfterCleanup(-1);
         }
-        if ((char)bitSet(ru->outputMask, part))
-            *s = sl->timingValues[5];
+        if ((char)bitSet(registerUse->outputMask, part))
+            *s = registerUseSlot->timingValues[5];
     }
-    if ((char)bitSet(ru->throughputMask | ru->externalOutputMask, part)) {
+    if ((char)bitSet(registerUse->throughputMask | registerUse->externalOutputMask, part)) {
         *e = 30000;
     } else {
-        if ((char)bitSet(ru->outputMask, part))
-            *e = sl->timingValues[8] + 1;
-        if ((char)bitSet(ru->inputMask, part) && sl->timingValues[3] > *e)
-            *e = sl->timingValues[3];
+        if ((char)bitSet(registerUse->outputMask, part))
+            *e = registerUseSlot->timingValues[8] + 1;
+        if ((char)bitSet(registerUse->inputMask, part) && registerUseSlot->timingValues[3] > *e)
+            *e = registerUseSlot->timingValues[3];
     }
     int row = *s;
     if (*e <= row) {
@@ -73,17 +73,17 @@ bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always)
     return true;
 }
 
-static inline bool isInternalLock(OperandLock *lk)
+static inline bool isInternalLock(OperandLock *operandLock)
 {
-    return lk->ownerType == 2;
+    return operandLock->ownerType == 2;
 }
 
-static inline bool isInternalIn(OperandLock *lk)
+static inline bool isInternalIn(OperandLock *operandLock)
 {
-    return lk->operandStatusCode == 2;
+    return operandLock->operandStatusCode == 2;
 }
 
-bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
+bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *out, int *s, int *e)
 {
     *s = -1;
     *e = -1;
@@ -93,14 +93,14 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
             reportError("failed to get instruction for non -internal input\n");
             return false;
         }
-        InstructionPosition *rl = &ins->position;
-        int line = rl->getRow();
+        InstructionPosition *instructionPosition = &ins->position;
+        int line = instructionPosition->getRow();
         int want = out->linearRow;
         if ((short)line != (short)want) {
             reportError("rLine mismatch\n");
             return false;
         }
-        if (!validPipe(rl->getPipe())) {
+        if (!validPipe(instructionPosition->getPipe())) {
             reportError("bad pipe for instruction\n");
             return false;
         }
@@ -116,17 +116,17 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
     } else {
         *e = -1;
     }
-    for (OperandLock *c = out->parentOrChildren; c; c = c->nextSibling) {
-        if (isInternalIn(c))
+    for (OperandLock *operandLock = out->parentOrChildren; operandLock; operandLock = operandLock->nextSibling) {
+        if (isInternalIn(operandLock))
             continue;
-        Instr *ci = c->ownerInstr();
+        Instr *ci = operandLock->ownerInstr();
         if (!ci) {
             reportError("no inst for rl\n");
             return false;
         }
         InstructionPosition *rl = &ci->position;
         int line = rl->getRow();
-        int want = c->linearRow;
+        int want = operandLock->linearRow;
         if ((short)line != (short)want) {
             reportError("rline mismatch for input locks\n");
             return false;
@@ -147,7 +147,7 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
     return true;
 }
 
-bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b)
+bool hack_slo(workTable *wt, RegPoolEntry *registerEntry, RegPoolEntry *b)
 {
     if (wt->codeModeValue != 3) {
         reportError("hack_slo - called - but table not raw\n");
@@ -166,11 +166,11 @@ bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b)
             if (!in)
                 continue;
             for (int i = 0; i != in->operandCount; i++) {
-                Operand *op = &in->operands[i];
-                if (isRegisterOperand(op, 2)) {
-                    if (op->assignedRegister == a)
+                Operand *operand = &in->operands[i];
+                if (isRegisterOperand(operand, 2)) {
+                    if (operand->assignedRegister == registerEntry)
                         hasA = true;
-                    if (op->assignedRegister == b)
+                    if (operand->assignedRegister == b)
                         hasB = true;
                 }
             }

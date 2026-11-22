@@ -45,15 +45,15 @@ int getNumOptimisers()
     return 11;
 }
 
-static inline void dumpLinearStream(instStream *s)
+static inline void dumpLinearStream(instStream *stream)
 {
-    s->dump(0);
+    stream->dump(0);
 }
 
-bool doLinear(Program *p, int smart)
+bool doLinear(Program *program, int smart)
 {
     instStream *s;
-    while ((s = selectUninsertedStream(p)) != 0) {
+    while ((s = selectUninsertedStream(program)) != 0) {
         if (s->getCodeMode() != 1) {
             reportError("doLinear() - asked to process a non-uta\n");
             return false;
@@ -63,7 +63,7 @@ bool doLinear(Program *p, int smart)
                           s->streamName(), s->getAllocMode());
             return false;
         }
-        if (!prepExtInfo(p, s, 0)) {
+        if (!prepExtInfo(program, s, 0)) {
             reportError("failed to prep external info for stream\n");
             return false;
         }
@@ -82,13 +82,13 @@ bool doLinear(Program *p, int smart)
             optimiser *o = &optTable[i];
             if (o->flags & 2) {
                 currentOptimizerName = o->name;
-                workTable *nt = prepUta(p, s, 0, 1);
+                workTable *nt = prepUta(program, s, 0, 1);
                 if (!nt) {
                     reportError("failed to prepUta istream\n");
                     return false;
                 }
                 nt->optimizerIndex = i;
-                if (!statReset(p)) {
+                if (!statReset(program)) {
                     reportError("failed to reset stats for cpu\n");
                     return false;
                 }
@@ -123,7 +123,7 @@ bool doLinear(Program *p, int smart)
                         reportError("failed to validate/patch moves - so continue\n");
                         exitAfterCleanup(-1);
                     }
-                    if (assignLocalRegisters(p, nt)) {
+                    if (assignLocalRegisters(program, nt)) {
                         if (best) {
                             if (nt->getPhysicalLen() < best->getPhysicalLen()) {
                                 delete best;
@@ -159,19 +159,19 @@ bool doLinear(Program *p, int smart)
     return true;
 }
 
-static inline const char *loopStallReason(instStream *s)
+static inline const char *loopStallReason(instStream *stream)
 {
-    return stallReasonStr(s->savedStallReason);
+    return stallReasonStr(stream->savedStallReason);
 }
 
-bool doLoop(Program *p, int smart)
+bool doLoop(Program *program, int smart)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
+    for (instStream *s = program->streamHead; s; s = s->nextStream) {
         int i;
         if (!s->canLoop() || !s->knownMinimumLoopCount)
             continue;
         workTable *best = 0;
-        if (!prepExtInfo(p, s, 1)) {
+        if (!prepExtInfo(program, s, 1)) {
             reportError("failed to prep external info for stream\n");
             return false;
         }
@@ -201,13 +201,13 @@ bool doLoop(Program *p, int smart)
                     const char *why = loopStallReason(s);
                     reportInfo("lpgen[%d](limit: %s) - '%s' flow %s\n",
                                   size, why, optTable[i].name, s->streamName());
-                    workTable *nt = prepUta(p, s, size, 1);
+                    workTable *nt = prepUta(program, s, size, 1);
                     if (!nt) {
                         reportError("failed to prepUta istream\n");
                         return false;
                     }
                     nt->optimizerIndex = i;
-                    if (!statReset(p)) {
+                    if (!statReset(program)) {
                         reportError("failed to reset stats for cpu\n");
                         return false;
                     }
@@ -238,7 +238,7 @@ bool doLoop(Program *p, int smart)
                             reportError("failed to validate/patch moves - so continue\n");
                             exitAfterCleanup(-1);
                         }
-                        if (!assignLocalRegisters(p, nt))
+                        if (!assignLocalRegisters(program, nt))
                             reportWarning("failed to assign reg size would be %d!\n", nt->getLoopSize());
                         else {
                             s->optimizationRecords[i].optimalLength = s->getRecordedLogicalLength();
@@ -285,11 +285,11 @@ bool doLoop(Program *p, int smart)
     return true;
 }
 
-bool doRawAndSynth(Program *p, int smart)
+bool doRawAndSynth(Program *program, int smart)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
+    for (instStream *s = program->streamHead; s; s = s->nextStream) {
         if (s->getCodeMode() == 3) {
-            if (!prepExtInfo(p, s, 0)) {
+            if (!prepExtInfo(program, s, 0)) {
                 reportError("failed to prep external info for stream\n");
                 return false;
             }
@@ -297,11 +297,11 @@ bool doRawAndSynth(Program *p, int smart)
                 reportError("work table not set\n");
                 exitAfterCleanup(-1);
             }
-            if (!optReset(p)) {
+            if (!optReset(program)) {
                 reportError("failed to optReset cpu\n");
                 exitAfterCleanup(-1);
             }
-            workTable *wt = makeForceTable(p, s);
+            workTable *wt = makeForceTable(program, s);
             if (!wt) {
                 s->dump(0);
                 reportError("failed to prepUta istream\n");
@@ -317,9 +317,9 @@ bool doRawAndSynth(Program *p, int smart)
             }
             switch ((unsigned char)wt->allocationMode) {
             case 2:
-                if (!assignLocalRegisters(p, wt)) {
+                if (!assignLocalRegisters(program, wt)) {
                     reportError("failed to assign reg for vsm table!\n");
-                    dumpProgramStreamsAndRegisters(p, 0);
+                    dumpProgramStreamsAndRegisters(program, 0);
                     reportError("here is %s\n", s->streamName());
                     return false;
                 }
@@ -348,66 +348,66 @@ bool doRawAndSynth(Program *p, int smart)
     return true;
 }
 
-bool relaxOpt(Program *p)
+bool relaxOpt(Program *program)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        switch (s->getCodeMode()) {
+    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        switch (stream->getCodeMode()) {
         case 3: {
-            workTable *opt = s->optimizedTable;
+            workTable *opt = stream->optimizedTable;
             if (!opt) {
-                reportError("relaxopt - no opt for %s\n", s->streamName());
+                reportError("relaxopt - no opt for %s\n", stream->streamName());
                 return false;
             }
-            workTable *wt = s->getTable();
+            workTable *wt = stream->getTable();
             if (opt != wt) {
                 reportError("relaxOpt - work and opt not same\n");
                 return false;
             }
             wt->dump();
-            for (Instr *i = s->getTable()->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
-                i->optimizedInstructionImageWord = 0;
-                i->cloneImage = 0;
-                i->originalInstructionImageWord = 0;
+            for (Instr *instruction = stream->getTable()->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+                instruction->optimizedInstructionImageWord = 0;
+                instruction->cloneImage = 0;
+                instruction->originalInstructionImageWord = 0;
             }
-            s->optimizedTable = 0;
+            stream->optimizedTable = 0;
             break;
         }
         case 4:
             break;
         case 1:
-            reportError("uta found at relax time %s\n", s->streamName());
+            reportError("uta found at relax time %s\n", stream->streamName());
             return false;
         default:
-            reportError("unknown code mode found at relax time %s\n", s->streamName());
+            reportError("unknown code mode found at relax time %s\n", stream->streamName());
             return false;
         }
     }
     return true;
 }
 
-bool optimizeProgramScheduling(Program *p, int smart, bool sizeReduce)
+bool optimizeProgramScheduling(Program *program, int smart, bool sizeReduce)
 {
-    for (instStream *s = p->streamHead; s; s = s->nextStream) {
+    for (instStream *s = program->streamHead; s; s = s->nextStream) {
         if (s->getCodeMode() == 3) {
-            if (!prepExtInfo(p, s, 0)) {
+            if (!prepExtInfo(program, s, 0)) {
                 reportError("failed to prep external info for stream\n");
                 return false;
             }
-            if (!optReset(p)) {
+            if (!optReset(program)) {
                 reportError("failed to optReset cpu\n");
                 exitAfterCleanup(-1);
             }
-            workTable *wt = makeForceTable(p, s);
+            workTable *wt = makeForceTable(program, s);
             if (!wt) {
                 reportError("failed to prepUta istream\n");
                 return false;
             }
-            if (!prepareReductionCandidates(p, s, wt)) {
+            if (!prepareReductionCandidates(program, s, wt)) {
                 reportError("failed to do initial reduction test\n");
                 return false;
             }
             if (s->usesFreeRawLayout()) {
-                if (!reduceLinearSchedule(p, wt, s->allowUpwardReduction, s->allowDownwardReduction)) {
+                if (!reduceLinearSchedule(program, wt, s->allowUpwardReduction, s->allowDownwardReduction)) {
                     reportError("failed to linear reduce table\n");
                     return false;
                 }

@@ -34,43 +34,43 @@ regUseList::regUseList()
 
 regUseList::~regUseList()
 {
-    regUse *ru = head;
-    while (ru) {
-        regUse *next = ru->next;
-        if (ru->next)
-            ru->next->previous = ru->previous;
+    regUse *registerUse = head;
+    while (registerUse) {
+        regUse *next = registerUse->next;
+        if (registerUse->next)
+            registerUse->next->previous = registerUse->previous;
         else
-            tail = ru->previous;
-        if (ru->previous)
-            ru->previous->next = ru->next;
+            tail = registerUse->previous;
+        if (registerUse->previous)
+            registerUse->previous->next = registerUse->next;
         else
-            head = ru->next;
+            head = registerUse->next;
         count--;
-        ru->previous = 0;
-        ru->next = 0;
-        delete ru;
-        ru = next;
+        registerUse->previous = 0;
+        registerUse->next = 0;
+        delete registerUse;
+        registerUse = next;
     }
 }
 
 bool regUseList::clear()
 {
-    regUse *ru = head;
-    while (ru) {
-        regUse *next = ru->next;
-        if (ru->next)
-            ru->next->previous = ru->previous;
+    regUse *registerUse = head;
+    while (registerUse) {
+        regUse *next = registerUse->next;
+        if (registerUse->next)
+            registerUse->next->previous = registerUse->previous;
         else
-            tail = ru->previous;
-        if (ru->previous)
-            ru->previous->next = ru->next;
+            tail = registerUse->previous;
+        if (registerUse->previous)
+            registerUse->previous->next = registerUse->next;
         else
-            head = ru->next;
+            head = registerUse->next;
         count--;
-        ru->previous = 0;
-        ru->next = 0;
-        delete ru;
-        ru = next;
+        registerUse->previous = 0;
+        registerUse->next = 0;
+        delete registerUse;
+        registerUse = next;
     }
     return true;
 }
@@ -82,61 +82,61 @@ regUse *regUseList::AddNewRegRef(RegPoolEntry *reg)
         exitAfterCleanup(-1);
         return 0;
     }
-    regUse *ru = new regUse(reg);
-    if (!ru) {
+    regUse *registerUse = new regUse(reg);
+    if (!registerUse) {
         reportError(regUseNewFailedError);
         exitAfterCleanup(-1);
         return 0;
     }
-    ru->previous = 0;
-    ru->next = 0;
+    registerUse->previous = 0;
+    registerUse->next = 0;
     if (!tail) {
-        head = ru;
+        head = registerUse;
     } else {
-        tail->next = ru;
-        ru->previous = tail;
+        tail->next = registerUse;
+        registerUse->previous = tail;
     }
-    tail = ru;
+    tail = registerUse;
     count++;
-    return ru;
+    return registerUse;
 }
 
-bool regUseList::append(regUse *ru)
+bool regUseList::append(regUse *registerUse)
 {
-    ru->previous = 0;
-    ru->next = 0;
+    registerUse->previous = 0;
+    registerUse->next = 0;
     if (!tail) {
-        head = ru;
+        head = registerUse;
     } else {
-        tail->next = ru;
-        ru->previous = tail;
+        tail->next = registerUse;
+        registerUse->previous = tail;
     }
-    tail = ru;
+    tail = registerUse;
     count++;
     return true;
 }
 
-bool regUseList::remove(regUse *ru)
+bool regUseList::remove(regUse *registerUse)
 {
-    if (ru->next)
-        ru->next->previous = ru->previous;
+    if (registerUse->next)
+        registerUse->next->previous = registerUse->previous;
     else
-        tail = ru->previous;
-    if (ru->previous)
-        ru->previous->next = ru->next;
+        tail = registerUse->previous;
+    if (registerUse->previous)
+        registerUse->previous->next = registerUse->next;
     else
-        head = ru->next;
+        head = registerUse->next;
     count--;
-    ru->previous = 0;
-    ru->next = 0;
+    registerUse->previous = 0;
+    registerUse->next = 0;
     return true;
 }
 
 bool regUseList::hasConsistentCount()
 {
     int n = 0;
-    for (regUse *ru = head; ru; ru = ru->next) {
-        if (!ru->registerEntry)
+    for (regUse *registerUse = head; registerUse; registerUse = registerUse->next) {
+        if (!registerUse->registerEntry)
             return false;
         n++;
     }

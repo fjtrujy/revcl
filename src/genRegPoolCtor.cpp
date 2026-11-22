@@ -76,11 +76,11 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
         RegPoolEntry *best = 0;
         RegPoolEntry *bestPrev = 0;
         RegPoolEntry *prev = 0;
-        for (RegPoolEntry *p = todo; p; prev = p, p = p->nextPendingAssignment) {
-            if (p->assignmentCostTableSize > max) {
-                best = p;
+        for (RegPoolEntry *registerEntry = todo; registerEntry; prev = registerEntry, registerEntry = registerEntry->nextPendingAssignment) {
+            if (registerEntry->assignmentCostTableSize > max) {
+                best = registerEntry;
                 bestPrev = prev;
-                max = p->assignmentCostTableSize;
+                max = registerEntry->assignmentCostTableSize;
             }
         }
         if (!best) {

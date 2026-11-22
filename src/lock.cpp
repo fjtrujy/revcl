@@ -79,9 +79,9 @@ bool cls0805bcc4::setOwner(int part, Instr *instr, int opnd)
     return true;
 }
 
-bool cls0805bcc4::setOwner(int part, regUse *rf)
+bool cls0805bcc4::setOwner(int part, regUse *registerUse)
 {
-    if (!rf) {
+    if (!registerUse) {
         reportError("setowner - passed null rf\n");
         exitAfterCleanup(-1);
         return false;
@@ -105,7 +105,7 @@ bool cls0805bcc4::setOwner(int part, regUse *rf)
     ownerComponent = part;
     unk_2a = 0;
     ownerType = 2;
-    ownerPointer = rf;
+    ownerPointer = registerUse;
     linearRow = -1;
     loopRow = -1;
     return true;
@@ -577,15 +577,15 @@ bool cls0805bcc4::isOk(int type, bool inserted)
 {
     int loopSize = activeLoopSize;
     bool ok = true;
-    regUse *rf = ownerType == 2 ? (regUse *)ownerPointer : 0;
-    Operand *op = lockOperand(this);
+    regUse *registerUse = ownerType == 2 ? (regUse *)ownerPointer : 0;
+    Operand *operand = lockOperand(this);
 
-    if (rf) {
-        if (op) {
+    if (registerUse) {
+        if (operand) {
             reportError("rLock::isOk() - both reg ref and op ok\n");
             ok = false;
         }
-    } else if (!op) {
+    } else if (!operand) {
         reportError("rLock::isOk() - neither op nor regref set\n");
         ok = false;
     }
@@ -835,11 +835,11 @@ void cls0805bcc4::resetCalculatedStats()
     resetStats();
 }
 
-void cls0805bcc4::setFrom(InstructionPosition *r)
+void cls0805bcc4::setFrom(InstructionPosition *instructionPosition)
 {
-    int rline = r->linearRow;
+    int rline = instructionPosition->linearRow;
     linearRow = rline;
-    int loop = r->loopRow;
+    int loop = instructionPosition->loopRow;
     loopRow = loop;
     int lsz = activeLoopSize;
     if (lsz) {

@@ -5,21 +5,21 @@
 #include "Instr.h"
 #include "ol_s_inline.h"
 
-int earliestInsert(workTable *wt, Instr *in, bool *found)
+int earliestInsert(workTable *wt, Instr *instruction, bool *found)
 {
-    short e = in->externalInputConstraint;
-    if (e < in->externalInputPairedConstraint)
-        e = in->externalInputPairedConstraint;
+    short e = instruction->externalInputConstraint;
+    if (e < instruction->externalInputPairedConstraint)
+        e = instruction->externalInputPairedConstraint;
     int line = e + wt->rangeStart;
     int thru = -1;
-    int iline = in->position.loopRow;
-    Operand *op;
-    for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *reg = registerOperand(op, 1);
+    int iline = instruction->position.loopRow;
+    Operand *operand;
+    for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+        RegPoolEntry *reg = registerOperand(operand, 1);
         if (reg) {
             for (int p = 0; p != reg->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *slot = &op->parts[p];
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
                     OperandLock *par = slot->getParent();
                     if (slot->operandStatusCode != 2) {
                         int s = par->linearRow;
@@ -27,7 +27,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                             int t = s + par->issueLatency + slot->issueLatency;
                             if (t >= line) {
                                 line = t;
-                                if (op->externalBlockModeFlag && !op->additionalLatency)
+                                if (operand->externalBlockModeFlag && !operand->additionalLatency)
                                     thru = t;
                             }
                             if (t > iline) {
@@ -40,20 +40,20 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                 }
             }
         }
-        reg = registerOperand(op, 2);
+        reg = registerOperand(operand, 2);
         if (reg && reg->tracksHotOutputPaths) {
             for (int p = 0; p != reg->partCount; p++) {
-                if ((op->componentMask >> p) & 1) {
-                    OpSlot *slot = &op->parts[p];
-                    OperandLock *lk = slot->ownerLockList->sortedOutputLocks;
-                    while (lk && lk != slot) {
-                        int s = lk->linearRow;
+                if ((operand->componentMask >> p) & 1) {
+                    OpSlot *slot = &operand->parts[p];
+                    OperandLock *operandLock = slot->ownerLockList->sortedOutputLocks;
+                    while (operandLock && operandLock != slot) {
+                        int s = operandLock->linearRow;
                         if (s > iline) {
                             reportError("sorted list corrupted?\n");
                             exitAfterCleanup(-1);
                         }
                         if (s >= 0) {
-                            int t = s + lk->throughputSpacing;
+                            int t = s + operandLock->throughputSpacing;
                             if (t >= line)
                                 line = thru = t;
                             if (t > iline) {
@@ -61,42 +61,42 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                                 exitAfterCleanup(-1);
                             }
                         }
-                        lk = lk->nextSortedOutput;
+                        operandLock = operandLock->nextSortedOutput;
                     }
-                    if (!lk) {
+                    if (!operandLock) {
                         reportError("sorted lock not  on list for get earliest!\n");
                         exitAfterCleanup(-1);
                     }
                 }
             }
         }
-        if (registerOperand(op, 2) && op->reductionHazardMask)
+        if (registerOperand(operand, 2) && operand->reductionHazardMask)
             line = iline;
     }
-    if (in->branchFlags)
+    if (instruction->branchFlags)
         line = iline;
     if (found)
         *found = thru == line;
     return line;
 }
 
-int latestInsert(workTable *wt, Instr *in, bool *found)
+int latestInsert(workTable *wt, Instr *instruction, bool *found)
 {
-    short e = in->externalOutputConstraint;
-    if (e < in->externalOutputPairedConstraint)
-        e = in->externalOutputPairedConstraint;
+    short e = instruction->externalOutputConstraint;
+    if (e < instruction->externalOutputPairedConstraint)
+        e = instruction->externalOutputPairedConstraint;
     int line = wt->rangeEnd - e - 1;
-    int iline = in->position.loopRow;
+    int iline = instruction->position.loopRow;
     bool thru = false;
-    Operand *op;
-    for (int i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *reg = registerOperand(op, 1);
-        if (reg && op->reductionHazardMask) {
+    Operand *operand;
+    for (int i = 0; (operand = instruction->getOp(i)) != 0; i++) {
+        RegPoolEntry *reg = registerOperand(operand, 1);
+        if (reg && operand->reductionHazardMask) {
             thru = true;
             break;
         }
     }
-    if (thru || in->branchFlags)
+    if (thru || instruction->branchFlags)
         line = iline;
     if (found)
         *found = false;

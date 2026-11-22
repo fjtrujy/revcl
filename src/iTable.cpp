@@ -769,17 +769,17 @@ bool workTable::grow(int n)
     }
     if (n <= rowCapacity)
         return 1;
-    wtRow *nt = new wtRow[n];
-    if (!nt) {
+    wtRow *workRow = new wtRow[n];
+    if (!workRow) {
         reportError("failed to get new tab\n");
         return 0;
     }
     for (int i = rangeStart; i < rangeEnd; i++) {
-        nt[i] = rows[i];
+        workRow[i] = rows[i];
         rows[i].clearEntries();
     }
     delete[] rows;
-    rows = nt;
+    rows = workRow;
     rowCapacity = n;
     return 1;
 }
@@ -1204,11 +1204,11 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
             return 0;
         }
         InstructionPosition pos;
-        InstructionPosition *op = &old->position;
-        pos.linearRow = op->linearRow;
-        pos.loopRow = op->loopRow;
-        pos.loopIteration = op->loopIteration;
-        pos.pipelineIndex = op->pipelineIndex;
+        InstructionPosition *instructionPosition = &old->position;
+        pos.linearRow = instructionPosition->linearRow;
+        pos.loopRow = instructionPosition->loopRow;
+        pos.loopIteration = instructionPosition->loopIteration;
+        pos.pipelineIndex = instructionPosition->pipelineIndex;
         InstructionPosition *position = &nw->position;
         position->linearRow = old->position.linearRow;
         position->loopRow = pos.loopRow;

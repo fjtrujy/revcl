@@ -11,28 +11,28 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
-static inline void dumpEmitInstruction(Instr *in)
+static inline void dumpEmitInstruction(Instr *instruction)
 {
-    in->dumpOperandDiagnostics(false);
+    instruction->dumpOperandDiagnostics(false);
 }
 
-char *emitGenericInstructionText(char *buf, Instr *in, bool upper, char *mods, bool b, int)
+char *emitGenericInstructionText(char *buf, Instr *instruction, bool upper, char *mods, bool b, int)
 {
-    iInfo *info = in->opcodeInfo;
+    iInfo *info = instruction->opcodeInfo;
     bool comma = false;
     if (!mods)
         mods = "";
     int len = formatIntoBuffer(buf, "%s%s", info->mnemonic, mods);
     char *p = buf + len;
-    p = emitDestMask(p, (char)info->destinationMaskMode, in->destinationMask);
+    p = emitDestMask(p, (char)info->destinationMaskMode, instruction->destinationMask);
     if (!p) {
         reportError("failed to emit inst mods\n");
         return 0;
     }
     for (int n = p - buf; n < 14; n++)
         *p++ = ' ';
-    for (int i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
+    for (int i = 0; i != instruction->operandCount; i++) {
+        Operand *op = &instruction->operands[i];
         if (op->isImplicit)
             continue;
         if (comma)
@@ -43,7 +43,7 @@ char *emitGenericInstructionText(char *buf, Instr *in, bool upper, char *mods, b
             reportError("failed to emit operand\n");
             op->diagnoseOperand(0);
             reportError("from\n");
-            dumpEmitInstruction(in);
+            dumpEmitInstruction(instruction);
             return 0;
         }
     }
@@ -97,25 +97,25 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
 
 RegPoolEntry *getReg(unsigned type, const char *name);
 
-bool extHook(void *, Instr *in)
+bool extHook(void *, Instr *instruction)
 {
     int done = 0;
-    for (int i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        if (op->operandKind != 55)
+    for (int i = 0; i != instruction->operandCount; i++) {
+        Operand *operand = &instruction->operands[i];
+        if (operand->operandKind != 55)
             continue;
-        if (op->assignedRegister) {
+        if (operand->assignedRegister) {
             reportError("extHook - register already set\n");
             return 0;
         }
-        RegPoolEntry *r = getReg((unsigned char)op->immediateDataType, "EXT");
-        if (!r) {
+        RegPoolEntry *registerEntry = getReg((unsigned char)operand->immediateDataType, "EXT");
+        if (!registerEntry) {
             reportError("couldn't get ext register for pool\n");
             return 0;
         }
-        op->assignedRegister = r;
-        op->componentMask = (1 << r->partCount) - 1;
-        if (!op->componentMask) {
+        operand->assignedRegister = registerEntry;
+        operand->componentMask = (1 << registerEntry->partCount) - 1;
+        if (!operand->componentMask) {
             reportError("no mod bits set for ext\n");
             return 0;
         }
