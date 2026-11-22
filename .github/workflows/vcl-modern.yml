@@ -58,6 +58,96 @@ jobs:
           path: tmp/cmake/${{ matrix.output }}/vcl
           if-no-files-found: error
 
+  linux-native:
+    name: Linux x86_64 native ${{ matrix.compiler }} + tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: g++
+            preset: linux-gcc
+            label: gcc
+          - compiler: clang++
+            preset: linux-clang
+            label: clang
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install native compilers and test dependencies
+        run: |
+          test "$(uname -m)" = "x86_64"
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake g++ clang
+          python -m pip install -r scripts/requirements.txt
+
+      - name: Build native 64-bit Linux executable
+        run: |
+          cmake --preset ${{ matrix.preset }}
+          cmake --build --preset ${{ matrix.preset }}
+          file tmp/cmake/${{ matrix.preset }}/vcl
+
+      - name: Run unit tests and compare all VCL fixture output hashes
+        run: ctest --preset ${{ matrix.preset }} --output-on-failure
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vcl-native-linux-x86_64-${{ matrix.label }}
+          path: tmp/cmake/${{ matrix.preset }}/vcl
+          if-no-files-found: error
+
+  linux-arm64:
+    # Standard ARM64 hosted runners are not available for private repos.
+    # QEMU provides an ARM64 Linux userland on a regular Ubuntu runner.
+    name: Linux arm64 (QEMU) ${{ matrix.compiler }} + tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: g++
+            preset: linux-gcc
+            label: gcc
+          - compiler: clang++
+            preset: linux-clang
+            label: clang
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build and test Linux arm64 ELF inside the ARM64 userland
+        run: |
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD:/work" -w /work ubuntu:24.04 bash -euc '
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update
+              apt-get install -y --no-install-recommends \
+                cmake make g++ clang python3 python3-venv python3-pip file
+              python3 -m venv /tmp/vcl-ci-venv
+              /tmp/vcl-ci-venv/bin/pip install -r scripts/requirements.txt
+              test "$(uname -m)" = "aarch64"
+              cmake --preset ${{ matrix.preset }} \
+                -DPython3_EXECUTABLE=/tmp/vcl-ci-venv/bin/python
+              cmake --build --preset ${{ matrix.preset }}
+              file tmp/cmake/${{ matrix.preset }}/vcl
+              ctest --preset ${{ matrix.preset }} --output-on-failure
+            '
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vcl-native-linux-arm64-${{ matrix.label }}
+          path: tmp/cmake/${{ matrix.preset }}/vcl
+          if-no-files-found: error
+
   macos-native:
     name: macOS ${{ matrix.arch }} native + tests
     runs-on: ${{ matrix.runner }}

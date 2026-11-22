@@ -140,10 +140,10 @@ int getMove(Block *blk, Instr *in, int now)
                 }
             }
             int s1 = in->unk_00;
-            Instr *s2 = blk->unk_94;
+            Instr *s2 = blk->unk_94.unk_00;
             if (score > bestScore) {
                 in->unk_00 = s1;
-                blk->unk_94 = s2;
+                blk->unk_94.unk_00 = s2;
                 bestOp = op2;
                 bestScore = score;
                 bestReg = reg;
@@ -182,7 +182,7 @@ int getMove(Block *blk, Instr *in, int now)
             }
         }
         if (!earliest)
-            earliest = blk->unk_a0;
+            earliest = blk->unk_a0.unk_00;
         func_080737b8(earliest);
         return 1;
     }
@@ -210,7 +210,7 @@ int getMove(Block *blk, Instr *in, int now)
         int moved = 0;
         int oldBits = 0;
         int newBits = 0;
-        for (Instr *it = blk->unk_94; it; it = (Instr *)it->unk_24.unk_00) {
+        for (Instr *it = blk->unk_94.unk_00; it; it = (Instr *)it->unk_24.unk_00) {
             int n;
             for (n = 0; n != it->unk_138b; n++) {
                 Operand *op = &it->unk_38[n];
@@ -371,7 +371,7 @@ bool undoMove(Block *blk, Instr *mv)
     RegPoolEntry *dup = out->unk_18;
     if (!UnlinkFromToDo(blk, mv))
         func_0804ad38("failed to unlink from todolist!\n");
-    for (Instr *i = blk->unk_94; i; i = (Instr *)i->unk_24.unk_00) {
+    for (Instr *i = blk->unk_94.unk_00; i; i = (Instr *)i->unk_24.unk_00) {
         for (int n = 0; n != i->unk_138b; n++) {
             Operand *op = &i->unk_38[n];
             RegPoolEntry *r = op->unk_18;
@@ -456,7 +456,7 @@ Instr *makeMove(Block *, RegPoolEntry *);
 bool undoMovesTo(Block *blk, Instr *stop)
 {
     bool done;
-    Instr *i = blk->unk_98;
+    Instr *i = blk->unk_94.unk_04;
     do {
         Instr *prev = i->unk_24.unk_04;
         done = (i == stop);

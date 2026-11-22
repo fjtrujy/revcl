@@ -38,9 +38,10 @@ Progress (matched bytes / file size):
 
 ### Build with CMake
 
-The repository uses one CMake project with four presets: `historical`
-(GCC 3.2.2 in Docker), `gcc` (modern Linux i386), `clang` (modern
-Linux i386), and `macos` (native arm64 or Intel x86_64).
+The repository uses one CMake project with six presets: `historical`
+(GCC 3.2.2 in Docker), `gcc` and `clang` (modern Linux i386),
+`linux-gcc` and `linux-clang` (native Linux x86_64 or ARM64), and
+`macos` (native arm64 or Intel x86_64).
 CMake 3.23+ is required. For the byte-exact historical build,
 first download the original, SHA-pinned Red Hat 9 compiler and libraries
 (Linux, or Ubuntu in a container for the extraction step on macOS):
@@ -54,17 +55,29 @@ cmake --build --preset historical
 ctest --preset historical              # exact SHA-256 verification
 ```
 
-Modern builds and their unit/functional tests run on Linux with 32-bit
-multilib installed. On Ubuntu, install `cmake`, `g++-multilib`, `clang`,
-`python3-venv`, and `python3-pip`, then:
+For modern **native 64-bit Linux** (x86_64 or ARM64/aarch64), install
+`cmake`, `g++`, `clang`, `python3-venv`, and `python3-pip`, then:
 
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r scripts/requirements.txt
 
+cmake --preset linux-gcc -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --build --preset linux-gcc
+ctest --preset linux-gcc               # Python unit tests + 11 VCL fixtures
+
+cmake --preset linux-clang -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --build --preset linux-clang
+ctest --preset linux-clang
+```
+
+The original modern **32-bit Linux** compatibility targets remain available
+on x86_64 machines with multilib packages installed:
+
+```sh
 cmake --preset gcc -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
 cmake --build --preset gcc
-ctest --preset gcc                     # Python unit tests + 11 VCL fixtures
+ctest --preset gcc
 
 cmake --preset clang -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
 cmake --build --preset clang
@@ -80,7 +93,7 @@ python3 -m venv .venv
 
 cmake --preset macos -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
 cmake --build --preset macos
-ctest --preset macos                    # 113 unit tests + 11 VCL fixtures
+ctest --preset macos                    # Python unit tests + 11 VCL fixtures
 ./tmp/cmake/macos/vcl -h
 ```
 
@@ -90,8 +103,16 @@ modern executable is **functionally tested**, not SHA-identical to the
 original 32-bit Linux ELF (which remains guaranteed by `historical`).
 For all eleven standalone oracle inputs, CTest additionally checks the
 complete generated output against SHA-256 baselines recorded in
-`tests/oracle/expected_stdout_sha256.json`, so native macOS and Linux
+`tests/oracle/expected_stdout_sha256.json`, so all modern Linux/macOS builds
 must produce identical VU text, not merely exit successfully.
+
+The **same C++ sources** are built on every platform, without macOS- or
+Linux-specific execution paths. `intptr_t`/`uintptr_t` hold pointers and
+pointer-derived handles on 32-bit and 64-bit systems; the original `Block`
+interface inherits the real `workTable` layout instead of maintaining a
+second platform-dependent overlay. Only the `historical` preset uses the
+original compiler flags and toolchain. The native modern binaries are
+functional equivalents, **not** expected to match the i386 ELF's SHA.
 
 ### Byte-exact CI
 
@@ -123,8 +144,10 @@ The full reproducibility report and verification procedure are in
 ### Developer tools
 
 The independent [modern compiler workflow](.github/workflows/vcl-modern.yml)
-builds all 131 C++ translation units with modern GCC and Clang on 32-bit
-Linux, and with Apple Clang on 64-bit macOS arm64 and Intel x86_64. It
+builds all 131 C++ translation units with modern GCC and Clang for 32-bit
+Linux i386, native 64-bit Linux x86_64/ARM64, and with Apple Clang for
+macOS arm64/Intel x86_64. For the private repository, Linux ARM64 CI uses
+an emulated ARM64 Linux userland on a standard GitHub runner. It
 produces runnable binaries and uses CTest to run the Python unit suite and
 all 11 standalone oracle fixture cases independently (including both
 expected invalid inputs). It does

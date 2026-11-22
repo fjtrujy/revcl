@@ -137,7 +137,7 @@ class workTable {
 public:
     int unk_00;
     short unk_04;
-    char unk_06[2];
+    short unk_06;  // dynamic statistics high-watermark (written as a short)
     char unk_08;
     unsigned char unk_09;   // code mode
     unsigned char unk_0a;

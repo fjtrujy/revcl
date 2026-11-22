@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.23)
 
 option(REVCL_HISTORICAL "Reproduce the original VCL binary with RH9 GCC 3.2.2" OFF)
-option(REVCL_NATIVE_MACOS "Build a native macOS Mach-O executable" OFF)
+option(REVCL_MODERN_32BIT "Compile modern VCL for the original 32-bit x86 ABI" OFF)
 project(REVCL LANGUAGES CXX)
-if(REVCL_NATIVE_MACOS AND NOT APPLE)
-  message(FATAL_ERROR "The macos preset requires macOS and Apple Clang")
-endif()
 include(CTest)
 include(config/vcl-link-order.cmake)
 
@@ -67,10 +64,10 @@ if(REVCL_HISTORICAL)
       -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VerifySha.cmake")
   endif()
 else()
-  # Linux reproduces the i386 data model; macOS builds a real native
-  # arm64/x86_64 Mach-O executable, with pointer-sized compatibility shims.
+  # The reconstructed source builds natively on 64-bit Linux and macOS.
+  # The optional 32-bit switch retains the existing Linux i386 test targets.
   target_compile_options(vcl PRIVATE -std=gnu++98 -O2 -Wno-write-strings)
-  if(NOT APPLE)
+  if(REVCL_MODERN_32BIT)
     target_compile_options(vcl PRIVATE -m32)
     target_link_options(vcl PRIVATE -m32)
   endif()

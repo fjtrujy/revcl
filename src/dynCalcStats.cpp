@@ -30,9 +30,9 @@ bool func_0805f550(Block *b)
 {
     b->unk_04 = -1;
     b->unk_06 = -1;
-    for (Instr *in = b->unk_a0; in; in = in->unk_24.unk_00)
+    for (Instr *in = b->unk_a0.unk_00; in; in = in->unk_24.unk_00)
         resetInstrDyn(in);
-    for (Instr *in = b->unk_94; in; in = in->unk_24.unk_00)
+    for (Instr *in = b->unk_94.unk_00; in; in = in->unk_24.unk_00)
         resetInstrDyn(in);
     return true;
 }
@@ -55,7 +55,7 @@ bool dynCalcStats(workTable *wt)
     Instr *in;
     func_0805f550(b);
 
-    for (in = b->unk_a0; in; in = in->unk_24.unk_00) {
+    for (in = b->unk_a0.unk_00; in; in = in->unk_24.unk_00) {
         int v = in->unk_13e8.unk_00;
         in->unk_140c = v;
         in->unk_140a = v;
@@ -63,7 +63,7 @@ bool dynCalcStats(workTable *wt)
             b->unk_04 = v;
     }
 
-    for (in = b->unk_94; in; in = in->unk_24.unk_00) {
+    for (in = b->unk_94.unk_00; in; in = in->unk_24.unk_00) {
         Operand *op;
         int h = 0;
         for (i = 0; i != in->unk_138b; i++) {
@@ -146,10 +146,10 @@ bool dynCalcStats(workTable *wt)
         }
     }
 
-    for (in = b->unk_94; in; in = in->unk_24.unk_00)
+    for (in = b->unk_94.unk_00; in; in = in->unk_24.unk_00)
         in->unk_140c = b->unk_04;
 
-    for (in = b->unk_98; in; in = in->unk_24.unk_04) {
+    for (in = b->unk_94.unk_04; in; in = in->unk_24.unk_04) {
         for (i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
             RegPoolEntry *reg = registerOperand(op, 1);
@@ -179,7 +179,7 @@ bool dynCalcStats(workTable *wt)
         }
     }
 
-    for (in = b->unk_94; in; in = in->unk_24.unk_00) {
+    for (in = b->unk_94.unk_00; in; in = in->unk_24.unk_00) {
         for (i = 0; i != in->unk_138b; i++) {
             Operand *op = &in->unk_38[i];
             RegPoolEntry *reg = registerOperand(op, 1);
@@ -209,7 +209,7 @@ bool dynCalcStats(workTable *wt)
         }
     }
 
-    for (in = b->unk_94; in; in = in->unk_24.unk_00) {
+    for (in = b->unk_94.unk_00; in; in = in->unk_24.unk_00) {
         in->unk_13f0.unk_04 = in->unk_140a;
         in->unk_13f0.unk_00 = b->unk_04 - in->unk_140c;
     }
@@ -222,7 +222,7 @@ void dynDumpStats(Block *b)
     errorOccurred = !quiet_080bbd98;
     func_0804acb0("dynDumpStats - start\n");
     int n = 0;
-    for (Instr *in = b->unk_94; in; in = in->unk_24.unk_00) {
+    for (Instr *in = b->unk_94.unk_00; in; in = in->unk_24.unk_00) {
         const char *mark = "    ";
         int s = in->unk_140a;
         int e = in->unk_1408;
