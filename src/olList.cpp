@@ -231,16 +231,16 @@ ol_s *olList::insertExternalLocation(ol_s *src)
             break;
         prev = location;
     }
-    ol_s *n = allocOL();
-    ol_s_copy_inl(n, src);
-    n->stateFlags |= 1;
-    n->next = location;
+    ol_s *insertedLocation = allocOL();
+    ol_s_copy_inl(insertedLocation, src);
+    insertedLocation->stateFlags |= 1;
+    insertedLocation->next = location;
     if (prev)
-        prev->next = n;
+        prev->next = insertedLocation;
     else
-        head = n;
+        head = insertedLocation;
     count++;
-    return n;
+    return insertedLocation;
 }
 
 void markLocationExternallyUsed(ol_s *location)
@@ -258,11 +258,11 @@ int instructionSerialAtLocation(ol_s *location)
     return location->instruction->instructionSerial;
 }
 
-bool sameOperandLocation(ol_s *location, ol_s *b)
+bool sameOperandLocation(ol_s *location, ol_s *secondLocation)
 {
-    if (location && b)
-        return location->instruction == b->instruction && location->packedOperandComponent == b->packedOperandComponent;
-    return location == b;
+    if (location && secondLocation)
+        return location->instruction == secondLocation->instruction && location->packedOperandComponent == secondLocation->packedOperandComponent;
+    return location == secondLocation;
 }
 
 instStream *locationOwningStream(ol_s *location)

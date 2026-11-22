@@ -97,24 +97,24 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
     int fdIn = -1;
     int fdOut = -1;
     bool ok = false;
-    Tool *t = &preprocessorToolTable[tool];
+    Tool *preprocessorTool = &preprocessorToolTable[tool];
 
-    reportInfo("..processing with %s\n", t->name);
+    reportInfo("..processing with %s\n", preprocessorTool->name);
     inPath[0] = 0;
     outPath[0] = 0;
 
     if (!buf) {
         reportError("null data passed to doGasp\n");
     } else {
-        int n = strlen(buf);
-        if (n == 0) {
+        int inputLength = strlen(buf);
+        if (inputLength == 0) {
             reportError("in buffer is null length\n");
         } else {
-            sprintf(inName, "vcli_%s", t->name);
+            sprintf(inName, "vcli_%s", preprocessorTool->name);
             fdIn = createTemporaryFile(inName, inPath);
             if (fdIn < 0) {
                 reportError("failed to make temp in file\n");
-            } else if (write(fdIn, buf, n) != n) {
+            } else if (write(fdIn, buf, inputLength) != inputLength) {
                 reportError("failed to write data to temp file\n");
             } else {
                 close(fdIn);
@@ -122,21 +122,21 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
                 fdIn = -1;
                 delete[] buf;
                 buf = 0;
-                sprintf(outName, "vclo_%s", t->name);
+                sprintf(outName, "vclo_%s", preprocessorTool->name);
                 fdOut = createTemporaryFile(outName, outPath);
                 if (fdOut < 0) {
                     reportError("failed to make tmp outfile\n");
                 } else {
                     close(fdOut);
                     fdOut = -1;
-                    char *commandCursor = cmd + sprintf(cmd, "%s ", t->cmd);
+                    char *commandCursor = cmd + sprintf(cmd, "%s ", preprocessorTool->cmd);
                     for (int i = argFirst; i < argEnd; i++)
                         if (toolOptMatches(1 << tool, argv[i][1]))
                             commandCursor += sprintf(commandCursor, "%s ", argv[i]);
                     sprintf(commandCursor, "%s > %s\n", inPath, outPath);
-                    int rc = system(cmd);
-                    if (rc) {
-                        reportError("system returned %d\n", rc);
+                    int processStatus = system(cmd);
+                    if (processStatus) {
+                        reportError("system returned %d\n", processStatus);
                     } else {
                         result = readFileIntoBuffer(outPath, len, true);
                         if (!result)

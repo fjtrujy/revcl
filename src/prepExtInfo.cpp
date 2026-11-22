@@ -49,27 +49,27 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         }
                         Instr *setter = location->instruction;
                         Operand *src = operandAtLocation(location);
-                        instStream *ss = setter->getOwningStream();
-                        if (!ss) {
+                        instStream *setterStream = setter->getOwningStream();
+                        if (!setterStream) {
                             reportError("failed to get the setters ist\n");
                             return 0;
                         }
-                        int sid = ss->streamId;
+                        int sid = setterStream->streamId;
                         bool same = sid == id;
-                        int kl = guessKeyLen(program, key, sid, id);
-                        if (kl < 0) {
+                        int pathLength = guessKeyLen(program, key, sid, id);
+                        if (pathLength < 0) {
                             reportError("minimal length .. bah\n");
                             return 0;
                         }
-                        int te = getToEnd(setter);
-                        if (te < 0) {
+                        int distanceToEnd = getToEnd(setter);
+                        if (distanceToEnd < 0) {
                             reportError("distance to end -ve..error\n");
                             return 0;
                         }
-                        int total = te + kl;
-                        int d = src->outputLatency + operand->additionalLatency - total - 1;
-                        if ((setter->hasRawTableOrImmediateToken() || same) && d > best)
-                            best = d;
+                        int total = distanceToEnd + pathLength;
+                        int requiredDistance = src->outputLatency + operand->additionalLatency - total - 1;
+                        if ((setter->hasRawTableOrImmediateToken() || same) && requiredDistance > best)
+                            best = requiredDistance;
                     }
                     if (operand->externalBlockModeFlag)
                         instruction->raiseExternalInputPairedConstraint(best);
@@ -90,37 +90,37 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                 short best = 0;
                 Operand *operand = &instruction->operands[operandLocation->operandIndex];
                 olList *locationList = &operand->getPart(operandLocation->componentIndex)->operandLocations;
-                ol_s *e = locationList->firstExternalLocation();
-                if (!operandLocation->isExtUsed() || e) {
-                    if (!e || operandLocation->isExtUsed()) {
-                        for (; e; e = e->nextExternalLocation()) {
-                            int key = e->pathKey;
+                ol_s *externalLocation = locationList->firstExternalLocation();
+                if (!operandLocation->isExtUsed() || externalLocation) {
+                    if (!externalLocation || operandLocation->isExtUsed()) {
+                        for (; externalLocation; externalLocation = externalLocation->nextExternalLocation()) {
+                            int key = externalLocation->pathKey;
                             if (!key) {
                                 reportError("can't have a null minkey for ext\n");
                                 return 0;
                             }
-                            Instr *user = e->instruction;
-                            Operand *dst = operandAtLocation(e);
+                            Instr *user = externalLocation->instruction;
+                            Operand *dst = operandAtLocation(externalLocation);
                             if (!user || !dst) {
                                 reportError("no setting instruction/operand\n");
                                 return 0;
                             }
-                            instStream *ss = user->getOwningStream();
-                            if (!ss) {
+                            instStream *userStream = user->getOwningStream();
+                            if (!userStream) {
                                 reportError("failed to get the setters ist\n");
                                 return 0;
                             }
-                            int kl = guessKeyLen(program, key, id, ss->streamId);
+                            int kl = guessKeyLen(program, key, id, userStream->streamId);
                             if (kl < 0) {
                                 reportError("minimal length .. bah\n");
                                 return 0;
                             }
-                            int fs = getFromStart(user);
-                            if (fs < 0) {
+                            int distanceFromStart = getFromStart(user);
+                            if (distanceFromStart < 0) {
                                 reportError("distance to end -ve..error\n");
                                 return 0;
                             }
-                            int total = fs + kl;
+                            int total = distanceFromStart + kl;
                             int d = operand->outputLatency + dst->additionalLatency - total - 1;
                             if (user->hasRawTableOrImmediateToken() && d > best)
                                 best = d;
@@ -154,12 +154,12 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         reportError("not get visible input\n");
                         return 0;
                     }
-                    instStream *ss = instruction->getOwningStream();
-                    if (!ss) {
+                    instStream *ownerStream = instruction->getOwningStream();
+                    if (!ownerStream) {
                         reportError("failed to get the setters ist\n");
                         return 0;
                     }
-                    int sourceId = ss->streamId;
+                    int sourceId = ownerStream->streamId;
                     int kl = guessKeyLen(program, key, sourceId, id);
                     if (kl < 0) {
                         reportError("minimal length .. bah\n");
@@ -211,39 +211,39 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                 }
             }
             for (tPair *transitionPair = registerUseSlot->throughputPairs.head; transitionPair; transitionPair = transitionPair->next) {
-                instStream *a = (instStream *)transitionPair->a;
-                instStream *b = (instStream *)transitionPair->b;
-                if (!a || !b) {
+                instStream *sourceStream = (instStream *)transitionPair->a;
+                instStream *destinationStream = (instStream *)transitionPair->b;
+                if (!sourceStream || !destinationStream) {
                     reportError("there's no src or dst in a tpair\n");
                     return 0;
                 }
-                workTable *scheduleTable = a->getTable();
-                workTable *wb = b->getTable();
-                if (scheduleTable->codeModeValue == 3 && wb->codeModeValue == 3) {
-                    int sourceId = a->streamId;
+                workTable *scheduleTable = sourceStream->getTable();
+                workTable *destinationTable = destinationStream->getTable();
+                if (scheduleTable->codeModeValue == 3 && destinationTable->codeModeValue == 3) {
+                    int sourceId = sourceStream->streamId;
                     int k1 = guessKeyLen(program, transitionPair->src, sourceId, id);
                     if (k1 < 0) {
                         reportError("failed to guess the key length\n");
                         return 0;
                     }
-                    int k2 = guessKeyLen(program, transitionPair->dst, id, b->streamId);
+                    int k2 = guessKeyLen(program, transitionPair->dst, id, destinationStream->streamId);
                     if (k2 < 0) {
                         reportError("distance to dst is bad\n");
                         return 0;
                     }
                     Instr *writerInstruction = scheduleTable->linearInstructions.tail;
-                    Operand *wo = 0;
+                    Operand *writerOperand = 0;
                     for (; writerInstruction; writerInstruction = writerInstruction->linearLink.previousInstruction)
-                        if ((wo = writerInstruction->findOutputOperand(reg, 1 << partIndex)) != 0)
+                        if ((writerOperand = writerInstruction->findOutputOperand(reg, 1 << partIndex)) != 0)
                             break;
-                    if (!wo) {
+                    if (!writerOperand) {
                         reportError("can't get last writer\n");
                         return 0;
                     }
-                    Instr *u = wb->linearInstructions.head;
+                    Instr *userInstruction = destinationTable->linearInstructions.head;
                     Operand *userOperand = 0;
-                    for (; u; u = u->linearLink.nextInstruction)
-                        if ((userOperand = u->findInputOperand(reg, 1 << partIndex)) != 0)
+                    for (; userInstruction; userInstruction = userInstruction->linearLink.nextInstruction)
+                        if ((userOperand = userInstruction->findInputOperand(reg, 1 << partIndex)) != 0)
                             break;
                     if (!userOperand) {
                         reportError("can't get first user \n");
@@ -254,9 +254,9 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         reportError("<ve to end \n");
                         return 0;
                     }
-                    int fs = getFromStart(u);
+                    int fs = getFromStart(userInstruction);
                     int total = te + k1 + k2 + fs;
-                    int d = wo->outputLatency + userOperand->additionalLatency - total - 1;
+                    int d = writerOperand->outputLatency + userOperand->additionalLatency - total - 1;
                     if (d > table->externalMinimumLength)
                         table->externalMinimumLength = d;
                 }
@@ -269,14 +269,14 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                 Operand *operand = &instruction->operands[i];
                 RegPoolEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
                 if (registerEntry && registerEntry->tracksHotOutputPaths) {
-                    regUse *u = registerUseList->findByRegister(registerEntry);
-                    if (!u) {
+                    regUse *currentRegisterUse = registerUseList->findByRegister(registerEntry);
+                    if (!currentRegisterUse) {
                         reportError("failed to find regref\n");
                         exitAfterCleanup(-1);
                     }
                     for (int k = 0; k != registerEntry->partCount; k++)
                         if ((operand->componentMask >> k) & 1) {
-                            regUseSlot *slot = &u->slots[k];
+                            regUseSlot *slot = &currentRegisterUse->slots[k];
                             instruction->raiseExternalInputPairedConstraint(slot->earliestExternalCycle);
                             int bound = instruction->baseIssueSpacing - slot->latestExternalCycle;
                             instruction->raiseExternalOutputPairedConstraint(bound);

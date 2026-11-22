@@ -34,18 +34,18 @@ bool calculateEarliestDependencyRow(Instr *instruction, int *row)
 {
     *row = 0;
     for (ol_s *operandLocation = instruction->predecessorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
-        Instr *in = operandLocation->instruction;
-        if (!in) {
+        Instr *dependencyInstruction = operandLocation->instruction;
+        if (!dependencyInstruction) {
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
         }
-        int r = in->position.linearRow;
-        if (r < 0) {
+        int dependencyRow = dependencyInstruction->position.linearRow;
+        if (dependencyRow < 0) {
             *row = -1;
             return true;
         }
-        if (r + 1 > *row)
-            *row = r + 1;
+        if (dependencyRow + 1 > *row)
+            *row = dependencyRow + 1;
     }
     return true;
 }
@@ -56,14 +56,14 @@ bool calculateLatestDependencyRow(Instr *instruction, int *row)
 {
     *row = 30000;
     for (ol_s *operandLocation = instruction->successorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
-        Instr *in = operandLocation->instruction;
-        if (!in) {
+        Instr *dependencyInstruction = operandLocation->instruction;
+        if (!dependencyInstruction) {
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
         }
-        int r = in->position.linearRow;
-        if (r >= 0 && r < *row)
-            *row = r;
+        int dependencyRow = dependencyInstruction->position.linearRow;
+        if (dependencyRow >= 0 && dependencyRow < *row)
+            *row = dependencyRow;
     }
     return true;
 }
@@ -261,11 +261,11 @@ bool tagsMatch(Instr *instruction, Instr *secondInstruction)
 
 bool fixupCloneFdeps(workTable *table)
 {
-    int n = 0;
+    int cloneCount = 0;
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
         Instr *orig = instruction->cloneImage;
-        n += 8;
-        instruction->linearOrderIndex = n;
+        cloneCount += 8;
+        instruction->linearOrderIndex = cloneCount;
         if (!orig) {
             reportError("no original set\n");
             exitAfterCleanup(-1);

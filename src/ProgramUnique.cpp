@@ -21,18 +21,18 @@ bool Program::doUnique()
                 reportError("no inst for a branch\n");
                 return false;
             }
-            int n = instructionInfo->branchTargetOperandSelector;
-            if (!n) {
+            int targetOperandSelector = instructionInfo->branchTargetOperandSelector;
+            if (!targetOperandSelector) {
                 reportError("doUnique - branch target operand not set\n");
                 exitAfterCleanup(-1);
             }
-            Operand *op = &instruction->operands[n - 1];
-            if (!op->isInput()) {
+            Operand *branchTargetOperand = &instruction->operands[targetOperandSelector - 1];
+            if (!branchTargetOperand->isInput()) {
                 reportError("alleged branch target immediate wasn't an input\n");
                 exitAfterCleanup(-1);
             }
-            if (op->operandKind == 0x1b) {
-                mValue *expressionValue = &op->immediateValue;
+            if (branchTargetOperand->operandKind == 0x1b) {
+                mValue *expressionValue = &branchTargetOperand->immediateValue;
                 if (expressionValue->type != mValue::STRING) {
                     reportError("doUnique: a branch target isn't a literal string\n");
                     return false;
@@ -71,14 +71,14 @@ bool Program::doUnique()
             }
         }
     }
-    for (mNode *n = uniqueNamePrefixes.head; n; n = n->next) {
-        if (!isExportedSymbol(this, n->name)) {
-            char *nn = mprefix_del(getUniqueName(this), n->name);
+    for (mNode *prefixNode = uniqueNamePrefixes.head; prefixNode; prefixNode = prefixNode->next) {
+        if (!isExportedSymbol(this, prefixNode->name)) {
+            char *nn = mprefix_del(getUniqueName(this), prefixNode->name);
             if (!nn) {
                 reportError("failed to cat\n");
                 return false;
             }
-            if (!n->setName(nn)) {
+            if (!prefixNode->setName(nn)) {
                 reportError("failed to set new name\n");
                 return false;
             }

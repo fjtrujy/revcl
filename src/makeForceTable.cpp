@@ -8,9 +8,9 @@ bool optReset(Program *p);
 int setRangeFrom(workTable *t);
 bool fixupCloneFdeps(workTable *wt);
 
-static inline void copyShort(short &to, const short &from)
+static inline void copyShort(short &destination, const short &from)
 {
-    to = from;
+    destination = from;
 }
 
 workTable *prepUta(Program *p, instStream *s, int loopSize, char smart);
@@ -25,12 +25,12 @@ workTable *makeForceTable(Program *program, instStream *stream)
         reportError("it_old is not raw mode - %s\n", modeName);
         return 0;
     }
-    workTable *nt = prepUta(program, stream, 0, 0);
-    if (!nt) {
+    workTable *newWorkTable = prepUta(program, stream, 0, 0);
+    if (!newWorkTable) {
         reportError("failed to make a lock table for makeForceTable\n");
         return 0;
     }
-    mode = nt->codeModeValue;
+    mode = newWorkTable->codeModeValue;
     if ((unsigned char)mode != 2) {
         const char *modeName = codeModeName(mode);
         reportError("it_new is not raw mode .. %s\n", modeName);
@@ -38,8 +38,8 @@ workTable *makeForceTable(Program *program, instStream *stream)
     }
     int start = scheduleTable->getRangeStart();
     int end = scheduleTable->getRangeEnd();
-    nt->setRange(start, end);
-    for (Instr *instruction = nt->pendingInstructions.head; instruction; instruction = nt->pendingInstructions.head) {
+    newWorkTable->setRange(start, end);
+    for (Instr *instruction = newWorkTable->pendingInstructions.head; instruction; instruction = newWorkTable->pendingInstructions.head) {
         Instr *clone = instruction->cloneImage;
         InstructionPosition pos;
         InstructionPosition *instructionPosition = &clone->position;
@@ -47,15 +47,15 @@ workTable *makeForceTable(Program *program, instStream *stream)
         pos.loopRow = instructionPosition->loopRow;
         pos.loopIteration = instructionPosition->loopIteration;
         pos.pipelineIndex = instructionPosition->pipelineIndex;
-        if (!nt->forceInsert(instruction, &pos)) {
+        if (!newWorkTable->forceInsert(instruction, &pos)) {
             reportError("failed to force an insert into table\n");
-            delete nt;
+            delete newWorkTable;
             return 0;
         }
     }
-    nt->changeMode(3);
-    nt->setTableRawMode(scheduleTable->getTableRawMode());
-    return nt;
+    newWorkTable->changeMode(3);
+    newWorkTable->setTableRawMode(scheduleTable->getTableRawMode());
+    return newWorkTable;
 }
 
 extern const char lpWorkSavedTableError[] = "there's already a saved work table\n";

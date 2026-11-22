@@ -38,12 +38,12 @@ bool prepareReductionCandidates(Program *program, instStream *stream, workTable 
                 operand->reductionHazardMask = 0;
                 if (!reg)
                     continue;
-                regUse *ru = registerUseList->findByRegister(reg);
+                regUse *currentRegisterUse = registerUseList->findByRegister(reg);
                 if (isRegisterOperand(operand, 1))
-                    operand->reductionHazardMask = ru->hazardMask & operand->externalPartMask;
+                    operand->reductionHazardMask = currentRegisterUse->hazardMask & operand->externalPartMask;
                 if (isRegisterOperand(operand, 2))
-                    operand->reductionHazardMask = ru->sourcePathHazardMask & operand->externalPartMask;
-                operand->reductionHazardMask |= ru->hazardBroadcastMask;
+                    operand->reductionHazardMask = currentRegisterUse->sourcePathHazardMask & operand->externalPartMask;
+                operand->reductionHazardMask |= currentRegisterUse->hazardBroadcastMask;
             }
         }
     }

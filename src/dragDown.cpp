@@ -35,15 +35,15 @@ int dragDown(workTable *scheduleTable)
     do {
         moved = 0;
         msl = scheduleTable->rangeEnd;
-        for (int l = scheduleTable->rangeEnd - 1; l >= scheduleTable->rangeStart; l--) {
-            wtRow *row = scheduleTable->getRowByIndex(l);
-            for (int p = 0; p != 2; p++) {
-                Instr *instruction = row->getEntry(p);
+        for (int rowIndex = scheduleTable->rangeEnd - 1; rowIndex >= scheduleTable->rangeStart; rowIndex--) {
+            wtRow *row = scheduleTable->getRowByIndex(rowIndex);
+            for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
+                Instr *instruction = row->getEntry(pipeIndex);
                 if (instruction && !instruction->branchFlags) {
-                    int rl = instruction->position.getRow();
+                    int instructionRow = instruction->position.getRow();
                     short mte = instruction->externalOutputConstraint < instruction->externalOutputPairedConstraint ? instruction->externalOutputPairedConstraint : instruction->externalOutputConstraint;
-                    int mn = scheduleTable->rangeEnd - mte - 1;
-                    if (rl != l) {
+                    int minimumAllowedRow = scheduleTable->rangeEnd - mte - 1;
+                    if (instructionRow != rowIndex) {
                         reportError("rl not l!\n");
                         exitAfterCleanup(-1);
                     }
@@ -55,31 +55,31 @@ int dragDown(workTable *scheduleTable)
                             for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
                                 OpSlot *operandSlot = &operand->parts[partIndex];
                                 if ((operand->componentMask >> partIndex) & 1) {
-                                    int e = scheduleTable->rangeEnd - 1;
+                                    int latestAllowedRow = scheduleTable->rangeEnd - 1;
                                     if (operandSlot->scheduledConsumerCount)
-                                        e = operandSlot->earliestConsumerFreeCycle - operandSlot->issueLatency;
-                                    if (e < mn)
-                                        mn = e;
+                                        latestAllowedRow = operandSlot->earliestConsumerFreeCycle - operandSlot->issueLatency;
+                                    if (latestAllowedRow < minimumAllowedRow)
+                                        minimumAllowedRow = latestAllowedRow;
                                 }
                             }
                         }
                         if (registerOperand(operand, 1) && operand->reductionHazardMask)
-                            mn = rl;
+                            minimumAllowedRow = instructionRow;
                     }
-                    if (mn > rl) {
-                        if (!doLocalMove(scheduleTable, instruction, mn, rl, -1)) {
+                    if (minimumAllowedRow > instructionRow) {
+                        if (!doLocalMove(scheduleTable, instruction, minimumAllowedRow, instructionRow, -1)) {
                             reportError("failed to do local move for raw down\n");
                             return -1;
                         }
-                        if (instruction->position.getRow() != rl)
+                        if (instruction->position.getRow() != instructionRow)
                             moved++;
                     }
                 }
                 if (instruction) {
-                    int s = instruction->position.getRow()
+                    int earliestAllowedRow = instruction->position.getRow()
                           - (instruction->externalInputConstraint < instruction->externalInputPairedConstraint ? instruction->externalInputPairedConstraint : instruction->externalInputConstraint);
-                    if (s < msl)
-                        msl = s;
+                    if (earliestAllowedRow < msl)
+                        msl = earliestAllowedRow;
                     if (msl < oStart) {
                         short mfs = instruction->externalInputConstraint < instruction->externalInputPairedConstraint ? instruction->externalInputPairedConstraint : instruction->externalInputConstraint;
                         reportWarning("%s %d-%d < mSline=%d [%d,%d]\n",

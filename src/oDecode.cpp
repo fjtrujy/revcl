@@ -24,7 +24,7 @@ int expectedSyntaxDiagnosticMode = -1;
 Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
 {
     int copyCount;
-    ImplicitOp op;
+    ImplicitOp decodedOperand;
     char buf[0x801];
     char nameBuf[0x400];
     char fmtBuf[0x400];
@@ -36,7 +36,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
     bool forcedMods = false;
     bool ok = false;
     int opBits = -1;
-    Instr *in = 0;
+    Instr *decodedInstruction = 0;
     bool bad = false;
     int mask;
     iInfo *info;
@@ -92,14 +92,14 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         goto fail;
     }
     cur++;
-    in = new Instr(info);
+    decodedInstruction = new Instr(info);
     if (loopid < 0) {
         reportUserMessage("parsed loop id is <0\n");
         goto fail;
     }
-    in->parsedLoopId = loopid;
-    in->instructionModifierBits = mods;
-    in->tildePrefix = tilde;
+    decodedInstruction->parsedLoopId = loopid;
+    decodedInstruction->instructionModifierBits = mods;
+    decodedInstruction->tildePrefix = tilde;
     mnemonicLen = mstrlen(info->mnemonic);
     {
         char *suffix = p + mnemonicLen;
@@ -115,15 +115,15 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         break;
     case 1:
         if (hasMods) {
-            in->destinationMask = mask;
-            if (!in->destinationMask) {
+            decodedInstruction->destinationMask = mask;
+            if (!decodedInstruction->destinationMask) {
                 reportUserMessage("getNextInstruction: instruction had zero mod bits\n");
                 goto fail;
             }
             forcedMods = true;
             explicitMods = true;
         } else
-            in->destinationMask = 15;
+            decodedInstruction->destinationMask = 15;
         break;
     case 2:
         if (hasMods && mask != 7) {
@@ -131,34 +131,34 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
             goto fail;
         }
         forcedMods = true;
-        in->destinationMask = 7;
+        decodedInstruction->destinationMask = 7;
         break;
     case 3:
         if (hasMods) {
-            if (in->ramAccessType == 1 && countSetBits(mask) != 1) {
+            if (decodedInstruction->ramAccessType == 1 && countSetBits(mask) != 1) {
                 reportUserMessage("getNextInstruction: MD_ONE instruction had bad mod bits. more than one?\n");
                 goto fail;
             }
             explicitMods = true;
-            in->destinationMask = mask;
+            decodedInstruction->destinationMask = mask;
         }
         break;
     default:
         reportError("processor: decode le - bad insn type\n");
         goto fail;
     }
-    op.immediateText[0] = 0;
-    op.name[0] = 0;
-    op.physicalRegisterName[0] = 0;
-    op.branchLabelText[0] = 0;
-    op.componentMask = 0;
-    op.genericOperandForm = 0;
-    op.forcePhysicalBinding = 0;
-    for (operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
-        Operand *opd = &in->operands[operandIndex];
+    decodedOperand.immediateText[0] = 0;
+    decodedOperand.name[0] = 0;
+    decodedOperand.physicalRegisterName[0] = 0;
+    decodedOperand.branchLabelText[0] = 0;
+    decodedOperand.componentMask = 0;
+    decodedOperand.genericOperandForm = 0;
+    decodedOperand.forcePhysicalBinding = 0;
+    for (operandIndex = 0; operandIndex != decodedInstruction->operandCount; operandIndex++) {
+        Operand *opd = &decodedInstruction->operands[operandIndex];
         int next = cur;
         if (opd->isImplicit) {
-            if (!buildImplicitOperand(opd->operandKind, &op, newSyntax)) {
+            if (!buildImplicitOperand(opd->operandKind, &decodedOperand, newSyntax)) {
                 reportError("getNextInstruction: failed to build implicit operand\n");
                 goto fail;
             }
@@ -167,7 +167,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                     reportError("implicit web patch set for non-output\n");
                     goto fail;
                 }
-                Operand *src = &in->operands[opd->pairedOperandIndexPlusOne - 1];
+                Operand *src = &decodedInstruction->operands[opd->pairedOperandIndexPlusOne - 1];
                 if (src->direction != 2) {
                     reportError("implicit web patched operand not input\n");
                     goto fail;
@@ -176,11 +176,11 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                     reportError("no register found for implicit patch\n");
                     goto fail;
                 }
-                formatIntoBuffer(op.name, "%s", src->assignedRegister->registerName());
+                formatIntoBuffer(decodedOperand.name, "%s", src->assignedRegister->registerName());
             }
         } else {
             bool last = false;
-            if (operandIndex == in->operandCount - 1 || opd[1].isImplicit)
+            if (operandIndex == decodedInstruction->operandCount - 1 || opd[1].isImplicit)
                 last = true;
             opd->sourceTokenStartIndex = cur;
             next = gatherTokens(locationTag, cur, last);
@@ -191,32 +191,32 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 gatheredToken[1] = 0;
             }
             opd->sourceTokenEndIndex = next;
-            if (!oDecodeToken(opd->operandKind, gatheredToken, &op, newSyntax)) {
+            if (!oDecodeToken(opd->operandKind, gatheredToken, &decodedOperand, newSyntax)) {
                 reportUserMessage("failed to decode operand\n");
                 goto fail;
             }
         }
-        if (op.branchLabelText[0]) {
-            if (in->branchLabelTags) {
+        if (decodedOperand.branchLabelText[0]) {
+            if (decodedInstruction->branchLabelTags) {
                 reportUserMessage("more than one tagged operand associated with instruction at operand %d\n", operandIndex);
                 goto fail;
             }
-            in->branchLabelTags = dupString(op.branchLabelText);
+            decodedInstruction->branchLabelTags = dupString(decodedOperand.branchLabelText);
         }
-        if (op.immediateText[0] && !parseImmediate(op.immediateText, opd->immediateDataType, &opd->immediateValue)) {
+        if (decodedOperand.immediateText[0] && !parseImmediate(decodedOperand.immediateText, opd->immediateDataType, &opd->immediateValue)) {
             reportError("failed to decode an immediate\n");
             goto fail;
         }
-        opd->addressComponentMask = op.addressComponentMask;
-        opd->componentMask = op.componentMask;
+        opd->addressComponentMask = decodedOperand.addressComponentMask;
+        opd->componentMask = decodedOperand.componentMask;
         if (opd->operandKind == 35 || opd->operandKind == 42 || opd->operandKind == 1 || opd->operandKind == 9) {
             if (forcedMods) {
-                if (opd->componentMask != in->destinationMask && opd->componentMask != 15)
+                if (opd->componentMask != decodedInstruction->destinationMask && opd->componentMask != 15)
                     reportWarning("getNextInstruction: forced mod bits!\n");
-                opd->componentMask = in->destinationMask;
+                opd->componentMask = decodedInstruction->destinationMask;
             } else if (opBits < 0) {
                 opBits = opd->componentMask;
-                in->destinationMask = opBits;
+                decodedInstruction->destinationMask = opBits;
             } else if (opd->componentMask != opBits) {
                 reportError("oDecode: bad mod bits in instruction.. not match opBitsStore (%x vs %x) op=%d?\n",
                               opd->componentMask, opBits, operandIndex);
@@ -226,12 +226,12 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         if (opd->operandKind == 30 || opd->operandKind == 31) {
             if (explicitMods) {
                 if (opd->addressComponentMask) {
-                    if (opd->addressComponentMask != in->destinationMask) {
+                    if (opd->addressComponentMask != decodedInstruction->destinationMask) {
                         reportError("ea/reg or imm(ea)reg has differing mod bits\n");
                         goto fail;
                     }
                 } else
-                    opd->addressComponentMask = in->destinationMask;
+                    opd->addressComponentMask = decodedInstruction->destinationMask;
             } else {
                 if (!opd->addressComponentMask) {
                     reportError("have to set modbits for ea/reg or imm(ea)reg somewhere\n");
@@ -241,22 +241,22 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                     reportError("only one mod field allowed (one of x,y,z, or w)\n");
                     goto fail;
                 }
-                in->destinationMask = opd->addressComponentMask;
+                decodedInstruction->destinationMask = opd->addressComponentMask;
             }
         }
-        if (op.name[0]) {
+        if (decodedOperand.name[0]) {
             int cls = -1;
             if (opd->operandKind == 38) {
-                if (op.genericOperandForm == 1) {
+                if (decodedOperand.genericOperandForm == 1) {
                     if (operandIndex != 2) {
                         reportUserMessage("a scalar can only be the third operand in generic instruction\n");
                         goto fail;
                     }
-                    if (asciiCaseEqual(op.name, "i")) {
+                    if (asciiCaseEqual(decodedOperand.name, "i")) {
                         cls = 10;
                         opd->operandKind = 4;
                     }
-                    if (asciiCaseEqual(op.name, "q")) {
+                    if (asciiCaseEqual(decodedOperand.name, "q")) {
                         cls = 10;
                         opd->operandKind = 7;
                     }
@@ -264,13 +264,13 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                         cls = 9;
                         opd->operandKind = 3;
                     }
-                } else if (op.genericOperandForm == 2) {
+                } else if (decodedOperand.genericOperandForm == 2) {
                     if (operandIndex == 0) {
-                        if (asciiCaseEqual(op.name, "acc")) {
+                        if (asciiCaseEqual(decodedOperand.name, "acc")) {
                             cls = 10;
                             opd->operandKind = 9;
                         }
-                    } else if (asciiCaseEqual(op.name, "acc")) {
+                    } else if (asciiCaseEqual(decodedOperand.name, "acc")) {
                         reportUserMessage("ACC can only be first vector operand\n");
                         goto fail;
                     }
@@ -278,7 +278,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                         cls = 9;
                         opd->operandKind = 1;
                     }
-                    opd->componentMask = in->destinationMask;
+                    opd->componentMask = decodedInstruction->destinationMask;
                     if (!newSyntax) {
                         reportError("new syntax off while parsing a tbd instruction\n");
                         goto fail;
@@ -295,7 +295,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 goto fail;
             }
             s = nameBuf;
-            if (pool->virtualPartCount && visibilityScopes.tail && !pool->findPhysicalByName(op.name) && op.name[0] != '_') {
+            if (pool->virtualPartCount && visibilityScopes.tail && !pool->findPhysicalByName(decodedOperand.name) && decodedOperand.name[0] != '_') {
                 for (mNode *macroNode = visibilityScopes.tail; macroNode; macroNode = macroNode->previous) {
                     char *macroNameCursor = macroNode->name;
                     if (!macroNameCursor) {
@@ -304,7 +304,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                     }
                     bool found = false;
                     while (*macroNameCursor && !found) {
-                        char *operandNameCursor = op.name;
+                        char *operandNameCursor = decodedOperand.name;
                         while (*operandNameCursor && *macroNameCursor && *operandNameCursor == *macroNameCursor) {
                             operandNameCursor++;
                             macroNameCursor++;
@@ -325,17 +325,17 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                     }
                 }
             }
-            formatIntoBuffer(s, "%s", op.name);
+            formatIntoBuffer(s, "%s", decodedOperand.name);
             char *full = dupString(nameBuf);
             RegPoolEntry *registerEntry = pool->findOrCreateRegister(full);
             if (!registerEntry) {
                 reportUserMessage("oDecode: not find register '%s' from %s\n", full, pool->poolName);
                 goto fail;
             }
-            if (op.forcePhysicalBinding) {
+            if (decodedOperand.forcePhysicalBinding) {
                 RegPoolEntry *base = 0;
-                if (op.physicalRegisterName[0]) {
-                    base = pool->findPhysicalByName(op.physicalRegisterName);
+                if (decodedOperand.physicalRegisterName[0]) {
+                    base = pool->findPhysicalByName(decodedOperand.physicalRegisterName);
                     if (!base) {
                         reportUserMessage("request to bing non-base register\n");
                         goto fail;
@@ -360,10 +360,10 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 }
                 registerEntry->assignedPhysicalRegister = base;
                 opd->forcedBaseRegister = base;
-            } else if (op.physicalRegisterName[0]) {
-                RegPoolEntry *base = pool->findPhysicalByName(op.physicalRegisterName);
+            } else if (decodedOperand.physicalRegisterName[0]) {
+                RegPoolEntry *base = pool->findPhysicalByName(decodedOperand.physicalRegisterName);
                 if (!base) {
-                    reportUserMessage("failed to find base map reg '%s'\n", op.physicalRegisterName);
+                    reportUserMessage("failed to find base map reg '%s'\n", decodedOperand.physicalRegisterName);
                     goto fail;
                 }
                 if (registerEntry->isVirtual != 1 && base != registerEntry) {
@@ -372,9 +372,9 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 }
                 opd->forcedBaseRegister = base;
             } else if (preferExistingPhysicalRegisters) {
-                RegPoolEntry *e = pool->findPhysicalByName(op.name);
-                if (e && e != e->ownerPool->zeroRegister)
-                    opd->forcedBaseRegister = e;
+                RegPoolEntry *physicalRegister = pool->findPhysicalByName(decodedOperand.name);
+                if (physicalRegister && physicalRegister != physicalRegister->ownerPool->zeroRegister)
+                    opd->forcedBaseRegister = physicalRegister;
             } else if (registerEntry->isVirtual != 1 && !registerEntry->enabledPhysicalRegister)
                 opd->forcedBaseRegister = registerEntry;
             opd->assignedRegister = registerEntry;
@@ -384,42 +384,42 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         }
         cur = next;
     }
-    if (!in->validateOperands()) {
+    if (!decodedInstruction->validateOperands()) {
         reportError("oDecode: sanity check failed\n");
         goto fail;
     }
-    if (info->decodeHook && !info->decodeHook(info, in)) {
+    if (info->decodeHook && !info->decodeHook(info, decodedInstruction)) {
         reportError("oDecode:: iBuildHook failed to patch instruction\n");
         goto fail;
     }
-    if (!in->expandVirtualStatOperand()) {
+    if (!decodedInstruction->expandVirtualStatOperand()) {
         reportError("failed to patch status register dependency\n");
         goto fail;
     }
-    if (in->normalizeZeroSources() < 0) {
+    if (decodedInstruction->normalizeZeroSources() < 0) {
         reportError("failed to normalise instruction\n");
         goto fail;
     }
     ok = true;
-    in->sourceTag = locationTag;
-    in->sourceTokenStartIndex = *pos;
-    in->sourceTokenEndIndex = cur;
+    decodedInstruction->sourceTag = locationTag;
+    decodedInstruction->sourceTokenStartIndex = *pos;
+    decodedInstruction->sourceTokenEndIndex = cur;
 fail:
     if (!ok) {
-        if (in) {
+        if (decodedInstruction) {
             reportUserMessage("couldn't decode instruction .. problem is at:\n");
             locationTag->dumpSourceLine(cur);
-            if (in->emitExpectedSyntax(newSyntax, fmtBuf, expectedSyntaxDiagnosticMode))
+            if (decodedInstruction->emitExpectedSyntax(newSyntax, fmtBuf, expectedSyntaxDiagnosticMode))
                 reportUserMessage("expected format is: %s\n", fmtBuf);
-            delete in;
-            in = 0;
+            delete decodedInstruction;
+            decodedInstruction = 0;
         } else if (locationTag) {
             reportUserMessage("found a syntax error at :\n");
             locationTag->dumpSourceLine(cur);
         }
     } else
         *pos = cur;
-    return in;
+    return decodedInstruction;
 }
 
 bool Processor::decodeLE(LocTag *locationTag, int *pos, mList *labels, Instr **out, int *nOut)
@@ -623,9 +623,9 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
             reportError("out of bounds rLine getting decoded instructions\n");
             goto done;
         }
-        DecodedLine *b = &blocks[n];
-        b->initialize();
-        if (!b->labels.transferNodesFrom(&labels)) {
+        DecodedLine *decodedBlock = &blocks[n];
+        decodedBlock->initialize();
+        if (!decodedBlock->labels.transferNodesFrom(&labels)) {
             reportError("failed to grab labels from current list\n");
             goto done;
         }
@@ -651,16 +651,16 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
                 goto done;
             }
         }
-        b->decodeMode = program->proc.decodeMode;
-        b->decodeSubMode = program->proc.decodeSubMode;
+        decodedBlock->decodeMode = program->proc.decodeMode;
+        decodedBlock->decodeSubMode = program->proc.decodeSubMode;
         if (synth) {
-            Instr *in = ins[0];
-            b->instructions[0] = in;
-            if (!in) {
+            Instr *firstInstruction = ins[0];
+            decodedBlock->instructions[0] = firstInstruction;
+            if (!firstInstruction) {
                 reportError("during the initial build, found an iEntry, which thought it was synthetic, but had no instruction\n");
                 goto done;
             }
-            switch ((unsigned char)in->syntheticKind) {
+            switch ((unsigned char)firstInstruction->syntheticKind) {
             case 1:
                 if (state) {
                     reportUserMessage("encountered enter directive in bad context\n");
@@ -713,21 +713,21 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
                 break;
             case 9:
             case 12:
-                if (b->decodeMode == 3) {
+                if (decodedBlock->decodeMode == 3) {
                     reportUserMessage("a loop size directive is an invalid directive for raw mode vsm..\n");
                     goto done;
                 }
                 /* fall through */
             case 8:
                 if (program->proc.insideRawLoop)
-                    b->rawLoopId = program->proc.rawLoopId;
+                    decodedBlock->rawLoopId = program->proc.rawLoopId;
                 break;
             case 10:
                 break;
             default:
                 reportError("iStream::ValidateSynthetics() - unhandled/unexpected synthetic type (%d)\n",
-                              (unsigned char)in->syntheticKind);
-                in->dumpOperandDiagnostics(false);
+                              (unsigned char)firstInstruction->syntheticKind);
+                firstInstruction->dumpOperandDiagnostics(false);
                 goto done;
             }
         } else if (program->proc.decodeMode == 3) {
@@ -737,9 +737,9 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
                 goto done;
             }
             if (program->proc.insideRawLoop)
-                b->rawLoopId = program->proc.rawLoopId;
+                decodedBlock->rawLoopId = program->proc.rawLoopId;
             for (int instructionIndex = 0; instructionIndex != program->proc.instructionsPerRawLine; instructionIndex++)
-                b->instructions[instructionIndex] = ins[instructionIndex];
+                decodedBlock->instructions[instructionIndex] = ins[instructionIndex];
         } else {
             if (program->proc.insideRawLoop) {
                 reportError("Build() - was in loop mode during uta\n");
@@ -750,36 +750,36 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
                 locationTag->dumpSourceLine(-1);
                 goto done;
             }
-            Instr *in = ins[0];
-            if (!in) {
+            Instr *decodedInstruction = ins[0];
+            if (!decodedInstruction) {
                 reportError("decode vcl - instruction ptr was null.. when I thought it wasn't\n");
                 locationTag->dumpSourceLine(-1);
                 goto done;
             }
-            if (in->rawOnly) {
-                reportUserMessage("vcl: instruction '%s' is unsupported, except in RAW mode.\n", in->opcodeInfo->mnemonic);
-                in->leDump();
-                delete in;
+            if (decodedInstruction->rawOnly) {
+                reportUserMessage("vcl: instruction '%s' is unsupported, except in RAW mode.\n", decodedInstruction->opcodeInfo->mnemonic);
+                decodedInstruction->leDump();
+                delete decodedInstruction;
                 goto done;
             }
-            b->instructions[0] = in;
+            decodedBlock->instructions[0] = decodedInstruction;
         }
-        if (b->decodeMode == 1) {
-            Instr *in = b->instructions[0];
-            if (in && ((in->branchFlags >> 2) & 1)) {
-                int r = in->simplifyBranch();
+        if (decodedBlock->decodeMode == 1) {
+            Instr *branchInstruction = decodedBlock->instructions[0];
+            if (branchInstruction && ((branchInstruction->branchFlags >> 2) & 1)) {
+                int r = branchInstruction->simplifyBranch();
                 if (r < 0) {
                     reportError("failed to fixup a branch\n");
                     goto done;
                 }
                 if (r == 0) {
-                    in->leDump();
-                    b->instructions[0] = 0;
-                    delete in;
-                    in = 0;
+                    branchInstruction->leDump();
+                    decodedBlock->instructions[0] = 0;
+                    delete branchInstruction;
+                    branchInstruction = 0;
                 }
                 if (r == 2)
-                    in->leDump();
+                    branchInstruction->leDump();
             }
         }
         n++;
@@ -823,11 +823,11 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
         if (!macroList->head)
             continue;
         for (int j = i + 1; j != n; j++) {
-            mList *c = &blocks[j].labels;
-            if (c->head) {
-                for (mNode *nd = macroList->head; nd; nd = nd->next) {
-                    if (c->findByNameIgnoreCase(nd->name)) {
-                        reportUserMessage("found at least two uses of the label '%s' in the source\n", nd->name);
+            mList *labelList = &blocks[j].labels;
+            if (labelList->head) {
+                for (mNode *labelNode = macroList->head; labelNode; labelNode = labelNode->next) {
+                    if (labelList->findByNameIgnoreCase(labelNode->name)) {
+                        reportUserMessage("found at least two uses of the label '%s' in the source\n", labelNode->name);
                         goto done;
                     }
                 }
@@ -847,33 +847,33 @@ done:
     return blocks;
 }
 
-int gatherTokens(LocTag *locationTag, int i, bool stopAtOpcode)
+int gatherTokens(LocTag *locationTag, int firstTokenIndex, bool stopAtOpcode)
 {
     char *outputCursor = gatheredToken;
     int n = 0;
     char sep;
 
-    for (; i < getLineTokenCount(locationTag); i++) {
-        char *tok = locationTag->tokenTextAt(i, &sep);
+    for (; firstTokenIndex < getLineTokenCount(locationTag); firstTokenIndex++) {
+        char *tok = locationTag->tokenTextAt(firstTokenIndex, &sep);
         if (!tok) {
             reportError("gatherTokens() - failed to get token\n");
             return -1;
         }
-        if (!locationTag->isCommentToken(i)) {
-            if (locationTag->probeNonCommentTokenAndReturnFalse(i)) {
+        if (!locationTag->isCommentToken(firstTokenIndex)) {
+            if (locationTag->probeNonCommentTokenAndReturnFalse(firstTokenIndex)) {
                 *outputCursor = 0;
-                return i;
+                return firstTokenIndex;
             }
             if (n && stopAtOpcode) {
                 for (char *tokenCursor = tok; *tokenCursor; tokenCursor++)
                     if (tokenCursor[0] == '.' && tokenCursor[1] == '.') {
                         *outputCursor = 0;
-                        return i;
+                        return firstTokenIndex;
                     }
             }
             if (n && stopAtOpcode && findOpcodeInfoByMnemonic(tok, false)) {
                 *outputCursor = 0;
-                return i;
+                return firstTokenIndex;
             }
             n++;
             while (*tok) {
@@ -889,5 +889,5 @@ int gatherTokens(LocTag *locationTag, int i, bool stopAtOpcode)
             break;
     }
     *outputCursor = 0;
-    return i + 1;
+    return firstTokenIndex + 1;
 }

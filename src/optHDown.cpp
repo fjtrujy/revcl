@@ -37,12 +37,12 @@ bool optHDown(workTable *scheduleTable, wrangleCand *candidate)
                 bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                 best = instruction;
             } else if (e == bestB) {
-                int f = instruction->candidateBaseRow + instruction->candidateCostOffset;
-                if (f < bestD) {
-                    bestD = f;
+                int candidatePlacementCost = instruction->candidateBaseRow + instruction->candidateCostOffset;
+                if (candidatePlacementCost < bestD) {
+                    bestD = candidatePlacementCost;
                     bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                     best = instruction;
-                } else if (f == bestD && instruction->schedulingStatistics.reverseDependencyHeight > bestC) {
+                } else if (candidatePlacementCost == bestD && instruction->schedulingStatistics.reverseDependencyHeight > bestC) {
                     bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                     best = instruction;
                 }
@@ -81,26 +81,26 @@ bool optDUp(workTable *scheduleTable, wrangleCand *candidate)
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;
     for (; instruction; instruction = instruction->nextMoveInstruction) {
-        int a = instruction->schedulingStatistics.moveDistance;
-        a -= instruction->candidateAttemptCount;
-        if (a > bestA) {
+        int distanceScore = instruction->schedulingStatistics.moveDistance;
+        distanceScore -= instruction->candidateAttemptCount;
+        if (distanceScore > bestA) {
             best = instruction;
-            bestA = a;
+            bestA = distanceScore;
             bestB = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardLatencyDepth;
             bestC = instruction->schedulingStatistics.reverseLatencyDepth;
-        } else if (a == bestA) {
-            int e = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardLatencyDepth;
-            if (e > bestB) {
-                bestB = e;
+        } else if (distanceScore == bestA) {
+            int latencyScore = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardLatencyDepth;
+            if (latencyScore > bestB) {
+                bestB = latencyScore;
                 bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                 best = instruction;
-            } else if (e == bestB) {
-                int f = instruction->candidateBaseRow + instruction->candidateCostOffset;
-                if (f < bestD) {
-                    bestD = f;
+            } else if (latencyScore == bestB) {
+                int candidatePlacementCost = instruction->candidateBaseRow + instruction->candidateCostOffset;
+                if (candidatePlacementCost < bestD) {
+                    bestD = candidatePlacementCost;
                     bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                     best = instruction;
-                } else if (f == bestD && instruction->schedulingStatistics.reverseDependencyHeight > bestC) {
+                } else if (candidatePlacementCost == bestD && instruction->schedulingStatistics.reverseDependencyHeight > bestC) {
                     bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                     best = instruction;
                 }

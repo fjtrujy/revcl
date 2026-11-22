@@ -430,14 +430,14 @@ bool optimizeProgramScheduling(Program *program, int smart, bool sizeReduce)
     return true;
 }
 
-const char *getOptimiserName(int id)
+const char *getOptimiserName(int optimizerIndex)
 {
     int numOptimisers = 11;
-    if (id < 0 || id >= numOptimisers) {
+    if (optimizerIndex < 0 || optimizerIndex >= numOptimisers) {
         reportError("asked to get an out of bounds optimiser id\n");
         abortAfterError();
     }
-    return optTable[id].name;
+    return optTable[optimizerIndex].name;
 }
 
 extern const char sredEarliestAfterError[] = "int_Sred.. tline>iline..earlieset insert is after instruction.. mode is upwards %d>%d mfs=%d\n";

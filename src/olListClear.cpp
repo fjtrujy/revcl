@@ -15,14 +15,14 @@ bool olList::clear()
 {
     ol_s *location = head;
     if (location) {
-        ol_s *f = olFreeList;
+        ol_s *freeListHead = olFreeList;
         do {
-            ol_s *n = location->next;
-            location->next = f;
-            f = location;
-            location = n;
+            ol_s *nextLocation = location->next;
+            location->next = freeListHead;
+            freeListHead = location;
+            location = nextLocation;
         } while (location);
-        olFreeList = f;
+        olFreeList = freeListHead;
     }
     head = 0;
     count = 0;

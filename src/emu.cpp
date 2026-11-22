@@ -9,9 +9,9 @@
 int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
 bool Cycle(Program *p, bool flag);
 
-static inline int clampByte(int v)
+static inline int clampByte(int value)
 {
-    return v > 255 ? 255 : v;
+    return value > 255 ? 255 : value;
 }
 
 bool emuTable(Program *program, workTable *scheduleTable)
@@ -63,16 +63,16 @@ fail:
     return false;
     case 1:
     case 4: {
-        Instr *i = scheduleTable->linearInstructions.head;
+        Instr *currentInstruction = scheduleTable->linearInstructions.head;
         wtRow row;
-        for (; i; i = i->linearLink.nextInstruction) {
+        for (; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction) {
             row.clearEntries();
-            row.entries[0].instruction = i;
-            int r = emuInst(program, &row, -1, true, true);
+            row.entries[0].instruction = currentInstruction;
+            int emulationResult = emuInst(program, &row, -1, true, true);
             row.entries[0].instruction = 0;
-            if (r < 0) {
+            if (emulationResult < 0) {
                 reportError("failed to uta emu instruction\n");
-                i->dumpOperandDiagnostics(false);
+                currentInstruction->dumpOperandDiagnostics(false);
                 goto fail;
             }
         }
@@ -95,7 +95,7 @@ static inline void reportRegRefFailure()
 bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
 {
     int count;
-    Instr *i;
+    Instr *currentInstruction;
     workTable *scheduleTable;
 
     scheduleTable = stream->getTable();
@@ -110,11 +110,11 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
         return false;
     }
     count = 0;
-    for (i = scheduleTable->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
+    for (currentInstruction = scheduleTable->linearInstructions.head; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction) {
         count++;
-        for (int operandIndex = 0; operandIndex != i->operandCount; operandIndex++) {
-            Operand *o = &i->operands[operandIndex];
-            RegPoolEntry *reg = o->assignedRegister;
+        for (int operandIndex = 0; operandIndex != currentInstruction->operandCount; operandIndex++) {
+            Operand *currentOperand = &currentInstruction->operands[operandIndex];
+            RegPoolEntry *reg = currentOperand->assignedRegister;
             if (!reg)
                 continue;
             regUse *registerUse = scheduleTable->registerUses.findByRegister(reg);
@@ -125,31 +125,31 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
                     return false;
                 }
             }
-            if (isRegisterOperand(o, 2))
-                registerUse->outputMask |= o->componentMask;
-            if (isRegisterOperand(o, 1))
-                registerUse->inputMask |= o->componentMask;
-            if (isRegisterOperand(o, 2)) {
-                if (o->externalPartMask) {
+            if (isRegisterOperand(currentOperand, 2))
+                registerUse->outputMask |= currentOperand->componentMask;
+            if (isRegisterOperand(currentOperand, 1))
+                registerUse->inputMask |= currentOperand->componentMask;
+            if (isRegisterOperand(currentOperand, 2)) {
+                if (currentOperand->externalPartMask) {
                     reportError("operand had xbits set for output!\n");
                     return false;
                 }
             }
-            registerUse->externalInputMask |= o->externalPartMask;
+            registerUse->externalInputMask |= currentOperand->externalPartMask;
             for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
-                if ((o->externalPartMask >> partIndex) & 1) {
+                if ((currentOperand->externalPartMask >> partIndex) & 1) {
                     if (registerUse->externalBlockMode == -1)
-                        registerUse->externalBlockMode = o->externalBlockModeFlag;
-                    else if (registerUse->externalBlockMode != (unsigned char)o->externalBlockModeFlag)
+                        registerUse->externalBlockMode = currentOperand->externalBlockModeFlag;
+                    else if (registerUse->externalBlockMode != (unsigned char)currentOperand->externalBlockModeFlag)
                         reportWarning("differing block modes for external input for %s..taking first encountered\n",
                                       reg->registerName());
-                    if (!registerUse->slots[partIndex].inputLocations.addOperandLocation(i, operandIndex, partIndex, false)) {
+                    if (!registerUse->slots[partIndex].inputLocations.addOperandLocation(currentInstruction, operandIndex, partIndex, false)) {
                         reportError("failed to add oploc user!\n");
                         return false;
                     }
                 }
-                if (((o->componentMask >> partIndex) & 1) && reg->tracksHotOutputPaths && isRegisterOperand(o, 2)) {
-                    if (!registerUse->slots[partIndex].sourceLocations.addOperandLocation(i, operandIndex, partIndex, false)) {
+                if (((currentOperand->componentMask >> partIndex) & 1) && reg->tracksHotOutputPaths && isRegisterOperand(currentOperand, 2)) {
+                    if (!registerUse->slots[partIndex].sourceLocations.addOperandLocation(currentInstruction, operandIndex, partIndex, false)) {
                         reportError("failed to add a local setter for a thruput check\n");
                         reportError("register is %s\n", reg->registerName());
                         return false;
@@ -162,14 +162,14 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
         reportError("icount mismatch (%d apparently in list, but %d in table?)\n", count, scheduleTable->instructionCountsByPipe[2]);
         return false;
     }
-    for (regUse *ru = scheduleTable->registerUses.head; ru; ru = ru->next) {
-        RegPoolEntry *reg = ru->registerEntry;
+    for (regUse *currentRegisterUse = scheduleTable->registerUses.head; currentRegisterUse; currentRegisterUse = currentRegisterUse->next) {
+        RegPoolEntry *reg = currentRegisterUse->registerEntry;
         if (!reg) {
             reportError("a reg ref had no register!\n");
             return false;
         }
         for (int part = 0; part != reg->partCount; part++) {
-            regUseSlot *slot = &ru->slots[part];
+            regUseSlot *slot = &currentRegisterUse->slots[part];
             rPart *registerPart = &reg->parts[part];
             slot->timingValues[0] = registerPart->emulationTimingMetrics[4];
             slot->timingValues[1] = registerPart->emulationTimingMetrics[5];
@@ -188,7 +188,7 @@ bool emulateAndCollectRegisterUses(Program *program, instStream *stream)
             slot->throughputSums[0] = registerPart->emulationTimingMetrics[0];
             slot->throughputSums[3] = registerPart->emulationTimingMetrics[2];
             slot->throughputSums[2] = registerPart->emulationTimingMetrics[3];
-            if ((ru->outputMask >> part) & 1) {
+            if ((currentRegisterUse->outputMask >> part) & 1) {
                 ol_s *out = &registerPart->currentLocation;
                 if (out->instruction && !slot->addOutput(out)) {
                     reportError("failed to add an output to an rrp\n");

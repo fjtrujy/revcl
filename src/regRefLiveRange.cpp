@@ -14,15 +14,15 @@ int countSetBits(unsigned int);
 int setRangeFrom(workTable *t);
 
 
-static inline bool validPipe(int p)
+static inline bool validPipe(int pipeIndex)
 {
-    return p == 0 || p == 1;
+    return pipeIndex == 0 || pipeIndex == 1;
 }
 
-bool regRefLiveRange(regUse *registerUse, int part, int *s, int *e, bool *always)
+bool regRefLiveRange(regUse *registerUse, int part, int *rangeStartOut, int *rangeEndOut, bool *always)
 {
-    *s = -4;
-    *e = -3;
+    *rangeStartOut = -4;
+    *rangeEndOut = -3;
     *always = false;
     regUseSlot *registerUseSlot = &registerUse->slots[part];
     if ((char)bitSet(registerUse->inputMask, part)) {
@@ -40,13 +40,13 @@ bool regRefLiveRange(regUse *registerUse, int part, int *s, int *e, bool *always
         }
     }
     if ((char)bitSet(registerUse->throughputMask & ~(registerUse->outputMask | registerUse->inputMask), part)) {
-        *s = -1;
-        *e = 30000;
+        *rangeStartOut = -1;
+        *rangeEndOut = 30000;
         *always = true;
         return true;
     }
     if ((char)bitSet(registerUse->externalInputMask, part)) {
-        *s = -1;
+        *rangeStartOut = -1;
     } else {
         if ((char)bitSet(registerUse->inputMask, part) && registerUseSlot->timingValues[0] <= registerUseSlot->timingValues[5]) {
             reportError("first input before first output.. but not xi %d,%d!\n",
@@ -54,20 +54,20 @@ bool regRefLiveRange(regUse *registerUse, int part, int *s, int *e, bool *always
             exitAfterCleanup(-1);
         }
         if ((char)bitSet(registerUse->outputMask, part))
-            *s = registerUseSlot->timingValues[5];
+            *rangeStartOut = registerUseSlot->timingValues[5];
     }
     if ((char)bitSet(registerUse->throughputMask | registerUse->externalOutputMask, part)) {
-        *e = 30000;
+        *rangeEndOut = 30000;
     } else {
         if ((char)bitSet(registerUse->outputMask, part))
-            *e = registerUseSlot->timingValues[8] + 1;
-        if ((char)bitSet(registerUse->inputMask, part) && registerUseSlot->timingValues[3] > *e)
-            *e = registerUseSlot->timingValues[3];
+            *rangeEndOut = registerUseSlot->timingValues[8] + 1;
+        if ((char)bitSet(registerUse->inputMask, part) && registerUseSlot->timingValues[3] > *rangeEndOut)
+            *rangeEndOut = registerUseSlot->timingValues[3];
     }
-    int row = *s;
-    if (*e <= row) {
-        row = *e;
-        reportError("liverange for regref has e<=s .. %d,%d?\n", *s, row);
+    int row = *rangeStartOut;
+    if (*rangeEndOut <= row) {
+        row = *rangeEndOut;
+        reportError("liverange for regref has e<=s .. %d,%d?\n", *rangeStartOut, row);
         return false;
     }
     return true;
@@ -83,10 +83,10 @@ static inline bool isInternalIn(OperandLock *operandLock)
     return operandLock->operandStatusCode == 2;
 }
 
-bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *out, int *s, int *e)
+bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *out, int *rangeStartOut, int *rangeEndOut)
 {
-    *s = -1;
-    *e = -1;
+    *rangeStartOut = -1;
+    *rangeEndOut = -1;
     if (!isInternalLock(out)) {
         Instr *ins = out->ownerInstr();
         if (!ins) {
@@ -104,50 +104,50 @@ bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *out, in
             reportError("bad pipe for instruction\n");
             return false;
         }
-        *s = line;
+        *rangeStartOut = line;
     } else {
-        *s = -1;
+        *rangeStartOut = -1;
     }
     if (out->externalOutputSlotPlusOne) {
-        if (activeLoopSize && *s >= 0)
-            *e = *s + activeLoopSize - *s % activeLoopSize;
+        if (activeLoopSize && *rangeStartOut >= 0)
+            *rangeEndOut = *rangeStartOut + activeLoopSize - *rangeStartOut % activeLoopSize;
         else
-            *e = 30000;
+            *rangeEndOut = 30000;
     } else {
-        *e = -1;
+        *rangeEndOut = -1;
     }
     for (OperandLock *operandLock = out->parentOrChildren; operandLock; operandLock = operandLock->nextSibling) {
         if (isInternalIn(operandLock))
             continue;
-        Instr *ci = operandLock->ownerInstr();
-        if (!ci) {
+        Instr *lockInstruction = operandLock->ownerInstr();
+        if (!lockInstruction) {
             reportError("no inst for rl\n");
             return false;
         }
-        InstructionPosition *rl = &ci->position;
-        int line = rl->getRow();
+        InstructionPosition *lockPosition = &lockInstruction->position;
+        int line = lockPosition->getRow();
         int want = operandLock->linearRow;
         if ((short)line != (short)want) {
             reportError("rline mismatch for input locks\n");
             return false;
         }
-        if (!validPipe(rl->getPipe())) {
+        if (!validPipe(lockPosition->getPipe())) {
             reportError("bad pipe for instruction\n");
             return false;
         }
-        if ((short)line <= *s) {
+        if ((short)line <= *rangeStartOut) {
             reportError("el<=s, but can't age\n");
             return false;
         }
-        if ((short)line > *e)
-            *e = (short)line;
+        if ((short)line > *rangeEndOut)
+            *rangeEndOut = (short)line;
     }
-    if (*e < 0)
-        *e = *s + 1;
+    if (*rangeEndOut < 0)
+        *rangeEndOut = *rangeStartOut + 1;
     return true;
 }
 
-bool hack_slo(workTable *scheduleTable, RegPoolEntry *registerEntry, RegPoolEntry *b)
+bool hack_slo(workTable *scheduleTable, RegPoolEntry *registerEntry, RegPoolEntry *alternateRegister)
 {
     if (scheduleTable->codeModeValue != 3) {
         reportError("hack_slo - called - but table not raw\n");
@@ -162,15 +162,15 @@ bool hack_slo(workTable *scheduleTable, RegPoolEntry *registerEntry, RegPoolEntr
         bool hasA = false;
         bool hasB = false;
         for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
-            Instr *in = row->entries[entryIndex].instruction;
-            if (!in)
+            Instr *rowInstruction = row->entries[entryIndex].instruction;
+            if (!rowInstruction)
                 continue;
-            for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
-                Operand *operand = &in->operands[operandIndex];
+            for (int operandIndex = 0; operandIndex != rowInstruction->operandCount; operandIndex++) {
+                Operand *operand = &rowInstruction->operands[operandIndex];
                 if (isRegisterOperand(operand, 2)) {
                     if (operand->assignedRegister == registerEntry)
                         hasA = true;
-                    if (operand->assignedRegister == b)
+                    if (operand->assignedRegister == alternateRegister)
                         hasB = true;
                 }
             }

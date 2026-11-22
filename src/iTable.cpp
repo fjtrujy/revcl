@@ -131,7 +131,7 @@ void workTable::dump()
         }
         if (!lsz && rangeEnd < 0) {
             wtRow *row = rows;
-            for (int n = rowCapacity - 1; n >= 0; n--, row++)
+            for (int rowIndex = rowCapacity - 1; rowIndex >= 0; rowIndex--, row++)
                 if (row->entries[0].instruction || row->entries[1].instruction)
                     break;
         }
@@ -271,10 +271,10 @@ Instr *workTable::getBranch()
             return 0;
         }
         if (rangeEnd > rangeStart) {
-            int r = rangeEnd - 2;
-            if (r < rangeStart)
+            int branchRow = rangeEnd - 2;
+            if (branchRow < rangeStart)
                 return 0;
-            secondInstruction = rowAt(r)->getEntry(1);
+            secondInstruction = rowAt(branchRow)->getEntry(1);
         }
         break;
     case 1:
@@ -401,8 +401,8 @@ bool cloneAppend(workTable *from, workTable *scheduleTable, int lidS, int lidE, 
         reportError("clone append - destination table has no attached table\n");
         return 0;
     }
-    int n = from->rangeEnd - from->rangeStart;
-    int need = n + scheduleTable->rangeEnd;
+    int appendedRowCount = from->rangeEnd - from->rangeStart;
+    int need = appendedRowCount + scheduleTable->rangeEnd;
     if (need > scheduleTable->rowCapacity && !scheduleTable->grow(need + 0x20)) {
         reportError("uh-oh, failed to grow a table\n");
         return 0;
@@ -456,7 +456,7 @@ bool cloneAppend(workTable *from, workTable *scheduleTable, int lidS, int lidE, 
             }
         }
     }
-    scheduleTable->rangeEnd += n;
+    scheduleTable->rangeEnd += appendedRowCount;
     return 1;
 }
 
@@ -484,8 +484,8 @@ int workTable::getTableRawMode()
 bool workTable::setTableRawMode(unsigned char mode)
 {
     if (codeModeValue != 3 && codeModeValue != 5 && mode) {
-        int cm = codeModeValue;
-        reportError("failed to set vsm mode - because code mode isn't vsm..mode=%d cm=%d\n", mode, cm);
+        int currentCodeMode = codeModeValue;
+        reportError("failed to set vsm mode - because code mode isn't vsm..mode=%d cm=%d\n", mode, currentCodeMode);
         abortAfterError();
         return 0;
     }
@@ -529,8 +529,8 @@ bool workTable::hasSafeTrailingInstructions()
     if (instruction) {
         if (instruction->ramAccessType || instruction->branchFlags)
             return 0;
-        int op = getOpcodeId(instruction->opcodeInfo);
-        if (op >= 165 && op <= 167)
+        int opcodeId = getOpcodeId(instruction->opcodeInfo);
+        if (opcodeId >= 165 && opcodeId <= 167)
             return 0;
     }
     row = rowAt(rangeEnd - 2);
@@ -568,9 +568,9 @@ Instr **cls_unk30::getIE_ck(int rowIndex)
     return (Instr **)&table->rows[rowIndex];
 }
 
-Instr *workTable::getInstr(int rl, int pipelineIndex)
+Instr *workTable::getInstr(int rowIndex, int pipelineIndex)
 {
-    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rl);
+    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rowIndex);
     if (!pipelineEntries)
         return 0;
     if (pipelineIndex < 0 || pipelineIndex >= 2) {
@@ -591,12 +591,12 @@ static inline Instr *getPipeInstr(Instr **pipelineEntries, int pipelineIndex)
     return pipelineEntries[pipelineIndex];
 }
 
-Instr *workTable::getInstrInRange(int rl, int p)
+Instr *workTable::getInstrInRange(int rowIndex, int pipeIndex)
 {
-    if (rl < rangeStart || rl >= rangeEnd)
+    if (rowIndex < rangeStart || rowIndex >= rangeEnd)
         return 0;
-    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rl);
-    return getPipeInstr(pipelineEntries, p);
+    Instr **pipelineEntries = ((cls_unk30 *)this)->getIE_ck(rowIndex);
+    return getPipeInstr(pipelineEntries, pipeIndex);
 }
 
 const char *codeModeName(int mode)
@@ -641,16 +641,16 @@ bool logInstr(Block *blk, Instr *instruction)
     if (instruction->permittedPipelineMask == 3)
         blk->dualPipelineInstructionCount++;
     else {
-        int n = 0;
+        int pipelineCount = 0;
         if (instruction->permittedPipelineMask & 1) {
             blk->instructionCountsByPipe[0]++;
-            n = 1;
+            pipelineCount = 1;
         }
         if (instruction->permittedPipelineMask & 2) {
-            n++;
+            pipelineCount++;
             blk->instructionCountsByPipe[1]++;
         }
-        if (n != 1) {
+        if (pipelineCount != 1) {
             reportError("nad too many / too few\n");
             abortAfterError();
         }
@@ -664,16 +664,16 @@ bool decrementInstructionPipelineCounts(Block *blk, Instr *instruction)
     if (instruction->permittedPipelineMask == 3)
         blk->dualPipelineInstructionCount--;
     else {
-        int n = 0;
+        int pipelineCount = 0;
         if (instruction->permittedPipelineMask & 1) {
             blk->instructionCountsByPipe[0]--;
-            n = 1;
+            pipelineCount = 1;
         }
         if (instruction->permittedPipelineMask & 2) {
-            n++;
+            pipelineCount++;
             blk->instructionCountsByPipe[1]--;
         }
-        if (n != 1) {
+        if (pipelineCount != 1) {
             reportError("nad too many\n");
             abortAfterError();
         }
@@ -815,26 +815,26 @@ bool workTable::setRange(int len)
     return 1;
 }
 
-bool workTable::setRange(int s, int e)
+bool workTable::setRange(int startRow, int endRow)
 {
     if (!rows) {
         reportError("setRange - no table!\n");
         return 0;
     }
-    rangeStart = s;
-    rangeEnd = e;
+    rangeStart = startRow;
+    rangeEnd = endRow;
     loopSize = 0;
-    if (s < 0) {
+    if (startRow < 0) {
         reportError("s before 0\n");
         abortAfterError();
         return 0;
     }
-    if (e < s) {
-        reportError("setRange : e<s before [%d,%d]\n", s, e);
+    if (endRow < startRow) {
+        reportError("setRange : e<s before [%d,%d]\n", startRow, endRow);
         abortAfterError();
         return 0;
     }
-    if (e >= rowCapacity) {
+    if (endRow >= rowCapacity) {
         reportError("e after end\n");
         abortAfterError();
         return 0;
@@ -1167,13 +1167,13 @@ workTable *workTable::localClone()
     return scheduleTable;
 }
 
-bool workTable::replaceInstruction(Instr *old, Instr *nw)
+bool workTable::replaceInstruction(Instr *old, Instr *newInstruction)
 {
     if (old->ownerTable != (cls_unk30 *)this) {
         reportError("old instruction isn't in table\n");
         return 0;
     }
-    cls_unk30 *own = nw->ownerTable;
+    cls_unk30 *own = newInstruction->ownerTable;
     if (own) {
         reportError("replaceInstruction - new instruction already has owner\n");
         return 0;
@@ -1183,23 +1183,23 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
         reportError("failed to take out old instruction from linear\n");
         return 0;
     }
-    nw->linearOrderIndex = old->linearOrderIndex;
-    nw->instructionSerial = old->instructionSerial;
+    newInstruction->linearOrderIndex = old->linearOrderIndex;
+    newInstruction->instructionSerial = old->instructionSerial;
     if (isAbstract()) {
-        if (nw->isConcreteMove()) {
+        if (newInstruction->isConcreteMove()) {
             reportError("trying to place a resolved move into abstract table\n");
             return 0;
         }
-        if (!logAddLinear_After(prev, nw)) {
+        if (!logAddLinear_After(prev, newInstruction)) {
             reportError("failed to log new instruction \n");
             return 0;
         }
     } else {
-        if (nw->isAbstractMove()) {
+        if (newInstruction->isAbstractMove()) {
             reportError("trying to replace an abstract move into a table\n");
             return 0;
         }
-        if (!logAddLinear_After(prev, nw)) {
+        if (!logAddLinear_After(prev, newInstruction)) {
             reportError("failed to log new instruction \n");
             return 0;
         }
@@ -1209,7 +1209,7 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
         pos.loopRow = instructionPosition->loopRow;
         pos.loopIteration = instructionPosition->loopIteration;
         pos.pipelineIndex = instructionPosition->pipelineIndex;
-        InstructionPosition *position = &nw->position;
+        InstructionPosition *position = &newInstruction->position;
         position->linearRow = old->position.linearRow;
         position->loopRow = pos.loopRow;
         position->loopIteration = pos.loopIteration;
@@ -1219,7 +1219,7 @@ bool workTable::replaceInstruction(Instr *old, Instr *nw)
             return 0;
         }
         wtRow *row = &rows[position->loopRow];
-        row->entries[position->pipelineIndex].instruction = nw;
+        row->entries[position->pipelineIndex].instruction = newInstruction;
     }
     return 1;
 }

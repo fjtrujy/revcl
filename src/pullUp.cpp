@@ -34,46 +34,46 @@ int pullUp(workTable *scheduleTable)
     int moved;
     int mrl;
     Instr *lbdli = 0;
-    Instr *br = scheduleTable->getBranch();
-    if (br) {
+    Instr *branchInstruction = scheduleTable->getBranch();
+    if (branchInstruction) {
         lbdli = scheduleTable->rows[scheduleTable->rangeEnd - 1].entries[1].instruction;
         if (lbdli)
-            lbdli = writesInputRegisterOf(lbdli, br) ? lbdli : 0;
+            lbdli = writesInputRegisterOf(lbdli, branchInstruction) ? lbdli : 0;
     }
 
     do {
         moved = 0;
         mrl = scheduleTable->rangeStart;
-        for (int l = scheduleTable->rangeStart; l != scheduleTable->rangeEnd; l++) {
-            wtRow *row = scheduleTable->getRowByIndex(l);
-            for (int p = 0; p != 2; p++) {
-                Instr *in = row->getEntry(p);
-                if (!in || in == br || in == lbdli)
+        for (int rowIndex = scheduleTable->rangeStart; rowIndex != scheduleTable->rangeEnd; rowIndex++) {
+            wtRow *row = scheduleTable->getRowByIndex(rowIndex);
+            for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
+                Instr *currentInstruction = row->getEntry(pipeIndex);
+                if (!currentInstruction || currentInstruction == branchInstruction || currentInstruction == lbdli)
                     continue;
-                int rl = in->position.getRow();
-                if (rl != l) {
+                int instructionRow = currentInstruction->position.getRow();
+                if (instructionRow != rowIndex) {
                     reportError("rl not l!\n");
                     exitAfterCleanup(-1);
                 }
-                int e = earliestInsert(scheduleTable, in, 0);
-                if (e < rl) {
-                    if (!doLocalMove(scheduleTable, in, e, rl, 1)) {
+                int earliestAllowedRow = earliestInsert(scheduleTable, currentInstruction, 0);
+                if (earliestAllowedRow < instructionRow) {
+                    if (!doLocalMove(scheduleTable, currentInstruction, earliestAllowedRow, instructionRow, 1)) {
                         reportError("failed to do local move for raw up\n");
                         return -1;
                     }
-                    if (in->position.getRow() != rl)
+                    if (currentInstruction->position.getRow() != instructionRow)
                         moved++;
                 }
-                short mte = in->externalOutputConstraint < in->externalOutputPairedConstraint ? in->externalOutputPairedConstraint : in->externalOutputConstraint;
-                int end = in->position.getRow() + mte;
+                short mte = currentInstruction->externalOutputConstraint < currentInstruction->externalOutputPairedConstraint ? currentInstruction->externalOutputPairedConstraint : currentInstruction->externalOutputConstraint;
+                int end = currentInstruction->position.getRow() + mte;
                 if (end > mrl)
                     mrl = end;
                 if (mrl >= scheduleTable->rangeEnd) {
                     reportError("mRline would be pushed after m_iEnd..%d, %d\n", mrl, scheduleTable->rangeEnd);
                     scheduleTable->dump();
-                    int diagnosticMte = in->externalOutputConstraint < in->externalOutputPairedConstraint ? in->externalOutputPairedConstraint : in->externalOutputConstraint;
+                    int diagnosticMte = currentInstruction->externalOutputConstraint < currentInstruction->externalOutputPairedConstraint ? currentInstruction->externalOutputPairedConstraint : currentInstruction->externalOutputConstraint;
                     reportError("faulting instruction is (mte=%d):\n", diagnosticMte);
-                    in->leDump();
+                    currentInstruction->leDump();
                     return -1;
                 }
             }
@@ -83,7 +83,7 @@ int pullUp(workTable *scheduleTable)
     if (mrl - scheduleTable->rangeStart + 1 < scheduleTable->externalMinimumLength)
         mrl = scheduleTable->rangeStart + scheduleTable->externalMinimumLength - 1;
 
-    int branchPresent = br != 0;
+    int branchPresent = branchInstruction != 0;
     if (branchPresent) {
         int l = mrl - 1;
         bool done = false;
@@ -95,20 +95,20 @@ int pullUp(workTable *scheduleTable)
                 return -1;
             }
             InstructionPosition pos;
-            pos.setInstructionPipe(br->position.pipelineIndex);
+            pos.setInstructionPipe(branchInstruction->position.pipelineIndex);
             pos.setFromLinearRow(l);
-            if (checkInstructionPlacementConstraints(scheduleTable, br, &pos)) {
+            if (checkInstructionPlacementConstraints(scheduleTable, branchInstruction, &pos)) {
                 l++;
             } else {
-                if (!scheduleTable->takeOut(br)) {
+                if (!scheduleTable->takeOut(branchInstruction)) {
                     reportError("failed to take out instruction\n");
                     exitAfterCleanup(-1);
                 }
-                if (!moveLocks(br, &pos)) {
+                if (!moveLocks(branchInstruction, &pos)) {
                     reportError("failed to move !\n");
                     exitAfterCleanup(-1);
                 }
-                if (!scheduleTable->putIn(br)) {
+                if (!scheduleTable->putIn(branchInstruction)) {
                     reportError("failed to put in back in\n");
                     exitAfterCleanup(-1);
                 }

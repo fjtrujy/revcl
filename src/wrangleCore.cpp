@@ -12,7 +12,7 @@ void adjustMoveCount(Block *blk, Instr *mv, int n);
 extern int optimizationTimeoutSeconds;
 
 
-bool scheduleMidTableMode0(workTable *table, wrangleFunc f)
+bool scheduleMidTableMode0(workTable *table, wrangleFunc candidateSelector)
 {
     allowInputLockLoopWrapping = 1;
     table->unk_ad = 0;
@@ -48,7 +48,7 @@ bool scheduleMidTableMode0(workTable *table, wrangleFunc f)
             return false;
         }
     }
-    if (!f) {
+    if (!candidateSelector) {
         reportError("Wrangle: passed a bad func\n");
         return false;
     }
@@ -63,7 +63,7 @@ bool scheduleMidTableMode0(workTable *table, wrangleFunc f)
         reportError("failed to set OS_setWatchdog\n");
         return false;
     }
-    bool schedulingSucceeded = wrangleMode0Worker(table, f);
+    bool schedulingSucceeded = wrangleMode0Worker(table, candidateSelector);
     if (!clearWatchdog()) {
         reportError("failed to clear watchdog timer\n");
         return false;
@@ -71,7 +71,7 @@ bool scheduleMidTableMode0(workTable *table, wrangleFunc f)
     return schedulingSucceeded;
 }
 
-bool wrangleMode0Worker(workTable *table, wrangleFunc f)
+bool wrangleMode0Worker(workTable *table, wrangleFunc candidateSelector)
 {
     InstructionPosition pos;
     for (;;) {
@@ -162,7 +162,7 @@ bool wrangleMode0Worker(workTable *table, wrangleFunc f)
         }
         pending = 0;
         while (*(&table->moveListHead)) {
-            if (!f(table, (int *)&c)) {
+            if (!candidateSelector(table, (int *)&c)) {
                 head = table->moveListHead = 0;
                 goto test_after_insert;
             }

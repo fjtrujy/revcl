@@ -50,15 +50,15 @@ bool concatenateCompatibleStreams(Program *program)
                 reportError("there's still out ist's after unlink\n");
                 return 0;
             }
-            linkNode *l;
-            while ((l = n->outputLinks.head) != 0) {
-                instStream *to = l->otherStream;
-                int type = l->linkType;
-                if (!program->unlinkStreams(n, to, type)) {
+            linkNode *outgoingLink;
+            while ((outgoingLink = n->outputLinks.head) != 0) {
+                instStream *destinationStream = outgoingLink->otherStream;
+                int type = outgoingLink->linkType;
+                if (!program->unlinkStreams(n, destinationStream, type)) {
                     reportError("failed to unlink streams\n");
                     return 0;
                 }
-                if (!program->linkStreams(stream, to, type)) {
+                if (!program->linkStreams(stream, destinationStream, type)) {
                     reportError("failed to link together streams\n");
                     return 0;
                 }
@@ -99,14 +99,14 @@ bool catOnTo(workTable *t1, workTable *t2)
         wtRow *src = &t2->rows[rowIndex];
         memcpy(&t1->rows[dst], src, 14);
         for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
-            Instr *in = src->entries[entryIndex].instruction;
-            if (in) {
-                if (!UnlinkFromLinear((Block *)t2, in)) {
+            Instr *sourceInstruction = src->entries[entryIndex].instruction;
+            if (sourceInstruction) {
+                if (!UnlinkFromLinear((Block *)t2, sourceInstruction)) {
                     reportError("failed to remlinear\n");
                     return 0;
                 }
-                in->ownerTable = 0;
-                in->setOwner((cls_unk30 *)t1);
+                sourceInstruction->ownerTable = 0;
+                sourceInstruction->setOwner((cls_unk30 *)t1);
             }
             src->entries[entryIndex].instruction = 0;
         }
@@ -114,8 +114,8 @@ bool catOnTo(workTable *t1, workTable *t2)
     for (rowIndex = t1->rangeStart; rowIndex < t1->rangeEnd; rowIndex++) {
         wtRow *workRow = &t1->rows[rowIndex];
         for (int j = 0; j != 2; j++) {
-            Instr *in = workRow->entries[j].instruction;
-            if (in && !UnlinkFromLinear((Block *)t1, in)) {
+            Instr *destinationInstruction = workRow->entries[j].instruction;
+            if (destinationInstruction && !UnlinkFromLinear((Block *)t1, destinationInstruction)) {
                 reportError("failed to link in from it1\n");
                 return 0;
             }
@@ -135,13 +135,13 @@ bool catOnTo(workTable *t1, workTable *t2)
     return 1;
 }
 
-bool appendStream(Program *program, instStream *stream, instStream *b)
+bool appendStream(Program *program, instStream *stream, instStream *followingStream)
 {
-    if (!stream || !b) {
+    if (!stream || !followingStream) {
         reportError("cat streams - passed a null pointer\n");
         return 0;
     }
-    if (b->leadingLabelFlags) {
+    if (followingStream->leadingLabelFlags) {
         reportError("dbgTop set for ist_2 ->>>>>>>>>>>>>>please code this!\n");
         return 0;
     }
@@ -150,17 +150,17 @@ bool appendStream(Program *program, instStream *stream, instStream *b)
         return 0;
     }
     workTable *t1 = stream->getTable();
-    workTable *t2 = b->getWorkTable();
+    workTable *t2 = followingStream->getWorkTable();
     if (!catOnTo(t1, t2)) {
         reportError("failed to cat table2 onto table1\n");
         return 0;
     }
-    int endType = b->endType;
+    int endType = followingStream->endType;
     stream->endType = endType;
-    int branchType = b->branchType;
+    int branchType = followingStream->branchType;
     stream->branchType = branchType;
-    stream->trailingLabelFlags = b->trailingLabelFlags;
-    stream->mergedBarrierFlag = b->mergedBarrierFlag;
+    stream->trailingLabelFlags = followingStream->trailingLabelFlags;
+    stream->mergedBarrierFlag = followingStream->mergedBarrierFlag;
     return 1;
 }
 

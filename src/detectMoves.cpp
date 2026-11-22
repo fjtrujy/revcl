@@ -29,8 +29,8 @@ bool detectMoves(Program *program)
         workTable *scheduleTable = stream->getTable();
         if (scheduleTable->codeModeValue == 1 || isPipeMode(scheduleTable)) {
             Instr *next;
-            for (Instr *in = scheduleTable->linearInstructions.head; in; in = next) {
-                next = in->linearLink.nextInstruction;
+            for (Instr *currentInstruction = scheduleTable->linearInstructions.head; currentInstruction; currentInstruction = next) {
+                next = currentInstruction->linearLink.nextInstruction;
                 int opc;
                 unsigned char mask;
                 int dstOp;
@@ -39,46 +39,46 @@ bool detectMoves(Program *program)
                 srcOp = -1;
                 dstOp = -1;
                 mask = 0;
-                if (!detectMove(in, opc, mask, dstOp, srcOp))
+                if (!detectMove(currentInstruction, opc, mask, dstOp, srcOp))
                     continue;
-                RegPoolEntry *srcReg = in->operands[srcOp].assignedRegister;
-                RegPoolEntry *dstReg = in->operands[dstOp].assignedRegister;
+                RegPoolEntry *srcReg = currentInstruction->operands[srcOp].assignedRegister;
+                RegPoolEntry *dstReg = currentInstruction->operands[dstOp].assignedRegister;
                 iInfo *info = getOpcodeInfoById(opc);
-                Instr *mv = new Instr(info);
-                if (!mv) {
+                Instr *newMoveInstruction = new Instr(info);
+                if (!newMoveInstruction) {
                     reportError("failed to make a move\n");
                     return false;
                 }
-                mv->abstractMoveOpcode = opc;
-                mv->concreteMoveOpcode = 0;
-                Operand *operand = &mv->operands[1];
-                Operand *d = &mv->operands[0];
+                newMoveInstruction->abstractMoveOpcode = opc;
+                newMoveInstruction->concreteMoveOpcode = 0;
+                Operand *operand = &newMoveInstruction->operands[1];
+                Operand *destinationOperand = &newMoveInstruction->operands[0];
                 if (dstReg == dstReg->ownerPool->zeroRegister) {
                     reportError("found a move to a const zero register\n");
-                    dumpMove(in);
+                    dumpMove(currentInstruction);
                     return false;
                 }
                 operand->assignedRegister = srcReg;
-                d->assignedRegister = dstReg;
-                mv->destinationMask = mask;
+                destinationOperand->assignedRegister = dstReg;
+                newMoveInstruction->destinationMask = mask;
                 operand->componentMask = mask;
-                d->componentMask = mask;
-                operand->originalRegister = in->operands[srcOp].originalRegister;
-                d->originalRegister = in->operands[dstOp].originalRegister;
-                operand->forcedBaseRegister = in->operands[srcOp].forcedBaseRegister;
-                d->forcedBaseRegister = in->operands[dstOp].forcedBaseRegister;
+                destinationOperand->componentMask = mask;
+                operand->originalRegister = currentInstruction->operands[srcOp].originalRegister;
+                destinationOperand->originalRegister = currentInstruction->operands[dstOp].originalRegister;
+                operand->forcedBaseRegister = currentInstruction->operands[srcOp].forcedBaseRegister;
+                destinationOperand->forcedBaseRegister = currentInstruction->operands[dstOp].forcedBaseRegister;
                 if (isRawTable(scheduleTable)) {
-                    int pipe = in->position.pipelineIndex;
-                    if (!resolveMovePipe(scheduleTable, mv, pipe)) {
+                    int pipe = currentInstruction->position.pipelineIndex;
+                    if (!resolveMovePipe(scheduleTable, newMoveInstruction, pipe)) {
                         reportError("failed to resolve a detected move for the pipe I found it in\n");
                         return false;
                     }
                 }
-                if (!scheduleTable->replaceInstruction(in, mv)) {
+                if (!scheduleTable->replaceInstruction(currentInstruction, newMoveInstruction)) {
                     reportError("failed to replace instruction!\n");
                     return false;
                 }
-                delete in;
+                delete currentInstruction;
             }
         }
     }

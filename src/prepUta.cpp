@@ -8,9 +8,9 @@ bool optReset(Program *p);
 int setRangeFrom(workTable *t);
 bool fixupCloneFdeps(workTable *wt);
 
-static inline void copyShort(short &to, const short &from)
+static inline void copyShort(short &destination, const short &from)
 {
-    to = from;
+    destination = from;
 }
 
 int nextReservedInstructionKey = 1;
@@ -36,58 +36,58 @@ workTable *prepUta(Program *program, instStream *stream, int loopSize, char smar
         reportError("failed to flush workClones table for %s\n", stream->streamName());
         return 0;
     }
-    workTable *nt = new workTable;
-    if (!nt) {
+    workTable *newWorkTable = new workTable;
+    if (!newWorkTable) {
         reportError("iStream::prepUta - failed alloc table\n");
         exitAfterCleanup(-1);
     }
-    if (!nt->init(2, stream->physicalInstructionBudget)) {
+    if (!newWorkTable->init(2, stream->physicalInstructionBudget)) {
         reportError("failed to allocate large table\n");
-        delete nt;
+        delete newWorkTable;
         return 0;
     }
-    nt->ownerStream = stream;
+    newWorkTable->ownerStream = stream;
     if (loopSize) {
-        nt->minimumSafeLoopCount = stream->safeMinimumLoopCount;
-        nt->setRange(loopSize);
+        newWorkTable->minimumSafeLoopCount = stream->safeMinimumLoopCount;
+        newWorkTable->setRange(loopSize);
     } else
-        nt->setRange();
-    setRangeFrom(nt);
+        newWorkTable->setRange();
+    setRangeFrom(newWorkTable);
     fatalReadBeforeReady = smart;
-    nt->statistics.copyCountersFrom(&stream->schedulingStatistics);
-    copyShort(nt->streamDependencyLength, scheduleTable->streamDependencyLength);
-    copyShort(nt->streamLogicalLength, scheduleTable->streamLogicalLength);
-    copyShort(nt->logicalInstructionLength, scheduleTable->logicalInstructionLength);
+    newWorkTable->statistics.copyCountersFrom(&stream->schedulingStatistics);
+    copyShort(newWorkTable->streamDependencyLength, scheduleTable->streamDependencyLength);
+    copyShort(newWorkTable->streamLogicalLength, scheduleTable->streamLogicalLength);
+    copyShort(newWorkTable->logicalInstructionLength, scheduleTable->logicalInstructionLength);
     int mode = (unsigned char)scheduleTable->allocationMode;
-    nt->allocationMode = mode;
-    nt->nextInsertionSerial = 0;
-    nt->externalMinimumLength = scheduleTable->externalMinimumLength;
+    newWorkTable->allocationMode = mode;
+    newWorkTable->nextInsertionSerial = 0;
+    newWorkTable->externalMinimumLength = scheduleTable->externalMinimumLength;
     regUseList &regs = scheduleTable->registerUses;
     for (regUse *registerUse = regs.head; registerUse; registerUse = registerUse->next) {
-        if (!nt->qRegRef(registerUse)) {
+        if (!newWorkTable->qRegRef(registerUse)) {
             reportError("failed to add a cloned regref in %s\n", stream->streamName());
             scheduleTable->dump();
-            delete nt;
+            delete newWorkTable;
             return 0;
         }
     }
-    for (Instr *in = scheduleTable->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-        if (in->getOwningStream() != stream) {
+    for (Instr *currentInstruction = scheduleTable->linearInstructions.head; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction) {
+        if (currentInstruction->getOwningStream() != stream) {
             reportError("owner not set or mismatch for prepUta .. istOwner = %x we are %x!\n",
-                          in->getOwningStream(), program);
-            in->leDump();
+                          currentInstruction->getOwningStream(), program);
+            currentInstruction->leDump();
             exitAfterCleanup(-1);
         }
-        in->candidateAttemptLimit = 0;
-        if (in->isNonSynthetic() && !in->isNop() && !nt->qInstruction(in)) {
+        currentInstruction->candidateAttemptLimit = 0;
+        if (currentInstruction->isNonSynthetic() && !currentInstruction->isNop() && !newWorkTable->qInstruction(currentInstruction)) {
             reportError("iStream: failed to queue instruction into table for opt\n");
             exitAfterCleanup(-1);
         }
     }
-    if (!fixupCloneFdeps(nt)) {
+    if (!fixupCloneFdeps(newWorkTable)) {
         reportError("failed to fix fdeps to new table\n");
         return 0;
     }
-    return nt;
+    return newWorkTable;
 }
 

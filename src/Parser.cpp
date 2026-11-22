@@ -323,10 +323,10 @@ int Parser::FindLocTag(const char *name, int n)
     return -1;
 }
 
-static inline bool isGaspDigit(unsigned char c)
+static inline bool isGaspDigit(unsigned char character)
 {
     for (const char *allowedCharacter = gaspLineNumberCharacters; *allowedCharacter; allowedCharacter++)
-        if ((unsigned char)*allowedCharacter == c)
+        if ((unsigned char)*allowedCharacter == character)
             return true;
     return false;
 }

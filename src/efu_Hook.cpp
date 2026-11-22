@@ -23,9 +23,9 @@ bool rotateInputComponentMask(void *, Instr *instruction)
     return 1;
 }
 
-bool efu_Hook(void *p, Instr *instruction)
+bool efu_Hook(void *opcodeMetadata, Instr *instruction)
 {
-    iInfo *info = (iInfo *)p;
+    iInfo *info = (iInfo *)opcodeMetadata;
     Operand *operand = &instruction->operands[1];
     switch (info->efuMaskType) {
     case 1: break;
@@ -42,9 +42,9 @@ bool efu_Hook(void *p, Instr *instruction)
 
 bool asciiCaseEqual(const char *a, const char *b);
 
-bool wr2w_Hook(void *p, Instr *in)
+bool wr2w_Hook(void *opcodeMetadata, Instr *in)
 {
-    iInfo *info = (iInfo *)p;
+    iInfo *info = (iInfo *)opcodeMetadata;
     iInfo *instructionInfo;
     if (asciiCaseEqual(info->mnemonic, "ilwr"))
         instructionInfo = findOpcodeInfoByMnemonic("ilw", false);
@@ -69,19 +69,19 @@ char *emitClip(char *buf, Instr *instruction, bool upper, char *mods, bool b, in
     bool comma = false;
     int len = formatIntoBuffer(buf, "clipw%s.xyz", mods);
     char *outputCursor = buf + len;
-    for (int n = outputCursor - buf; n < 14; n++)
+    for (int paddingIndex = outputCursor - buf; paddingIndex < 14; paddingIndex++)
         *outputCursor++ = ' ';
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
-        Operand *op = &instruction->operands[operandIndex];
-        if (op->isImplicit)
+        Operand *currentOperand = &instruction->operands[operandIndex];
+        if (currentOperand->isImplicit)
             continue;
         if (comma)
             *outputCursor++ = ',';
         comma = true;
-        outputCursor = op->Emit(outputCursor, upper, b);
+        outputCursor = currentOperand->Emit(outputCursor, upper, b);
         if (!outputCursor) {
             reportError("failed to emit operand\n");
-            op->diagnoseOperand(0);
+            currentOperand->diagnoseOperand(0);
             reportError("from\n");
             dumpEmitInstruction(instruction);
             return 0;
@@ -107,7 +107,7 @@ char *vmove_Emit(char *buf, Instr *instruction, bool upper, char *mods, bool b, 
     switch (instruction->concreteMoveOpcode) {
     case 0xb3:
         p += formatIntoBuffer(buf, "iaddiu");
-        for (int n = p - buf; n < 14; n++)
+        for (int paddingIndex = p - buf; paddingIndex < 14; paddingIndex++)
             *p++ = ' ';
         p = instruction->operands[0].Emit(p, upper, b);
         if (!p)
@@ -170,9 +170,9 @@ done:
     return p;
 }
 
-bool semSynth(void *p, Instr *in)
+bool semSynth(void *opcodeMetadata, Instr *in)
 {
-    iInfo *info = (iInfo *)p;
+    iInfo *info = (iInfo *)opcodeMetadata;
     char name[32];
     char *nameDestination = name;
     const char *mnemonicSource = info->mnemonic;
@@ -196,12 +196,12 @@ bool semSynth(void *p, Instr *in)
     }
     if (k == 3) {
         unsigned char m = in->operands[2].componentMask;
-        int n = 0;
-        if (m == 1) { *nameDestination++ = 'x'; n++; }
-        if (m == 2) { *nameDestination++ = 'y'; n++; }
-        if (m == 4) { *nameDestination++ = 'z'; n++; }
-        if (m == 8) { *nameDestination++ = 'w'; n++; }
-        if (n != 1) {
+        int componentCount = 0;
+        if (m == 1) { *nameDestination++ = 'x'; componentCount++; }
+        if (m == 2) { *nameDestination++ = 'y'; componentCount++; }
+        if (m == 4) { *nameDestination++ = 'z'; componentCount++; }
+        if (m == 8) { *nameDestination++ = 'w'; componentCount++; }
+        if (componentCount != 1) {
             reportError("semSynth - bad FL1 bits\n");
             return 0;
         }

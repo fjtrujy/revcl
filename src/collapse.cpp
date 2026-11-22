@@ -12,19 +12,19 @@ int collapseImmediateOffset;
 int decodeCollapsibleMoveImmediate(Instr *in);
 int expandOneLoopIntoRegions(Program *p, instStream *s);
 
-static inline int fitsSigned(int v, int bits)
+static inline int fitsSigned(int value, int bits)
 {
-    int r = 0;
-    int hi = 1 << (bits - 1);
-    int lo = -hi;
-    if (v >= lo && v < hi)
-        r = 1;
-    return r;
+    int fitsRange = 0;
+    int signedUpperBound = 1 << (bits - 1);
+    int signedLowerBound = -signedUpperBound;
+    if (value >= signedLowerBound && value < signedUpperBound)
+        fitsRange = 1;
+    return fitsRange;
 }
 
-static inline bool fitsUnsigned(int v, int bits)
+static inline bool fitsUnsigned(int value, int bits)
 {
-    return v >= 0 && v < (1 << bits);
+    return value >= 0 && value < (1 << bits);
 }
 bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc);
 
@@ -201,15 +201,15 @@ int decodeCollapsibleMoveImmediate(Instr *instruction)
     return idx;
 }
 
-static inline int immFitsUnsigned(int v, int bits)
+static inline int immFitsUnsigned(int value, int bits)
 {
-    int r = 0;
-    if (v >= 0 && v < (1 << bits))
-        r = 1;
-    return r;
+    int fitsRange = 0;
+    if (value >= 0 && value < (1 << bits))
+        fitsRange = 1;
+    return fitsRange;
 }
 
-bool immCalc(Instr *instruction, int *srcOp, int *immOp, int *val, int *opc)
+bool immCalc(Instr *instruction, int *srcOp, int *immOp, int *resultValue, int *opc)
 {
     *srcOp = -1;
     *immOp = -1;
@@ -252,6 +252,6 @@ bool immCalc(Instr *instruction, int *srcOp, int *immOp, int *val, int *opc)
     } else if (!(char)immFitsUnsigned(x < 0 ? -x : x, 15)) {
         return false;
     }
-    *val = x;
+    *resultValue = x;
     return true;
 }

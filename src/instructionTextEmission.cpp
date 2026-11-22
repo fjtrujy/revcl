@@ -29,19 +29,19 @@ char *emitGenericInstructionText(char *buf, Instr *instruction, bool upper, char
         reportError("failed to emit inst mods\n");
         return 0;
     }
-    for (int n = outputCursor - buf; n < 14; n++)
+    for (int paddingIndex = outputCursor - buf; paddingIndex < 14; paddingIndex++)
         *outputCursor++ = ' ';
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
-        Operand *op = &instruction->operands[operandIndex];
-        if (op->isImplicit)
+        Operand *currentOperand = &instruction->operands[operandIndex];
+        if (currentOperand->isImplicit)
             continue;
         if (comma)
             *outputCursor++ = ',';
         comma = true;
-        outputCursor = op->Emit(outputCursor, upper, b);
+        outputCursor = currentOperand->Emit(outputCursor, upper, b);
         if (!outputCursor) {
             reportError("failed to emit operand\n");
-            op->diagnoseOperand(0);
+            currentOperand->diagnoseOperand(0);
             reportError("from\n");
             dumpEmitInstruction(instruction);
             return 0;
@@ -74,19 +74,19 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
         reportError("failed to generate instruction mod string\n");
         return 0;
     }
-    for (int n = outputCursor - buf; n < 14; n++)
+    for (int paddingIndex = outputCursor - buf; paddingIndex < 14; paddingIndex++)
         *outputCursor++ = ' ';
     for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
-        Operand *op = &in->operands[operandIndex];
-        if (op->isImplicit)
+        Operand *currentOperand = &in->operands[operandIndex];
+        if (currentOperand->isImplicit)
             continue;
         if (comma)
             *outputCursor++ = ',';
         comma = true;
-        outputCursor = op->Emit(outputCursor, upper, b);
+        outputCursor = currentOperand->Emit(outputCursor, upper, b);
         if (!outputCursor) {
             reportError("failed to emit operand\n");
-            op->diagnoseOperand(0);
+            currentOperand->diagnoseOperand(0);
             reportError("from\n");
             dumpEmitInstruction(in);
             return 0;

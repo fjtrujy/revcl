@@ -27,16 +27,16 @@ static inline bool initPrune_p(Program *program)
 
 static inline int tryPrune_p(Program *program)
 {
-    int n = 0;
+    int successfulPruneCount = 0;
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        int r = tryPrune(stream);
-        if (r < 0) {
+        int pruneResult = tryPrune(stream);
+        if (pruneResult < 0) {
             reportError("flowMon: failed to  tryPrune %s\n", stream->streamName());
             return -1;
         }
-        n += r;
+        successfulPruneCount += pruneResult;
     }
-    return n;
+    return successfulPruneCount;
 }
 
 static inline bool doPrune_p(Program *program)
@@ -55,14 +55,14 @@ bool Prune(Program *program)
         reportError("failed to init prune!\n");
         return false;
     }
-    int n;
+    int prunePassCount;
     do {
-        n = tryPrune_p(program);
-        if (n < 0) {
+        prunePassCount = tryPrune_p(program);
+        if (prunePassCount < 0) {
             reportError("flowMon::Prune - an error occured\n");
             exitAfterCleanup(-1);
         }
-    } while (n);
+    } while (prunePassCount);
     if (!doPrune_p(program)) {
         reportError("failed to do prune!\n");
         return false;
@@ -118,16 +118,16 @@ bool initPrune(Instr *instruction)
 
 int tryPrune(Program *program)
 {
-    int n = 0;
+    int successfulPruneCount = 0;
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        int r = tryPrune(stream);
-        if (r < 0) {
+        int pruneResult = tryPrune(stream);
+        if (pruneResult < 0) {
             reportError("flowMon: failed to  tryPrune %s\n", stream->streamName());
             return -1;
         }
-        n += r;
+        successfulPruneCount += pruneResult;
     }
-    return n;
+    return successfulPruneCount;
 }
 
 static inline void dumpPruneInstruction(Instr *instruction)
@@ -137,7 +137,7 @@ static inline void dumpPruneInstruction(Instr *instruction)
 
 int tryPrune(instStream *stream)
 {
-    int n = 0;
+    int successfulPruneCount = 0;
     workTable *scheduleTable = stream->getTable();
     if (!scheduleTable) {
         reportError("failed to get work table\n");
@@ -146,35 +146,35 @@ int tryPrune(instStream *stream)
     bool raw = false;
     if (scheduleTable->codeModeValue == 4 || scheduleTable->getTableRawMode() == 4)
         raw = true;
-    for (Instr *in = scheduleTable->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-        int r = tryPrune(in, raw);
-        if (r < 0) {
+    for (Instr *currentInstruction = scheduleTable->linearInstructions.head; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction) {
+        int pruneResult = tryPrune(currentInstruction, raw);
+        if (pruneResult < 0) {
             reportError("rec  prune failed for instruction\n");
-            dumpPruneInstruction(in);
+            dumpPruneInstruction(currentInstruction);
             return -1;
         }
-        n += r;
+        successfulPruneCount += pruneResult;
     }
-    return n;
+    return successfulPruneCount;
 }
 
 int tryPrune(Instr *instruction, bool raw)
 {
-    int n = 0;
+    int pruneCount = 0;
     if (!instruction->opcodeInfo)
         return 0;
     if (raw) {
-        Operand *r, *op, *lookup;
+        Operand *registerOperand, *candidateOperand, *lookup;
         for (int operandIndex = 0;
              ((operandIndex < 0 ? (lookup = instruction->getOp(operandIndex)) :
                        (lookup = operandIndex < instruction->operandCount ? &instruction->operands[operandIndex] : 0)),
-              r = lookup, op = lookup, lookup = 0, op) != 0; operandIndex++) {
-            if (r->isInput())
-                (RegPoolEntry *&)r = r->assignedRegister;
+              registerOperand = lookup, candidateOperand = lookup, lookup = 0, candidateOperand) != 0; operandIndex++) {
+            if (registerOperand->isInput())
+                (RegPoolEntry *&)registerOperand = registerOperand->assignedRegister;
             else
-                (RegPoolEntry *&)r = 0;
-            if (r)
-                op->pruneMask = op->componentMask;
+                (RegPoolEntry *&)registerOperand = 0;
+            if (registerOperand)
+                candidateOperand->pruneMask = candidateOperand->componentMask;
         }
     }
     Operand *out;
@@ -207,7 +207,7 @@ int tryPrune(Instr *instruction, bool raw)
                 }
                 if (((src->pruneMask >> partIndex) & 1) && ((~out->pruneMask >> partIndex) & 1)) {
                     cnt++;
-                    n++;
+                    pruneCount++;
                     out->pruneMask |= 1 << partIndex;
                 }
             }
@@ -216,10 +216,10 @@ int tryPrune(Instr *instruction, bool raw)
             continue;
         if (out->operandKind == 10 || out->operandKind == 11)
             out->pruneMask = out->componentMask;
-        Operand *ip;
-        for (int k = 0; (ip = instruction->getOp(k)) != 0; k++) {
-            int isIn = ip->direction == 1;
-            RegPoolEntry *registerEntry = isIn ? ip->assignedRegister : 0;
+        Operand *inputOperand;
+        for (int k = 0; (inputOperand = instruction->getOp(k)) != 0; k++) {
+            int isIn = inputOperand->direction == 1;
+            RegPoolEntry *registerEntry = isIn ? inputOperand->assignedRegister : 0;
             if (!registerEntry)
                 continue;
             int bits = hackIOmask(instruction, o, out->pruneMask, k);
@@ -227,18 +227,18 @@ int tryPrune(Instr *instruction, bool raw)
                 reportError("lprune: failed to deduce which inputs affected which outputs\n");
                 return -1;
             }
-            if ((ip->componentMask & bits) != bits) {
+            if ((inputOperand->componentMask & bits) != bits) {
                 reportError("bits were used.. but outside of mod bit mask!\n");
                 reportError("OUTPUT(%d) INPUT(%d) inst : \n", o, k);
-                reportError("A_BITS=%x .. INPUT_MODBITS=%x : \n", bits, ip->componentMask);
-                reportError("otype is opt->m_oType=%d\n", ip->operandKind);
+                reportError("A_BITS=%x .. INPUT_MODBITS=%x : \n", bits, inputOperand->componentMask);
+                reportError("otype is opt->m_oType=%d\n", inputOperand->operandKind);
                 dumpPruneInstruction(instruction);
                 return -1;
             }
-            ip->pruneMask |= bits;
+            inputOperand->pruneMask |= bits;
         }
     }
-    return n;
+    return pruneCount;
 }
 
 bool doPrune(Program *program)
@@ -264,33 +264,33 @@ bool doPrune(instStream *stream)
     if (scheduleTable->getTableRawMode() == 4 || scheduleTable->getTableRawMode() == 3)
         return true;
     Instr *first = scheduleTable->linearInstructions.head;
-    Instr *in = first;
+    Instr *currentInstruction = first;
     Instr *next;
     if (first) do {
-        next = in->linearLink.nextInstruction;
-        int r = doPrune(in);
-        if (r < 0) {
+        next = currentInstruction->linearLink.nextInstruction;
+        int pruneResult = doPrune(currentInstruction);
+        if (pruneResult < 0) {
             reportError("do  prune failed for instruction\n");
-            dumpPruneInstruction(in);
+            dumpPruneInstruction(currentInstruction);
             return false;
         }
-        if (r == 0) {
-            if (!in->isNop()) {
+        if (pruneResult == 0) {
+            if (!currentInstruction->isNop()) {
                 reportVerboseInfo("REMOVE INST: ");
                 int saved = errorOccurred;
                 errorOccurred = quietDiagnostics;
-                in->leDump();
+                currentInstruction->leDump();
                 errorOccurred = saved;
             }
-            if (!scheduleTable->destroyInstruction(in)) {
+            if (!scheduleTable->destroyInstruction(currentInstruction)) {
                 reportError("failed to destroy instruction\n");
-                if (in)
-                    dumpPruneInstruction(in);
+                if (currentInstruction)
+                    dumpPruneInstruction(currentInstruction);
                 return false;
             }
         }
-        in = next;
-    } while (in);
+        currentInstruction = next;
+    } while (currentInstruction);
     return true;
 }
 
@@ -299,12 +299,12 @@ bool rotateInputComponentMask(void *, Instr *in);
 int doPrune(Instr *in)
 {
     int i;
-    Operand *op;
+    Operand *currentOperand;
     unsigned char any = 0;
     if (in->pruningRestricted)
         return 1;
-    for (i = 0; (op = in->getOp(i)) != 0; i++) {
-        any |= op->pruneMask;
+    for (i = 0; (currentOperand = in->getOp(i)) != 0; i++) {
+        any |= currentOperand->pruneMask;
     }
     if (!any)
         return 0;
@@ -317,23 +317,23 @@ int doPrune(Instr *in)
         return 0;
     if (info->destinationMaskMode == 1) {
         int m, nIn = 0, inOR = 0, outOR = 0, nOut = 0;
-        for (i = 0; (op = in->getOp(i)) != 0; i++) {
-            if (op->operandKind != 1 && op->operandKind != 9)
+        for (i = 0; (currentOperand = in->getOp(i)) != 0; i++) {
+            if (currentOperand->operandKind != 1 && currentOperand->operandKind != 9)
                 continue;
-            if (!op->assignedRegister) {
+            if (!currentOperand->assignedRegister) {
                 reportError("couldn't get a register for V_FL4 or V_ACC operand\n");
                 return -1;
             }
-            if (op->isInput()) {
-                inOR |= op->pruneMask;
+            if (currentOperand->isInput()) {
+                inOR |= currentOperand->pruneMask;
                 nIn++;
             }
-            if (op->isOutput()) {
-                if (nOut && op->pruneMask != outOR) {
+            if (currentOperand->isOutput()) {
+                if (nOut && currentOperand->pruneMask != outOR) {
                     reportError("prune - found two inputs with different pBits state for FL4/ACC\n");
                     return -1;
                 }
-                outOR |= op->pruneMask;
+                outOR |= currentOperand->pruneMask;
                 nOut++;
             }
         }
@@ -372,29 +372,29 @@ int doPrune(Instr *in)
             errorOccurred = saved;
         }
         in->destinationMask = m;
-        for (i = 0; (op = in->getOp(i)) != 0; i++) {
-            if (op->operandKind == 1 || op->operandKind == 9)
-                op->componentMask = m;
+        for (i = 0; (currentOperand = in->getOp(i)) != 0; i++) {
+            if (currentOperand->operandKind == 1 || currentOperand->operandKind == 9)
+                currentOperand->componentMask = m;
         }
         if (info->decodeHook == rotateInputComponentMask)
             in->operands[1].componentMask = (((m & 8) >> 3) | (m << 1)) & 0xf;
     }
-    for (i = 0; (op = in->getOp(i)) != 0; i++) {
-        RegPoolEntry *registerEntry = registerOperand(op, 2);
-        if (!registerEntry || op->pruneMask || !registerEntry->isVirtual)
+    for (i = 0; (currentOperand = in->getOp(i)) != 0; i++) {
+        RegPoolEntry *registerEntry = registerOperand(currentOperand, 2);
+        if (!registerEntry || currentOperand->pruneMask || !registerEntry->isVirtual)
             continue;
         RegPool *pool = registerEntry->ownerPool;
         if (!pool) {
             reportError("register had no regpool\n");
             return -1;
         }
-        if (pool->zeroRegister && !op->pairedOperandIndexPlusOne) {
+        if (pool->zeroRegister && !currentOperand->pairedOperandIndexPlusOne) {
             reportVerboseInfo("ZERO FIX   : ");
             int saved = errorOccurred;
             errorOccurred = quietDiagnostics;
             in->leDump(i);
             errorOccurred = saved;
-            op->assignedRegister = pool->zeroRegister;
+            currentOperand->assignedRegister = pool->zeroRegister;
         }
     }
     return 1;

@@ -232,12 +232,12 @@ void Operand::diagnoseOperand(int)
 
 static inline int operandZeroValue(Operand *operand)
 {
-    int z = 0;
+    int isZeroRegister = 0;
     if (operand->assignedRegister) {
         if (operand->assignedRegister == operand->assignedRegister->ownerPool->zeroRegister)
-            z = 1;
+            isZeroRegister = 1;
     }
-    return z;
+    return isZeroRegister;
 }
 
 char *Operand::Emit(char *buf, bool, bool symbolic)
@@ -248,8 +248,8 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
     if (!validateKindAndMask())
         return 0;
     if (assignedRegister) {
-        int z = assignedRegister == assignedRegister->ownerPool->zeroRegister;
-        if ((char)z != (char)operandZeroValue(this)) {
+        int isZeroRegister = assignedRegister == assignedRegister->ownerPool->zeroRegister;
+        if ((char)isZeroRegister != (char)operandZeroValue(this)) {
             reportError("Operand::Emit - zero mismatch..%s but %d\n", assignedRegister->registerName(), operandZeroValue(this));
             return 0;
         }
@@ -578,10 +578,10 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     case 54: {
         int *spk = &out->addressComponentMask;
         int svx = *spk;
-        int zs = (unsigned char)tok[2];
-        zs >>= 4;
-        zs >>= 4;
-        if (zs)
+        int tokenHighNibble = (unsigned char)tok[2];
+        tokenHighNibble >>= 4;
+        tokenHighNibble >>= 4;
+        if (tokenHighNibble)
             return false;
         *spk = svx;
         reportError("encountered a force bind to $ra in an explicit operand\n");
@@ -1425,9 +1425,9 @@ bool isVectorOrAccumulatorOperandKind(int kind)
 
 int Operand::getRegFrom(Operand *src)
 {
-    int a = registerClassForOperandKind(operandKind);
-    int b = registerClassForOperandKind(src->operandKind);
-    if (b != a) {
+    int targetRegisterClass = registerClassForOperandKind(operandKind);
+    int sourceRegisterClass = registerClassForOperandKind(src->operandKind);
+    if (sourceRegisterClass != targetRegisterClass) {
         reportError("incompatible type request getting type for operand\n");
         return 0;
     }
@@ -1438,7 +1438,7 @@ int Operand::getRegFrom(Operand *src)
         reportError("no register set in get reg from\n");
         return 0;
     }
-    if (assignedRegister->registerClass != b) {
+    if (assignedRegister->registerClass != sourceRegisterClass) {
         reportError("register not of correct type\n");
         return 0;
     }

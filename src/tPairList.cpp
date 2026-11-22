@@ -25,18 +25,18 @@ bool tPairList::clear()
 
 void tPairList::dump()
 {
-    int n = 0;
+    int actualPairCount = 0;
     for (tPair *transitionPair = head; transitionPair; transitionPair = transitionPair->next)
-        n++;
-    if (n != count) {
+        actualPairCount++;
+    if (actualPairCount != count) {
         reportError("     tpairdump : entry count mismatch\n");
         exitAfterCleanup(-1);
     }
 }
 
-bool tPairList::addPair(void *a, void *b, int src, int dst)
+bool tPairList::addPair(void *sourceObject, void *destinationObject, int src, int dst)
 {
-    if (!a || !b) {
+    if (!sourceObject || !destinationObject) {
         reportError("tPairList::addPair - null arg\n");
         return false;
     }
@@ -53,8 +53,8 @@ bool tPairList::addPair(void *a, void *b, int src, int dst)
         reportError("failed to get a new pair\n");
         return false;
     }
-    transitionPair->a = a;
-    transitionPair->b = b;
+    transitionPair->a = sourceObject;
+    transitionPair->b = destinationObject;
     transitionPair->src = src;
     transitionPair->dst = dst;
     transitionPair->next = head;
@@ -89,7 +89,7 @@ void tPair::noopThroughputPairHook()
 {
 }
 
-bool int_buildTpairs(Program *program, RegPoolEntry *reg, int part, instStream *stream, void *b)
+bool int_buildTpairs(Program *program, RegPoolEntry *reg, int part, instStream *stream, void *targetStream)
 {
     if (!stream) {
         reportError("int_buildTpairs - null arg\n");
@@ -150,7 +150,7 @@ bool int_buildTpairs(Program *program, RegPoolEntry *reg, int part, instStream *
             reportError("src_key is bad in tpair\n");
             return false;
         }
-        if (!registerUse->slots[part].throughputPairs.addPair(s, b, src_key, dst_key)) {
+        if (!registerUse->slots[part].throughputPairs.addPair(s, targetStream, src_key, dst_key)) {
             reportError("failed to add tpair for tcheck\n");
             return false;
         }

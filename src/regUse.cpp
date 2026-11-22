@@ -134,13 +134,13 @@ bool regUseList::remove(regUse *registerUse)
 
 bool regUseList::hasConsistentCount()
 {
-    int n = 0;
+    int consistentUseCount = 0;
     for (regUse *registerUse = head; registerUse; registerUse = registerUse->next) {
         if (!registerUse->registerEntry)
             return false;
-        n++;
+        consistentUseCount++;
     }
-    return n == count;
+    return consistentUseCount == count;
 }
 
 bool regUseList::hasEntries()

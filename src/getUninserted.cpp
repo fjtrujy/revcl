@@ -16,9 +16,9 @@ instStream *selectUninsertedStream(Program *program)
     int maxOut = -1000000;
     for (; stream; stream = stream->nextStream) {
         if (stream->getCodeMode() == 1) {
-            int in = stream->getUninsertedxInputs();
+            int missingInputs = stream->getUninsertedxInputs();
             int out = stream->getUninsertedxOutputs();
-            if (in < 0) {
+            if (missingInputs < 0) {
                 reportError("failed to get uninserted inputs\n");
                 return 0;
             }
@@ -26,11 +26,11 @@ instStream *selectUninsertedStream(Program *program)
                 reportError("failed to get uninserted outputs\n");
                 return 0;
             }
-            if (in < minIn) {
+            if (missingInputs < minIn) {
                 best = stream;
-                minIn = in;
+                minIn = missingInputs;
                 maxOut = out;
-            } else if (in == minIn && out > maxOut) {
+            } else if (missingInputs == minIn && out > maxOut) {
                 best = stream;
                 maxOut = out;
             }
@@ -69,13 +69,13 @@ int instStream::getUninsertedxInputs()
                     Instr *setter = operandLocation->instruction;
                     if (setter->getOwningStream() == this || setter->optimizedInstructionImageWord)
                         continue;
-                    int te = getToEnd(setter);
-                    if (te < 0) {
+                    int distanceToEnd = getToEnd(setter);
+                    if (distanceToEnd < 0) {
                         reportError("getUninsertedxInputs - failed to get to end for a setter\n");
                         return -1;
                     }
                     Operand *src = operandAtLocation(operandLocation);
-                    if (te + base + operandLocation->cycleOffset + 1 < src->outputLatency + operand->additionalLatency) {
+                    if (distanceToEnd + base + operandLocation->cycleOffset + 1 < src->outputLatency + operand->additionalLatency) {
                         if (reg->partCount == 1)
                             count += 4;
                         else
@@ -114,13 +114,13 @@ int instStream::getUninsertedxOutputs()
                         Instr *user = operandLocation->instruction;
                         if (user->getOwningStream() == this || user->optimizedInstructionImageWord)
                             continue;
-                        int fs = getFromStart(user);
-                        if (fs < 0) {
+                        int distanceFromStart = getFromStart(user);
+                        if (distanceFromStart < 0) {
                             reportError("getUninsertedxOutputs - failed to get to end for a setter\n");
                             return -1;
                         }
                         Operand *src = operandAtLocation(operandLocation);
-                        if (base + fs + operandLocation->cycleOffset + 1 < operand->outputLatency + src->additionalLatency) {
+                        if (base + distanceFromStart + operandLocation->cycleOffset + 1 < operand->outputLatency + src->additionalLatency) {
                             if (reg->partCount == 1)
                                 count += 4;
                             else
@@ -172,20 +172,20 @@ int getToEnd(Instr *instruction)
             reportError("logical len<0 for table \n");
             return -1;
         }
-        int et = img->scheduledCycle;
-        if (et < 0) {
+        int executionCycle = img->scheduledCycle;
+        if (executionCycle < 0) {
             reportError("exec time not set\n");
             return -1;
         }
-        int te = len - et - 1;
-        if (te < 0) {
-            reportError("te<0... for getLLen.. eTim=%d tSiz=%d\n", et, len, te);
+        int distanceToEnd = len - executionCycle - 1;
+        if (distanceToEnd < 0) {
+            reportError("te<0... for getLLen.. eTim=%d tSiz=%d\n", executionCycle, len, distanceToEnd);
             table->dump();
             reportError("instruction is\n");
             img->dumpOperandDiagnostics(false);
             break;
         }
-        return te;
+        return distanceToEnd;
     }
     case 4:
         return 0;
@@ -235,13 +235,13 @@ int getFromStart(Instr *instruction)
             reportError("logical len<0 for table \n");
             return -1;
         }
-        int et = img->scheduledCycle;
-        if (et < 0) {
+        int executionCycle = img->scheduledCycle;
+        if (executionCycle < 0) {
             reportError("exec time not set\n");
             return -1;
         }
-        if (et < len)
-            return et;
+        if (executionCycle < len)
+            return executionCycle;
         reportError("tick after table end\n");
         return -1;
     }

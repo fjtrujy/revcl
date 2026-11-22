@@ -258,16 +258,16 @@ void xpTree::dump()
     dumpNode(root);
 }
 
-const char *parseExpressionTokenIntoNode(const char *s, xpNode *node, bool binary)
+const char *parseExpressionTokenIntoNode(const char *expressionText, xpNode *node, bool binary)
 {
-    if (!s)
+    if (!expressionText)
         return 0;
     if (!node)
         return 0;
-    if (!*s)
+    if (!*expressionText)
         return 0;
     int len = 0;
-    const char *tokenCursor = s;
+    const char *tokenCursor = expressionText;
     xpOp *found = 0;
     int state = 1;
     int dots = 0;
@@ -320,11 +320,11 @@ const char *parseExpressionTokenIntoNode(const char *s, xpNode *node, bool binar
     } else {
         if (!found)
             return 0;
-        s = found->name;
-        for (const char *scanCursor = s; *scanCursor; scanCursor++, tokenCursor++)
+        expressionText = found->name;
+        for (const char *scanCursor = expressionText; *scanCursor; scanCursor++, tokenCursor++)
             len++;
     }
-    if (!node->val.setString(s, len))
+    if (!node->val.setString(expressionText, len))
         return 0;
     node->operatorType = found->type;
     node->precedence = found->prec;
@@ -340,11 +340,11 @@ static inline xpOp *findOp(unsigned char type)
     return 0;
 }
 
-bool xpTree::evalExp(const char *s)
+bool xpTree::evalExp(const char *expressionText)
 {
     const char *p;
 
-    if (!s) {
+    if (!expressionText) {
         puts("evalExp - null string");
         return false;
     }
@@ -370,7 +370,7 @@ bool xpTree::evalExp(const char *s)
         return false;
     }
     cur = root;
-    p = s;
+    p = expressionText;
     while (*p) {
         if (*p == '(') {
             if (cur->unmatchedOpeningParentheses == -1) {
@@ -613,21 +613,21 @@ void clearUnknownSymbols()
 
 inline xun::xun(InitTag) { next = 0; name = 0; }
 
-bool recordUnknownSymbol(const char *s)
+bool recordUnknownSymbol(const char *symbolName)
 {
-    if (!s) {
+    if (!symbolName) {
         reportError("passed a null string to add unknown\n");
         return false;
     }
     for (xun *unknownSymbol = unknownSymbolListHead; unknownSymbol; unknownSymbol = unknownSymbol->next)
-        if (asciiCaseEqual(unknownSymbol->name, s))
+        if (asciiCaseEqual(unknownSymbol->name, symbolName))
             return true;
     xun *x = new xun(xun::INIT);
     if (!x) {
         reportError("failed to new xun\n");
         return false;
     }
-    x->name = dupString(s);
+    x->name = dupString(symbolName);
     if (!x->name) {
         reportError("failed to dup string for xun\n");
         delete (xunDel *)x;

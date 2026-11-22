@@ -15,25 +15,25 @@ bool optVuta1(workTable *scheduleTable, wrangleCand *candidate)
     for (; instruction; instruction = instruction->nextMoveInstruction) {
         int cost = vuta1RegCost(instruction);
         int base = instruction->schedulingStatistics.moveDistance;
-        int a = base - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardLatencyDepth * 32 + cost;
-        if (a > bestA) {
+        int forwardLatencyScore = base - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardLatencyDepth * 32 + cost;
+        if (forwardLatencyScore > bestA) {
             best = instruction;
-            bestA = a;
+            bestA = forwardLatencyScore;
             bestB = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardDependencyHeight + cost;
             bestC = instruction->schedulingStatistics.reverseLatencyDepth;
-        } else if (a == bestA) {
-            int e = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardDependencyHeight + cost;
-            if (e > bestB) {
-                bestB = e;
+        } else if (forwardLatencyScore == bestA) {
+            int dependencyScore = instruction->schedulingStatistics.moveCount - instruction->candidateAttemptCount + instruction->schedulingStatistics.forwardDependencyHeight + cost;
+            if (dependencyScore > bestB) {
+                bestB = dependencyScore;
                 bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                 best = instruction;
-            } else if (e == bestB) {
-                int f = instruction->candidateBaseRow + (instruction->candidateAttemptCount >> 2);
-                if (f < bestD) {
-                    bestD = f;
+            } else if (dependencyScore == bestB) {
+                int candidatePlacementCost = instruction->candidateBaseRow + (instruction->candidateAttemptCount >> 2);
+                if (candidatePlacementCost < bestD) {
+                    bestD = candidatePlacementCost;
                     bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                     best = instruction;
-                } else if (f == bestD && instruction->schedulingStatistics.reverseLatencyDepth > bestC) {
+                } else if (candidatePlacementCost == bestD && instruction->schedulingStatistics.reverseLatencyDepth > bestC) {
                     bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                     best = instruction;
                 }

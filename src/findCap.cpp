@@ -63,8 +63,8 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
             unsigned char mask[32];
             int i;
             for (i = 0; i != 32; i++) {
-                RegPoolEntry *e = pool->findByRegisterIndex(i);
-                mask[i] = (e->enabledPhysicalRegister && e->allocatable) ? instruction->operands[0].componentMask : 0;
+                RegPoolEntry *candidateRegister = pool->findByRegisterIndex(i);
+                mask[i] = (candidateRegister->enabledPhysicalRegister && candidateRegister->allocatable) ? instruction->operands[0].componentMask : 0;
             }
             mask[0] = 0;
             for (regUse *registerUse = scheduleTable->registerUses.head; registerUse; registerUse = registerUse->next) {
@@ -86,13 +86,13 @@ int findCap(workTable *scheduleTable, Instr *instruction, int opIdx, RegPoolEntr
             }
             int best = 0;
             for (i = 1; i != 32; i++) {
-                int m = instruction->operands[0].componentMask & mask[i];
-                int n = countSetBits(m);
-                if (n > best) {
-                    RegPoolEntry *e = pool->findByRegisterIndex(i);
-                    selectedCapMask = m;
-                    selectedCapRegister = e;
-                    best = n;
+                int matchingComponentMask = instruction->operands[0].componentMask & mask[i];
+                int matchedComponentCount = countSetBits(matchingComponentMask);
+                if (matchedComponentCount > best) {
+                    RegPoolEntry *selectedRegister = pool->findByRegisterIndex(i);
+                    selectedCapMask = matchingComponentMask;
+                    selectedCapRegister = selectedRegister;
+                    best = matchedComponentCount;
                 }
             }
         } else {

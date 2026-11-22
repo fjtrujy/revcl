@@ -36,23 +36,23 @@ bool bindDependencies(Program *program)
 {
     RegPool *pools[8];
     instStream *stream;
-    int n = getPoolsByClassID(3, pools, 8);
-    if (n < 0) {
+    int hardwarePoolCount = getPoolsByClassID(3, pools, 8);
+    if (hardwarePoolCount < 0) {
         reportError("bindDependencies() - Processor failed to enumerate hardware register classes\n");
         return false;
     }
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
         workTable *scheduleTable = stream->getTable();
-        for (Instr *in = scheduleTable->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-            int bits = in->getRamBits();
-            if (!in->branchLabelTags)
+        for (Instr *streamInstruction = scheduleTable->linearInstructions.head; streamInstruction; streamInstruction = streamInstruction->linearLink.nextInstruction) {
+            int bits = streamInstruction->getRamBits();
+            if (!streamInstruction->branchLabelTags)
                 continue;
-            if (!in->ramAccessType) {
+            if (!streamInstruction->ramAccessType) {
                 reportUserMessage("tagString found for non memory instruction\n");
                 return false;
             }
             if (bits) {
-                char *tag = in->branchLabelTags;
+                char *tag = streamInstruction->branchLabelTags;
                 RegPool *registerPool = GetRP(10);
                 if (!registerPool) {
                     reportError("failed to get a hw pool\n");
@@ -75,15 +75,15 @@ bool bindDependencies(Program *program)
                         reportError("failed to create a tag register\n");
                         return false;
                     }
-                    switch ((unsigned char)in->ramAccessType) {
+                    switch ((unsigned char)streamInstruction->ramAccessType) {
                     case 1:
-                        if (!addNewInputInl(in, registerEntry, bits)) {
+                        if (!addNewInputInl(streamInstruction, registerEntry, bits)) {
                             reportError("failed to add input operand for load\n");
                             return false;
                         }
                         break;
                     case 2:
-                        if (!addNewOutputInl(in, registerEntry, bits, true)) {
+                        if (!addNewOutputInl(streamInstruction, registerEntry, bits, true)) {
                             reportError("failed to add output operand for store\n");
                             return false;
                         }
@@ -95,8 +95,8 @@ bool bindDependencies(Program *program)
                     tag = end;
                 }
             }
-            delete in->branchLabelTags;
-            in->branchLabelTags = 0;
+            delete streamInstruction->branchLabelTags;
+            streamInstruction->branchLabelTags = 0;
         }
     }
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
@@ -115,11 +115,11 @@ bool bindDependencies(Program *program)
             }
         }
         if (xin || xout) {
-            for (int i = 0; i != n; i++) {
-                RegPool *rp = pools[i];
-                RegPoolEntry *ext = rp->externalRegister;
+            for (int i = 0; i != hardwarePoolCount; i++) {
+                RegPool *hardwarePool = pools[i];
+                RegPoolEntry *ext = hardwarePool->externalRegister;
                 if (!ext) {
-                    reportError("failed to get EXT for pool %s\n", rp->poolName);
+                    reportError("failed to get EXT for pool %s\n", hardwarePool->poolName);
                     return false;
                 }
                 if (xin && !addXinFor(stream, ext)) {
@@ -130,13 +130,13 @@ bool bindDependencies(Program *program)
                     reportError("failed to add external output to %s\n", stream->streamName());
                     return false;
                 }
-                for (RegPoolEntry *e = rp->virtualHead; e; e = e->next) {
-                    if (xin && !addXinFor(stream, e)) {
+                for (RegPoolEntry *virtualRegister = hardwarePool->virtualHead; virtualRegister; virtualRegister = virtualRegister->next) {
+                    if (xin && !addXinFor(stream, virtualRegister)) {
                         reportError("failed to add external input to %s\n", stream->streamName());
                         return false;
                     }
                     // the original calls addXinFor here too
-                    if (xout && !addXinFor(stream, e)) {
+                    if (xout && !addXinFor(stream, virtualRegister)) {
                         reportError("failed to add external output to %s\n", stream->streamName());
                         return false;
                     }
@@ -154,37 +154,37 @@ Instr *addXinFor(instStream *stream, RegPoolEntry *registerEntry)
         reportError("addXinFor - cant get xin_hw\n");
         return 0;
     }
-    Instr *in = new Instr(info);
-    if (!in) {
+    Instr *newInputInstruction = new Instr(info);
+    if (!newInputInstruction) {
         reportError("failed to make xin instruction\n");
         return 0;
     }
-    if (in->operandCount != 1) {
+    if (newInputInstruction->operandCount != 1) {
         reportError("xin doesn't have just one operand\n");
-        delete in;
+        delete newInputInstruction;
         return 0;
     }
     int serial = nextInstructionSerial++;
-    in->instructionSerial = serial;
-    Operand *op = &in->operands[0];
-    if (op->operandKind != 0x37) {
+    newInputInstruction->instructionSerial = serial;
+    Operand *externalInputOperand = &newInputInstruction->operands[0];
+    if (externalInputOperand->operandKind != 0x37) {
         reportError("xin wasn't external\n");
-        delete in;
+        delete newInputInstruction;
         return 0;
     }
-    op->assignedRegister = registerEntry;
-    op->componentMask = (1 << registerEntry->partCount) - 1;
+    externalInputOperand->assignedRegister = registerEntry;
+    externalInputOperand->componentMask = (1 << registerEntry->partCount) - 1;
     workTable *scheduleTable = stream->getTable();
     if (!scheduleTable) {
         reportError("can't get work table\n");
-        delete in;
+        delete newInputInstruction;
         return 0;
     }
-    if (!scheduleTable->logAddLinear_Tail(in)) {
+    if (!scheduleTable->logAddLinear_Tail(newInputInstruction)) {
         reportError("failed to an external input to the tail of list\n");
         return 0;
     }
-    return in;
+    return newInputInstruction;
 }
 
 Instr *addXoutFor(instStream *stream, RegPoolEntry *registerEntry)
@@ -194,37 +194,37 @@ Instr *addXoutFor(instStream *stream, RegPoolEntry *registerEntry)
         reportError("addxoutFor - can't get xout_hw\n");
         return 0;
     }
-    Instr *in = new Instr(info);
-    if (!in) {
+    Instr *newOutputInstruction = new Instr(info);
+    if (!newOutputInstruction) {
         reportError("failed to make xout instruction\n");
         return 0;
     }
-    if (in->operandCount != 1) {
+    if (newOutputInstruction->operandCount != 1) {
         reportError("xout doesn't have just one operand\n");
-        delete in;
+        delete newOutputInstruction;
         return 0;
     }
     int serial = nextInstructionSerial++;
-    in->instructionSerial = serial;
-    Operand *op = &in->operands[0];
-    if (op->operandKind != 0x37) {
+    newOutputInstruction->instructionSerial = serial;
+    Operand *externalOutputOperand = &newOutputInstruction->operands[0];
+    if (externalOutputOperand->operandKind != 0x37) {
         reportError("xout wasn't external\n");
-        delete in;
+        delete newOutputInstruction;
         return 0;
     }
-    op->assignedRegister = registerEntry;
-    op->componentMask = (1 << registerEntry->partCount) - 1;
+    externalOutputOperand->assignedRegister = registerEntry;
+    externalOutputOperand->componentMask = (1 << registerEntry->partCount) - 1;
     workTable *scheduleTable = stream->getTable();
     if (!scheduleTable) {
         reportError("can't get work table\n");
-        delete in;
+        delete newOutputInstruction;
         return 0;
     }
-    if (!scheduleTable->logAddLinear_Head(in)) {
+    if (!scheduleTable->logAddLinear_Head(newOutputInstruction)) {
         reportError("failed to an external output to the head of list\n");
         return 0;
     }
-    return in;
+    return newOutputInstruction;
 }
 
 bool addNewOperand(Instr *in, RegPoolEntry *registerEntry, int bits, int kind, int dir, int flag)
@@ -249,9 +249,9 @@ bool addNewOperand(Instr *in, RegPoolEntry *registerEntry, int bits, int kind, i
     unsigned char n = in->operandCount;
     int i;
     for (i = 0; i < n; i++) {
-        Operand *op = &in->operands[i];
-        if (op->isImplicit && op->direction == dir && registerEntry == op->assignedRegister) {
-            op->componentMask |= bits;
+        Operand *existingOperand = &in->operands[i];
+        if (existingOperand->isImplicit && existingOperand->direction == dir && registerEntry == existingOperand->assignedRegister) {
+            existingOperand->componentMask |= bits;
             return true;
         }
     }
@@ -259,18 +259,18 @@ bool addNewOperand(Instr *in, RegPoolEntry *registerEntry, int bits, int kind, i
         reportError("ran out of operand space for add new output\n");
         return false;
     }
-    Operand *op = &in->operands[n];
-    op->operandIndex = n;
-    op->externalBlockModeFlag = 1;
-    op->direction = dir;
-    op->isImplicit = 1;
-    op->immediateDataType = 0;
-    op->pairedOperandIndexPlusOne = 0;
-    op->outputLatency = flag;
-    op->additionalLatency = 0;
-    op->assignedRegister = registerEntry;
-    op->componentMask = bits;
-    op->operandKind = kind;
+    Operand *newOperand = &in->operands[n];
+    newOperand->operandIndex = n;
+    newOperand->externalBlockModeFlag = 1;
+    newOperand->direction = dir;
+    newOperand->isImplicit = 1;
+    newOperand->immediateDataType = 0;
+    newOperand->pairedOperandIndexPlusOne = 0;
+    newOperand->outputLatency = flag;
+    newOperand->additionalLatency = 0;
+    newOperand->assignedRegister = registerEntry;
+    newOperand->componentMask = bits;
+    newOperand->operandKind = kind;
     in->operandCount++;
     return in->validateOperands();
 }

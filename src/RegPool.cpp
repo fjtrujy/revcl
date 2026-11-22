@@ -44,9 +44,9 @@ RegPool::~RegPool()
 {
     RegPoolEntry* registerEntry = virtualHead;
     while (registerEntry) {
-        RegPoolEntry* n = registerEntry->next;
+        RegPoolEntry* nextRegisterEntry = registerEntry->next;
         delete registerEntry;
-        registerEntry = n;
+        registerEntry = nextRegisterEntry;
     }
     virtualHead = virtualTail = 0;
     virtualCount = 0;
@@ -136,7 +136,7 @@ void RegPool::Dump()
                 ;
         }
         if (virtualPartCount) {
-            for (RegPoolEntry* p = virtualHead; p; p = p->next)
+            for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
                 ;
         }
     }
@@ -167,8 +167,8 @@ bool RegPool::resetPoolThroughputState()
         RegPoolEntry* registerEntry = registerEntries;
         for (int entryIndex = 0; entryIndex != entryCount; entryIndex++, registerEntry++)
             registerEntry->resetRegisterThroughputState();
-        for (RegPoolEntry* p = virtualHead; p; p = p->next)
-            p->resetRegisterThroughputState();
+        for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
+            virtualRegister->resetRegisterThroughputState();
     }
     return true;
 }
@@ -179,8 +179,8 @@ bool RegPool::resetPoolPartTiming()
         RegPoolEntry* registerEntry = registerEntries;
         for (int entryIndex = 0; entryIndex != entryCount; entryIndex++, registerEntry++)
             registerEntry->resetRegisterPartTiming();
-        for (RegPoolEntry* p = virtualHead; p; p = p->next)
-            p->resetRegisterPartTiming();
+        for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
+            virtualRegister->resetRegisterPartTiming();
     }
     return true;
 }
@@ -192,8 +192,8 @@ bool RegPool::resetPoolFlowState()
         for (int entryIndex = 0; entryIndex != entryCount; entryIndex++, registerEntry++)
             registerEntry->resetRegisterFlowState();
     }
-    for (RegPoolEntry* p = virtualHead; p; p = p->next)
-        p->resetRegisterFlowState();
+    for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
+        virtualRegister->resetRegisterFlowState();
     return true;
 }
 
@@ -203,19 +203,19 @@ bool RegPool::clearPoolPartPayloads()
         RegPoolEntry* registerEntry = registerEntries;
         for (int entryIndex = 0; entryIndex != entryCount; entryIndex++, registerEntry++)
             registerEntry->clearRegisterPartPayloads();
-        for (RegPoolEntry* p = virtualHead; p; p = p->next)
-            p->clearRegisterPartPayloads();
+        for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
+            virtualRegister->clearRegisterPartPayloads();
     }
     return true;
 }
 
 bool RegPool::clearVirtualRegistersForParse()
 {
-    RegPoolEntry* p = virtualHead;
-    while (p) {
-        RegPoolEntry* n = p->next;
-        delete p;
-        p = n;
+    RegPoolEntry* virtualRegister = virtualHead;
+    while (virtualRegister) {
+        RegPoolEntry* nextVirtualRegister = virtualRegister->next;
+        delete virtualRegister;
+        virtualRegister = nextVirtualRegister;
     }
     virtualHead = virtualTail = 0;
     virtualCount = 0;
@@ -286,9 +286,9 @@ bool RegPool::cycleRegisters(bool flag)
             reportError("cycle: fail for %s\n", registerEntry->registerName());
             return false;
         }
-    for (RegPoolEntry* p = virtualHead; p; p = p->next)
-        if (!p->cycleRegisterParts(flag)) {
-            reportError("cycle: fail for %s\n", p->registerName());
+    for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
+        if (!virtualRegister->cycleRegisterParts(flag)) {
+            reportError("cycle: fail for %s\n", virtualRegister->registerName());
             return false;
         }
     return true;
@@ -298,9 +298,9 @@ bool RegPool::clearVirtualRegisters()
 {
     RegPoolEntry* registerEntry = virtualHead;
     while (registerEntry) {
-        RegPoolEntry* n = registerEntry->next;
+        RegPoolEntry* nextRegisterEntry = registerEntry->next;
         delete registerEntry;
-        registerEntry = n;
+        registerEntry = nextRegisterEntry;
     }
     virtualHead = virtualTail = 0;
     virtualCount = 0;
@@ -408,8 +408,8 @@ bool RegPool::clearRegisterAssignmentsFirstPass()
         for (int entryIndex = 0; entryIndex != entryCount; entryIndex++, registerEntry++)
             registerEntry->assignedPhysicalRegister = 0;
     }
-    for (RegPoolEntry* p = virtualHead; p; p = p->next)
-        p->assignedPhysicalRegister = 0;
+    for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
+        virtualRegister->assignedPhysicalRegister = 0;
     return true;
 }
 
@@ -420,18 +420,18 @@ bool RegPool::clearRegisterAssignmentsSecondPass()
         for (int entryIndex = 0; entryIndex != entryCount; entryIndex++, registerEntry++)
             registerEntry->assignedPhysicalRegister = 0;
     }
-    for (RegPoolEntry* p = virtualHead; p; p = p->next)
-        p->assignedPhysicalRegister = 0;
+    for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
+        virtualRegister->assignedPhysicalRegister = 0;
     return true;
 }
 
 bool RegPool::resetPoolLocalAllocationState()
 {
-    for (RegPoolEntry* p = virtualHead; p; p = p->next) {
-        if (!p->clearPartPayloadMarkers())
+    for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next) {
+        if (!virtualRegister->clearPartPayloadMarkers())
             goto fail;
-        p->assignedPhysicalRegister = 0;
-        p->assignmentCostTableSize = -1;
+        virtualRegister->assignedPhysicalRegister = 0;
+        virtualRegister->assignmentCostTableSize = -1;
     }
     {
         RegPoolEntry* registerEntry = registerEntries;
@@ -489,8 +489,8 @@ bool RegPool::optReset()
         RegPoolEntry* registerEntry = registerEntries;
         for (int entryIndex = 0; entryIndex != entryCount; entryIndex++, registerEntry++)
             registerEntry->optReset();
-        for (RegPoolEntry* p = virtualHead; p; p = p->next)
-            p->optReset();
+        for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
+            virtualRegister->optReset();
     }
     return true;
 }
@@ -501,8 +501,8 @@ bool RegPool::emitReset()
         RegPoolEntry* registerEntry = registerEntries;
         for (int entryIndex = 0; entryIndex != entryCount; entryIndex++, registerEntry++)
             registerEntry->usedSlotMask = 0;
-        for (RegPoolEntry* p = virtualHead; p; p = p->next)
-            p->usedSlotMask = 0;
+        for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next)
+            virtualRegister->usedSlotMask = 0;
     }
     return true;
 }
@@ -515,71 +515,71 @@ char* RegPool::emitStats(char* buf)
 
 int RegPool::regIndex(int reg)
 {
-    int r = -1;
+    int registerOffset = -1;
     if (registerEntries) {
         reg -= registerEntries->registerIndex;
         if (reg >= 0 && reg < entryCount)
-            r = reg;
+            registerOffset = reg;
     }
-    return r;
+    return registerOffset;
 }
 
 int RegPool::countUsed()
 {
-    int n = 0;
+    int usedRegisterCount = 0;
     if (registerEntries) {
         RegPoolEntry* registerEntry = registerEntries;
         for (int entryIndex = 0; entryIndex != entryCount; entryIndex++, registerEntry++)
             if (registerEntry->usedSlotMask)
-                n++;
+                usedRegisterCount++;
     }
-    return n;
+    return usedRegisterCount;
 }
 
 int RegPool::countMarkedPhysicalRegisters()
 {
-    int n = 0;
+    int enabledRegisterCount = 0;
     if (registerEntries) {
         for (int registerIndex = 0; registerIndex != entryCount; registerIndex++)
             if (registerEntries[registerIndex].enabledPhysicalRegister)
-                n++;
+                enabledRegisterCount++;
     }
-    return n;
+    return enabledRegisterCount;
 }
 
 int RegPoolEntry::gatherInflight(ol_s** out)
 {
-    int n = 0;
+    int inflightLocationCount = 0;
     int partIndex;
     for (partIndex = 0; partIndex != partCount; partIndex++) {
         rPart* registerPart = getRP(partIndex);
         ol_s* location = &registerPart->currentLocation;
         if (location->cycleOffset)
-            out[n++] = location;
+            out[inflightLocationCount++] = location;
         int j;
-        ol_s* p;
-        for (j = 0, p = registerPart->pendingLocations; j != 4; j++, p++)
-            if (p->cycleOffset)
-                out[n++] = p;
+        ol_s* pendingLocation;
+        for (j = 0, pendingLocation = registerPart->pendingLocations; j != 4; j++, pendingLocation++)
+            if (pendingLocation->cycleOffset)
+                out[inflightLocationCount++] = pendingLocation;
     }
-    return n;
+    return inflightLocationCount;
 }
 
 int RegPool::gatherInflight(ol_s** out)
 {
-    int n = 0;
+    int inflightLocationCount = 0;
     for (int registerIndex = 0; registerIndex != entryCount; registerIndex++) {
         RegPoolEntry* registerEntry = &registerEntries[registerIndex];
-        int r = registerEntry->gatherInflight(out + n);
+        int appendedLocationCount = registerEntry->gatherInflight(out + inflightLocationCount);
+        if (appendedLocationCount < 0)
+            return -1;
+        inflightLocationCount += appendedLocationCount;
+    }
+    for (RegPoolEntry* virtualRegister = virtualHead; virtualRegister; virtualRegister = virtualRegister->next) {
+        int r = virtualRegister->gatherInflight(out + inflightLocationCount);
         if (r < 0)
             return -1;
-        n += r;
+        inflightLocationCount += r;
     }
-    for (RegPoolEntry* p = virtualHead; p; p = p->next) {
-        int r = p->gatherInflight(out + n);
-        if (r < 0)
-            return -1;
-        n += r;
-    }
-    return n;
+    return inflightLocationCount;
 }

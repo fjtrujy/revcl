@@ -64,7 +64,7 @@ bool clearWatchdog()
 int createTemporaryFile(const char *name, char *pathOut)
 {
     char buf[1024];
-    int fd = -1;
+    int temporaryDescriptor = -1;
 
     if (!pathOut) {
         reportError("OS_mkTemp - passed null output ptr\n");
@@ -80,14 +80,14 @@ int createTemporaryFile(const char *name, char *pathOut)
         return -1;
     }
     sprintf(buf, "/tmp/%s.XXXXXX", name);
-    fd = mkstemp(buf);
-    if (fd < 0) {
+    temporaryDescriptor = mkstemp(buf);
+    if (temporaryDescriptor < 0) {
         reportError("failed to make temp in file\n");
         *pathOut = 0;
         return -1;
     }
     mstrcpy(pathOut, buf);
-    return fd;
+    return temporaryDescriptor;
 }
 
 int OS_End()

@@ -139,7 +139,7 @@ bool mValue::setInt(int newValue)
     return true;
 }
 
-bool mValue::setString(const char *s)
+bool mValue::setString(const char *text)
 {
     if (type == STRING) {
         if (str)
@@ -148,7 +148,7 @@ bool mValue::setString(const char *s)
     }
     type = NONE;
     type = STRING;
-    str = dupString(s);
+    str = dupString(text);
     if (!str) {
         reportError("failed to dup string for set str\n");
         type = NONE;
@@ -157,7 +157,7 @@ bool mValue::setString(const char *s)
     return true;
 }
 
-bool mValue::setString(const char *s, int n)
+bool mValue::setString(const char *text, int maxLength)
 {
     if (type == STRING) {
         if (str)
@@ -165,20 +165,20 @@ bool mValue::setString(const char *s, int n)
         str = 0;
     }
     type = NONE;
-    if (!s)
+    if (!text)
         return false;
     type = STRING;
-    str = new char[n + 1];
+    str = new char[maxLength + 1];
     if (!str) {
         reportError("failed to new chars for set str\n");
         type = NONE;
         return false;
     }
-    const char *sourceCursor = s;
+    const char *sourceCursor = text;
     char *destinationCursor = str;
-    while (n && *sourceCursor) {
+    while (maxLength && *sourceCursor) {
         *destinationCursor++ = *sourceCursor++;
-        n--;
+        maxLength--;
     }
     *destinationCursor = 0;
     return true;

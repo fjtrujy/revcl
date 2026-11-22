@@ -77,15 +77,15 @@ bool resolveProgramImmediateFixups(Program *program, bool init)
 }
 
 
-static inline bool bit0(unsigned char m)
+static inline bool bit0(unsigned char mask)
 {
-    return m & 1;
+    return mask & 1;
 }
 
-static inline bool bit0Clear(unsigned char m)
+static inline bool bit0Clear(unsigned char mask)
 {
-    m ^= 1;
-    return m & 1;
+    mask ^= 1;
+    return mask & 1;
 }
 
 static inline bool hasAaData(Instr *instruction)
@@ -410,7 +410,7 @@ bool resolveInstructionImmediateFixup(Instr *instruction)
         reportError("operand isn't cinput for in fix\n");
         exitAfterCleanup(-1);
     }
-    int ep;
+    int epilogueIndex;
     if (stream->streamSerial) {
         if (instruction->expectedAliasLoopId < 0) {
             reportError("loop, epID<0 for operand in im fixup aaDstMode=%d..epMode=%d\n",
@@ -418,7 +418,7 @@ bool resolveInstructionImmediateFixup(Instr *instruction)
             instruction->dumpOperandDiagnostics(false);
             exitAfterCleanup(-1);
         }
-        ep = instruction->expectedAliasLoopId;
+        epilogueIndex = instruction->expectedAliasLoopId;
     } else {
         if (instruction->expectedAliasLoopId >= 0) {
             reportError("nonloop, epID>=0 for operand in im fixup aaDstmode=%d..epMode=%d\n",
@@ -426,10 +426,10 @@ bool resolveInstructionImmediateFixup(Instr *instruction)
             instruction->dumpOperandDiagnostics(false);
             exitAfterCleanup(-1);
         }
-        ep = 0;
+        epilogueIndex = 0;
     }
     if (instruction->addressAliasDirection == 1)
-        ep--;
+        epilogueIndex--;
     int lid;
     if (stream->streamSerial) {
         olList *oll = &operand->parts[0].operandLocations;
@@ -443,8 +443,8 @@ bool resolveInstructionImmediateFixup(Instr *instruction)
         }
     } else
         lid = operand->externalPartMask ? -1 : 0;
-    if (ep != lid) {
-    int diff = ep - lid;
+    if (epilogueIndex != lid) {
+    int diff = epilogueIndex - lid;
     int dir;
     if (diff < 0) {
         dir = -1;
@@ -470,13 +470,13 @@ bool resolveInstructionImmediateFixup(Instr *instruction)
     }
     if (dir * mul < 0)
         diff = -diff;
-    int r = maddImmediate(&instruction->operands[instruction->addressAliasOperandIndex], &instruction->addressImmediateValue, diff);
-    if (r < 0) {
+    int fixupResult = maddImmediate(&instruction->operands[instruction->addressAliasOperandIndex], &instruction->addressImmediateValue, diff);
+    if (fixupResult < 0) {
         reportError("failed to madd immediates\n");
         instruction->leDump(instruction->addressAliasOperandIndex);
         exitAfterCleanup(-1);
     }
-    if (r == 1) {
+    if (fixupResult == 1) {
         reportError("ran out of bits for immfixup\n");
         return false;
     }

@@ -22,15 +22,15 @@ int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
                     OpSlot *slot = &operand->parts[partIndex];
                     OperandLock *par = slot->getParent();
                     if (slot->operandStatusCode != 2) {
-                        int s = par->linearRow;
-                        if ((short)s >= 0) {
-                            int t = s + par->issueLatency + slot->issueLatency;
-                            if (t >= line) {
-                                line = t;
+                        int producerRow = par->linearRow;
+                        if ((short)producerRow >= 0) {
+                            int readyRow = producerRow + par->issueLatency + slot->issueLatency;
+                            if (readyRow >= line) {
+                                line = readyRow;
                                 if (operand->externalBlockModeFlag && !operand->additionalLatency)
-                                    thru = t;
+                                    thru = readyRow;
                             }
-                            if (t > iline) {
+                            if (readyRow > iline) {
                                 reportError("ln>iline.. \n");
                                 slot->print();
                                 exitAfterCleanup(-1);
@@ -47,16 +47,16 @@ int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
                     OpSlot *slot = &operand->parts[p];
                     OperandLock *operandLock = slot->ownerLockList->sortedOutputLocks;
                     while (operandLock && operandLock != slot) {
-                        int s = operandLock->linearRow;
-                        if (s > iline) {
+                        int outputLockRow = operandLock->linearRow;
+                        if (outputLockRow > iline) {
                             reportError("sorted list corrupted?\n");
                             exitAfterCleanup(-1);
                         }
-                        if (s >= 0) {
-                            int t = s + operandLock->throughputSpacing;
-                            if (t >= line)
-                                line = thru = t;
-                            if (t > iline) {
+                        if (outputLockRow >= 0) {
+                            int throughputReadyRow = outputLockRow + operandLock->throughputSpacing;
+                            if (throughputReadyRow >= line)
+                                line = thru = throughputReadyRow;
+                            if (throughputReadyRow > iline) {
                                 reportError("ln>iline for thru case\n");
                                 exitAfterCleanup(-1);
                             }

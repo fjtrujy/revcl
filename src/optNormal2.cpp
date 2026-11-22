@@ -15,25 +15,25 @@ bool optNormal2(workTable *scheduleTable, wrangleCand *candidate)
     int bestD = 0x7fffffff;
     for (; instruction; instruction = instruction->nextMoveInstruction) {
         normal2RegCost(instruction);
-        int d = instruction->schedulingStatistics.reverseLatencyDepth - instruction->candidateAttemptCount;
-        if (d > bestA) {
+        int reverseLatencyScore = instruction->schedulingStatistics.reverseLatencyDepth - instruction->candidateAttemptCount;
+        if (reverseLatencyScore > bestA) {
             best = instruction;
-            bestA = d;
+            bestA = reverseLatencyScore;
             bestB = -instruction->linearOrderIndex;
             bestC = instruction->schedulingStatistics.reverseLatencyDepth;
-        } else if (d == bestA) {
-            int e = -instruction->linearOrderIndex;
-            if (e > bestB) {
-                bestB = e;
+        } else if (reverseLatencyScore == bestA) {
+            int linearOrderScore = -instruction->linearOrderIndex;
+            if (linearOrderScore > bestB) {
+                bestB = linearOrderScore;
                 bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                 best = instruction;
-            } else if (e == bestB) {
-                int f = instruction->candidateBaseRow + (instruction->candidateAttemptCount >> 2);
-                if (f < bestD) {
-                    bestD = f;
+            } else if (linearOrderScore == bestB) {
+                int candidatePlacementCost = instruction->candidateBaseRow + (instruction->candidateAttemptCount >> 2);
+                if (candidatePlacementCost < bestD) {
+                    bestD = candidatePlacementCost;
                     bestC = instruction->schedulingStatistics.reverseLatencyDepth;
                     best = instruction;
-                } else if (f == bestD && instruction->schedulingStatistics.reverseDependencyHeight > bestC) {
+                } else if (candidatePlacementCost == bestD && instruction->schedulingStatistics.reverseDependencyHeight > bestC) {
                     bestC = instruction->schedulingStatistics.reverseDependencyHeight;
                     best = instruction;
                 }

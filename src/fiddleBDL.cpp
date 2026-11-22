@@ -43,11 +43,11 @@ bool fiddleBDL(workTable *scheduleTable)
             goto done;
 
         // reduceExt
-        Instr *br = scheduleTable->getBranch();
+        Instr *branchInstruction = scheduleTable->getBranch();
         int extlen = scheduleTable->rangeEnd - scheduleTable->rangeStart;
-        if (extlen <= 2 || !br)
+        if (extlen <= 2 || !branchInstruction)
             goto done;
-        short m = br->externalInputConstraint < br->externalInputPairedConstraint ? br->externalInputPairedConstraint : br->externalInputConstraint;
+        short m = branchInstruction->externalInputConstraint < branchInstruction->externalInputPairedConstraint ? branchInstruction->externalInputPairedConstraint : branchInstruction->externalInputConstraint;
         if (m > extlen - 3)
             goto done;
         wtRow *last = scheduleTable->getRowByIndex(scheduleTable->rangeEnd - 1);
@@ -78,19 +78,19 @@ bool fiddleBDL(workTable *scheduleTable)
             row -= 2;
             posB.setRow(row);
             bool ok = true;
-            if (br != brow->entries[1].instruction) {
+            if (branchInstruction != brow->entries[1].instruction) {
                 reportError(fiddleBranchPosError);
                 return false;
             }
             Instr *prev = prow->entries[1].instruction;
-            if (writesInputRegisterOf(prev, br))
+            if (writesInputRegisterOf(prev, branchInstruction))
                 return true;
 
             if (prev && !scheduleTable->takeOut(prev)) {
                 reportError("failed to takeout in_p\n");
                 return false;
             }
-            if (checkInstructionPlacementConstraints(scheduleTable, br, &posP))
+            if (checkInstructionPlacementConstraints(scheduleTable, branchInstruction, &posP))
                 ok = false;
             if (prev) {
                 if (!moveLocks(prev, &posP)) {
@@ -106,7 +106,7 @@ bool fiddleBDL(workTable *scheduleTable)
                 goto success;
 
             if (prev) {
-                if (!scheduleTable->takeOut(br)) {
+                if (!scheduleTable->takeOut(branchInstruction)) {
                     reportError("failed to takeout in_b\n");
                     return false;
                 }
@@ -115,11 +115,11 @@ bool fiddleBDL(workTable *scheduleTable)
                 int m2 = prev->externalOutputConstraint < prev->externalOutputPairedConstraint ? prev->externalOutputPairedConstraint : prev->externalOutputConstraint;
                 if ((short)m2)
                     ok = false;
-                if (!moveLocks(br, &posB)) {
+                if (!moveLocks(branchInstruction, &posB)) {
                     reportError("failed to undo branch\n");
                     return false;
                 }
-                if (!scheduleTable->putIn(br)) {
+                if (!scheduleTable->putIn(branchInstruction)) {
                     reportError("failed to put branch back in\n");
                     return false;
                 }
@@ -127,7 +127,7 @@ bool fiddleBDL(workTable *scheduleTable)
             if (!ok)
                 goto success;
 
-            if (!scheduleTable->takeOut(br)) {
+            if (!scheduleTable->takeOut(branchInstruction)) {
                 reportError("failed to takeout in_b\n");
                 return false;
             }
@@ -135,7 +135,7 @@ bool fiddleBDL(workTable *scheduleTable)
                 reportError("failed to takeout in_p\n");
                 return false;
             }
-            if (!moveLocks(br, &posP)) {
+            if (!moveLocks(branchInstruction, &posP)) {
                 reportError(fiddleMoveBranchError);
                 return false;
             }
@@ -149,7 +149,7 @@ bool fiddleBDL(workTable *scheduleTable)
                     return false;
                 }
             }
-            if (!scheduleTable->putIn(br)) {
+            if (!scheduleTable->putIn(branchInstruction)) {
                 reportError("failed to put branch back in\n");
                 return false;
             }

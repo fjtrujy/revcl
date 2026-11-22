@@ -12,15 +12,15 @@ bool Instr::patchBranchLatencies()
         if (!(branchFlags & 4))
             continue;
         for (ol_s *location = operand->parts[0].operandLocations.head; location; location = location->next) {
-            Instr *in = location->instruction;
+            Instr *branchInstruction = location->instruction;
             bool found = false;
-            if (in->ramAccessType) {
+            if (branchInstruction->ramAccessType) {
                 int c = location->operandIndex;
                 if ((char)c == 0)
                     continue;
             }
-            for (int j = 0; j != in->operandCount; j++) {
-                RegPoolEntry *registerEntry = registerOperand(&in->operands[j], 1);
+            for (int j = 0; j != branchInstruction->operandCount; j++) {
+                RegPoolEntry *registerEntry = registerOperand(&branchInstruction->operands[j], 1);
                 if (registerEntry && (unsigned)(registerEntry->registerIndex - 54) <= 5) {
                     found = true;
                     break;
@@ -37,12 +37,12 @@ bool Instr::patchBranchLatencies()
 
 int Instr::simplifyBranch()
 {
-    int id, target;
+    int opcodeId, target;
     if (!opcodeInfo)
         return 0;
     target = -1;
-    id = getOpcodeId(opcodeInfo);
-    if (id < 0) {
+    opcodeId = getOpcodeId(opcodeInfo);
+    if (opcodeId < 0) {
         reportError("vpu: fixup branch - iUID<0\n");
         return -1;
     }
@@ -55,20 +55,20 @@ int Instr::simplifyBranch()
         if (!registerEntry)
             return -1;
         if (registerEntry->registerIndex == 0x20) {
-            if (id == 0xa8)
+            if (opcodeId == 0xa8)
                 return 0;
-            if (id == 0xa9)
+            if (opcodeId == 0xa9)
                 target = 1;
-            if (id == 0xaa)
+            if (opcodeId == 0xaa)
                 return 0;
-            if (id == 0xab)
+            if (opcodeId == 0xab)
                 target = 1;
         }
     }
     if (operandCount == 3 && operands[0].assignedRegister == operands[1].assignedRegister) {
-        if (id == 0xac)
+        if (opcodeId == 0xac)
             target = 2;
-        if (id == 0xad)
+        if (opcodeId == 0xad)
             return 0;
     }
     if (target > 0) {

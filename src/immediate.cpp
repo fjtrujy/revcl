@@ -11,17 +11,17 @@ extern const char evalImmediateError[];
 extern const char parseImmediateWarn[];
 extern const char maddImmediateInputError[];
 
-const char *immediateTypeName(unsigned char t)
+const char *immediateTypeName(unsigned char immediateFlags)
 {
-    return immediateValueTypeName(decodeImmediateCategory(t));
+    return immediateValueTypeName(decodeImmediateCategory(immediateFlags));
 }
 
 bool parseImmediate(const char *immediateText, unsigned char type, mValue *expressionValue)
 {
     expressionValue->clear();
     parseFloatImmediateMode = (type == 0x40);
-    int t = decodeImmediateCategory(type);
-    if (t == 4) {
+    int immediateCategory = decodeImmediateCategory(type);
+    if (immediateCategory == 4) {
         parseFloatImmediateMode = false;
         return expressionValue->setString(immediateText);
     }
@@ -29,19 +29,19 @@ bool parseImmediate(const char *immediateText, unsigned char type, mValue *expre
     if (!tree.evalExp(immediateText)) {
         reportError(parseImmediateError, immediateText);
     } else {
-        int n = tree.countUnknownExpressionSymbols();
-        if (n < 0) {
+        int unknownSymbolCount = tree.countUnknownExpressionSymbols();
+        if (unknownSymbolCount < 0) {
             reportWarning(parseImmediateWarn, immediateText);
         } else {
-            if (n != 0) {
+            if (unknownSymbolCount != 0) {
                 if (!expressionValue->setString(immediateText)) {
                     reportError("failed to set literal\n");
                     return false;
                 }
             } else {
                 expressionValue->dump();
-                if (!tree.evaluate(expressionValue, t)) {
-                    reportError(evalImmediateError, immediateText, immediateValueTypeName(t));
+                if (!tree.evaluate(expressionValue, immediateCategory)) {
+                    reportError(evalImmediateError, immediateText, immediateValueTypeName(immediateCategory));
                     goto fail;
                 }
             }
@@ -54,9 +54,9 @@ fail:
     return false;
 }
 
-int maddImmediate(Operand *const op, mValue *expressionValue, int n)
+int maddImmediate(Operand *const operand, mValue *expressionValue, int n)
 {
-    if (!op->immediateValue.isValid()) {
+    if (!operand->immediateValue.isValid()) {
         reportError("madd immediate- ximm invalid\n");
         return -1;
     }
@@ -64,17 +64,17 @@ int maddImmediate(Operand *const op, mValue *expressionValue, int n)
         reportError(maddImmediateInputError);
         return 0;
     }
-    int r = 0;
-    if (expressionValue->isInt() && op->immediateValue.isInt()) {
-        int a = 0;
-        int b = 0;
-        if (!op->immediateValue.getInt(&a) || !expressionValue->getInt(&b)) {
+    int arithmeticResult = 0;
+    if (expressionValue->isInt() && operand->immediateValue.isInt()) {
+        int operandValue = 0;
+        int sourceValue = 0;
+        if (!operand->immediateValue.getInt(&operandValue) || !expressionValue->getInt(&sourceValue)) {
             reportError("failed to get integer values\n");
             return -1;
         }
-        op->immediateValue.setInt(a + b * n);
+        operand->immediateValue.setInt(operandValue + sourceValue * n);
     } else {
-        char *operandImmediateText = op->immediateValue.asChars();
+        char *operandImmediateText = operand->immediateValue.asChars();
         char *sourceImmediateText = expressionValue->asChars();
         if (!operandImmediateText || !sourceImmediateText) {
             reportError("failed to get chars\n");
@@ -82,8 +82,8 @@ int maddImmediate(Operand *const op, mValue *expressionValue, int n)
         }
         char buf[1024];
         formatIntoBuffer(buf, "(%s)+((%s)*%d)", operandImmediateText, sourceImmediateText, n);
-        op->immediateValue.setString(buf);
-        r = 2;
+        operand->immediateValue.setString(buf);
+        arithmeticResult = 2;
     }
-    return r;
+    return arithmeticResult;
 }

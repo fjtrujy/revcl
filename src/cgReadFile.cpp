@@ -24,19 +24,19 @@ char *readFileIntoBuffer(const char *path, int *len, bool nulTerm)
     bool ok = false;
     char *buf = 0;
     int size = -1;
-    int fd = open(path, O_RDONLY);
+    int fileDescriptor = open(path, O_RDONLY);
 
-    if (fd == -1) {
+    if (fileDescriptor == -1) {
         printf("cgReadFile: failed to open file '%s'\n", path);
     } else {
-        size = lseek(fd, 0, SEEK_END);
-        lseek(fd, 0, SEEK_SET);
+        size = lseek(fileDescriptor, 0, SEEK_END);
+        lseek(fileDescriptor, 0, SEEK_SET);
         int allocSize = size;
         if (nulTerm)
             allocSize = size + 1;
         buf = (char *)malloc(allocSize);
         if (buf) {
-            if (read(fd, buf, size) == size)
+            if (read(fileDescriptor, buf, size) == size)
                 ok = true;
             else
                 printf("cgReadFile: failed to read all of file %s\n", path);
@@ -44,8 +44,8 @@ char *readFileIntoBuffer(const char *path, int *len, bool nulTerm)
         if (nulTerm)
             buf[size] = 0;
     }
-    if (fd != -1)
-        close(fd);
+    if (fileDescriptor != -1)
+        close(fileDescriptor);
     if (!ok) {
         size = -1;
         if (buf)
@@ -57,9 +57,9 @@ char *readFileIntoBuffer(const char *path, int *len, bool nulTerm)
     return buf;
 }
 
-char *readDescriptorIntoBuffer(int fd, int *len, bool nulTerm)
+char *readDescriptorIntoBuffer(int fileDescriptor, int *len, bool nulTerm)
 {
-    int ok = 0;
+    int readSucceeded = 0;
     int used = 0;
     char *buf = (char *)malloc(0x10000);
 
@@ -77,27 +77,27 @@ char *readDescriptorIntoBuffer(int fd, int *len, bool nulTerm)
                 }
                 buf = nbuf;
             }
-            int n = read(fd, buf + used, 0xffff);
-            if (n < 0) {
+            int bytesRead = read(fileDescriptor, buf + used, 0xffff);
+            if (bytesRead < 0) {
                 reportError("read returned <0\n");
                 break;
             }
-            if (n == 0) {
-                ok = 1;
+            if (bytesRead == 0) {
+                readSucceeded = 1;
                 break;
             }
-            used += n;
+            used += bytesRead;
         }
         if (nulTerm && buf)
             buf[used] = 0;
     }
-    if (!ok && buf) {
+    if (!readSucceeded && buf) {
         free(buf);
         buf = 0;
         used = 0;
     }
-    if (fd > 0)
-        close(fd);
+    if (fileDescriptor > 0)
+        close(fileDescriptor);
     if (len)
         *len = used;
     return buf;

@@ -213,10 +213,10 @@ bool LocTag::startsWithDirective()
     return false;
 }
 
-bool LocTag::isCommentToken(int i)
+bool LocTag::isCommentToken(int tokenIndex)
 {
-    if (i >= 0 && i < tokenCount)
-        return tokens[i].inComment != 0;
+    if (tokenIndex >= 0 && tokenIndex < tokenCount)
+        return tokens[tokenIndex].inComment != 0;
     return true;
 }
 
@@ -228,10 +228,10 @@ bool LocTag::hasAssignmentMarker()
     return false;
 }
 
-bool LocTag::probeNonCommentTokenAndReturnFalse(int i)
+bool LocTag::probeNonCommentTokenAndReturnFalse(int tokenIndex)
 {
-    if (!inComment(i))
-        tokenTextAt(i, 0);
+    if (!inComment(tokenIndex))
+        tokenTextAt(tokenIndex, 0);
     return false;
 }
 

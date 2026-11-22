@@ -45,13 +45,13 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             return false;
         }
         decodedLine->labels.clearNodes();
-        Instr *in = decodedLine->instructions[0];
-        if (in && in->syntheticKind) {
-            if (!s->processCmdSynth(in)) {
+        Instr *syntheticInstruction = decodedLine->instructions[0];
+        if (syntheticInstruction && syntheticInstruction->syntheticKind) {
+            if (!s->processCmdSynth(syntheticInstruction)) {
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
                 errorOccurred = !quietDiagnostics;
-                in->dumpOperandDiagnostics(false);
+                syntheticInstruction->dumpOperandDiagnostics(false);
                 errorOccurred = saved;
             }
             continue;
@@ -62,58 +62,58 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             return false;
         }
         row->clearEntries();
-        int n = 0;
+        int instructionCount = 0;
         int valid = 0;
         for (int j = 0; j != 2; j++) {
-            Instr *in = decodedLine->instructions[j];
-            if (!in)
+            Instr *decodedInstruction = decodedLine->instructions[j];
+            if (!decodedInstruction)
                 continue;
-            if (in->syntheticKind) {
+            if (decodedInstruction->syntheticKind) {
                 reportError("encountered a synth instruction in raw mode\n");
                 return false;
             }
             decodedLine->instructions[j] = 0;
-            if (!scheduleTable->logAddLinear_Tail(in)) {
+            if (!scheduleTable->logAddLinear_Tail(decodedInstruction)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
             }
-            short lid = in->parsedLoopId;
+            short lid = decodedInstruction->parsedLoopId;
             if (lid < 0) {
                 reportError("-ve parseLid set\n");
                 return false;
             }
             if (lid) {
-                if (in->isNop()) {
+                if (decodedInstruction->isNop()) {
                     reportUserMessage("loopid set on a nop\n");
-                    in->leDump();
+                    decodedInstruction->leDump();
                     return false;
                 }
                 if (!looped && valid) {
                     reportUserMessage("flow::build - hit a looped vsm instruction - but others before it weren't..%d valid \n", valid);
-                    in->leDump();
+                    decodedInstruction->leDump();
                     return false;
                 }
                 looped = true;
-            } else if (looped && !in->isNop()) {
+            } else if (looped && !decodedInstruction->isNop()) {
                 reportError("flow::build - parse id wasn't set for a supposedly looped instruction.type\n");
-                in->leDump();
+                decodedInstruction->leDump();
                 return false;
             }
-            if (in->getBranchType()) {
+            if (decodedInstruction->getBranchType()) {
                 if (branchRow != -1) {
                     reportError("found more than one branch..in what should be continuous sequence\n");
                     return false;
                 }
-                branchType = in->getBranchType();
+                branchType = decodedInstruction->getBranchType();
                 branchRow = rows;
-                branch = in;
+                branch = decodedInstruction;
             }
-            row->entries[j].instruction = in;
-            in->setOwner((cls_unk30 *)scheduleTable);
+            row->entries[j].instruction = decodedInstruction;
+            decodedInstruction->setOwner((cls_unk30 *)scheduleTable);
             valid++;
-            n++;
+            instructionCount++;
         }
-        if (n) {
+        if (instructionCount) {
             if (checkDispatchEntry(&row->entries[0].instruction)) {
                 reportUserMessage("invalid instruction combination\n");
                 int saved = errorOccurred;
@@ -127,8 +127,8 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
     }
     s->branchType = branchType;
     if (branchRow >= 0) {
-        int d = rows - branchRow - 1;
-        if (d <= 0) {
+        int branchDelayRows = rows - branchRow - 1;
+        if (branchDelayRows <= 0) {
             if (looped) {
                 reportError("in raw_loop mode, vcl expects you to set the branch delay slot!\n");
                 branch->leDump();
@@ -139,7 +139,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             reportUserMessage("for now -this is an error\n");
             return false;
         }
-        if (d > 1) {
+        if (branchDelayRows > 1) {
             reportError("stray branch instruction found in sequence\n");
             branch->leDump();
             return false;
@@ -158,22 +158,22 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             return false;
         }
         for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
-            Instr *in = row->entries[entryIndex].instruction;
-            if (!in)
+            Instr *rowInstruction = row->entries[entryIndex].instruction;
+            if (!rowInstruction)
                 continue;
             int lid, pos;
             if (looped) {
-                lid = in->parsedLoopId - 1;
+                lid = rowInstruction->parsedLoopId - 1;
                 pos = i + rows * lid;
             } else {
                 pos = i;
                 lid = 0;
             }
-            in->parsedLoopId = -1;
+            rowInstruction->parsedLoopId = -1;
             if (lid > maxLid)
                 maxLid = lid;
-            in->position.setInstructionPipe(entryIndex);
-            in->position.setFromLinearRow(pos);
+            rowInstruction->position.setInstructionPipe(entryIndex);
+            rowInstruction->position.setFromLinearRow(pos);
         }
     }
     if (looped && !maxLid) {

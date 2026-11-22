@@ -56,9 +56,9 @@ bool makeLpWork(instStream *stream, int maxSpread)
                             reportError("in_s not set\n");
                             return false;
                         }
-                        int v = src->instructionId + otherOperand->outputLatency + operand->additionalLatency;
-                        if (latest < v)
-                            latest = v;
+                        int latestRequiredRow = src->instructionId + otherOperand->outputLatency + operand->additionalLatency;
+                        if (latest < latestRequiredRow)
+                            latest = latestRequiredRow;
                     }
                 }
             }
@@ -79,9 +79,9 @@ bool makeLpWork(instStream *stream, int maxSpread)
                             reportError("in_s not set\n");
                             return false;
                         }
-                        int v = dst->instructionId - operand->outputLatency - otherOperand->additionalLatency;
-                        if (earliest > v)
-                            earliest = v;
+                        int earliestRequiredRow = dst->instructionId - operand->outputLatency - otherOperand->additionalLatency;
+                        if (earliest > earliestRequiredRow)
+                            earliest = earliestRequiredRow;
                     }
                 }
             }
@@ -96,8 +96,8 @@ bool makeLpWork(instStream *stream, int maxSpread)
     }
     char buf[256];
     for (instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-        int lo = 30000;
-        int hi = 0;
+        int minimumDependencyRow = 30000;
+        int maximumDependencyRow = 0;
         char *outputCursor = buf;
         for (int i = 0; i != instruction->operandCount; i++) {
             Operand *operand = &instruction->operands[i];
@@ -111,13 +111,13 @@ bool makeLpWork(instStream *stream, int maxSpread)
                         ol_s *operandLocation = operand->parts[j].operandLocations.head;
                         if (operandLocation) {
                             Instr *src = operandLocation->instruction;
-                            int d = instruction->instructionId - src->instructionId;
+                            int dependencyDistance = instruction->instructionId - src->instructionId;
                             any = true;
-                            if (d < rlo)
-                                rlo = d;
-                            if (d > rhi)
-                                rhi = d;
-                            outputCursor += formatIntoBuffer(outputCursor, "%3d ", d);
+                            if (dependencyDistance < rlo)
+                                rlo = dependencyDistance;
+                            if (dependencyDistance > rhi)
+                                rhi = dependencyDistance;
+                            outputCursor += formatIntoBuffer(outputCursor, "%3d ", dependencyDistance);
                         } else
                             outputCursor += formatIntoBuffer(outputCursor, "xxx ");
                     } else
@@ -127,15 +127,15 @@ bool makeLpWork(instStream *stream, int maxSpread)
                     outputCursor += formatIntoBuffer(outputCursor, "[%d %d] (%d) ", rlo, rhi, rhi - rlo);
                     if (rhi - rlo > maxSpread)
                         outputCursor += formatIntoBuffer(outputCursor, "!!!");
-                    if (rlo < lo)
-                        lo = rlo;
-                    if (rhi > hi)
-                        hi = rhi;
+                    if (rlo < minimumDependencyRow)
+                        minimumDependencyRow = rlo;
+                    if (rhi > maximumDependencyRow)
+                        maximumDependencyRow = rhi;
                 }
             }
         }
-        outputCursor += formatIntoBuffer(outputCursor, "    -> %d %d (%d)", lo, hi, hi - lo);
-        if (lo > maxSpread)
+        outputCursor += formatIntoBuffer(outputCursor, "    -> %d %d (%d)", minimumDependencyRow, maximumDependencyRow, maximumDependencyRow - minimumDependencyRow);
+        if (minimumDependencyRow > maxSpread)
             outputCursor += formatIntoBuffer(outputCursor, " ****");
         outputCursor[10] = 0;
     }
@@ -177,7 +177,7 @@ bool lsqChain(workTable *table)
         Instr *list[1024];
         Instr *instruction = table->linearInstructions.head;
         reportInfo("lsqi- scan %s\n", reg->registerName());
-        int n = 0;
+        int chainedInstructionCount = 0;
         bool bad = false;
         bool ok = true;
         for (; instruction; instruction = instruction->linearLink.nextInstruction) {
@@ -187,13 +187,13 @@ bool lsqChain(workTable *table)
                     ok = false;
                     break;
                 }
-                list[n++] = instruction;
+                list[chainedInstructionCount++] = instruction;
             }
             if (instruction->inputMaskForRegister(reg, 0xff)
                 && !(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4))
                 bad = true;
         }
-        if (!ok || n <= 1)
+        if (!ok || chainedInstructionCount <= 1)
             continue;
         reportInfo("lsChain for %s\n", reg->registerName());
         Operand *src = &list[0]->operands[1];
@@ -202,7 +202,7 @@ bool lsqChain(workTable *table)
             abortAfterError();
         }
         int total = 0;
-        for (int i = 0; i != n; i++) {
+        for (int i = 0; i != chainedInstructionCount; i++) {
             Instr *instruction = list[i];
             int opc = instruction->opcodeId();
             int delta = 0;
@@ -230,23 +230,23 @@ bool lsqChain(workTable *table)
             total = -total;
         } else
             opcodeInfo = getOpcodeInfoById(0x6e);
-        Instr *ni = new Instr(opcodeInfo);
-        if (!ni) {
+        Instr *newInstruction = new Instr(opcodeInfo);
+        if (!newInstruction) {
             reportError(lsqChainNewInstrError);
             return false;
         }
-        ni->operands[0].assignedRegister = reg;
-        ni->operands[0].externalPartMask = 1;
-        ni->operands[0].componentMask = 1;
-        ni->operands[1].assignedRegister = reg;
-        ni->operands[1].externalPartMask = 1;
-        ni->operands[1].componentMask = 1;
-        ni->operands[2].immediateValue.setInt(total);
-        if (!table->logAddLinear_After(list[n - 1], ni)) {
+        newInstruction->operands[0].assignedRegister = reg;
+        newInstruction->operands[0].externalPartMask = 1;
+        newInstruction->operands[0].componentMask = 1;
+        newInstruction->operands[1].assignedRegister = reg;
+        newInstruction->operands[1].externalPartMask = 1;
+        newInstruction->operands[1].componentMask = 1;
+        newInstruction->operands[2].immediateValue.setInt(total);
+        if (!table->logAddLinear_After(list[chainedInstructionCount - 1], newInstruction)) {
             reportError(lsqChainAddError);
             return false;
         }
-        for (Instr *instruction = ni->linearLink.nextInstruction; instruction; instruction = instruction->linearLink.nextInstruction) {
+        for (Instr *instruction = newInstruction->linearLink.nextInstruction; instruction; instruction = instruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
                 if (operand->assignedRegister != reg)
@@ -256,7 +256,7 @@ bool lsqChain(workTable *table)
                     return false;
                 }
                 operand->parts[0].operandLocations.clear();
-                if (!link_oParts(ni, 0, 0, instruction, operandIndex, 0)) {
+                if (!link_oParts(newInstruction, 0, 0, instruction, operandIndex, 0)) {
                     reportError(lsqChainLinkError);
                     return false;
                 }

@@ -345,21 +345,21 @@ bool AddLinear_After(Block *blk, Instr *after, Instr *instruction)
     return true;
 }
 
-bool equalAsciiCaseInsensitive(char a, char b)
+bool equalAsciiCaseInsensitive(char firstCharacter, char secondCharacter)
 {
-    if (a >= 'a' && a <= 'z')
-        a -= 32;
-    if (b >= 'a' && b <= 'z')
-        b -= 32;
-    return a == b;
+    if (firstCharacter >= 'a' && firstCharacter <= 'z')
+        firstCharacter -= 32;
+    if (secondCharacter >= 'a' && secondCharacter <= 'z')
+        secondCharacter -= 32;
+    return firstCharacter == secondCharacter;
 }
 
-int countSetBits(unsigned int x)
+int countSetBits(unsigned int mask)
 {
     int bitCount = 0;
-    while (x) {
-        bitCount += x & 1;
-        x >>= 1;
+    while (mask) {
+        bitCount += mask & 1;
+        mask >>= 1;
     }
     return bitCount;
 }
@@ -369,20 +369,20 @@ const char *tokenAllowedCharacters =
 const char *identifierAllowedCharacters =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_@";
 
-bool isTokenAlphabetCharacter(char c)
+bool isTokenAlphabetCharacter(char character)
 {
     const char *cursor = tokenAllowedCharacters;
     char matchedChar;
-    while ((matchedChar = *cursor) != 0 && matchedChar != c)
+    while ((matchedChar = *cursor) != 0 && matchedChar != character)
         cursor++;
     return matchedChar != 0;
 }
 
-bool isIdentifierAlphabetCharacter(char c)
+bool isIdentifierAlphabetCharacter(char character)
 {
     const char *cursor = identifierAllowedCharacters;
     char matchedChar;
-    while ((matchedChar = *cursor) != 0 && matchedChar != c)
+    while ((matchedChar = *cursor) != 0 && matchedChar != character)
         cursor++;
     return matchedChar != 0;
 }
@@ -408,41 +408,41 @@ bool asciiCaseEqual(const char *left, const char *right)
     return true;
 }
 
-bool equalExactStrings(const char *a, const char *b)
+bool equalExactStrings(const char *leftText, const char *rightText)
 {
-    if (!a || !b)
+    if (!leftText || !rightText)
         return false;
-    while (*a && *b && *a == *b) {
-        a++;
-        b++;
+    while (*leftText && *rightText && *leftText == *rightText) {
+        leftText++;
+        rightText++;
     }
-    if (*a || *b)
+    if (*leftText || *rightText)
         return false;
     return true;
 }
 
-void removeLastDotSuffix(char *s)
+void removeLastDotSuffix(char *text)
 {
-    char *cursor = s;
-    if (!s || !*s)
+    char *cursor = text;
+    if (!text || !*text)
         return;
     while (*cursor)
         cursor++;
     cursor--;
-    while (cursor != s && *cursor != '.')
+    while (cursor != text && *cursor != '.')
         cursor--;
     if (*cursor == '.')
         *cursor = 0;
 }
 
-void removeTrailingComponentSuffix(char *s)
+void removeTrailingComponentSuffix(char *text)
 {
-    char *cursor = s;
-    if (!s || !*s)
+    char *cursor = text;
+    if (!text || !*text)
         return;
     while (*cursor)
         cursor++;
-    for (--cursor; cursor != s && (*cursor == 'x' || *cursor == 'X' || *cursor == 'y' || *cursor == 'Y' ||
+    for (--cursor; cursor != text && (*cursor == 'x' || *cursor == 'X' || *cursor == 'y' || *cursor == 'Y' ||
                         *cursor == 'z' || *cursor == 'Z' || *cursor == 'w' || *cursor == 'W'); --cursor)
         ;
     cursor[1] = 0;
@@ -450,74 +450,74 @@ void removeTrailingComponentSuffix(char *s)
         *cursor = 0;
 }
 
-char *dupString(const char *s)
+char *dupString(const char *source)
 {
-    if (!s) {
+    if (!source) {
         reportError("dupString: passed null ptr\n");
         return 0;
     }
-    const char *sourceEnd = s;
+    const char *sourceEnd = source;
     while (*sourceEnd)
         sourceEnd++;
-    char *duplicate = new char[sourceEnd - s + 1];
+    char *duplicate = new char[sourceEnd - source + 1];
     if (!duplicate) {
         reportError("dupString: new failed to get ram\n");
         reportError("aborting.. sorry\n");
         exitAfterCleanup(-1);
     }
     char *outputCursor = duplicate;
-    while (*s)
-        *outputCursor++ = *s++;
+    while (*source)
+        *outputCursor++ = *source++;
     *outputCursor = 0;
     return duplicate;
 }
 
-char *dupLabelString(const char *s)
+char *dupLabelString(const char *source)
 {
-    if (!s) {
+    if (!source) {
         reportError("dupLabelString: null ptr input\n");
         return 0;
     }
-    const char *sourceEnd = s;
+    const char *sourceEnd = source;
     while (*sourceEnd)
         sourceEnd++;
-    char *duplicate = new char[sourceEnd - s + 1];
+    char *duplicate = new char[sourceEnd - source + 1];
     if (!duplicate) {
         reportError("dupLabelString: failed to get ram input\n");
         return 0;
     }
     char *outputCursor = duplicate;
-    while (*s && *s != ':')
-        *outputCursor++ = *s++;
+    while (*source && *source != ':')
+        *outputCursor++ = *source++;
     *outputCursor = 0;
     return duplicate;
 }
 
-void clearRawBytes(char *p, int n)
+void clearRawBytes(char *buffer, int byteCount)
 {
-    if (!p) {
+    if (!buffer) {
         reportError("asked to zero memory location 0\n");
         exitAfterCleanup(-1);
     }
-    if (n < 0) {
+    if (byteCount < 0) {
         reportError("asked to zero -ve size\n");
         exitAfterCleanup(-1);
     }
-    char *outputCursor = p;
-    for (; n; n--)
+    char *outputCursor = buffer;
+    for (; byteCount; byteCount--)
         *outputCursor++ = 0;
 }
 
-int mstrlen(const char *s)
+int mstrlen(const char *text)
 {
-    if (!s) {
+    if (!text) {
         reportError("mstrlen passed null ptr\n");
         exitAfterCleanup(-1);
     }
-    const char *stringEnd = s;
+    const char *stringEnd = text;
     while (*stringEnd)
         stringEnd++;
-    return stringEnd - s;
+    return stringEnd - text;
 }
 
 char *mstrcpy(char *dst, const char *src)
@@ -538,25 +538,25 @@ char *mstrcpy(char *dst, const char *src)
     return dst;
 }
 
-char *mprefix_del(const char *a, const char *b)
+char *mprefix_del(const char *firstPart, const char *secondPart)
 {
-    if (!a || !b) {
+    if (!firstPart || !secondPart) {
         reportError("mprefix_del - not str\n");
         return 0;
     }
-    const char *stringEnd = a;
+    const char *stringEnd = firstPart;
     while (*stringEnd)
         stringEnd++;
-    int prefixLength = stringEnd - a;
-    if (!b) {
+    int prefixLength = stringEnd - firstPart;
+    if (!secondPart) {
         reportError("mstrlen passed null ptr\n");
         exitAfterCleanup(-1);
     }
-    stringEnd = b;
+    stringEnd = secondPart;
     while (*stringEnd)
         stringEnd++;
-    char *joinedName = new char[prefixLength + (stringEnd - b) + 2];
-    const char *sourceCursor = a;
+    char *joinedName = new char[prefixLength + (stringEnd - secondPart) + 2];
+    const char *sourceCursor = firstPart;
     char *outputCursor = joinedName;
     if (!joinedName) {
         reportError("failed to get a string\n");
@@ -565,7 +565,7 @@ char *mprefix_del(const char *a, const char *b)
     while (*sourceCursor)
         *outputCursor++ = *sourceCursor++;
     *outputCursor++ = '_';
-    sourceCursor = b;
+    sourceCursor = secondPart;
     while (*sourceCursor)
         *outputCursor++ = *sourceCursor++;
     *outputCursor = 0;
