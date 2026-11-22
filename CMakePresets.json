@@ -1,0 +1,40 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {"major": 3, "minor": 23, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "gcc",
+      "displayName": "Modern GCC (Linux i386)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/tmp/cmake/gcc",
+      "cacheVariables": {"CMAKE_CXX_COMPILER": "g++"}
+    },
+    {
+      "name": "clang",
+      "displayName": "Modern Clang (Linux i386)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/tmp/cmake/clang",
+      "cacheVariables": {"CMAKE_CXX_COMPILER": "clang++"}
+    },
+    {
+      "name": "historical",
+      "displayName": "Historical RH9 GCC 3.2.2 (Docker compiler)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/tmp/cmake/historical",
+      "cacheVariables": {
+        "REVCL_HISTORICAL": "ON",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/rh9.cmake"
+      }
+    }
+  ],
+  "buildPresets": [
+    {"name":"gcc","configurePreset":"gcc","jobs":2},
+    {"name":"clang","configurePreset":"clang","jobs":2},
+    {"name":"historical","configurePreset":"historical","jobs":2}
+  ],
+  "testPresets": [
+    {"name":"gcc","configurePreset":"gcc","output":{"outputOnFailure":true}},
+    {"name":"clang","configurePreset":"clang","output":{"outputOnFailure":true}},
+    {"name":"historical","configurePreset":"historical","output":{"outputOnFailure":true}}
+  ]
+}
