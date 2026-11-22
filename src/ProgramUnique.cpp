@@ -31,8 +31,8 @@ bool Program::doUnique()
                 reportError("alleged branch target immediate wasn't an input\n");
                 exitAfterCleanup(-1);
             }
-            if (op->unk_04 == 0x1b) {
-                mValue *v = &op->unk_1c;
+            if (op->operandKind == 0x1b) {
+                mValue *v = &op->immediateValue;
                 if (v->type != mValue::STRING) {
                     reportError("doUnique: a branch target isn't a literal string\n");
                     return false;

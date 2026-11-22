@@ -20,12 +20,12 @@ bool emuTable(Program *p, workTable *wt)
         reportWarning("emu - passed a null table ptr!\n");
         return true;
     }
-    if (wt->getLoopSize() || wt->unk_3c) {
+    if (wt->getLoopSize() || wt->mainLoopId) {
         reportError("mlid is set, or loop size is set for emu..which is now kinda tricky..\n");
         return false;
     }
     wt->unk_0c = -1;
-    switch (wt->unk_09) {
+    switch (wt->codeModeValue) {
     case 3: {
         int skipped = 0;
         for (int line = wt->getRangeStart(); line != wt->getRangeEnd(); line++) {
@@ -79,7 +79,7 @@ fail:
         break;
     }
     default:
-        const char *modeName = codeModeName(wt->unk_09);
+        const char *modeName = codeModeName(wt->codeModeValue);
         reportError("emu - can't emu table from %s of type %s\n",
                       wt->ownerName(), modeName);
         break;
@@ -114,42 +114,42 @@ bool func_080642ec(Program *p, instStream *s)
         count++;
         for (int op = 0; op != i->operandCount; op++) {
             Operand *o = &i->operands[op];
-            RegPoolEntry *reg = o->unk_18;
+            RegPoolEntry *reg = o->assignedRegister;
             if (!reg)
                 continue;
-            regUse *ru = wt->unk_14.findByRegister(reg);
+            regUse *ru = wt->registerUses.findByRegister(reg);
             if (!ru) {
-                ru = wt->unk_14.AddNewRegRef(reg);
+                ru = wt->registerUses.AddNewRegRef(reg);
                 if (!ru) {
                     reportRegRefFailure();
                     return false;
                 }
             }
             if (isRegisterOperand(o, 2))
-                ru->unk_0f |= o->unk_07;
+                ru->outputMask |= o->componentMask;
             if (isRegisterOperand(o, 1))
-                ru->unk_0e |= o->unk_07;
+                ru->inputMask |= o->componentMask;
             if (isRegisterOperand(o, 2)) {
-                if (o->unk_27) {
+                if (o->externalPartMask) {
                     reportError("operand had xbits set for output!\n");
                     return false;
                 }
             }
-            ru->unk_0c |= o->unk_27;
+            ru->externalInputMask |= o->externalPartMask;
             for (int k = 0; k != reg->partCount; k++) {
-                if ((o->unk_27 >> k) & 1) {
-                    if (ru->unk_15 == -1)
-                        ru->unk_15 = o->unk_0b;
-                    else if (ru->unk_15 != (unsigned char)o->unk_0b)
+                if ((o->externalPartMask >> k) & 1) {
+                    if (ru->externalBlockMode == -1)
+                        ru->externalBlockMode = o->unk_0b;
+                    else if (ru->externalBlockMode != (unsigned char)o->unk_0b)
                         reportWarning("differing block modes for external input for %s..taking first encountered\n",
                                       reg->registerName());
-                    if (!ru->unk_20[k].unk_00.addOperandLocation(i, op, k, false)) {
+                    if (!ru->slots[k].inputLocations.addOperandLocation(i, op, k, false)) {
                         reportError("failed to add oploc user!\n");
                         return false;
                     }
                 }
-                if (((o->unk_07 >> k) & 1) && reg->unk_2c && isRegisterOperand(o, 2)) {
-                    if (!ru->unk_20[k].unk_20.addOperandLocation(i, op, k, false)) {
+                if (((o->componentMask >> k) & 1) && reg->unk_2c && isRegisterOperand(o, 2)) {
+                    if (!ru->slots[k].sourceLocations.addOperandLocation(i, op, k, false)) {
                         reportError("failed to add a local setter for a thruput check\n");
                         reportError("register is %s\n", reg->registerName());
                         return false;
@@ -162,35 +162,35 @@ bool func_080642ec(Program *p, instStream *s)
         reportError("icount mismatch (%d apparently in list, but %d in table?)\n", count, wt->instructionCountsByPipe[2]);
         return false;
     }
-    for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
-        RegPoolEntry *reg = ru->unk_08;
+    for (regUse *ru = wt->registerUses.head; ru; ru = ru->next) {
+        RegPoolEntry *reg = ru->registerEntry;
         if (!reg) {
             reportError("a reg ref had no register!\n");
             return false;
         }
         for (int part = 0; part != reg->partCount; part++) {
-            regUseSlot *slot = &ru->unk_20[part];
-            rPart *rp = &reg->unk_44[part];
-            slot->unk_3c[0] = rp->unk_00[4];
-            slot->unk_3c[1] = rp->unk_00[5];
-            slot->unk_3c[2] = rp->unk_00[6];
-            slot->unk_3c[3] = rp->unk_00[7];
-            slot->unk_3c[4] = rp->unk_00[8];
-            slot->unk_3c[5] = rp->unk_00[9];
-            slot->unk_3c[6] = rp->unk_00[10];
-            slot->unk_3c[7] = rp->unk_00[11];
-            slot->unk_3c[8] = rp->unk_00[12];
-            slot->unk_3c[9] = rp->unk_00[13];
-            slot->unk_3c[10] = rp->unk_00[14];
-            slot->unk_3c[11] = rp->unk_00[15];
-            slot->unk_3c[12] = rp->unk_00[16];
-            slot->unk_34[1] = rp->unk_00[1];
-            slot->unk_34[0] = rp->unk_00[0];
-            slot->unk_34[3] = rp->unk_00[2];
-            slot->unk_34[2] = rp->unk_00[3];
-            if ((ru->unk_0f >> part) & 1) {
-                ol_s *out = &rp->unk_24;
-                if (out->unk_04 && !slot->addOutput(out)) {
+            regUseSlot *slot = &ru->slots[part];
+            rPart *rp = &reg->parts[part];
+            slot->timingValues[0] = rp->unk_00[4];
+            slot->timingValues[1] = rp->unk_00[5];
+            slot->timingValues[2] = rp->unk_00[6];
+            slot->timingValues[3] = rp->unk_00[7];
+            slot->timingValues[4] = rp->unk_00[8];
+            slot->timingValues[5] = rp->unk_00[9];
+            slot->timingValues[6] = rp->unk_00[10];
+            slot->timingValues[7] = rp->unk_00[11];
+            slot->timingValues[8] = rp->unk_00[12];
+            slot->timingValues[9] = rp->unk_00[13];
+            slot->timingValues[10] = rp->unk_00[14];
+            slot->timingValues[11] = rp->unk_00[15];
+            slot->timingValues[12] = rp->unk_00[16];
+            slot->throughputSums[1] = rp->unk_00[1];
+            slot->throughputSums[0] = rp->unk_00[0];
+            slot->throughputSums[3] = rp->unk_00[2];
+            slot->throughputSums[2] = rp->unk_00[3];
+            if ((ru->outputMask >> part) & 1) {
+                ol_s *out = &rp->currentLocation;
+                if (out->instruction && !slot->addOutput(out)) {
                     reportError("failed to add an output to an rrp\n");
                     return false;
                 }
@@ -205,8 +205,8 @@ bool func_080642ec(Program *p, instStream *s)
                         return false;
                     }
                 }
-                if (slot->unk_08.count <= 0) {
-                    reportError("no or -ve outputs during out build..nOut=%d!\n", slot->unk_08.count);
+                if (slot->outputLocations.count <= 0) {
+                    reportError("no or -ve outputs during out build..nOut=%d!\n", slot->outputLocations.count);
                     return false;
                 }
             }

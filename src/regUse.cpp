@@ -4,21 +4,21 @@ extern const char regUseNewFailedError[];
 
 regUse::regUse(RegPoolEntry *reg)
 {
-    unk_08 = reg;
-    unk_0c = 0;
-    unk_0d = 0;
-    unk_0e = 0;
-    unk_0f = 0;
-    unk_10 = 0;
+    this->registerEntry = reg;
+    externalInputMask = 0;
+    externalOutputMask = 0;
+    inputMask = 0;
+    outputMask = 0;
+    throughputMask = 0;
     unk_11 = 0;
-    unk_12 = 0;
+    hazardMask = 0;
     unk_13 = 0;
-    unk_14 = 0;
-    unk_15 = -1;
-    unk_00 = 0;
-    unk_04 = 0;
+    hazardBroadcastMask = 0;
+    externalBlockMode = -1;
+    previous = 0;
+    next = 0;
     unk_18 = reg->unk_36;
-    unk_1c = reg->throughputWriter;
+    definingInstruction = reg->throughputWriter;
 }
 
 regUse::~regUse()
@@ -36,18 +36,18 @@ regUseList::~regUseList()
 {
     regUse *ru = head;
     while (ru) {
-        regUse *next = ru->unk_04;
-        if (ru->unk_04)
-            ru->unk_04->unk_00 = ru->unk_00;
+        regUse *next = ru->next;
+        if (ru->next)
+            ru->next->previous = ru->previous;
         else
-            tail = ru->unk_00;
-        if (ru->unk_00)
-            ru->unk_00->unk_04 = ru->unk_04;
+            tail = ru->previous;
+        if (ru->previous)
+            ru->previous->next = ru->next;
         else
-            head = ru->unk_04;
+            head = ru->next;
         count--;
-        ru->unk_00 = 0;
-        ru->unk_04 = 0;
+        ru->previous = 0;
+        ru->next = 0;
         delete ru;
         ru = next;
     }
@@ -57,18 +57,18 @@ bool regUseList::clear()
 {
     regUse *ru = head;
     while (ru) {
-        regUse *next = ru->unk_04;
-        if (ru->unk_04)
-            ru->unk_04->unk_00 = ru->unk_00;
+        regUse *next = ru->next;
+        if (ru->next)
+            ru->next->previous = ru->previous;
         else
-            tail = ru->unk_00;
-        if (ru->unk_00)
-            ru->unk_00->unk_04 = ru->unk_04;
+            tail = ru->previous;
+        if (ru->previous)
+            ru->previous->next = ru->next;
         else
-            head = ru->unk_04;
+            head = ru->next;
         count--;
-        ru->unk_00 = 0;
-        ru->unk_04 = 0;
+        ru->previous = 0;
+        ru->next = 0;
         delete ru;
         ru = next;
     }
@@ -88,13 +88,13 @@ regUse *regUseList::AddNewRegRef(RegPoolEntry *reg)
         exitAfterCleanup(-1);
         return 0;
     }
-    ru->unk_00 = 0;
-    ru->unk_04 = 0;
+    ru->previous = 0;
+    ru->next = 0;
     if (!tail) {
         head = ru;
     } else {
-        tail->unk_04 = ru;
-        ru->unk_00 = tail;
+        tail->next = ru;
+        ru->previous = tail;
     }
     tail = ru;
     count++;
@@ -103,13 +103,13 @@ regUse *regUseList::AddNewRegRef(RegPoolEntry *reg)
 
 bool regUseList::append(regUse *ru)
 {
-    ru->unk_00 = 0;
-    ru->unk_04 = 0;
+    ru->previous = 0;
+    ru->next = 0;
     if (!tail) {
         head = ru;
     } else {
-        tail->unk_04 = ru;
-        ru->unk_00 = tail;
+        tail->next = ru;
+        ru->previous = tail;
     }
     tail = ru;
     count++;
@@ -118,25 +118,25 @@ bool regUseList::append(regUse *ru)
 
 bool regUseList::remove(regUse *ru)
 {
-    if (ru->unk_04)
-        ru->unk_04->unk_00 = ru->unk_00;
+    if (ru->next)
+        ru->next->previous = ru->previous;
     else
-        tail = ru->unk_00;
-    if (ru->unk_00)
-        ru->unk_00->unk_04 = ru->unk_04;
+        tail = ru->previous;
+    if (ru->previous)
+        ru->previous->next = ru->next;
     else
-        head = ru->unk_04;
+        head = ru->next;
     count--;
-    ru->unk_00 = 0;
-    ru->unk_04 = 0;
+    ru->previous = 0;
+    ru->next = 0;
     return true;
 }
 
 bool regUseList::hasConsistentCount()
 {
     int n = 0;
-    for (regUse *ru = head; ru; ru = ru->unk_04) {
-        if (!ru->unk_08)
+    for (regUse *ru = head; ru; ru = ru->next) {
+        if (!ru->registerEntry)
             return false;
         n++;
     }
@@ -150,25 +150,25 @@ bool regUseList::hasEntries()
 
 regUseSlot::regUseSlot()
 {
-    unk_34[1] = 0;
-    unk_34[0] = 0;
-    unk_34[3] = 0;
-    unk_34[2] = 0;
-    unk_3c[0] = -1;
-    unk_3c[2] = -1;
-    unk_3c[1] = -1;
-    unk_3c[3] = -1;
-    unk_3c[4] = -1;
-    unk_3c[5] = -1;
-    unk_3c[6] = -1;
-    unk_3c[7] = -1;
-    unk_3c[8] = -1;
-    unk_3c[9] = -1;
-    unk_3c[10] = -1;
-    unk_3c[11] = -1;
-    unk_3c[12] = -1;
-    unk_30 = -1;
-    unk_32 = -1;
-    unk_58 = 0;
-    unk_5c.func_0805bcc4();
+    throughputSums[1] = 0;
+    throughputSums[0] = 0;
+    throughputSums[3] = 0;
+    throughputSums[2] = 0;
+    timingValues[0] = -1;
+    timingValues[2] = -1;
+    timingValues[1] = -1;
+    timingValues[3] = -1;
+    timingValues[4] = -1;
+    timingValues[5] = -1;
+    timingValues[6] = -1;
+    timingValues[7] = -1;
+    timingValues[8] = -1;
+    timingValues[9] = -1;
+    timingValues[10] = -1;
+    timingValues[11] = -1;
+    timingValues[12] = -1;
+    earliestExternalCycle = -1;
+    latestExternalCycle = -1;
+    assignmentPayload = 0;
+    registerLock.func_0805bcc4();
 }

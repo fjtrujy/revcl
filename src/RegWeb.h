@@ -9,13 +9,13 @@
 
 class RegWeb {
 public:
-    RegPoolEntry *unk_00;   // assigned register
-    RegPoolEntry *unk_04;   // virtual register of the web
-    RegPoolEntry *unk_08;   // forced (mapped) register
-    RegWeb *unk_0c;         // parent link (merged into)
-    unsigned short unk_10;  // count
-    short unk_12;           // index in regWebs
-    unsigned char unk_14;   // slot mask
+    RegPoolEntry *assignedRegister;
+    RegPoolEntry *virtualRegister;
+    RegPoolEntry *forcedRegister;
+    RegWeb *parentWeb;
+    unsigned short memberCount;
+    short webIndex;
+    unsigned char componentMask;
     char unk_15[3];
 
     RegWeb() {}

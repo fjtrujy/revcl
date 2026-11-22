@@ -21,11 +21,11 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         reportError("instruction already inserted\n");
         return false;
     }
-    if (row < unk_30) {
+    if (row < rangeStart) {
         reportError("ForceInsert - before start\n");
         return false;
     }
-    if (row >= unk_34) {
+    if (row >= rangeEnd) {
         reportError("ForceInsert - after end\n");
         return false;
     }
@@ -48,7 +48,7 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
     p->unk_03 = pos->unk_03;
     p->unk_02 = pos->unk_02;
     *slot = in;
-    in->unk_1396 = unk_40;
+    in->insertionSerial = unk_40;
     unk_40++;
     for (i = 0; i != in->operandCount; i++) {
         Operand *op = &in->operands[i];
@@ -56,8 +56,8 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         if (!reg)
             continue;
         for (int k = 0; k != reg->partCount; k++) {
-            if ((bool)((op->unk_07 >> k) & 1)) {
-                OperandLock *lk = &op->unk_2c[k];
+            if ((bool)((op->componentMask >> k) & 1)) {
+                OperandLock *lk = &op->parts[k];
                 if (!lk) {
                     reportError("failed to get lock \n");
                     return false;
@@ -81,8 +81,8 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
         if (!reg)
             continue;
         for (int k = 0; k != reg->partCount; k++) {
-            if ((bool)((op->unk_07 >> k) & 1)) {
-                OperandLock *lk = &op->unk_2c[k];
+            if ((bool)((op->componentMask >> k) & 1)) {
+                OperandLock *lk = &op->parts[k];
                 if (!lk) {
                     reportError("failed to get lock \n");
                     return false;

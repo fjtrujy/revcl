@@ -18,14 +18,14 @@ int dragDown(workTable *wt);
 
 static inline bool setPullUpRange(workTable *wt, int lsz)
 {
-    return setRange(wt->unk_30, wt->unk_34, lsz);
+    return setRange(wt->rangeStart, wt->rangeEnd, lsz);
 }
 
 int pullUp(workTable *wt)
 {
-    if (wt->unk_34 == wt->unk_30)
+    if (wt->rangeEnd == wt->rangeStart)
         return 0;
-    if (wt->unk_38) {
+    if (wt->loopSize) {
         reportError("raw_PullUp it has loop\n");
         return -1;
     }
@@ -36,15 +36,15 @@ int pullUp(workTable *wt)
     Instr *lbdli = 0;
     Instr *br = wt->getBranch();
     if (br) {
-        lbdli = wt->unk_2c[wt->unk_34 - 1].entries[1].unk_00;
+        lbdli = wt->rows[wt->rangeEnd - 1].entries[1].unk_00;
         if (lbdli)
             lbdli = func_0805449c(lbdli, br) ? lbdli : 0;
     }
 
     do {
         moved = 0;
-        mrl = wt->unk_30;
-        for (int l = wt->unk_30; l != wt->unk_34; l++) {
+        mrl = wt->rangeStart;
+        for (int l = wt->rangeStart; l != wt->rangeEnd; l++) {
             wtRow *row = wt->getRowByIndex(l);
             for (int p = 0; p != 2; p++) {
                 Instr *in = row->getEntry(p);
@@ -68,8 +68,8 @@ int pullUp(workTable *wt)
                 int end = in->position.getRow() + mte;
                 if (end > mrl)
                     mrl = end;
-                if (mrl >= wt->unk_34) {
-                    reportError("mRline would be pushed after m_iEnd..%d, %d\n", mrl, wt->unk_34);
+                if (mrl >= wt->rangeEnd) {
+                    reportError("mRline would be pushed after m_iEnd..%d, %d\n", mrl, wt->rangeEnd);
                     wt->dump();
                     int diagnosticMte = in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6;
                     reportError("faulting instruction is (mte=%d):\n", diagnosticMte);
@@ -80,17 +80,17 @@ int pullUp(workTable *wt)
         }
     } while (moved);
 
-    if (mrl - wt->unk_30 + 1 < wt->unk_44)
-        mrl = wt->unk_30 + wt->unk_44 - 1;
+    if (mrl - wt->rangeStart + 1 < wt->externalMinimumLength)
+        mrl = wt->rangeStart + wt->externalMinimumLength - 1;
 
     int branchPresent = br != 0;
     if (branchPresent) {
         int l = mrl - 1;
         bool done = false;
-        if (l < wt->unk_30)
-            l = wt->unk_30;
+        if (l < wt->rangeStart)
+            l = wt->rangeStart;
         while (!done) {
-            if (l >= wt->unk_34) {
+            if (l >= wt->rangeEnd) {
                 reportError("branch line overrun\n");
                 return -1;
             }
@@ -118,7 +118,7 @@ int pullUp(workTable *wt)
                 if (lbdli) {
                     pos.setFromLinearRow(l);
                     pos.setInstructionPipe(lbdli->position.unk_02);
-                    if (l >= wt->unk_34) {
+                    if (l >= wt->rangeEnd) {
                         reportError("over run for bdli\n");
                         return -1;
                     }
@@ -144,15 +144,15 @@ int pullUp(workTable *wt)
         }
     }
 
-    int ret = wt->unk_34 - mrl - 1;
+    int ret = wt->rangeEnd - mrl - 1;
     int end = mrl + 1;
-    if (end > wt->unk_34) {
-        reportError("table would grow ! mrl=%d..m_iE=%d\n", mrl, wt->unk_34);
+    if (end > wt->rangeEnd) {
+        reportError("table would grow ! mrl=%d..m_iE=%d\n", mrl, wt->rangeEnd);
         wt->dump();
         return -1;
     }
-    wt->unk_34 = end;
-    end = wt->unk_38;
+    wt->rangeEnd = end;
+    end = wt->loopSize;
     setPullUpRange(wt, end);
     return ret;
 }

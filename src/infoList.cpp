@@ -21,9 +21,9 @@ static inline int iHolderMatches(iHolder *h, ol_s *ol)
     if (!ol || !h->instruction)
         return 0;
     int r = 0;
-    Instr *i = ol->unk_04;
+    Instr *i = ol->instruction;
     if (h->instruction == i) {
-        int idx = ol->unk_10;
+        int idx = ol->operandIndex;
         if (h->operandIndex == idx)
             r = 1;
     }
@@ -58,19 +58,19 @@ bool iHolder::catInit(ol_s *ol)
         return false;
     }
     if (!instruction) {
-        Instr *in = ol->unk_04;
+        Instr *in = ol->instruction;
         if (!in) {
             reportError("iHolder:: init called, but ol_s not inst\n");
             return false;
         }
         instruction = in;
-        operandIndex = ol->unk_10;
+        operandIndex = ol->operandIndex;
         componentMask = 0;
-    } else if (instruction != ol->unk_04 || operandIndex != ol->unk_10) {
+    } else if (instruction != ol->instruction || operandIndex != ol->operandIndex) {
         reportError("iHolder::catInit - mismatch adding to an existing object\n");
         return false;
     }
-    componentMask |= 1 << ol->unk_11;
+    componentMask |= 1 << ol->componentIndex;
     return true;
 }
 
@@ -208,8 +208,8 @@ bool stallNode::catStall(ol_s *a, ol_s *b, int type, int val)
         reportError("stallInit - failed to add in a source loc\n");
         return false;
     }
-    Instr *ia = a->unk_04;
-    Instr *ib = b->unk_04;
+    Instr *ia = a->instruction;
+    Instr *ib = b->instruction;
     if (!ia || !ib) {
         reportError("can't determine - at least one of instructions in stall pair\n");
         return false;
@@ -268,15 +268,15 @@ void ubsNode::dump()
     if (!haveTable)
         wt = use->workTablePtr;
     regUse *ru;
-    if (wt && (ru = wt->unk_14.findByRegister(reg))) {
+    if (wt && (ru = wt->registerUses.findByRegister(reg))) {
         reportInfo("register %s is used before set at instruction(s) :\n",
                       reg->registerName());
         for (int i = 0; i != reg->partCount; i++) {
             if ((slotMask >> i) & 1) {
-                for (ol_s *p = ru->unk_20[i].unk_00.head; p; p = p->unk_00) {
-                    Instr *inst = p->unk_04;
-                    int bit = p->unk_11;
-                    int opnd = p->unk_10;
+                for (ol_s *p = ru->slots[i].inputLocations.head; p; p = p->next) {
+                    Instr *inst = p->instruction;
+                    int bit = p->componentIndex;
+                    int opnd = p->operandIndex;
                     bit = 1 << bit;
                     int j;
                     for (j = 0; j < n &&

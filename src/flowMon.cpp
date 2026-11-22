@@ -58,8 +58,8 @@ bool func_08060018(Program *p, bool b)
         return false;
     }
     for (s = p->streamHead; s; s = s->nextStream) {
-        for (regUse *ru = s->getWorkTable()->unk_14.head; ru; ru = ru->unk_04) {
-            RegPoolEntry *reg = ru->unk_08;
+        for (regUse *ru = s->getWorkTable()->registerUses.head; ru; ru = ru->next) {
+            RegPoolEntry *reg = ru->registerEntry;
             if (!reg) {
                 reportError("found a reg ref with no reg!\n");
                 return false;
@@ -67,21 +67,21 @@ bool func_08060018(Program *p, bool b)
             for (int part = 0; part != reg->partCount; part++) {
                 bool hot = false;
                 int mode = 0;
-                if ((ru->unk_0c >> part) & 1) {
-                    char bm = ru->unk_15;
+                if ((ru->externalInputMask >> part) & 1) {
+                    char bm = ru->externalBlockMode;
                     if (bm == -1) {
                         reportError("regref doesn't have block mode set\n");
                         return false;
                     }
                     mode = (bm != 0) + 1;
                 }
-                if (ru->unk_0f & (1 << part) & reg->unk_2c)
+                if (ru->outputMask & (1 << part) & reg->unk_2c)
                     hot = true;
                 if (!hot && !mode)
                     continue;
                 int depth;
                 if (s->getCodeMode() == 3)
-                    depth = ru->unk_20[part].unk_3c[2];
+                    depth = ru->slots[part].timingValues[2];
                 else {
                     depth = 30000;
                     if (mode == 1)
@@ -91,8 +91,8 @@ bool func_08060018(Program *p, bool b)
                     reportError("failed to back trace a register!\n");
                     return false;
                 }
-                if (p->unk_e0) {
-                    for (instStream *t = p->unk_e0; t; t = t->unk_258) {
+                if (p->resolvedStreams) {
+                    for (instStream *t = p->resolvedStreams; t; t = t->nextResolvedStream) {
                         if (!int_buildTpairs(p, reg, part, t, s)) {
                             reportError("failed to build the tpairs\n");
                             return false;

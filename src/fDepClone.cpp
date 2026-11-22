@@ -33,8 +33,8 @@ static inline bool fdep_LinkInline(Instr *pre, Instr *post)
 bool func_0806558c(Instr *i, int *row)
 {
     *row = 0;
-    for (ol_s *o = i->predecessorDependencies.head; o; o = o->unk_00) {
-        Instr *in = o->unk_04;
+    for (ol_s *o = i->predecessorDependencies.head; o; o = o->next) {
+        Instr *in = o->instruction;
         if (!in) {
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
@@ -55,8 +55,8 @@ bool func_0806558c(Instr *i, int *row)
 bool func_080655e8(Instr *i, int *row)
 {
     *row = 30000;
-    for (ol_s *o = i->successorDependencies.head; o; o = o->unk_00) {
-        Instr *in = o->unk_04;
+    for (ol_s *o = i->successorDependencies.head; o; o = o->next) {
+        Instr *in = o->instruction;
         if (!in) {
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
@@ -167,7 +167,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                         }
                     }
                 }
-            } else if (in->unk_139c) {
+            } else if (in->branchLabelTags) {
                 reportError("tag string, but no match criteria set\n");
                 return false;
             }
@@ -177,12 +177,12 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                     RegPoolEntry *r = registerOperand(op, 2);
                     if (r) {
                         if (r->registerIndex == 48)
-                            in->specialRegisterWriteMask = op->unk_07;
+                            in->specialRegisterWriteMask = op->componentMask;
                         if (r->registerIndex == 48 || r->registerIndex == 49) {
                             for (int p = 0; p != r->partCount; p++)
-                                if ((op->unk_07 >> p) & 1)
-                                    for (ol_s *l = op->unk_2c[p].unk_54.head; l; l = l->unk_00) {
-                                        Instr *x = l->unk_04;
+                                if ((op->componentMask >> p) & 1)
+                                    for (ol_s *l = op->parts[p].unk_54.head; l; l = l->next) {
+                                        Instr *x = l->instruction;
                                         if (x)
                                             func_08065fd4(in, x);
                                     }
@@ -190,7 +190,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                     }
                     r = registerOperand(op, 1);
                     if (r && r->registerIndex == 48)
-                        in->specialRegisterReadMask = op->unk_07;
+                        in->specialRegisterReadMask = op->componentMask;
                 }
             }
             in = in->unk_1c.unk_00;
@@ -212,8 +212,8 @@ finalize_ready:
             if ((in->specialRegisterReadMask >> p) & 1) {
                 Instr *w = last[p];
                 if (w)
-                    for (ol_s *l = in->predecessorDependencies.head; l; l = l->unk_00) {
-                        Instr *pre = l->unk_04;
+                    for (ol_s *l = in->predecessorDependencies.head; l; l = l->next) {
+                        Instr *pre = l->instruction;
                         if (pre->linearOrderIndex < w->linearOrderIndex) {
                             w->hasExtraPredecessors = 1;
                             w->predecessorDependencies.addInstructionLocation(pre);
@@ -230,10 +230,10 @@ finalize_ready:
 
 bool tagsMatch(Instr *a, Instr *b)
 {
-    char *p = a->unk_139c;
+    char *p = a->branchLabelTags;
     if (!p)
         return false;
-    char *q0 = b->unk_139c;
+    char *q0 = b->branchLabelTags;
     if (!q0)
         return false;
     while (*p) {
@@ -302,8 +302,8 @@ bool fdep_Link(Instr *pre, Instr *post)
 
 bool copyCloneFdeps(Instr *, ol_s *o, olList *dst)
 {
-    for (; o; o = o->unk_00) {
-        Instr *in = o->unk_04;
+    for (; o; o = o->next) {
+        Instr *in = o->instruction;
         if (!in) {
             reportError("qInstruction.. fDepList in_f not set in ol\n");
             return false;
@@ -330,9 +330,9 @@ bool func_08065fd4(Instr *in, Instr *other)
         RegPoolEntry *r = registerOperand(op, 1);
         if (r) {
             for (int p = 0; p != r->partCount; p++)
-                if ((op->unk_07 >> p) & 1)
-                    for (ol_s *l = op->unk_2c[p].unk_54.head; l; l = l->unk_00) {
-                        Instr *x = l->unk_04;
+                if ((op->componentMask >> p) & 1)
+                    for (ol_s *l = op->parts[p].unk_54.head; l; l = l->next) {
+                        Instr *x = l->instruction;
                         if (x && x != in && x->linearOrderIndex < in->linearOrderIndex) {
                             in->hasExtraPredecessors = 1;
                             if (!in->predecessorDependencies.addInstructionLocation(x)) {

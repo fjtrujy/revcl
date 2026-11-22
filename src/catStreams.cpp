@@ -83,7 +83,7 @@ bool catOnTo(workTable *t1, workTable *t2)
         reportError("catOnTo - passed a null pointer\n");
         return 0;
     }
-    if (!t1->unk_2c || !t2->unk_2c) {
+    if (!t1->rows || !t2->rows) {
         reportError("it_1 or it_2 one of them has no table\n");
         return 0;
     }
@@ -93,11 +93,11 @@ bool catOnTo(workTable *t1, workTable *t2)
         reportError("failed to grow table1\n");
         return 0;
     }
-    int dst = t1->unk_34;
+    int dst = t1->rangeEnd;
     int i;
     for (i = t2->getRangeStart(); i < t2->getRangeEnd(); dst++, i++) {
-        wtRow *src = &t2->unk_2c[i];
-        memcpy(&t1->unk_2c[dst], src, 14);
+        wtRow *src = &t2->rows[i];
+        memcpy(&t1->rows[dst], src, 14);
         for (int j = 0; j != 2; j++) {
             Instr *in = src->entries[j].unk_00;
             if (in) {
@@ -111,8 +111,8 @@ bool catOnTo(workTable *t1, workTable *t2)
             src->entries[j].unk_00 = 0;
         }
     }
-    for (i = t1->unk_30; i < t1->unk_34; i++) {
-        wtRow *r = &t1->unk_2c[i];
+    for (i = t1->rangeStart; i < t1->rangeEnd; i++) {
+        wtRow *r = &t1->rows[i];
         for (int j = 0; j != 2; j++) {
             Instr *in = r->entries[j].unk_00;
             if (in && !UnlinkFromLinear((Block *)t1, in)) {
@@ -121,9 +121,9 @@ bool catOnTo(workTable *t1, workTable *t2)
             }
         }
     }
-    t1->unk_34 = dst;
-    t2->unk_34 = 0;
-    t2->unk_30 = 0;
+    t1->rangeEnd = dst;
+    t2->rangeEnd = 0;
+    t2->rangeStart = 0;
     if (!t1->prepRawTable()) {
         reportError("failed to prep it_1\n");
         return 0;

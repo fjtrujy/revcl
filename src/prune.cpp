@@ -106,9 +106,9 @@ bool initPrune(Instr *in)
             Operand *op = in->getOp(i);
             if (!op)
                 break;
-            op->unk_2a = 0;
+            op->pruneMask = 0;
             if (op->isInput() && in->unk_13cc)
-                op->unk_2a = op->unk_07;
+                op->pruneMask = op->componentMask;
         }
         return true;
     }
@@ -144,7 +144,7 @@ int tryPrune(instStream *s)
         return 0;
     }
     bool raw = false;
-    if (t->unk_09 == 4 || t->getTableRawMode() == 4)
+    if (t->codeModeValue == 4 || t->getTableRawMode() == 4)
         raw = true;
     for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         int r = tryPrune(in, raw);
@@ -170,30 +170,30 @@ int tryPrune(Instr *in, bool raw)
                        (lookup = i < in->operandCount ? &in->operands[i] : 0)),
               r = lookup, op = lookup, lookup = 0, op) != 0; i++) {
             if (r->isInput())
-                (RegPoolEntry *&)r = r->unk_18;
+                (RegPoolEntry *&)r = r->assignedRegister;
             else
                 (RegPoolEntry *&)r = 0;
             if (r)
-                op->unk_2a = op->unk_07;
+                op->pruneMask = op->componentMask;
         }
     }
     Operand *out;
     for (int o = 0; (out = in->getOp(o)) != 0; o++) {
-        int isOut = out->unk_09 == 2;
-        RegPoolEntry *reg = isOut ? out->unk_18 : 0;
+        int isOut = out->direction == 2;
+        RegPoolEntry *reg = isOut ? out->assignedRegister : 0;
         if (!reg)
             continue;
         int cnt = 0;
         for (int s = 0; s != reg->partCount; s++) {
-            if ((out->unk_07 >> s) & 1)
-            for (ol_s *ol = out->unk_2c[s].unk_54.head; ol; ol = ol->unk_00) {
-                Operand *src = func_0805802c(ol);
+            if ((out->componentMask >> s) & 1)
+            for (ol_s *ol = out->parts[s].unk_54.head; ol; ol = ol->next) {
+                Operand *src = operandAtLocation(ol);
                 if (!src) {
                     reportError("failed to get an operand from an oploc\n");
                     return -1;
                 }
-                int sw = ol->unk_11;
-                if (src->unk_18 != reg) {
+                int sw = ol->componentIndex;
+                if (src->assignedRegister != reg) {
                     reportError("there was a reg mismatch\n");
                     return -1;
                 }
@@ -201,41 +201,41 @@ int tryPrune(Instr *in, bool raw)
                     reportError("swizzle detected\n");
                     return -1;
                 }
-                if (!((src->unk_07 >> s) & 1)) {
+                if (!((src->componentMask >> s) & 1)) {
                     reportError("there was a mop bit mismatch\n");
                     return -1;
                 }
-                if (((src->unk_2a >> s) & 1) && ((~out->unk_2a >> s) & 1)) {
+                if (((src->pruneMask >> s) & 1) && ((~out->pruneMask >> s) & 1)) {
                     cnt++;
                     n++;
-                    out->unk_2a |= 1 << s;
+                    out->pruneMask |= 1 << s;
                 }
             }
         }
         if (!cnt)
             continue;
-        if (out->unk_04 == 10 || out->unk_04 == 11)
-            out->unk_2a = out->unk_07;
+        if (out->operandKind == 10 || out->operandKind == 11)
+            out->pruneMask = out->componentMask;
         Operand *ip;
         for (int k = 0; (ip = in->getOp(k)) != 0; k++) {
-            int isIn = ip->unk_09 == 1;
-            RegPoolEntry *r = isIn ? ip->unk_18 : 0;
+            int isIn = ip->direction == 1;
+            RegPoolEntry *r = isIn ? ip->assignedRegister : 0;
             if (!r)
                 continue;
-            int bits = hackIOmask(in, o, out->unk_2a, k);
+            int bits = hackIOmask(in, o, out->pruneMask, k);
             if (bits < 0) {
                 reportError("lprune: failed to deduce which inputs affected which outputs\n");
                 return -1;
             }
-            if ((ip->unk_07 & bits) != bits) {
+            if ((ip->componentMask & bits) != bits) {
                 reportError("bits were used.. but outside of mod bit mask!\n");
                 reportError("OUTPUT(%d) INPUT(%d) inst : \n", o, k);
-                reportError("A_BITS=%x .. INPUT_MODBITS=%x : \n", bits, ip->unk_07);
-                reportError("otype is opt->m_oType=%d\n", ip->unk_04);
+                reportError("A_BITS=%x .. INPUT_MODBITS=%x : \n", bits, ip->componentMask);
+                reportError("otype is opt->m_oType=%d\n", ip->operandKind);
                 dumpPruneInstruction(in);
                 return -1;
             }
-            ip->unk_2a |= bits;
+            ip->pruneMask |= bits;
         }
     }
     return n;
@@ -304,7 +304,7 @@ int doPrune(Instr *in)
     if (in->unk_13cc)
         return 1;
     for (i = 0; (op = in->getOp(i)) != 0; i++) {
-        any |= op->unk_2a;
+        any |= op->pruneMask;
     }
     if (!any)
         return 0;
@@ -313,27 +313,27 @@ int doPrune(Instr *in)
         reportError("Instruction::doPrune() - had no iInfo\n");
         return -1;
     }
-    if (in->unk_142c && in->operands[0].unk_18 == in->operands[1].unk_18)
+    if (in->abstractMoveOpcode && in->operands[0].assignedRegister == in->operands[1].assignedRegister)
         return 0;
     if (info->destinationMaskMode == 1) {
         int m, nIn = 0, inOR = 0, outOR = 0, nOut = 0;
         for (i = 0; (op = in->getOp(i)) != 0; i++) {
-            if (op->unk_04 != 1 && op->unk_04 != 9)
+            if (op->operandKind != 1 && op->operandKind != 9)
                 continue;
-            if (!op->unk_18) {
+            if (!op->assignedRegister) {
                 reportError("couldn't get a register for V_FL4 or V_ACC operand\n");
                 return -1;
             }
             if (op->isInput()) {
-                inOR |= op->unk_2a;
+                inOR |= op->pruneMask;
                 nIn++;
             }
             if (op->isOutput()) {
-                if (nOut && op->unk_2a != outOR) {
+                if (nOut && op->pruneMask != outOR) {
                     reportError("prune - found two inputs with different pBits state for FL4/ACC\n");
                     return -1;
                 }
-                outOR |= op->unk_2a;
+                outOR |= op->pruneMask;
                 nOut++;
             }
         }
@@ -373,28 +373,28 @@ int doPrune(Instr *in)
         }
         in->destinationMask = m;
         for (i = 0; (op = in->getOp(i)) != 0; i++) {
-            if (op->unk_04 == 1 || op->unk_04 == 9)
-                op->unk_07 = m;
+            if (op->operandKind == 1 || op->operandKind == 9)
+                op->componentMask = m;
         }
         if (info->decodeHook == func_08087860)
-            in->operands[1].unk_07 = (((m & 8) >> 3) | (m << 1)) & 0xf;
+            in->operands[1].componentMask = (((m & 8) >> 3) | (m << 1)) & 0xf;
     }
     for (i = 0; (op = in->getOp(i)) != 0; i++) {
         RegPoolEntry *r = registerOperand(op, 2);
-        if (!r || op->unk_2a || !r->isVirtual)
+        if (!r || op->pruneMask || !r->isVirtual)
             continue;
         RegPool *pool = r->ownerPool;
         if (!pool) {
             reportError("register had no regpool\n");
             return -1;
         }
-        if (pool->zeroRegister && !op->unk_0d) {
+        if (pool->zeroRegister && !op->pairedOperandIndexPlusOne) {
             reportVerboseInfo("ZERO FIX   : ");
             int saved = errorOccurred;
             errorOccurred = quiet_080bbd98;
             in->leDump(i);
             errorOccurred = saved;
-            op->unk_18 = pool->zeroRegister;
+            op->assignedRegister = pool->zeroRegister;
         }
     }
     return 1;

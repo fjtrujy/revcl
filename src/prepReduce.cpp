@@ -13,7 +13,7 @@ bool func_0807e528(Program *p, instStream *s, workTable *wt)
         bool ext = false;
         workTable *t = s->getTable();
         int len = t->getRangeEnd() - t->getRangeStart();
-        if (s->participatesInStall || len < t->unk_44) {
+        if (s->participatesInStall || len < t->externalMinimumLength) {
             t->setTableRawMode(2);
             s->unk_261 = 0;
             s->unk_262 = 0;
@@ -22,9 +22,9 @@ bool func_0807e528(Program *p, instStream *s, workTable *wt)
                           s->streamName());
             return true;
         }
-        regUseList *ul = &wt->unk_14;
-        for (regUse *r = ul->head; r; r = r->unk_04)
-            if (r->unk_14)
+        regUseList *ul = &wt->registerUses;
+        for (regUse *r = ul->head; r; r = r->next)
+            if (r->hazardBroadcastMask)
                 ext = true;
         if (ext) {
             s->unk_261 = 0;
@@ -34,16 +34,16 @@ bool func_0807e528(Program *p, instStream *s, workTable *wt)
         for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
-                RegPoolEntry *reg = op->unk_18;
+                RegPoolEntry *reg = op->assignedRegister;
                 op->unk_28 = 0;
                 if (!reg)
                     continue;
                 regUse *ru = ul->findByRegister(reg);
                 if (isRegisterOperand(op, 1))
-                    op->unk_28 = ru->unk_12 & op->unk_27;
+                    op->unk_28 = ru->hazardMask & op->externalPartMask;
                 if (isRegisterOperand(op, 2))
-                    op->unk_28 = ru->unk_13 & op->unk_27;
-                op->unk_28 |= ru->unk_14;
+                    op->unk_28 = ru->unk_13 & op->externalPartMask;
+                op->unk_28 |= ru->hazardBroadcastMask;
             }
         }
     }

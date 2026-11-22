@@ -130,7 +130,7 @@ bool instStream::gatherStats()
         int logged = 0;
         if (in) {
             for (int j = 0; j != 9; j++) {
-                bool b = (in->unk_138d >> j) & 1;
+                bool b = (in->opcodeResourceMask >> j) & 1;
                 if (b)
                     sc->unk_00[j] += 2;
             }
@@ -145,22 +145,22 @@ bool instStream::gatherStats()
     for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
-            RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
+            RegPoolEntry *r = (isRegisterOperand(op, 1) && op->operandStatus != 2) ? op->assignedRegister : 0;
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
-                    if ((op->unk_07 >> p) & 1) {
-                        for (ol_s *ol = op->unk_2c[p].unk_54.head; ol; ol = ol->unk_00) {
-                            if (!ol->unk_04) {
+                    if ((op->componentMask >> p) & 1) {
+                        for (ol_s *ol = op->parts[p].unk_54.head; ol; ol = ol->next) {
+                            if (!ol->instruction) {
                                 reportError("failed to get setting instruction!\n");
                                 return false;
                             }
-                            if (iOwn(ol->unk_04)) {
-                                Operand *so = func_0805802c(ol);
+                            if (iOwn(ol->instruction)) {
+                                Operand *so = operandAtLocation(ol);
                                 if (!so) {
                                     reportError("failed to get setting operand for instruction\n");
                                     return false;
                                 }
-                                int l = so->unk_0a + op->unk_29;
+                                int l = so->outputLatency + op->additionalLatency;
                                 if (maxLat < l)
                                     maxLat = l;
                             }
@@ -175,20 +175,20 @@ bool instStream::gatherStats()
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r;
-            if (isRegisterOperand(op, 1) && op->unk_2b != 2)
-                r = op->unk_18;
+            if (isRegisterOperand(op, 1) && op->operandStatus != 2)
+                r = op->assignedRegister;
             else
                 r = 0;
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
-                    if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
-                        if (op->unk_2c[p].unk_54.count != 1) {
+                    if (((op->componentMask & ~op->externalPartMask) >> p) & 1) {
+                        if (op->parts[p].unk_54.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = op->unk_2c[p].unk_54.head->unk_04;
-                        Operand *so = func_0805802c(op->unk_2c[p].unk_54.head);
-                        int d = src->unk_13f0.unk_04 + so->unk_0a + op->unk_29;
+                        Instr *src = op->parts[p].unk_54.head->instruction;
+                        Operand *so = operandAtLocation(op->parts[p].unk_54.head);
+                        int d = src->unk_13f0.unk_04 + so->outputLatency + op->additionalLatency;
                         int h = src->unk_13f0.unk_06 + 1;
                         if (d > in->unk_13f0.unk_04)
                             in->unk_13f0.unk_04 = d;
@@ -203,17 +203,17 @@ bool instStream::gatherStats()
     for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
-            RegPoolEntry *r = (isRegisterOperand(op, 1) && op->unk_2b != 2) ? op->unk_18 : 0;
+            RegPoolEntry *r = (isRegisterOperand(op, 1) && op->operandStatus != 2) ? op->assignedRegister : 0;
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
-                    if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
-                        if (op->unk_2c[p].unk_54.count != 1) {
+                    if (((op->componentMask & ~op->externalPartMask) >> p) & 1) {
+                        if (op->parts[p].unk_54.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = op->unk_2c[p].unk_54.head->unk_04;
-                        Operand *so = func_0805802c(op->unk_2c[p].unk_54.head);
-                        int d = src->unk_13f0.unk_14 + so->unk_0a + op->unk_29;
+                        Instr *src = op->parts[p].unk_54.head->instruction;
+                        Operand *so = operandAtLocation(op->parts[p].unk_54.head);
+                        int d = src->unk_13f0.unk_14 + so->outputLatency + op->additionalLatency;
                         if (d > in->unk_13f0.unk_14)
                             in->unk_13f0.unk_14 = d;
                     }
@@ -227,20 +227,20 @@ bool instStream::gatherStats()
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *r;
-            if (isRegisterOperand(op, 1) && op->unk_2b != 2)
-                r = op->unk_18;
+            if (isRegisterOperand(op, 1) && op->operandStatus != 2)
+                r = op->assignedRegister;
             else
                 r = 0;
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
-                    if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
-                        if (op->unk_2c[p].unk_54.count != 1) {
+                    if (((op->componentMask & ~op->externalPartMask) >> p) & 1) {
+                        if (op->parts[p].unk_54.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = op->unk_2c[p].unk_54.head->unk_04;
-                        Operand *so = func_0805802c(op->unk_2c[p].unk_54.head);
-                        int d = in->unk_13f0.unk_00 + so->unk_0a + op->unk_29;
+                        Instr *src = op->parts[p].unk_54.head->instruction;
+                        Operand *so = operandAtLocation(op->parts[p].unk_54.head);
+                        int d = in->unk_13f0.unk_00 + so->outputLatency + op->additionalLatency;
                         int h = in->unk_13f0.unk_02 + 1;
                         if (d > src->unk_13f0.unk_00)
                             src->unk_13f0.unk_00 = d;
@@ -276,7 +276,7 @@ bool instStream::gatherStats()
     for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         if (in->branchFlags)
             unk_2b4 = in->unk_13f0.unk_04;
-        char c = in->unk_138c;
+        char c = in->permittedPipelineMask;
         if (c == 3)
             both++;
         else if (c & 2)
@@ -296,9 +296,9 @@ bool instStream::gatherStats()
                     int nBoth = 0;
                     int n1 = 0;
                     int nOther = 0;
-                    if ((op->unk_07 >> p) & 1) {
-                        for (ol_s *ol = op->unk_2c[p].unk_54.firstInternalLocation(); ol; ol = ol->func_080583ac()) {
-                            char c = ol->unk_04->unk_138c;
+                    if ((op->componentMask >> p) & 1) {
+                        for (ol_s *ol = op->parts[p].unk_54.firstInternalLocation(); ol; ol = ol->nextInternalLocation()) {
+                            char c = ol->instruction->permittedPipelineMask;
                             if (c == 3)
                                 nBoth++;
                             else if (c == 1)
@@ -318,7 +318,7 @@ bool instStream::gatherStats()
                         hi += (rem + 1) >> 1;
                     if (hi)
                         hi--;
-                    hi += op->unk_0a;
+                    hi += op->outputLatency;
                     if (hi > maxIssue)
                         maxIssue = hi;
                 }
@@ -352,22 +352,22 @@ bool instStream::gatherStats()
     int depth = unk_278.unk_14;
     if (depth < 0)
         depth = 0;
-    for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
-        RegPoolEntry *r = ru->unk_08;
+    for (regUse *ru = wt->registerUses.head; ru; ru = ru->next) {
+        RegPoolEntry *r = ru->registerEntry;
         if (!r) {
             reportError("regref had no reg\n");
             return false;
         }
         for (int p = 0; p != r->partCount; p++) {
-            if ((ru->unk_0f >> p) & 1) {
-                regUseSlot *s = &ru->unk_20[p];
-                int h = s->unk_34[0];
+            if ((ru->outputMask >> p) & 1) {
+                regUseSlot *s = &ru->slots[p];
+                int h = s->throughputSums[0];
                 if (h > thru)
                     thru = h;
-                int d = h - s->unk_34[3];
+                int d = h - s->throughputSums[3];
                 if (d > depth)
                     depth = d;
-                physSum += s->unk_34[1];
+                physSum += s->throughputSums[1];
             }
         }
     }
@@ -396,7 +396,7 @@ bool instStream::gatherStats()
         physSum = 64;
     if (physSum > 0x4000)
         physSum = 0x4000;
-    if (wt->unk_09 == 3 && physSum < wt->getPhysicalLen())
+    if (wt->codeModeValue == 3 && physSum < wt->getPhysicalLen())
         physSum = wt->getPhysicalLen();
     unk_2bc = physSum;
     if (canLoop()) {
@@ -462,7 +462,7 @@ int instStream::getOrGuessDepLength()
         exitAfterCleanup(-1);
     }
     int len = 0;
-    switch (wt->unk_09) {
+    switch (wt->codeModeValue) {
     case 1:
         len = clampDepLen(dependencyLength);
         break;
@@ -481,7 +481,7 @@ int instStream::getClampedDependencyLength()
         exitAfterCleanup(-1);
     }
     int len = 0;
-    switch (wt->unk_09) {
+    switch (wt->codeModeValue) {
     case 1:
     case 3:
         len = clampDepLen(dependencyLength);
@@ -513,7 +513,7 @@ bool statCounts::add(Instr *in)
     if (!in)
         return false;
     for (int i = 0; i != 9; i++) {
-        bool b = (in->unk_138d >> i) & 1;
+        bool b = (in->opcodeResourceMask >> i) & 1;
         if (b)
             unk_00[i] += 2;
     }

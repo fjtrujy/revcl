@@ -142,10 +142,10 @@ public:
     instStream *shortestPathPredecessor;        // min-path predecessor
     int unk_248;
     instStream *longestPathPredecessor;        // max-path predecessor
-    instStream *unk_250;        // next in Program::unk_dc
-    instStream *unk_254;        // next in Program::unk_d8
-    instStream *unk_258;        // next in Program::unk_e0
-    instStream *unk_25c;        // next in Program::unk_e4
+    instStream *nextSourceStream;
+    instStream *nextMatchedStream;
+    instStream *nextResolvedStream;
+    instStream *nextActiveStream;
     char participatesInStall;      // set when stream takes part in a stall
     char unk_261;
     char unk_262;

@@ -151,10 +151,10 @@ epiRec *loopDebris::allocPro(int size)
         r->unk_14->unk_2c4 = 2;
         if (unk_10) {
             setDebrisMode(r->unk_18, 2);
-            r->unk_18->unk_08 = unk_14;
+            r->unk_18->allocationMode = unk_14;
         } else {
             setDebrisMode(r->unk_18, 1);
-            r->unk_18->unk_08 = 2;
+            r->unk_18->allocationMode = 2;
         }
         m_nPro++;
     } else
@@ -180,10 +180,10 @@ epiRec *loopDebris::allocEpi(int size)
         r->unk_14->unk_2c4 = 3;
         if (unk_10) {
             setDebrisMode(r->unk_18, 2);
-            r->unk_18->unk_08 = unk_14;
+            r->unk_18->allocationMode = unk_14;
         } else {
             setDebrisMode(r->unk_18, 1);
-            r->unk_18->unk_08 = 2;
+            r->unk_18->allocationMode = 2;
         }
         m_nEpi++;
     } else
@@ -204,7 +204,7 @@ epiRec *loopDebris::allocMain(int size)
         return 0;
     }
     m_main.unk_14->unk_2c4 = 5;
-    m_main.unk_18->unk_08 = unk_14;
+    m_main.unk_18->allocationMode = unk_14;
     m_main.unk_18->setTableRawMode(2);
     return &m_main;
 }
@@ -217,7 +217,7 @@ epiRec *loopDebris::allocEnter(int size)
         return 0;
     }
     m_enter.unk_14->unk_2c4 = 4;
-    m_enter.unk_18->unk_08 = 2;
+    m_enter.unk_18->allocationMode = 2;
     m_enter.unk_18->setTableRawMode(1);
     return &m_enter;
 }
@@ -230,7 +230,7 @@ epiRec *loopDebris::allocExit(int size)
         return 0;
     }
     m_exit.unk_14->unk_2c4 = 1;
-    m_exit.unk_18->unk_08 = 2;
+    m_exit.unk_18->allocationMode = 2;
     m_exit.unk_18->setTableRawMode(1);
     return &m_exit;
 }
@@ -321,7 +321,7 @@ bool epiRec::init(int size, const char *name)
     int serial = g_streamSerial;
     unk_18 = wt;
     s->streamSerial = serial;
-    wt->unk_10 = unk_14;
+    wt->ownerStream = unk_14;
     unk_14->workTablePtr = &unk_14->sourceTable;
     return true;
 }
@@ -344,7 +344,7 @@ int func_08067e18(Program *p, instStream *s)
         reportError("BuildEP - loopsize not set in input stream\n");
         return -1;
     }
-    if (wt->unk_09 != 3) {
+    if (wt->codeModeValue != 3) {
         reportError("intput table is not vsm\n");
         return -1;
     }
@@ -602,11 +602,11 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
                       s->knownMinimumLoopCount, s->safeMinimumLoopCount);
         return false;
     }
-    int mlid = wt->unk_3c;
+    int mlid = wt->mainLoopId;
     int clid = wt->getCondLid();
     int lsz = wt->getLoopSize();
     bool userFixed = wt->getTableRawMode() == 4;
-    initDebris(ld, baseName, (unsigned char)wt->unk_08, userFixed);
+    initDebris(ld, baseName, (unsigned char)wt->allocationMode, userFixed);
     Instr *cond = wt->getConditionalBranch();
     if (mlid < 0 || clid < 0 || clid > mlid || !cond) {
         reportError("iTable::BuildEPStreams - well - mlid or clid or no conditional ? something was wrong [clid=%d mlid=%d] %x\n",
@@ -658,7 +658,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
             pro->unk_1c = c;
             if (c) {
                 pro->unk_14->branchType = 5;
-                c->unk_1391 = 1;
+                c->reverseBranchSense = 1;
             }
             last = i + 1;
             pro = 0;

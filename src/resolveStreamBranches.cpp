@@ -61,10 +61,10 @@ bool resolveStreamBranches(Program *p)
                         reportError("failed to get a branch instruction for btor case\n");
                         return false;
                     }
-                    if (br->unk_139c) {
+                    if (br->branchLabelTags) {
                         int type = branchLinkTypeForFlags(s->branchType);
                         char name[2064];
-                        for (char *q = br->unk_139c; *q; q++) {
+                        for (char *q = br->branchLabelTags; *q; q++) {
                             char *r = q;
                             char *d = name;
                             while (*r != ':')
@@ -139,9 +139,9 @@ bool resolveStreamBranches(Program *p)
     func_0806ed78(p, 0);
     for (s = p->streamHead; s; s = s->nextStream) {
         Instr *br = s->getBranch();
-        if (br && br->unk_139c) {
-            delete[] br->unk_139c;
-            br->unk_139c = 0;
+        if (br && br->branchLabelTags) {
+            delete[] br->branchLabelTags;
+            br->branchLabelTags = 0;
         }
     }
     return true;
@@ -207,7 +207,7 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
                         (*changed)++;
                         again = true;
                     }
-                } else if (!br->unk_139c) {
+                } else if (!br->branchLabelTags) {
                     reportError("VCL has found a branch to register at :\n");
                     br->func_08054008(false);
                     reportError("that's apparently set by:\n");

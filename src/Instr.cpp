@@ -36,18 +36,18 @@ Instr::Instr(iInfo *info)
     }
     operandCount = 0;
     unk_13d1 = 0;
-    unk_1389 = 0;
+    instructionModifierBits = 0;
     destinationMask = 0;
     previousThroughputWriter = 0;
     unk_14 = 0;
     unk_18 = 0;
     unk_1a = 0;
-    unk_1430 = 0;
-    unk_1432 = 0;
-    unk_142c = 0;
-    unk_142e = 0;
+    moveRowOffset = 0;
+    moveChainDepth = 0;
+    abstractMoveOpcode = 0;
+    concreteMoveOpcode = 0;
     parsedLoopId = -1;
-    unk_139c = 0;
+    branchLabelTags = 0;
     unk_1398 = 0;
     unk_30 = 0;
     unk_1428 = 0;
@@ -56,7 +56,7 @@ Instr::Instr(iInfo *info)
     unk_13b4 = 0;
     unk_13b6 = 0;
     linearOrderIndex = -1;
-    unk_13e0 = -1;
+    instructionSerial = -1;
     unk_1418 = 0;
     unk_141a = 0;
     opcodeInfo = info;
@@ -64,19 +64,19 @@ Instr::Instr(iInfo *info)
     unk_08 = 0;
     unk_00 = 0;
     unk_04 = 0;
-    unk_1391 = 0;
-    unk_1392 = 0;
+    reverseBranchSense = 0;
+    tildePrefix = 0;
     scheduledCycle = -1;
     unk_141c = 0;
-    unk_13d2 = -1;
-    unk_138e = -1;
+    expectedAliasLoopId = -1;
+    schedulerCategory = -1;
     resetImmFixup();
     opcodeInfo = info;
     unk_13d7 = info->unk_0e;
-    unk_138c = info->unk_0e;
-    unk_138d = info->unk_10;
+    permittedPipelineMask = info->unk_0e;
+    opcodeResourceMask = info->unk_10;
     branchFlags = info->branchFlags();
-    unk_13cf = info->unk_12;
+    baseIssueSpacing = info->unk_12;
     ramAccessType = info->ramType();
     opcodeFlags = info->kindAndFlags & ~7;
     rawOnly = info->isRawOnly();
@@ -85,27 +85,27 @@ Instr::Instr(iInfo *info)
         operandCount++;
         Operand *op = &operands[i];
         iOpDesc *d = &info->operandDescriptors[i];
-        op->unk_04 = d->operandKind;
-        op->unk_26 = i;
+        op->operandKind = d->operandKind;
+        op->operandIndex = i;
         op->unk_0b = d->unk_04 != 0;
-        op->unk_09 = d->direction;
-        op->unk_08 = d->isImplicit != 0;
+        op->direction = d->direction;
+        op->isImplicit = d->isImplicit != 0;
         op->unk_05 = d->unk_05;
-        op->unk_0d = d->patchedOutputIndexPlusOne;
-        if (op->unk_0d)
-            operands[op->unk_0d - 1].unk_0d = i + 1;
+        op->pairedOperandIndexPlusOne = d->patchedOutputIndexPlusOne;
+        if (op->pairedOperandIndexPlusOne)
+            operands[op->pairedOperandIndexPlusOne - 1].pairedOperandIndexPlusOne = i + 1;
         if (d->direction == 2)
-            op->unk_0a = d->outputLatency;
+            op->outputLatency = d->outputLatency;
         else
-            op->unk_0a = 0;
+            op->outputLatency = 0;
     }
 }
 
 Instr::~Instr()
 {
-    if (unk_139c) {
-        delete[] unk_139c;
-        unk_139c = 0;
+    if (branchLabelTags) {
+        delete[] branchLabelTags;
+        branchLabelTags = 0;
     }
     mValue *value = &addressImmediateValue;
     value->clear();
@@ -115,9 +115,9 @@ Instr::~Instr()
 
 bool Instr::clearDynamicData()
 {
-    if (unk_139c) {
-        delete[] unk_139c;
-        unk_139c = 0;
+    if (branchLabelTags) {
+        delete[] branchLabelTags;
+        branchLabelTags = 0;
     }
     addressImmediateValue.clear();
     predecessorDependencies.clear();
@@ -146,11 +146,11 @@ void Instr::func_08054008(int flags)
         if (flags & 1) {
             for (int j = 0; j != operandCount; j++) {
                 Operand *op = &operands[j];
-                RegPoolEntry *r = op->unk_18;
+                RegPoolEntry *r = op->assignedRegister;
                 if (r && r->isVirtual)
                     for (int k = 0; k != r->partCount; k++)
-                        if ((op->unk_07 >> k) & 1)
-                            op->unk_2c[k].unk_54.validateOperandLocations();
+                        if ((op->componentMask >> k) & 1)
+                            op->parts[k].unk_54.validateOperandLocations();
             }
         }
     }
@@ -192,7 +192,7 @@ bool Instr::clearTransientFlags()
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
         for (int k = 0; k != 4; k++)
-            op->unk_2c[k].unk_50 = 0;
+            op->parts[k].unk_50 = 0;
     }
     return true;
 }
@@ -218,11 +218,11 @@ void Instr::leDump(int opnd, int mask)
     if (unk_14) {
         int idx = unk_18;
         if (opnd >= 0) {
-            if (operands[opnd].unk_18 && operands[opnd].unk_18->partCount != 1 && mask >= 0)
+            if (operands[opnd].assignedRegister && operands[opnd].assignedRegister->partCount != 1 && mask >= 0)
                 reportMessage("(field(s) : %s) ", func_08052064(mask));
-            if (operands[opnd].unk_08) {
-                if (operands[opnd].unk_18)
-                    reportMessage("implicit operand '%s'\n", operands[opnd].unk_18->registerName());
+            if (operands[opnd].isImplicit) {
+                if (operands[opnd].assignedRegister)
+                    reportMessage("implicit operand '%s'\n", operands[opnd].assignedRegister->registerName());
                 else
                     reportError("implicit operand with no register??\n");
             } else
@@ -246,9 +246,9 @@ bool func_080543bc(Instr *a, Instr *b)
         if (r) {
             int n = r->partCount;
             for (int k = 0; k != n; k++)
-                if (((op->unk_07 & ~op->unk_27) >> k) & 1)
-                    for (ol_s *p = op->unk_2c[k].unk_54.head; p; p = p->unk_00)
-                        if (p->unk_04 == a)
+                if (((op->componentMask & ~op->externalPartMask) >> k) & 1)
+                    for (ol_s *p = op->parts[k].unk_54.head; p; p = p->next)
+                        if (p->instruction == a)
                             return true;
         }
     }
@@ -263,12 +263,12 @@ bool func_0805449c(Instr *a, Instr *b)
         Operand *op = &b->operands[i];
         RegPoolEntry *r = registerOperand(op, 1);
         if (r) {
-            int want = op->unk_07;
+            int want = op->componentMask;
             int mask = 0;
             Instr *in = a;
             for (int j = 0; j != in->operandCount; j++)
                 if (registerOperand(&in->operands[j], 2) == r)
-                    mask |= in->operands[j].unk_07;
+                    mask |= in->operands[j].componentMask;
             if (mask & want)
                 return true;
         }
@@ -297,26 +297,26 @@ Instr *Instr::clone()
     c->destinationMask = destinationMask;
     c->rawOnly = rawOnly;
     c->unk_1428 = 0;
-    c->unk_1389 = unk_1389;
-    c->unk_142c = unk_142c;
-    c->unk_142e = unk_142e;
+    c->instructionModifierBits = instructionModifierBits;
+    c->abstractMoveOpcode = abstractMoveOpcode;
+    c->concreteMoveOpcode = concreteMoveOpcode;
     c->unk_13d7 = unk_13d7;
     c->unk_13f0.copyCountersFrom(&unk_13f0);
     c->linearOrderIndex = linearOrderIndex;
-    c->unk_13e0 = unk_13e0;
+    c->instructionSerial = instructionSerial;
     c->unk_141a = unk_141a;
     c->parsedLoopId = parsedLoopId;
-    c->unk_1392 = unk_1392;
-    c->unk_1391 = unk_1391;
+    c->tildePrefix = tildePrefix;
+    c->reverseBranchSense = reverseBranchSense;
     c->unk_14 = unk_14;
     c->unk_18 = unk_18;
     c->unk_1a = unk_1a;
-    c->unk_13d4 = unk_13d4;
-    c->unk_13d5 = unk_13d5;
-    c->unk_13d6 = unk_13d6;
+    c->addressAliasMode = addressAliasMode;
+    c->addressAliasDirection = addressAliasDirection;
+    c->addressAliasOperandIndex = addressAliasOperandIndex;
     if (addressImmediateValue.isValid())
         c->addressImmediateValue.set(&addressImmediateValue);
-    c->unk_13d2 = unk_13d2;
+    c->expectedAliasLoopId = expectedAliasLoopId;
     if (unk_08) {
         reportError("during instruction clone - tmpClone was already set!\n");
         delete c;
@@ -324,8 +324,8 @@ Instr *Instr::clone()
     }
     unk_08 = c;
     c->unk_08 = this;
-    if (unk_139c)
-        c->unk_139c = dupString(unk_139c);
+    if (branchLabelTags)
+        c->branchLabelTags = dupString(branchLabelTags);
     c->operandCount = operandCount;
     Operand *s;
     for (int i = 0; (s = getOp(i)) != 0; i++) {
@@ -334,35 +334,35 @@ Instr *Instr::clone()
             reportError("fatal error, couldn't get operand during clone\n");
             exitAfterCleanup(-1);
         }
-        if (s->unk_26 != i) {
+        if (s->operandIndex != i) {
             reportError("bad index in operand for clone\n");
             exitAfterCleanup(-1);
         }
-        d->unk_26 = s->unk_26;
-        d->unk_04 = s->unk_04;
-        d->unk_09 = s->unk_09;
-        d->unk_0a = s->unk_0a;
+        d->operandIndex = s->operandIndex;
+        d->operandKind = s->operandKind;
+        d->direction = s->direction;
+        d->outputLatency = s->outputLatency;
         d->unk_05 = s->unk_05;
         d->unk_0b = s->unk_0b;
-        d->unk_18 = s->unk_18;
-        d->unk_07 = s->unk_07;
+        d->assignedRegister = s->assignedRegister;
+        d->componentMask = s->componentMask;
         d->unk_0c = s->unk_0c;
-        d->unk_0d = s->unk_0d;
-        d->unk_08 = s->unk_08;
-        d->unk_14 = s->unk_14;
-        d->unk_10 = s->unk_10;
-        if (s->unk_1c.isValid()) {
-            if (!d->unk_1c.set(&s->unk_1c)) {
+        d->pairedOperandIndexPlusOne = s->pairedOperandIndexPlusOne;
+        d->isImplicit = s->isImplicit;
+        d->originalRegister = s->originalRegister;
+        d->forcedBaseRegister = s->forcedBaseRegister;
+        if (s->immediateValue.isValid()) {
+            if (!d->immediateValue.set(&s->immediateValue)) {
                 reportError("failed to clone immediate\n");
                 exitAfterCleanup(-1);
             }
         }
         d->unk_24 = s->unk_24;
         d->unk_25 = s->unk_25;
-        d->unk_29 = s->unk_29;
-        d->unk_27 = s->unk_27;
-        d->unk_2b = 0;
-        d->unk_06 = s->unk_06;
+        d->additionalLatency = s->additionalLatency;
+        d->externalPartMask = s->externalPartMask;
+        d->operandStatus = 0;
+        d->externalComponentMask = s->externalComponentMask;
         d->unk_28 = s->unk_28;
     }
     return c;
@@ -437,12 +437,12 @@ int Instr::collectOutputRegisterMask(RegPoolEntry *reg, bool *paired)
     for (int i = 0; (op = getOp(i)) != 0; i++) {
         RegPoolEntry *r;
         if (op->isOutput())
-            r = op->unk_18;
+            r = op->assignedRegister;
         else
             r = 0;
         if (reg == r) {
-            *paired = *paired || op->unk_0d;
-            mask |= op->unk_07;
+            *paired = *paired || op->pairedOperandIndexPlusOne;
+            mask |= op->componentMask;
         }
     }
     return mask;
@@ -456,12 +456,12 @@ int Instr::collectInputRegisterMask(RegPoolEntry *reg, bool *paired)
     for (int i = 0; (op = getOp(i)) != 0; i++) {
         RegPoolEntry *r;
         if (op->isInput())
-            r = op->unk_18;
+            r = op->assignedRegister;
         else
             r = 0;
         if (reg == r) {
-            *paired = *paired || op->unk_0d;
-            mask |= op->unk_07;
+            *paired = *paired || op->pairedOperandIndexPlusOne;
+            mask |= op->componentMask;
         }
     }
     return mask;
@@ -475,7 +475,7 @@ bool Instr::getImmediateOperand(int n, int *out)
         reportError("failed to get operand %d\n", n);
         return false;
     }
-    return op->unk_1c.getInt(out);
+    return op->immediateValue.getInt(out);
 }
 
 
@@ -500,11 +500,11 @@ bool Instr::changeBranchImmediate(const char *s)
         exitAfterCleanup(-1);
     }
     Operand *op = &operands[n - 1];
-    if (op->unk_04 != 0x1b) {
+    if (op->operandKind != 0x1b) {
         reportError("changeBranchImmediate::target operand isn't immediate!\n");
         exitAfterCleanup(-1);
     }
-    return op->unk_1c.setString(s);
+    return op->immediateValue.setString(s);
 }
 
 bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
@@ -517,8 +517,8 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
         reportError("swizzle detected for ps2 ?\n");
         return false;
     }
-    OpSlot *sa = &a->operands[aOp].unk_2c[slot];
-    OpSlot *sb = &b->operands[bOp].unk_2c[slot];
+    OpSlot *sa = &a->operands[aOp].parts[slot];
+    OpSlot *sb = &b->operands[bOp].parts[slot];
     ol_s *oa = sa->unk_54.addOperandLocation(b, bOp, slot, false);
     if (oa) {
         olList *lb = &sb->unk_54;
@@ -548,7 +548,7 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         reportError("link_oParts, null arg pointer2!\n");
         return false;
     }
-    Operand *out = func_0805802c(o);
+    Operand *out = operandAtLocation(o);
     if (!out) {
         reportError("link_oParts(2) - output not set \n");
         return false;
@@ -558,7 +558,7 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         dumpLinkOperand(out);
         return false;
     }
-    Operand *in = func_0805802c(i);
+    Operand *in = operandAtLocation(i);
     if (!in) {
         reportError("link_oParts(2) - input not set \n");
         return false;
@@ -567,31 +567,31 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         reportError("link_oParts - input was not input\n");
         return false;
     }
-    int to = o->unk_11;
-    int ti = i->unk_11;
-    if (!((out->unk_07 >> to) & 1)) {
+    int to = o->componentIndex;
+    int ti = i->componentIndex;
+    if (!((out->componentMask >> to) & 1)) {
         reportError("link_oParts - mod bit not set for output\n");
         return false;
     }
-    if (!((in->unk_07 >> ti) & 1)) {
+    if (!((in->componentMask >> ti) & 1)) {
         reportError("link_oParts - mod bit not set for input\n");
         return false;
     }
-    if (!((in->unk_27 >> ti) & 1)) {
+    if (!((in->externalPartMask >> ti) & 1)) {
         reportError("link_oParts_ext - external bit not set for input\n");
         return false;
     }
-    out->unk_27 |= 1 << to;
-    if (func_08058618(o) != func_08058618(i)) {
-        out->unk_06 |= 1 << o->unk_11;
-        in->unk_06 |= 1 << i->unk_11;
+    out->externalPartMask |= 1 << to;
+    if (locationOwningStream(o) != locationOwningStream(i)) {
+        out->externalComponentMask |= 1 << o->componentIndex;
+        in->externalComponentMask |= 1 << i->componentIndex;
     }
     if (to != ti) {
         reportError("link_oParts - not a bug, but should not happen for this cpu, t_o!=t_i (%d!=%d)\n", to, ti);
         return false;
     }
-    OpSlot *so = out->unk_2c + ti;
-    OpSlot *si = in->unk_2c + ti;
+    OpSlot *so = out->parts + ti;
+    OpSlot *si = in->parts + ti;
     olList *lo = &so->unk_54;
     ol_s *a = lo->copyOperandLocation(i, true);
     if (!a) {
@@ -608,10 +608,10 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
     if (s > 0xff)
         s = 0xff;
     a->unk_12 = s;
-    a->unk_08 = x;
+    a->pathKey = x;
     a->unk_0c = y;
     b->unk_12 = 0;
-    b->unk_08 = x;
+    b->pathKey = x;
     b->unk_0c = y;
     return true;
 }
@@ -673,7 +673,7 @@ char *Instr::func_080552a8(bool flag, char *buf, int)
     }
     buf += formatIntoBuffer(buf, "\t");
     for (int n = 0; n != operandCount; n++) {
-        if (operands[n].unk_08)
+        if (operands[n].isImplicit)
             break;
         if (n)
             buf += formatIntoBuffer(buf, ",");
@@ -691,7 +691,7 @@ int Instr::outputMaskForRegister(RegPoolEntry *reg, int mask)
         for (int i = 0; i != operandCount; i++) {
             Operand *op = &operands[i];
             if (op->outRegZ() == reg)
-                result |= op->unk_07;
+                result |= op->componentMask;
         }
     }
     return result & mask;
@@ -704,7 +704,7 @@ int Instr::inputMaskForRegister(RegPoolEntry *reg, int mask)
         for (int i = 0; i != operandCount; i++) {
             Operand *op = &operands[i];
             if (op->inRegOp2() == reg)
-                result |= op->unk_07;
+                result |= op->componentMask;
         }
     }
     return result & mask;
@@ -757,8 +757,8 @@ char *Instr::getBranchTargetImmediate()
         reportError("alleged branch target immediate wasn't an input\n");
         exitAfterCleanup(-1);
     }
-    if (op->unk_04 == 0x1b)
-        return op->unk_1c.getString();
+    if (op->operandKind == 0x1b)
+        return op->immediateValue.getString();
     return 0;
 }
 
@@ -781,9 +781,9 @@ RegPoolEntry *Instr::getBranchTargetRegister()
         reportError("alleged branch target register wasn't an input\n");
         exitAfterCleanup(-1);
     }
-    if (op->unk_04 == 0x1b)
+    if (op->operandKind == 0x1b)
         return 0;
-    RegPoolEntry *r = op->unk_18;
+    RegPoolEntry *r = op->assignedRegister;
     if (!r) {
         reportError("branch target register wasn't set\n");
         exitAfterCleanup(-1);
@@ -800,7 +800,7 @@ Operand *Instr::findInputOperand(RegPoolEntry *reg, int mask)
 {
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
-        if (op->inRegOp2() == reg && (op->unk_07 & mask))
+        if (op->inRegOp2() == reg && (op->componentMask & mask))
             return op;
     }
     return 0;
@@ -810,7 +810,7 @@ Operand *Instr::findOutputOperand(RegPoolEntry *reg, int mask)
 {
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
-        if (op->outRegZ() == reg && (op->unk_07 & mask))
+        if (op->outRegZ() == reg && (op->componentMask & mask))
             return op;
     }
     return 0;
@@ -824,10 +824,10 @@ bool Instr::hasLinkedOutputFrom(unsigned int n)
         Operand *op = &operands[n];
         RegPoolEntry *r = registerOperand(op, 2);
         if (r) {
-            if (op->unk_27)
+            if (op->externalPartMask)
                 return true;
             for (int j = 0; j != r->partCount; j++)
-                if (((op->unk_07 >> j) & 1) && op->unk_2c[j].unk_54.count)
+                if (((op->componentMask >> j) & 1) && op->parts[j].unk_54.count)
                     return true;
         }
     }
@@ -837,21 +837,21 @@ bool Instr::hasLinkedOutputFrom(unsigned int n)
 bool Instr::func_080558f4()
 {
     if (ramAccessType == 2) {
-        unk_138e = 1;
+        schedulerCategory = 1;
         return true;
     }
     if (opcodeFlags & 0x40) {
-        unk_138e = 2;
+        schedulerCategory = 2;
         return true;
     }
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
-        if (isRegisterOperand(op, 2) && op->unk_06) {
-            unk_138e = 2;
+        if (isRegisterOperand(op, 2) && op->externalComponentMask) {
+            schedulerCategory = 2;
             return true;
         }
     }
-    unk_138e = 0;
+    schedulerCategory = 0;
     return true;
 }
 
@@ -880,7 +880,7 @@ int Instr::getFirstOutputLatency()
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
         if (op->outRegZ() && !op->unk_0b)
-            return op->unk_0a;
+            return op->outputLatency;
     }
     return 0;
 }
@@ -915,55 +915,55 @@ bool Instr::expandVirtualStatOperand()
 {
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
-        if (op->unk_04 < 22 || op->unk_04 > 25)
+        if (op->operandKind < 22 || op->operandKind > 25)
             continue;
         if (i != operandCount - 1) {
             reportError("virtual stat operand not final\n");
             return false;
         }
         operandCount--;
-        switch (op->unk_04) {
+        switch (op->operandKind) {
         case 23:
-            op->unk_08 = 1;
-            op->unk_04 = 21;
-            op->unk_09 = 2;
-            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(55);
-            op->unk_07 = 1;
-            op->unk_0a = 4;
+            op->isImplicit = 1;
+            op->operandKind = 21;
+            op->direction = 2;
+            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(55);
+            op->componentMask = 1;
+            op->outputLatency = 4;
             op->unk_0b = 0;
-            op->unk_26 = operandCount++;
+            op->operandIndex = operandCount++;
             op = &operands[i + 1];
-            op->unk_08 = 1;
-            op->unk_04 = 18;
-            op->unk_09 = 1;
-            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(57);
-            op->unk_07 = 1;
-            op->unk_0a = -1;
+            op->isImplicit = 1;
+            op->operandKind = 18;
+            op->direction = 1;
+            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
+            op->componentMask = 1;
+            op->outputLatency = -1;
             op->unk_0b = 1;
-            op->unk_26 = operandCount++;
+            op->operandIndex = operandCount++;
             break;
         case 22:
-            op->unk_08 = 1;
-            op->unk_04 = 20;
-            op->unk_09 = 2;
-            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(56);
-            op->unk_07 = 1;
-            op->unk_0a = operands[0].unk_0a;
+            op->isImplicit = 1;
+            op->operandKind = 20;
+            op->direction = 2;
+            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(56);
+            op->componentMask = 1;
+            op->outputLatency = operands[0].outputLatency;
             op->unk_0b = 0;
-            op->unk_26 = operandCount;
+            op->operandIndex = operandCount;
             op = &operands[i + 1];
             operandCount++;
-            op->unk_08 = 1;
-            op->unk_04 = 19;
-            op->unk_09 = 1;
-            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(58);
-            op->unk_07 = 1;
-            op->unk_0a = -1;
+            op->isImplicit = 1;
+            op->operandKind = 19;
+            op->direction = 1;
+            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
+            op->componentMask = 1;
+            op->outputLatency = -1;
             op->unk_0b = 1;
-            op->unk_26 = operandCount++;
+            op->operandIndex = operandCount++;
             break;
         case 24: {
-            if (operands[i - 1].unk_04 != 27) {
+            if (operands[i - 1].operandKind != 27) {
                 reportError("not immediate predecessor in fs test\n");
                 return false;
             }
@@ -971,7 +971,7 @@ bool Instr::expandVirtualStatOperand()
             bool b = true;
             bool c = true;
             bool d = true;
-            mValue *v = &operands[i - 1].unk_1c;
+            mValue *v = &operands[i - 1].immediateValue;
             unsigned int imm;
             if (isLiteral(v)) {
                 reportWarning("fsop has literals - so assuming the worst - if it were numerical vcl could figure out dependencies better\n");
@@ -1005,92 +1005,92 @@ bool Instr::expandVirtualStatOperand()
             a = a | c;
             b = b | d;
             if (a) {
-                op->unk_08 = 1;
-                op->unk_04 = 21;
-                op->unk_09 = 1;
-                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(55);
-                op->unk_07 = 1;
-                op->unk_0a = -1;
+                op->isImplicit = 1;
+                op->operandKind = 21;
+                op->direction = 1;
+                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(55);
+                op->componentMask = 1;
+                op->outputLatency = -1;
                 op->unk_0b = 0;
-                op->unk_26 = operandCount;
+                op->operandIndex = operandCount;
                 op++;
                 operandCount++;
             }
             if (b) {
-                op->unk_08 = 1;
-                op->unk_04 = 20;
-                op->unk_09 = 1;
-                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(56);
-                op->unk_07 = 1;
-                op->unk_0a = -1;
+                op->isImplicit = 1;
+                op->operandKind = 20;
+                op->direction = 1;
+                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(56);
+                op->componentMask = 1;
+                op->outputLatency = -1;
                 op->unk_0b = 0;
-                op->unk_26 = operandCount;
+                op->operandIndex = operandCount;
                 op++;
                 operandCount++;
             }
             if (c) {
-                op->unk_08 = 1;
-                op->unk_04 = 18;
-                op->unk_09 = 1;
-                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(57);
-                op->unk_07 = 1;
-                op->unk_0a = -1;
+                op->isImplicit = 1;
+                op->operandKind = 18;
+                op->direction = 1;
+                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
+                op->componentMask = 1;
+                op->outputLatency = -1;
                 op->unk_0b = 1;
-                op->unk_26 = operandCount;
+                op->operandIndex = operandCount;
                 op++;
                 operandCount++;
-                op->unk_08 = 1;
-                op->unk_04 = 18;
-                op->unk_09 = 2;
-                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(57);
-                op->unk_07 = 1;
-                op->unk_0a = 1;
+                op->isImplicit = 1;
+                op->operandKind = 18;
+                op->direction = 2;
+                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
+                op->componentMask = 1;
+                op->outputLatency = 1;
                 op->unk_0b = 1;
-                op->unk_26 = operandCount;
+                op->operandIndex = operandCount;
                 op++;
                 operandCount++;
             }
             if (d) {
-                op->unk_08 = 1;
-                op->unk_04 = 19;
-                op->unk_09 = 1;
-                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(58);
-                op->unk_07 = 1;
-                op->unk_0a = -1;
+                op->isImplicit = 1;
+                op->operandKind = 19;
+                op->direction = 1;
+                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
+                op->componentMask = 1;
+                op->outputLatency = -1;
                 op->unk_0b = 1;
-                op->unk_26 = operandCount;
+                op->operandIndex = operandCount;
                 op++;
                 operandCount++;
-                op->unk_08 = 1;
-                op->unk_04 = 19;
-                op->unk_09 = 2;
-                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(58);
-                op->unk_07 = 1;
-                op->unk_0a = 1;
+                op->isImplicit = 1;
+                op->operandKind = 19;
+                op->direction = 2;
+                op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
+                op->componentMask = 1;
+                op->outputLatency = 1;
                 op->unk_0b = 1;
-                op->unk_26 = operandCount++;
+                op->operandIndex = operandCount++;
             }
             break;
         }
         case 25:
-            op->unk_08 = 1;
-            op->unk_04 = 18;
-            op->unk_09 = 2;
-            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(57);
-            op->unk_07 = 1;
-            op->unk_0a = 1;
+            op->isImplicit = 1;
+            op->operandKind = 18;
+            op->direction = 2;
+            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(57);
+            op->componentMask = 1;
+            op->outputLatency = 1;
             op->unk_0b = 1;
-            op->unk_26 = operandCount;
+            op->operandIndex = operandCount;
             op = &operands[i + 1];
             operandCount++;
-            op->unk_08 = 1;
-            op->unk_04 = 19;
-            op->unk_09 = 2;
-            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(58);
-            op->unk_07 = 1;
-            op->unk_0a = 1;
+            op->isImplicit = 1;
+            op->operandKind = 19;
+            op->direction = 2;
+            op->originalRegister = op->assignedRegister = findRegisterByGlobalIndex(58);
+            op->componentMask = 1;
+            op->outputLatency = 1;
             op->unk_0b = 1;
-            op->unk_26 = operandCount++;
+            op->operandIndex = operandCount++;
             break;
         }
     }
@@ -1113,22 +1113,22 @@ void Instr::copyExternalTimingConstraints(Instr *src)
     unk_13b6 = src->unk_13b6;
 }
 
-void Instr::func_08055fbc(short v)
+void Instr::raiseExternalInputPairedConstraint(short v)
 {
     unk_13b0 = unk_13b0 < v ? v : unk_13b0;
 }
 
-void Instr::func_08055fdc(short v)
+void Instr::raiseExternalInputConstraint(short v)
 {
     unk_13b2 = unk_13b2 < v ? v : unk_13b2;
 }
 
-void Instr::func_08055ffc(short v)
+void Instr::raiseExternalOutputPairedConstraint(short v)
 {
     unk_13b4 = unk_13b4 < v ? v : unk_13b4;
 }
 
-void Instr::func_0805601c(short v)
+void Instr::raiseExternalOutputConstraint(short v)
 {
     unk_13b6 = unk_13b6 < v ? v : unk_13b6;
 }

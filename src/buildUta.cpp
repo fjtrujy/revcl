@@ -28,7 +28,7 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
         reportError("failed to init uta table for '%s'\n", s->streamName());
         return false;
     }
-    t->unk_10 = s;
+    t->ownerStream = s;
     int flags = 0;
     int branch = -1;
     for (int i = 0; i != count; i++) {
@@ -55,7 +55,7 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
                 dumpUtaInstruction(in);
                 errorOccurred = saved;
             }
-            flags |= in->unk_1389;
+            flags |= in->instructionModifierBits;
         } else {
             b->instructions[0] = 0;
             if (!t->logAddLinear_Tail(in)) {

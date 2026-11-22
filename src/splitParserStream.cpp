@@ -37,7 +37,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
                 }
                 f->isBranchTarget = 1;
             } else {
-                char *tags = ((Instr *)in)->unk_139c;
+                char *tags = ((Instr *)in)->branchLabelTags;
                 if (!tags)
                     continue;
                 char *tag = tags;
@@ -123,7 +123,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
             if (!in)
                 continue;
             int serial = g_080b33a8++;
-            in->unk_13e0 = serial;
+            in->instructionSerial = serial;
             char t = in->syntheticKind;
             switch ((unsigned char)t) {
             case 1:

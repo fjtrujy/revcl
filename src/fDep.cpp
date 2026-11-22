@@ -24,7 +24,7 @@ Operand *getEA(Instr *i)
             exitAfterCleanup(-1);
         }
         Operand *op = &i->operands[ii->unk_1a];
-        if (op->unk_09 != 1) {
+        if (op->direction != 1) {
             reportError("effective address specifier isn't an input\n");
             exitAfterCleanup(-1);
         }
@@ -35,7 +35,7 @@ Operand *getEA(Instr *i)
 
 static inline bool sameValue(Operand *a, Operand *b)
 {
-    return func_0804e5c0(&a->unk_1c, &b->unk_1c);
+    return func_0804e5c0(&a->immediateValue, &b->immediateValue);
 }
 
 static inline bool sameOwner(Instr *a, Instr *b)
@@ -55,10 +55,10 @@ bool sameEA(Instr *a, Instr *b)
         reportError("failed to get effective address operand\n");
         exitAfterCleanup(-1);
     }
-    if (ea1->unk_27 != ea2->unk_27)
+    if (ea1->externalPartMask != ea2->externalPartMask)
         return false;
-    RegPoolEntry *r1 = ea1->unk_18;
-    RegPoolEntry *r2 = ea2->unk_18;
+    RegPoolEntry *r1 = ea1->assignedRegister;
+    RegPoolEntry *r2 = ea2->assignedRegister;
     if (r1 && r1 == r1->ownerPool->zeroRegister)
         r1 = 0;
     if (r2 && r2 == r2->ownerPool->zeroRegister)
@@ -66,13 +66,13 @@ bool sameEA(Instr *a, Instr *b)
     if (r1 != r2)
         return false;
     if (r1) {
-        if (ea1->unk_07 != ea2->unk_07)
+        if (ea1->componentMask != ea2->componentMask)
             return false;
-        if (ea1->unk_07 != 1) {
+        if (ea1->componentMask != 1) {
             reportError("mod bits not 1 for an effective address specifier\n");
             exitAfterCleanup(-1);
         }
-        if (!func_080585d4(ea1->unk_2c[0].unk_54.head, ea2->unk_2c[0].unk_54.head))
+        if (!sameOperandLocation(ea1->parts[0].unk_54.head, ea2->parts[0].unk_54.head))
             return false;
     }
     return sameValue(ea1, ea2);

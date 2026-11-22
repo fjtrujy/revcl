@@ -12,12 +12,12 @@ RegPoolEntry *getZeroReg(unsigned int type);
 
 static inline bool isRawTable(workTable *wt)
 {
-    return wt->unk_09 == 3;
+    return wt->codeModeValue == 3;
 }
 
 static inline bool isPipeMode(workTable *wt)
 {
-    return isRawTable(wt) && (wt->unk_0a == 1 || wt->unk_0a == 3);
+    return isRawTable(wt) && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
 }
 
 inline bool atEarliest(workTable *wt, Instr *in)
@@ -108,20 +108,20 @@ bool sredTable(workTable *wt)
 {
     if (!isPipeMode(wt))
         return true;
-    int i = wt->unk_30;
-    int n = wt->unk_34;
+    int i = wt->rangeStart;
+    int n = wt->rangeEnd;
     if (i != n) {
-        i = n = wt->unk_38;
+        i = n = wt->loopSize;
         if (i) {
             reportError("can't do modular reduction\n");
             return false;
         }
-        setRange(wt->unk_30, wt->unk_34, 0);
+        setRange(wt->rangeStart, wt->rangeEnd, 0);
 
         int changed;
         do {
             changed = false;
-            for (i = wt->unk_30; i != wt->unk_34; i++) {
+            for (i = wt->rangeStart; i != wt->rangeEnd; i++) {
                 Instr *in = wt->getRowByIndex(i)->onlyEntry();
                 if (in) {
                     if (in->position.unk_04 != i) {
@@ -138,7 +138,7 @@ bool sredTable(workTable *wt)
 
         do {
             changed = false;
-            for (i = wt->unk_34 - 1; i >= wt->unk_30; i--) {
+            for (i = wt->rangeEnd - 1; i >= wt->rangeStart; i--) {
                 Instr *in = wt->getRowByIndex(i)->onlyEntry();
                 if (in && !atEarliest(wt, in)) {
                     if (in->position.unk_04 != i) {

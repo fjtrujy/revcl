@@ -28,7 +28,7 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
         reportError("failed to init synth table for '%s'\n", s->streamName());
         return false;
     }
-    t->unk_10 = s;
+    t->ownerStream = s;
     int inSynth;
     int stype;
     int flags = 0;
@@ -57,11 +57,11 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
                 reportUserMessage("istream already has end macro attached\n");
                 return false;
             }
-            if (!in->operands[0].unk_1c.getString()) {
+            if (!in->operands[0].immediateValue.getString()) {
                 reportError("EXITM has no macro string attached\n");
                 return false;
             }
-            s->endDirectiveText = dupString(in->operands[0].unk_1c.getString());
+            s->endDirectiveText = dupString(in->operands[0].immediateValue.getString());
         case 1:
         case 3:
             if (stype) {
@@ -126,7 +126,7 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
                 return false;
             }
         } else
-            flags |= in->unk_1389;
+            flags |= in->instructionModifierBits;
     }
     switch (stype) {
     case 11:

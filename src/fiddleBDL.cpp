@@ -15,7 +15,7 @@ static inline bool isRawMode(workTable *wt)
 
 static inline bool noReduce(workTable *wt)
 {
-    return isRawMode(wt) && (wt->unk_0a == 2 || wt->unk_0a == 4);
+    return isRawMode(wt) && (wt->rawSchedulingMode == 2 || wt->rawSchedulingMode == 4);
 }
 
 extern const char fiddleBranchPosError[];
@@ -28,41 +28,41 @@ extern const char fiddleSmallerError[];
 
 bool fiddleBDL(workTable *wt)
 {
-    setRange(wt->unk_30, wt->unk_34, wt->unk_38);
+    setRange(wt->rangeStart, wt->rangeEnd, wt->loopSize);
     if (noReduce(wt)) {
         return true;
     } else {
-        int len = wt->unk_34 - wt->unk_30;
-        if (len < wt->unk_44) {
+        int len = wt->rangeEnd - wt->rangeStart;
+        if (len < wt->externalMinimumLength) {
             reportError(fiddleSmallerError);
             return false;
         }
-        if (len == wt->unk_44)
+        if (len == wt->externalMinimumLength)
             return true;
-        if (wt->unk_38)
+        if (wt->loopSize)
             goto done;
 
         // reduceExt
         Instr *br = wt->getBranch();
-        int extlen = wt->unk_34 - wt->unk_30;
+        int extlen = wt->rangeEnd - wt->rangeStart;
         if (extlen <= 2 || !br)
             goto done;
         short m = br->unk_13b2 < br->unk_13b0 ? br->unk_13b0 : br->unk_13b2;
         if (m > extlen - 3)
             goto done;
-        wtRow *last = wt->getRowByIndex(wt->unk_34 - 1);
+        wtRow *last = wt->getRowByIndex(wt->rangeEnd - 1);
         if (!last) {
             reportError(fiddleGetLastIeError);
             return false;
         }
         if (last->countEntries())
             goto done;
-        wtRow *brow = wt->getRowByIndex(wt->unk_34 - 2);
+        wtRow *brow = wt->getRowByIndex(wt->rangeEnd - 2);
         if (!brow) {
             reportError(fiddleGetBranchIeError);
             return false;
         }
-        wtRow *prow = wt->getRowByIndex(wt->unk_34 - 3);
+        wtRow *prow = wt->getRowByIndex(wt->rangeEnd - 3);
         if (!prow) {
             reportError(fiddleGetPrevIeError);
             return false;
@@ -71,10 +71,10 @@ bool fiddleBDL(workTable *wt)
         InstructionPosition posP;
         {
             InstructionPosition posB;
-            short row = wt->unk_34;
+            short row = wt->rangeEnd;
             row -= 3;
             posP.setRow(row);
-            row = wt->unk_34;
+            row = wt->rangeEnd;
             row -= 2;
             posB.setRow(row);
             bool ok = true;
@@ -153,7 +153,7 @@ bool fiddleBDL(workTable *wt)
                 reportError("failed to put branch back in\n");
                 return false;
             }
-            wt->unk_34--;
+            wt->rangeEnd--;
 success:
             ;
         }

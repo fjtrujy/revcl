@@ -57,12 +57,12 @@ int func_0807aaf4(Program *p, instStream *s)
     int len = wt->getRangeEnd() - wt->getRangeStart();
     if (len == 0)
         return 0;
-    if (wt->unk_44 < 0) {
+    if (wt->externalMinimumLength < 0) {
         reportError("the minimal length is -ve for ext\n");
         return -1;
     }
-    if (len < wt->unk_44) {
-        reportError("table is lready too short (%d<%d)\n", len, wt->unk_44);
+    if (len < wt->externalMinimumLength) {
+        reportError("table is lready too short (%d<%d)\n", len, wt->externalMinimumLength);
         return -1;
     }
     func_0807bb84(wt);
@@ -77,7 +77,7 @@ int func_0807aaf4(Program *p, instStream *s)
             for (int i = 0; i != in->operandCount; i++) {
                 op = &in->operands[i];
                 RegPoolEntry *reg = registerOperand(op, 2);
-                ol_s *live = op->unk_2c[0].unk_54.head;
+                ol_s *live = op->parts[0].unk_54.head;
                 if (!reg || op->unk_0b || !live)
                     continue;
                 RegPoolEntry *capReg = 0;
@@ -89,7 +89,7 @@ int func_0807aaf4(Program *p, instStream *s)
                 }
                 if (!bits)
                     continue;
-                int need = op->unk_0a;
+                int need = op->outputLatency;
                 if (reg->registerIndex == 0x34 && need > 1)
                     need--;
                 int line = rl + 1;

@@ -11,11 +11,11 @@ int maddImmediate(Operand *op, mValue *v, int n);
 
 static inline void initImm(Instr *in)
 {
-    in->unk_13d4 = 0;
-    in->unk_13d5 = 0;
-    in->unk_13d6 = -1;
+    in->addressAliasMode = 0;
+    in->addressAliasDirection = 0;
+    in->addressAliasOperandIndex = -1;
     in->addressImmediateValue.clear();
-    in->unk_13d2 = -1;
+    in->expectedAliasLoopId = -1;
 }
 
 static inline bool initStreamImm(instStream *s)
@@ -90,8 +90,8 @@ static inline bool bit0Clear(unsigned char m)
 
 static inline bool hasAaData(Instr *in)
 {
-    if (in->unk_13d4 != 0 || in->unk_13d5 != 0 ||
-        in->unk_13d6 != -1 || in->addressImmediateValue.isValid())
+    if (in->addressAliasMode != 0 || in->addressAliasDirection != 0 ||
+        in->addressAliasOperandIndex != -1 || in->addressImmediateValue.isValid())
         return true;
     return false;
 }
@@ -101,20 +101,20 @@ static inline bool immValid(mValue *v)
     return v->isValid();
 }
 
-static inline regUse *firstRegUse(workTable *wt) { return wt->unk_14.head; }
-static inline RegPoolEntry *regUseReg(regUse *ru) { return ru->unk_08; }
-static inline Instr *regUseInstr(regUse *ru) { return ru->unk_1c; }
-static inline olList *regUseVisList0(regUse *ru) { return &ru->unk_20[0].unk_00; }
-static inline unsigned char regUseExtIn(regUse *ru) { return ru->unk_0c; }
-static inline unsigned char regUseExtOut(regUse *ru) { return ru->unk_0d; }
+static inline regUse *firstRegUse(workTable *wt) { return wt->registerUses.head; }
+static inline RegPoolEntry *regUseReg(regUse *ru) { return ru->registerEntry; }
+static inline Instr *regUseInstr(regUse *ru) { return ru->definingInstruction; }
+static inline olList *regUseVisList0(regUse *ru) { return &ru->slots[0].inputLocations; }
+static inline unsigned char regUseExtIn(regUse *ru) { return ru->externalInputMask; }
+static inline unsigned char regUseExtOut(regUse *ru) { return ru->externalOutputMask; }
 static inline Operand *instrRawOp(Instr *in, unsigned char idx) { return &in->operands[idx]; }
 static inline Operand *instrRawOpS(Instr *in, signed char idx) { return &in->operands[idx]; }
-static inline RegPoolEntry *opRawReg(Operand *op) { return op->unk_18; }
-static inline unsigned char opSlotMask(Operand *op) { return op->unk_07; }
-static inline mValue *opImmVal(Operand *op) { return &op->unk_1c; }
-static inline olList *opSlotUses0(Operand *op) { return &op->unk_2c[0].unk_54; }
-static inline Instr *olInstr(ol_s *ol) { return ol->unk_04; }
-static inline char olOpIndex(ol_s *ol) { return ol->unk_10; }
+static inline RegPoolEntry *opRawReg(Operand *op) { return op->assignedRegister; }
+static inline unsigned char opSlotMask(Operand *op) { return op->componentMask; }
+static inline mValue *opImmVal(Operand *op) { return &op->immediateValue; }
+static inline olList *opSlotUses0(Operand *op) { return &op->parts[0].unk_54; }
+static inline Instr *olInstr(ol_s *ol) { return ol->instruction; }
+static inline char olOpIndex(ol_s *ol) { return ol->operandIndex; }
 static inline mValue *instrAaImm(Instr *in) { return &in->addressImmediateValue; }
 static inline unsigned char aaOutOp(aaDesc *aa) { return aa->unk_06; }
 static inline unsigned char aaInOp(aaDesc *aa) { return aa->unk_05; }
@@ -129,7 +129,7 @@ bool aaFixup(instStream *s)
         reportError("Init_immFixup - failed to get work table\n");
         return false;
     }
-    for (regUse *ru = firstRegUse(wt); ru; ru = ru->unk_04) {
+    for (regUse *ru = firstRegUse(wt); ru; ru = ru->next) {
         RegPoolEntry *reg = regUseReg(ru);
         if (!reg) {
             reportError("aaFixup - regref had no register\n");
@@ -140,13 +140,13 @@ bool aaFixup(instStream *s)
         aaDesc *aa = findAddressAliasDescriptor(in);
         if (!aa || !bit0(regUseExtIn(ru)) || !bit0(regUseExtOut(ru)) || ru->unk_18 != 1)
             continue;
-        RegPoolEntry *outReg = in->operands[aa->unk_06].unk_18;
+        RegPoolEntry *outReg = in->operands[aa->unk_06].assignedRegister;
         if (outReg != reg || opRawReg(instrRawOp(in, aaInOp(aa))) != outReg)
             continue;
         ol_s *ol;
-        for (ol = vis->firstInternalLocation(); ol; ol = ol->func_080583ac()) {
+        for (ol = vis->firstInternalLocation(); ol; ol = ol->nextInternalLocation()) {
             Instr *vi = olInstr(ol);
-            Operand *vop = func_0805802c(ol);
+            Operand *vop = operandAtLocation(ol);
             if (!vi)
                 goto bad1;
             if (!vop)
@@ -161,9 +161,9 @@ bool aaFixup(instStream *s)
                     immValid(instrAaImm(vi));
                     return false;
                 }
-                vi->unk_13d5 = 1;
-                vi->unk_13d4 = aa->unk_04;
-                vi->unk_13d6 = u->unk_04;
+                vi->addressAliasDirection = 1;
+                vi->addressAliasMode = aa->unk_04;
+                vi->addressAliasOperandIndex = u->unk_04;
                 mValue *v = instrAaImm(vi);
                 if (aa->unk_07 >= 0) {
                     if (!v->set(opImmVal(instrRawOpS(in, aaImmOp(aa))))) {
@@ -189,9 +189,9 @@ bool aaFixup(instStream *s)
             reportError("failed to get output operand for aa\n");
             exitAfterCleanup(-1);
         }
-        for (ol = opSlotUses0(out)->firstInternalLocation(); ol; ol = ol->func_080583ac()) {
+        for (ol = opSlotUses0(out)->firstInternalLocation(); ol; ol = ol->nextInternalLocation()) {
             Instr *vi = olInstr(ol);
-            Operand *vop = func_0805802c(ol);
+            Operand *vop = operandAtLocation(ol);
             if (!vi || !vop) {
                 reportError("failed to get instruction for visible input.. mode after\n");
                 exitAfterCleanup(-1);
@@ -205,9 +205,9 @@ bool aaFixup(instStream *s)
                     return false;
                 }
                 mValue *v = instrAaImm(vi);
-                vi->unk_13d5 = 2;
-                vi->unk_13d4 = aa->unk_04;
-                vi->unk_13d6 = u->unk_04;
+                vi->addressAliasDirection = 2;
+                vi->addressAliasMode = aa->unk_04;
+                vi->addressAliasOperandIndex = u->unk_04;
                 if (aa->unk_07 >= 0) {
                     if (!v->set(opImmVal(instrRawOpS(in, aaImmOp(aa))))) {
                         reportError("failed to set xaaImm after\n");
@@ -265,8 +265,8 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
     }
     int nLocal = 0;
     ol_s *ol;
-    for (ol = oll->head; ol; ol = ol->unk_00) {
-        Instr *in = ol->unk_04;
+    for (ol = oll->head; ol; ol = ol->next) {
+        Instr *in = ol->instruction;
         if (!in) {
             reportError("failed to get in from ol\n");
             exitAfterCleanup(-1);
@@ -282,8 +282,8 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
         }
     }
     epSrc src[2];
-    for (ol = oll->head; ol; ol = ol->unk_00) {
-        Instr *in = ol->unk_04;
+    for (ol = oll->head; ol; ol = ol->next) {
+        Instr *in = ol->instruction;
         if (!in) {
             reportError("failed to get in from ol\n");
             exitAfterCleanup(-1);
@@ -303,7 +303,7 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
             oll->validateOperandLocations();
             return false;
         }
-        src[nLocal].lid = in->unk_13d2;
+        src[nLocal].lid = in->expectedAliasLoopId;
         src[nLocal].type = type;
         nLocal++;
     }
@@ -389,7 +389,7 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
 
 static inline bool isCinput(Operand *op)
 {
-    return op->unk_09 == 1;
+    return op->direction == 1;
 }
 
 bool func_08069e7c(Instr *in)
@@ -399,9 +399,9 @@ bool func_08069e7c(Instr *in)
         reportError("failed to get owner istream from inst during immediate fixup\n");
         exitAfterCleanup(-1);
     }
-    if (!in->unk_13d4)
+    if (!in->addressAliasMode)
         return true;
-    Operand *op = in->getOp(in->unk_13d6);
+    Operand *op = in->getOp(in->addressAliasOperandIndex);
     if (!op) {
         reportError("failed to get opernad for imm fix\n");
         exitAfterCleanup(-1);
@@ -412,37 +412,37 @@ bool func_08069e7c(Instr *in)
     }
     int ep;
     if (s->streamSerial) {
-        if (in->unk_13d2 < 0) {
+        if (in->expectedAliasLoopId < 0) {
             reportError("loop, epID<0 for operand in im fixup aaDstMode=%d..epMode=%d\n",
-                          in->unk_13d5, in->unk_13d2);
+                          in->addressAliasDirection, in->expectedAliasLoopId);
             in->func_08054008(false);
             exitAfterCleanup(-1);
         }
-        ep = in->unk_13d2;
+        ep = in->expectedAliasLoopId;
     } else {
-        if (in->unk_13d2 >= 0) {
+        if (in->expectedAliasLoopId >= 0) {
             reportError("nonloop, epID>=0 for operand in im fixup aaDstmode=%d..epMode=%d\n",
-                          in->unk_13d5, in->unk_13d2);
+                          in->addressAliasDirection, in->expectedAliasLoopId);
             in->func_08054008(false);
             exitAfterCleanup(-1);
         }
         ep = 0;
     }
-    if (in->unk_13d5 == 1)
+    if (in->addressAliasDirection == 1)
         ep--;
     int lid;
     if (s->streamSerial) {
-        olList *oll = &op->unk_2c[0].unk_54;
+        olList *oll = &op->parts[0].unk_54;
         if (!getSrcEpLid(oll, s->streamSerial, s->unk_2c4, &lid)) {
             reportError("failed to determine actual loopid of setter.. we are:\n");
             in->leDump();
             if (in->getOwningStream())
                 reportError("parent stream is : %s\n", in->getOwningStream()->streamName());
-            reportError("expected was %d\n", in->unk_13d2);
+            reportError("expected was %d\n", in->expectedAliasLoopId);
             exitAfterCleanup(-1);
         }
     } else
-        lid = op->unk_27 ? -1 : 0;
+        lid = op->externalPartMask ? -1 : 0;
     if (ep != lid) {
     int diff = ep - lid;
     int dir;
@@ -452,7 +452,7 @@ bool func_08069e7c(Instr *in)
     } else
         dir = 1;
     int mul;
-    switch (in->unk_13d4) {
+    switch (in->addressAliasMode) {
     case 1:
         mul = 1;
         break;
@@ -464,16 +464,16 @@ bool func_08069e7c(Instr *in)
         exitAfterCleanup(-1);
         return false;
     default:
-        reportError("bad opchar mode %d\n", in->unk_13d4);
+        reportError("bad opchar mode %d\n", in->addressAliasMode);
         exitAfterCleanup(-1);
         return false;
     }
     if (dir * mul < 0)
         diff = -diff;
-    int r = maddImmediate(&in->operands[in->unk_13d6], &in->addressImmediateValue, diff);
+    int r = maddImmediate(&in->operands[in->addressAliasOperandIndex], &in->addressImmediateValue, diff);
     if (r < 0) {
         reportError("failed to madd immediates\n");
-        in->leDump(in->unk_13d6);
+        in->leDump(in->addressAliasOperandIndex);
         exitAfterCleanup(-1);
     }
     if (r == 1) {
@@ -504,16 +504,16 @@ void Instr::hasImmValue()
 
 bool Instr::hasImmFixup()
 {
-    if (unk_13d4 != 0 || unk_13d5 != 0 || unk_13d6 != -1 || addressImmediateValue.isValid())
+    if (addressAliasMode != 0 || addressAliasDirection != 0 || addressAliasOperandIndex != -1 || addressImmediateValue.isValid())
         return true;
     return false;
 }
 
 void Instr::resetImmFixup()
 {
-    unk_13d4 = 0;
-    unk_13d5 = 0;
-    unk_13d6 = -1;
+    addressAliasMode = 0;
+    addressAliasDirection = 0;
+    addressAliasOperandIndex = -1;
     addressImmediateValue.clear();
 }
 

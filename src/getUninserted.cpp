@@ -56,17 +56,17 @@ int instStream::getUninsertedxInputs()
         Operand *op;
         for (int i = 0; (op = in->getOp(i)) != 0; i++) {
             RegPoolEntry *reg = registerOperand(op, 1);
-            if (!reg || !op->unk_27)
+            if (!reg || !op->externalPartMask)
                 continue;
             for (int k = 0; k != reg->partCount; k++) {
-                if ((op->unk_27 >> k) & 1) {
-                ol_s *ol = op->unk_2c[k].unk_54.head;
+                if ((op->externalPartMask >> k) & 1) {
+                ol_s *ol = op->parts[k].unk_54.head;
                 if (!ol) {
                     reportError("no setter list found during getuninstxi!\n");
                     return -1;
                 }
-                for (; ol; ol = ol->unk_00) {
-                    Instr *setter = ol->unk_04;
+                for (; ol; ol = ol->next) {
+                    Instr *setter = ol->instruction;
                     if (setter->getOwningStream() == this || setter->unk_00)
                         continue;
                     int te = getToEnd(setter);
@@ -74,8 +74,8 @@ int instStream::getUninsertedxInputs()
                         reportError("getUninsertedxInputs - failed to get to end for a setter\n");
                         return -1;
                     }
-                    Operand *src = func_0805802c(ol);
-                    if (te + base + ol->unk_12 + 1 < src->unk_0a + op->unk_29) {
+                    Operand *src = operandAtLocation(ol);
+                    if (te + base + ol->unk_12 + 1 < src->outputLatency + op->additionalLatency) {
                         if (reg->partCount == 1)
                             count += 4;
                         else
@@ -106,12 +106,12 @@ int instStream::getUninsertedxOutputs()
         Operand *op;
         for (int i = 0; (op = in->getOp(i)) != 0; i++) {
             RegPoolEntry *reg = registerOperand(op, 2);
-            if (!reg || !op->unk_27)
+            if (!reg || !op->externalPartMask)
                 continue;
             for (int k = 0; k != reg->partCount; k++) {
-                if ((op->unk_27 >> k) & 1) {
-                    for (ol_s *ol = op->unk_2c[k].unk_54.head; ol; ol = ol->unk_00) {
-                        Instr *user = ol->unk_04;
+                if ((op->externalPartMask >> k) & 1) {
+                    for (ol_s *ol = op->parts[k].unk_54.head; ol; ol = ol->next) {
+                        Instr *user = ol->instruction;
                         if (user->getOwningStream() == this || user->unk_00)
                             continue;
                         int fs = getFromStart(user);
@@ -119,8 +119,8 @@ int instStream::getUninsertedxOutputs()
                             reportError("getUninsertedxOutputs - failed to get to end for a setter\n");
                             return -1;
                         }
-                        Operand *src = func_0805802c(ol);
-                        if (base + fs + ol->unk_12 + 1 < op->unk_0a + src->unk_29) {
+                        Operand *src = operandAtLocation(ol);
+                        if (base + fs + ol->unk_12 + 1 < op->outputLatency + src->additionalLatency) {
                             if (reg->partCount == 1)
                                 count += 4;
                             else
@@ -141,7 +141,7 @@ int getToEnd(Instr *in)
         reportError("instruction had no owner for getToEnd()\n");
         return -1;
     }
-    instStream *s = wt->unk_10;
+    instStream *s = wt->ownerStream;
     if (!s) {
         reportError("failed to get owner owner\n");
         return -1;
@@ -158,12 +158,12 @@ int getToEnd(Instr *in)
             return -1;
         }
         wt = (workTable *)img->unk_30;
-        if (wt->unk_09 != 3) {
+        if (wt->codeModeValue != 3) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
         }
     }
-    switch (wt->unk_09) {
+    switch (wt->codeModeValue) {
     case 1:
         return in->unk_13f0.unk_00;
     case 3: {
@@ -190,7 +190,7 @@ int getToEnd(Instr *in)
     case 4:
         return 0;
     default:
-        const char *modeName = codeModeName(wt->unk_09);
+        const char *modeName = codeModeName(wt->codeModeValue);
         reportError("bad code mode for getToEnd()..mode=%s\n", modeName);
         break;
     }
@@ -204,7 +204,7 @@ int getFromStart(Instr *in)
         reportError("instruction had no owner for getToEnd()\n");
         return -1;
     }
-    instStream *s = wt->unk_10;
+    instStream *s = wt->ownerStream;
     if (!s) {
         reportError("failed to get owner owner\n");
         return -1;
@@ -221,12 +221,12 @@ int getFromStart(Instr *in)
             return -1;
         }
         wt = (workTable *)img->unk_30;
-        if (wt->unk_09 != 3) {
+        if (wt->codeModeValue != 3) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
         }
     }
-    switch (wt->unk_09) {
+    switch (wt->codeModeValue) {
     case 1:
         return in->unk_13f0.unk_04;
     case 3: {
@@ -272,15 +272,15 @@ bool loadLocks(Program *p, workTable *wt)
         return false;
     }
     setRange(wt->getRangeStart(), wt->getRangeEnd(), wt->getLoopSize());
-    for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
-        RegPoolEntry *reg = ru->unk_08;
+    for (regUse *ru = wt->registerUses.head; ru; ru = ru->next) {
+        RegPoolEntry *reg = ru->registerEntry;
         for (int i = 0; i != reg->partCount; i++) {
-            regUseSlot *rs = &ru->unk_20[i];
+            regUseSlot *rs = &ru->slots[i];
             if (!rs) {
                 reportError("failed to get rrp\n");
                 exitAfterCleanup(-1);
             }
-            RegisterPartLockList *rll = (RegisterPartLockList *)rs->unk_58;
+            RegisterPartLockList *rll = (RegisterPartLockList *)rs->assignmentPayload;
             if (!rll) {
                 reportError("no rll set in regref\n");
                 exitAfterCleanup(-1);

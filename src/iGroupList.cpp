@@ -164,22 +164,22 @@ int iGroupLog::logTable(workTable *wt)
         reportError("logTable - called - but the table is already open\n");
         return 0;
     }
-    for (regUse *p = wt->unk_14.head; p; p = p->unk_04) {
-        RegPoolEntry *reg = p->unk_08;
+    for (regUse *p = wt->registerUses.head; p; p = p->next) {
+        RegPoolEntry *reg = p->registerEntry;
         for (int i = 0; i != reg->partCount; i++) {
-            if (((p->unk_0c & p->unk_0d) >> i) & 1) {
+            if (((p->externalInputMask & p->externalOutputMask) >> i) & 1) {
             Instr *in;
             for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
                 in->unk_0e = 0;
             for (Instr *cur = (in = wt->linearInstructions.head); in; cur = (in = in->unk_1c.unk_00))
                 for (int j = 0; j != cur->operandCount; j++) {
                     Operand *op = &cur->operands[j];
-                    RegPoolEntry *r = op->unk_18;
-                    if (r == reg && op->unk_27)
+                    RegPoolEntry *r = op->assignedRegister;
+                    if (r == reg && op->externalPartMask)
                         for (int k = 0; k != r->partCount; k++) {
-                            if (isRegisterOperand(op, 2) && ((op->unk_27 >> k) & 1))
+                            if (isRegisterOperand(op, 2) && ((op->externalPartMask >> k) & 1))
                                 in->func_08055aa8();
-                            if (isRegisterOperand(op, 1) && ((op->unk_27 >> k) & 1))
+                            if (isRegisterOperand(op, 1) && ((op->externalPartMask >> k) & 1))
                                 in->func_08055a88();
                         }
                 }
@@ -193,8 +193,8 @@ int iGroupLog::logTable(workTable *wt)
                             RegPoolEntry *r = registerOperand(op, 2);
                             if (r)
                                 for (int k = 0; k != r->partCount; k++)
-                                    for (ol_s *o = op->unk_2c[k].unk_54.firstInternalLocation(); o; o = o->func_080583ac()) {
-                                        Instr *t = o->unk_04;
+                                    for (ol_s *o = op->parts[k].unk_54.firstInternalLocation(); o; o = o->nextInternalLocation()) {
+                                        Instr *t = o->instruction;
                                         changed = changed || t->func_08055a88();
                                     }
                         }
@@ -206,8 +206,8 @@ int iGroupLog::logTable(workTable *wt)
                             RegPoolEntry *r = registerOperand(op, 1);
                             if (r)
                                 for (int k = 0; k != r->partCount; k++)
-                                    for (ol_s *o = op->unk_2c[k].unk_54.firstInternalLocation(); o; o = o->func_080583ac())
-                                        o->unk_04->unk_0e_0 = 1;
+                                    for (ol_s *o = op->parts[k].unk_54.firstInternalLocation(); o; o = o->nextInternalLocation())
+                                        o->instruction->unk_0e_0 = 1;
                         }
             } while (changed);
             reportInfo("  dumping scan for %s\n", reg->maskName(1 << i));

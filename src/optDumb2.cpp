@@ -6,7 +6,7 @@
 
 bool optDumb2(workTable *wt, wrangleCand *c)
 {
-    Instr *in = wt->unk_4c;
+    Instr *in = wt->moveListHead;
     Instr *best = 0;
     int bestV = 0x7fffffff;
     for (; in; in = in->unk_2c) {

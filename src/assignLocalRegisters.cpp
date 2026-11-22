@@ -49,11 +49,11 @@ bool assignLocalRegisters(Program *p, workTable *wt)
             in->func_08054008(false);
         exitAfterCleanup(-1);
     }
-    if (wt->unk_08 != 2) {
+    if (wt->allocationMode != 2) {
         reportError(assignLocalExternalError);
         exitAfterCleanup(-1);
     }
-    unsigned int mode = wt->unk_09;
+    unsigned int mode = wt->codeModeValue;
     if ((unsigned char)mode != 3) {
         reportError(assignLocalModeError, mode);
         exitAfterCleanup(-1);
@@ -75,7 +75,7 @@ bool assignLocalRegisters(Program *p, workTable *wt)
             return false;
         }
     }
-    wt->unk_08 = 3;
+    wt->allocationMode = 3;
     return true;
 }
 
@@ -317,7 +317,7 @@ int genRegPool::bestReg()
 
 bool genRegPool::set_in_aTab(regUse *ru)
 {
-    RegPoolEntry *reg = ru->unk_08;
+    RegPoolEntry *reg = ru->registerEntry;
     if (!reg) {
         reportError("regref had no register\n");
         return false;
@@ -334,7 +334,7 @@ bool genRegPool::set_in_aTab(regUse *ru)
             exitAfterCleanup(-1);
         }
         if (reg->unk_16) {
-            unsigned char mask = ru->unk_0e | ru->unk_0f | ru->unk_10;
+            unsigned char mask = ru->inputMask | ru->outputMask | ru->throughputMask;
             if (!mask) {
                 reportError("error here\n");
                 exitAfterCleanup(-1);

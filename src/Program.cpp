@@ -17,7 +17,7 @@ const char *getOptimiserName(int id);
 
 Program::Program(bool symbolic)
 {
-    unk_9c = symbolic;
+    symbolicOutput = symbolic;
     streamTail = 0;
     streamHead = 0;
     streamCount = 0;
@@ -427,7 +427,7 @@ bool func_0806f610(Program *p)
             reportError("failed to get work table\n");
             return false;
         }
-        wt->unk_08 = 1;
+        wt->allocationMode = 1;
     }
     return true;
 }

@@ -6,20 +6,20 @@
 class Instr;
 
 struct ol_s {
-    ol_s *unk_00;   // next
-    Instr *unk_04;  // instruction
-    int unk_08;
+    ol_s *next;
+    Instr *instruction;
+    int pathKey;
     int unk_0c;
     union {
         struct {
-            char unk_10;    // operand index
-            char unk_11;    // field bit number
+            char operandIndex;
+            char componentIndex;
         };
-        short unk_10_11;    // operand index and bit compared together
+        short packedOperandComponent;
     };
     unsigned char unk_12;
     union {
-        unsigned char unk_13;   // flags, bit0 = external
+        unsigned char stateFlags;
         struct {
             unsigned char external : 1;
             unsigned char externalUsed : 1;
@@ -31,11 +31,11 @@ struct ol_s {
     inline void reset();
     inline bool isExt();
     inline bool isExtUsed();
-    void func_08057fbc();
-    void func_08057fec();
-    ol_s *func_080583ac();
-    ol_s *func_08058414();
-    void func_08058054(ol_s *src);
+    void dumpInstructionContext();
+    void dumpOperandContext();
+    ol_s *nextInternalLocation();
+    ol_s *nextExternalLocation();
+    void copyLocationFrom(ol_s *src);
     void init(Instr *inst, int op, int slot, bool ext);
 };
 

@@ -54,7 +54,7 @@ bool assignExtRegisters(Program *p)
     }
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
-        unsigned int mode = (unsigned char)wt->unk_08;
+        unsigned int mode = (unsigned char)wt->allocationMode;
         if ((char)mode != 1) {
             const char *modeName = allocModeName(mode);
             reportError("AssignExtRegisters - alloc mode not NONE for %s mode %s!\n",
@@ -71,9 +71,9 @@ bool assignExtRegisters(Program *p)
         for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             for (int j = 0; j != in->operandCount; j++) {
                 Operand *op = &in->operands[j];
-                RegPoolEntry *reg = op->unk_18;
+                RegPoolEntry *reg = op->assignedRegister;
                 if (reg && reg->isVirtual) {
-                    regUse *ru = wt->unk_14.findByRegister(reg);
+                    regUse *ru = wt->registerUses.findByRegister(reg);
                     if (!ru) {
                         reportError("failed to find reg ref associated with reg\n");
                         return false;
@@ -88,12 +88,12 @@ bool assignExtRegisters(Program *p)
                             reportError("alloc tmp is virtual in ext assign\n");
                             return false;
                         }
-                        op->unk_18 = ext;
+                        op->assignedRegister = ext;
                     }
                 }
             }
         }
-        wt->unk_08 = 2;
+        wt->allocationMode = 2;
     }
     if (!func_0806f6a4(p)) {
         reportError("failed to clean up after global alloc\n");

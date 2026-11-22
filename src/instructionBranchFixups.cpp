@@ -8,14 +8,14 @@ bool Instr::patchBranchLatencies()
         Operand *op = &operands[i];
         if (!registerOperand(op, 1))
             continue;
-        op->unk_29 = 0;
+        op->additionalLatency = 0;
         if (!(branchFlags & 4))
             continue;
-        for (ol_s *ol = op->unk_2c[0].unk_54.head; ol; ol = ol->unk_00) {
-            Instr *in = ol->unk_04;
+        for (ol_s *ol = op->parts[0].unk_54.head; ol; ol = ol->next) {
+            Instr *in = ol->instruction;
             bool found = false;
             if (in->ramAccessType) {
-                int c = ol->unk_10;
+                int c = ol->operandIndex;
                 if ((char)c == 0)
                     continue;
             }
@@ -27,7 +27,7 @@ bool Instr::patchBranchLatencies()
                 }
             }
             if (!found) {
-                op->unk_29 = 1;
+                op->additionalLatency = 1;
                 break;
             }
         }
@@ -51,7 +51,7 @@ int Instr::simplifyBranch()
     if (branchFlags & 8)
         return 1;
     if (operandCount == 2) {
-        RegPoolEntry *r = operands[0].unk_18;
+        RegPoolEntry *r = operands[0].assignedRegister;
         if (!r)
             return -1;
         if (r->registerIndex == 0x20) {
@@ -65,7 +65,7 @@ int Instr::simplifyBranch()
                 target = 1;
         }
     }
-    if (operandCount == 3 && operands[0].unk_18 == operands[1].unk_18) {
+    if (operandCount == 3 && operands[0].assignedRegister == operands[1].assignedRegister) {
         if (id == 0xac)
             target = 2;
         if (id == 0xad)
@@ -73,16 +73,16 @@ int Instr::simplifyBranch()
     }
     if (target > 0) {
         for (int i = 0; i != operandCount; i++) {
-            operands[i].unk_18 = 0;
-            operands[i].unk_04 = 0;
+            operands[i].assignedRegister = 0;
+            operands[i].operandKind = 0;
         }
         operandCount = 1;
-        operands[0].unk_04 = 0x1b;
-        if (!operands[0].unk_1c.set(&operands[target].unk_1c)) {
+        operands[0].operandKind = 0x1b;
+        if (!operands[0].immediateValue.set(&operands[target].immediateValue)) {
             reportError("fixup branch -set new ximm\n");
             return -1;
         }
-        operands[target].unk_1c.clear();
+        operands[target].immediateValue.clear();
         opcodeInfo = findOpcodeInfoByMnemonic("b", true);
         if (!validateOperands()) {
             reportError("failed to convert a branch\n");

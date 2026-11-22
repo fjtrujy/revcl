@@ -21,24 +21,24 @@ bool bindExternals(Program *p)
         for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
-                RegPoolEntry *reg = op->unk_18;
+                RegPoolEntry *reg = op->assignedRegister;
                 if (!reg)
                     continue;
-                regUse *ru = wt->unk_14.findByRegister(reg);
+                regUse *ru = wt->registerUses.findByRegister(reg);
                 if (!ru) {
                     reportError(bindExtFindRegRefError);
                     return false;
                 }
-                if (ru->isExternal() || wt->unk_08 == 3) {
+                if (ru->isExternal() || wt->allocationMode == 3) {
                     if (reg->isVirtual) {
                         reportError(bindExtVirtualRegError);
                         return false;
                     }
-                    if (op->unk_10 && op->unk_10 != reg) {
+                    if (op->forcedBaseRegister && op->forcedBaseRegister != reg) {
                         reportError(bindExtForcedBaseError);
                         return false;
                     }
-                    op->unk_10 = reg;
+                    op->forcedBaseRegister = reg;
                 }
             }
         }

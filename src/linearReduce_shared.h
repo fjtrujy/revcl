@@ -20,7 +20,7 @@ bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl);
 
 static inline bool isPipeMode(workTable *wt)
 {
-    return wt->unk_09 == 3 && (wt->unk_0a == 1 || wt->unk_0a == 3);
+    return wt->codeModeValue == 3 && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
 }
 
 #endif

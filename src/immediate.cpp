@@ -56,7 +56,7 @@ fail:
 
 int maddImmediate(Operand *const op, mValue *v, int n)
 {
-    if (!op->unk_1c.isValid()) {
+    if (!op->immediateValue.isValid()) {
         reportError("madd immediate- ximm invalid\n");
         return -1;
     }
@@ -65,16 +65,16 @@ int maddImmediate(Operand *const op, mValue *v, int n)
         return 0;
     }
     int r = 0;
-    if (v->isInt() && op->unk_1c.isInt()) {
+    if (v->isInt() && op->immediateValue.isInt()) {
         int a = 0;
         int b = 0;
-        if (!op->unk_1c.getInt(&a) || !v->getInt(&b)) {
+        if (!op->immediateValue.getInt(&a) || !v->getInt(&b)) {
             reportError("failed to get integer values\n");
             return -1;
         }
-        op->unk_1c.setInt(a + b * n);
+        op->immediateValue.setInt(a + b * n);
     } else {
-        char *x = op->unk_1c.asChars();
+        char *x = op->immediateValue.asChars();
         char *y = v->asChars();
         if (!x || !y) {
             reportError("failed to get chars\n");
@@ -82,7 +82,7 @@ int maddImmediate(Operand *const op, mValue *v, int n)
         }
         char buf[1024];
         formatIntoBuffer(buf, "(%s)+((%s)*%d)", x, y, n);
-        op->unk_1c.setString(buf);
+        op->immediateValue.setString(buf);
         r = 2;
     }
     return r;

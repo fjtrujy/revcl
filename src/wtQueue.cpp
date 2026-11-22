@@ -13,7 +13,7 @@ struct optimiser {
     int wmode;
     int flags;
     wrangleFunc func;
-    int unk_10;
+    int ownerStream;
 };
 
 extern optimiser optTable[11];
@@ -51,40 +51,40 @@ bool workTable::qRegRef(regUse *ru)
         reportError("failed to clone regref\n");
         exitAfterCleanup(-1);
     }
-    RegPoolEntry *reg = c->unk_08;
+    RegPoolEntry *reg = c->registerEntry;
     if (!reg) {
         reportError("no register attached to cloned rf during qRegRef\n");
         delete c;
         return false;
     }
-    if (!unk_14.append(c)) {
+    if (!registerUses.append(c)) {
         reportError("failed to add cloned regref to list\n");
         delete c;
         return false;
     }
-    if (~c->unk_0f & c->unk_0d) {
+    if (~c->outputMask & c->externalOutputMask) {
         reportError("xobits set, but o bits not\n");
         c->validateAndDumpParts();
         return false;
     }
-    if (~c->unk_0e & c->unk_0c) {
+    if (~c->inputMask & c->externalInputMask) {
         reportError("xibits set, but i bits not\n");
         c->validateAndDumpParts();
         return false;
     }
     for (int i = 0; i != reg->partCount; i++) {
-        c->unk_20[i].unk_30 = ru->unk_20[i].unk_30;
-        c->unk_20[i].unk_32 = ru->unk_20[i].unk_32;
+        c->slots[i].earliestExternalCycle = ru->slots[i].earliestExternalCycle;
+        c->slots[i].latestExternalCycle = ru->slots[i].latestExternalCycle;
         RegisterPartLockList *ll = getLockList(reg, i);
         if (!ll) {
             reportError("failed to get lock list ptr in register for rfv for reg %s\n", reg->registerName());
             exitAfterCleanup(-1);
         }
-        if (c->unk_20[i].unk_58) {
+        if (c->slots[i].assignmentPayload) {
             reportError("rll is already set in rrp\n");
             exitAfterCleanup(-1);
         }
-        c->unk_20[i].unk_58 = (VclPtrWord)ll;
+        c->slots[i].assignmentPayload = (VclPtrWord)ll;
         if (reg->getPartPayload(i)) {
             reportError("regref register part already had locklist\n");
             exitAfterCleanup(-1);
@@ -93,22 +93,22 @@ bool workTable::qRegRef(regUse *ru)
             reportError("failed to set curr lock list pointer in rf register\n");
             exitAfterCleanup(-1);
         }
-        if ((c->unk_0f >> i) & 1)
+        if ((c->outputMask >> i) & 1)
             ll->unk_29 = 0;
-        char xi = (c->unk_0c >> i) & 1;
-        char t = (c->unk_10 >> i) & 1;
+        char xi = (c->externalInputMask >> i) & 1;
+        char t = (c->throughputMask >> i) & 1;
         bool sync = false;
         if (reg->unk_2c && g_080b336c == 0)
             sync = true;
-        char nb = reg->unk_1c;
-        if (!nb && (c->unk_10 & (c->unk_0f | c->unk_0d))) {
+        char nb = reg->nonBlockId;
+        if (!nb && (c->throughputMask & (c->outputMask | c->externalOutputMask))) {
             reportError("t bits set for nbid register\n");
             c->validateAndDumpParts();
             return false;
         }
         if (t || xi || sync) {
             unsigned char nbz = nb == 0;
-            OperandLock *lk = c->unk_20[i].func_0805b830();
+            OperandLock *lk = c->slots[i].getRegisterLock();
             if (!lk)
                 reportError("failed to get lock for %s.%d as %s\n",
                               reg->registerName(), i, reg->registerName());
@@ -123,7 +123,7 @@ bool workTable::qRegRef(regUse *ru)
                 return false;
             }
             if (t) {
-                bool ext = !(((c->unk_0f | c->unk_0e) >> i) & 1);
+                bool ext = !(((c->outputMask | c->inputMask) >> i) & 1);
                 if (!ll->addExtOutput(lk, ext)) {
                     reportError("failed to add pass thru reg ref as ext output for register %s\n",
                                   reg->registerName());
@@ -146,12 +146,12 @@ extern int g_080b33f0;
 
 static inline bool isAAOperand(Operand *op)
 {
-    return op->unk_2b == 2;
+    return op->operandStatus == 2;
 }
 
 static inline unsigned char operandLockMode(Operand *op)
 {
-    return op->unk_2b;
+    return op->operandStatus;
 }
 
 bool workTable::qInstruction(Instr *in)
@@ -168,16 +168,16 @@ bool workTable::qInstruction(Instr *in)
         exitAfterCleanup(-1);
     }
     c->copyExternalTimingConstraints(in);
-    if (!unk_10) {
+    if (!ownerStream) {
         reportError("qInstruction - no owner\n");
         return false;
     }
-    if (c->unk_13d5 == 1 || c->unk_13d5 == 2) {
-        if (c->unk_13d6 < 0) {
+    if (c->addressAliasDirection == 1 || c->addressAliasDirection == 2) {
+        if (c->addressAliasOperandIndex < 0) {
             reportError("m_aaOp<0 but dstMode is set!\n");
             exitAfterCleanup(-1);
         }
-        c->operands[c->unk_13d6].unk_2b = 2;
+        c->operands[c->addressAliasOperandIndex].operandStatus = 2;
     }
     setPipeBits(c);
 
@@ -188,10 +188,10 @@ bool workTable::qInstruction(Instr *in)
             reportError("qInstruction failed to get an operand\n");
             return false;
         }
-        RegPoolEntry *reg = dst->unk_18;
+        RegPoolEntry *reg = dst->assignedRegister;
         if (!reg)
             continue;
-        regUse *rr = unk_14.findByRegister(reg);
+        regUse *rr = registerUses.findByRegister(reg);
         if (!rr) {
             reportError("find reg ref failed to find rr from owner.. by now - this is fatal.. register %s\n",
                           reg->registerName());
@@ -199,14 +199,14 @@ bool workTable::qInstruction(Instr *in)
         }
         if (isRegisterOperand(dst, 1)) {
             if (isAAOperand(dst))
-                dst->unk_09 = 3;
+                dst->direction = 3;
         }
         if (isRegisterOperand(dst, 1)) {
-            if (g_080b336c && isVuRegister(reg) && dst->unk_2b != 2)
-                dst->unk_2b = 1;
+            if (g_080b336c && isVuRegister(reg) && dst->operandStatus != 2)
+                dst->operandStatus = 1;
             for (int k = 0; k != reg->partCount; k++) {
-                if ((dst->unk_07 >> k) & 1) {
-                OperandLock *lk = &dst->unk_2c[k];
+                if ((dst->componentMask >> k) & 1) {
+                OperandLock *lk = &dst->parts[k];
                 int a = 0;
                 RegisterPartLockList *ll = (RegisterPartLockList *)reg->getPartPayload(k);
                 if (!ll) {
@@ -215,21 +215,21 @@ bool workTable::qInstruction(Instr *in)
                 }
                 lk->setOwner(k, c, i);
                 OperandLock *out;
-                if ((dst->unk_27 >> k) & 1) {
-                    regUse *o = unk_14.findByRegister(reg);
+                if ((dst->externalPartMask >> k) & 1) {
+                    regUse *o = registerUses.findByRegister(reg);
                     if (!o) {
                         reportError("failed to find regref owner for input\n");
                         return false;
                     }
-                    out = o->unk_20[k].func_0805b830();
+                    out = o->slots[k].getRegisterLock();
                 } else {
-                    olList *uses = &src->unk_2c[k].unk_54;
+                    olList *uses = &src->parts[k].unk_54;
                     ol_s *ol = uses->head;
-                    if (!ol || ol->unk_00) {
+                    if (!ol || ol->next) {
                         reportError("more or less than one oploc for non-extern input\n");
                         exitAfterCleanup(-1);
                     }
-                    Instr *setter = ol->unk_04;
+                    Instr *setter = ol->instruction;
                     if (!setter) {
                         reportError("could not get setting op for setter\n");
                         exitAfterCleanup(-1);
@@ -243,13 +243,13 @@ bool workTable::qInstruction(Instr *in)
                         reportError("qInstruction  - image of setter wasn't in this table\n");
                         return false;
                     }
-                    Operand *sop = img->getOp(ol->unk_10);
+                    Operand *sop = img->getOp(ol->operandIndex);
                     if (!sop) {
                         reportError("failed to get setter operand\n");
                         return false;
                     }
-                    out = &sop->unk_2c[k];
-                    a = dst->unk_29;
+                    out = &sop->parts[k];
+                    a = dst->additionalLatency;
                 }
                 lk->unk_19 = operandLockMode(dst);
                 if (!ll->addInput(out, lk, a, dst->unk_0b)) {
@@ -259,8 +259,8 @@ bool workTable::qInstruction(Instr *in)
                 }
             }
         }
-        if (isRegisterOperand(dst, 2) && dst->unk_2b != 2 && g_080b336c && isVuRegister(reg) && !rr->unk_0d)
-            dst->unk_2b = 1;
+        if (isRegisterOperand(dst, 2) && dst->operandStatus != 2 && g_080b336c && isVuRegister(reg) && !rr->externalOutputMask)
+            dst->operandStatus = 1;
     }
 
     for (i = 0; i != c->operandCount; i++) {
@@ -269,22 +269,22 @@ bool workTable::qInstruction(Instr *in)
         if (!reg)
             continue;
         for (int k = 0; k != reg->partCount; k++) {
-            if ((op->unk_07 >> k) & 1) {
+            if ((op->componentMask >> k) & 1) {
                 RegisterPartLockList *ll = (RegisterPartLockList *)reg->getPartPayload(k);
                 if (!ll) {
                     reportError("couldn't get rll from reg\n");
                     exitAfterCleanup(-1);
                 }
-                OperandLock *lk = &op->unk_2c[k];
+                OperandLock *lk = &op->parts[k];
                 lk->setOwner(k, c, i);
                 int a = 1;
                 if (reg->unk_2c)
-                    a = c->unk_13cf;
-                if (!ll->addOutput(lk, a, op->unk_0a, op->unk_0b)) {
+                    a = c->baseIssueSpacing;
+                if (!ll->addOutput(lk, a, op->outputLatency, op->unk_0b)) {
                     reportError("failed to register output operand : %s.%d\n", reg->registerName(), k);
                     return false;
                 }
-                if ((op->unk_27 >> k) & 1) {
+                if ((op->externalPartMask >> k) & 1) {
                     RegisterPartLockList *el = (RegisterPartLockList *)reg->getPartPayload(k);
                     if (!el)
                         reportError("couldn't get curr lock list for output\n");
@@ -308,10 +308,10 @@ bool workTable::qInstruction(Instr *in)
                 continue;
             int k = 0;
             if (k != reg->partCount) {
-                OpSlot *outputLock = o2->unk_2c;
-                OpSlot *inputLock = op->unk_2c;
+                OpSlot *outputLock = o2->parts;
+                OpSlot *inputLock = op->parts;
                 do {
-                    if (((op->unk_07 & o2->unk_07) >> k) & 1) {
+                    if (((op->componentMask & o2->componentMask) >> k) & 1) {
                         if (!inputLock->setInOut(outputLock)) {
                             reportError("failed to set in out\n");
                             exitAfterCleanup(-1);
@@ -335,10 +335,10 @@ bool workTable::qInstruction(Instr *in)
         reportError("iTable::qInstruction - failed to add to linear list tail\n");
         return false;
     }
-    if (unk_38 && c->branchFlags) {
+    if (loopSize && c->branchFlags) {
         g_080b33f0 += 2;
         c->unk_1398 = g_080b33f0;
-        reserveEntry(g_080b33f0, unk_38 - 2, 1);
+        reserveEntry(g_080b33f0, loopSize - 2, 1);
     }
     return true;
 }

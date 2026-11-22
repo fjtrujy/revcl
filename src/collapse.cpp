@@ -30,8 +30,8 @@ bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc);
 
 bool pushImmediate(ol_s *ol)
 {
-    for (; ol; ol = ol->unk_00) {
-        Instr *in = ol->unk_04;
+    for (; ol; ol = ol->next) {
+        Instr *in = ol->instruction;
         int val = 0;
         int srcOp = -1;
         int immOp = -1;
@@ -49,7 +49,7 @@ bool pushImmediate(ol_s *ol)
             val = -val;
             in->opcodeInfo = getOpcodeInfoById(nopc);
         }
-        if (!in->operands[immOp].unk_1c.setInt(val)) {
+        if (!in->operands[immOp].immediateValue.setInt(val)) {
             reportError("failed to set new immediate value\n");
             return false;
         }
@@ -66,7 +66,7 @@ bool func_0806a74c(Program *p)
         for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             if (__builtin_expect(in->func_08055ac4() != 0x6d, 1))
                 continue;
-            mValue *v = &in->operands[2].unk_1c;
+            mValue *v = &in->operands[2].immediateValue;
             if (v->type != mValue::STRING) {
                 int val = 0;
                 if (!v->getInt(&val)) {
@@ -104,15 +104,15 @@ bool func_0806a74c(Program *p)
                 if (k < 0)
                     continue;
                 bool ok = true;
-                ol_s *list = in->operands[k].unk_2c[0].unk_54.head;
-                for (ol_s *ol = list; ol && ok; ol = ol->unk_00) {
-                    Instr *user = ol->unk_04;
-                    Operand *op = func_0805802c(ol);
+                ol_s *list = in->operands[k].parts[0].unk_54.head;
+                for (ol_s *ol = list; ol && ok; ol = ol->next) {
+                    Instr *user = ol->instruction;
+                    Operand *op = operandAtLocation(ol);
                     if (user == in) {
                         ok = false;
                         break;
                     }
-                    int idx = ol->unk_10;
+                    int idx = ol->operandIndex;
                     int immOp = -1;
                     int srcOp = -1;
                     int val;
@@ -126,8 +126,8 @@ bool func_0806a74c(Program *p)
                         ok = false;
                         break;
                     }
-                    for (ol_s *u = op->unk_2c[0].unk_54.head; u; u = u->unk_00)
-                        if (u->unk_04 != in) {
+                    for (ol_s *u = op->parts[0].unk_54.head; u; u = u->next)
+                        if (u->instruction != in) {
                             ok = false;
                             break;
                         }
@@ -166,14 +166,14 @@ int func_0806aa54(Instr *in)
         bits = 15;
         idx = 0;
         isSigned = false;
-        g_080de6ac = in->operands[1].unk_18;
-        g_080de6b0 = &in->operands[2].unk_1c;
+        g_080de6ac = in->operands[1].assignedRegister;
+        g_080de6b0 = &in->operands[2].immediateValue;
         break;
     case 0x70:
         bits = 15;
         isSigned = false;
-        g_080de6ac = in->operands[1].unk_18;
-        g_080de6b0 = &in->operands[2].unk_1c;
+        g_080de6ac = in->operands[1].assignedRegister;
+        g_080de6b0 = &in->operands[2].immediateValue;
         idx = 0;
         neg = true;
         break;
@@ -237,7 +237,7 @@ bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc)
     default:
         return false;
     }
-    mValue *v = &in->operands[*immOp].unk_1c;
+    mValue *v = &in->operands[*immOp].immediateValue;
     if (isStringValue(v))
         return false;
     int x = 0;

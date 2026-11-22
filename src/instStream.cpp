@@ -305,7 +305,7 @@ bool instStream::flowReset()
         reportError("work table not set\n");
         return false;
     }
-    if (!workTablePtr->unk_14.clear()) {
+    if (!workTablePtr->registerUses.clear()) {
         reportError("iStream::flowReset() - failed to dispose regrefs\n");
         return false;
     }
@@ -400,7 +400,7 @@ unsigned char instStream::getCodeMode()
 {
     workTable *wt = workTablePtr;
     if (wt)
-        return wt->unk_09;
+        return wt->codeModeValue;
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
@@ -409,7 +409,7 @@ const char *instStream::getCodeModeName()
 {
     workTable *wt = workTablePtr;
     if (wt)
-        return codeModeName(wt->unk_09);
+        return codeModeName(wt->codeModeValue);
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
@@ -425,12 +425,12 @@ unsigned char instStream::getRawSchedulingMode()
 
 static inline bool isRawTable(workTable *wt)
 {
-    return wt->unk_09 == 3;
+    return wt->codeModeValue == 3;
 }
 
 static inline bool isFreeRawTable(workTable *wt)
 {
-    return isRawTable(wt) && (wt->unk_0a == 1 || wt->unk_0a == 3);
+    return isRawTable(wt) && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
 }
 
 bool instStream::usesFreeRawLayout()
@@ -443,7 +443,7 @@ bool instStream::usesFreeRawLayout()
 
 static inline bool isFixedRawTable(workTable *wt)
 {
-    return isRawTable(wt) && (wt->unk_0a == 2 || wt->unk_0a == 4);
+    return isRawTable(wt) && (wt->rawSchedulingMode == 2 || wt->rawSchedulingMode == 4);
 }
 
 bool instStream::usesFixedRawLayout()
@@ -458,7 +458,7 @@ unsigned char instStream::getAllocMode()
 {
     workTable *wt = workTablePtr;
     if (wt)
-        return wt->unk_08;
+        return wt->allocationMode;
     reportError("getAllocMode - work table not set\n");
     return 0;
 }
@@ -466,7 +466,7 @@ unsigned char instStream::getAllocMode()
 bool instStream::isOutsideRawMode()
 {
     workTable *wt = workTablePtr;
-    if (wt && wt->unk_09 == 3)
+    if (wt && wt->codeModeValue == 3)
         return false;
     return true;
 }

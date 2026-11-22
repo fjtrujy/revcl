@@ -70,7 +70,7 @@ int setRangeFrom(workTable *t)
         reportError("setRangeFrom - null ptr\n");
         return 0;
     }
-    if (!t->unk_2c) {
+    if (!t->rows) {
         reportError("setRangeFrom - can't set range .. there's no table\n");
         return 0;
     }

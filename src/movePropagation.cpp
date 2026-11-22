@@ -32,11 +32,11 @@ int propagateMoves(workTable *t)
             reportError(propagateNormaliseError);
             return 0;
         }
-        if (!in->unk_142c)
+        if (!in->abstractMoveOpcode)
             continue;
-        int mask = in->operands[0].unk_07;
-        RegPoolEntry *dst = in->operands[0].unk_18;
-        RegPoolEntry *src = in->operands[1].unk_18;
+        int mask = in->operands[0].componentMask;
+        RegPoolEntry *dst = in->operands[0].assignedRegister;
+        RegPoolEntry *src = in->operands[1].assignedRegister;
         int keep = 0;
         int srcWritten = 0;
         int valid = mask;
@@ -95,19 +95,19 @@ int propagateMoves(workTable *t)
             cur = cur->unk_1c.unk_00;
             row = r;
         }
-        if (~valid & in->operands[0].unk_27) {
+        if (~valid & in->operands[0].externalPartMask) {
             reportError(propagateValidMaskError,
                           dst->registerName(), src->registerName());
             reportError(propagateValidDetailError,
-                          valid, in->operands[0].unk_27);
+                          valid, in->operands[0].externalPartMask);
             return -1;
         }
-        keep |= in->operands[0].unk_27;
+        keep |= in->operands[0].externalPartMask;
         if (!keep)
-            in->operands[0].unk_18 = in->operands[1].unk_18;
+            in->operands[0].assignedRegister = in->operands[1].assignedRegister;
         in->destinationMask = keep;
-        in->operands[0].unk_07 = keep;
-        in->operands[1].unk_07 = keep;
+        in->operands[0].componentMask = keep;
+        in->operands[1].componentMask = keep;
     }
     return count;
 }
@@ -118,7 +118,7 @@ int removeDeadMoves(workTable *t)
     Instr *next;
     for (Instr *in = t->linearInstructions.head; in; in = next) {
         next = in->unk_1c.unk_00;
-        if (in->unk_142c && in->operands[0].unk_18 == in->operands[1].unk_18) {
+        if (in->abstractMoveOpcode && in->operands[0].assignedRegister == in->operands[1].assignedRegister) {
             if (!t->destroyInstruction(in)) {
                 reportError("failed to destroy a move\n");
                 return -1;

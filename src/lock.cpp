@@ -982,7 +982,7 @@ Instr *cls0805c244::earliestExt()
                         exitAfterCleanup(-1);
                     }
                     if (in->position.unk_00 < best) {
-                        best = in->unk_1396;
+                        best = in->insertionSerial;
                         res = in;
                     }
                 }

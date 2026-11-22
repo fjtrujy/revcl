@@ -40,16 +40,16 @@ static inline void assignLength(float &dst, int value)
 
 bool workTable::doPostOpt(int rawMode)
 {
-    if (!unk_2c) {
+    if (!rows) {
         reportWarning("doPostOpt() - no attached table!\n");
         return true;
     }
     {
-        if (unk_30 < 0 || unk_34 < 0 || unk_34 < unk_30) {
+        if (rangeStart < 0 || rangeEnd < 0 || rangeEnd < rangeStart) {
             reportError("bad table start/end\n");
             return false;
         }
-        if (unk_09 != 3) {
+        if (codeModeValue != 3) {
             reportError("not mid-code mode for doPostOpt\n");
             return false;
         }
@@ -58,7 +58,7 @@ bool workTable::doPostOpt(int rawMode)
             reportError("doPostOpt - but there's things still to do\n");
             return false;
         }
-        instStream *owner = unk_10;
+        instStream *owner = ownerStream;
         if (!owner) {
             reportError("doPostOpt - not get owner\n");
             return false;
@@ -77,13 +77,13 @@ bool workTable::doPostOpt(int rawMode)
         expected = lin->count;
         int count = 0;
         if (owner->getEndType() == 2) {
-            if (unk_34 - unk_30 <= 1)
-                unk_34 = unk_30 + 2;
+            if (rangeEnd - rangeStart <= 1)
+                rangeEnd = rangeStart + 2;
         } else if (owner->getEndType() == 3) {
-            if (unk_34 - unk_30 <= 1)
-                unk_34 = unk_30 + 2;
+            if (rangeEnd - rangeStart <= 1)
+                rangeEnd = rangeStart + 2;
         }
-        ::setRange(unk_30, unk_34, unk_38);
+        ::setRange(rangeStart, rangeEnd, loopSize);
         int maxLid = 0;
         float length;
         switch (rawMode) {
@@ -92,8 +92,8 @@ bool workTable::doPostOpt(int rawMode)
             return false;
         case 1:
         case 2: {
-            int rangeStart = *(volatile int *)&unk_30;
-            int rangeEnd = unk_34;
+            int rangeStart = *(volatile int *)&this->rangeStart;
+            int rangeEnd = this->rangeEnd;
             *(int *)&length = rangeEnd - rangeStart;
             break;
         }
@@ -107,7 +107,7 @@ bool workTable::doPostOpt(int rawMode)
             return false;
         }
         int rl;
-        for (rl = unk_30; rl < unk_34; rl++) {
+        for (rl = rangeStart; rl < rangeEnd; rl++) {
             Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
             if (!ie) {
                 reportError("iTable::doPostOpt - failed to get ientry\n");
@@ -125,7 +125,7 @@ bool workTable::doPostOpt(int rawMode)
                     case 2: {
                         int t = in->position.unk_04;
                         in->scheduledCycle = t;
-                        if (unk_30) {
+                        if (rangeStart) {
                             reportError("postopt - istart set for fixed mode \n");
                             return false;
                         }
@@ -134,7 +134,7 @@ bool workTable::doPostOpt(int rawMode)
                     case 1: {
                         nBranch = -1;
                         int t = in->position.unk_04;
-                        in->scheduledCycle = t - unk_30;
+                        in->scheduledCycle = t - rangeStart;
                         break;
                     }
                     case 3:
@@ -182,7 +182,7 @@ bool workTable::doPostOpt(int rawMode)
                             reportError("doPostOpt - more than one branch\n");
                             return false;
                         }
-                        if (rl != unk_34 - 2) {
+                        if (rl != rangeEnd - 2) {
                             reportError("badly placed branch detected in postopt\n");
                             dump();
                             return false;
@@ -192,7 +192,7 @@ bool workTable::doPostOpt(int rawMode)
                     int lid = loc->unk_03;
                     int row = loc->unk_04;
                     int iloc = in->position.unk_00;
-                    if (!unk_38 && lid) {
+                    if (!loopSize && lid) {
                         reportError("i_lid set not in loop\n");
                         return false;
                     }
@@ -228,14 +228,14 @@ bool workTable::doPostOpt(int rawMode)
             reportError("doPostOpt() - things remained on Linear list after scanning table\n");
             return false;
         }
-        if (unk_38)
-            unk_3c = maxLid;
+        if (loopSize)
+            mainLoopId = maxLid;
         else if (maxLid) {
             reportError("iTable::doPostOpt - maxLid set - but not loopsize!\n");
             return false;
         }
         resetCounts();
-        for (rl = unk_30; rl < unk_34; rl++) {
+        for (rl = rangeStart; rl < rangeEnd; rl++) {
             Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
             if (!ie)
                 reportError("can't get ie during postopt\n");
@@ -249,7 +249,7 @@ bool workTable::doPostOpt(int rawMode)
                 }
             }
         }
-        if (unk_38 && unk_34 - unk_30 != unk_38) {
+        if (loopSize && rangeEnd - rangeStart != loopSize) {
             reportError("bad loop size for postOpt\n");
             return false;
         }
@@ -260,7 +260,7 @@ bool workTable::doPostOpt(int rawMode)
 
 static inline bool isRawTable(workTable *wt)
 {
-    return wt->unk_09 == 3;
+    return wt->codeModeValue == 3;
 }
 
 bool instStream::setOptTable(workTable *nt)
@@ -322,15 +322,15 @@ bool instStream::setOptTable(workTable *nt)
                 return false;
             }
             for (int i = 0; i != in->operandCount; i++) {
-                char io = in->operands[i].unk_09;
-                char cio = c->operands[i].unk_09;
+                char io = in->operands[i].direction;
+                char cio = c->operands[i].direction;
                 if (io != cio) {
                     if (cio != 1 && io != 3) {
                         reportError("io type mismatch for something that wasn't a whacked input\n");
                         return false;
                     }
-                    in->operands[i].unk_18 = c->operands[i].unk_18;
-                    in->operands[i].unk_09 = cio;
+                    in->operands[i].assignedRegister = c->operands[i].assignedRegister;
+                    in->operands[i].direction = cio;
                 }
             }
             in->unk_04 = (VclPtrWord)c;

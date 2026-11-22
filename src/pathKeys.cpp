@@ -5,7 +5,7 @@ bool func_08061c34(instStream *n);
 
 static inline regUseSlot *registerPart(regUse *u, int part)
 {
-    return &u->unk_20[part];
+    return &u->slots[part];
 }
 
 bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
@@ -15,27 +15,27 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
         reportError("failed to get work table\n");
         return 0;
     }
-    regUse *u = wt->unk_14.findByRegister(reg);
+    regUse *u = wt->registerUses.findByRegister(reg);
     n->unk_227 = 0;
     n->hazardFlag = 0;
-    n->unk_258 = 0;
+    n->nextResolvedStream = 0;
     n->unk_234 = u;
-    if (u && ((u->unk_0f >> part) & 1)) {
+    if (u && ((u->outputMask >> part) & 1)) {
         if (wt->codeMode() == 1 || wt->codeMode() == 4) {
             n->unk_224 = 1;
             n->unk_230 = 0;
             n->unk_232 = 0;
         } else {
-            int count = u->unk_20[part].unk_08.count;
+            int count = u->slots[part].outputLocations.count;
             n->unk_224 = count;
-            ol_s *head = u->unk_20[part].unk_08.head;
+            ol_s *head = u->slots[part].outputLocations.head;
             if (!head) {
                 reportError("visible outputs has no head for l_init.. but it should!\n");
                 return 0;
             }
             int lo = head->unk_12;
             n->unk_230 = lo;
-            ol_s *last = registerPart(u, part)->func_0805ba2c(0, true);
+            ol_s *last = registerPart(u, part)->findPreviousOutputAtPosition(0, true);
             if (!last) {
                 reportError("visible outputs had nothing visible at infinity\n");
                 return 0;
@@ -64,9 +64,9 @@ bool func_08061c34(instStream *n)
     n->shortestPathPredecessor = 0;
     n->unk_248 = -1;
     n->longestPathPredecessor = 0;
-    n->unk_250 = 0;
-    n->unk_254 = 0;
-    n->unk_25c = 0;
+    n->nextSourceStream = 0;
+    n->nextMatchedStream = 0;
+    n->nextActiveStream = 0;
     return true;
 }
 
@@ -77,7 +77,7 @@ int func_08061cb0(Program *p, instStream *n)
         reportError("failed to start a record\n");
         return 0;
     }
-    if (!vc->setBit(p->unk_d4->streamId)) {
+    if (!vc->setBit(p->traceTargetStream->streamId)) {
         reportError("failed to add target to min path key\n");
         return 0;
     }
@@ -97,7 +97,7 @@ int getMaxPathKey(Program *p, instStream *n)
         reportError("failed to start a record\n");
         return 0;
     }
-    if (!vc->setBit(p->unk_d4->streamId)) {
+    if (!vc->setBit(p->traceTargetStream->streamId)) {
         reportError("failed to add target to max path key\n");
         return 0;
     }

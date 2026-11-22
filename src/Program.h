@@ -25,7 +25,7 @@ struct Program {
     int unk_80;         // emulated length
     char unk_84[4];
     mList uniqueNamePrefixes;       // names prefixed by doUnique
-    bool unk_9c;        // ctor arg
+    bool symbolicOutput;
     char unk_9d[3];
     instStream *streamHead; // all streams, chained via unk_108
     instStream *streamTail; // stream list tail
@@ -33,16 +33,16 @@ struct Program {
     short flowIdCount;       // flow UID count
     char unk_ae[2];
     instStream **streamsById; // linear table indexed by stream id
-    bool oddPipeMoveCount;        // logmax: also compute max path key
-    char unk_b5;
+    bool trackMaximumPathLength;
+    char traceStoreEnabled;
     char unk_b6[2];
-    int evenPipeMoveCount;
+    int traceStoreWordCount;
     VisitCache backTraceVisitCache;  // back-trace visit cache
-    instStream *unk_d4; // t target
-    instStream *unk_d8; // new match list, chained via unk_254
-    instStream *unk_dc; // sources, chained via unk_250
-    instStream *unk_e0; // chained via unk_258
-    instStream *unk_e4; // chained via unk_25c
+    instStream *traceTargetStream;
+    instStream *matchedStreams;
+    instStream *sourceStreams;
+    instStream *resolvedStreams;
+    instStream *activeStreams;
     char unk_e8[8];
 
     bool linkStreams(instStream *from, instStream *to, int type);

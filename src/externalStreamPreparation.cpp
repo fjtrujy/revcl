@@ -52,12 +52,12 @@ bool removeNops(Program *p, instStream *s)
     int len = wt->getRangeEnd() - wt->getRangeStart();
     if (len == 0)
         return true;
-    if (wt->unk_44 < 0) {
+    if (wt->externalMinimumLength < 0) {
         reportError("the minimal length is -ve for ext\n");
         return false;
     }
-    if (len < wt->unk_44) {
-        reportError("table is lready too short (%d<%d)\n", len, wt->unk_44);
+    if (len < wt->externalMinimumLength) {
+        reportError("table is lready too short (%d<%d)\n", len, wt->externalMinimumLength);
         return false;
     }
     RegPool *hw = GetRP(10);
@@ -97,13 +97,13 @@ bool removeNops(Program *p, instStream *s)
             int k;
             for (k = 0; k != n; k++) {
                 ol_s *ol = inflight[k];
-                Instr *in = ol->unk_04;
-                Operand *op = func_0805802c(ol);
-                RegPoolEntry *reg = op->unk_18;
-                int part = ol->unk_11;
+                Instr *in = ol->instruction;
+                Operand *op = operandAtLocation(ol);
+                RegPoolEntry *reg = op->assignedRegister;
+                int part = ol->componentIndex;
                 int lat = ol->unk_12;
                 if (reg->unk_2c) {
-                    int tv = in->unk_13cf;
+                    int tv = in->baseIssueSpacing;
                     if (tv <= 6)
                         exitWithError("bad throught value in register\n");
                     int thr = lat;
@@ -129,9 +129,9 @@ bool removeNops(Program *p, instStream *s)
                         l++;
                     }
                 }
-                for (ol_s *u = op->unk_2c[part].unk_54.firstInternalLocation(); u && !u->isExt(); u = u->unk_00) {
-                    Instr *ui = u->unk_04;
-                    if (func_0805802c(u)->unk_0b && op->unk_0a > 1) {
+                for (ol_s *u = op->parts[part].unk_54.firstInternalLocation(); u && !u->isExt(); u = u->next) {
+                    Instr *ui = u->instruction;
+                    if (operandAtLocation(u)->unk_0b && op->outputLatency > 1) {
                         int ul = ui->position.unk_00;
                         int tu = wt->ctime(ul);
                         if (tu <= tNow) {
@@ -152,13 +152,13 @@ bool removeNops(Program *p, instStream *s)
                 ok = false;
             for (k = 0; k != n && ok; k++) {
                 ol_s *ol = inflight[k];
-                Operand *op = func_0805802c(ol);
-                int part = ol->unk_11;
+                Operand *op = operandAtLocation(ol);
+                int part = ol->componentIndex;
                 int lat = ol->unk_12;
-                ol_s *u = op->unk_2c[part].unk_54.firstInternalLocation();
+                ol_s *u = op->parts[part].unk_54.firstInternalLocation();
                 if (u) {
-                    Instr *ui = u->unk_04;
-                    Operand *uo = func_0805802c(u);
+                    Instr *ui = u->instruction;
+                    Operand *uo = operandAtLocation(u);
                     int ul = ui->position.unk_00;
                     int tu = wt->ctime(ul) - 1;
                     if (!op->unk_0b && !uo->unk_0b && ul < m && tNow + lat > tu)
@@ -182,7 +182,7 @@ bool removeNops(Program *p, instStream *s)
                             if (o->unk_28)
                                 ok = false;
                             if (w && !o->unk_0b) {
-                                int t = base + o->unk_0a;
+                                int t = base + o->outputLatency;
                                 if (t < tm) {
                                     int l2 = m;
                                     wtRow *r2 = (wtRow *)((cls_unk30 *)wt)->getIE_ck(m);
@@ -249,7 +249,7 @@ bool removeNops(Program *p, instStream *s)
                     if (ok) {
                         if (m >= wt->getRangeEnd()) {
                             int last = wt->func_08072eec() - 1;
-                            if (last < wt->unk_44)
+                            if (last < wt->externalMinimumLength)
                                 ok = false;
                             if (s->endType != 1 && last <= 1)
                                 ok = false;
@@ -288,9 +288,9 @@ bool removeNops(Program *p, instStream *s)
 
 void func_0807bb84(workTable *wt)
 {
-    wtRow *row = wt->unk_2c + wt->unk_30;
-    for (int l = wt->unk_30; l != wt->unk_34; l++, row++) {
-        int rel = l - wt->unk_30;
+    wtRow *row = wt->rows + wt->rangeStart;
+    for (int l = wt->rangeStart; l != wt->rangeEnd; l++, row++) {
+        int rel = l - wt->rangeStart;
         for (int p = 0; p != 2; p++) {
             Instr *in = GetI((Instr **)row, p);
             if (in && in->scheduledCycle != rel)
@@ -298,27 +298,27 @@ void func_0807bb84(workTable *wt)
                               l, in->scheduledCycle, rel);
         }
         short *time = &row->cycleTime;
-        *time = l - wt->unk_30;
+        *time = l - wt->rangeStart;
     }
 }
 
 void splitCtime(workTable *wt, int l, int m)
 {
-    if (l < wt->unk_30 || l >= wt->unk_34)
+    if (l < wt->rangeStart || l >= wt->rangeEnd)
         exitWithError("nop line is bad\n");
     if (m <= l)
         exitWithError("m<l for splitCtime()\n");
-    if (m > wt->unk_34)
-        m = wt->unk_34;
-    wtRow *row = &wt->unk_2c[l];
+    if (m > wt->rangeEnd)
+        m = wt->rangeEnd;
+    wtRow *row = &wt->rows[l];
     for (; l < m; l++, row++)
         row->cycleTime--;
 }
 
 int getCtime(workTable *wt, int l)
 {
-    if (l < wt->unk_30 || l >= wt->unk_34)
+    if (l < wt->rangeStart || l >= wt->rangeEnd)
         exitWithError("nop line is bad\n");
-    return wt->unk_2c[l].cycleTime;
+    return wt->rows[l].cycleTime;
 }
 

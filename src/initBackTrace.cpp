@@ -25,7 +25,7 @@ bool initBackTrace(Program *p)
             return false;
         }
     }
-    p->evenPipeMoveCount = (n + 31) >> 2;
+    p->traceStoreWordCount = (n + 31) >> 2;
     if (!p->backTraceVisitCache.init(n)) {
         reportError("flowMin::flowReset - failed to init visit cache\n");
         return false;
@@ -44,7 +44,7 @@ bool initBackTrace(Program *p)
 
 bool disposeBackTrace(Program *p)
 {
-    p->evenPipeMoveCount = 0;
+    p->traceStoreWordCount = 0;
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (s->traceStore)
             delete[] s->traceStore;

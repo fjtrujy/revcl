@@ -48,15 +48,15 @@ bool makeLpWork(instStream *s, int maxSpread)
             RegPoolEntry *reg = registerOperand(op, 1);
             if (reg) {
                 for (int j = 0; j != reg->partCount; j++) {
-                    ol_s *ol = op->unk_2c[j].unk_54.head;
+                    ol_s *ol = op->parts[j].unk_54.head;
                     if (ol) {
-                        Instr *src = ol->unk_04;
-                        Operand *o = func_0805802c(ol);
+                        Instr *src = ol->instruction;
+                        Operand *o = operandAtLocation(ol);
                         if (!src || !o) {
                             reportError("in_s not set\n");
                             return false;
                         }
-                        int v = src->unk_0c + o->unk_0a + op->unk_29;
+                        int v = src->unk_0c + o->outputLatency + op->additionalLatency;
                         if (latest < v)
                             latest = v;
                     }
@@ -72,14 +72,14 @@ bool makeLpWork(instStream *s, int maxSpread)
             RegPoolEntry *reg = registerOperand(op, 2);
             if (reg) {
                 for (int j = 0; j != reg->partCount; j++) {
-                    for (ol_s *ol = op->unk_2c[j].unk_54.head; ol; ol = ol->unk_00) {
-                        Instr *dst = ol->unk_04;
-                        Operand *o = func_0805802c(ol);
+                    for (ol_s *ol = op->parts[j].unk_54.head; ol; ol = ol->next) {
+                        Instr *dst = ol->instruction;
+                        Operand *o = operandAtLocation(ol);
                         if (!dst || !o) {
                             reportError("in_s not set\n");
                             return false;
                         }
-                        int v = dst->unk_0c - op->unk_0a - o->unk_29;
+                        int v = dst->unk_0c - op->outputLatency - o->additionalLatency;
                         if (earliest > v)
                             earliest = v;
                     }
@@ -107,10 +107,10 @@ bool makeLpWork(instStream *s, int maxSpread)
                 int rlo = 30000, rhi = 0;
                 bool any = false;
                 for (int j = 0; j != reg->partCount; j++) {
-                    if ((op->unk_07 >> j) & 1) {
-                        ol_s *ol = op->unk_2c[j].unk_54.head;
+                    if ((op->componentMask >> j) & 1) {
+                        ol_s *ol = op->parts[j].unk_54.head;
                         if (ol) {
-                            Instr *src = ol->unk_04;
+                            Instr *src = ol->instruction;
                             int d = in->unk_0c - src->unk_0c;
                             any = true;
                             if (d < rlo)
@@ -170,8 +170,8 @@ bool lsqChain(workTable *wt)
 {
     reportError(lsqChainHopeError);
     abortAfterError();
-    for (regUse *ru = wt->unk_14.head; ru; ru = ru->unk_04) {
-        RegPoolEntry *reg = ru->unk_08;
+    for (regUse *ru = wt->registerUses.head; ru; ru = ru->next) {
+        RegPoolEntry *reg = ru->registerEntry;
         if (reg->registerClass != 8)
             continue;
         Instr *list[1024];
@@ -197,7 +197,7 @@ bool lsqChain(workTable *wt)
             continue;
         reportInfo("lsChain for %s\n", reg->registerName());
         Operand *src = &list[0]->operands[1];
-        if (src->unk_27 != 1) {
+        if (src->externalPartMask != 1) {
             reportError("this isn't externally set!\n");
             abortAfterError();
         }
@@ -235,13 +235,13 @@ bool lsqChain(workTable *wt)
             reportError(lsqChainNewInstrError);
             return false;
         }
-        ni->operands[0].unk_18 = reg;
-        ni->operands[0].unk_27 = 1;
-        ni->operands[0].unk_07 = 1;
-        ni->operands[1].unk_18 = reg;
-        ni->operands[1].unk_27 = 1;
-        ni->operands[1].unk_07 = 1;
-        ni->operands[2].unk_1c.setInt(total);
+        ni->operands[0].assignedRegister = reg;
+        ni->operands[0].externalPartMask = 1;
+        ni->operands[0].componentMask = 1;
+        ni->operands[1].assignedRegister = reg;
+        ni->operands[1].externalPartMask = 1;
+        ni->operands[1].componentMask = 1;
+        ni->operands[2].immediateValue.setInt(total);
         if (!wt->logAddLinear_After(list[n - 1], ni)) {
             reportError(lsqChainAddError);
             return false;
@@ -249,13 +249,13 @@ bool lsqChain(workTable *wt)
         for (Instr *in = ni->unk_1c.unk_00; in; in = in->unk_1c.unk_00) {
             for (int k = 0; k != in->operandCount; k++) {
                 Operand *op = &in->operands[k];
-                if (op->unk_18 != reg)
+                if (op->assignedRegister != reg)
                     continue;
                 if (!isRegisterOperand(op, 1)) {
                     reportError(lsqChainNotInputError);
                     return false;
                 }
-                op->unk_2c[0].unk_54.clear();
+                op->parts[0].unk_54.clear();
                 if (!link_oParts(ni, 0, 0, in, k, 0)) {
                     reportError(lsqChainLinkError);
                     return false;
@@ -288,22 +288,22 @@ bool modLsqq(Instr *in, int imm)
         return false;
     }
     in->opcodeInfo = ii;
-    in->operands[2].unk_2c[0].clearSlotLocations();
-    in->operands[1].unk_2c[0].clearSlotLocations();
+    in->operands[2].parts[0].clearSlotLocations();
+    in->operands[1].parts[0].clearSlotLocations();
     in->operandCount = 2;
-    in->operands[1].unk_27 = 1;
+    in->operands[1].externalPartMask = 1;
     Operand *op = &in->operands[1];
     iOpDesc *d = &ii->operandDescriptors[1];
-    op->unk_04 = d->operandKind;
-    op->unk_08 = d->isImplicit != 0;
+    op->operandKind = d->operandKind;
+    op->isImplicit = d->isImplicit != 0;
     op->unk_05 = d->unk_05;
-    op->unk_0d = d->patchedOutputIndexPlusOne;
-    if (op->unk_04 != 0x1d) {
+    op->pairedOperandIndexPlusOne = d->patchedOutputIndexPlusOne;
+    if (op->operandKind != 0x1d) {
         reportError("modded lqsq isn't ea_imm_reg\n");
         abortAfterError();
         return false;
     }
-    if (!op->unk_1c.setInt(imm)) {
+    if (!op->immediateValue.setInt(imm)) {
         reportError("failed to set new immediate\n");
         return false;
     }

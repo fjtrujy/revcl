@@ -16,8 +16,8 @@ int dragDown(workTable *wt);
 
 static inline bool isPipeMode(workTable *wt)
 {
-    int mode = wt->unk_09 - 3;
-    return !mode && (wt->unk_0a == 1 || wt->unk_0a == 3);
+    int mode = wt->codeModeValue - 3;
+    return !mode && (wt->rawSchedulingMode == 1 || wt->rawSchedulingMode == 3);
 }
 
 static inline void dumpLinearReduce(Program *p)

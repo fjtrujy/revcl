@@ -12,11 +12,11 @@ bool func_0807f2c4(Block *blk, Instr *mv)
 {
     if (!mv)
         return false;
-    if (mv->unk_142e)
+    if (mv->concreteMoveOpcode)
         unresolveMove(blk, mv);
-    mv->unk_2c = blk->unk_4c;
+    mv->unk_2c = blk->moveListHead;
     blk->unk_50++;
-    blk->unk_4c = mv;
+    blk->moveListHead = mv;
     return true;
 }
 
