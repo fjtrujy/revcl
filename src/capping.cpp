@@ -9,10 +9,10 @@ int insertStreamRegisterCaps(Program *p, instStream *s);
 void initializeScheduledCycleTimes(workTable *wt);
 bool removeNops(Program *p, instStream *s);
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
-bool doCap(int line, int pipe, int mask);
-RegPool *GetRP(unsigned t);
+bool insertRegisterCapInstruction(int line, int pipe, int mask);
+RegPool *getRegisterPoolByIndex(unsigned t);
 bool resetProcessorThroughput(Program *p);
-int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
+int emulateInstructionRow(Program *p, wtRow *row, int line, bool uta, bool commit);
 void splitCtime(workTable *wt, int l, int m);
 
 int insertAllRegisterCaps(Program *program)
@@ -70,15 +70,15 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
         wtRow *row = (wtRow *)((cls_unk30 *)scheduleTable)->getIE_ck(rowIndex);
         int cycleTime = row->ctime();
         for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
-            Instr *rowInstruction = GetI((Instr **)row, pipeIndex);
+            Instr *rowInstruction = getInstructionInPipe((Instr **)row, pipeIndex);
             if (!rowInstruction)
                 continue;
             Operand *operand;
             for (int operandIndex = 0; operandIndex != rowInstruction->operandCount; operandIndex++) {
                 operand = &rowInstruction->operands[operandIndex];
-                RegPoolEntry *reg = registerOperand(operand, 2);
+                RegPoolEntry *registerEntry = registerOperand(operand, 2);
                 ol_s *live = operand->parts[0].operandLocations.head;
-                if (!reg || operand->externalBlockModeFlag || !live)
+                if (!registerEntry || operand->externalBlockModeFlag || !live)
                     continue;
                 RegPoolEntry *capReg = 0;
                 int capMask = 0;
@@ -90,7 +90,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
                 if (!bits)
                     continue;
                 int need = operand->outputLatency;
-                if (reg->registerIndex == 0x34 && need > 1)
+                if (registerEntry->registerIndex == 0x34 && need > 1)
                     need--;
                 int line = rowIndex + 1;
                 wtRow *workRow = row + 1;
@@ -99,7 +99,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
                 while (line < scheduleTable->getRangeEnd() && capMask) {
                     if (workRow->cycleTime >= limit) {
                         for (int availablePipeIndex = 0; availablePipeIndex != 2; availablePipeIndex++) {
-                            if (((bits >> availablePipeIndex) & 1) && !GetI((Instr **)workRow, availablePipeIndex)) {
+                            if (((bits >> availablePipeIndex) & 1) && !getInstructionInPipe((Instr **)workRow, availablePipeIndex)) {
                                 if ((!workRow->countEntries() && bestLine < 0) || workRow->countEntries()) {
                                     bestLine = line;
                                     bestCount = count;
@@ -110,7 +110,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
                             }
                         }
                     }
-                    if (workRow->inputMaskFor(reg, 0xff))
+                    if (workRow->inputMaskFor(registerEntry, 0xff))
                         break;
                     if (workRow->countEntries())
                         count++;
@@ -121,7 +121,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
                 if (bestLine < 0)
                     continue;
                 if (bestCount < need) {
-                    if (!doCap(bestLine, bestPipe, bestMask)) {
+                    if (!insertRegisterCapInstruction(bestLine, bestPipe, bestMask)) {
                         reportError("failed to add cap instruction\n");
                         return -1;
                     }

@@ -19,7 +19,7 @@ public:
     bool transferNodesFrom(mList *other);
     void noopListTraversal();
     char *firstNodeName();
-    char *appendNamedLabels(char *buf);
+    char *appendNamedLabels(char *outputBuffer);
     int combinedFlags();
     int takeCombinedFlags();
 

@@ -10,12 +10,12 @@ extern int errorOccurred;
 extern bool quietDiagnostics;
 
 bool asciiCaseEqual(const char *a, const char *b);
-RegPool *GetRP(unsigned t);
+RegPool *getRegisterPoolByIndex(unsigned t);
 bool setRegisterRangeEnabled(LocTag *t, RegPool *pool, bool b);
 bool pushVisibilityScope(Program *prog, LocTag *t, int v);
 bool popVisibilityScope(Program *prog, LocTag *t, int v);
 bool initializeMemoryRegisterArea(RegPool *pool, const char *name, int size);
-int mstrlen(const char *s);
+int checkedStringLength(const char *s);
 bool handleInitVfDirective(Program *prog, LocTag *t);
 bool handleInitViDirective(Program *prog, LocTag *t);
 bool handleRemoveVfDirective(Program *prog, LocTag *t);
@@ -72,27 +72,27 @@ Directive directiveDispatchTable[28] = {
     {".endhide", handleEndHideDirective},
 };
 
-bool handleInitVfDirective(Program *prog, LocTag *sourceLine)
+bool handleInitVfDirective(Program *program, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(sourceLine, GetRP(9), true);
+    return setRegisterRangeEnabled(sourceLine, getRegisterPoolByIndex(9), true);
 }
 
-bool handleInitViDirective(Program *prog, LocTag *sourceLine)
+bool handleInitViDirective(Program *program, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(sourceLine, GetRP(8), true);
+    return setRegisterRangeEnabled(sourceLine, getRegisterPoolByIndex(8), true);
 }
 
-bool handleRemoveVfDirective(Program *prog, LocTag *sourceLine)
+bool handleRemoveVfDirective(Program *program, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(sourceLine, GetRP(9), false);
+    return setRegisterRangeEnabled(sourceLine, getRegisterPoolByIndex(9), false);
 }
 
-bool handleRemoveViDirective(Program *prog, LocTag *sourceLine)
+bool handleRemoveViDirective(Program *program, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(sourceLine, GetRP(8), false);
+    return setRegisterRangeEnabled(sourceLine, getRegisterPoolByIndex(8), false);
 }
 
-inline bool ExecRP_init_reg_all(RegPool *pool)
+inline bool markAllPhysicalRegistersUsed(RegPool *pool)
 {
     if (!pool) {
         reportError("ExecRP_init_reg_all: passed a null pool\n");
@@ -101,83 +101,83 @@ inline bool ExecRP_init_reg_all(RegPool *pool)
     return pool->markAllocatablePhysicalRegistersUsed();
 }
 
-bool handleInitAllVfDirective(Program *prog, LocTag *sourceLine)
+bool handleInitAllVfDirective(Program *program, LocTag *sourceLine)
 {
-    return ExecRP_init_reg_all(GetRP(9));
+    return markAllPhysicalRegistersUsed(getRegisterPoolByIndex(9));
 }
 
-bool handleInitAllViDirective(Program *prog, LocTag *sourceLine)
+bool handleInitAllViDirective(Program *program, LocTag *sourceLine)
 {
-    return ExecRP_init_reg_all(GetRP(8));
+    return markAllPhysicalRegistersUsed(getRegisterPoolByIndex(8));
 }
 
-bool handleDisableAlignmentDirective(Program *prog, LocTag *sourceLine)
+bool handleDisableAlignmentDirective(Program *program, LocTag *sourceLine)
 {
     disableOutputAlignment = true;
     reportInfo("dh_align_disable() - disabling .align emit\n");
     return 1;
 }
 
-bool handleDisableEbitDirective(Program *prog, LocTag *sourceLine)
+bool handleDisableEbitDirective(Program *program, LocTag *sourceLine)
 {
     disableOutputAlignment = true;
     reportInfo("dh_no_ebits() - disabling [e]bit emit\n");
     return 1;
 }
 
-bool handleProgramNameDirective(Program *prog, LocTag *sourceLine)
+bool handleProgramNameDirective(Program *program, LocTag *sourceLine)
 {
     char *nameToken = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
     if (!nameToken) {
         reportError("failed to get global name\n");
         return 0;
     } else {
-        prog->proc.globalName = dupString(nameToken);
+        program->proc.globalName = dupString(nameToken);
     }
     return 1;
 }
 
-bool handleVuDirective(Program *prog, LocTag *sourceLine)
+bool handleVuDirective(Program *program, LocTag *sourceLine)
 {
-    prog->proc.vuDirectiveSeen = true;
+    program->proc.vuDirectiveSeen = true;
     return 1;
 }
 
-bool handleMpgDirective(Program *prog, LocTag *sourceLine)
+bool handleMpgDirective(Program *program, LocTag *sourceLine)
 {
     char *addressToken = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
     if (!addressToken) {
         reportError("must specify target address for mpg mode!\n");
         return 0;
     }
-    prog->proc.mpgTargetAddress = parseInteger(addressToken);
+    program->proc.mpgTargetAddress = parseInteger(addressToken);
     return 1;
 }
 
-bool handleGlobalDirective(Program *prog, LocTag *sourceLine)
+bool handleGlobalDirective(Program *program, LocTag *sourceLine)
 {
     char *symbolToken = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
     if (symbolToken)
-        prog->proc.exportedSymbols.findOrAppendByExactName(symbolToken);
+        program->proc.exportedSymbols.findOrAppendByExactName(symbolToken);
     return 1;
 }
 
-bool handleBeginRawDirective(Program *prog, LocTag *sourceLine)
+bool handleBeginRawDirective(Program *program, LocTag *sourceLine)
 {
-    if (prog->proc.insideRawLoop) {
+    if (program->proc.insideRawLoop) {
         reportUserMessage("hit a raw directive in a rawloop block\n");
         return 0;
     }
-    if (prog->proc.decodeMode == 3)
+    if (program->proc.decodeMode == 3)
         reportWarning("hit a raw directive while already in a raw block\n");
-    prog->proc.decodeMode = 3;
-    prog->proc.decodeSubMode = 4;
+    program->proc.decodeMode = 3;
+    program->proc.decodeSubMode = 4;
     char *reorderOption = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
     if (reorderOption) {
         if (asciiCaseEqual(reorderOption, "reorder"))
-            prog->proc.decodeSubMode = 3;
+            program->proc.decodeSubMode = 3;
         else if (asciiCaseEqual(reorderOption, "noreorder"))
-            prog->proc.decodeSubMode = 4;
+            program->proc.decodeSubMode = 4;
         else {
             reportUserMessage("bad option '%s' to raw directive\n", reorderOption);
             return 0;
@@ -186,38 +186,38 @@ bool handleBeginRawDirective(Program *prog, LocTag *sourceLine)
     return 1;
 }
 
-bool handleEndRawDirective(Program *prog, LocTag *sourceLine)
+bool handleEndRawDirective(Program *program, LocTag *sourceLine)
 {
-    if (prog->proc.decodeMode == 1) {
+    if (program->proc.decodeMode == 1) {
         reportWarning("hit an endraw directive while not in raw mode\n");
         return 0;
     }
-    if (prog->proc.insideRawLoop) {
+    if (program->proc.insideRawLoop) {
         reportUserMessage("hit an endraw directive inside a rawloop\n");
         return 0;
     }
-    prog->proc.decodeMode = 1;
-    prog->proc.decodeSubMode = 0;
+    program->proc.decodeMode = 1;
+    program->proc.decodeSubMode = 0;
     return 1;
 }
 
-bool handleBeginRawLoopDirective(Program *prog, LocTag *sourceLine)
+bool handleBeginRawLoopDirective(Program *program, LocTag *sourceLine)
 {
-    if (prog->proc.insideRawLoop) {
+    if (program->proc.insideRawLoop) {
         reportUserMessage("encountered a .rawloop directive, while already in loop mode\n");
         return 0;
     }
-    prog->proc.rawLoopId++;
-    prog->proc.savedDecodeMode = prog->proc.decodeMode;
-    prog->proc.decodeMode = 3;
-    prog->proc.decodeSubMode = 4;
-    prog->proc.insideRawLoop = true;
+    program->proc.rawLoopId++;
+    program->proc.savedDecodeMode = program->proc.decodeMode;
+    program->proc.decodeMode = 3;
+    program->proc.decodeSubMode = 4;
+    program->proc.insideRawLoop = true;
     char *reorderOption = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
     if (reorderOption) {
         if (asciiCaseEqual(reorderOption, "reorder"))
-            prog->proc.decodeSubMode = 3;
+            program->proc.decodeSubMode = 3;
         else if (asciiCaseEqual(reorderOption, "noreorder"))
-            prog->proc.decodeSubMode = 4;
+            program->proc.decodeSubMode = 4;
         else {
             reportUserMessage("bad option '%s' to raw loop directive\n", reorderOption);
             return 0;
@@ -226,23 +226,23 @@ bool handleBeginRawLoopDirective(Program *prog, LocTag *sourceLine)
     return 1;
 }
 
-bool handleEndRawLoopDirective(Program *prog, LocTag *sourceLine)
+bool handleEndRawLoopDirective(Program *program, LocTag *sourceLine)
 {
-    if (!prog->proc.insideRawLoop) {
+    if (!program->proc.insideRawLoop) {
         reportUserMessage("reached an .endloop directive but when wasn't in loop mode\n");
         return 0;
     }
-    if (prog->proc.decodeMode != 3) {
-        reportUserMessage("hit end raw directive, but wasn't in VSM mode..(mode is %d)?\n", prog->proc.decodeMode);
+    if (program->proc.decodeMode != 3) {
+        reportUserMessage("hit end raw directive, but wasn't in VSM mode..(mode is %d)?\n", program->proc.decodeMode);
         return 0;
     }
-    prog->proc.decodeMode = prog->proc.savedDecodeMode;
-    prog->proc.decodeSubMode = prog->proc.savedDecodeSubMode;
-    prog->proc.insideRawLoop = false;
+    program->proc.decodeMode = program->proc.savedDecodeMode;
+    program->proc.decodeSubMode = program->proc.savedDecodeSubMode;
+    program->proc.insideRawLoop = false;
     return 1;
 }
 
-bool handleVuWorkAreaDirective(Program *prog, LocTag *sourceLine)
+bool handleVuWorkAreaDirective(Program *program, LocTag *sourceLine)
 {
     int device = -1;
     int limit = -1;
@@ -291,7 +291,7 @@ bool handleVuWorkAreaDirective(Program *prog, LocTag *sourceLine)
         reportError("work area overruns size of device\n");
         return 0;
     }
-    RegPool *pool = GetRP(11);
+    RegPool *pool = getRegisterPoolByIndex(11);
     if (!pool) {
         reportError("init work area - failed to get vu mem pool\n");
         return 0;
@@ -304,53 +304,53 @@ bool handleVuWorkAreaDirective(Program *prog, LocTag *sourceLine)
     return 1;
 }
 
-inline bool ExecRP_skip_directive(LocTag *sourceLine)
+inline bool skipRegisterDirective(LocTag *sourceLine)
 {
     reportWarning("skipping directive:\n");
     sourceLine->dumpSourceLine(-1);
     return true;
 }
 
-bool handleAlignmentDirective(Program *prog, LocTag *sourceLine)
+bool handleAlignmentDirective(Program *program, LocTag *sourceLine)
 {
-    return ExecRP_skip_directive(sourceLine);
+    return skipRegisterDirective(sourceLine);
 }
 
-bool handleHideDirective(Program *prog, LocTag *sourceLine)
+bool handleHideDirective(Program *program, LocTag *sourceLine)
 {
-    return pushVisibilityScope(prog, sourceLine, 0);
+    return pushVisibilityScope(program, sourceLine, 0);
 }
 
-bool handleShowDirective(Program *prog, LocTag *sourceLine)
+bool handleShowDirective(Program *program, LocTag *sourceLine)
 {
-    return pushVisibilityScope(prog, sourceLine, 1);
+    return pushVisibilityScope(program, sourceLine, 1);
 }
 
-bool handleEndHideDirective(Program *prog, LocTag *sourceLine)
+bool handleEndHideDirective(Program *program, LocTag *sourceLine)
 {
-    return popVisibilityScope(prog, sourceLine, 0);
+    return popVisibilityScope(program, sourceLine, 0);
 }
 
-bool handleEndShowDirective(Program *prog, LocTag *sourceLine)
+bool handleEndShowDirective(Program *program, LocTag *sourceLine)
 {
-    return popVisibilityScope(prog, sourceLine, 1);
+    return popVisibilityScope(program, sourceLine, 1);
 }
 
-bool handleUniqueDirective(Program *prog, LocTag *sourceLine)
+bool handleUniqueDirective(Program *program, LocTag *sourceLine)
 {
     char *name = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
     if (name) {
-        if (mstrlen(name) > 128) {
+        if (checkedStringLength(name) > 128) {
             reportUserMessage("unique name too long\n");
             return 0;
         }
-        prog->proc.setUniqueName(name);
+        program->proc.setUniqueName(name);
     }
-    prog->proc.uniqueAll = 1;
+    program->proc.uniqueAll = 1;
     return 1;
 }
 
-bool handleSyntaxDirective(Program *prog, LocTag *sourceLine)
+bool handleSyntaxDirective(Program *program, LocTag *sourceLine)
 {
     char *syntaxOption = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
     if (!syntaxOption) {
@@ -358,11 +358,11 @@ bool handleSyntaxDirective(Program *prog, LocTag *sourceLine)
         return 0;
     }
     if (asciiCaseEqual(syntaxOption, "new")) {
-        prog->proc.newSyntax = true;
+        program->proc.newSyntax = true;
         return 1;
     }
     if (asciiCaseEqual(syntaxOption, "old")) {
-        prog->proc.newSyntax = false;
+        program->proc.newSyntax = false;
         return 1;
     }
     reportUserMessage("invalid argument to .syntax, options are 'new' or 'old'\n");
@@ -460,24 +460,24 @@ bool setRegisterRangeEnabled(LocTag *sourceLine, RegPool *pool, bool flag)
     return true;
 }
 
-int handleInitHwRegisterType1(Program *prog, LocTag *sourceLine)
+int handleInitHwRegisterType1(Program *program, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(sourceLine, GetRP(1), true);
+    return setRegisterRangeEnabled(sourceLine, getRegisterPoolByIndex(1), true);
 }
 
-int handleInitHwRegisterType2(Program *prog, LocTag *sourceLine)
+int handleInitHwRegisterType2(Program *program, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(sourceLine, GetRP(2), true);
+    return setRegisterRangeEnabled(sourceLine, getRegisterPoolByIndex(2), true);
 }
 
-int handleRemoveHwRegisterType1(Program *prog, LocTag *sourceLine)
+int handleRemoveHwRegisterType1(Program *program, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(sourceLine, GetRP(1), false);
+    return setRegisterRangeEnabled(sourceLine, getRegisterPoolByIndex(1), false);
 }
 
-int handleRemoveHwRegisterType2(Program *prog, LocTag *sourceLine)
+int handleRemoveHwRegisterType2(Program *program, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(sourceLine, GetRP(2), false);
+    return setRegisterRangeEnabled(sourceLine, getRegisterPoolByIndex(2), false);
 }
 
 int enableAllRegistersInPool(LocTag *sourceLine, RegPool *pool)
@@ -489,27 +489,27 @@ int enableAllRegistersInPool(LocTag *sourceLine, RegPool *pool)
     return pool->markAllocatablePhysicalRegistersUsed();
 }
 
-int handleInitAllHwRegisterType1(Program *prog, LocTag *sourceLine)
+int handleInitAllHwRegisterType1(Program *program, LocTag *sourceLine)
 {
-    return ExecRP_init_reg_all(GetRP(1));
+    return markAllPhysicalRegistersUsed(getRegisterPoolByIndex(1));
 }
 
-int handleInitAllHwRegisterType2(Program *prog, LocTag *sourceLine)
+int handleInitAllHwRegisterType2(Program *program, LocTag *sourceLine)
 {
-    return ExecRP_init_reg_all(GetRP(2));
+    return markAllPhysicalRegistersUsed(getRegisterPoolByIndex(2));
 }
 
-int alwaysAcceptDirective(Program *prog, LocTag *sourceLine)
+int alwaysAcceptDirective(Program *program, LocTag *sourceLine)
 {
     return 1;
 }
 
-int alwaysRejectDirective(Program *prog, LocTag *sourceLine)
+int alwaysRejectDirective(Program *program, LocTag *sourceLine)
 {
     return 0;
 }
 
-bool pushVisibilityScope(Program *prog, LocTag *sourceLine, int visibilityMode)
+bool pushVisibilityScope(Program *program, LocTag *sourceLine, int visibilityMode)
 {
     char buf[0x800];
     int left = 0x7ff;
@@ -528,7 +528,7 @@ bool pushVisibilityScope(Program *prog, LocTag *sourceLine, int visibilityMode)
         *outputCursor++ = ':';
     }
     *outputCursor = 0;
-    mNode *scopeNode = prog->proc.visibilityScopes.appendNamedNode(buf);
+    mNode *scopeNode = program->proc.visibilityScopes.appendNamedNode(buf);
     if (!scopeNode) {
         reportError("failed to process  a visibility directive\n");
         return false;
@@ -537,19 +537,19 @@ bool pushVisibilityScope(Program *prog, LocTag *sourceLine, int visibilityMode)
     return true;
 }
 
-inline void ExecRP_show_line(LocTag *sourceLine)
+inline void reportRegisterDirectiveLine(LocTag *sourceLine)
 {
     sourceLine->dumpSourceLine(-1);
 }
 
-bool popVisibilityScope(Program *prog, LocTag *sourceLine, int visibilityMode)
+bool popVisibilityScope(Program *program, LocTag *sourceLine, int visibilityMode)
 {
-    mNode *scopeNode = prog->proc.visibilityScopes.tail;
+    mNode *scopeNode = program->proc.visibilityScopes.tail;
     if (!scopeNode) {
         reportWarning("closing visibility directive and no tail at:\n");
         int savedErrorFlag = errorOccurred;
         errorOccurred = !quietDiagnostics;
-        ExecRP_show_line(sourceLine);
+        reportRegisterDirectiveLine(sourceLine);
         errorOccurred = savedErrorFlag;
         return true;
     }
@@ -557,11 +557,11 @@ bool popVisibilityScope(Program *prog, LocTag *sourceLine, int visibilityMode)
         reportUserMessage("mode mismatch closing a visibility scope\n");
         int savedErrorFlag = errorOccurred;
         errorOccurred = !quietDiagnostics;
-        ExecRP_show_line(sourceLine);
+        reportRegisterDirectiveLine(sourceLine);
         errorOccurred = savedErrorFlag;
         return false;
     }
-    if (!prog->proc.visibilityScopes.detachNode(scopeNode)) {
+    if (!program->proc.visibilityScopes.detachNode(scopeNode)) {
         reportError("failed to remove tail node\n");
         return false;
     }

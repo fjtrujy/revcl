@@ -53,7 +53,7 @@ RegPool::~RegPool()
     delete[] registerEntries;
 }
 
-bool RegPool::Init(VclPtrWord registerPrefix, const char* name, int cls, int virtualRegisterParts)
+bool RegPool::initializeRegisterPool(VclPtrWord registerPrefix, const char* name, int cls, int virtualRegisterParts)
 {
     this->registerPrefix = registerPrefix;
     virtualPartCount = virtualRegisterParts;
@@ -229,7 +229,7 @@ bool RegPool::clearVirtualRegistersForParse()
 
 int isReservedRegisterName(const char* name)
 {
-    return RegPool::isResvd(name, -123);
+    return RegPool::isReservedNameForClass(name, -123);
 }
 
 static inline bool isRegNameChar(char character)
@@ -240,7 +240,7 @@ static inline bool isRegNameChar(char character)
     return false;
 }
 
-bool RegPool::isResvd(const char* name, int cls)
+bool RegPool::isReservedNameForClass(const char* name, int cls)
 {
     if (!name) {
         reportError("isResvd. passed a null string as name\n");
@@ -326,7 +326,7 @@ RegPoolEntry* RegPool::findOrCreateRegister(const char* name)
     RegPoolEntry* registerEntry = findPhysicalByName(name);
     if (registerEntry)
         return registerEntry;
-    if (isResvd(name, registerClass)) {
+    if (isReservedNameForClass(name, registerClass)) {
         reportUserMessage("can't use %s as a name for one of the %s\n", name, poolName);
         return 0;
     }
@@ -348,7 +348,7 @@ RegPoolEntry* RegPool::findVirtualByName(const char* name)
 
 RegPoolEntry* RegPool::createVirtualRegister(const char* name)
 {
-    if (isResvd(name, registerClass))
+    if (isReservedNameForClass(name, registerClass))
         reportWarning(" name '%s' was reserved\n", name);
     RegPoolEntry* registerEntry;
     for (registerEntry = virtualHead; registerEntry; registerEntry = registerEntry->next)
@@ -456,7 +456,7 @@ char candidateRegisterTimeline[0x1000];
 char allocationRegisterMask[32];
 int moveRegCount;
 
-RegPoolEntry* RegPool::getMoveReg(Instr* move)
+RegPoolEntry* RegPool::findMoveRegister(Instr* move)
 {
     char buf[128];
     formatIntoBuffer(buf, "move__m%d", moveRegCount);
@@ -507,10 +507,10 @@ bool RegPool::emitReset()
     return true;
 }
 
-char* RegPool::emitStats(char* buf)
+char* RegPool::emitStats(char* outputBuffer)
 {
-    buf += formatIntoBuffer(buf, "; %3d %s\n", countUsed(), poolName);
-    return buf;
+    outputBuffer += formatIntoBuffer(outputBuffer, "; %3d %s\n", countUsedRegisters(), poolName);
+    return outputBuffer;
 }
 
 int RegPool::regIndex(int reg)
@@ -524,7 +524,7 @@ int RegPool::regIndex(int reg)
     return registerOffset;
 }
 
-int RegPool::countUsed()
+int RegPool::countUsedRegisters()
 {
     int usedRegisterCount = 0;
     if (registerEntries) {
@@ -552,7 +552,7 @@ int RegPoolEntry::gatherInflight(ol_s** out)
     int inflightLocationCount = 0;
     int partIndex;
     for (partIndex = 0; partIndex != partCount; partIndex++) {
-        rPart* registerPart = getRP(partIndex);
+        rPart* registerPart = getRegisterPartByIndex(partIndex);
         ol_s* location = &registerPart->currentLocation;
         if (location->cycleOffset)
             out[inflightLocationCount++] = location;

@@ -11,7 +11,7 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
-bool buildPassThru(Program *prog, instStream *stream, DecodedLine *blocks, int count)
+bool buildPassThru(Program *program, instStream *stream, DecodedLine *blocks, int count)
 {
     reportInfo("BLD_PASS\n");
     if (count != 1) {

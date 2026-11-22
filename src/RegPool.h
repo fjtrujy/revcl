@@ -67,7 +67,7 @@ struct RegPoolEntry {
     VclPtrWord getPartPayload(int i);
     bool setPartPayload(int i, VclPtrWord v);
     void moveReset();
-    rPart* getRP(int i)
+    rPart* getRegisterPartByIndex(int i)
     {
         if (i < 0 || i >= partCount) {
             reportError("getRP - asked to get out of range part %s.%d / %d\n",
@@ -102,7 +102,7 @@ struct RegPoolEntry {
     RegWeb *registerWeb;    // register web
     mList nameAliases;
 
-    RegWeb *GetWeb();
+    RegWeb *getRootRegisterWeb();
 };
 
 class RegPool {
@@ -112,7 +112,7 @@ public:
     virtual bool assignExt(instStream *s) = 0;                        // slot 2
     virtual bool discardDisjointExternalRegister(instStream *s, RegPoolEntry *reg) = 0; // slot 3
     virtual bool assignRegistersForWorkTable(workTable *t) = 0;                     // slot 4
-    bool Init(VclPtrWord registerPrefix, const char* name, int cls, int virtualRegisterParts);
+    bool initializeRegisterPool(VclPtrWord registerPrefix, const char* name, int cls, int virtualRegisterParts);
     void Dump();
     RegPoolEntry* findByRegisterIndex(int index);
     RegPoolEntry* findPhysicalByName(const char* name);
@@ -121,7 +121,7 @@ public:
     bool resetPoolFlowState();
     bool clearPoolPartPayloads();
     bool clearVirtualRegistersForParse();
-    static bool isResvd(const char* name, int cls);
+    static bool isReservedNameForClass(const char* name, int cls);
     bool cycleRegisters(bool flag);
     bool clearVirtualRegisters();
     RegPoolEntry* findOrCreateRegister(const char* name);
@@ -131,13 +131,13 @@ public:
     bool clearRegisterAssignmentsFirstPass();
     bool clearRegisterAssignmentsSecondPass();
     bool resetPoolLocalAllocationState();
-    RegPoolEntry* getMoveReg(Instr* move);
+    RegPoolEntry* findMoveRegister(Instr* move);
     bool ownsRegisterClass(RegPoolEntry* e);
     bool optReset();
     bool emitReset();
-    char* emitStats(char* buf);
+    char* emitStats(char* outputBuffer);
     int regIndex(int reg);
-    int countUsed();
+    int countUsedRegisters();
     int countMarkedPhysicalRegisters();
     int gatherInflight(ol_s** out);
 

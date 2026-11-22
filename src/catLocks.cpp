@@ -126,23 +126,23 @@ int cls0805c244::canMoveInputLock(OperandLock *operandLock, short *pos, int slot
     return 0;
 }
 
-int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
+int cls0805c244::canMoveOutputLock(OperandLock *outputLock, short *pos, int slotBit)
 {
     int ret;
     int lsz = activeLoopSize;
     int targetLinearRow = ((InstructionPosition *)pos)->linearRow;
     int targetLoopRow = ((InstructionPosition *)pos)->loopRow;
     int overlapRow = targetLinearRow;
-    ret = checkOverlap(out, pos, &overlapRow);
+    ret = checkOverlap(outputLock, pos, &overlapRow);
     if (ret)
         return ret;
-    int first = out->latencyModeFlag ? targetLinearRow + 1 : out->issueLatency + targetLinearRow;
-    int last = out->issueLatency + targetLinearRow;
+    int first = outputLock->latencyModeFlag ? targetLinearRow + 1 : outputLock->issueLatency + targetLinearRow;
+    int last = outputLock->issueLatency + targetLinearRow;
 
     int lim;
-    if (out->referenceCount) {
-        int upperConsumerCount = out->upperPipeConsumerCount, lowerConsumerCount = out->lowerPipeConsumerCount;
-        int eitherConsumerCount = out->eitherPipeConsumerCount;
+    if (outputLock->referenceCount) {
+        int upperConsumerCount = outputLock->upperPipeConsumerCount, lowerConsumerCount = outputLock->lowerPipeConsumerCount;
+        int eitherConsumerCount = outputLock->eitherPipeConsumerCount;
         int maxConsumerCount = upperConsumerCount, minConsumerCount = lowerConsumerCount;
         if (upperConsumerCount < lowerConsumerCount) {
             maxConsumerCount = lowerConsumerCount;
@@ -158,17 +158,17 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
     } else
         lim = first;
 
-    if (out->scheduledConsumerCount) {
-        if (out->latestConsumerCycle > lim)
-            lim = out->latestConsumerCycle;
-        if (last > out->earliestConsumerFreeCycle)
+    if (outputLock->scheduledConsumerCount) {
+        if (outputLock->latestConsumerCycle > lim)
+            lim = outputLock->latestConsumerCycle;
+        if (last > outputLock->earliestConsumerFreeCycle)
             return 2;
     }
 
     bool ext = false;
-    if (out->externalOutputSlotPlusOne) {
+    if (outputLock->externalOutputSlotPlusOne) {
         for (OperandLock *lock = outputLocks; lock; lock = lock->nextSibling) {
-            if (lock == out)
+            if (lock == outputLock)
                 continue;
             if (first <= lock->latestReadyCycle)
                 return 0x1000;
@@ -200,7 +200,7 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
     int wrappedEnd = targetLoopRow - targetLinearRow + lim;
     wrapRangeLocal(wrappedStart, wrappedEnd);
     for (OperandLock *lock = outputLocks; lock; lock = lock->nextSibling) {
-        if (lock == out)
+        if (lock == outputLock)
             continue;
         if (ext && lock->ownerType == 2)
             continue;
@@ -212,14 +212,14 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
     }
     if (ret)
         return ret;
-    if (externalOutputCount && !lsz && !out->latencyModeFlag) {
+    if (externalOutputCount && !lsz && !outputLock->latencyModeFlag) {
         OperandLock *externalOutputLock = externalOutputLocks[0];
         if (!externalOutputLock) {
             reportError("external lock not set \n");
             abortAfterError();
         }
         if (externalOutputLock->insertedIntoLockList) {
-            if (out->linearRow == targetLinearRow)
+            if (outputLock->linearRow == targetLinearRow)
                 return 0;
             if (targetLinearRow > externalOutputLock->linearRow)
                 return 0x200000;

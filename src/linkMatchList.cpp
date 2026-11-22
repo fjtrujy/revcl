@@ -7,7 +7,7 @@ static inline regUseSlot *registerPart(regUse *registerUse, int part)
     return &registerUse->slots[part];
 }
 
-bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *reg, int part, int ofs, bool ext)
+bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *registerEntry, int part, int ofs, bool ext)
 {
     regUse *registerUse = targetStream->backtraceRegisterUse;
     if (!registerUse) {
@@ -99,7 +99,7 @@ bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *reg
                             matchedStream->hazardFlag = 1;
                         } else {
                             reportWarning("vcl found a RAW stream with a non blocking operation for '%s' where by going down differing paths, an operand was set in different places..\n",
-                                          reg->registerName());
+                                          registerEntry->registerName());
                             reportWarning("this is a bit dodgy - min_ilen=%d.. max_ilen=%d.. target is %s, and match is  %s\n",
                                           matchedMinimumPathLength, matchedMaximumPathLength, targetStream->streamName(), matchedStream->streamName());
                             reportWarning("I can't really guarantee that the code is correct after this - but - since vcl would stop anyway here, let's carry on and see what happens... \n");
@@ -127,7 +127,7 @@ bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *reg
             if (match) {
                 markLocationExternallyUsed(match);
                 matchedRegisterUse->externalOutputMask |= 1 << part;
-                if (!link_oParts(match, location, minKey, maxKey)) {
+                if (!linkOperandParts(match, location, minKey, maxKey)) {
                     reportError("failed to link_oparts external\n");
                     match->dumpInstructionContext();
                     return false;

@@ -28,8 +28,8 @@ bool noopIOmaskProgramHook(Program *program)
 
 int hackIOmask(Instr *instruction, int outOp, unsigned char mask, int inOp)
 {
-    iInfo *info = instruction->opcodeInfo;
-    if (!info) {
+    iInfo *opcodeInfo = instruction->opcodeInfo;
+    if (!opcodeInfo) {
         reportError("hackIOmask - no inst set\n");
         return -1;
     }
@@ -59,7 +59,7 @@ int hackIOmask(Instr *instruction, int outOp, unsigned char mask, int inOp)
     if (!mask)
         return 0;
     if ((operand->operandKind == 1 || operand->operandKind == 9) && (out->operandKind == 1 || out->operandKind == 9)) {
-        if (info->decodeHook == rotateInputComponentMask)
+        if (opcodeInfo->decodeHook == rotateInputComponentMask)
             return ((bits << 1) & 0xf) | ((mask & 8) >> 3);
         return bits;
     }

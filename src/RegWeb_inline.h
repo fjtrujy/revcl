@@ -10,342 +10,342 @@
 
 bool resetPoolOptimizationState(Program *p);
 
-inline bool resetRegWebs()
+inline bool resetRegisterWebs()
 {
     regWebCount = 0;
     regWebUsed = 0;
     return true;
 }
 
-inline bool RegWeb::AddiTable(workTable *t)
+inline bool RegWeb::collectTableRegisterWebs(workTable *scheduleTable)
 {
-    if (!t) {
+    if (!scheduleTable) {
         reportError("RegWeb::AddiTable - passed a null pointer\n");
         return false;
     }
-    for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-        if (!AddiInstr(in)) {
+    for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+        if (!collectInstructionRegisterWebs(instruction)) {
             reportError("RegWeb::AddiTable: failed to add an isn\n");
-            in->dumpOperandDiagnostics(false);
-            t->dump();
+            instruction->dumpOperandDiagnostics(false);
+            scheduleTable->dump();
             return false;
         }
     }
     return true;
 }
 
-inline bool RegWeb::AddiInstr(Instr *in)
+inline bool RegWeb::collectInstructionRegisterWebs(Instr *instruction)
 {
-    if (!in)
+    if (!instruction)
         return false;
-    for (int i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        RegPoolEntry *vrg = op->assignedRegister;
-        if (!vrg || !op->isForwardable())
+    for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *operand = &instruction->operands[operandIndex];
+        RegPoolEntry *registerEntry = operand->assignedRegister;
+        if (!registerEntry || !operand->isForwardable())
             continue;
-        RegWeb *w = op->registerWeb;
-        if (!op->GetWeb()) {
-            w = GetNewWeb(vrg);
-            if (!w) {
+        RegWeb *registerWeb = operand->registerWeb;
+        if (!operand->getRootRegisterWeb()) {
+            registerWeb = createRegisterWeb(registerEntry);
+            if (!registerWeb) {
                 reportError("failed to get a web entry for forwardable operand\n");
                 return false;
             }
-            op->registerWeb = w;
+            operand->registerWeb = registerWeb;
         }
-        w->componentMask |= op->componentMask;
-        if (op->pairedOperandIndexPlusOne && op->direction == 1) {
-            if (!merge(w, in->operands[op->pairedOperandIndexPlusOne - 1].GetWeb())) {
+        registerWeb->componentMask |= operand->componentMask;
+        if (operand->pairedOperandIndexPlusOne && operand->direction == 1) {
+            if (!merge(registerWeb, instruction->operands[operand->pairedOperandIndexPlusOne - 1].getRootRegisterWeb())) {
                 reportError("failed to merge web for implicit web patch\n");
                 return false;
             }
         }
-        if (op->forcedBaseRegister) {
-            RegPoolEntry *fb = op->forcedBaseRegister;
-            if (fb->isVirtual) {
+        if (operand->forcedBaseRegister) {
+            RegPoolEntry *forcedRegister = operand->forcedBaseRegister;
+            if (forcedRegister->isVirtual) {
                 reportError("can't have a virtual forced register\n");
                 return false;
             }
-            if (!setfMap(w, fb)) {
+            if (!setForcedRegisterMapping(registerWeb, forcedRegister)) {
                 reportError("setfMap failed when binding to base for basereg %s, reg %s\n",
-                              fb->registerName(), vrg->registerName());
+                              forcedRegister->registerName(), registerEntry->registerName());
                 return false;
             }
-            if (!vrg->isVirtual && vrg != fb) {
+            if (!registerEntry->isVirtual && registerEntry != forcedRegister) {
                 reportError("register isn't virtual - but doesn't match base for forced base reg\n");
                 return false;
             }
         }
-        if (isRegisterOperand(op, 1)) {
-            for (int j = 0; j != vrg->partCount; j++) {
-                bool used = (op->componentMask >> j) & 1;
-                if (!used)
+        if (isRegisterOperand(operand, 1)) {
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
+                bool partUsed = (operand->componentMask >> partIndex) & 1;
+                if (!partUsed)
                     continue;
-                ol_s *ol = op->parts[j].operandLocations.head;
-                if (!ol) {
+                ol_s *sourceLocation = operand->parts[partIndex].operandLocations.head;
+                if (!sourceLocation) {
                     reportError("found input operand part with empty olList..\n");
                     reportError("this should have been caught by now..\n");
                     reportError("stopping\n");
-                    in->leDump(i, j);
+                    instruction->dumpInstructionContext(operandIndex, partIndex);
                     return false;
                 }
                 do {
-                    Operand *src = operandAtLocation(ol);
-                    if (!src) {
+                    Operand *sourceOperand = operandAtLocation(sourceLocation);
+                    if (!sourceOperand) {
                         reportError("getoploc - empty!\n");
-                        in->leDump(i, j);
-                        ol->dumpInstructionContext();
+                        instruction->dumpInstructionContext(operandIndex, partIndex);
+                        sourceLocation->dumpInstructionContext();
                     }
-                    if (!src->GetWeb()) {
-                        src->registerWeb = GetNewWeb(vrg);
-                        if (!src->registerWeb) {
+                    if (!sourceOperand->getRootRegisterWeb()) {
+                        sourceOperand->registerWeb = createRegisterWeb(registerEntry);
+                        if (!sourceOperand->registerWeb) {
                             reportError("failed to get a web entry for forwardable operand\n");
                             return false;
                         }
                     }
-                    src->registerWeb->componentMask |= src->componentMask;
-                    if (!merge(src->GetWeb(), w)) {
+                    sourceOperand->registerWeb->componentMask |= sourceOperand->componentMask;
+                    if (!merge(sourceOperand->getRootRegisterWeb(), registerWeb)) {
                         reportError("failed to merge web entries\n");
                         return false;
                     }
-                    ol = ol->next;
-                } while (ol);
+                    sourceLocation = sourceLocation->next;
+                } while (sourceLocation);
             }
         }
     }
     return true;
 }
 
-inline RegWeb *RegWeb::GetNewWeb(RegPoolEntry *old_vrg)
+inline RegWeb *RegWeb::createRegisterWeb(RegPoolEntry *registerEntry)
 {
     if (regWebCount >= 0x4000) {
         reportError("oh no! ran out of regweb entries\n");
         return 0;
     }
-    if (!old_vrg) {
+    if (!registerEntry) {
         reportError("GetNewWeb  - old_vrg not set\n");
         return 0;
     }
-    RegWeb *w = &regWebs[regWebCount];
-    w->assignedRegister = 0;
-    w->virtualRegister = old_vrg;
-    w->componentMask = 0;
-    w->parentWeb = 0;
-    w->memberCount = 1;
-    w->webIndex = regWebCount;
-    w->forcedRegister = 0;
+    RegWeb *registerWeb = &regWebs[regWebCount];
+    registerWeb->assignedRegister = 0;
+    registerWeb->virtualRegister = registerEntry;
+    registerWeb->componentMask = 0;
+    registerWeb->parentWeb = 0;
+    registerWeb->memberCount = 1;
+    registerWeb->webIndex = regWebCount;
+    registerWeb->forcedRegister = 0;
     regWebCount++;
-    return w;
+    return registerWeb;
 }
 
-inline bool RegWeb::merge(RegWeb *w_a, RegWeb *w_b)
+inline bool RegWeb::merge(RegWeb *firstWeb, RegWeb *secondWeb)
 {
-    if (!w_a) {
+    if (!firstWeb) {
         reportError("RegWeb::merge.. w_a was null!\n");
         return false;
     }
-    unsigned char fa = 0, fb = 0;
-    while (w_a->parentWeb) {
-        fa |= w_a->componentMask;
-        if (w_a->memberCount) {
+    unsigned char firstMask = 0, secondMask = 0;
+    while (firstWeb->parentWeb) {
+        firstMask |= firstWeb->componentMask;
+        if (firstWeb->memberCount) {
             reportError("Merge: inconsistency - nUsed on chase\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (w_a->forcedRegister) {
+        if (firstWeb->forcedRegister) {
             reportError("non-terminal web a had mapping\n");
             exitAfterCleanup(-1);
             return false;
         }
-        w_a = w_a->parentWeb;
+        firstWeb = firstWeb->parentWeb;
     }
-    if (!w_a->memberCount) {
+    if (!firstWeb->memberCount) {
         reportError("hit a terminal empty strand in web\n");
         return false;
     }
-    if (!w_b) {
+    if (!secondWeb) {
         reportError("RegWeb::merge .. b was null\n");
         return false;
     }
-    while (w_b->parentWeb) {
-        fb |= w_b->componentMask;
-        if (w_b->memberCount) {
+    while (secondWeb->parentWeb) {
+        secondMask |= secondWeb->componentMask;
+        if (secondWeb->memberCount) {
             reportError("Merge: inconsistency - nUsed on chase for w_b\n");
             return false;
         }
-        if (w_b->forcedRegister) {
+        if (secondWeb->forcedRegister) {
             reportError("web b had mapping\n");
             exitAfterCleanup(-1);
             return false;
         }
-        w_b = w_b->parentWeb;
+        secondWeb = secondWeb->parentWeb;
     }
-    if (!w_b->memberCount) {
+    if (!secondWeb->memberCount) {
         reportError("hit a terminal empty strand in web\n");
         return false;
     }
-    if (w_a == w_b)
+    if (firstWeb == secondWeb)
         return true;
-    if (w_b->assignedRegister || w_a->assignedRegister) {
+    if (secondWeb->assignedRegister || firstWeb->assignedRegister) {
         reportError("one or both strands had register attached!\n");
         return false;
     }
-    unsigned char m = fa | fb | w_b->componentMask | w_a->componentMask;
-    w_a->componentMask = m;
-    w_b->componentMask = m;
-    if (w_a->forcedRegister) {
-        if (!setfMap(w_b, w_a->forcedRegister)) {
+    unsigned char combinedMask = firstMask | secondMask | secondWeb->componentMask | firstWeb->componentMask;
+    firstWeb->componentMask = combinedMask;
+    secondWeb->componentMask = combinedMask;
+    if (firstWeb->forcedRegister) {
+        if (!setForcedRegisterMapping(secondWeb, firstWeb->forcedRegister)) {
             reportError("failed to load mapping from a into b\n");
             return false;
         }
-        w_a->forcedRegister = 0;
+        firstWeb->forcedRegister = 0;
     }
-    w_b->memberCount += w_a->memberCount;
-    w_a->parentWeb = w_b;
-    w_a->memberCount = 0;
+    secondWeb->memberCount += firstWeb->memberCount;
+    firstWeb->parentWeb = secondWeb;
+    firstWeb->memberCount = 0;
     return true;
 }
 
-inline RegWeb *RegPoolEntry::GetWeb()
+inline RegWeb *RegPoolEntry::getRootRegisterWeb()
 {
-    RegWeb *w = registerWeb;
-    if (!w)
+    RegWeb *rootWeb = registerWeb;
+    if (!rootWeb)
         return 0;
-    while (w->parentWeb) {
-        if (w->memberCount) {
+    while (rootWeb->parentWeb) {
+        if (rootWeb->memberCount) {
             reportError(" INTERNAL Register::GetWeb found non terminal count not at end!! for '%s' count=%d\n",
-                          registerName(), w->memberCount);
+                          registerName(), rootWeb->memberCount);
             exitAfterCleanup(-1);
         }
-        w = w->parentWeb;
+        rootWeb = rootWeb->parentWeb;
     }
-    if (!w->memberCount) {
+    if (!rootWeb->memberCount) {
         reportError("INTERNAL Register::terminal entry had zero count!\n");
         exitAfterCleanup(-1);
     }
-    return w;
+    return rootWeb;
 }
 
-inline RegWeb *Operand::GetWeb()
+inline RegWeb *Operand::getRootRegisterWeb()
 {
-    RegWeb *w = registerWeb;
-    if (!w)
+    RegWeb *rootWeb = registerWeb;
+    if (!rootWeb)
         return 0;
-    while (w->parentWeb) {
-        if (w->memberCount) {
+    while (rootWeb->parentWeb) {
+        if (rootWeb->memberCount) {
             reportError("INTERNAL : Operand::GetWeb found non terminal count!\n");
             exitAfterCleanup(-1);
         }
-        w = w->parentWeb;
+        rootWeb = rootWeb->parentWeb;
     }
-    if (!w->memberCount) {
+    if (!rootWeb->memberCount) {
         reportError("INTERNAL : Operand::terminal entry had zero count!\n");
         exitAfterCleanup(-1);
     }
-    return w;
+    return rootWeb;
 }
 
-inline bool GatherWeb()
+inline bool assignRegisterWebs()
 {
-    int used = 0;
-    char name[128];
-    int i;
-    for (i = 0; i != regWebCount; i++) {
-        RegWeb *w = &regWebs[i];
-        if (w->memberCount && w->forcedRegister) {
-            RegPoolEntry *r = w->forcedRegister;
-            if (r->isVirtual == 1) {
+    int allocatedWebCount = 0;
+    char virtualRegisterName[128];
+    int webIndex;
+    for (webIndex = 0; webIndex != regWebCount; webIndex++) {
+        RegWeb *registerWeb = &regWebs[webIndex];
+        if (registerWeb->memberCount && registerWeb->forcedRegister) {
+            RegPoolEntry *registerEntry = registerWeb->forcedRegister;
+            if (registerEntry->isVirtual == 1) {
                 reportError("forced to a non-base register\n");
                 return false;
             }
-            if (r->registerWeb) {
-                if (!RegWeb::merge(r->registerWeb, w)) {
-                    reportError("during mapped merge..failed for %s\n", r->registerName());
+            if (registerEntry->registerWeb) {
+                if (!RegWeb::merge(registerEntry->registerWeb, registerWeb)) {
+                    reportError("during mapped merge..failed for %s\n", registerEntry->registerName());
                     return false;
                 }
             } else
-                r->registerWeb = w;
+                registerEntry->registerWeb = registerWeb;
         }
     }
-    for (i = 0; i != regWebCount; i++) {
-        RegWeb *w = &regWebs[i];
-        if (w->memberCount) {
-            RegPoolEntry *r = w->virtualRegister;
-            if (!r) {
+    for (webIndex = 0; webIndex != regWebCount; webIndex++) {
+        RegWeb *registerWeb = &regWebs[webIndex];
+        if (registerWeb->memberCount) {
+            RegPoolEntry *registerEntry = registerWeb->virtualRegister;
+            if (!registerEntry) {
                 reportError("GatherWeb:: oh no - dReg not set\n");
                 exitAfterCleanup(-1);
                 return false;
             }
-            if (w->assignedRegister) {
+            if (registerWeb->assignedRegister) {
                 reportError("found register assign at unexpected place!\n");
                 exitAfterCleanup(-1);
             }
-            if (w->forcedRegister)
-                w->assignedRegister = w->forcedRegister;
+            if (registerWeb->forcedRegister)
+                registerWeb->assignedRegister = registerWeb->forcedRegister;
             else {
-                RegPool *pool = r->ownerPool;
-                if (!pool) {
+                RegPool *registerPool = registerEntry->ownerPool;
+                if (!registerPool) {
                     reportError("Gather: register had no pool\n");
                     return false;
                 }
-                formatIntoBuffer(name, "%s__%d", r->registerName(), r->uniqueNameSerial);
-                w->assignedRegister = pool->createVirtualRegister(name);
-                if (!w->assignedRegister) {
-                    reportError("GatherWeb: failed to get '%s' from %s\n", name, pool->poolName);
+                formatIntoBuffer(virtualRegisterName, "%s__%d", registerEntry->registerName(), registerEntry->uniqueNameSerial);
+                registerWeb->assignedRegister = registerPool->createVirtualRegister(virtualRegisterName);
+                if (!registerWeb->assignedRegister) {
+                    reportError("GatherWeb: failed to get '%s' from %s\n", virtualRegisterName, registerPool->poolName);
                     return false;
                 }
-                w->assignedRegister->registerWeb = w;
-                r->uniqueNameSerial++;
-                used++;
+                registerWeb->assignedRegister->registerWeb = registerWeb;
+                registerEntry->uniqueNameSerial++;
+                allocatedWebCount++;
             }
         }
     }
-    regWebUsed = used;
+    regWebUsed = allocatedWebCount;
     return true;
 }
 
-inline bool RegWeb::PatchOperand(Operand *op)
+inline bool RegWeb::applyRegisterWebToOperand(Operand *operand)
 {
-    if (!op)
+    if (!operand)
         return true;
-    RegWeb *w = op->GetWeb();
-    if (w) {
-        if (!w->assignedRegister) {
+    RegWeb *registerWeb = operand->getRootRegisterWeb();
+    if (registerWeb) {
+        if (!registerWeb->assignedRegister) {
             reportError("patch operand - web has no reg\n");
             return false;
         }
-        RegPoolEntry *r = w->assignedRegister;
-        op->assignedRegister = r;
-        if (op->forcedBaseRegister && op->forcedBaseRegister != r) {
+        RegPoolEntry *registerEntry = registerWeb->assignedRegister;
+        operand->assignedRegister = registerEntry;
+        if (operand->forcedBaseRegister && operand->forcedBaseRegister != registerEntry) {
             reportError("not forcing to a base reg after all - in PatchOperands %s isn't %s\n",
-                          op->forcedBaseRegister->registerName(), r->registerName());
-            int have = op->assignedRegister->isVirtual;
-            int want = op->forcedBaseRegister->isVirtual;
-            reportError("have %d %d\n", want, have);
+                          operand->forcedBaseRegister->registerName(), registerEntry->registerName());
+            int actualVirtualFlag = operand->assignedRegister->isVirtual;
+            int forcedVirtualFlag = operand->forcedBaseRegister->isVirtual;
+            reportError("have %d %d\n", forcedVirtualFlag, actualVirtualFlag);
             return false;
         }
     }
     return true;
 }
 
-inline bool RegWeb::PatchInstr(Instr *in)
+inline bool RegWeb::applyRegisterWebsToInstruction(Instr *instruction)
 {
-    if (!in)
+    if (!instruction)
         return true;
-    for (int i = 0; i != in->operandCount; i++) {
-        Operand *op = &in->operands[i];
-        if (!PatchOperand(op))
+    for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+        Operand *operand = &instruction->operands[operandIndex];
+        if (!applyRegisterWebToOperand(operand))
             return false;
     }
     return true;
 }
 
-inline bool RegWeb::PatchITable(workTable *t)
+inline bool RegWeb::applyRegisterWebsToTable(workTable *scheduleTable)
 {
-    if (t) {
-        for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-            if (!PatchInstr(in)) {
+    if (scheduleTable) {
+        for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
+            if (!applyRegisterWebsToInstruction(instruction)) {
                 reportError("patchiTable - failed\n");
-                in->dumpOperandDiagnostics(false);
+                instruction->dumpOperandDiagnostics(false);
                 goto fail;
             }
         }
@@ -357,76 +357,76 @@ fail:
     return false;
 }
 
-inline void RegWeb::Dump()
+inline void RegWeb::checkRegisterWebInvariants()
 {
-    for (int i = 0; i != regWebCount; i++) {
-        if (regWebs[i].memberCount && !regWebs[i].virtualRegister) {
+    for (int webIndex = 0; webIndex != regWebCount; webIndex++) {
+        if (regWebs[webIndex].memberCount && !regWebs[webIndex].virtualRegister) {
             reportError("Dump: dReg not set\n");
             exitAfterCleanup(-1);
         }
     }
 }
 
-inline bool RegWeb::setfMap(RegWeb *w, RegPoolEntry *r)
+inline bool RegWeb::setForcedRegisterMapping(RegWeb *registerWeb, RegPoolEntry *forcedRegister)
 {
-    while (w->parentWeb)
-        w = w->parentWeb;
-    if (!r) {
+    while (registerWeb->parentWeb)
+        registerWeb = registerWeb->parentWeb;
+    if (!forcedRegister) {
         reportError("regweb::setfMap - asked to set a null mapping\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (r->isVirtual) {
+    if (forcedRegister->isVirtual) {
         reportError("regweb:: setfMap - can't setfmap to virtual!\n");
         exitAfterCleanup(-1);
         return false;
     }
-    if (w->forcedRegister) {
-        if (w->forcedRegister != r) {
+    if (registerWeb->forcedRegister) {
+        if (registerWeb->forcedRegister != forcedRegister) {
             reportError("regweb:: set map - can't map to different base registers..\n");
             reportError("regweb:: try to map both %s and %s\n",
-                          w->forcedRegister->registerName(), r->registerName());
+                          registerWeb->forcedRegister->registerName(), forcedRegister->registerName());
             return false;
         }
     } else
-        w->forcedRegister = r;
+        registerWeb->forcedRegister = forcedRegister;
     return true;
 }
 
-inline bool buildRegWebs(Program *p)
+inline bool buildRegisterWebs(Program *program)
 {
-    resetRegWebs();
-    if (!resetPoolOptimizationState(p)) {
+    resetRegisterWebs();
+    if (!resetPoolOptimizationState(program)) {
         reportError("flow:: reset the webs\n");
         return false;
     }
-    instStream *s;
-    for (s = p->streamHead; s; s = s->nextStream)
-        RegWeb::ClearWebs(s->getWorkTable());
-    for (s = p->streamHead; s; s = s->nextStream) {
-        if (!RegWeb::AddiTable(s->getWorkTable())) {
-            reportError("flow: AddIStream failed for %s\n", s->streamName());
+    instStream *stream;
+    for (stream = program->streamHead; stream; stream = stream->nextStream)
+        RegWeb::clearTableRegisterWebs(stream->getWorkTable());
+    for (stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (!RegWeb::collectTableRegisterWebs(stream->getWorkTable())) {
+            reportError("flow: AddIStream failed for %s\n", stream->streamName());
             return false;
         }
     }
-    if (!GatherWeb()) {
+    if (!assignRegisterWebs()) {
         reportError("flow::GatherWeb() failed\n");
         return false;
     }
-    for (s = p->streamHead; s; s = s->nextStream) {
-        if (!RegWeb::PatchITable(s->getWorkTable())) {
-            reportError("flow: failed to patch ist %s\n", s->streamName());
+    for (stream = program->streamHead; stream; stream = stream->nextStream) {
+        if (!RegWeb::applyRegisterWebsToTable(stream->getWorkTable())) {
+            reportError("flow: failed to patch ist %s\n", stream->streamName());
             return false;
         }
     }
     return true;
 }
 
-inline bool RegWeb::ClearWebs(workTable *t)
+inline bool RegWeb::clearTableRegisterWebs(workTable *scheduleTable)
 {
-    for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-        for (int i = 0; i != in->operandCount; i++)
-            in->operands[i].registerWeb = 0;
+    for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
+        for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++)
+            instruction->operands[operandIndex].registerWeb = 0;
     return true;
 }
 

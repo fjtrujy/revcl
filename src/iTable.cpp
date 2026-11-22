@@ -51,7 +51,7 @@ bool workTable::init(unsigned char mode, int size)
     loopSize = 0;
     fallbackSchedulingActive = 0;
     nextInsertionSerial = 0;
-    unk_ad = 0;
+    movePipeCapacityExceeded = 0;
     declaredRawLength = 0;
     minimumSafeLoopCount = 0;
     codeModeValue = mode;
@@ -314,7 +314,7 @@ Instr *workTable::getBranch()
     return (secondInstruction && secondInstruction->branchFlags) ? secondInstruction : 0;
 }
 
-bool UnlinkFromLinear(Block *blk, Instr *n);
+bool unlinkFromLinearInstructions(Block *blk, Instr *n);
 bool decrementInstructionPipelineCounts(Block *blk, Instr *in);
 
 inline bool workTable::unlinkAndUnlog(Instr *instruction)
@@ -323,7 +323,7 @@ inline bool workTable::unlinkAndUnlog(Instr *instruction)
         reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", pendingInstructions.count);
         return 0;
     }
-    if (!UnlinkFromLinear((Block *)this, instruction)) {
+    if (!unlinkFromLinearInstructions((Block *)this, instruction)) {
         reportError("logUnlinkFromLinear: failed to unlink instruction from linear\n");
         abortAfterError();
     }
@@ -350,7 +350,7 @@ bool workTable::removeBranch()
     return 1;
 }
 
-int workTable::getCondLid()
+int workTable::getTerminatingConditionalLoopId()
 {
     int lid = -1;
     Instr *secondInstruction = getBranch();
@@ -636,49 +636,49 @@ int workTable::getPipeCount(int pipeIndex)
     return instructionCountsByPipe[pipeIndex];
 }
 
-bool logInstr(Block *blk, Instr *instruction)
+bool logInstr(Block *block, Instr *instruction)
 {
     if (instruction->permittedPipelineMask == 3)
-        blk->dualPipelineInstructionCount++;
+        block->dualPipelineInstructionCount++;
     else {
         int pipelineCount = 0;
         if (instruction->permittedPipelineMask & 1) {
-            blk->instructionCountsByPipe[0]++;
+            block->instructionCountsByPipe[0]++;
             pipelineCount = 1;
         }
         if (instruction->permittedPipelineMask & 2) {
             pipelineCount++;
-            blk->instructionCountsByPipe[1]++;
+            block->instructionCountsByPipe[1]++;
         }
         if (pipelineCount != 1) {
             reportError("nad too many / too few\n");
             abortAfterError();
         }
     }
-    blk->instructionCountsByPipe[2]++;
+    block->instructionCountsByPipe[2]++;
     return 1;
 }
 
-bool decrementInstructionPipelineCounts(Block *blk, Instr *instruction)
+bool decrementInstructionPipelineCounts(Block *block, Instr *instruction)
 {
     if (instruction->permittedPipelineMask == 3)
-        blk->dualPipelineInstructionCount--;
+        block->dualPipelineInstructionCount--;
     else {
         int pipelineCount = 0;
         if (instruction->permittedPipelineMask & 1) {
-            blk->instructionCountsByPipe[0]--;
+            block->instructionCountsByPipe[0]--;
             pipelineCount = 1;
         }
         if (instruction->permittedPipelineMask & 2) {
             pipelineCount++;
-            blk->instructionCountsByPipe[1]--;
+            block->instructionCountsByPipe[1]--;
         }
         if (pipelineCount != 1) {
             reportError("nad too many\n");
             abortAfterError();
         }
     }
-    if (--blk->instructionCountsByPipe[2] < 0) {
+    if (--block->instructionCountsByPipe[2] < 0) {
         reportError("-ve icount\n");
         return 0;
     }
@@ -936,7 +936,7 @@ bool workTable::changeMode(unsigned char mode)
     return 1;
 }
 
-bool AddLinear_After(Block *blk, Instr *after, Instr *n);
+bool insertLinearInstructionAfter(Block *blk, Instr *after, Instr *n);
 
 bool workTable::logAddLinear_After(Instr *after, Instr *insertedInstruction)
 {
@@ -948,7 +948,7 @@ bool workTable::logAddLinear_After(Instr *after, Instr *insertedInstruction)
         reportError("logAddLinear_Head: failed to set owner\n");
         return 0;
     }
-    if (!AddLinear_After((Block *)this, after, insertedInstruction)) {
+    if (!insertLinearInstructionAfter((Block *)this, after, insertedInstruction)) {
         reportError("logAddLinear_Head: failed to add head of linear list\n");
         return 0;
     }
@@ -959,7 +959,7 @@ bool workTable::logAddLinear_After(Instr *after, Instr *insertedInstruction)
     return 1;
 }
 
-bool AddLinear_Head(Block *blk, Instr *n);
+bool prependLinearInstruction(Block *blk, Instr *n);
 
 bool workTable::logAddLinear_Head(Instr *headInstruction)
 {
@@ -971,7 +971,7 @@ bool workTable::logAddLinear_Head(Instr *headInstruction)
         reportError("logAddLinear_Head: failed to set owner\n");
         return 0;
     }
-    if (!AddLinear_Head((Block *)this, headInstruction)) {
+    if (!prependLinearInstruction((Block *)this, headInstruction)) {
         reportError("logAddLinear_Head: failed to add head of linear list\n");
         return 0;
     }
@@ -982,7 +982,7 @@ bool workTable::logAddLinear_Head(Instr *headInstruction)
     return 1;
 }
 
-bool AddLinear_Tail(Block *blk, Instr *n);
+bool appendLinearInstruction(Block *blk, Instr *n);
 
 bool workTable::logAddLinear_Tail(Instr *tailInstruction)
 {
@@ -994,7 +994,7 @@ bool workTable::logAddLinear_Tail(Instr *tailInstruction)
         reportError("logAddLinear_Head: failed to set owner\n");
         return 0;
     }
-    if (!AddLinear_Tail((Block *)this, tailInstruction)) {
+    if (!appendLinearInstruction((Block *)this, tailInstruction)) {
         reportError("logAddLinear_Head: failed to add head of linear list\n");
         return 0;
     }
@@ -1022,7 +1022,7 @@ bool workTable::makeLinearList()
             Instr *instruction = pipelineEntries[pipelineIndex];
             if (instruction && !logAddLinear_Tail(instruction)) {
                 reportError("iTable - failed to add an instruction\n");
-                instruction->leDump();
+                instruction->dumpInstructionContext();
                 return 0;
             }
         }
@@ -1036,7 +1036,7 @@ bool workTable::logUnlinkFromLinear(Instr *instruction)
         reportError("iTable::logUnlinkFromLinear - hmm - we might be being optimised? todo=%d\n", pendingInstructions.count);
         return 0;
     }
-    if (!UnlinkFromLinear((Block *)this, instruction)) {
+    if (!unlinkFromLinearInstructions((Block *)this, instruction)) {
         reportError("logUnlinkFromLinear: failed to unlink instruction from linear\n");
         abortAfterError();
     }
@@ -1121,10 +1121,10 @@ workTable *workTable::localClone()
         Instr *cloneInstruction = instruction->clone();
         for (int operandIndex = 0; operandIndex != cloneInstruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
-            RegPoolEntry *reg = registerOperand(operand, 1);
-            if (reg) {
+            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            if (registerEntry) {
             int mask = operand->componentMask & ~operand->externalPartMask;
-            for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
+            for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 int bit = 1 << partIndex;
                 if (mask & bit) {
                 ol_s *operandLocation = operand->parts[partIndex].operandLocations.head;
@@ -1149,7 +1149,7 @@ workTable *workTable::localClone()
                 Instr *writerInstruction = setter->cloneImage;
                 int p1 = operandLocation->componentIndex;
                 int p0 = operandLocation->operandIndex;
-                if (!link_oParts(writerInstruction, p0, p1, cloneInstruction, operandIndex, partIndex)) {
+                if (!linkOperandParts(writerInstruction, p0, p1, cloneInstruction, operandIndex, partIndex)) {
                     reportError("failed to link local oparts\n");
                     return 0;
                 }

@@ -197,17 +197,17 @@ bool Instr::clearTransientFlags()
     return true;
 }
 
-void Instr::leDump()
+void Instr::dumpInstructionContext()
 {
-    leDump(-1, -1);
+    dumpInstructionContext(-1, -1);
 }
 
-void Instr::leDump(int opnd)
+void Instr::dumpInstructionContext(int opnd)
 {
-    leDump(opnd, -1);
+    dumpInstructionContext(opnd, -1);
 }
 
-void Instr::leDump(int opnd, int mask)
+void Instr::dumpInstructionContext(int opnd, int mask)
 {
     if (opnd >= operandCount) {
         reportError("Instruction::leDump - out of bounds operand!\n");
@@ -507,7 +507,7 @@ bool Instr::changeBranchImmediate(const char *immediateText)
     return operand->immediateValue.setString(immediateText);
 }
 
-bool link_oParts(Instr *instruction, int aOp, int slot, Instr *secondInstruction, int bOp, int bSlot)
+bool linkOperandParts(Instr *instruction, int aOp, int slot, Instr *secondInstruction, int bOp, int bSlot)
 {
     if (!instruction || !secondInstruction) {
         reportError("link_oParts, null arg pointer!\n");
@@ -538,7 +538,7 @@ static inline void dumpLinkOperand(Operand *operand)
     operand->diagnoseOperand(0);
 }
 
-bool link_oParts(ol_s *location, ol_s *inputLocation, int minimumPathKey, int maximumPathKey)
+bool linkOperandParts(ol_s *location, ol_s *inputLocation, int minimumPathKey, int maximumPathKey)
 {
     if (!location) {
         reportError("link_oParts, null arg pointer2!\n");
@@ -650,60 +650,60 @@ const char *branchTypeNameByCode(int branchType)
     }
 }
 
-char *Instr::emitExpectedSyntax(bool flag, char *buf, int)
+char *Instr::emitExpectedSyntax(bool flag, char *outputBuffer, int)
 {
-    if (!buf)
+    if (!outputBuffer)
         return 0;
     iInfo *info = opcodeInfo;
     if (info) {
-        buf += formatIntoBuffer(buf, info->mnemonic);
+        outputBuffer += formatIntoBuffer(outputBuffer, info->mnemonic);
         switch ((char)info->destinationMaskMode) {
         case 1:
-            buf += formatIntoBuffer(buf, ".[xyzw]");
+            outputBuffer += formatIntoBuffer(outputBuffer, ".[xyzw]");
             break;
         case 2:
-            buf += formatIntoBuffer(buf, ".xyz");
+            outputBuffer += formatIntoBuffer(outputBuffer, ".xyz");
             break;
         case 3:
-            buf += formatIntoBuffer(buf, ".[x/y/z/w]");
+            outputBuffer += formatIntoBuffer(outputBuffer, ".[x/y/z/w]");
             break;
         }
     } else {
-        buf += formatIntoBuffer(buf, "nop");
+        outputBuffer += formatIntoBuffer(outputBuffer, "nop");
     }
-    buf += formatIntoBuffer(buf, "\t");
+    outputBuffer += formatIntoBuffer(outputBuffer, "\t");
     for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
         if (operands[operandIndex].isImplicit)
             break;
         if (operandIndex)
-            buf += formatIntoBuffer(buf, ",");
-        buf = operands[operandIndex].emitExpectedOperandType(flag, buf);
-        if (!buf)
+            outputBuffer += formatIntoBuffer(outputBuffer, ",");
+        outputBuffer = operands[operandIndex].emitExpectedOperandType(flag, outputBuffer);
+        if (!outputBuffer)
             break;
     }
-    return buf;
+    return outputBuffer;
 }
 
-int Instr::outputMaskForRegister(RegPoolEntry *reg, int mask)
+int Instr::outputMaskForRegister(RegPoolEntry *registerEntry, int mask)
 {
     int result = 0;
-    if (reg) {
+    if (registerEntry) {
         for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
             Operand *operand = &operands[operandIndex];
-            if (operand->outRegZ() == reg)
+            if (operand->outRegZ() == registerEntry)
                 result |= operand->componentMask;
         }
     }
     return result & mask;
 }
 
-int Instr::inputMaskForRegister(RegPoolEntry *reg, int mask)
+int Instr::inputMaskForRegister(RegPoolEntry *registerEntry, int mask)
 {
     int result = 0;
-    if (reg) {
+    if (registerEntry) {
         for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
             Operand *operand = &operands[operandIndex];
-            if (operand->inRegOp2() == reg)
+            if (operand->inRegOp2() == registerEntry)
                 result |= operand->componentMask;
         }
     }
@@ -796,21 +796,21 @@ int Instr::constantZeroInstructionHook()
     return 0;
 }
 
-Operand *Instr::findInputOperand(RegPoolEntry *reg, int mask)
+Operand *Instr::findInputOperand(RegPoolEntry *registerEntry, int mask)
 {
     for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
         Operand *operand = &operands[operandIndex];
-        if (operand->inRegOp2() == reg && (operand->componentMask & mask))
+        if (operand->inRegOp2() == registerEntry && (operand->componentMask & mask))
             return operand;
     }
     return 0;
 }
 
-Operand *Instr::findOutputOperand(RegPoolEntry *reg, int mask)
+Operand *Instr::findOutputOperand(RegPoolEntry *registerEntry, int mask)
 {
     for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
         Operand *operand = &operands[operandIndex];
-        if (operand->outRegZ() == reg && (operand->componentMask & mask))
+        if (operand->outRegZ() == registerEntry && (operand->componentMask & mask))
             return operand;
     }
     return 0;
@@ -1105,12 +1105,12 @@ void Instr::clearExternalTimingConstraints()
     externalOutputConstraint = 0;
 }
 
-void Instr::copyExternalTimingConstraints(Instr *src)
+void Instr::copyExternalTimingConstraints(Instr *sourceInstruction)
 {
-    externalInputPairedConstraint = src->externalInputPairedConstraint;
-    externalInputConstraint = src->externalInputConstraint;
-    externalOutputPairedConstraint = src->externalOutputPairedConstraint;
-    externalOutputConstraint = src->externalOutputConstraint;
+    externalInputPairedConstraint = sourceInstruction->externalInputPairedConstraint;
+    externalInputConstraint = sourceInstruction->externalInputConstraint;
+    externalOutputPairedConstraint = sourceInstruction->externalOutputPairedConstraint;
+    externalOutputConstraint = sourceInstruction->externalOutputConstraint;
 }
 
 void Instr::raiseExternalInputPairedConstraint(short pairedInputConstraint)

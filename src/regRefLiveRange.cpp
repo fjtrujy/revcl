@@ -6,7 +6,7 @@
 #include "genRegPool.h"
 
 void clearRawBytes(char *p, int n);
-RegPool *GetRP(unsigned t);
+RegPool *getRegisterPoolByIndex(unsigned t);
 bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
@@ -83,19 +83,19 @@ static inline bool isInternalIn(OperandLock *operandLock)
     return operandLock->operandStatusCode == 2;
 }
 
-bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *out, int *rangeStartOut, int *rangeEndOut)
+bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *outputLock, int *rangeStartOut, int *rangeEndOut)
 {
     *rangeStartOut = -1;
     *rangeEndOut = -1;
-    if (!isInternalLock(out)) {
-        Instr *ins = out->ownerInstr();
+    if (!isInternalLock(outputLock)) {
+        Instr *ins = outputLock->ownerInstr();
         if (!ins) {
             reportError("failed to get instruction for non -internal input\n");
             return false;
         }
         InstructionPosition *instructionPosition = &ins->position;
         int line = instructionPosition->getRow();
-        int want = out->linearRow;
+        int want = outputLock->linearRow;
         if ((short)line != (short)want) {
             reportError("rLine mismatch\n");
             return false;
@@ -108,7 +108,7 @@ bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *out, in
     } else {
         *rangeStartOut = -1;
     }
-    if (out->externalOutputSlotPlusOne) {
+    if (outputLock->externalOutputSlotPlusOne) {
         if (activeLoopSize && *rangeStartOut >= 0)
             *rangeEndOut = *rangeStartOut + activeLoopSize - *rangeStartOut % activeLoopSize;
         else
@@ -116,7 +116,7 @@ bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *out, in
     } else {
         *rangeEndOut = -1;
     }
-    for (OperandLock *operandLock = out->parentOrChildren; operandLock; operandLock = operandLock->nextSibling) {
+    for (OperandLock *operandLock = outputLock->parentOrChildren; operandLock; operandLock = operandLock->nextSibling) {
         if (isInternalIn(operandLock))
             continue;
         Instr *lockInstruction = operandLock->ownerInstr();
@@ -147,7 +147,7 @@ bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *out, in
     return true;
 }
 
-bool hack_slo(workTable *scheduleTable, RegPoolEntry *registerEntry, RegPoolEntry *alternateRegister)
+bool haveSimultaneousRegisterOutputs(workTable *scheduleTable, RegPoolEntry *registerEntry, RegPoolEntry *alternateRegister)
 {
     if (scheduleTable->codeModeValue != 3) {
         reportError("hack_slo - called - but table not raw\n");

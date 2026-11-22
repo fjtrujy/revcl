@@ -7,103 +7,103 @@
 #include "mValue.h"
 #include "os.h"
 
-bool UnlinkFromToDo(Block *blk, Instr *instruction)
+bool unlinkFromPendingInstructions(Block *block, Instr *instruction)
 {
     if (!instruction) {
         reportError("UnlinkFromToDo - passed a null pointer\n");
         return false;
     }
-    if (!blk->pendingInstructions.count) {
+    if (!block->pendingInstructions.count) {
         reportError("UnlinkFromToDo asked to unlink - but zero count\n");
         return false;
     }
     if (instruction->pendingLink.nextInstruction)
         instruction->pendingLink.nextInstruction->pendingLink.previousInstruction = instruction->pendingLink.previousInstruction;
-    else if (instruction == blk->pendingInstructions.tail)
-        blk->pendingInstructions.tail = instruction->pendingLink.previousInstruction;
+    else if (instruction == block->pendingInstructions.tail)
+        block->pendingInstructions.tail = instruction->pendingLink.previousInstruction;
     else {
         reportError("UnlinkFromToDono next.. but not tail!\n");
         return false;
     }
     if (instruction->pendingLink.previousInstruction)
         instruction->pendingLink.previousInstruction->pendingLink.nextInstruction = instruction->pendingLink.nextInstruction;
-    else if (instruction == blk->pendingInstructions.head)
-        blk->pendingInstructions.head = instruction->pendingLink.nextInstruction;
+    else if (instruction == block->pendingInstructions.head)
+        block->pendingInstructions.head = instruction->pendingLink.nextInstruction;
     else {
         reportError("UnlinkFromToDono next.. but not tail!\n");
         return false;
     }
-    blk->pendingInstructions.count--;
+    block->pendingInstructions.count--;
     instruction->pendingLink.previousInstruction = 0;
     instruction->pendingLink.nextInstruction = 0;
     return true;
 }
 
-bool UnlinkFromDone(Block *blk, Instr *instruction)
+bool unlinkFromCompletedInstructions(Block *block, Instr *instruction)
 {
     if (!instruction) {
         reportError("UnlinkFromDone - passed a null pointer\n");
         return false;
     }
-    if (!blk->completedInstructions.count) {
+    if (!block->completedInstructions.count) {
         reportError("UnlinkFromDone asked to unlink - but zero count\n");
         return false;
     }
     if (instruction->pendingLink.nextInstruction)
         instruction->pendingLink.nextInstruction->pendingLink.previousInstruction = instruction->pendingLink.previousInstruction;
-    else if (instruction == blk->completedInstructions.tail)
-        blk->completedInstructions.tail = instruction->pendingLink.previousInstruction;
+    else if (instruction == block->completedInstructions.tail)
+        block->completedInstructions.tail = instruction->pendingLink.previousInstruction;
     else {
         reportError("UnlinkFromDoneno next.. but not tail!\n");
         return false;
     }
     if (instruction->pendingLink.previousInstruction)
         instruction->pendingLink.previousInstruction->pendingLink.nextInstruction = instruction->pendingLink.nextInstruction;
-    else if (instruction == blk->completedInstructions.head)
-        blk->completedInstructions.head = instruction->pendingLink.nextInstruction;
+    else if (instruction == block->completedInstructions.head)
+        block->completedInstructions.head = instruction->pendingLink.nextInstruction;
     else {
         reportError("UnlinkFromDoneno next.. but not tail!\n");
         return false;
     }
-    blk->completedInstructions.count--;
+    block->completedInstructions.count--;
     instruction->pendingLink.previousInstruction = 0;
     instruction->pendingLink.nextInstruction = 0;
     return true;
 }
 
-bool UnlinkFromLinear(Block *blk, Instr *instruction)
+bool unlinkFromLinearInstructions(Block *block, Instr *instruction)
 {
     if (!instruction) {
         reportError("UnlinkFromLinear - passed a null pointer\n");
         return false;
     }
-    if (!blk->linearInstructions.count) {
+    if (!block->linearInstructions.count) {
         reportError("UnlinkFromLinear asked to unlink - but zero count\n");
         return false;
     }
     if (instruction->linearLink.nextInstruction)
         instruction->linearLink.nextInstruction->linearLink.previousInstruction = instruction->linearLink.previousInstruction;
-    else if (instruction == blk->linearInstructions.tail)
-        blk->linearInstructions.tail = instruction->linearLink.previousInstruction;
+    else if (instruction == block->linearInstructions.tail)
+        block->linearInstructions.tail = instruction->linearLink.previousInstruction;
     else {
         reportError("UnlinkFromLinearno next.. but not tail!\n");
         return false;
     }
     if (instruction->linearLink.previousInstruction)
         instruction->linearLink.previousInstruction->linearLink.nextInstruction = instruction->linearLink.nextInstruction;
-    else if (instruction == blk->linearInstructions.head)
-        blk->linearInstructions.head = instruction->linearLink.nextInstruction;
+    else if (instruction == block->linearInstructions.head)
+        block->linearInstructions.head = instruction->linearLink.nextInstruction;
     else {
         reportError("UnlinkFromLinearno next.. but not tail!\n");
         return false;
     }
-    blk->linearInstructions.count--;
+    block->linearInstructions.count--;
     instruction->linearLink.previousInstruction = 0;
     instruction->linearLink.nextInstruction = 0;
     return true;
 }
 
-bool AddToDo_Head(Block *blk, Instr *instruction)
+bool prependPendingInstruction(Block *block, Instr *instruction)
 {
     if (!instruction) {
         reportError("AddToDo_Head - passed a null pointer\n");
@@ -113,33 +113,33 @@ bool AddToDo_Head(Block *blk, Instr *instruction)
         reportError("AddToDo_Head - node already appears linked\n");
         return false;
     }
-    if (blk->pendingInstructions.head) {
-        if (!blk->pendingInstructions.tail) {
+    if (block->pendingInstructions.head) {
+        if (!block->pendingInstructions.tail) {
             reportError("AddToDo_Headlist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->pendingInstructions.count) {
+        if (!block->pendingInstructions.count) {
             reportError("AddToDo_Headlist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        instruction->pendingLink.nextInstruction = blk->pendingInstructions.head;
-        blk->pendingInstructions.head->pendingLink.previousInstruction = instruction;
-        blk->pendingInstructions.head = instruction;
+        instruction->pendingLink.nextInstruction = block->pendingInstructions.head;
+        block->pendingInstructions.head->pendingLink.previousInstruction = instruction;
+        block->pendingInstructions.head = instruction;
     } else {
-        if (blk->pendingInstructions.count) {
+        if (block->pendingInstructions.count) {
             reportError("AddToDo_Headno list head but count not zero\n");
             return false;
         }
-        blk->pendingInstructions.tail = instruction;
-        blk->pendingInstructions.head = instruction;
+        block->pendingInstructions.tail = instruction;
+        block->pendingInstructions.head = instruction;
     }
-    blk->pendingInstructions.count++;
+    block->pendingInstructions.count++;
     return true;
 }
 
-bool AddDone_Head(Block *blk, Instr *instruction)
+bool prependCompletedInstruction(Block *block, Instr *instruction)
 {
     if (!instruction) {
         reportError("AddDone_Head - passed a null pointer\n");
@@ -149,33 +149,33 @@ bool AddDone_Head(Block *blk, Instr *instruction)
         reportError("AddDone_Head - node already appears linked\n");
         return false;
     }
-    if (blk->completedInstructions.head) {
-        if (!blk->completedInstructions.tail) {
+    if (block->completedInstructions.head) {
+        if (!block->completedInstructions.tail) {
             reportError("AddDone_Headlist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->completedInstructions.count) {
+        if (!block->completedInstructions.count) {
             reportError("AddDone_Headlist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        instruction->pendingLink.nextInstruction = blk->completedInstructions.head;
-        blk->completedInstructions.head->pendingLink.previousInstruction = instruction;
-        blk->completedInstructions.head = instruction;
+        instruction->pendingLink.nextInstruction = block->completedInstructions.head;
+        block->completedInstructions.head->pendingLink.previousInstruction = instruction;
+        block->completedInstructions.head = instruction;
     } else {
-        if (blk->completedInstructions.count) {
+        if (block->completedInstructions.count) {
             reportError("AddDone_Headno list head but count not zero\n");
             return false;
         }
-        blk->completedInstructions.tail = instruction;
-        blk->completedInstructions.head = instruction;
+        block->completedInstructions.tail = instruction;
+        block->completedInstructions.head = instruction;
     }
-    blk->completedInstructions.count++;
+    block->completedInstructions.count++;
     return true;
 }
 
-bool AddLinear_Head(Block *blk, Instr *instruction)
+bool prependLinearInstruction(Block *block, Instr *instruction)
 {
     if (!instruction) {
         reportError("AddLinear_Head - passed a null pointer\n");
@@ -185,33 +185,33 @@ bool AddLinear_Head(Block *blk, Instr *instruction)
         reportError("AddLinear_Head - node already appears linked\n");
         return false;
     }
-    if (blk->linearInstructions.head) {
-        if (!blk->linearInstructions.tail) {
+    if (block->linearInstructions.head) {
+        if (!block->linearInstructions.tail) {
             reportError("AddLinear_Headlist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->linearInstructions.count) {
+        if (!block->linearInstructions.count) {
             reportError("AddLinear_Headlist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        instruction->linearLink.nextInstruction = blk->linearInstructions.head;
-        blk->linearInstructions.head->linearLink.previousInstruction = instruction;
-        blk->linearInstructions.head = instruction;
+        instruction->linearLink.nextInstruction = block->linearInstructions.head;
+        block->linearInstructions.head->linearLink.previousInstruction = instruction;
+        block->linearInstructions.head = instruction;
     } else {
-        if (blk->linearInstructions.count) {
+        if (block->linearInstructions.count) {
             reportError("AddLinear_Headno list head but count not zero\n");
             return false;
         }
-        blk->linearInstructions.tail = instruction;
-        blk->linearInstructions.head = instruction;
+        block->linearInstructions.tail = instruction;
+        block->linearInstructions.head = instruction;
     }
-    blk->linearInstructions.count++;
+    block->linearInstructions.count++;
     return true;
 }
 
-bool AddToDo_Tail(Block *blk, Instr *instruction)
+bool appendPendingInstruction(Block *block, Instr *instruction)
 {
     if (!instruction) {
         reportError("AddToDo_Tail - passed a null pointer\n");
@@ -221,33 +221,33 @@ bool AddToDo_Tail(Block *blk, Instr *instruction)
         reportError("AddToDo_Tail - node already appears linked\n");
         return false;
     }
-    if (blk->pendingInstructions.head) {
-        if (!blk->pendingInstructions.tail) {
+    if (block->pendingInstructions.head) {
+        if (!block->pendingInstructions.tail) {
             reportError("AddToDo_Taillist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->pendingInstructions.count) {
+        if (!block->pendingInstructions.count) {
             reportError("AddToDo_Taillist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        instruction->pendingLink.previousInstruction = blk->pendingInstructions.tail;
-        blk->pendingInstructions.tail->pendingLink.nextInstruction = instruction;
-        blk->pendingInstructions.tail = instruction;
+        instruction->pendingLink.previousInstruction = block->pendingInstructions.tail;
+        block->pendingInstructions.tail->pendingLink.nextInstruction = instruction;
+        block->pendingInstructions.tail = instruction;
     } else {
-        if (blk->pendingInstructions.count) {
+        if (block->pendingInstructions.count) {
             reportError("AddToDo_Tailno list head but count not zero\n");
             return false;
         }
-        blk->pendingInstructions.tail = instruction;
-        blk->pendingInstructions.head = instruction;
+        block->pendingInstructions.tail = instruction;
+        block->pendingInstructions.head = instruction;
     }
-    blk->pendingInstructions.count++;
+    block->pendingInstructions.count++;
     return true;
 }
 
-bool AddDone_Tail(Block *blk, Instr *instruction)
+bool appendCompletedInstruction(Block *block, Instr *instruction)
 {
     if (!instruction) {
         reportError("AddDone_Tail - passed a null pointer\n");
@@ -257,33 +257,33 @@ bool AddDone_Tail(Block *blk, Instr *instruction)
         reportError("AddDone_Tail - node already appears linked\n");
         return false;
     }
-    if (blk->completedInstructions.head) {
-        if (!blk->completedInstructions.tail) {
+    if (block->completedInstructions.head) {
+        if (!block->completedInstructions.tail) {
             reportError("AddDone_Taillist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->completedInstructions.count) {
+        if (!block->completedInstructions.count) {
             reportError("AddDone_Taillist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        instruction->pendingLink.previousInstruction = blk->completedInstructions.tail;
-        blk->completedInstructions.tail->pendingLink.nextInstruction = instruction;
-        blk->completedInstructions.tail = instruction;
+        instruction->pendingLink.previousInstruction = block->completedInstructions.tail;
+        block->completedInstructions.tail->pendingLink.nextInstruction = instruction;
+        block->completedInstructions.tail = instruction;
     } else {
-        if (blk->completedInstructions.count) {
+        if (block->completedInstructions.count) {
             reportError("AddDone_Tailno list head but count not zero\n");
             return false;
         }
-        blk->completedInstructions.tail = instruction;
-        blk->completedInstructions.head = instruction;
+        block->completedInstructions.tail = instruction;
+        block->completedInstructions.head = instruction;
     }
-    blk->completedInstructions.count++;
+    block->completedInstructions.count++;
     return true;
 }
 
-bool AddLinear_Tail(Block *blk, Instr *instruction)
+bool appendLinearInstruction(Block *block, Instr *instruction)
 {
     if (!instruction) {
         reportError("AddLinear_Tail - passed a null pointer\n");
@@ -293,33 +293,33 @@ bool AddLinear_Tail(Block *blk, Instr *instruction)
         reportError("AddLinear_Tail - node already appears linked\n");
         return false;
     }
-    if (blk->linearInstructions.head) {
-        if (!blk->linearInstructions.tail) {
+    if (block->linearInstructions.head) {
+        if (!block->linearInstructions.tail) {
             reportError("AddLinear_Taillist had no first, but last set!\n");
             exitAfterCleanup(-1);
             return false;
         }
-        if (!blk->linearInstructions.count) {
+        if (!block->linearInstructions.count) {
             reportError("AddLinear_Taillist had no head or tail, but count not zero\n");
             exitAfterCleanup(-1);
             return false;
         }
-        instruction->linearLink.previousInstruction = blk->linearInstructions.tail;
-        blk->linearInstructions.tail->linearLink.nextInstruction = instruction;
-        blk->linearInstructions.tail = instruction;
+        instruction->linearLink.previousInstruction = block->linearInstructions.tail;
+        block->linearInstructions.tail->linearLink.nextInstruction = instruction;
+        block->linearInstructions.tail = instruction;
     } else {
-        if (blk->linearInstructions.count) {
+        if (block->linearInstructions.count) {
             reportError("AddLinear_Tailno list head but count not zero\n");
             return false;
         }
-        blk->linearInstructions.tail = instruction;
-        blk->linearInstructions.head = instruction;
+        block->linearInstructions.tail = instruction;
+        block->linearInstructions.head = instruction;
     }
-    blk->linearInstructions.count++;
+    block->linearInstructions.count++;
     return true;
 }
 
-bool AddLinear_After(Block *blk, Instr *after, Instr *instruction)
+bool insertLinearInstructionAfter(Block *block, Instr *after, Instr *instruction)
 {
     if (!instruction) {
         reportError("AddLinear_After - passed a null in_a pointer\n");
@@ -334,14 +334,14 @@ bool AddLinear_After(Block *blk, Instr *after, Instr *instruction)
         instruction->linearLink.previousInstruction = after;
         after->linearLink.nextInstruction = instruction;
     } else {
-        instruction->linearLink.nextInstruction = blk->linearInstructions.head;
-        blk->linearInstructions.head = instruction;
+        instruction->linearLink.nextInstruction = block->linearInstructions.head;
+        block->linearInstructions.head = instruction;
     }
     if (instruction->linearLink.nextInstruction)
         instruction->linearLink.nextInstruction->linearLink.previousInstruction = instruction;
     else
-        blk->linearInstructions.tail = instruction;
-    blk->linearInstructions.count++;
+        block->linearInstructions.tail = instruction;
+    block->linearInstructions.count++;
     return true;
 }
 
@@ -508,7 +508,7 @@ void clearRawBytes(char *buffer, int byteCount)
         *outputCursor++ = 0;
 }
 
-int mstrlen(const char *text)
+int checkedStringLength(const char *text)
 {
     if (!text) {
         reportError("mstrlen passed null ptr\n");
@@ -520,9 +520,9 @@ int mstrlen(const char *text)
     return stringEnd - text;
 }
 
-char *mstrcpy(char *dst, const char *src)
+char *checkedStringCopy(char *destinationBuffer, const char *src)
 {
-    if (!dst) {
+    if (!destinationBuffer) {
         reportError("mstrcpy passed null dst ptr\n");
         exitAfterCleanup(-1);
     }
@@ -531,14 +531,14 @@ char *mstrcpy(char *dst, const char *src)
         exitAfterCleanup(-1);
     }
     const char *sourceCursor = src;
-    char *destinationCursor = dst;
+    char *destinationCursor = destinationBuffer;
     while (*sourceCursor)
         *destinationCursor++ = *sourceCursor++;
     *destinationCursor = 0;
-    return dst;
+    return destinationBuffer;
 }
 
-char *mprefix_del(const char *firstPart, const char *secondPart)
+char *joinNameWithPrefix(const char *firstPart, const char *secondPart)
 {
     if (!firstPart || !secondPart) {
         reportError("mprefix_del - not str\n");

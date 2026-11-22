@@ -30,7 +30,7 @@ DecodedLine *findDecodedLineByLabel(DecodedLine *blocks, int count, const char *
 int maximumDecodedLineFlowId(DecodedLine *blocks, int count);
 DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyntax, int *count);
 bool splitParserStream(Program *p, DecodedLine *blocks, int count);
-bool buildPassThru(Program *prog, instStream *s, DecodedLine *blocks, int count);
-bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int loopMode);
+bool buildPassThru(Program *program, instStream *s, DecodedLine *blocks, int count);
+bool buildRaw(Program *program, instStream *s, DecodedLine *blocks, int count, int loopMode);
 
 #endif

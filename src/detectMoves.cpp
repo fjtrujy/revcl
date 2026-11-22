@@ -43,8 +43,8 @@ bool detectMoves(Program *program)
                     continue;
                 RegPoolEntry *srcReg = currentInstruction->operands[srcOp].assignedRegister;
                 RegPoolEntry *dstReg = currentInstruction->operands[dstOp].assignedRegister;
-                iInfo *info = getOpcodeInfoById(opc);
-                Instr *newMoveInstruction = new Instr(info);
+                iInfo *opcodeInfo = getOpcodeInfoById(opc);
+                Instr *newMoveInstruction = new Instr(opcodeInfo);
                 if (!newMoveInstruction) {
                     reportError("failed to make a move\n");
                     return false;

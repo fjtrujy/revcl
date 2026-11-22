@@ -9,12 +9,12 @@ struct Tool {
 
 extern Tool preprocessorToolTable[3];
 
-bool OS_Init();
+bool initializeOperatingSystem();
 bool setWatchdog(char *flag, unsigned int seconds);
 bool clearWatchdog();
 
 int createTemporaryFile(const char *name, char *pathOut);
-int OS_End();
+int shutDownOperatingSystem();
 void suppressFurtherErrors();
 char *readFileIntoBuffer(const char *path, int *len, bool flag);
 char *readDescriptorIntoBuffer(int fd, int *len, bool nulTerm);
@@ -24,7 +24,7 @@ int reportInfo(const char *fmt, ...);
 int reportVerboseInfo(const char *fmt, ...);
 int reportError(const char *fmt, ...);
 int reportUserMessage(const char *fmt, ...);
-int formatIntoBuffer(char *buf, const char *fmt, ...);
+int formatIntoBuffer(char *outputBuffer, const char *fmt, ...);
 const char *deviceNameByIndex(int dev);  // device name
 int parseInteger(const char *s);
 void exitAfterCleanup(int status);
@@ -32,6 +32,6 @@ void exitWithError(const char *fmt, ...);
 void abortAfterError();
 bool asciiCaseEqual(const char *a, const char *b);
 
-char *mstrcpy(char *dst, const char *src);
+char *checkedStringCopy(char *dst, const char *src);
 
 #endif

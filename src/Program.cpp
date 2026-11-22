@@ -13,7 +13,7 @@ bool emitReset(Program *p);
 char *emitStats(Program *p, char *buf);
 char *emitFileStart(Program *p, char *buf);
 char *emitFileEnd(Program *p, char *buf);
-const char *getOptimiserName(int id);
+const char *getOptimizerName(int id);
 
 Program::Program(bool symbolic)
 {
@@ -29,7 +29,7 @@ Program::~Program()
     dispose();
 }
 
-bool Program::Init(CpuDef *cpu, const char *uniqueName, bool uniqueAll)
+bool Program::initializeProgram(CpuDef *cpu, const char *uniqueName, bool uniqueAll)
 {
     if (!dispose()) {
         reportError("flowMon::Init() - failed to dispose\n");
@@ -46,7 +46,7 @@ bool Program::Init(CpuDef *cpu, const char *uniqueName, bool uniqueAll)
         return false;
     }
     proc.uniqueAll = uniqueAll;
-    if (!proc.Init(cpu)) {
+    if (!proc.initializeProcessor(cpu)) {
         reportError("flowMon::Init failed to init cpu object\n");
         return false;
     }
@@ -262,22 +262,22 @@ bool patchAllStreamLatencies(Program *program)
     return true;
 }
 
-char *emitProgram(Program *program, char *out, int comments)
+char *emitProgram(Program *program, char *outputBuffer, int comments)
 {
     instStream *stream;
     int total = 0;
-    if (!out) {
+    if (!outputBuffer) {
         reportError("flowMon::Emit - null output pointer\n");
         return 0;
     }
-    char *outputCursor = out;
+    char *outputCursor = outputBuffer;
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
         if (stream->optimizationRecordCount) {
             outputCursor += formatIntoBuffer(outputCursor, "; === __LP__ %s:\n", stream->streamName());
             for (int optimizerIndex = 0; optimizerIndex != stream->optimizationRecordCount; optimizerIndex++) {
                 if (stream->optimizationRecords[optimizerIndex].instructionCount > 0) {
                     outputCursor += formatIntoBuffer(outputCursor, "; === %16s : optimal=%d clid=%d mlid=%d size=(%d) ",
-                                         getOptimiserName(optimizerIndex), stream->optimizationRecords[optimizerIndex].optimalLength, stream->optimizationRecords[optimizerIndex].candidateLoopId,
+                                         getOptimizerName(optimizerIndex), stream->optimizationRecords[optimizerIndex].optimalLength, stream->optimizationRecords[optimizerIndex].candidateLoopId,
                                          stream->optimizationRecords[optimizerIndex].mainLoopId, stream->optimizationRecords[optimizerIndex].instructionCount);
                     outputCursor += formatIntoBuffer(outputCursor, "\n");
                 }
@@ -327,16 +327,16 @@ const char *getUniqueName(Program *program)
     return program->proc.getUniqueName();
 }
 
-char *emitLabels(Program *program, char *buf)
+char *emitLabels(Program *program, char *outputBuffer)
 {
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        buf = stream->emitLabels(buf);
-        if (!buf) {
+        outputBuffer = stream->emitLabels(outputBuffer);
+        if (!outputBuffer) {
             reportError("failed to emit user labels for '%s'\n", stream->streamName());
             return 0;
         }
     }
-    return buf;
+    return outputBuffer;
 }
 
 bool isReferencedLabel(Program *program, char *name)

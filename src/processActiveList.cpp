@@ -81,7 +81,7 @@ bool extendBackTrace(Program *program, instStream *targetStream)
                         reportError("failed to add a new active node for predecessor in bal case\n");
                         return false;
                     }
-                    if (program->traceStoreEnabled && mergeTstores(program, prev->traceStore, targetStream->traceStore) < 0) {
+                    if (program->traceStoreEnabled && mergeBacktraceTraceStores(program, prev->traceStore, targetStream->traceStore) < 0) {
                         reportError("failed to merge tstores\n");
                         return false;
                     }
@@ -101,7 +101,7 @@ bool extendBackTrace(Program *program, instStream *targetStream)
                 reportError("can't get input stream for ir during trace\n");
                 return false;
             }
-            if (program->traceStoreEnabled && mergeTstores(program, sourceStream->traceStore, targetStream->traceStore) < 0) {
+            if (program->traceStoreEnabled && mergeBacktraceTraceStores(program, sourceStream->traceStore, targetStream->traceStore) < 0) {
                 reportError("failed to merge tstores\n");
                 return false;
             }

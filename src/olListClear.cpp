@@ -8,7 +8,7 @@
 int countSetBits(unsigned int);
 bool asciiCaseEqual(const char *a, const char *b);
 void removeTrailingComponentSuffix(char *s);
-int mstrlen(const char *s);
+int checkedStringLength(const char *s);
 
 
 bool olList::clear()

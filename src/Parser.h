@@ -61,10 +61,10 @@ public:
     bool buildProcessedLines(bool gasp, bool cpp);
     int getParsedLineCount();
     LocTag *getParsedLine(int i);
-    void Dump();
-    void DumpLocTags();
+    void dumpParsedSourceLines();
+    void dumpLocationTags();
     int addLocationTag(const char *name, int n);
-    int FindLocTag(const char *name, int n);
+    int findLocationTagByName(const char *name, int n);
     bool decodeGaspLine(char *line);
     bool isAssignmentLine(int i);
 

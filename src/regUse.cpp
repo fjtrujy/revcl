@@ -2,9 +2,9 @@
 extern const char regUseNewFailedError[];
 #include "RegPool_shared.h"
 
-regUse::regUse(RegPoolEntry *reg)
+regUse::regUse(RegPoolEntry *registerEntry)
 {
-    this->registerEntry = reg;
+    this->registerEntry = registerEntry;
     externalInputMask = 0;
     externalOutputMask = 0;
     inputMask = 0;
@@ -17,8 +17,8 @@ regUse::regUse(RegPoolEntry *reg)
     externalBlockMode = -1;
     previous = 0;
     next = 0;
-    recordedOutputWriteCount = reg->outputWriteCount;
-    definingInstruction = reg->throughputWriter;
+    recordedOutputWriteCount = registerEntry->outputWriteCount;
+    definingInstruction = registerEntry->throughputWriter;
 }
 
 regUse::~regUse()
@@ -75,14 +75,14 @@ bool regUseList::clear()
     return true;
 }
 
-regUse *regUseList::AddNewRegRef(RegPoolEntry *reg)
+regUse *regUseList::addRegisterUse(RegPoolEntry *registerEntry)
 {
-    if (find(reg)) {
+    if (find(registerEntry)) {
         reportError("addnewregref - already have rg\n");
         exitAfterCleanup(-1);
         return 0;
     }
-    regUse *registerUse = new regUse(reg);
+    regUse *registerUse = new regUse(registerEntry);
     if (!registerUse) {
         reportError(regUseNewFailedError);
         exitAfterCleanup(-1);

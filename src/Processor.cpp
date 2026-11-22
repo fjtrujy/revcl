@@ -38,7 +38,7 @@ Processor::~Processor()
 {
 }
 
-bool Processor::Init(CpuDef *cpu)
+bool Processor::initializeProcessor(CpuDef *cpu)
 {
     if (!cpu) {
         reportError("null pointer got into init for a cpu\n");
@@ -89,7 +89,7 @@ bool Processor::Init(CpuDef *cpu)
         }
         if (!pool)
             reportError("Processor::Init  - failed to get a regpool '%s'\n", poolDefinition->name);
-        if (!pool->Init((VclPtrWord)poolDefinition->prefix, poolDefinition->name, poolDefinition->cls, poolDefinition->virtualRegisterParts)) {
+        if (!pool->initializeRegisterPool((VclPtrWord)poolDefinition->prefix, poolDefinition->name, poolDefinition->cls, poolDefinition->virtualRegisterParts)) {
             reportError("failed to init reg pool '%s'\n", poolDefinition->name);
             delete pool;
             return false;
@@ -291,7 +291,7 @@ bool optReset(Program *program)
     return true;
 }
 
-bool Cycle(Program *program, bool flag)
+bool advanceProcessorCycle(Program *program, bool flag)
 {
     program->emulatedCycleCount++;
     for (int poolIndex = 0; poolIndex != 12; poolIndex++)
@@ -315,7 +315,7 @@ bool resetProcessorThroughput(Program *program)
     return true;
 }
 
-inline RegPool *getRP(unsigned poolIndex)
+inline RegPool *lookupProcessorRegisterPool(unsigned poolIndex)
 {
     if (poolIndex < 12)
         return processorRegisterPools[poolIndex];
@@ -323,9 +323,9 @@ inline RegPool *getRP(unsigned poolIndex)
     return 0;
 }
 
-RegPoolEntry *getReg(unsigned type, const char *name)
+RegPoolEntry *findPhysicalRegister(unsigned type, const char *name)
 {
-    RegPool *pool = getRP(type);
+    RegPool *pool = lookupProcessorRegisterPool(type);
     if (!pool) {
         reportError("getBaseReg from - not find pool %d\n", type);
         exitAfterCleanup(-1);
@@ -333,9 +333,9 @@ RegPoolEntry *getReg(unsigned type, const char *name)
     return pool->findPhysicalByName(name);
 }
 
-RegPoolEntry *getReg(unsigned type, int index)
+RegPoolEntry *findPhysicalRegister(unsigned type, int index)
 {
-    RegPool *pool = getRP(type);
+    RegPool *pool = lookupProcessorRegisterPool(type);
     if (!pool) {
         reportError("getBaseReg from - not find pool %d\n", type);
         exitAfterCleanup(-1);
@@ -356,9 +356,9 @@ RegPoolEntry *findRegisterByGlobalIndex(int idx)
     return 0;
 }
 
-RegPoolEntry *getOperandZeroReg(int kind)
+RegPoolEntry *getOperandZeroRegister(int kind)
 {
-    RegPool *pool = getRP(registerClassForOperandKind(kind));
+    RegPool *pool = lookupProcessorRegisterPool(registerClassForOperandKind(kind));
     if (!pool) {
         reportError("getRP failed for operand getZeroReg\n");
         exitAfterCleanup(-1);
@@ -366,9 +366,9 @@ RegPoolEntry *getOperandZeroReg(int kind)
     return pool->zeroRegister;
 }
 
-RegPoolEntry *getZeroReg(unsigned type)
+RegPoolEntry *getPoolZeroRegister(unsigned type)
 {
-    RegPool *pool = getRP(type);
+    RegPool *pool = lookupProcessorRegisterPool(type);
     if (!pool) {
         reportError("getRP failed getZeroReg\n");
         exitAfterCleanup(-1);
@@ -376,7 +376,7 @@ RegPoolEntry *getZeroReg(unsigned type)
     return pool->zeroRegister;
 }
 
-RegPool *GetRP(unsigned poolIndex)
+RegPool *getRegisterPoolByIndex(unsigned poolIndex)
 {
     if (poolIndex > 11) {
         reportWarning("Processor::GetRP - out of range register type (%d)\n", poolIndex);
@@ -423,7 +423,7 @@ int checkDispatchEntry(Instr **pipelineEntries)
         exitAfterCleanup(-1);
     }
     for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
-        Instr *instruction = GetI(pipelineEntries, pipeIndex);
+        Instr *instruction = getInstructionInPipe(pipelineEntries, pipeIndex);
         if (!instruction)
             continue;
         if (!(((unsigned char)instruction->permittedPipelineMask >> pipeIndex) & 1))
@@ -433,7 +433,7 @@ int checkDispatchEntry(Instr **pipelineEntries)
             if (!outputRegister)
                 continue;
             for (int pairedPipeIndex = pipeIndex + 1; pairedPipeIndex <= 1; pairedPipeIndex++) {
-                Instr *pairedInstruction = GetI(pipelineEntries, pairedPipeIndex);
+                Instr *pairedInstruction = getInstructionInPipe(pipelineEntries, pairedPipeIndex);
                 if (!pairedInstruction)
                     continue;
                 if (!(((unsigned char)pairedInstruction->permittedPipelineMask >> pairedPipeIndex) & 1))
@@ -581,19 +581,19 @@ bool emitReset(Program *program)
     return true;
 }
 
-char *emitStats(Program *program, char *buf)
+char *emitStats(Program *program, char *outputBuffer)
 {
-    buf += formatIntoBuffer(buf, "; register stats:\n");
+    outputBuffer += formatIntoBuffer(outputBuffer, "; register stats:\n");
     for (int poolIndex = 0; poolIndex != 12; poolIndex++)
         if (processorRegisterPools[poolIndex] && processorRegisterPools[poolIndex]->virtualPartCount) {
-            buf = processorRegisterPools[poolIndex]->emitStats(buf);
-            if (!buf) {
+            outputBuffer = processorRegisterPools[poolIndex]->emitStats(outputBuffer);
+            if (!outputBuffer) {
                 reportError("Processor::emitStats() - failed to emit stats for %s\n",
                               processorRegisterPools[poolIndex]->poolName);
                 return 0;
             }
         }
-    return buf;
+    return outputBuffer;
 }
 
 int getPoolsByClassID(int poolClass, RegPool **matchingPools, int maximumPools)

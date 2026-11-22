@@ -6,6 +6,6 @@
 #include "os.h"
 
 Instr *getMove(int type, int);
-int getMove(Block *blk, Instr *in, int now);
+int getMove(Block *block, Instr *in, int now);
 
 #endif

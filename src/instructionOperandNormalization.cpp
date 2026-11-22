@@ -38,7 +38,7 @@ resetSources:
     {
         Operand *operand = &operands[1];
         if (operand->assignedRegister == operands[2].assignedRegister) {
-            RegPoolEntry *zeroRegister = getOperandZeroReg(operand->operandKind);
+            RegPoolEntry *zeroRegister = getOperandZeroRegister(operand->operandKind);
             if (!zeroRegister) {
                 reportError("failed to get a zero register");
                 return 0;

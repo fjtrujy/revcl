@@ -6,7 +6,7 @@
 bool asciiCaseEqual(const char *a, const char *b);
 bool equalExactStrings(const char *a, const char *b);
 char *dupString(const char *s);
-int mstrlen(const char *s);
+int checkedStringLength(const char *s);
 
 static inline bool mNode_detach_inl(mNode *macroNode)
 {
@@ -195,12 +195,12 @@ char *mList::firstNodeName()
     return 0;
 }
 
-char *mList::appendNamedLabels(char *buf)
+char *mList::appendNamedLabels(char *outputBuffer)
 {
     for (mNode *node = head; node; node = node->next)
         if (node->name)
-            buf += formatIntoBuffer(buf, "%s:\n", node->name);
-    return buf;
+            outputBuffer += formatIntoBuffer(outputBuffer, "%s:\n", node->name);
+    return outputBuffer;
 }
 
 mNode::mNode()
@@ -235,10 +235,10 @@ bool mNode::setName(const char *name)
         this->name = 0;
     }
     if (name) {
-        this->name = new char[mstrlen(name) + 1];
+        this->name = new char[checkedStringLength(name) + 1];
         if (!this->name)
             return false;
-        mstrcpy(this->name, name);
+        checkedStringCopy(this->name, name);
     }
     return true;
 }

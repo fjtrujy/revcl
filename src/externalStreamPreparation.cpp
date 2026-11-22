@@ -10,10 +10,10 @@ int insertStreamRegisterCaps(Program *p, instStream *s);
 void initializeScheduledCycleTimes(workTable *wt);
 bool removeNops(Program *p, instStream *s);
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
-bool doCap(int line, int pipe, int mask);
-RegPool *GetRP(unsigned t);
+bool insertRegisterCapInstruction(int line, int pipe, int mask);
+RegPool *getRegisterPoolByIndex(unsigned t);
 bool resetProcessorThroughput(Program *p);
-int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
+int emulateInstructionRow(Program *p, wtRow *row, int line, bool uta, bool commit);
 void splitCtime(workTable *wt, int l, int m);
 
 
@@ -60,7 +60,7 @@ bool removeNops(Program *program, instStream *stream)
         reportError("table is lready too short (%d<%d)\n", len, table->externalMinimumLength);
         return false;
     }
-    RegPool *hardwarePool = GetRP(10);
+    RegPool *hardwarePool = getRegisterPoolByIndex(10);
     if (!hardwarePool) {
         reportError("failed to get hw register pool - maybe this isn't vpu?\n");
         return false;
@@ -99,17 +99,17 @@ bool removeNops(Program *program, instStream *stream)
                 ol_s *operandLocation = inflight[inflightIndex];
                 Instr *instruction = operandLocation->instruction;
                 Operand *operand = operandAtLocation(operandLocation);
-                RegPoolEntry *reg = operand->assignedRegister;
+                RegPoolEntry *registerEntry = operand->assignedRegister;
                 int part = operandLocation->componentIndex;
                 int lat = operandLocation->cycleOffset;
-                if (reg->tracksHotOutputPaths) {
+                if (registerEntry->tracksHotOutputPaths) {
                     int issueSpacing = instruction->baseIssueSpacing;
                     if (issueSpacing <= 6)
                         exitWithError("bad throught value in register\n");
                     int thr = lat;
-                    if (reg->registerIndex == 0x34)
+                    if (registerEntry->registerIndex == 0x34)
                         thr--;
-                    else if (reg->registerIndex != 0x32)
+                    else if (registerEntry->registerIndex != 0x32)
                         exitWithError("non p-q has throughput?\n");
                     int nextRowIndex = rowIndex + 1;
                     wtRow *followingRow = row;
@@ -117,7 +117,7 @@ bool removeNops(Program *program, instStream *stream)
                         int followingCycleTime = followingRow->cycleTime;
                         if (followingCycleTime > tNow + thr)
                             break;
-                        if (followingRow->outputMaskFor(reg, 0xff)) {
+                        if (followingRow->outputMaskFor(registerEntry, 0xff)) {
                             if (followingCycleTime != tNow + thr) {
                                 reportError("unexpected thruput stall detected\n");
                                 return false;
@@ -209,7 +209,7 @@ bool removeNops(Program *program, instStream *stream)
                     do {
                         int base = candidateRow->cycleTime - 1;
                         for (int candidatePipeIndex = 0; candidatePipeIndex != 2; candidatePipeIndex++) {
-                            Instr *instruction = GetI((Instr **)candidateRow, candidatePipeIndex);
+                            Instr *instruction = getInstructionInPipe((Instr **)candidateRow, candidatePipeIndex);
                             if (instruction) {
                                 short inputConstraint = instruction->externalInputConstraint;
                                 if (inputConstraint < instruction->externalInputPairedConstraint)
@@ -233,7 +233,7 @@ bool removeNops(Program *program, instStream *stream)
                             if (dist < 0)
                                 exitWithError("distance to end appears to be less than zero\n");
                             for (int sampledPipeIndex = 0; sampledPipeIndex != 2; sampledPipeIndex++) {
-                                Instr *instruction = GetI((Instr **)sampledRow, sampledPipeIndex);
+                                Instr *instruction = getInstructionInPipe((Instr **)sampledRow, sampledPipeIndex);
                                 if (instruction) {
                                     short outputConstraint = instruction->externalOutputConstraint;
                                     if (outputConstraint < instruction->externalOutputPairedConstraint)
@@ -264,7 +264,7 @@ bool removeNops(Program *program, instStream *stream)
                 }
             }
         }
-        int emulationResult = emuInst(program, row, rowIndex, false, false);
+        int emulationResult = emulateInstructionRow(program, row, rowIndex, false, false);
         if (emulationResult < 0) {
             reportError("failed to emu an ientry\n");
             return false;
@@ -292,7 +292,7 @@ void initializeScheduledCycleTimes(workTable *table)
     for (int rowIndex = table->rangeStart; rowIndex != table->rangeEnd; rowIndex++, row++) {
         int rel = rowIndex - table->rangeStart;
         for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
-            Instr *instruction = GetI((Instr **)row, pipeIndex);
+            Instr *instruction = getInstructionInPipe((Instr **)row, pipeIndex);
             if (instruction && instruction->scheduledCycle != rel)
                 exitWithError("l=%d exec time mismatch in instruction %d!=%d\n",
                               rowIndex, instruction->scheduledCycle, rel);

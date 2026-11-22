@@ -1170,6 +1170,79 @@ both the scoped and field passes. Reference stripped VCL SHA-256:
 There are no function-name macro aliases, vtable/layout rewrites,
 translation-unit reorderings, or VUC branch changes in this batch.
 
+## Reconstructed APIs, register-web lifetimes and declaration consistency
+
+After merging PR #16, the remaining high-confidence naming work shifted
+from individual short locals to **reconstructed callable APIs** and their
+declaration/definition boundaries. The source contains 106 direct C++
+callable renames in this pass, plus class-qualified names such as
+Program::initializeProgram, Processor::initializeProcessor,
+RegPool::initializeRegisterPool, the parser's diagnostic dump methods,
+and the VisitCache and RegWeb validation helpers. These are real
+function renames; no preprocessor aliases are used.
+
+### Function and parameter evidence
+
+- The global register-pool selector is now getRegisterPoolByIndex, and
+  getInstructionInPipe identifies the instruction slot lookup.
+  Register-web APIs distinguish collecting webs from instructions or
+  tables, merging their roots, forcing physical register mappings,
+  assigning new webs, and applying the results to operands/tables.
+- Pending/completed/linear instruction-list helpers now say whether
+  they prepend, append, remove or insert after an instruction. The
+  related work-table queue helpers distinguish register uses from
+  instructions.
+- The local register allocator's candidate and allocation timelines
+  have names that match their role in occupancy, fit-cost assessment,
+  and register choice. Backtrace helpers now name the operations
+  on the trace store and distinguish stream-start/end distances.
+- String handling names preserve the distinction between the
+  checked helpers and the standard library, and between emitting
+  operand text and printing instruction context. The main scheduling
+  stages now distinguish linear, loop, and raw/synthetic stream work.
+- Declaration-ID-scoped AST changes renamed **104 typed parameters**
+  and **328 matching references** in the implementation sources,
+  followed by **92 typed locals** and **360 references** across 40
+  implementation files. Source and destination operands, instruction
+  owners, register entries, and source/target streams were named only
+  when the declaration type and its uses supported the role.
+- A separate, function-specific pass renamed **20 output-buffer
+  parameters** and **287 references** in emission and formatting
+  functions. The 51 reviewed parameter-name occurrences in 18
+  headers were synchronized with the resulting definitions, without
+  changing types, default arguments, or overloads.
+- The 14 inline register-web implementations now identify **45
+  scoped roles** at approximately **299 token positions**: operand
+  and part indices, source locations, register-web roots, forced
+  register mapping, assigned register entries, and allocation counts.
+
+### Owner-specific field evidence and safety gate
+
+workTable::movePipeCapacityExceeded replaces unk_ad, which is set
+when creating a vector-integer move would exceed the even-pipe move
+capacity. The scheduler reads and clears this flag while deciding
+whether to use its fallback scheduling path. The field retains its
+original type and offset. **60 owner-qualified offset-based fields**
+remain unresolved, including padding and fields with insufficient
+semantic evidence.
+
+This round also revealed a failure mode of lexical naming scripts:
+renaming a register-web local to the same name as its member silently
+turned its initializer into a self-reference. The native compiler
+accepted that code, but the historical stripped executable changed.
+The corrected source calls the local rootWeb and initializes it from
+the actual registerWeb member; this correction was independently
+validated against the historical hash **before** the broader
+parameter changes were accepted. Naming tools must distinguish
+member expressions from local declarations.
+
+The native macOS build, all **13 native CTest fixtures**, the historical
+RH9/i686 GCC 3.2.2 build, and the historical **exact-sha256** gate
+passed. The unchanged reference stripped VCL SHA-256 is
+83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274.
+No source-file link order, ABI layout, compiler flags, or VUC code
+were changed; historic diagnostic string literals were preserved.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout

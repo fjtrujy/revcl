@@ -7,12 +7,12 @@
 
 Operand *getEA(Instr *i);
 bool sameEA(Instr *a, Instr *b);
-bool BuildfDepList(workTable *wt, bool force, bool);
+bool buildForwardDependencyList(workTable *wt, bool force, bool);
 bool tagsMatch(Instr *a, Instr *b);
 bool addAdditionalClonePredecessors(Instr *in, Instr *other);
 bool copyCloneFdeps(Instr *in, ol_s *o, olList *dst);
 
-static inline bool fdep_LinkInline(Instr *pre, Instr *post)
+static inline bool linkForwardDependencyInline(Instr *pre, Instr *post)
 {
     if (!pre && !post) {
         reportError("fdep_Link -passed a null ptr\n");
@@ -74,10 +74,10 @@ bool instStream::buildForwardDependencies(bool forceDependencyChecks, bool b)
         reportWarning("BuildfDepList - no work table set for %s!\n", streamName());
         return false;
     }
-    return BuildfDepList(workTablePtr, forceDependencyChecks, b);
+    return buildForwardDependencyList(workTablePtr, forceDependencyChecks, b);
 }
 
-bool BuildfDepList(workTable *table, bool force, bool)
+bool buildForwardDependencyList(workTable *table, bool force, bool)
 {
     Instr *instruction;
     Instr *phaseHead;
@@ -111,7 +111,7 @@ bool BuildfDepList(workTable *table, bool force, bool)
             bool b20 = false;
             if (instruction->opcodeFlags & 0x08) {
                 reportError("found an instruction barrier fdep - this should be done with --barrier fixup!\n");
-                instruction->leDump();
+                instruction->dumpInstructionContext();
                 return false;
             }
             if (instruction->opcodeFlags & 0x10)
@@ -161,7 +161,7 @@ bool BuildfDepList(workTable *table, bool force, bool)
                             dep = true;
                     }
                     if (dep) {
-                        if (!fdep_LinkInline(otherInstruction, instruction)) {
+                        if (!linkForwardDependencyInline(otherInstruction, instruction)) {
                             reportError("failed to add ol for fdeps \n");
                             exitAfterCleanup(-1);
                         }
@@ -283,7 +283,7 @@ bool fixupCloneFdeps(workTable *table)
     return true;
 }
 
-bool fdep_Link(Instr *pre, Instr *post)
+bool linkForwardDependency(Instr *pre, Instr *post)
 {
     if (!pre && !post) {
         reportError("fdep_Link -passed a null ptr\n");

@@ -5,55 +5,55 @@
 #include "fileEmit.h"
 
 extern bool disableOutputAlignment;
-int getNumOptimisers();
-const char *getOptimiserName(int id);
+int getOptimizerCount();
+const char *getOptimizerName(int id);
 
-char *emitFileStart(Program *program, char *buf)
+char *emitFileStart(Program *program, char *outputBuffer)
 {
     if ((!program->proc.newSyntax || program->proc.vuDirectiveSeen) && program->proc.mpgTargetAddress < 0)
-        buf += formatIntoBuffer(buf, "\t\t.vu\n");
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\t.vu\n");
     if (!disableOutputAlignment)
-        buf += formatIntoBuffer(buf, "\t\t.align 4\n");
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\t.align 4\n");
     if (program->proc.globalName && *program->proc.globalName) {
-        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeStart\n", program->proc.globalName);
-        buf += formatIntoBuffer(buf, "\t\t.global\t%s_CodeEnd\n", program->proc.globalName);
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\t.global\t%s_CodeStart\n", program->proc.globalName);
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\t.global\t%s_CodeEnd\n", program->proc.globalName);
     }
     if (program->proc.mpgTargetAddress >= 0) {
         if (program->proc.globalName && *program->proc.globalName) {
-            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaTag\n", program->proc.globalName);
-            buf += formatIntoBuffer(buf, "\t\t.global\t%s_DmaEnd\n", program->proc.globalName);
-            buf += formatIntoBuffer(buf, "\n");
-            buf += formatIntoBuffer(buf, "%s_DmaTag:\n", program->proc.globalName);
+            outputBuffer += formatIntoBuffer(outputBuffer, "\t\t.global\t%s_DmaTag\n", program->proc.globalName);
+            outputBuffer += formatIntoBuffer(outputBuffer, "\t\t.global\t%s_DmaEnd\n", program->proc.globalName);
+            outputBuffer += formatIntoBuffer(outputBuffer, "\n");
+            outputBuffer += formatIntoBuffer(outputBuffer, "%s_DmaTag:\n", program->proc.globalName);
         }
-        buf += formatIntoBuffer(buf, "\t\tDMAret\t*\n");
-        buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
-        buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
-        buf += formatIntoBuffer(buf, "\t\tvifnop\t\n");
-        buf += formatIntoBuffer(buf, "\t\tMPG\t%d,*\n", program->proc.mpgTargetAddress);
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\tDMAret\t*\n");
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\tvifnop\t\n");
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\tvifnop\t\n");
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\tvifnop\t\n");
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\tMPG\t%d,*\n", program->proc.mpgTargetAddress);
     }
     for (mNode *macroNode = program->proc.exportedSymbols.head; macroNode; macroNode = macroNode->next)
-        buf += formatIntoBuffer(buf, "\t\t.global\t%s\n", macroNode->name);
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\t.global\t%s\n", macroNode->name);
     if (program->proc.globalName && *program->proc.globalName)
-        buf += formatIntoBuffer(buf, "%s_CodeStart:\n", program->proc.globalName);
-    return buf;
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s_CodeStart:\n", program->proc.globalName);
+    return outputBuffer;
 }
 
-char *emitFileEnd(Program *program, char *buf)
+char *emitFileEnd(Program *program, char *outputBuffer)
 {
     if (!disableOutputAlignment)
-        buf += formatIntoBuffer(buf, "\t\t.align 4\n");
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t\t.align 4\n");
     if (program->proc.globalName && *program->proc.globalName)
-        buf += formatIntoBuffer(buf, "%s_CodeEnd:\n", program->proc.globalName);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s_CodeEnd:\n", program->proc.globalName);
     for (mNode *macroNode = program->proc.trailingLabels.head; macroNode; macroNode = macroNode->next)
         if (macroNode->name)
-            buf += formatIntoBuffer(buf, "%s:\n", macroNode->name);
+            outputBuffer += formatIntoBuffer(outputBuffer, "%s:\n", macroNode->name);
     if (program->proc.mpgTargetAddress >= 0) {
-        buf += formatIntoBuffer(buf, "\t.EndMPG\n");
-        buf += formatIntoBuffer(buf, "\t.EndDmaData\n");
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t.EndMPG\n");
+        outputBuffer += formatIntoBuffer(outputBuffer, "\t.EndDmaData\n");
     }
     if (program->proc.globalName && *program->proc.globalName && program->proc.mpgTargetAddress >= 0)
-        buf += formatIntoBuffer(buf, "%s_DmaEnd:\n", program->proc.globalName);
-    return buf;
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s_DmaEnd:\n", program->proc.globalName);
+    return outputBuffer;
 }
 
 static inline unsigned char streamEndType(instStream *stream)
@@ -66,7 +66,7 @@ static inline void dumpFailedRow(wtRow *workRow)
     workRow->refreshInstructionOperands(-1);
 }
 
-char *workTable::emit(char *buf, int mode, int *p1, int *p2)
+char *workTable::emit(char *outputBuffer, int mode, int *p1, int *p2)
 {
     *p2 = 0;
     *p1 = 0;
@@ -121,8 +121,8 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             }
             emissionFlags |= top;
             top = 0;
-            buf = blank.emit(buf, emissionFlags, false, false);
-            if (!buf) {
+            outputBuffer = blank.emit(outputBuffer, emissionFlags, false, false);
+            if (!outputBuffer) {
                 reportError("failed to emit null ie for synth instruction!\n");
                 return 0;
             }
@@ -130,20 +130,20 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
     } else {
         instStream *stream = ownerStream;
         if (stream) {
-            buf += formatIntoBuffer(buf, "; ");
+            outputBuffer += formatIntoBuffer(outputBuffer, "; ");
             if (stream->hasLoopOptimization)
-                buf += formatIntoBuffer(buf, "_LPOPT_");
+                outputBuffer += formatIntoBuffer(outputBuffer, "_LPOPT_");
             else
-                buf += formatIntoBuffer(buf, "_LNOPT_");
-            buf += formatIntoBuffer(buf, "w=[ ");
+                outputBuffer += formatIntoBuffer(outputBuffer, "_LNOPT_");
+            outputBuffer += formatIntoBuffer(outputBuffer, "w=[ ");
             if (stream->appliedOptimizationMask) {
-                for (int optimizerIndex = 0; optimizerIndex != getNumOptimisers(); optimizerIndex++) {
+                for (int optimizerIndex = 0; optimizerIndex != getOptimizerCount(); optimizerIndex++) {
                     int bit = 1 << optimizerIndex;
                     if (stream->appliedOptimizationMask & bit)
-                        buf += formatIntoBuffer(buf, "%s ", getOptimiserName(optimizerIndex));
+                        outputBuffer += formatIntoBuffer(outputBuffer, "%s ", getOptimizerName(optimizerIndex));
                 }
             }
-            buf += formatIntoBuffer(buf, "] %d [%d %d] %d   [%s]\n",
+            outputBuffer += formatIntoBuffer(outputBuffer, "] %d [%d %d] %d   [%s]\n",
                                  *p1, streamDependencyLength, streamLogicalLength, *p2, stream->streamName());
         }
         if (len < nulls) {
@@ -177,33 +177,33 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             top = 0;
             switch (mode) {
             case 0:
-                buf = emissionRow->emit(buf, rowEmissionFlags, false, true);
-                if (!buf) {
+                outputBuffer = emissionRow->emit(outputBuffer, rowEmissionFlags, false, true);
+                if (!outputBuffer) {
                     reportError("failed to emit instruction!\n");
                     dumpFailedRow(emissionRow);
                     return 0;
                 }
                 break;
             case 1:
-                *buf++ = ';';
-                buf = emissionRow->emit(buf, rowEmissionFlags, true, true);
-                if (!buf) {
+                *outputBuffer++ = ';';
+                outputBuffer = emissionRow->emit(outputBuffer, rowEmissionFlags, true, true);
+                if (!outputBuffer) {
                     reportError("failed to emit instruction!\n");
                     dumpFailedRow(emissionRow);
                     return 0;
                 }
-                *buf++ = ' ';
-                buf = emissionRow->emit(buf, rowEmissionFlags, false, true);
-                if (!buf) {
+                *outputBuffer++ = ' ';
+                outputBuffer = emissionRow->emit(outputBuffer, rowEmissionFlags, false, true);
+                if (!outputBuffer) {
                     reportError("failed to emit instruction!\n");
                     dumpFailedRow(emissionRow);
                     return 0;
                 }
-                *buf++ = '\n';
+                *outputBuffer++ = '\n';
                 break;
             case 2:
-                buf = emissionRow->emit(buf, rowEmissionFlags, true, true);
-                if (!buf) {
+                outputBuffer = emissionRow->emit(outputBuffer, rowEmissionFlags, true, true);
+                if (!outputBuffer) {
                     reportError("failed to emit instruction!\n");
                     emissionRow->refreshInstructionOperands(-1);
                     goto fail;
@@ -216,7 +216,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         reportWarning("did not emit end insn\n");
         return 0;
     }
-    return buf;
+    return outputBuffer;
 fail:
     return 0;
 }
@@ -227,9 +227,9 @@ int countSetBits(unsigned int);
 char *emitNop(char *buf, int flags, int *len);
 char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b);
 
-char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
+char *wtRow::emit(char *outputBuffer, int flags, bool upper, bool unused)
 {
-    if (!buf) {
+    if (!outputBuffer) {
         reportError("iEntry::emit - null pointer!\n");
         return 0;
     }
@@ -238,9 +238,9 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
             reportError("can't skip a non-empty ie\n");
             return 0;
         }
-        return buf;
+        return outputBuffer;
     }
-    buf += formatIntoBuffer(buf, "         ");
+    outputBuffer += formatIntoBuffer(outputBuffer, "         ");
     int entryIndex;
     for (entryIndex = 0; entryIndex != 2; entryIndex++)
         if (entries[entryIndex].instruction)
@@ -248,36 +248,36 @@ char *wtRow::emit(char *buf, int flags, bool upper, bool unused)
     int len = 0;
     for (entryIndex = 0; entryIndex != 2; entryIndex++) {
         if (!entries[entryIndex].instruction)
-            buf = emitNop(buf, flags, &len);
+            outputBuffer = emitNop(outputBuffer, flags, &len);
         else
-            buf = emitInstr(entries[entryIndex].instruction, buf, false, flags, upper);
-        if (!buf) {
+            outputBuffer = emitInstr(entries[entryIndex].instruction, outputBuffer, false, flags, upper);
+        if (!outputBuffer) {
             reportError("failed to emit upper for pipe %d ie\n", entryIndex);
             return 0;
         }
         flags = 0;
         if (entryIndex != 1)
-            buf += formatIntoBuffer(buf, "         ");
+            outputBuffer += formatIntoBuffer(outputBuffer, "         ");
     }
     if (maxStallLength) {
-        buf += formatIntoBuffer(buf, "       ;\tSTALL");
+        outputBuffer += formatIntoBuffer(outputBuffer, "       ;\tSTALL");
         bool any = false;
         for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++) {
             int bit = (stallTypeMask >> stallTypeIndex) & 1;
             if (bit) {
-                buf += formatIntoBuffer(buf, "_%s", stallTypeNames[stallTypeIndex]);
+                outputBuffer += formatIntoBuffer(outputBuffer, "_%s", stallTypeNames[stallTypeIndex]);
                 any = true;
             }
         }
         if (!any)
             reportWarning("reported a stall.. but dunno what type\n");
         int stall = maxStallLength;
-        buf += formatIntoBuffer(buf, " ?%d", stall);
+        outputBuffer += formatIntoBuffer(outputBuffer, " ?%d", stall);
     }
-    return buf + formatIntoBuffer(buf, "\n");
+    return outputBuffer + formatIntoBuffer(outputBuffer, "\n");
 }
 
-char *emitNop(char *buf, int flags, int *len)
+char *emitNop(char *outputBuffer, int flags, int *len)
 {
     char line[320];
     char mods[16];
@@ -293,11 +293,11 @@ char *emitNop(char *buf, int flags, int *len)
     for (int paddingIndex = lineCursor - line; paddingIndex < 50; paddingIndex++)
         *lineCursor++ = ' ';
     *lineCursor = 0;
-    buf += formatIntoBuffer(buf, "%s", line);
-    return buf;
+    outputBuffer += formatIntoBuffer(outputBuffer, "%s", line);
+    return outputBuffer;
 }
 
-char *emitInstr(Instr *emittedInstruction, char *buf, bool upper, int flags, bool symbolic)
+char *emitInstr(Instr *emittedInstruction, char *outputBuffer, bool upper, int flags, bool symbolic)
 {
     char line[320];
     char mods[16];
@@ -327,7 +327,7 @@ char *emitInstr(Instr *emittedInstruction, char *buf, bool upper, int flags, boo
     for (int paddingIndex = lineCursor - line; paddingIndex < 50; paddingIndex++)
         *lineCursor++ = ' ';
     *lineCursor = 0;
-    return buf + formatIntoBuffer(buf, "%s", line);
+    return outputBuffer + formatIntoBuffer(outputBuffer, "%s", line);
 }
 
 char *emitDestMask(char *outputCursor, int mdBits, unsigned char mods)

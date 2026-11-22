@@ -8,20 +8,20 @@
 #include "workTable.h"
 #include "RegPool.h"
 
-bool g_initBackTrace(instStream *s, int n);
+bool initializeStreamBacktrace(instStream *s, int n);
 bool extendBackTrace(Program *p, instStream *n);
 bool addNewActive(Program *p, instStream *n, instStream *from);
 bool recalcMinTraceLengths(Program *p);
 bool recalcMaxTraceLengths(Program *p);
-int mergeTstores(Program *p, unsigned *dst, unsigned *src);
+int mergeBacktraceTraceStores(Program *p, unsigned *dst, unsigned *src);
 int buildMinimumPathKey(Program *p, instStream *n);
 int getMaxPathKey(Program *p, instStream *n);
 bool isPathRaw(Program *p, int key);
-bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b);
-bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part);
-bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int ofs, bool ext);
+bool buildCrossStreamThroughputPairs(Program *p, RegPoolEntry *registerEntry, int part, instStream *t, void *b);
+bool addThroughputStalls(Program *p, instStream *t, RegPoolEntry *registerEntry, int part);
+bool linkMatchList(Program *p, instStream *t, RegPoolEntry *registerEntry, int part, int ofs, bool ext);
 bool processActiveList(Program *p);
-bool initializeRegisterBacktraceLocation(instStream *n, RegPoolEntry *reg, int part);
+bool initializeRegisterBacktraceLocation(instStream *n, RegPoolEntry *registerEntry, int part);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 
 #endif

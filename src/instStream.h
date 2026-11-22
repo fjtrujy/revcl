@@ -68,7 +68,7 @@ public:
     const char *endTypeName();
     unsigned char getEndType() { return endType; }
     const char *startTypeName();
-    char *emit(char *buf, int a, int *p1, int *p2);
+    char *emit(char *outputBuffer, int a, int *p1, int *p2);
     int checkStartEnd()
     {
         int st = startType;
@@ -82,11 +82,11 @@ public:
     }
     unsigned char getCodeMode(); // code mode
     unsigned char getRawSchedulingMode(); // work table mode
-    int getUninsertedxInputs();
-    int getUninsertedxOutputs();
+    int countUnresolvedExternalInputs();
+    int countUnresolvedExternalOutputs();
     const char *getCodeModeName();
     void dumpSynthetics();
-    char *emitLabels(char *buf);
+    char *emitLabels(char *outputBuffer);
     Instr *getBranch();
     bool removeBranch();
     char *getBranchTargetImmediate();
@@ -106,7 +106,7 @@ public:
     int checkStartEndStatus();          // out-of-line checkStartEnd
     bool disposeInputTable();
     bool processCmdSynth(Instr *i);
-    void copySourceRecordsFrom(instStream *src);  // copy record table from src
+    void copySourceRecordsFrom(instStream *sourceStream);  // copy record table from src
     bool setOptTable(workTable *nt);
 
     int optimizationRecordCount;

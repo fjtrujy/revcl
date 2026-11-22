@@ -89,7 +89,7 @@ void tPair::noopThroughputPairHook()
 {
 }
 
-bool int_buildTpairs(Program *program, RegPoolEntry *reg, int part, instStream *stream, void *targetStream)
+bool buildCrossStreamThroughputPairs(Program *program, RegPoolEntry *registerEntry, int part, instStream *stream, void *targetStream)
 {
     if (!stream) {
         reportError("int_buildTpairs - null arg\n");
@@ -126,7 +126,7 @@ bool int_buildTpairs(Program *program, RegPoolEntry *reg, int part, instStream *
         reportError("there's  no regref set in t target\n");
         return false;
     }
-    if (registerUse->registerEntry != reg) {
+    if (registerUse->registerEntry != registerEntry) {
         reportError("there's a mismatch between reg and regref\n");
         return false;
     }
@@ -136,7 +136,7 @@ bool int_buildTpairs(Program *program, RegPoolEntry *reg, int part, instStream *
             reportError("there's no regref in t src\n");
             return false;
         }
-        if (sourceRegisterUse->registerEntry != reg) {
+        if (sourceRegisterUse->registerEntry != registerEntry) {
             reportError("mismatch between regref reg and rg\n");
             return false;
         }

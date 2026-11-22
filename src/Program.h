@@ -15,7 +15,7 @@ class instStream;
 struct Program {
     Program(bool symbolic);
     ~Program();
-    bool Init(CpuDef *cpu, const char *uniqueName, bool uniqueAll);
+    bool initializeProgram(CpuDef *cpu, const char *uniqueName, bool uniqueAll);
     bool dispose();
     bool addStream(instStream *stream);
     bool insertStreamAfter(instStream *after, instStream *stream);
@@ -46,7 +46,7 @@ struct Program {
     char unk_e8[8];
 
     bool linkStreams(instStream *from, instStream *to, int type);
-    bool areLinkedBy(instStream *src, instStream *dst, int type);
+    bool areLinkedBy(instStream *sourceStream, instStream *destinationStream, int type);
     bool unlinkStreams(instStream *from, instStream *to, int type);
     bool unLinkStreams(instStream *from, instStream *to, int type);
     bool doUnique();

@@ -28,8 +28,8 @@ bool refineMode0InsertionCandidate(workTable *wt, wrangleCand *c);
 int checkInsert(workTable *wt, Instr *in, InstructionPosition *pos, int *minPos);
 bool buildCandidateList(workTable *wt);
 bool refineMode1InsertionCandidate(workTable *wt, wrangleCand *c);
-bool DoInsert(workTable *wt, Instr *in, InstructionPosition *pos);
-bool UndoInsert(workTable *wt, Instr *in);
+bool insertInstructionWithLocks(workTable *wt, Instr *in, InstructionPosition *pos);
+bool undoInstructionWithLocks(workTable *wt, Instr *in);
 int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth);
 int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos);
 int pullLatencyWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos);
@@ -47,7 +47,7 @@ bool scheduleMidTableMode1(workTable *table, wrangleFunc candidateSelector)
         abortAfterError();
     }
     mode1SchedulingPassCount = 0;
-    table->unk_ad = 0;
+    table->movePipeCapacityExceeded = 0;
     table->fallbackSchedulingActive = 0;
     fatalReadBeforeReady = 1;
     table->loopBoundaryInstruction = 0;
@@ -169,7 +169,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
                                 if (instruction->position.linearRow < lim2) {
                                     int saved = errorOccurred;
                                     errorOccurred = !quietDiagnostics;
-                                    instruction->leDump();
+                                    instruction->dumpInstructionContext();
                                     errorOccurred = saved;
                                     trackEarliestInsertion(instruction);
                                 }
@@ -225,7 +225,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
                 }
                 if (pipe == 1 && table->evenPipeMoveCount == lsz && !table->fallbackSchedulingActive) {
                     table->fallbackSchedulingActive = 1;
-                    table->unk_ad = 0;
+                    table->movePipeCapacityExceeded = 0;
                     earliestInsertionInstruction = table->completedInstructions.head;
                     goto faulted;
                 }
@@ -318,7 +318,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
                     abortAfterError();
                 }
             }
-            if (!DoInsert(table, selectedCandidate.candidateInstruction, &pos)) {
+            if (!insertInstructionWithLocks(table, selectedCandidate.candidateInstruction, &pos)) {
                 reportError("was ok to insert..but failed!\n");
                 table->dump();
                 abortAfterError();
@@ -354,9 +354,9 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
                     abortAfterError();
                     break;
                 case 1:
-                    if (table->unk_ad && !table->fallbackSchedulingActive) {
+                    if (table->movePipeCapacityExceeded && !table->fallbackSchedulingActive) {
                         table->fallbackSchedulingActive = 1;
-                        table->unk_ad = 0;
+                        table->movePipeCapacityExceeded = 0;
                         earliestInsertionInstruction = table->completedInstructions.head;
                     }
                     break;
@@ -387,7 +387,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
                  tail = &table->completedInstructions) {
                 Instr *instruction = tail->last();
                 instruction->clearTransientFlags();
-                if (!UndoInsert(table, instruction)) {
+                if (!undoInstructionWithLocks(table, instruction)) {
                     reportError("in finst track..undoinsert failed\n");
                     abortAfterError();
                     return false;
@@ -399,7 +399,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
             }
             while (table->completedInstructions.head) {
                 Instr *instruction = table->completedInstructions.last();
-                if (!UndoInsert(table, instruction)) {
+                if (!undoInstructionWithLocks(table, instruction)) {
                     reportError("undo insert: failed to remove done list tail\n");
                     abortAfterError();
                     return false;

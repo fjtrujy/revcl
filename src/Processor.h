@@ -45,7 +45,7 @@ class Processor {
 public:
     Processor();
     ~Processor();
-    bool Init(CpuDef *cpu);
+    bool initializeProcessor(CpuDef *cpu);
     bool clearProcessorLists();
     void dumpRegisterPools();
     int gatherInflight(ol_s **out);

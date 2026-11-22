@@ -17,7 +17,7 @@ static inline void dumpUtaInstruction(Instr *instruction)
 }
 
 
-bool buildUta(Program *prog, instStream *targetStream, DecodedLine *blocks, int count)
+bool buildUta(Program *program, instStream *targetStream, DecodedLine *blocks, int count)
 {
     workTable *scheduleTable = &targetStream->sourceTable;
     if (!scheduleTable) {
@@ -43,7 +43,7 @@ bool buildUta(Program *prog, instStream *targetStream, DecodedLine *blocks, int 
             continue;
         if (decodedInstruction->parsedLoopId > 0) {
             reportUserMessage("parseLid set for a uta instruction\n");
-            decodedInstruction->leDump();
+            decodedInstruction->dumpInstructionContext();
             return false;
         }
         decodedInstruction->parsedLoopId = -1;

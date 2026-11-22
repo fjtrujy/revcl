@@ -17,7 +17,7 @@ static inline void dumpSynthInstruction(Instr *instruction)
 }
 
 
-bool buildSynth(Program *prog, instStream *targetStream, DecodedLine *blocks, int count)
+bool buildSynth(Program *program, instStream *targetStream, DecodedLine *blocks, int count)
 {
     workTable *scheduleTable = &targetStream->sourceTable;
     if (!scheduleTable) {
@@ -47,7 +47,7 @@ bool buildSynth(Program *prog, instStream *targetStream, DecodedLine *blocks, in
         bool isIO = false;
         if (decodedInstruction->parsedLoopId > 0) {
             reportUserMessage("parseLid set for a synth instruction\n");
-            decodedInstruction->leDump();
+            decodedInstruction->dumpInstructionContext();
             return false;
         }
         decodedInstruction->parsedLoopId = -1;
@@ -67,7 +67,7 @@ bool buildSynth(Program *prog, instStream *targetStream, DecodedLine *blocks, in
             if (stype) {
                 const char *syntheticName = syntheticTypeName((unsigned char)decodedInstruction->syntheticKind);
                 reportError("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", syntheticName, syntheticTypeName(stype));
-                decodedInstruction->leDump();
+                decodedInstruction->dumpInstructionContext();
                 return false;
             }
             inSynth = stype = (unsigned char)decodedInstruction->syntheticKind;
@@ -75,12 +75,12 @@ bool buildSynth(Program *prog, instStream *targetStream, DecodedLine *blocks, in
         case 2:
             if (stype != 1) {
                 reportError("unexpected --endenter encountered\n");
-                decodedInstruction->leDump();
+                decodedInstruction->dumpInstructionContext();
                 return false;
             }
             if (!inSynth) {
                 reportError("flow related synthetic encountered.. but the block didn't appear to be wholly synthetic\n");
-                decodedInstruction->leDump();
+                decodedInstruction->dumpInstructionContext();
                 return false;
             }
             inSynth = 0;
@@ -88,12 +88,12 @@ bool buildSynth(Program *prog, instStream *targetStream, DecodedLine *blocks, in
         case 4:
             if (!inSynth) {
                 reportError("end exit encountered, but not in synthetic mode\n");
-                decodedInstruction->leDump();
+                decodedInstruction->dumpInstructionContext();
                 return false;
             }
             if (stype != 3 && stype != 11) {
                 reportError("unexpected --endexit encountered\n");
-                decodedInstruction->leDump();
+                decodedInstruction->dumpInstructionContext();
                 return false;
             }
             inSynth = 0;
@@ -102,14 +102,14 @@ bool buildSynth(Program *prog, instStream *targetStream, DecodedLine *blocks, in
             isIO = true;
             if (stype != 1) {
                 reportUserMessage("synthetic input not in enter block\n");
-                decodedInstruction->leDump();
+                decodedInstruction->dumpInstructionContext();
                 return false;
             }
             break;
         case 7:
             if (stype != 3 && stype != 11) {
                 reportUserMessage("synthetic output not in exit block\n");
-                decodedInstruction->leDump();
+                decodedInstruction->dumpInstructionContext();
                 return false;
             }
             isIO = true;

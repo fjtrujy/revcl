@@ -26,7 +26,7 @@ extern const char fiddleGetBranchIeError[];
 extern const char fiddleGetLastIeError[];
 extern const char fiddleSmallerError[];
 
-bool fiddleBDL(workTable *scheduleTable)
+bool adjustTrailingBranchLayout(workTable *scheduleTable)
 {
     setRange(scheduleTable->rangeStart, scheduleTable->rangeEnd, scheduleTable->loopSize);
     if (noReduce(scheduleTable)) {

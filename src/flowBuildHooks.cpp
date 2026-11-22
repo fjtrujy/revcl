@@ -13,7 +13,7 @@ bool noopFlowBuildHook(Program *)
 }
 
 const char *getUniqueName(Program *p);
-int mstrlen(const char *s);
+int checkedStringLength(const char *s);
 bool expandRawTables(Program *p);
 bool resolveStreamBranches(Program *p);
 bool recalcFlowUIDs(Program *p);

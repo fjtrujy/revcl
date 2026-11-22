@@ -93,7 +93,7 @@ char *formatComponentMaskLetters(int mask)
 inline char *VUStr_dot_mask(char *buf, int mask)
 {
     buf[0] = '.';
-    mstrcpy(buf + 1, formatComponentMaskLetters(mask));
+    checkedStringCopy(buf + 1, formatComponentMaskLetters(mask));
     return buf;
 }
 
@@ -149,13 +149,13 @@ int removeInstructionModifierGroups(char *modifierText)
 {
     int mods = 0;
     if (modifierText) {
-        char *dst = modifierText;
+        char *destinationBuffer = modifierText;
         char *src = modifierText;
         while (*src) {
             while (*src) {
                 if (*src == '[')
                     break;
-                *dst++ = *src++;
+                *destinationBuffer++ = *src++;
             }
             if (*src == '[') {
                 char *modifierCursor = src + 1;
@@ -178,11 +178,11 @@ int removeInstructionModifierGroups(char *modifierText)
                     src = modifierCursor + 1;
                 } else {
                     reportWarning("possibly misformed instruction modifier detected\n");
-                    *dst++ = *src++;
+                    *destinationBuffer++ = *src++;
                 }
             }
         }
-        *dst = 0;
+        *destinationBuffer = 0;
     }
     return mods;
 }

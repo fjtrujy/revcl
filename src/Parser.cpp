@@ -3,7 +3,7 @@
 #include "xun.h"
 #include "os.h"
 
-int mstrlen(const char *s);
+int checkedStringLength(const char *s);
 bool equalExactStrings(const char *a, const char *b);
 bool asciiCaseEqual(const char *a, const char *b);
 bool matchesLeadingKeyword(const char *s, const char *kw);
@@ -35,7 +35,7 @@ bool Parser::initializeParser(char *buf, const char *name, bool gasp, bool cpp)
         reset();
         return false;
     }
-    int len = mstrlen(buf);
+    int len = checkedStringLength(buf);
     if (!len) {
         reportError("Parser:: was passed a null string!\n");
         reset();
@@ -47,7 +47,7 @@ bool Parser::initializeParser(char *buf, const char *name, bool gasp, bool cpp)
         reset();
         return false;
     }
-    mstrcpy(rawBuffer, buf);
+    checkedStringCopy(rawBuffer, buf);
     if (addLocationTag(name, 1)) {
         reportError("Parser::failed to add initial loctag!\n");
         return false;
@@ -106,7 +106,7 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
         reset();
         return false;
     }
-    int len = mstrlen(rawBuffer);
+    int len = checkedStringLength(rawBuffer);
     if (!len) {
         reportError("arser: raw buffer was null string\n");
         reset();
@@ -130,12 +130,12 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
         return false;
     }
     parsedLineCount = 0;
-    LocTag *t;
+    LocTag *locationTag;
     int lineNo = 0;
     char *next;
     char *line = rawBuffer;
     int commentMode = 0;
-    char *out = processedBuffer;
+    char *outputBuffer = processedBuffer;
     for (; *line; line = next) {
         char *p = line;
         while (*p && *p != '\n')
@@ -159,8 +159,8 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
         int checkBlock = process;
         if ((char)checkBlock && matchesLeadingKeyword(line, blockStartKeyword)) {
             char *q = next;
-            t = &parsedLines[parsedLineCount++];
-            t->sourceLineNumber = lineNo;
+            locationTag = &parsedLines[parsedLineCount++];
+            locationTag->sourceLineNumber = lineNo;
             char rawHead = *next;
             for (;;) {
                 if (!rawHead)
@@ -193,9 +193,9 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
                 lineNo++;
             }
             *e = 0;
-            t->gaspDepth = -1;
-            t->lineText = next;
-            t->isRawMacroBlock = 1;
+            locationTag->gaspDepth = -1;
+            locationTag->lineText = next;
+            locationTag->isRawMacroBlock = 1;
             next = q;
             process = false;
         }
@@ -210,21 +210,21 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
                 tok != 0;
             }))
                 s++;
-            t = &parsedLines[parsedLineCount];
+            locationTag = &parsedLines[parsedLineCount];
             if (gasp) {
-                t->gaspDepth = gaspLocationDepth;
+                locationTag->gaspDepth = gaspLocationDepth;
                 for (int i = 0; i != gaspLocationDepth; i++)
-                    t->gaspStack[i] = gaspLocationStack[i];
+                    locationTag->gaspStack[i] = gaspLocationStack[i];
             } else {
-                t->gaspDepth = -1;
+                locationTag->gaspDepth = -1;
             }
-            t->sourceLineNumber = lineNo;
+            locationTag->sourceLineNumber = lineNo;
             parsedLineCount++;
-            t->lineText = out;
-            out = t->tokenizeSourceLine(&commentMode, line);
-            if (!out) {
+            locationTag->lineText = outputBuffer;
+            outputBuffer = locationTag->tokenizeSourceLine(&commentMode, line);
+            if (!outputBuffer) {
                 reportError("Parser: failed to tokenise line '%s'\n", line);
-                dumpLineEntry(t, -1);
+                dumpLineEntry(locationTag, -1);
                 return false;
             }
         }
@@ -263,7 +263,7 @@ bool isLineEndingCharacter(char character)
     return character == '\n' || character == '\r';
 }
 
-void Parser::Dump()
+void Parser::dumpParsedSourceLines()
 {
     if (!parsedLines) {
         reportError("Parse::Dump() - line table was not set\n");
@@ -279,7 +279,7 @@ void Parser::Dump()
     }
 }
 
-void Parser::DumpLocTags()
+void Parser::dumpLocationTags()
 {
     reportMessage("parser::DumpLocTags..\n");
     for (int lineIndex = 0; lineIndex != locationTagCount; lineIndex++) {
@@ -315,7 +315,7 @@ found:
     return idx;
 }
 
-int Parser::FindLocTag(const char *name, int locationKind)
+int Parser::findLocationTagByName(const char *name, int locationKind)
 {
     for (int lineIndex = 0; lineIndex < locationTagCount; lineIndex++)
         if (lines[lineIndex].locationKind == locationKind && equalExactStrings(lines[lineIndex].locationName, name))
@@ -441,13 +441,13 @@ bool isTokenSeparatorCharacter(char character)
 
 bool Parser::isAssignmentLine(int i)
 {
-    LocTag *t;
+    LocTag *locationTag;
     if (i < 0 || i >= parsedLineCount)
-        t = 0;
+        locationTag = 0;
     else
-        t = &parsedLines[i];
-    if (t)
-        return t->hasAssignmentMarker();
+        locationTag = &parsedLines[i];
+    if (locationTag)
+        return locationTag->hasAssignmentMarker();
     return false;
 }
 

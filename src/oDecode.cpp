@@ -15,10 +15,10 @@ int gatherTokens(LocTag *t, int i, bool stopAtOpcode);
 int countSetBits(unsigned int x);
 bool asciiCaseEqual(const char *a, const char *b);
 char *dupString(const char *s);
-int mstrlen(const char *s);
+int checkedStringLength(const char *s);
 bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax);
 bool parseImmediate(const char *s, unsigned char type, mValue *v);
-RegPool *GetRP(unsigned t);
+RegPool *getRegisterPoolByIndex(unsigned t);
 int expectedSyntaxDiagnosticMode = -1;
 
 Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
@@ -39,7 +39,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
     Instr *decodedInstruction = 0;
     bool bad = false;
     int mask;
-    iInfo *info;
+    iInfo *opcodeInfo;
     int mods;
     char tilde = 0;
     int operandIndex;
@@ -86,13 +86,13 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         }
         p = q + 2;
     }
-    info = findOpcodeInfoByMnemonic(p, newSyntax);
-    if (!info) {
+    opcodeInfo = findOpcodeInfoByMnemonic(p, newSyntax);
+    if (!opcodeInfo) {
         reportUserMessage("vcl can't find instruction '%s'\n", p);
         goto fail;
     }
     cur++;
-    decodedInstruction = new Instr(info);
+    decodedInstruction = new Instr(opcodeInfo);
     if (loopid < 0) {
         reportUserMessage("parsed loop id is <0\n");
         goto fail;
@@ -100,7 +100,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
     decodedInstruction->parsedLoopId = loopid;
     decodedInstruction->instructionModifierBits = mods;
     decodedInstruction->tildePrefix = tilde;
-    mnemonicLen = mstrlen(info->mnemonic);
+    mnemonicLen = checkedStringLength(opcodeInfo->mnemonic);
     {
         char *suffix = p + mnemonicLen;
         bad = false;
@@ -110,7 +110,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         reportUserMessage("instruction has bad .modifier bits\n");
         goto fail;
     }
-    switch ((char)info->destinationMaskMode) {
+    switch ((char)opcodeInfo->destinationMaskMode) {
     case 0:
         break;
     case 1:
@@ -167,16 +167,16 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                     reportError("implicit web patch set for non-output\n");
                     goto fail;
                 }
-                Operand *src = &decodedInstruction->operands[opd->pairedOperandIndexPlusOne - 1];
-                if (src->direction != 2) {
+                Operand *sourceOperand = &decodedInstruction->operands[opd->pairedOperandIndexPlusOne - 1];
+                if (sourceOperand->direction != 2) {
                     reportError("implicit web patched operand not input\n");
                     goto fail;
                 }
-                if (!src->assignedRegister) {
+                if (!sourceOperand->assignedRegister) {
                     reportError("no register found for implicit patch\n");
                     goto fail;
                 }
-                formatIntoBuffer(decodedOperand.name, "%s", src->assignedRegister->registerName());
+                formatIntoBuffer(decodedOperand.name, "%s", sourceOperand->assignedRegister->registerName());
             }
         } else {
             bool last = false;
@@ -186,7 +186,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
             next = gatherTokens(locationTag, cur, last);
             if (next < 0)
                 goto fail;
-            if (info->syntheticKind() == 11 && !gatheredToken[0]) {
+            if (opcodeInfo->syntheticKind() == 11 && !gatheredToken[0]) {
                 gatheredToken[0] = ' ';
                 gatheredToken[1] = 0;
             }
@@ -237,7 +237,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                     reportError("have to set modbits for ea/reg or imm(ea)reg somewhere\n");
                     goto fail;
                 }
-                if (info->destinationMaskMode == 3 && countSetBits(opd->addressComponentMask) != 1) {
+                if (opcodeInfo->destinationMaskMode == 3 && countSetBits(opd->addressComponentMask) != 1) {
                     reportError("only one mod field allowed (one of x,y,z, or w)\n");
                     goto fail;
                 }
@@ -289,7 +289,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
                 }
             } else
                 cls = registerClassForOperandKind(opd->operandKind);
-            RegPool *pool = GetRP(cls);
+            RegPool *pool = getRegisterPoolByIndex(cls);
             if (!pool) {
                 reportError("oDecode: not find expected register ! regtype= '%d' operand = %d\n", cls, operandIndex);
                 goto fail;
@@ -388,7 +388,7 @@ Instr *Processor::getNextInstruction(LocTag *locationTag, int *pos)
         reportError("oDecode: sanity check failed\n");
         goto fail;
     }
-    if (info->decodeHook && !info->decodeHook(info, decodedInstruction)) {
+    if (opcodeInfo->decodeHook && !opcodeInfo->decodeHook(opcodeInfo, decodedInstruction)) {
         reportError("oDecode:: iBuildHook failed to patch instruction\n");
         goto fail;
     }
@@ -647,7 +647,7 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
             if (!areInstructionModifiersAllowed(ins[decodedInstructionIndex]->instructionModifierBits, program->proc.decodeMode, false)) {
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(program->proc.decodeMode));
-                ins[decodedInstructionIndex]->leDump();
+                ins[decodedInstructionIndex]->dumpInstructionContext();
                 goto done;
             }
         }
@@ -758,7 +758,7 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
             }
             if (decodedInstruction->rawOnly) {
                 reportUserMessage("vcl: instruction '%s' is unsupported, except in RAW mode.\n", decodedInstruction->opcodeInfo->mnemonic);
-                decodedInstruction->leDump();
+                decodedInstruction->dumpInstructionContext();
                 delete decodedInstruction;
                 goto done;
             }
@@ -773,13 +773,13 @@ DecodedLine *decodeSourceLines(Program *program, Parser *parser, int type, bool 
                     goto done;
                 }
                 if (branchSimplificationResult == 0) {
-                    branchInstruction->leDump();
+                    branchInstruction->dumpInstructionContext();
                     decodedBlock->instructions[0] = 0;
                     delete branchInstruction;
                     branchInstruction = 0;
                 }
                 if (branchSimplificationResult == 2)
-                    branchInstruction->leDump();
+                    branchInstruction->dumpInstructionContext();
             }
         }
         decodedLineCount++;

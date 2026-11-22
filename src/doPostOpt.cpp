@@ -173,7 +173,7 @@ bool workTable::doPostOpt(int rawMode)
                             return false;
                         }
                     }
-                    if (!UnlinkFromDone((Block *)this, rowInstruction)) {
+                    if (!unlinkFromCompletedInstructions((Block *)this, rowInstruction)) {
                         reportError("doPostOpt -  unlink from done list failed\n");
                         return false;
                     }

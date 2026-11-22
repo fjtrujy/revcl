@@ -69,7 +69,7 @@ bool VisitCache::release()
     return true;
 }
 
-bool VisitCache::Extend(int rows)
+bool VisitCache::resizeRecordStorage(int rows)
 {
     unsigned *resizedRecordData = (unsigned *)realloc(recordData, rows * wordsPerRecord * sizeof(unsigned));
     if (!resizedRecordData) {
@@ -85,7 +85,7 @@ bool VisitCache::Extend(int rows)
 bool VisitCache::startRecord()
 {
     if (recordCount >= recordCapacity - 1) {
-        if (!Extend(recordCapacity + 512)) {
+        if (!resizeRecordStorage(recordCapacity + 512)) {
             reportError("startRecord - failed to extend\n");
             return false;
         }
@@ -133,7 +133,7 @@ bool VisitCache::testBit(int rec, int bit)
     return (row[bit / 32] & (1 << (bit & 31))) != 0;
 }
 
-void VisitCache::Dump()
+void VisitCache::dumpVisitRecords()
 {
     reportInfo("VisitCache::Dump()\n");
     unsigned *row = recordData;
@@ -153,7 +153,7 @@ static inline bool testPathBit(VisitCache *visitCache, int rec, int bit)
     return (row[bit / 32] & (1 << (bit & 31))) != 0;
 }
 
-void dumpPathKey(Program *program, int key)
+void dumpBacktracePathKey(Program *program, int key)
 {
     reportInfo("dumping path key '%d'\n", key);
     for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {

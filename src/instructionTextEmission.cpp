@@ -16,20 +16,20 @@ static inline void dumpEmitInstruction(Instr *instruction)
     instruction->dumpOperandDiagnostics(false);
 }
 
-char *emitGenericInstructionText(char *buf, Instr *instruction, bool upper, char *mods, bool symbolic, int)
+char *emitGenericInstructionText(char *outputBuffer, Instr *instruction, bool upper, char *mods, bool symbolic, int)
 {
-    iInfo *info = instruction->opcodeInfo;
+    iInfo *opcodeInfo = instruction->opcodeInfo;
     bool comma = false;
     if (!mods)
         mods = "";
-    int len = formatIntoBuffer(buf, "%s%s", info->mnemonic, mods);
-    char *outputCursor = buf + len;
-    outputCursor = emitDestMask(outputCursor, (char)info->destinationMaskMode, instruction->destinationMask);
+    int len = formatIntoBuffer(outputBuffer, "%s%s", opcodeInfo->mnemonic, mods);
+    char *outputCursor = outputBuffer + len;
+    outputCursor = emitDestMask(outputCursor, (char)opcodeInfo->destinationMaskMode, instruction->destinationMask);
     if (!outputCursor) {
         reportError("failed to emit inst mods\n");
         return 0;
     }
-    for (int paddingIndex = outputCursor - buf; paddingIndex < 14; paddingIndex++)
+    for (int paddingIndex = outputCursor - outputBuffer; paddingIndex < 14; paddingIndex++)
         *outputCursor++ = ' ';
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *currentOperand = &instruction->operands[operandIndex];
@@ -38,7 +38,7 @@ char *emitGenericInstructionText(char *buf, Instr *instruction, bool upper, char
         if (comma)
             *outputCursor++ = ',';
         comma = true;
-        outputCursor = currentOperand->Emit(outputCursor, upper, symbolic);
+        outputCursor = currentOperand->emitOperandText(outputCursor, upper, symbolic);
         if (!outputCursor) {
             reportError("failed to emit operand\n");
             currentOperand->diagnoseOperand(0);
@@ -50,9 +50,9 @@ char *emitGenericInstructionText(char *buf, Instr *instruction, bool upper, char
     return outputCursor;
 }
 
-char *emitReversibleBranch(char *buf, Instr *branchInstruction, bool upper, char *mods, bool symbolic, int)
+char *emitReversibleBranch(char *outputBuffer, Instr *branchInstruction, bool upper, char *mods, bool symbolic, int)
 {
-    iInfo *info = branchInstruction->opcodeInfo;
+    iInfo *opcodeInfo = branchInstruction->opcodeInfo;
     bool comma = false;
     if (!mods)
         mods = "";
@@ -61,20 +61,20 @@ char *emitReversibleBranch(char *buf, Instr *branchInstruction, bool upper, char
             reportError("can't reverse sense of a likely branch at the emit stage\n");
             return 0;
         }
-        info = findOpcodeInfoByMnemonic(info->reverseSenseMnemonic, false);
-        if (!info) {
+        opcodeInfo = findOpcodeInfoByMnemonic(opcodeInfo->reverseSenseMnemonic, false);
+        if (!opcodeInfo) {
             reportError("failed to find sense reversing instruction\n");
             return 0;
         }
     }
-    int len = formatIntoBuffer(buf, "%s%s", info->mnemonic, mods);
-    char *outputCursor = buf + len;
-    outputCursor = emitDestMask(outputCursor, (char)info->destinationMaskMode, branchInstruction->destinationMask);
+    int len = formatIntoBuffer(outputBuffer, "%s%s", opcodeInfo->mnemonic, mods);
+    char *outputCursor = outputBuffer + len;
+    outputCursor = emitDestMask(outputCursor, (char)opcodeInfo->destinationMaskMode, branchInstruction->destinationMask);
     if (!outputCursor) {
         reportError("failed to generate instruction mod string\n");
         return 0;
     }
-    for (int paddingIndex = outputCursor - buf; paddingIndex < 14; paddingIndex++)
+    for (int paddingIndex = outputCursor - outputBuffer; paddingIndex < 14; paddingIndex++)
         *outputCursor++ = ' ';
     for (int operandIndex = 0; operandIndex != branchInstruction->operandCount; operandIndex++) {
         Operand *currentOperand = &branchInstruction->operands[operandIndex];
@@ -83,7 +83,7 @@ char *emitReversibleBranch(char *buf, Instr *branchInstruction, bool upper, char
         if (comma)
             *outputCursor++ = ',';
         comma = true;
-        outputCursor = currentOperand->Emit(outputCursor, upper, symbolic);
+        outputCursor = currentOperand->emitOperandText(outputCursor, upper, symbolic);
         if (!outputCursor) {
             reportError("failed to emit operand\n");
             currentOperand->diagnoseOperand(0);
@@ -95,7 +95,7 @@ char *emitReversibleBranch(char *buf, Instr *branchInstruction, bool upper, char
     return outputCursor;
 }
 
-RegPoolEntry *getReg(unsigned type, const char *name);
+RegPoolEntry *findPhysicalRegister(unsigned type, const char *name);
 
 bool extHook(void *, Instr *instruction)
 {
@@ -108,7 +108,7 @@ bool extHook(void *, Instr *instruction)
             reportError("extHook - register already set\n");
             return 0;
         }
-        RegPoolEntry *registerEntry = getReg((unsigned char)operand->immediateDataType, "EXT");
+        RegPoolEntry *registerEntry = findPhysicalRegister((unsigned char)operand->immediateDataType, "EXT");
         if (!registerEntry) {
             reportError("couldn't get ext register for pool\n");
             return 0;

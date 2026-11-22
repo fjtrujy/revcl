@@ -8,7 +8,7 @@
 int countSetBits(unsigned int);
 bool asciiCaseEqual(const char *a, const char *b);
 void removeTrailingComponentSuffix(char *s);
-int mstrlen(const char *s);
+int checkedStringLength(const char *s);
 
 Operand::Operand()
 {
@@ -240,7 +240,7 @@ static inline int operandZeroValue(Operand *operand)
     return isZeroRegister;
 }
 
-char *Operand::Emit(char *buf, bool, bool symbolic)
+char *Operand::emitOperandText(char *outputBuffer, bool, bool symbolic)
 {
     const char *registerNameText = 0;
     if (isImplicit)
@@ -263,20 +263,20 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             registerNameText = originalRegister->registerName();
         }
     } else {
-        RegPoolEntry *reg = assignedRegister;
-        if (reg) {
-            if (reg->isVirtual) {
+        RegPoolEntry *registerEntry = assignedRegister;
+        if (registerEntry) {
+            if (registerEntry->isVirtual) {
                 reportError("non symbolic emit.. but found a virtual register in an operand!\n");
                 return 0;
             }
-            registerNameText = reg->registerName();
-            reg->usedSlotMask |= componentMask;
+            registerNameText = registerEntry->registerName();
+            registerEntry->usedSlotMask |= componentMask;
         }
     }
     switch (operandKind) {
     case 13:
     emit_x:
-        buf += formatIntoBuffer(buf, "%sx", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%sx", registerNameText);
         break;
     case 3:
         if (componentMask & 1)
@@ -290,59 +290,59 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
         return 0;
     case 14:
     emit_y:
-        buf += formatIntoBuffer(buf, "%sy", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%sy", registerNameText);
         break;
     case 4:
-        buf += formatIntoBuffer(buf, "I");
+        outputBuffer += formatIntoBuffer(outputBuffer, "I");
         break;
     case 5:
-        buf += formatIntoBuffer(buf, "P");
+        outputBuffer += formatIntoBuffer(outputBuffer, "P");
         break;
     case 6:
-        buf += formatIntoBuffer(buf, "nP");
+        outputBuffer += formatIntoBuffer(outputBuffer, "nP");
         break;
     case 7:
-        buf += formatIntoBuffer(buf, "Q");
+        outputBuffer += formatIntoBuffer(outputBuffer, "Q");
         break;
     case 15:
     emit_z:
-        buf += formatIntoBuffer(buf, "%sz", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%sz", registerNameText);
         break;
     case 8:
-        buf += formatIntoBuffer(buf, "R");
+        outputBuffer += formatIntoBuffer(outputBuffer, "R");
         break;
     case 9:
-        buf += formatIntoBuffer(buf, "ACC");
+        outputBuffer += formatIntoBuffer(outputBuffer, "ACC");
         break;
     case 10:
-        buf += formatIntoBuffer(buf, "ACCxyz");
+        outputBuffer += formatIntoBuffer(outputBuffer, "ACCxyz");
         break;
     case 16:
     emit_w:
-        buf += formatIntoBuffer(buf, "%sw", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%sw", registerNameText);
         break;
     case 11:
-        buf += formatIntoBuffer(buf, "%sxyz", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%sxyz", registerNameText);
         break;
     case 1:
     case 2:
-        buf += formatIntoBuffer(buf, "%s", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s", registerNameText);
         break;
     case 39:
     case 40:
     case 41:
     case 42:
-        buf += formatIntoBuffer(buf, "%s", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s", registerNameText);
         break;
     case 43:
     case 44:
-        buf += formatIntoBuffer(buf, "%s", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s", registerNameText);
         break;
     case 54:
-        buf += formatIntoBuffer(buf, "%s", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s", registerNameText);
         break;
     case 34:
-        buf += formatIntoBuffer(buf, "%s", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s", registerNameText);
         break;
     case 27: {
         mValue *imm = &immediateValue;
@@ -352,12 +352,12 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
                 reportError("failed to get chars from immediate operand\n");
                 return 0;
             }
-            buf += formatIntoBuffer(buf, "%s", immediateText);
+            outputBuffer += formatIntoBuffer(outputBuffer, "%s", immediateText);
         } else {
             if (decodeImmediateCategory(immediateDataType) == 2)
-                buf += formatIntoBuffer(buf, "%d", imm->i);
+                outputBuffer += formatIntoBuffer(outputBuffer, "%d", imm->i);
             else
-                buf += formatIntoBuffer(buf, "0x%08x", imm->u);
+                outputBuffer += formatIntoBuffer(outputBuffer, "0x%08x", imm->u);
         }
         break;
     }
@@ -372,14 +372,14 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             reportError("failed to get chars from ximm blah_ea_imm\n");
             return 0;
         }
-        buf += formatIntoBuffer(buf, "%s(%s)", immediateLiteralText, registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s(%s)", immediateLiteralText, registerNameText);
         break;
     }
     case 31: {
         char *immediateLiteralText = immediateValue.asChars();
         if (!immediateLiteralText)
             reportError("failed to get chars from ximm for v_ea_imm\n");
-        buf += formatIntoBuffer(buf, "%s", immediateLiteralText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "%s", immediateLiteralText);
     }
     case 30:
         if (!registerNameText) {
@@ -387,35 +387,35 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             return 0;
         }
     case 28:
-        buf += formatIntoBuffer(buf, "(%s)", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "(%s)", registerNameText);
         break;
     case 32:
         if (!registerNameText) {
             reportError("null rn - abort _V_EA_INC\n");
             return 0;
         }
-        buf += formatIntoBuffer(buf, "(%s++)", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "(%s++)", registerNameText);
         break;
     case 33:
         if (!registerNameText) {
             reportError("null rn - abort _V_EA_DEC\n");
             return 0;
         }
-        buf += formatIntoBuffer(buf, "(--%s)", registerNameText);
+        outputBuffer += formatIntoBuffer(outputBuffer, "(--%s)", registerNameText);
         break;
     case 37:
         if (!registerNameText) {
             reportError("emit ramreg - no rn\n");
             return 0;
         }
-        buf += formatIntoBuffer("ramreg-[%s]", registerNameText);
+        outputBuffer += formatIntoBuffer("ramreg-[%s]", registerNameText);
         break;
     case 55:
     default:
         reportError("asked to emit an unknown/unemittable operand\n");
         return 0;
     }
-    return buf;
+    return outputBuffer;
 }
 
 bool Operand::resetFlowState()
@@ -457,14 +457,14 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
     out->componentMask = 0;
     out->forcePhysicalBinding = 0;
     switch (kind) {
-    case 10: mstrcpy(out->name, "ACC");   out->componentMask = 7; return true;
-    case 4:  mstrcpy(out->name, "I");     out->componentMask = 1; return true;
-    case 5:  mstrcpy(out->name, "P");     out->componentMask = 1; return true;
-    case 6:  mstrcpy(out->name, "tt_nP"); out->componentMask = 1; return true;
-    case 7:  mstrcpy(out->name, "Q");     out->componentMask = 1; return true;
-    case 8:  mstrcpy(out->name, "R");     out->componentMask = 1; return true;
-    case 9:  mstrcpy(out->name, "ACC");   out->componentMask = 15; return true;
-    case 17: mstrcpy(out->name, "CLIP");  out->componentMask = 1; return true;
+    case 10: checkedStringCopy(out->name, "ACC");   out->componentMask = 7; return true;
+    case 4:  checkedStringCopy(out->name, "I");     out->componentMask = 1; return true;
+    case 5:  checkedStringCopy(out->name, "P");     out->componentMask = 1; return true;
+    case 6:  checkedStringCopy(out->name, "tt_nP"); out->componentMask = 1; return true;
+    case 7:  checkedStringCopy(out->name, "Q");     out->componentMask = 1; return true;
+    case 8:  checkedStringCopy(out->name, "R");     out->componentMask = 1; return true;
+    case 9:  checkedStringCopy(out->name, "ACC");   out->componentMask = 15; return true;
+    case 17: checkedStringCopy(out->name, "CLIP");  out->componentMask = 1; return true;
     case 18: case 19: case 20: case 21:
         reportError("odecode for a V_STAT\n");
         return false;
@@ -474,28 +474,28 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
     case 22: case 23: case 24: case 25:
         out->name[0] = 0;
         return true;
-    case 26: mstrcpy(out->name, "MAC");   out->componentMask = 1; return true;
+    case 26: checkedStringCopy(out->name, "MAC");   out->componentMask = 1; return true;
     case 28: out->componentMask = 1; return true;
-    case 37: mstrcpy(out->name, "ramreg"); return true;
+    case 37: checkedStringCopy(out->name, "ramreg"); return true;
     case 54:
-        mstrcpy(out->physicalRegisterName, "$ra");
-        mstrcpy(out->name, "$ra");
+        checkedStringCopy(out->physicalRegisterName, "$ra");
+        checkedStringCopy(out->name, "$ra");
         out->componentMask = 3;
         return true;
     case 40: out->componentMask = 3; return true;
-    case 45: mstrcpy(out->name, "CLIPA"); out->componentMask = 1; return true;
+    case 45: checkedStringCopy(out->name, "CLIPA"); out->componentMask = 1; return true;
     default:
         reportError("fell through building an implicit operand of type %s\n", opKindName(kind));
         out->name[0] = 0;
         out->physicalRegisterName[0] = 0;
         return false;
-    case 47: mstrcpy(out->name, "HILO0"); out->componentMask = 1; return true;
-    case 48: mstrcpy(out->name, "HILO1"); out->componentMask = 1; return true;
-    case 49: mstrcpy(out->name, "FSTAT"); out->componentMask = 1; return true;
-    case 50: mstrcpy(out->name, "FCOND"); out->componentMask = 1; return true;
-    case 51: mstrcpy(out->name, "FACC");  out->componentMask = 1; return true;
-    case 52: mstrcpy(out->name, "FDIV");  out->componentMask = 1; return true;
-    case 53: mstrcpy(out->name, "SHFTA"); out->componentMask = 1; return true;
+    case 47: checkedStringCopy(out->name, "HILO0"); out->componentMask = 1; return true;
+    case 48: checkedStringCopy(out->name, "HILO1"); out->componentMask = 1; return true;
+    case 49: checkedStringCopy(out->name, "FSTAT"); out->componentMask = 1; return true;
+    case 50: checkedStringCopy(out->name, "FCOND"); out->componentMask = 1; return true;
+    case 51: checkedStringCopy(out->name, "FACC");  out->componentMask = 1; return true;
+    case 52: checkedStringCopy(out->name, "FDIV");  out->componentMask = 1; return true;
+    case 53: checkedStringCopy(out->name, "SHFTA"); out->componentMask = 1; return true;
     }
 }
 
@@ -521,7 +521,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     int savedTokenWord1;
     int savedTokenWord2;
     char zG;
-    if (mstrlen(tok) > 2047) {
+    if (checkedStringLength(tok) > 2047) {
         reportError("odecodeToken: token was too long\n");
         return false;
     }
@@ -685,7 +685,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         }
         if (newSyntax) {
             out->componentMask = 15;
-            mstrcpy(out->name, tok);
+            checkedStringCopy(out->name, tok);
         } else {
             savedTokenWord2 = readTrailingComponentMask(tok);
             out->componentMask = savedTokenWord2;
@@ -703,12 +703,12 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 reportError("oDecodeToken: bad FL4 bits\n");
                 return false;
             }
-            mstrcpy(out->name, tok);
+            checkedStringCopy(out->name, tok);
             removeTrailingComponentSuffix(out->name);
         }
         return true;
     case 2:
-        mstrcpy(out->name, tok);
+        checkedStringCopy(out->name, tok);
         out->componentMask = 1;
         return true;
     case 38:
@@ -742,18 +742,18 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         if (asciiCaseEqual(tok, "q")) {
             out->genericOperandForm = 1;
             out->componentMask = 1;
-            mstrcpy(out->name, "Q");
+            checkedStringCopy(out->name, "Q");
             return true;
         }
         if (asciiCaseEqual(tok, "i")) {
             out->genericOperandForm = 1;
             out->componentMask = 1;
-            mstrcpy(out->name, "I");
+            checkedStringCopy(out->name, "I");
             return true;
         }
         out->componentMask = 15;
         out->genericOperandForm = 2;
-        mstrcpy(out->name, tok);
+        checkedStringCopy(out->name, tok);
         return true;
     case 3:
         {
@@ -787,7 +787,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             out->componentMask = mask;
-            mstrcpy(out->name, tok);
+            checkedStringCopy(out->name, tok);
             removeTrailingComponentSuffix(out->name);
         }
         return true;
@@ -870,7 +870,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             reportError("oDecodeToken: bad FL4 bits\n");
             return false;
         }
-        mstrcpy(out->name, "ACC");
+        checkedStringCopy(out->name, "ACC");
         return true;
     }
     case 10:
@@ -880,7 +880,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             return false;
         }
         out->componentMask = 7;
-        mstrcpy(out->name, "ACC");
+        checkedStringCopy(out->name, "ACC");
         return true;
     case 11:
         field = 7;
@@ -904,7 +904,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 out->componentMask = field;
                 return true;
             }
-            mstrcpy(out->name, tok);
+            checkedStringCopy(out->name, tok);
             out->componentMask = field;
         } else {
             mask = readTrailingComponentMask(tok);
@@ -913,7 +913,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             out->componentMask = field;
-            mstrcpy(out->name, tok);
+            checkedStringCopy(out->name, tok);
             removeTrailingComponentSuffix(out->name);
         }
         return true;
@@ -931,10 +931,10 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         goto fieldSel;
     case 17:
         out->componentMask = 1;
-        mstrcpy(out->name, "CLIP");
+        checkedStringCopy(out->name, "CLIP");
         return true;
     case 27:
-        mstrcpy(out->immediateText, tok);
+        checkedStringCopy(out->immediateText, tok);
         return true;
     case 28: {
         out->componentMask = 1;
@@ -998,7 +998,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[1] = svI_c43;
             ((int *)tok)[kind] = svO_c43;
         }
-        mstrcpy(out->name, tok);
+        checkedStringCopy(out->name, tok);
         out->componentMask = 1;
         return true;
     case 30: {
@@ -1108,15 +1108,15 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             reportUserMessage("oDecode:: operand has to be vi01 for this instruction..\n");
             return false;
         }
-        mstrcpy(out->physicalRegisterName, tok);
-        mstrcpy(out->name, tok);
+        checkedStringCopy(out->physicalRegisterName, tok);
+        checkedStringCopy(out->name, tok);
         out->componentMask = 1;
         return true;
     case 26:
         reportError("explicit mac register - but I'm writing ASTATUS here??\n");
         exitAfterCleanup(1);
         out->componentMask = 1;
-        mstrcpy(out->name, "ASTATUS");
+        checkedStringCopy(out->name, "ASTATUS");
         return true;
     case 39:
         {
@@ -1129,15 +1129,15 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[kind] = svk_c39;
         }
         out->componentMask = 1;
-        mstrcpy(out->name, tok);
+        checkedStringCopy(out->name, tok);
         return true;
     case 40:
         out->componentMask = 3;
-        mstrcpy(out->name, tok);
+        checkedStringCopy(out->name, tok);
         return true;
     case 41:
         out->componentMask = 15;
-        mstrcpy(out->name, tok);
+        checkedStringCopy(out->name, tok);
         return true;
     case 44:
         d = out->name;
@@ -1364,52 +1364,52 @@ OpSlot *Operand::getPart(int part)
     return 0;
 }
 
-char *Operand::emitExpectedOperandType(bool flag, char *buf)
+char *Operand::emitExpectedOperandType(bool flag, char *outputBuffer)
 {
-    if (!buf)
+    if (!outputBuffer)
         return 0;
     if (isImplicit)
-        return buf;
+        return outputBuffer;
     switch (operandKind) {
-    case 38: buf += formatIntoBuffer(buf, "vec_reg"); break;
+    case 38: outputBuffer += formatIntoBuffer(outputBuffer, "vec_reg"); break;
     case 1:
         if (flag)
-            buf += formatIntoBuffer(buf, "vf_reg");
+            outputBuffer += formatIntoBuffer(outputBuffer, "vf_reg");
         else
-            buf += formatIntoBuffer(buf, "vf_reg[xyzw]");
+            outputBuffer += formatIntoBuffer(outputBuffer, "vf_reg[xyzw]");
         break;
-    case 2: buf += formatIntoBuffer(buf, "vi_reg"); break;
-    case 3: buf += formatIntoBuffer(buf, "vf_reg[x/y/z/w]"); break;
-    case 4: buf += formatIntoBuffer(buf, "I"); break;
-    case 5: buf += formatIntoBuffer(buf, "P"); break;
-    case 7: buf += formatIntoBuffer(buf, "Q"); break;
-    case 8: buf += formatIntoBuffer(buf, "R"); break;
-    case 9: buf += formatIntoBuffer(buf, "ACC"); break;
-    case 10: buf += formatIntoBuffer(buf, "ACCxyz"); break;
-    case 11: buf += formatIntoBuffer(buf, "vf_regxyz"); break;
-    case 13: buf += formatIntoBuffer(buf, "vf_regx"); break;
-    case 14: buf += formatIntoBuffer(buf, "vf_regy"); break;
-    case 15: buf += formatIntoBuffer(buf, "vf_regz"); break;
-    case 16: buf += formatIntoBuffer(buf, "vf_regw"); break;
-    case 27: buf += formatIntoBuffer(buf, "IMMEDIATE(%s)", immediateTypeName(immediateDataType)); break;
-    case 28: buf += formatIntoBuffer(buf, "(vi_reg)"); break;
-    case 29: buf += formatIntoBuffer(buf, "OFFSET(vi_reg)"); break;
-    case 30: buf += formatIntoBuffer(buf, "(vi_reg)[x/y/z/w]"); break;
-    case 31: buf += formatIntoBuffer(buf, "OFFSET(vi_reg)[x/y/z/w]"); break;
-    case 32: buf += formatIntoBuffer(buf, "(vi_reg++)"); break;
-    case 33: buf += formatIntoBuffer(buf, "(--vi_reg)"); break;
-    case 34: buf += formatIntoBuffer(buf, "vi01"); break;
-    case 35: buf += formatIntoBuffer(buf, "vf_reg[.xyzw][(base_reg)]"); break;
-    case 36: buf += formatIntoBuffer(buf, "vi_reg[(base_reg)]"); break;
-    case 39: case 40: case 41: buf += formatIntoBuffer(buf, "gpr"); break;
-    case 42: buf += formatIntoBuffer(buf, "gpr(reg)"); break;
-    case 43: buf += formatIntoBuffer(buf, "fpr"); break;
-    case 44: buf += formatIntoBuffer(buf, "fpr(reg)"); break;
-    case 46: buf += formatIntoBuffer(buf, "OFFSET(gpr)"); break;
-    case 54: buf += formatIntoBuffer(buf, "$ra"); break;
+    case 2: outputBuffer += formatIntoBuffer(outputBuffer, "vi_reg"); break;
+    case 3: outputBuffer += formatIntoBuffer(outputBuffer, "vf_reg[x/y/z/w]"); break;
+    case 4: outputBuffer += formatIntoBuffer(outputBuffer, "I"); break;
+    case 5: outputBuffer += formatIntoBuffer(outputBuffer, "P"); break;
+    case 7: outputBuffer += formatIntoBuffer(outputBuffer, "Q"); break;
+    case 8: outputBuffer += formatIntoBuffer(outputBuffer, "R"); break;
+    case 9: outputBuffer += formatIntoBuffer(outputBuffer, "ACC"); break;
+    case 10: outputBuffer += formatIntoBuffer(outputBuffer, "ACCxyz"); break;
+    case 11: outputBuffer += formatIntoBuffer(outputBuffer, "vf_regxyz"); break;
+    case 13: outputBuffer += formatIntoBuffer(outputBuffer, "vf_regx"); break;
+    case 14: outputBuffer += formatIntoBuffer(outputBuffer, "vf_regy"); break;
+    case 15: outputBuffer += formatIntoBuffer(outputBuffer, "vf_regz"); break;
+    case 16: outputBuffer += formatIntoBuffer(outputBuffer, "vf_regw"); break;
+    case 27: outputBuffer += formatIntoBuffer(outputBuffer, "IMMEDIATE(%s)", immediateTypeName(immediateDataType)); break;
+    case 28: outputBuffer += formatIntoBuffer(outputBuffer, "(vi_reg)"); break;
+    case 29: outputBuffer += formatIntoBuffer(outputBuffer, "OFFSET(vi_reg)"); break;
+    case 30: outputBuffer += formatIntoBuffer(outputBuffer, "(vi_reg)[x/y/z/w]"); break;
+    case 31: outputBuffer += formatIntoBuffer(outputBuffer, "OFFSET(vi_reg)[x/y/z/w]"); break;
+    case 32: outputBuffer += formatIntoBuffer(outputBuffer, "(vi_reg++)"); break;
+    case 33: outputBuffer += formatIntoBuffer(outputBuffer, "(--vi_reg)"); break;
+    case 34: outputBuffer += formatIntoBuffer(outputBuffer, "vi01"); break;
+    case 35: outputBuffer += formatIntoBuffer(outputBuffer, "vf_reg[.xyzw][(base_reg)]"); break;
+    case 36: outputBuffer += formatIntoBuffer(outputBuffer, "vi_reg[(base_reg)]"); break;
+    case 39: case 40: case 41: outputBuffer += formatIntoBuffer(outputBuffer, "gpr"); break;
+    case 42: outputBuffer += formatIntoBuffer(outputBuffer, "gpr(reg)"); break;
+    case 43: outputBuffer += formatIntoBuffer(outputBuffer, "fpr"); break;
+    case 44: outputBuffer += formatIntoBuffer(outputBuffer, "fpr(reg)"); break;
+    case 46: outputBuffer += formatIntoBuffer(outputBuffer, "OFFSET(gpr)"); break;
+    case 54: outputBuffer += formatIntoBuffer(outputBuffer, "$ra"); break;
     default: break;
     }
-    return buf;
+    return outputBuffer;
 }
 
 bool isScalarFloatingOperandKind(int kind)
@@ -1423,17 +1423,17 @@ bool isVectorOrAccumulatorOperandKind(int kind)
     return kind == 1 || kind == 9;
 }
 
-int Operand::getRegFrom(Operand *src)
+int Operand::getRegFrom(Operand *sourceOperand)
 {
     int targetRegisterClass = registerClassForOperandKind(operandKind);
-    int sourceRegisterClass = registerClassForOperandKind(src->operandKind);
+    int sourceRegisterClass = registerClassForOperandKind(sourceOperand->operandKind);
     if (sourceRegisterClass != targetRegisterClass) {
         reportError("incompatible type request getting type for operand\n");
         return 0;
     }
-    assignedRegister = src->assignedRegister;
-    originalRegister = src->originalRegister;
-    forcedBaseRegister = src->forcedBaseRegister;
+    assignedRegister = sourceOperand->assignedRegister;
+    originalRegister = sourceOperand->originalRegister;
+    forcedBaseRegister = sourceOperand->forcedBaseRegister;
     if (!assignedRegister) {
         reportError("no register set in get reg from\n");
         return 0;

@@ -6,7 +6,7 @@
 #include "Block.h"
 #include "os.h"
 
-bool UnlinkFromLinear(Block *blk, Instr *n);
+bool unlinkFromLinearInstructions(Block *blk, Instr *n);
 bool streamExportsSymbol(Program *p, instStream *s);
 bool appendStream(Program *p, instStream *a, instStream *b);
 
@@ -101,7 +101,7 @@ bool catOnTo(workTable *t1, workTable *t2)
         for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
             Instr *sourceInstruction = src->entries[entryIndex].instruction;
             if (sourceInstruction) {
-                if (!UnlinkFromLinear((Block *)t2, sourceInstruction)) {
+                if (!unlinkFromLinearInstructions((Block *)t2, sourceInstruction)) {
                     reportError("failed to remlinear\n");
                     return 0;
                 }
@@ -115,7 +115,7 @@ bool catOnTo(workTable *t1, workTable *t2)
         wtRow *workRow = &t1->rows[rowIndex];
         for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
             Instr *destinationInstruction = workRow->entries[pipeIndex].instruction;
-            if (destinationInstruction && !UnlinkFromLinear((Block *)t1, destinationInstruction)) {
+            if (destinationInstruction && !unlinkFromLinearInstructions((Block *)t1, destinationInstruction)) {
                 reportError("failed to link in from it1\n");
                 return 0;
             }

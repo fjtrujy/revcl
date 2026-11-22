@@ -344,18 +344,18 @@ bool cls0805c244::reset()
     return true;
 }
 
-bool cls0805c244::addInput(cls0805bcc4 *out, cls0805bcc4 *inputLock, char issueLatency, unsigned char latencyModeFlag)
+bool cls0805c244::addInput(cls0805bcc4 *outputLock, cls0805bcc4 *inputLock, char issueLatency, unsigned char latencyModeFlag)
 {
     inputLock->lockDirection = 1;
     inputLock->ownerLockList = this;
-    out->latencyModeFlag = latencyModeFlag;
+    outputLock->latencyModeFlag = latencyModeFlag;
     inputLock->issueLatency = issueLatency;
-    out->eitherPipeConsumerCount += inputLock->eitherPipeInputDemand;
-    out->upperPipeConsumerCount += inputLock->upperPipeInputDemand;
-    out->referenceCount++;
-    out->activeReferenceCount++;
-    inputLock->parentOrChildren = out;
-    out->lowerPipeConsumerCount += inputLock->lowerPipeInputDemand;
+    outputLock->eitherPipeConsumerCount += inputLock->eitherPipeInputDemand;
+    outputLock->upperPipeConsumerCount += inputLock->upperPipeInputDemand;
+    outputLock->referenceCount++;
+    outputLock->activeReferenceCount++;
+    inputLock->parentOrChildren = outputLock;
+    outputLock->lowerPipeConsumerCount += inputLock->lowerPipeInputDemand;
     return true;
 }
 
@@ -380,12 +380,12 @@ bool cls0805c244::addOutput(cls0805bcc4 *lock, int throughputSpacing, int issueL
 
 bool cls0805c244::removeInput(cls0805bcc4 *inputLock)
 {
-    cls0805bcc4 *out = inputLock->parentOrChildren;
-    out->eitherPipeConsumerCount -= inputLock->eitherPipeInputDemand;
-    out->upperPipeConsumerCount -= inputLock->upperPipeInputDemand;
-    out->referenceCount--;
-    out->activeReferenceCount--;
-    out->lowerPipeConsumerCount -= inputLock->lowerPipeInputDemand;
+    cls0805bcc4 *outputLock = inputLock->parentOrChildren;
+    outputLock->eitherPipeConsumerCount -= inputLock->eitherPipeInputDemand;
+    outputLock->upperPipeConsumerCount -= inputLock->upperPipeInputDemand;
+    outputLock->referenceCount--;
+    outputLock->activeReferenceCount--;
+    outputLock->lowerPipeConsumerCount -= inputLock->lowerPipeInputDemand;
     inputLock->ownerLockList = 0;
     inputLock->lockDirection = 0;
     inputLock->parentOrChildren = 0;
@@ -484,11 +484,11 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lock)
 
 bool cls0805c244::addInputLock(cls0805bcc4 *inputLock)
 {
-    cls0805bcc4 *out = inputLock->parentOrChildren;
-    out->activeReferenceCount--;
-    inputLock->nextSibling = out->parentOrChildren;
-    out->parentOrChildren = inputLock;
-    if (!out->calcStats(0)) {
+    cls0805bcc4 *outputLock = inputLock->parentOrChildren;
+    outputLock->activeReferenceCount--;
+    inputLock->nextSibling = outputLock->parentOrChildren;
+    outputLock->parentOrChildren = inputLock;
+    if (!outputLock->calcStats(0)) {
         reportError("AddInputLock failed to calcStats\n");
         exitAfterCleanup(-1);
     }
@@ -498,11 +498,11 @@ bool cls0805c244::addInputLock(cls0805bcc4 *inputLock)
 
 bool cls0805c244::undoInputLock(cls0805bcc4 *inputLock)
 {
-    cls0805bcc4 *out = inputLock->parentOrChildren;
-    out->activeReferenceCount++;
-    out->parentOrChildren = inputLock->nextSibling;
+    cls0805bcc4 *outputLock = inputLock->parentOrChildren;
+    outputLock->activeReferenceCount++;
+    outputLock->parentOrChildren = inputLock->nextSibling;
     inputLock->nextSibling = 0;
-    if (!out->calcStats(0)) {
+    if (!outputLock->calcStats(0)) {
         reportError("UndoInputLock failed to calcStats\n");
         exitAfterCleanup(-1);
         return false;
@@ -1015,11 +1015,11 @@ bool freeLockLists(cls0805c244 *firstLockList)
     return true;
 }
 
-cls0805c244 *findLockList(cls0805c244 *firstLockList, RegPoolEntry *reg, int part)
+cls0805c244 *findLockList(cls0805c244 *firstLockList, RegPoolEntry *registerEntry, int part)
 {
     for (; firstLockList; firstLockList = firstLockList->nextLockList) {
-        if (firstLockList->registerEntry == reg && firstLockList->componentIndex == part) {
-            if (reg->getPartPayload(part) && reg->getPartPayload(part) != (VclPtrWord)firstLockList) {
+        if (firstLockList->registerEntry == registerEntry && firstLockList->componentIndex == part) {
+            if (registerEntry->getPartPayload(part) && registerEntry->getPartPayload(part) != (VclPtrWord)firstLockList) {
                 reportError("rg points to rll, but rll list not it\n");
                 exitAfterCleanup(-1);
             }

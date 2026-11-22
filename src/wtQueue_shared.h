@@ -30,7 +30,7 @@ bool dynCalcStats(workTable *wt);
 bool scheduleMidTableMode1(workTable *wt, wrangleFunc f);
 bool scheduleMidTableMode0(workTable *wt, wrangleFunc f);
 bool reduceExtents(workTable *wt);
-bool fiddleBDL(workTable *wt);
+bool adjustTrailingBranchLayout(workTable *wt);
 bool assignLocalRegisters(Program *p, workTable *wt);
 bool makeLpWork(instStream *s, int maxSpread);
 bool disposeLpWork(instStream *s);
@@ -42,7 +42,7 @@ const char *stallReasonStr(short why);
 bool sredTable(workTable *wt);
 bool prepareReductionCandidates(Program *p, instStream *s, workTable *wt);
 bool reduceLinearSchedule(Program *p, workTable *wt, unsigned char a, unsigned char b);
-bool UnlinkFromDone(Block *blk, Instr *n);
+bool unlinkFromCompletedInstructions(Block *block, Instr *n);
 bool setRange(int s, int e, int lsz);
 
 #endif

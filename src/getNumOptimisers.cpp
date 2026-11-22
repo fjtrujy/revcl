@@ -40,7 +40,7 @@ optimiser optTable[11] = {
     {"dumb2", 0, 1, (wrangleFunc)optDumb2, 0},
 };
 
-int getNumOptimisers()
+int getOptimizerCount()
 {
     return 11;
 }
@@ -50,7 +50,7 @@ static inline void dumpLinearStream(instStream *stream)
     stream->dump(0);
 }
 
-bool doLinear(Program *program, int smart)
+bool scheduleLinearStreams(Program *program, int smart)
 {
     instStream *selectedStream;
     while ((selectedStream = selectUninsertedStream(program)) != 0) {
@@ -115,7 +115,7 @@ bool doLinear(Program *program, int smart)
                         reportError("failed to reduce extents for code!\n");
                         return false;
                     }
-                    if (!fiddleBDL(candidateTable)) {
+                    if (!adjustTrailingBranchLayout(candidateTable)) {
                         reportError("reduceEx - failed to fiddle bdl\n");
                         return false;
                     }
@@ -164,7 +164,7 @@ static inline const char *loopStallReason(instStream *stream)
     return stallReasonStr(stream->savedStallReason);
 }
 
-bool doLoop(Program *program, int smart)
+bool scheduleLoopStreams(Program *program, int smart)
 {
     for (instStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         int optimizerIndex;
@@ -243,7 +243,7 @@ bool doLoop(Program *program, int smart)
                         else {
                             currentStream->optimizationRecords[optimizerIndex].optimalLength = currentStream->getRecordedLogicalLength();
                             currentStream->optimizationRecords[optimizerIndex].mainLoopId = scheduleTable->mainLoopId;
-                            currentStream->optimizationRecords[optimizerIndex].candidateLoopId = scheduleTable->getCondLid();
+                            currentStream->optimizationRecords[optimizerIndex].candidateLoopId = scheduleTable->getTerminatingConditionalLoopId();
                             currentStream->optimizationRecords[optimizerIndex].instructionCount = scheduleTable->getLoopSize();
                             if (best && best->mainLoopId < scheduleTable->mainLoopId) {
                                 delete scheduleTable;
@@ -285,7 +285,7 @@ bool doLoop(Program *program, int smart)
     return true;
 }
 
-bool doRawAndSynth(Program *program, int smart)
+bool prepareRawAndSyntheticStreams(Program *program, int smart)
 {
     for (instStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         if (currentStream->getCodeMode() == 3) {
@@ -430,7 +430,7 @@ bool optimizeProgramScheduling(Program *program, int smart, bool sizeReduce)
     return true;
 }
 
-const char *getOptimiserName(int optimizerIndex)
+const char *getOptimizerName(int optimizerIndex)
 {
     int numOptimisers = 11;
     if (optimizerIndex < 0 || optimizerIndex >= numOptimisers) {

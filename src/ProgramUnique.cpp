@@ -6,7 +6,7 @@
 
 bool isExportedSymbol(Program *p, char *name);
 const char *getUniqueName(Program *p);
-char *mprefix_del(const char *a, const char *b);
+char *joinNameWithPrefix(const char *a, const char *b);
 
 bool Program::doUnique()
 {
@@ -43,7 +43,7 @@ bool Program::doUnique()
                     return false;
                 }
                 if (!isExportedSymbol(this, name)) {
-                    char *qualifiedName = mprefix_del(getUniqueName(this), name);
+                    char *qualifiedName = joinNameWithPrefix(getUniqueName(this), name);
                     if (!qualifiedName) {
                         reportError("failed to cat name\n");
                         return false;
@@ -59,7 +59,7 @@ bool Program::doUnique()
     for (stream = streamHead; stream; stream = stream->nextStream) {
         for (mNode *macroNode = stream->labels.head; macroNode; macroNode = macroNode->next) {
             if (!isExportedSymbol(this, macroNode->name)) {
-                char *qualifiedLabelName = mprefix_del(getUniqueName(this), macroNode->name);
+                char *qualifiedLabelName = joinNameWithPrefix(getUniqueName(this), macroNode->name);
                 if (!qualifiedLabelName) {
                     reportError("failed to cat\n");
                     return false;
@@ -73,7 +73,7 @@ bool Program::doUnique()
     }
     for (mNode *prefixNode = uniqueNamePrefixes.head; prefixNode; prefixNode = prefixNode->next) {
         if (!isExportedSymbol(this, prefixNode->name)) {
-            char *qualifiedPrefixName = mprefix_del(getUniqueName(this), prefixNode->name);
+            char *qualifiedPrefixName = joinNameWithPrefix(getUniqueName(this), prefixNode->name);
             if (!qualifiedPrefixName) {
                 reportError("failed to cat\n");
                 return false;

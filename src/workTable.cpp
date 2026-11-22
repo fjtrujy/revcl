@@ -5,7 +5,7 @@ extern const char thruSumOobError[] = "thruSum was set - but - oBits wasn't set 
 #include "os.h"
 #include "workTable.h"
 
-RegPool *GetRP(unsigned t);
+RegPool *getRegisterPoolByIndex(unsigned t);
 
 regUseSlot::~regUseSlot()
 {
@@ -15,7 +15,7 @@ void regUseList::dumpRegisterUses()
 {
     if (hasConsistentCount()) {
         for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
-            RegPool *pool = GetRP(poolIndex);
+            RegPool *pool = getRegisterPoolByIndex(poolIndex);
             if (pool)
                 dumpRegisterClassUses(poolIndex);
         }
@@ -30,13 +30,13 @@ int regUseList::dumpRegisterClassUses(int regClass)
     regUse *listHead = head;
     regUse *registerUse;
     for (registerUse = listHead; registerUse; registerUse = registerUse->next) {
-        RegPoolEntry *reg = registerUse->registerEntry;
-        if (!reg) {
+        RegPoolEntry *registerEntry = registerUse->registerEntry;
+        if (!registerEntry) {
             reportError("found reg ref with no reg!\n");
             exitAfterCleanup(-1);
             return 0;
         }
-        if (reg->registerClass == regClass)
+        if (registerEntry->registerClass == regClass)
             registerUseCount++;
     }
     if (registerUseCount == 0)
@@ -70,21 +70,21 @@ void regUse::validateAndDumpParts()
     }
 }
 
-regUse *regUseList::findByRegister(RegPoolEntry *reg)
+regUse *regUseList::findByRegister(RegPoolEntry *registerEntry)
 {
-    return find(reg);
+    return find(registerEntry);
 }
 
 regUse *regUseList::firstReal()
 {
     regUse *previousUse;
     for (previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *reg = previousUse->registerEntry;
-        if (!reg) {
+        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        if (!registerEntry) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
         }
-        if (!reg->isVirtual)
+        if (!registerEntry->isVirtual)
             break;
     }
     return previousUse;
@@ -94,12 +94,12 @@ regUse *regUse::nextReal()
 {
     regUse *previousUse;
     for (previousUse = next; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *reg = previousUse->registerEntry;
-        if (!reg) {
+        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        if (!registerEntry) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
         }
-        if (!reg->isVirtual)
+        if (!registerEntry->isVirtual)
             break;
     }
     return previousUse;
@@ -109,12 +109,12 @@ regUse *regUseList::firstVirtual()
 {
     regUse *previousUse;
     for (previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *reg = previousUse->registerEntry;
-        if (!reg) {
+        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        if (!registerEntry) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
         }
-        if (reg->isVirtual)
+        if (registerEntry->isVirtual)
             break;
     }
     return previousUse;
@@ -124,12 +124,12 @@ regUse *regUse::nextVirtual()
 {
     regUse *previousUse;
     for (previousUse = next; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *reg = previousUse->registerEntry;
-        if (!reg) {
+        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        if (!registerEntry) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
         }
-        if (reg->isVirtual)
+        if (registerEntry->isVirtual)
             break;
     }
     return previousUse;
@@ -262,8 +262,8 @@ int regUseList::countUncoveredRegisterClassUses(int regClass)
 {
     int uncoveredUseCount = 0;
     for (regUse *previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *reg = previousUse->registerEntry;
-        if (reg->registerClass != regClass || reg == reg->ownerPool->zeroRegister)
+        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        if (registerEntry->registerClass != regClass || registerEntry == registerEntry->ownerPool->zeroRegister)
             continue;
         if (~previousUse->inputMask & previousUse->throughputMask)
             uncoveredUseCount++;
@@ -277,7 +277,7 @@ void regUseList::dumpVirtualRegisterUses()
 {
     if (hasConsistentCount()) {
         for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
-            RegPool *pool = GetRP(poolIndex);
+            RegPool *pool = getRegisterPoolByIndex(poolIndex);
             if (pool && pool->virtualPartCount) {
                 reportInfo("%s\n", pool->poolName);
                 dumpRegisterClassAllocations(poolIndex);
@@ -286,9 +286,9 @@ void regUseList::dumpVirtualRegisterUses()
     }
 }
 
-static inline bool isVirtualRegister(RegPoolEntry *reg)
+static inline bool isVirtualRegister(RegPoolEntry *registerEntry)
 {
-    if (reg->isVirtual == true)
+    if (registerEntry->isVirtual == true)
         return true;
     return false;
 }
@@ -297,31 +297,31 @@ void regUseList::dumpRegisterClassAllocations(int regClass)
 {
     regUse *previousUse;
     for (previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *reg = previousUse->registerEntry;
-        RegPoolEntry *phys = reg->assignedPhysicalRegister;
+        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        RegPoolEntry *phys = registerEntry->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();
-        if (!isVirtualRegister(reg))
-            alloc = reg->registerName();
+        if (!isVirtualRegister(registerEntry))
+            alloc = registerEntry->registerName();
         int mask = previousUse->inputMask | previousUse->outputMask | previousUse->externalInputMask | previousUse->externalOutputMask | previousUse->throughputMask;
-        if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && previousUse->isExternal()) {
+        if (registerEntry->registerClass == regClass && registerEntry != registerEntry->ownerPool->zeroRegister && previousUse->isExternal()) {
             const char *thr = "";
             if (previousUse->throughputMask & ~(previousUse->inputMask | previousUse->outputMask | previousUse->externalInputMask | previousUse->externalOutputMask))
                 thr = "-THR";
-            reportInfo(" EXTERNAL: %20s - %s %s\n", reg->maskName(mask), alloc, thr);
+            reportInfo(" EXTERNAL: %20s - %s %s\n", registerEntry->maskName(mask), alloc, thr);
         }
     }
     for (previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *reg = previousUse->registerEntry;
-        RegPoolEntry *phys = reg->assignedPhysicalRegister;
+        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        RegPoolEntry *phys = registerEntry->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();
-        if (!isVirtualRegister(reg))
-            alloc = reg->registerName();
+        if (!isVirtualRegister(registerEntry))
+            alloc = registerEntry->registerName();
         int mask = previousUse->inputMask | previousUse->outputMask | previousUse->externalInputMask | previousUse->externalOutputMask | previousUse->throughputMask;
-        if (reg->registerClass == regClass && reg != reg->ownerPool->zeroRegister && !previousUse->isExternal())
-            reportInfo(" LOCAL : %20s - %s\n", reg->maskName(mask), alloc);
+        if (registerEntry->registerClass == regClass && registerEntry != registerEntry->ownerPool->zeroRegister && !previousUse->isExternal())
+            reportInfo(" LOCAL : %20s - %s\n", registerEntry->maskName(mask), alloc);
     }
 }

@@ -8,8 +8,8 @@
 #include "tPair.h"
 #include "tPairList.h"
 
-int getToEnd(Instr *in);
-int getFromStart(Instr *in);
+int getInstructionDistanceToStreamEnd(Instr *in);
+int getInstructionDistanceFromStreamStart(Instr *in);
 int guessKeyLen(Program *p, int key, int start, int end);
 
 bool prepExtInfo(Program *program, instStream *stream, bool noExt)
@@ -48,7 +48,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                             return 0;
                         }
                         Instr *setter = location->instruction;
-                        Operand *src = operandAtLocation(location);
+                        Operand *sourceOperand = operandAtLocation(location);
                         instStream *setterStream = setter->getOwningStream();
                         if (!setterStream) {
                             reportError("failed to get the setters ist\n");
@@ -61,13 +61,13 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                             reportError("minimal length .. bah\n");
                             return 0;
                         }
-                        int distanceToEnd = getToEnd(setter);
+                        int distanceToEnd = getInstructionDistanceToStreamEnd(setter);
                         if (distanceToEnd < 0) {
                             reportError("distance to end -ve..error\n");
                             return 0;
                         }
                         int total = distanceToEnd + pathLength;
-                        int requiredDistance = src->outputLatency + operand->additionalLatency - total - 1;
+                        int requiredDistance = sourceOperand->outputLatency + operand->additionalLatency - total - 1;
                         if ((setter->hasRawTableOrImmediateToken() || same) && requiredDistance > best)
                             best = requiredDistance;
                     }
@@ -100,8 +100,8 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                                 return 0;
                             }
                             Instr *user = externalLocation->instruction;
-                            Operand *dst = operandAtLocation(externalLocation);
-                            if (!user || !dst) {
+                            Operand *destinationOperand = operandAtLocation(externalLocation);
+                            if (!user || !destinationOperand) {
                                 reportError("no setting instruction/operand\n");
                                 return 0;
                             }
@@ -115,13 +115,13 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                                 reportError("minimal length .. bah\n");
                                 return 0;
                             }
-                            int distanceFromStart = getFromStart(user);
+                            int distanceFromStart = getInstructionDistanceFromStreamStart(user);
                             if (distanceFromStart < 0) {
                                 reportError("distance to end -ve..error\n");
                                 return 0;
                             }
                             int total = distanceFromStart + userPathLength;
-                            int userRequiredDistance = operand->outputLatency + dst->additionalLatency - total - 1;
+                            int userRequiredDistance = operand->outputLatency + destinationOperand->additionalLatency - total - 1;
                             if (user->hasRawTableOrImmediateToken() && userRequiredDistance > best)
                                 best = userRequiredDistance;
                         }
@@ -165,7 +165,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         reportError("minimal length .. bah\n");
                         return 0;
                     }
-                    int setterDistanceToEnd = getToEnd(instruction);
+                    int setterDistanceToEnd = getInstructionDistanceToStreamEnd(instruction);
                     if (setterDistanceToEnd < 0) {
                         reportError("distance to end -ve..error\n");
                         return 0;
@@ -198,7 +198,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         reportError("minimal length .. bah\n");
                         return 0;
                     }
-                    int consumerDistanceFromStart = getFromStart(instruction);
+                    int consumerDistanceFromStart = getInstructionDistanceFromStreamStart(instruction);
                     if (consumerDistanceFromStart < 0) {
                         reportError("distance from start -ve..error\n");
                         return 0;
@@ -249,12 +249,12 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         reportError("can't get first user \n");
                         return 0;
                     }
-                    int writerDistanceToEnd = getToEnd(writerInstruction);
+                    int writerDistanceToEnd = getInstructionDistanceToStreamEnd(writerInstruction);
                     if (writerDistanceToEnd < 0) {
                         reportError("<ve to end \n");
                         return 0;
                     }
-                    int readerDistanceFromStart = getFromStart(userInstruction);
+                    int readerDistanceFromStart = getInstructionDistanceFromStreamStart(userInstruction);
                     int total = writerDistanceToEnd + k1 + k2 + readerDistanceFromStart;
                     int crossStreamRequiredDistance = writerOperand->outputLatency + userOperand->additionalLatency - total - 1;
                     if (crossStreamRequiredDistance > table->externalMinimumLength)

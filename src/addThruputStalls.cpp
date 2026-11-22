@@ -18,7 +18,7 @@ static inline int thruputTail(instStream *stream, regUse *registerUse, int part)
     return length - last;
 }
 
-bool addThruputStalls(Program *program, instStream *targetStream, RegPoolEntry *reg, int part)
+bool addThroughputStalls(Program *program, instStream *targetStream, RegPoolEntry *registerEntry, int part)
 {
     regUse *registerUse = targetStream->backtraceRegisterUse;
     if (!registerUse) {
@@ -29,7 +29,7 @@ bool addThruputStalls(Program *program, instStream *targetStream, RegPoolEntry *
         regUse *sourceRegisterUse = sourceStream->backtraceRegisterUse;
         if (!sourceRegisterUse) {
             reportError("no btRegRef for something on the match list %s.%d target=%s stream is %s!\n",
-                          reg->registerName(), part, targetStream->streamName(), sourceStream->streamName());
+                          registerEntry->registerName(), part, targetStream->streamName(), sourceStream->streamName());
             return false;
         }
         int key = buildMinimumPathKey(program, sourceStream);

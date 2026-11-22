@@ -26,7 +26,7 @@ int nextHostClockTick()
     return ++hostClockCounter;
 }
 
-bool OS_Init()
+bool initializeOperatingSystem()
 {
     reportInfo("OS_Init(Linux)\n");
     hostClockCounter = time(0);
@@ -86,11 +86,11 @@ int createTemporaryFile(const char *name, char *pathOut)
         *pathOut = 0;
         return -1;
     }
-    mstrcpy(pathOut, buf);
+    checkedStringCopy(pathOut, buf);
     return temporaryDescriptor;
 }
 
-int OS_End()
+int shutDownOperatingSystem()
 {
     reportInfo("OS_End(Linux)\n");
     return 1;

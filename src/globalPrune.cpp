@@ -61,7 +61,7 @@ bool globalPrune(Program *program)
                 reportInfo("REMOVE INST: ");
                 int saved = errorOccurred;
                 errorOccurred = !quietDiagnostics;
-                currentInstruction->leDump();
+                currentInstruction->dumpInstructionContext();
                 errorOccurred = saved;
             }
         linkNode *incomingLink;

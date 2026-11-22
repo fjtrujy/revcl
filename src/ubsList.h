@@ -9,7 +9,7 @@ class stallList : public infoList {
 
 class ubsList : public infoList {
 public:
-    bool addUBS(instStream *entry, instStream *use, RegPoolEntry *reg, unsigned char bits);
+    bool addUBS(instStream *entry, instStream *use, RegPoolEntry *registerEntry, unsigned char bits);
 };
 
 #endif

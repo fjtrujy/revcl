@@ -81,11 +81,11 @@ int reportUserMessage(const char *fmt, ...)
     return vfprintf(stderr, fmt, ap);
 }
 
-int formatIntoBuffer(char *buf, const char *fmt, ...)
+int formatIntoBuffer(char *outputBuffer, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    return vsprintf(buf, fmt, ap);
+    return vsprintf(outputBuffer, fmt, ap);
 }
 
 int parseInteger(const char *s)
@@ -101,7 +101,7 @@ void exitAfterCleanup(int status)
         else
             puts("ERROR: something went wrong, vcl's outta here.");
     }
-    OS_End();
+    shutDownOperatingSystem();
     exit(status);
 }
 
@@ -118,6 +118,6 @@ void exitWithError(const char *fmt, ...)
         printf("ERROR: something went wrong, making '%s' vcl's outta here.\n", currentOutputFileName);
     else
         puts("ERROR: something went wrong, vcl's outta here.");
-    OS_End();
+    shutDownOperatingSystem();
     exit(-1);
 }
