@@ -5,7 +5,7 @@
 #include "os.h"
 
 
-Instr *makeMove(Block *block, RegPoolEntry *registerEntry)
+Instr *makeMove(Block *block, RegisterEntry *registerEntry)
 {
     int type = 0;
     Instr *instruction = 0;
@@ -42,7 +42,7 @@ Instr *makeMove(Block *block, RegPoolEntry *registerEntry)
             reportError("failed to get move output!\n");
             exitAfterCleanup(1);
         }
-        RegPoolEntry *dup = out->assignedRegister;
+        RegisterEntry *dup = out->assignedRegister;
         if (!dup) {
             reportError("failed to dup  a reg\n");
             abortAfterError();
@@ -78,14 +78,14 @@ int getMove(Block *block, Instr *instruction, int now)
 {
     Operand *bestOp = 0;
     int bestScore = -1;
-    RegPoolEntry *bestReg = 0;
+    RegisterEntry *bestReg = 0;
     OperandLock *bestLk = 0;
     if (instruction->moveRecordWord)
         return 2;
     Operand *operand;
     int sourceOperandIndex;
     for (sourceOperandIndex = 0; (operand = instruction->getOp(sourceOperandIndex)) != 0; sourceOperandIndex++) {
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
             registerEntry->minimumMoveRow = 0x7fff;
             registerEntry->maximumMoveRow = -1;
@@ -93,7 +93,7 @@ int getMove(Block *block, Instr *instruction, int now)
     }
     Operand *op2;
     for (sourceOperandIndex = 0; (op2 = instruction->getOp(sourceOperandIndex)) != 0; sourceOperandIndex++) {
-        RegPoolEntry *reg = registerOperand(op2, 1);
+        RegisterEntry *reg = registerOperand(op2, 1);
         if (reg && isVuRegister(reg) && op2->operandStatus != 2) {
             OperandLock *lock = 0;
             int score = -1;
@@ -127,14 +127,14 @@ int getMove(Block *block, Instr *instruction, int now)
                             reportError("dff was <0\n");
                             abortAfterError();
                         }
-                        RegPoolEntry *originalBaseRegister = op2->forcedBaseRegister;
+                        RegisterEntry *originalBaseRegister = op2->forcedBaseRegister;
                         RegisterPartLockList *u04 = parent->ownerLockList;
                         if (distanceToUse > score) {
                             op2->forcedBaseRegister = originalBaseRegister;
                             parent->ownerLockList = u04;
                             score = distanceToUse;
                         }
-                        RegPoolEntry *u14b = op2->originalRegister;
+                        RegisterEntry *u14b = op2->originalRegister;
                         op2->originalRegister = u14b;
                     }
                 }
@@ -202,7 +202,7 @@ int getMove(Block *block, Instr *instruction, int now)
         moveInstruction->candidateCostOffset = 0;
         Operand *out = moveInstruction->getOp(0);
         Operand *mvIn = moveInstruction->getOp(1);
-        RegPoolEntry *newReg = out->assignedRegister;
+        RegisterEntry *newReg = out->assignedRegister;
         mvIn->originalRegister = bestOp->originalRegister;
         out->originalRegister = newReg;
         short targetRow = out->outputLatency;
@@ -214,7 +214,7 @@ int getMove(Block *block, Instr *instruction, int now)
             int operandIndex;
             for (operandIndex = 0; operandIndex != pendingInstruction->operandCount; operandIndex++) {
                 Operand *operand = &pendingInstruction->operands[operandIndex];
-                RegPoolEntry *reg = registerOperand(operand, 1);
+                RegisterEntry *reg = registerOperand(operand, 1);
                 if (reg == bestReg) {
                     bool stale = false;
                     if (operand->operandStatus != 1) {
@@ -297,7 +297,7 @@ int getMove(Block *block, Instr *instruction, int now)
             }
             for (operandIndex = 0; operandIndex != pendingInstruction->operandCount; operandIndex++) {
                 Operand *operand = &pendingInstruction->operands[operandIndex];
-                RegPoolEntry *reg = registerOperand(operand, 2);
+                RegisterEntry *reg = registerOperand(operand, 2);
                 if (reg == bestReg) {
                     if (operand->operandStatus != 1) {
                         moveInstruction->requiresFullLoopMoveDrag = 0;
@@ -367,14 +367,14 @@ bool undoMove(Block *block, Instr *moveInstruction)
         unresolveMove(block, moveInstruction);
     Operand *out = moveInstruction->getOp(0);
     Operand *inputOperand = moveInstruction->getOp(1);
-    RegPoolEntry *orig = inputOperand->assignedRegister;
-    RegPoolEntry *dup = out->assignedRegister;
+    RegisterEntry *orig = inputOperand->assignedRegister;
+    RegisterEntry *dup = out->assignedRegister;
     if (!unlinkFromPendingInstructions(block, moveInstruction))
         reportError("failed to unlink from todolist!\n");
     for (Instr *instruction = block->pendingInstructions.head; instruction; instruction = (Instr *)instruction->pendingLink.nextInstruction) {
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = operand->assignedRegister;
+            RegisterEntry *registerEntry = operand->assignedRegister;
             if (registerEntry == dup) {
                 operand->assignedRegister = orig;
                 if (isRegisterOperand(operand, 1)) {
@@ -451,7 +451,7 @@ bool undoMove(Block *block, Instr *moveInstruction)
 #include "os.h"
 
 
-Instr *makeMove(Block *, RegPoolEntry *);
+Instr *makeMove(Block *, RegisterEntry *);
 
 bool undoMovesTo(Block *block, Instr *stop)
 {

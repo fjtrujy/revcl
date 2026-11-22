@@ -8,7 +8,7 @@
 void olList::validateOperandLocations()
 {
     int visitedCount = 0;
-    ol_s *location = head;
+    OperandLocation *location = head;
     if (count != 0) {
         for (; location; location = location->next) {
             if (location->instruction) {
@@ -30,7 +30,7 @@ void olList::validateOperandLocations()
 void olList::dumpOperandLocations()
 {
     int visitedCount = 0;
-    ol_s *location = head;
+    OperandLocation *location = head;
     if (count != 0) {
         for (; location; location = location->next) {
             if (location->instruction) {
@@ -46,7 +46,7 @@ void olList::dumpOperandLocations()
         exitWithError("oploc list - bad list not nent\n");
 }
 
-void ol_s::dumpInstructionContext()
+void OperandLocation::dumpInstructionContext()
 {
     if (instruction) {
         instruction->getOwningStream();
@@ -54,7 +54,7 @@ void ol_s::dumpInstructionContext()
     }
 }
 
-void ol_s::dumpOperandContext()
+void OperandLocation::dumpOperandContext()
 {
     if (instruction) {
         instruction->getOwningStream();
@@ -62,14 +62,14 @@ void ol_s::dumpOperandContext()
     }
 }
 
-Operand *operandAtLocation(ol_s *location)
+Operand *operandAtLocation(OperandLocation *location)
 {
     if (location->instruction)
         return &location->instruction->operands[location->operandIndex];
     return 0;
 }
 
-static inline void ol_s_copy_inl(ol_s *dst, ol_s *src)
+static inline void ol_s_copy_inl(OperandLocation *dst, OperandLocation *src)
 {
     dst->reset();
     if (src) {
@@ -81,7 +81,7 @@ static inline void ol_s_copy_inl(ol_s *dst, ol_s *src)
     }
 }
 
-void ol_s::copyLocationFrom(ol_s *src)
+void OperandLocation::copyLocationFrom(OperandLocation *src)
 {
     reset();
     if (src) {
@@ -93,7 +93,7 @@ void ol_s::copyLocationFrom(ol_s *src)
     }
 }
 
-static inline void ol_s_init_inl(ol_s *location, Instr *instruction, int operandIndex, int slot, bool ext)
+static inline void ol_s_init_inl(OperandLocation *location, Instr *instruction, int operandIndex, int slot, bool ext)
 {
     location->reset();
     if (ext)
@@ -103,7 +103,7 @@ static inline void ol_s_init_inl(ol_s *location, Instr *instruction, int operand
     location->componentIndex = slot;
 }
 
-void ol_s::init(Instr *inst, int operandPosition, int slot, bool ext)
+void OperandLocation::init(Instr *inst, int operandPosition, int slot, bool ext)
 {
     reset();
     if (ext)
@@ -113,11 +113,11 @@ void ol_s::init(Instr *inst, int operandPosition, int slot, bool ext)
     componentIndex = slot;
 }
 
-static inline ol_s *allocOL()
+static inline OperandLocation *allocOL()
 {
-    ol_s *location = olFreeList;
+    OperandLocation *location = olFreeList;
     if (!location) {
-        location = new ol_s;
+        location = new OperandLocation;
     } else {
         olFreeList = location->next;
         location->reset();
@@ -125,10 +125,10 @@ static inline ol_s *allocOL()
     return location;
 }
 
-ol_s *olList::addOperandLocation(Instr *instruction, int operandIndex, int slot, bool ext)
+OperandLocation *olList::addOperandLocation(Instr *instruction, int operandIndex, int slot, bool ext)
 {
-    ol_s *prev = 0;
-    ol_s *location;
+    OperandLocation *prev = 0;
+    OperandLocation *location;
     for (location = head; location; location = location->next) {
         if (instruction == location->instruction && operandIndex == location->operandIndex && slot == location->componentIndex) {
             if (ext != location->isExt()) {
@@ -151,10 +151,10 @@ ol_s *olList::addOperandLocation(Instr *instruction, int operandIndex, int slot,
     return location;
 }
 
-ol_s *olList::addInstructionLocation(Instr *instruction)
+OperandLocation *olList::addInstructionLocation(Instr *instruction)
 {
-    ol_s *prev = 0;
-    ol_s *location;
+    OperandLocation *prev = 0;
+    OperandLocation *location;
     for (location = head; location; location = location->next) {
         if (instruction == location->instruction)
             return location;
@@ -170,14 +170,14 @@ ol_s *olList::addInstructionLocation(Instr *instruction)
     return location;
 }
 
-ol_s *olList::copyOperandLocation(ol_s *location, bool ext)
+OperandLocation *olList::copyOperandLocation(OperandLocation *location, bool ext)
 {
     return addOperandLocation(location->instruction, location->operandIndex, location->componentIndex, ext);
 }
 
-ol_s *olList::firstInternalLocation()
+OperandLocation *olList::firstInternalLocation()
 {
-    ol_s *location = head;
+    OperandLocation *location = head;
     if (location && location->isExt()) {
         location = location->next;
         while (location && location->isExt())
@@ -186,17 +186,17 @@ ol_s *olList::firstInternalLocation()
     return location;
 }
 
-ol_s *ol_s::nextInternalLocation()
+OperandLocation *OperandLocation::nextInternalLocation()
 {
-    ol_s *location = next;
+    OperandLocation *location = next;
     while (location && location->isExt())
         location = location->next;
     return location;
 }
 
-ol_s *olList::firstExternalLocation()
+OperandLocation *olList::firstExternalLocation()
 {
-    ol_s *location = head;
+    OperandLocation *location = head;
     if (location && !location->isExt()) {
         location = location->next;
         while (location && !location->isExt())
@@ -205,15 +205,15 @@ ol_s *olList::firstExternalLocation()
     return location;
 }
 
-ol_s *ol_s::nextExternalLocation()
+OperandLocation *OperandLocation::nextExternalLocation()
 {
-    ol_s *location = next;
+    OperandLocation *location = next;
     while (location && !location->isExt())
         location = location->next;
     return location;
 }
 
-RegPoolEntry *registerAtLocation(ol_s *location)
+RegisterEntry *registerAtLocation(OperandLocation *location)
 {
     Operand *operand = location->instruction ? &location->instruction->operands[location->operandIndex] : 0;
     if (operand)
@@ -222,16 +222,16 @@ RegPoolEntry *registerAtLocation(ol_s *location)
     return 0;
 }
 
-ol_s *olList::insertExternalLocation(ol_s *src)
+OperandLocation *olList::insertExternalLocation(OperandLocation *src)
 {
-    ol_s *prev = 0;
-    ol_s *location;
+    OperandLocation *prev = 0;
+    OperandLocation *location;
     for (location = head; location; location = location->next) {
         if (src->cycleOffset < location->cycleOffset)
             break;
         prev = location;
     }
-    ol_s *insertedLocation = allocOL();
+    OperandLocation *insertedLocation = allocOL();
     ol_s_copy_inl(insertedLocation, src);
     insertedLocation->stateFlags |= 1;
     insertedLocation->next = location;
@@ -243,39 +243,39 @@ ol_s *olList::insertExternalLocation(ol_s *src)
     return insertedLocation;
 }
 
-void markLocationExternallyUsed(ol_s *location)
+void markLocationExternallyUsed(OperandLocation *location)
 {
     location->stateFlags |= 2;
 }
 
-int hasRawOrImmediateInstructionAtLocation(ol_s *location)
+int hasRawOrImmediateInstructionAtLocation(OperandLocation *location)
 {
     return location->instruction->hasRawTableOrImmediateToken();
 }
 
-int instructionSerialAtLocation(ol_s *location)
+int instructionSerialAtLocation(OperandLocation *location)
 {
     return location->instruction->instructionSerial;
 }
 
-bool sameOperandLocation(ol_s *location, ol_s *secondLocation)
+bool sameOperandLocation(OperandLocation *location, OperandLocation *secondLocation)
 {
     if (location && secondLocation)
         return location->instruction == secondLocation->instruction && location->packedOperandComponent == secondLocation->packedOperandComponent;
     return location == secondLocation;
 }
 
-instStream *locationOwningStream(ol_s *location)
+InstructionStream *locationOwningStream(OperandLocation *location)
 {
     return location->instruction->getOwningStream();
 }
 
-int locationRow(ol_s *location)
+int locationRow(OperandLocation *location)
 {
     return location->instruction->position.linearRow;
 }
 
-ol_s *allocateLocationNode()
+OperandLocation *allocateLocationNode()
 {
     return allocOL();
 }
@@ -283,9 +283,9 @@ ol_s *allocateLocationNode()
 int countFreeLocationNodes()
 {
     int freeCount = 0;
-    for (ol_s *location = olFreeList; location; location = location->next)
+    for (OperandLocation *location = olFreeList; location; location = location->next)
         freeCount++;
     return freeCount;
 }
 
-ol_s *olFreeList = 0;
+OperandLocation *olFreeList = 0;

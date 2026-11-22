@@ -8,7 +8,7 @@ static inline void resetInstrDyn(Instr *instruction)
     instruction->dynamicReverseStart = 0;
     instruction->dynamicReverseEnd = 0;
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
-        RegPoolEntry *registerEntry = instruction->operands[operandIndex].assignedRegister;
+        RegisterEntry *registerEntry = instruction->operands[operandIndex].assignedRegister;
         if (registerEntry)
             registerEntry->resetRegisterPartTiming();
     }
@@ -21,7 +21,7 @@ void Instr::resetDynamicSchedulingStats()
     dynamicReverseStart = 0;
     dynamicReverseEnd = 0;
     for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
-        RegPoolEntry *registerEntry = operands[operandIndex].assignedRegister;
+        RegisterEntry *registerEntry = operands[operandIndex].assignedRegister;
         if (registerEntry)
             registerEntry->resetRegisterPartTiming();
     }
@@ -30,7 +30,7 @@ void Instr::resetDynamicSchedulingStats()
 bool resetBlockDynamicStats(Block *block)
 {
     block->maximumDynamicStartRow = -1;
-    block->unk_06 = -1;
+    block->resetOnlyDynamicStatisticsMarker = -1;
     for (Instr *instruction = block->completedInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction)
         resetInstrDyn(instruction);
     for (Instr *instruction = block->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction)
@@ -49,7 +49,7 @@ static inline int lockLatency(OperandLock *input, OperandLock *parent)
     return input->issueLatency + parent->issueLatency;
 }
 
-bool dynCalcStats(workTable *table)
+bool dynCalcStats(ScheduleTable *table)
 {
     Block *block = (Block *)table;
     int operandIndex;
@@ -69,7 +69,7 @@ bool dynCalcStats(workTable *table)
         int maximumReadyCycle = 0;
         for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            RegisterEntry *registerEntry = registerOperand(operand, 1);
             if (registerEntry) {
                 for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                     OpSlot *slot = &operand->parts[partIndex];
@@ -88,10 +88,10 @@ bool dynCalcStats(workTable *table)
         }
         for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 2);
+            RegisterEntry *registerEntry = registerOperand(operand, 2);
             if (registerEntry) {
                 for (int registerPartIndex = 0; registerPartIndex != registerEntry->partCount; registerPartIndex++) {
-                    rPart *registerPart = registerEntry->getRegisterPartByIndex(registerPartIndex);
+                    RegisterPartState *registerPart = registerEntry->getRegisterPartByIndex(registerPartIndex);
                     if (instruction->inputMaskForRegister(registerEntry, 1 << registerPartIndex) && registerPart->latestPendingReadCycle != -1) {
                         int pendingReadCycle = registerPart->latestPendingReadCycle;
                         if (operand->externalBlockModeFlag)
@@ -109,13 +109,13 @@ bool dynCalcStats(workTable *table)
             block->maximumDynamicStartRow = maximumReadyCycle;
         for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            RegisterEntry *registerEntry = registerOperand(operand, 1);
             if (registerEntry) {
                 for (int registerPartIndex = 0; registerPartIndex != registerEntry->partCount; registerPartIndex++) {
                     bool bit = (operand->componentMask >> registerPartIndex) & 1;
                     if (bit) {
                         OpSlot *slot = &operand->parts[registerPartIndex];
-                        rPart *registerPart = registerEntry->getRegisterPartByIndex(registerPartIndex);
+                        RegisterPartState *registerPart = registerEntry->getRegisterPartByIndex(registerPartIndex);
                         if (!isAAInputLock(slot)) {
                             if (registerPart->earliestPendingReadCycle == -1) {
                                 registerPart->earliestPendingReadCycle = instruction->dynamicEarliestStart;
@@ -133,12 +133,12 @@ bool dynCalcStats(workTable *table)
         }
         for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 2);
+            RegisterEntry *registerEntry = registerOperand(operand, 2);
             if (registerEntry) {
                 for (int registerPartIndex = 0; registerPartIndex != registerEntry->partCount; registerPartIndex++) {
                     bool bit = (operand->componentMask >> registerPartIndex) & 1;
                     if (bit) {
-                        rPart *registerPart = registerEntry->getRegisterPartByIndex(registerPartIndex);
+                        RegisterPartState *registerPart = registerEntry->getRegisterPartByIndex(registerPartIndex);
                         registerPart->earliestPendingReadCycle = -1;
                         registerPart->latestPendingReadCycle = -1;
                     }
@@ -153,7 +153,7 @@ bool dynCalcStats(workTable *table)
     for (instruction = block->pendingInstructions.tail; instruction; instruction = instruction->pendingLink.previousInstruction) {
         for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            RegisterEntry *registerEntry = registerOperand(operand, 1);
             if (registerEntry) {
                 for (int registerPartIndex = 0; registerPartIndex != registerEntry->partCount; registerPartIndex++) {
                     OpSlot *slot = &operand->parts[registerPartIndex];
@@ -183,7 +183,7 @@ bool dynCalcStats(workTable *table)
     for (instruction = block->pendingInstructions.head; instruction; instruction = instruction->pendingLink.nextInstruction) {
         for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            RegisterEntry *registerEntry = registerOperand(operand, 1);
             if (registerEntry) {
                 for (int registerPartIndex = 0; registerPartIndex != registerEntry->partCount; registerPartIndex++) {
                     OpSlot *slot = &operand->parts[registerPartIndex];

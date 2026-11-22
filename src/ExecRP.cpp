@@ -416,7 +416,7 @@ bool setRegisterRangeEnabled(LocTag *sourceLine, RegPool *pool, bool flag)
         int first = -1, last;
         int registerNameIndex;
         for (registerNameIndex = 0; registerNameIndex <= range; registerNameIndex++) {
-            RegPoolEntry *registerEntry = pool->findPhysicalByName(buf[registerNameIndex]);
+            RegisterEntry *registerEntry = pool->findPhysicalByName(buf[registerNameIndex]);
             if (!registerEntry) {
                 reportError("not find %s\n", tok);
                 return false;
@@ -441,7 +441,7 @@ bool setRegisterRangeEnabled(LocTag *sourceLine, RegPool *pool, bool flag)
             first = swapIndex;
         }
         for (registerNameIndex = first; registerNameIndex <= last; registerNameIndex++) {
-            RegPoolEntry *registerEntry = pool->findByRegisterIndex(registerNameIndex);
+            RegisterEntry *registerEntry = pool->findByRegisterIndex(registerNameIndex);
             if (!registerEntry) {
                 reportError("not find %s\n", tok);
                 return false;

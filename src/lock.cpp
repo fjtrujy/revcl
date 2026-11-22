@@ -9,7 +9,7 @@ extern int errorOccurred;
 extern bool quietDiagnostics;
 bool fatalReadBeforeReady;
 
-bool cls0805bcc4::resetLock()
+bool OperandLock::resetLock()
 {
     activeReferenceCount = 0;
     referenceCount = 0;
@@ -51,7 +51,7 @@ bool cls0805bcc4::resetLock()
     return true;
 }
 
-bool cls0805bcc4::setOwner(int part, Instr *instr, int opnd)
+bool OperandLock::setOwner(int part, Instr *instr, int opnd)
 {
     if (!instr) {
         reportError("setowner - passed null\n");
@@ -79,7 +79,7 @@ bool cls0805bcc4::setOwner(int part, Instr *instr, int opnd)
     return true;
 }
 
-bool cls0805bcc4::setOwner(int part, regUse *registerUse)
+bool OperandLock::setOwner(int part, RegisterUse *registerUse)
 {
     if (!registerUse) {
         reportError("setowner - passed null rf\n");
@@ -103,7 +103,7 @@ bool cls0805bcc4::setOwner(int part, regUse *registerUse)
     }
     ownerOperandIndex = 0;
     ownerComponent = part;
-    unk_2a = 0;
+    resetOnlyLockOwnerMetadata = 0;
     ownerType = 2;
     ownerPointer = registerUse;
     linearRow = -1;
@@ -111,7 +111,7 @@ bool cls0805bcc4::setOwner(int part, regUse *registerUse)
     return true;
 }
 
-bool cls0805bcc4::clearOwner()
+bool OperandLock::clearOwner()
 {
     ownerPointer = 0;
     ownerType = 0;
@@ -122,21 +122,21 @@ bool cls0805bcc4::clearOwner()
     return true;
 }
 
-Instr *cls0805bcc4::ownerInstr()
+Instr *OperandLock::ownerInstr()
 {
     if (ownerType == 1)
         return (Instr *)ownerPointer;
     return 0;
 }
 
-regUse *cls0805bcc4::ownerRegUse()
+RegisterUse *OperandLock::ownerRegUse()
 {
     if (ownerType == 2)
-        return (regUse *)ownerPointer;
+        return (RegisterUse *)ownerPointer;
     return 0;
 }
 
-Operand *cls0805bcc4::ownerOperand()
+Operand *OperandLock::ownerOperand()
 {
     if (ownerType == 1) {
         int opnd = ownerOperandIndex;
@@ -146,14 +146,14 @@ Operand *cls0805bcc4::ownerOperand()
     return 0;
 }
 
-int cls0805bcc4::ownerOpnd()
+int OperandLock::ownerOpnd()
 {
     if (ownerType == 1)
         return ownerOperandIndex;
     return -1;
 }
 
-int cls0805bcc4::getPart()
+int OperandLock::getPart()
 {
     if (ownerType == 1 || ownerType == 2)
         return ownerComponent;
@@ -162,7 +162,7 @@ int cls0805bcc4::getPart()
     return -1;
 }
 
-void cls0805bcc4::printOwner()
+void OperandLock::printOwner()
 {
     switch (ownerType) {
     case 0:
@@ -177,7 +177,7 @@ void cls0805bcc4::printOwner()
         break;
     }
     case 2: {
-        regUse *ownerUse = ownerType == 2 ? (regUse *)ownerPointer : 0;
+        RegisterUse *ownerUse = ownerType == 2 ? (RegisterUse *)ownerPointer : 0;
         if (!ownerUse) {
             reportError("type regref..  can't get it though!\n");
             exitAfterCleanup(-1);
@@ -190,7 +190,7 @@ void cls0805bcc4::printOwner()
     }
 }
 
-cls0805bcc4 *cls0805bcc4::getParent()
+OperandLock *OperandLock::getParent()
 {
     if (lockDirection != 1) {
         reportError("getParent - called on non input lock\n");
@@ -213,7 +213,7 @@ cls0805bcc4 *cls0805bcc4::getParent()
     return parentOrChildren;
 }
 
-bool cls0805bcc4::setInOut(cls0805bcc4 *olk)
+bool OperandLock::setInOut(OperandLock *olk)
 {
     if (!olk) {
         reportError("setinout - passed null\n");
@@ -251,33 +251,33 @@ bool cls0805bcc4::setInOut(cls0805bcc4 *olk)
     return true;
 }
 
-bool cls0805bcc4::incRef()
+bool OperandLock::incRef()
 {
     activeReferenceCount++;
     return true;
 }
 
-bool cls0805bcc4::decRef()
+bool OperandLock::decRef()
 {
     activeReferenceCount--;
     return true;
 }
 
-void cls0805bcc4::print()
+void OperandLock::print()
 {
     switch (lockDirection) {
     case 0:
     case 1:
         break;
     case 2:
-        for (cls0805bcc4 *lock = parentOrChildren; lock; lock = lock->nextSibling)
+        for (OperandLock *lock = parentOrChildren; lock; lock = lock->nextSibling)
             lock->print();
         break;
     }
     printOwner();
 }
 
-cls0805c244::cls0805c244()
+RegisterPartLockList::RegisterPartLockList()
 {
     registerEntry = 0;
     nextLockList = 0;
@@ -294,7 +294,7 @@ cls0805c244::cls0805c244()
     loopWrapMinimumRow = 0;
 }
 
-cls0805c244::cls0805c244(cls0805c244 *next)
+RegisterPartLockList::RegisterPartLockList(RegisterPartLockList *next)
 {
     nextLockList = next;
     registerEntry = 0;
@@ -311,16 +311,16 @@ cls0805c244::cls0805c244(cls0805c244 *next)
     loopWrapMinimumRow = 0;
 }
 
-cls0805c244::~cls0805c244()
+RegisterPartLockList::~RegisterPartLockList()
 {
 }
 
-void cls0805c244::checkCounts()
+void RegisterPartLockList::checkCounts()
 {
     int siblingCount = 0;
-    for (cls0805bcc4 *outputLock = outputLocks; outputLock; outputLock = outputLock->nextSibling) {
+    for (OperandLock *outputLock = outputLocks; outputLock; outputLock = outputLock->nextSibling) {
         outputLock->printOwner();
-        for (cls0805bcc4 *lock = outputLock->parentOrChildren; lock; lock = lock->nextSibling)
+        for (OperandLock *lock = outputLock->parentOrChildren; lock; lock = lock->nextSibling)
             lock->printOwner();
         siblingCount++;
     }
@@ -328,7 +328,7 @@ void cls0805c244::checkCounts()
         reportError("ERROR - nOutLocks != nToGo + nDone\n");
 }
 
-bool cls0805c244::reset()
+bool RegisterPartLockList::reset()
 {
     for (int externalOutputIndex = 0; externalOutputIndex != 4; externalOutputIndex++)
         externalOutputLocks[externalOutputIndex] = 0;
@@ -344,7 +344,7 @@ bool cls0805c244::reset()
     return true;
 }
 
-bool cls0805c244::addInput(cls0805bcc4 *outputLock, cls0805bcc4 *inputLock, char issueLatency, unsigned char latencyModeFlag)
+bool RegisterPartLockList::addInput(OperandLock *outputLock, OperandLock *inputLock, char issueLatency, unsigned char latencyModeFlag)
 {
     inputLock->lockDirection = 1;
     inputLock->ownerLockList = this;
@@ -359,12 +359,12 @@ bool cls0805c244::addInput(cls0805bcc4 *outputLock, cls0805bcc4 *inputLock, char
     return true;
 }
 
-static inline bool isRegLock(cls0805bcc4 *lock)
+static inline bool isRegLock(OperandLock *lock)
 {
     return lock->ownerType == 2;
 }
 
-bool cls0805c244::addOutput(cls0805bcc4 *lock, int throughputSpacing, int issueLatency, unsigned char latencyModeFlag)
+bool RegisterPartLockList::addOutput(OperandLock *lock, int throughputSpacing, int issueLatency, unsigned char latencyModeFlag)
 {
     if (isRegLock(lock))
         containsRegisterOutput = 1;
@@ -378,9 +378,9 @@ bool cls0805c244::addOutput(cls0805bcc4 *lock, int throughputSpacing, int issueL
     return true;
 }
 
-bool cls0805c244::removeInput(cls0805bcc4 *inputLock)
+bool RegisterPartLockList::removeInput(OperandLock *inputLock)
 {
-    cls0805bcc4 *outputLock = inputLock->parentOrChildren;
+    OperandLock *outputLock = inputLock->parentOrChildren;
     outputLock->eitherPipeConsumerCount -= inputLock->eitherPipeInputDemand;
     outputLock->upperPipeConsumerCount -= inputLock->upperPipeInputDemand;
     outputLock->referenceCount--;
@@ -392,7 +392,7 @@ bool cls0805c244::removeInput(cls0805bcc4 *inputLock)
     return true;
 }
 
-bool cls0805c244::removeOutput(cls0805bcc4 *lock)
+bool RegisterPartLockList::removeOutput(OperandLock *lock)
 {
     lock->lockDirection = 0;
     lock->ownerLockList = 0;
@@ -401,12 +401,12 @@ bool cls0805c244::removeOutput(cls0805bcc4 *lock)
     return true;
 }
 
-static inline bool isOwnedBy(cls0805bcc4 *lock, cls0805c244 *lockList)
+static inline bool isOwnedBy(OperandLock *lock, RegisterPartLockList *lockList)
 {
     return lock->ownerLockList == lockList;
 }
 
-bool cls0805c244::addOutputLock(cls0805bcc4 *lock)
+bool RegisterPartLockList::addOutputLock(OperandLock *lock)
 {
     if (!lock) {
         reportError("Addoutputlock - null pointer\n");
@@ -457,8 +457,8 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lock)
     }
     lock->insertedIntoLockList = 1;
     lock->nextSortedOutput = 0;
-    cls0805bcc4 *prev = 0;
-    for (cls0805bcc4 *cur = sortedOutputLocks; cur; cur = cur->nextSortedOutput) {
+    OperandLock *prev = 0;
+    for (OperandLock *cur = sortedOutputLocks; cur; cur = cur->nextSortedOutput) {
         int lockLoopRow = lock->loopRow;
         int crl = cur->loopRow;
         if ((short)lockLoopRow == (short)crl && (short)lockLoopRow >= 0) {
@@ -482,9 +482,9 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lock)
     return true;
 }
 
-bool cls0805c244::addInputLock(cls0805bcc4 *inputLock)
+bool RegisterPartLockList::addInputLock(OperandLock *inputLock)
 {
-    cls0805bcc4 *outputLock = inputLock->parentOrChildren;
+    OperandLock *outputLock = inputLock->parentOrChildren;
     outputLock->activeReferenceCount--;
     inputLock->nextSibling = outputLock->parentOrChildren;
     outputLock->parentOrChildren = inputLock;
@@ -496,9 +496,9 @@ bool cls0805c244::addInputLock(cls0805bcc4 *inputLock)
     return true;
 }
 
-bool cls0805c244::undoInputLock(cls0805bcc4 *inputLock)
+bool RegisterPartLockList::undoInputLock(OperandLock *inputLock)
 {
-    cls0805bcc4 *outputLock = inputLock->parentOrChildren;
+    OperandLock *outputLock = inputLock->parentOrChildren;
     outputLock->activeReferenceCount++;
     outputLock->parentOrChildren = inputLock->nextSibling;
     inputLock->nextSibling = 0;
@@ -512,7 +512,7 @@ bool cls0805c244::undoInputLock(cls0805bcc4 *inputLock)
     return true;
 }
 
-bool cls0805c244::undoOutputLock(cls0805bcc4 *lock)
+bool RegisterPartLockList::undoOutputLock(OperandLock *lock)
 {
     remainingLockCount++;
     outputLocks = lock->nextSibling;
@@ -524,8 +524,8 @@ bool cls0805c244::undoOutputLock(cls0805bcc4 *lock)
         return false;
     }
     lock->insertedIntoLockList = 0;
-    cls0805bcc4 *prev = 0;
-    cls0805bcc4 *cur = sortedOutputLocks;
+    OperandLock *prev = 0;
+    OperandLock *cur = sortedOutputLocks;
     while (cur && cur != lock) {
         prev = cur;
         cur = cur->nextSortedOutput;
@@ -543,10 +543,10 @@ bool cls0805c244::undoOutputLock(cls0805bcc4 *lock)
     return true;
 }
 
-int cls0805c244::maxConstraintOfFirstOutputs(int maximumLockCount)
+int RegisterPartLockList::maxConstraintOfFirstOutputs(int maximumLockCount)
 {
     int best = 0;
-    for (cls0805bcc4 *lock = sortedOutputLocks; lock; lock = lock->nextSortedOutput) {
+    for (OperandLock *lock = sortedOutputLocks; lock; lock = lock->nextSortedOutput) {
         maximumLockCount--;
         if (lock->latestConsumerCycle > best)
             best = lock->latestConsumerCycle;
@@ -558,7 +558,7 @@ int cls0805c244::maxConstraintOfFirstOutputs(int maximumLockCount)
     return best;
 }
 
-static inline Operand *lockOperand(cls0805bcc4 *lock)
+static inline Operand *lockOperand(OperandLock *lock)
 {
     if (lock->ownerType == 1) {
         int opnd = lock->ownerOperandIndex;
@@ -568,16 +568,16 @@ static inline Operand *lockOperand(cls0805bcc4 *lock)
     return 0;
 }
 
-static inline bool isInserted(cls0805bcc4 *lock)
+static inline bool isInserted(OperandLock *lock)
 {
     return lock->insertedIntoLockList != 0;
 }
 
-bool cls0805bcc4::isOk(int type, bool inserted)
+bool OperandLock::isOk(int type, bool inserted)
 {
     int loopSize = activeLoopSize;
     bool lockIsValid = true;
-    regUse *registerUse = ownerType == 2 ? (regUse *)ownerPointer : 0;
+    RegisterUse *registerUse = ownerType == 2 ? (RegisterUse *)ownerPointer : 0;
     Operand *operand = lockOperand(this);
 
     if (registerUse) {
@@ -609,7 +609,7 @@ bool cls0805bcc4::isOk(int type, bool inserted)
             reportError("output lock - ref count mismatch\n");
             return false;
         }
-        regUse *orf = ownerType == 2 ? (regUse *)ownerPointer : 0;
+        RegisterUse *orf = ownerType == 2 ? (RegisterUse *)ownerPointer : 0;
         if (orf && loopSize) {
             if (issueLatency > 1) {
                 reportError("external input had latency for loop\n");
@@ -645,14 +645,14 @@ bool cls0805bcc4::isOk(int type, bool inserted)
     return lockIsValid;
 }
 
-static inline bool ownsLock(cls0805c244 *list, cls0805bcc4 *lock)
+static inline bool ownsLock(RegisterPartLockList *list, OperandLock *lock)
 {
     if (lock->ownerLockList == list)
         return true;
     return false;
 }
 
-bool cls0805c244::isOk(cls0805bcc4 *candidateLock, int type, bool inserted)
+bool RegisterPartLockList::isOk(OperandLock *candidateLock, int type, bool inserted)
 {
     if (!candidateLock) {
         reportError("rLockList::isOk  -passed a null lock\n");
@@ -660,8 +660,8 @@ bool cls0805c244::isOk(cls0805bcc4 *candidateLock, int type, bool inserted)
     }
     bool lockIsValid = candidateLock->isOk(type, inserted);
     if (candidateLock->lockDirection == 0) {
-        cls0805bcc4 *parent = candidateLock->getParent();
-        cls0805bcc4 *outputLock;
+        OperandLock *parent = candidateLock->getParent();
+        OperandLock *outputLock;
         for (outputLock = outputLocks; outputLock; outputLock = outputLock->nextSibling)
             if (outputLock == parent)
                 break;
@@ -691,30 +691,30 @@ bool cls0805c244::isOk(cls0805bcc4 *candidateLock, int type, bool inserted)
     return lockIsValid;
 }
 
-short cls0805bcc4::maximumLockConstraint()
+short OperandLock::maximumLockConstraint()
 {
     return latestConsumerCycle;
 }
 
-short cls0805bcc4::secondaryLockConstraint()
+short OperandLock::secondaryLockConstraint()
 {
     return earliestConsumerFreeCycle;
 }
 
-static inline bool hasPartFlag(cls0805bcc4 *lock)
+static inline bool hasPartFlag(OperandLock *lock)
 {
     return lock->externalOutputSlotPlusOne && lock->ownerLockList->containsRegisterOutput;
 }
 
-bool cls0805bcc4::calcStats(Instr *skip)
+bool OperandLock::calcStats(Instr *skip)
 {
     int lsz = activeLoopSize;
-    cls0805c244 *lockList = ownerLockList;
+    RegisterPartLockList *lockList = ownerLockList;
     scheduledConsumerCount = 0;
     int maxT = -30000;
     int minFree = 30000;
     int minUse = 30000;
-    for (cls0805bcc4 *lock = parentOrChildren; lock; lock = lock->nextSibling) {
+    for (OperandLock *lock = parentOrChildren; lock; lock = lock->nextSibling) {
         if (skip) {
             Instr *otherInstruction = lock->ownerType == 1 ? (Instr *)lock->ownerPointer : 0;
             if (otherInstruction == skip)
@@ -830,12 +830,12 @@ bool cls0805bcc4::calcStats(Instr *skip)
 }
 
 
-void cls0805bcc4::resetCalculatedStats()
+void OperandLock::resetCalculatedStats()
 {
     resetStats();
 }
 
-void cls0805bcc4::setFrom(InstructionPosition *instructionPosition)
+void OperandLock::setFrom(InstructionPosition *instructionPosition)
 {
     int rline = instructionPosition->linearRow;
     linearRow = rline;
@@ -854,14 +854,14 @@ void cls0805bcc4::setFrom(InstructionPosition *instructionPosition)
     exitAfterCleanup(-1);
 }
 
-short cls0805bcc4::getCurrentLoopIteration()
+short OperandLock::getCurrentLoopIteration()
 {
     if (activeLoopSize)
         return linearRow / activeLoopSize;
     return 0;
 }
 
-bool cls0805c244::moveOutputLock(cls0805bcc4 *lock)
+bool RegisterPartLockList::moveOutputLock(OperandLock *lock)
 {
     if (!lock) {
         reportError("moveoutputlock - null pointer\n");
@@ -881,11 +881,11 @@ bool cls0805c244::moveOutputLock(cls0805bcc4 *lock)
         checkCounts();
         exitAfterCleanup(-1);
     }
-    cls0805bcc4 *cur = sortedOutputLocks;
-    cls0805bcc4 *prev = 0;
+    OperandLock *cur = sortedOutputLocks;
+    OperandLock *prev = 0;
     sortedOutputLocks = 0;
     while (cur) {
-        cls0805bcc4 *next = cur->nextSortedOutput;
+        OperandLock *next = cur->nextSortedOutput;
         cur->nextSortedOutput = 0;
         if (cur != lock) {
             if (!sortedOutputLocks)
@@ -921,7 +921,7 @@ bool cls0805c244::moveOutputLock(cls0805bcc4 *lock)
     return true;
 }
 
-bool cls0805c244::moveInputLock(cls0805bcc4 *inputLock)
+bool RegisterPartLockList::moveInputLock(OperandLock *inputLock)
 {
     if (!inputLock->parentOrChildren->calcStats(0)) {
         reportError("moveinputlock failed to calcStats\n");
@@ -937,7 +937,7 @@ static inline bool singleExtOutputMode()
     return false;
 }
 
-bool cls0805c244::addExtOutput(cls0805bcc4 *lock, bool flag)
+bool RegisterPartLockList::addExtOutput(OperandLock *lock, bool flag)
 {
     if (lock->externalOutputSlotPlusOne) {
         reportError("lock is already external output\n");
@@ -960,21 +960,21 @@ bool cls0805c244::addExtOutput(cls0805bcc4 *lock, bool flag)
     return true;
 }
 
-static inline bool hasRegUseOwner(cls0805bcc4 *lock)
+static inline bool hasRegUseOwner(OperandLock *lock)
 {
     if (lock->ownerType == 2)
         return true;
     return false;
 }
 
-Instr *cls0805c244::earliestExt()
+Instr *RegisterPartLockList::earliestExt()
 {
     Instr *res = 0;
-    cls0805bcc4 *lock = sortedOutputLocks;
+    OperandLock *lock = sortedOutputLocks;
     if (lock) {
         if (hasRegUseOwner(lock)) {
             int best = 30000;
-            for (cls0805bcc4 *childLock = lock->parentOrChildren; childLock; childLock = childLock->nextSibling) {
+            for (OperandLock *childLock = lock->parentOrChildren; childLock; childLock = childLock->nextSibling) {
                 if (childLock->operandStatusCode != 2) {
                     Instr *instruction = childLock->ownerType == 1 ? (Instr *)childLock->ownerPointer : 0;
                     if (!instruction) {
@@ -992,9 +992,9 @@ Instr *cls0805c244::earliestExt()
     return res;
 }
 
-int cls0805c244::countFlaggedOutputLocks()
+int RegisterPartLockList::countFlaggedOutputLocks()
 {
-    cls0805bcc4 *lock = outputLocks;
+    OperandLock *lock = outputLocks;
     int activeLockCount = 0;
     while (lock) {
         if (lock->activeReferenceCount)
@@ -1004,10 +1004,10 @@ int cls0805c244::countFlaggedOutputLocks()
     return activeLockCount;
 }
 
-bool freeLockLists(cls0805c244 *firstLockList)
+bool freeLockLists(RegisterPartLockList *firstLockList)
 {
     while (firstLockList) {
-        cls0805c244 *next = firstLockList->nextLockList;
+        RegisterPartLockList *next = firstLockList->nextLockList;
         if (firstLockList)
             ::operator delete(firstLockList);
         firstLockList = next;
@@ -1015,7 +1015,7 @@ bool freeLockLists(cls0805c244 *firstLockList)
     return true;
 }
 
-cls0805c244 *findLockList(cls0805c244 *firstLockList, RegPoolEntry *registerEntry, int part)
+RegisterPartLockList *findLockList(RegisterPartLockList *firstLockList, RegisterEntry *registerEntry, int part)
 {
     for (; firstLockList; firstLockList = firstLockList->nextLockList) {
         if (firstLockList->registerEntry == registerEntry && firstLockList->componentIndex == part) {
@@ -1043,18 +1043,18 @@ const char *rlmtName(unsigned char lockType)
     }
 }
 
-const char *cls0805bcc4::regName()
+const char *OperandLock::regName()
 {
-    cls0805c244 *lockList = ownerLockList;
+    RegisterPartLockList *lockList = ownerLockList;
     if (!lockList)
         return "NOT_ON_A_LOCKLIST";
-    RegPoolEntry *registerEntry = lockList->registerEntry;
+    RegisterEntry *registerEntry = lockList->registerEntry;
     if (!registerEntry)
         return "RLL_HAS_NO_REG";
     return registerEntry->registerName();
 }
 
-bool cls0805c244::setRepReg(RegPoolEntry *selectedRegister)
+bool RegisterPartLockList::setRepReg(RegisterEntry *selectedRegister)
 {
     if (registerEntry && selectedRegister != registerEntry) {
         reportError("can't set representative reg - it's already set\n");

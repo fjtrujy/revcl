@@ -4,10 +4,10 @@
 bool isReferencedLabel(Program *p, char *name);
 bool isExportedSymbol(Program *p, char *name);
 
-instStream::instStream()
+InstructionStream::InstructionStream()
 {
     stats.clear();
-    unk_2d8 = 0;
+    resetOnlyStreamEmissionWord = 0;
     appliedOptimizationMask = 0;
     hasLoopOptimization = 0;
     savedStallReason = 0;
@@ -28,7 +28,7 @@ instStream::instStream()
     previousStream = 0;
     streamId = 0;
     streamSerial = 0;
-    unk_2c6 = 0;
+    resetOnlyStreamLoopShort = 0;
     owningProgram = 0;
     workTablePtr = 0;
     savedTable = 0;
@@ -42,7 +42,7 @@ instStream::instStream()
     participatesInStall = 0;
     allowUpwardReduction = 0;
     allowDownwardReduction = 0;
-    unk_2b6 = -1;
+    resetOnlyStreamBranchTimingSentinel = -1;
     branchForwardLatencyDepth = -1;
     branchType = 0;
     endType = 1;
@@ -50,12 +50,12 @@ instStream::instStream()
     optimizationRecordCount = 0;
 }
 
-instStream::~instStream()
+InstructionStream::~InstructionStream()
 {
     reset();
 }
 
-bool instStream::reset()
+bool InstructionStream::reset()
 {
     savedStallReason = 0;
     currentStallReason = 0;
@@ -77,12 +77,12 @@ bool instStream::reset()
     return true;
 }
 
-void instStream::dump(int)
+void InstructionStream::dump(int unusedDumpMode)
 {
     labels.noopListTraversal();
     inputLinks.dump();
     canLoop();
-    workTable *table = workTablePtr;
+    ScheduleTable *table = workTablePtr;
     if (!table) {
         reportWarning("iStream:: dump - null work table - defaulting to inputTable\n");
         table = &sourceTable;
@@ -96,7 +96,7 @@ void instStream::dump(int)
     }
 }
 
-void instStream::zeroStats()
+void InstructionStream::zeroStats()
 {
     if (!workTablePtr) {
         reportError("no work table set for zeroStats!\n");
@@ -107,13 +107,13 @@ void instStream::zeroStats()
     schedulingStatistics.zeroAllCounters();
 }
 
-bool instStream::iOwn(Instr *instruction)
+bool InstructionStream::iOwn(Instr *instruction)
 {
     if (!instruction) {
         reportWarning("iStream::iOwn - passed a null pointer\n");
         return false;
     }
-    instStream *otherStream = instruction->getOwningStream();
+    InstructionStream *otherStream = instruction->getOwningStream();
     if (!otherStream) {
         reportWarning("iStream::iOwn - no owner for instruction\n");
         return false;
@@ -121,9 +121,9 @@ bool instStream::iOwn(Instr *instruction)
     return otherStream == this;
 }
 
-bool instStream::patchLatencies()
+bool InstructionStream::patchLatencies()
 {
-    workTable *table = workTablePtr;
+    ScheduleTable *table = workTablePtr;
     int patchedLatencyCount = 0;
     if (!table) {
         reportError("iStream::PatchLatencies - no work table\n");
@@ -165,7 +165,7 @@ const char *istBranchTypeName(int branchType)
     return branchTypeNameByCode(branchType);
 }
 
-const char *instStream::branchTypeName()
+const char *InstructionStream::branchTypeName()
 {
     return branchTypeNameByCode(branchType);
 }
@@ -187,7 +187,7 @@ const char *istStartTypeName(int streamStartType)
     return startTypeNameText;
 }
 
-const char *instStream::endTypeName()
+const char *InstructionStream::endTypeName()
 {
     int streamEndType = endType;
     const char *endTypeNameText = "ISTET_BAD";
@@ -208,7 +208,7 @@ const char *instStream::endTypeName()
     return endTypeNameText;
 }
 
-const char *instStream::startTypeName()
+const char *InstructionStream::startTypeName()
 {
     const char *startTypeNameText;
     switch (startType) {
@@ -225,10 +225,10 @@ const char *instStream::startTypeName()
     return startTypeNameText;
 }
 
-bool instStream::canLoop()
+bool InstructionStream::canLoop()
 {
     if (branchType == 1 || branchType == 5) {
-        instStream *stream = outputLinks.getStream(1);
+        InstructionStream *stream = outputLinks.getStream(1);
         if (!stream) {
             reportError("canLoop - bad return from outIST getFirst\n");
             exitAfterCleanup(-1);
@@ -246,12 +246,12 @@ bool instStream::canLoop()
     return false;
 }
 
-static inline void dumpEmitStream(instStream *stream)
+static inline void dumpEmitStream(InstructionStream *stream)
 {
     stream->dump(false);
 }
 
-char *instStream::emit(char *outputBuffer, int commentMode, int *p1, int *p2)
+char *InstructionStream::emit(char *outputBuffer, int commentMode, int *p1, int *p2)
 {
     *p1 = 0;
     *p2 = 0;
@@ -299,7 +299,7 @@ char *instStream::emit(char *outputBuffer, int commentMode, int *p1, int *p2)
     return outputBuffer;
 }
 
-bool instStream::flowReset()
+bool InstructionStream::flowReset()
 {
     if (!workTablePtr) {
         reportError("work table not set\n");
@@ -323,7 +323,7 @@ bool instStream::flowReset()
     return true;
 }
 
-const char *instStream::streamName()
+const char *InstructionStream::streamName()
 {
     const char *candidateName = labels.firstNodeName();
     const char *resolvedName = "UNNAMED_ISTREAM";
@@ -332,12 +332,12 @@ const char *instStream::streamName()
     return resolvedName;
 }
 
-void instStream::dumpSynthetics()
+void InstructionStream::dumpSynthetics()
 {
     checkedTable("dump synthetics .. work table not set\n")->dumpSynthetics();
 }
 
-char *instStream::emitLabels(char *outputBuffer)
+char *InstructionStream::emitLabels(char *outputBuffer)
 {
     if (emissionStartIndex >= 0) {
         for (mNode *node = labels.head; node; node = node->next) {
@@ -356,12 +356,12 @@ char *instStream::emitLabels(char *outputBuffer)
     return outputBuffer;
 }
 
-Instr *instStream::getBranch()
+Instr *InstructionStream::getBranch()
 {
     return checkedTable("getBranch  - no work table!\n")->getBranch();
 }
 
-bool instStream::removeBranch()
+bool InstructionStream::removeBranch()
 {
     requireTable("getBranch  - no work table!\n");
     if (!workTablePtr->removeBranch()) {
@@ -372,7 +372,7 @@ bool instStream::removeBranch()
     return true;
 }
 
-char *instStream::getBranchTargetImmediate()
+char *InstructionStream::getBranchTargetImmediate()
 {
     char *branchLabelText = 0;
     requireTable("getBranch  - no work table!\n");
@@ -384,9 +384,9 @@ char *instStream::getBranchTargetImmediate()
     return branchLabelText;
 }
 
-RegPoolEntry *instStream::getBranchTargetRegister()
+RegisterEntry *InstructionStream::getBranchTargetRegister()
 {
-    RegPoolEntry *registerEntry = 0;
+    RegisterEntry *registerEntry = 0;
     requireTable("getBranch  - no work table!\n");
     Instr *branchInstruction = workTablePtr->getBranch();
     if (branchInstruction)
@@ -396,89 +396,89 @@ RegPoolEntry *instStream::getBranchTargetRegister()
     return registerEntry;
 }
 
-unsigned char instStream::getCodeMode()
+unsigned char InstructionStream::getCodeMode()
 {
-    workTable *table = workTablePtr;
+    ScheduleTable *table = workTablePtr;
     if (table)
         return table->codeModeValue;
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
 
-const char *instStream::getCodeModeName()
+const char *InstructionStream::getCodeModeName()
 {
-    workTable *table = workTablePtr;
+    ScheduleTable *table = workTablePtr;
     if (table)
         return codeModeName(table->codeModeValue);
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
 
-unsigned char instStream::getRawSchedulingMode()
+unsigned char InstructionStream::getRawSchedulingMode()
 {
-    workTable *table = workTablePtr;
+    ScheduleTable *table = workTablePtr;
     if (table)
         return table->getTableRawMode();
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
 
-static inline bool isRawTable(workTable *table)
+static inline bool isRawTable(ScheduleTable *table)
 {
     return table->codeModeValue == 3;
 }
 
-static inline bool isFreeRawTable(workTable *table)
+static inline bool isFreeRawTable(ScheduleTable *table)
 {
     return isRawTable(table) && (table->rawSchedulingMode == 1 || table->rawSchedulingMode == 3);
 }
 
-bool instStream::usesFreeRawLayout()
+bool InstructionStream::usesFreeRawLayout()
 {
-    workTable *table = workTablePtr;
+    ScheduleTable *table = workTablePtr;
     if (!table)
         return false;
     return isFreeRawTable(table);
 }
 
-static inline bool isFixedRawTable(workTable *table)
+static inline bool isFixedRawTable(ScheduleTable *table)
 {
     return isRawTable(table) && (table->rawSchedulingMode == 2 || table->rawSchedulingMode == 4);
 }
 
-bool instStream::usesFixedRawLayout()
+bool InstructionStream::usesFixedRawLayout()
 {
-    workTable *table = workTablePtr;
+    ScheduleTable *table = workTablePtr;
     if (!table)
         return false;
     return isFixedRawTable(table);
 }
 
-unsigned char instStream::getAllocMode()
+unsigned char InstructionStream::getAllocMode()
 {
-    workTable *table = workTablePtr;
+    ScheduleTable *table = workTablePtr;
     if (table)
         return table->allocationMode;
     reportError("getAllocMode - work table not set\n");
     return 0;
 }
 
-bool instStream::isOutsideRawMode()
+bool InstructionStream::isOutsideRawMode()
 {
-    workTable *table = workTablePtr;
+    ScheduleTable *table = workTablePtr;
     if (table && table->codeModeValue == 3)
         return false;
     return true;
 }
 
-bool instStream::hasSafeTrailingInstructions()
+bool InstructionStream::hasSafeTrailingInstructions()
 {
     if (workTablePtr)
         return workTablePtr->hasSafeTrailingInstructions();
     return false;
 }
 
-int instStream::checkStartEndStatus()
+int InstructionStream::checkStartEndStatus()
 {
     int streamStartType = startType;
     int validStartEndPair = 0;
@@ -490,7 +490,7 @@ int instStream::checkStartEndStatus()
     return validStartEndPair;
 }
 
-bool instStream::processCmdSynth(Instr *instruction)
+bool InstructionStream::processCmdSynth(Instr *instruction)
 {
     if (!instruction) {
         reportError("processCmdSynth - passed a null ptr\n");
@@ -558,9 +558,9 @@ bool instStream::processCmdSynth(Instr *instruction)
     return true;
 }
 
-bool instStream::disposeInputTable()
+bool InstructionStream::disposeInputTable()
 {
-    workTable *table = &sourceTable;
+    ScheduleTable *table = &sourceTable;
     if (table == workTablePtr) {
         reportError("can't dispose of input table while it's the work table\n");
         abortAfterError();
@@ -568,7 +568,7 @@ bool instStream::disposeInputTable()
     return table->dispose();
 }
 
-void instStream::copySourceRecordsFrom(instStream *sourceStream)
+void InstructionStream::copySourceRecordsFrom(InstructionStream *sourceStream)
 {
     optimizationRecordCount = sourceStream->optimizationRecordCount;
     for (int optimizationIndex = 0; optimizationIndex != optimizationRecordCount; optimizationIndex++)

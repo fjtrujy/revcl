@@ -6,7 +6,7 @@ bool processActiveList(Program *program)
 {
     program->matchedStreams = 0;
     while (program->activeStreams) {
-        instStream *stream = program->activeStreams;
+        InstructionStream *stream = program->activeStreams;
         program->activeStreams = stream->nextActiveStream;
         if (stream->visitState != 1) {
             reportError("an inconsistency in the active list?\n");
@@ -27,7 +27,7 @@ bool processActiveList(Program *program)
             stream->nextSourceStream = program->sourceStreams;
             program->sourceStreams = stream;
         } else {
-            linkNode *head = stream->inputLinks.head;
+            StreamLinkNode *head = stream->inputLinks.head;
             if (head) {
                 stream->visitState = 2;
                 if (!extendBackTrace(program, stream)) {
@@ -42,14 +42,14 @@ bool processActiveList(Program *program)
     return true;
 }
 
-bool extendBackTrace(Program *program, instStream *targetStream)
+bool extendBackTrace(Program *program, InstructionStream *targetStream)
 {
     int cnt = 0;
     if (targetStream->visitState != 2 && targetStream->visitState != 0) {
         reportError("extend: called - but not visited or unvisited\n");
         return false;
     }
-    linkNode *incomingLink;
+    StreamLinkNode *incomingLink;
     for (incomingLink = targetStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next) {
         if (incomingLink->linkType == 3 || incomingLink->linkType == 4) {
             if (incomingLink->includedInPathTraversal)
@@ -64,13 +64,13 @@ bool extendBackTrace(Program *program, instStream *targetStream)
     for (incomingLink = targetStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next) {
         int branch = incomingLink->linkType == 2 || incomingLink->linkType == 4 || incomingLink->linkType == 5;
         if ((char)branch) {
-            instStream *prev = targetStream->previousStream;
+            InstructionStream *prev = targetStream->previousStream;
             if (!prev) {
                 reportError("to register branch had no previous\n");
                 return false;
             }
-            for (linkNode *outgoingLink = prev->outputLinks.head; outgoingLink; outgoingLink = outgoingLink->next) {
-                instStream *destinationStream = outgoingLink->otherStream;
+            for (StreamLinkNode *outgoingLink = prev->outputLinks.head; outgoingLink; outgoingLink = outgoingLink->next) {
+                InstructionStream *destinationStream = outgoingLink->otherStream;
                 int type = outgoingLink->linkType;
                 if (!destinationStream) {
                     reportError("no dest stream set for and link\n");
@@ -87,7 +87,7 @@ bool extendBackTrace(Program *program, instStream *targetStream)
                     }
                     type = outgoingLink->linkType;
                 }
-                linkNode *back = destinationStream->inputLinks.findLinkToStream(prev, type);
+                StreamLinkNode *back = destinationStream->inputLinks.findLinkToStream(prev, type);
                 if (!back) {
                     reportError("destination had no link back\n");
                     return false;
@@ -96,7 +96,7 @@ bool extendBackTrace(Program *program, instStream *targetStream)
             }
         }
         if (all || incomingLink->includedInPathTraversal) {
-            instStream *sourceStream = incomingLink->otherStream;
+            InstructionStream *sourceStream = incomingLink->otherStream;
             if (!sourceStream) {
                 reportError("can't get input stream for ir during trace\n");
                 return false;
@@ -140,7 +140,7 @@ bool extendBackTrace(Program *program, instStream *targetStream)
                         return false;
                     }
                     bool notOnPath = true;
-                    for (instStream *pathStream = targetStream; pathStream; pathStream = pathStream->longestPathPredecessor) {
+                    for (InstructionStream *pathStream = targetStream; pathStream; pathStream = pathStream->longestPathPredecessor) {
                         if (pathStream == sourceStream) {
                             notOnPath = false;
                             break;
@@ -172,7 +172,7 @@ bool extendBackTrace(Program *program, instStream *targetStream)
     return true;
 }
 
-bool addNewActive(Program *program, instStream *stream, instStream *from)
+bool addNewActive(Program *program, InstructionStream *stream, InstructionStream *from)
 {
     if (stream->visitState) {
         reportError("addNewActive called - but ist_n(%s) is not unvisited.ist_o is %s\n",
@@ -197,11 +197,11 @@ bool addNewActive(Program *program, instStream *stream, instStream *from)
 
 bool recalcMinTraceLengths(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         if (!stream->visitState)
             continue;
         int len = 0;
-        for (instStream *predecessorStream = stream->shortestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->shortestPathPredecessor)
+        for (InstructionStream *predecessorStream = stream->shortestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->shortestPathPredecessor)
             len += predecessorStream->backtraceDependencyLength;
         if (stream->minimumPathLength < len) {
             reportError("recalcPaths - code produced a longer path.. but should be tracking shortest ..path is %s nLen=%d, but old length was %d!\n",
@@ -215,11 +215,11 @@ bool recalcMinTraceLengths(Program *program)
 
 bool recalcMaxTraceLengths(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         if (!stream->visitState)
             continue;
         int len = 0;
-        for (instStream *predecessorStream = stream->longestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->longestPathPredecessor)
+        for (InstructionStream *predecessorStream = stream->longestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->longestPathPredecessor)
             len += predecessorStream->backtraceDependencyLength;
         if (stream->maximumPathLength > len) {
             reportError("recalcPaths - code produced a shorter maximal path.. but should be tracking longest ..path is %s nLen=%d, but old length was %d!\n",

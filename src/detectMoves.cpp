@@ -6,14 +6,14 @@
 #include "RegPool.h"
 #include "moveRec.h"
 
-bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
+bool resolveMovePipe(ScheduleTable *wt, Instr *mv, int pipe);
 
-static inline bool isRawTable(workTable *scheduleTable)
+static inline bool isRawTable(ScheduleTable *scheduleTable)
 {
     return scheduleTable->codeModeValue == 3;
 }
 
-static inline bool isPipeMode(workTable *scheduleTable)
+static inline bool isPipeMode(ScheduleTable *scheduleTable)
 {
     return isRawTable(scheduleTable) && (scheduleTable->rawSchedulingMode == 1 || scheduleTable->rawSchedulingMode == 3);
 }
@@ -25,8 +25,8 @@ static inline void dumpMove(Instr *instruction)
 
 bool detectMoves(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *scheduleTable = stream->getTable();
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        ScheduleTable *scheduleTable = stream->getTable();
         if (scheduleTable->codeModeValue == 1 || isPipeMode(scheduleTable)) {
             Instr *next;
             for (Instr *currentInstruction = scheduleTable->linearInstructions.head; currentInstruction; currentInstruction = next) {
@@ -41,9 +41,9 @@ bool detectMoves(Program *program)
                 mask = 0;
                 if (!detectMove(currentInstruction, opc, mask, dstOp, srcOp))
                     continue;
-                RegPoolEntry *srcReg = currentInstruction->operands[srcOp].assignedRegister;
-                RegPoolEntry *dstReg = currentInstruction->operands[dstOp].assignedRegister;
-                iInfo *opcodeInfo = getOpcodeInfoById(opc);
+                RegisterEntry *srcReg = currentInstruction->operands[srcOp].assignedRegister;
+                RegisterEntry *dstReg = currentInstruction->operands[dstOp].assignedRegister;
+                OpcodeDescriptor *opcodeInfo = getOpcodeInfoById(opc);
                 Instr *newMoveInstruction = new Instr(opcodeInfo);
                 if (!newMoveInstruction) {
                     reportError("failed to make a move\n");

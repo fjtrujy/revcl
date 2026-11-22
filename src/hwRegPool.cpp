@@ -8,19 +8,19 @@ RegPool *getRegisterPoolByIndex(unsigned t);
 void dumpThroughputRegisters(Program *program)
 {
     reportInfo("dump through registers ==============================================\n");
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         int poolIndex;
         RegPool *registerPool;
-        workTable *scheduleTable = stream->getTable();
+        ScheduleTable *scheduleTable = stream->getTable();
         reportInfo("%s:\n", stream->streamName());
         for (poolIndex = 0; poolIndex != 12; poolIndex++) {
             registerPool = getRegisterPoolByIndex(poolIndex);
             if (!registerPool || !registerPool->virtualPartCount)
                 continue;
             reportInfo("    %s\n", registerPool->poolName);
-            for (regUse *registerUse = scheduleTable->registerUses.head; registerUse; registerUse = registerUse->next) {
+            for (RegisterUse *registerUse = scheduleTable->registerUses.head; registerUse; registerUse = registerUse->next) {
                 int mask = registerUse->throughputMask & ~(registerUse->inputMask | registerUse->outputMask | registerUse->externalInputMask | registerUse->externalOutputMask);
-                RegPoolEntry *registerEntry = registerUse->registerEntry;
+                RegisterEntry *registerEntry = registerUse->registerEntry;
                 if (mask && registerPool->ownsRegisterClass(registerEntry))
                     reportInfo("        %s\n", registerEntry->maskName(mask));
             }
@@ -38,17 +38,17 @@ hwRegPool::~hwRegPool()
 {
 }
 
-bool hwRegPool::assignRegistersForWorkTable(workTable *)
+bool hwRegPool::assignRegistersForWorkTable(ScheduleTable * unusedTable)
 {
     return true;
 }
 
-bool hwRegPool::assignExt(instStream *)
+bool hwRegPool::assignExt(InstructionStream * unusedStream)
 {
     return true;
 }
 
-bool hwRegPool::discardDisjointExternalRegister(instStream *, RegPoolEntry *)
+bool hwRegPool::discardDisjointExternalRegister(InstructionStream *, RegisterEntry * unusedRegister)
 {
     return true;
 }

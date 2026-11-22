@@ -2,19 +2,19 @@
 
 #include "backTrace_shared.h"
 
-static inline regUseSlot *registerPart(regUse *registerUse, int part)
+static inline regUseSlot *registerPart(RegisterUse *registerUse, int part)
 {
     return &registerUse->slots[part];
 }
 
-bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *registerEntry, int part, int ofs, bool ext)
+bool linkMatchList(Program *program, InstructionStream *targetStream, RegisterEntry *registerEntry, int part, int ofs, bool ext)
 {
-    regUse *registerUse = targetStream->backtraceRegisterUse;
+    RegisterUse *registerUse = targetStream->backtraceRegisterUse;
     if (!registerUse) {
         reportError("no rfu ?\n");
         return false;
     }
-    for (instStream *matchedStream = program->matchedStreams; matchedStream; matchedStream = matchedStream->nextMatchedStream) {
+    for (InstructionStream *matchedStream = program->matchedStreams; matchedStream; matchedStream = matchedStream->nextMatchedStream) {
         if (matchedStream->visitState != 3) {
             reportError("not end_match on the newmatchlist\n");
             return false;
@@ -32,7 +32,7 @@ bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *reg
                 return false;
             }
         }
-        regUse *matchedRegisterUse = matchedStream->backtraceRegisterUse;
+        RegisterUse *matchedRegisterUse = matchedStream->backtraceRegisterUse;
         if (!matchedRegisterUse) {
             reportError("an entry on the new match list had no regref?\n");
             return false;
@@ -60,9 +60,9 @@ bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *reg
                 }
             }
         }
-        for (ol_s *location = registerUse->slots[part].inputLocations.head; location; location = location->next) {
-            ol_s *last = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(0, true);
-            ol_s *match = 0;
+        for (OperandLocation *location = registerUse->slots[part].inputLocations.head; location; location = location->next) {
+            OperandLocation *last = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(0, true);
+            OperandLocation *match = 0;
             if (ext)
                 match = last;
             else {
@@ -82,8 +82,8 @@ bool linkMatchList(Program *program, instStream *targetStream, RegPoolEntry *reg
                     reportError("instruction not inserted or emu'd??\n");
                     return false;
                 }
-                ol_s *min_s = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(pos + matchedMinimumPathLength, false);
-                ol_s *max_s = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(pos + matchedMaximumPathLength, false);
+                OperandLocation *min_s = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(pos + matchedMinimumPathLength, false);
+                OperandLocation *max_s = matchedRegisterUse->slots[part].findPreviousOutputAtPosition(pos + matchedMaximumPathLength, false);
                 if (min_s) {
                     if (!max_s) {
                         reportError("min_s set, but couldn't find max_s\n");

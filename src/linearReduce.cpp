@@ -4,17 +4,17 @@
 
 class Program;
 
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 bool moveLocks(Instr *i, InstructionPosition *pos);
-int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int checkPlacementInAllowedPipelines(ScheduleTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
-int earliestInsert(workTable *wt, Instr *in, bool *found);
-int checkInstructionPlacementConstraints(workTable *wt, Instr *i, InstructionPosition *pos);
+int earliestInsert(ScheduleTable *wt, Instr *in, bool *found);
+int checkInstructionPlacementConstraints(ScheduleTable *wt, Instr *i, InstructionPosition *pos);
 bool setRange(int start, int end, int lsz);
-int pullUp(workTable *wt);
-int dragDown(workTable *wt);
+int pullUp(ScheduleTable *wt);
+int dragDown(ScheduleTable *wt);
 
-static inline bool isPipeMode(workTable *scheduleTable)
+static inline bool isPipeMode(ScheduleTable *scheduleTable)
 {
     int mode = scheduleTable->codeModeValue - 3;
     return !mode && (scheduleTable->rawSchedulingMode == 1 || scheduleTable->rawSchedulingMode == 3);
@@ -25,7 +25,7 @@ static inline void dumpLinearReduce(Program *program)
     dumpProgramStreamsAndRegisters(program, 0);
 }
 
-bool reduceLinearSchedule(Program *program, workTable *scheduleTable, unsigned char reduceUpward, unsigned char down)
+bool reduceLinearSchedule(Program *program, ScheduleTable *scheduleTable, unsigned char reduceUpward, unsigned char down)
 {
     if (!isPipeMode(scheduleTable))
         return true;
@@ -66,7 +66,7 @@ bool reduceLinearSchedule(Program *program, workTable *scheduleTable, unsigned c
     return true;
 }
 
-bool doLocalMove(workTable *scheduleTable, Instr *instruction, int s_test, int e_test, int moveDirection)
+bool doLocalMove(ScheduleTable *scheduleTable, Instr *instruction, int s_test, int e_test, int moveDirection)
 {
     InstructionPosition pos;
     bool found = false;

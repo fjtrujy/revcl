@@ -13,11 +13,11 @@ int checkedStringLength(const char *s);
 
 bool olList::clear()
 {
-    ol_s *location = head;
+    OperandLocation *location = head;
     if (location) {
-        ol_s *freeListHead = olFreeList;
+        OperandLocation *freeListHead = olFreeList;
         do {
-            ol_s *nextLocation = location->next;
+            OperandLocation *nextLocation = location->next;
             location->next = freeListHead;
             freeListHead = location;
             location = nextLocation;

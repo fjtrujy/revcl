@@ -24,9 +24,9 @@ public:
     int componentMask;
 
     inline iHolder();
-    int matchesOperandLocation(ol_s *ol);
+    int matchesOperandLocation(OperandLocation *ol);
     void dumpOperandLocation();
-    bool catInit(ol_s *ol);
+    bool catInit(OperandLocation *ol);
     inline void dump();
 };
 
@@ -36,7 +36,7 @@ public:
     virtual ~infoList();
     bool clear();
     void dumpEntries();
-    bool addStall(ol_s *a, ol_s *b, int x, int val);
+    bool addStall(OperandLocation *a, OperandLocation *b, int x, int val);
 
     infoNode *head;
     int count;
@@ -49,7 +49,7 @@ public:
     inline stallNode(InitTag);
     virtual ~stallNode();
     virtual void dump();
-    bool catStall(ol_s *a, ol_s *b, int x, int val);
+    bool catStall(OperandLocation *a, OperandLocation *b, int x, int val);
 
     bool isLocal;
     iHolder setter;
@@ -57,19 +57,19 @@ public:
     unsigned short stallByType[3];
 };
 
-class RegPoolEntry;
+class RegisterEntry;
 
 class ubsNode : public infoNode {
 public:
     ubsNode();
     virtual ~ubsNode();
     virtual void dump();
-    bool catInit(instStream *entry, instStream *use, RegPoolEntry *registerEntry, unsigned char bits);
+    bool catInit(InstructionStream *entry, InstructionStream *use, RegisterEntry *registerEntry, unsigned char bits);
 
-    RegPoolEntry *reg;
+    RegisterEntry *reg;
     unsigned char slotMask;
-    instStream *entryStream;
-    instStream *useStream;
+    InstructionStream *entryStream;
+    InstructionStream *useStream;
 };
 
 #endif

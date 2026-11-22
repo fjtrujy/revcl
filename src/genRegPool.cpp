@@ -9,7 +9,7 @@ bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
 int countSetBits(unsigned int);
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 
 extern int maximumAllocationParts;
 extern int allocationRegisterCount;
@@ -26,7 +26,7 @@ void clearRegMask()
 
 bool initRegMask(RegPool *pool)
 {
-    RegPoolEntry *registerEntry = pool->registerEntries;
+    RegisterEntry *registerEntry = pool->registerEntries;
     int *maximumPartsOut = &maximumAllocationParts;
     clearRawBytes(allocationRegisterMask, 32);
     for (int entryIndex = 0; entryIndex != pool->entryCount; entryIndex++, registerEntry++) {
@@ -52,8 +52,8 @@ bool assignExtRegisters(Program *program)
         reportError("failed to allocReset before ext assign\n");
         return false;
     }
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *scheduleTable = stream->getTable();
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        ScheduleTable *scheduleTable = stream->getTable();
         unsigned int mode = (unsigned char)scheduleTable->allocationMode;
         if ((char)mode != 1) {
             const char *modeName = allocModeName(mode);
@@ -71,15 +71,15 @@ bool assignExtRegisters(Program *program)
         for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
-                RegPoolEntry *registerEntry = operand->assignedRegister;
+                RegisterEntry *registerEntry = operand->assignedRegister;
                 if (registerEntry && registerEntry->isVirtual) {
-                    regUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
+                    RegisterUse *registerUse = scheduleTable->registerUses.findByRegister(registerEntry);
                     if (!registerUse) {
                         reportError("failed to find reg ref associated with reg\n");
                         return false;
                     }
                     if (registerUse->isExternal()) {
-                        RegPoolEntry *ext = registerEntry->assignedPhysicalRegister;
+                        RegisterEntry *ext = registerEntry->assignedPhysicalRegister;
                         if (!ext) {
                             reportError("no ext mapping on register\n");
                             return false;

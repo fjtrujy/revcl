@@ -6,6 +6,6 @@
 // Preserve the historic Block* function signatures, but use workTable as the
 // single source of truth for its actual fields and ABI layout. No Block
 // instances are created; legacy functions operate on workTable objects.
-class Block : public workTable {};
+class Block : public ScheduleTable {};
 
 #endif

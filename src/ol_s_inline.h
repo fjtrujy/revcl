@@ -4,7 +4,7 @@
 
 #include "ol_s.h"
 
-inline void ol_s::reset()
+inline void OperandLocation::reset()
 {
     stateFlags = 0;
     instruction = 0;
@@ -16,22 +16,22 @@ inline void ol_s::reset()
     pathKey = 0;
 }
 
-inline bool ol_s::isExt()
+inline bool OperandLocation::isExt()
 {
     return stateFlags & 1;
 }
 
-inline bool ol_s::isExtUsed()
+inline bool OperandLocation::isExtUsed()
 {
     return flags.externalUsed;
 }
 
-inline ol_s::ol_s()
+inline OperandLocation::OperandLocation()
 {
     reset();
 }
 
-inline ol_s::~ol_s()
+inline OperandLocation::~OperandLocation()
 {
 }
 

@@ -1,4 +1,4 @@
-// Expression tree node (class name guessed), sizeof 0x1c, no vptr.
+// Expression operator/operand node (0x1c bytes on i386, no vptr).
 #ifndef XPNODE_H
 #define XPNODE_H
 
@@ -6,7 +6,7 @@
 #include "mValue.h"
 #include "os.h"
 
-class xpNode {
+class ExpressionNode {
 public:
     char unmatchedOpeningParentheses;
     unsigned char depth;
@@ -14,12 +14,12 @@ public:
     unsigned char precedence;
     unsigned char operandArity;
     unsigned char childCount;
-    xpNode *parent;
-    xpNode *child[2];
-    mValue val;
+    ExpressionNode *parent;
+    ExpressionNode *child[2];
+    TypedValue val;
 
-    xpNode();
-    ~xpNode();
+    ExpressionNode();
+    ~ExpressionNode();
     bool clearExpressionNodeValue();
     void dumpExpressionNodeValue();
     void reset();
@@ -31,46 +31,46 @@ public:
     inline void init();
 };
 
-// Owner of an expression tree (class name guessed), sizeof 0x10, no vptr.
-class xpTree {
+// Expression tree owner and evaluator (0x10 bytes on i386, no vptr).
+class ExpressionTree {
 public:
-    xpNode *cur;
-    xpNode *root;
-    int unk_08;
-    int unk_0c;
+    ExpressionNode *cur;
+    ExpressionNode *root;
+    int resetOnlyTreeStateWord0;
+    int resetOnlyTreeStateWord1;
 
-    xpTree();
-    inline ~xpTree();
-    bool dispose(xpNode *n);
+    ExpressionTree();
+    inline ~ExpressionTree();
+    bool dispose(ExpressionNode *n);
     bool reset();
     void calcDepths();
-    void setDepth(xpNode *n, int depth);
-    void visitExpressionDescendants(xpNode *n);
+    void setDepth(ExpressionNode *n, int depth);
+    void visitExpressionDescendants(ExpressionNode *n);
     void resetExpressionDepths();
-    void dumpNode(xpNode *n);
+    void dumpNode(ExpressionNode *n);
     void dump();
     bool evalExp(const char *s);
-    bool evaluate(mValue *out, unsigned int type);
+    bool evaluate(TypedValue *out, unsigned int type);
     bool evalUInt(unsigned int *out);
     bool evalFloat(float *out);
     bool evalInt(int *out);
-    bool evaluateExpressionNode(xpNode *n);
+    bool evaluateExpressionNode(ExpressionNode *n);
     int countUnknownExpressionSymbols();
-    void countUnknownSymbolsInNode(xpNode *n);
+    void countUnknownSymbolsInNode(ExpressionNode *n);
 
     inline bool clear();
 };
 
-// Expression operator table entry (name guessed).
+// Expression operator descriptor (type, precedence and operand arity).
 struct xpOp {
     const char *name;
-    unsigned char type;   // -> xpNode::unk_02
-    unsigned char arity;  // -> xpNode::unk_04
-    unsigned char prec;   // -> xpNode::unk_03
+    unsigned char type;   // matches ExpressionNode::operatorType
+    unsigned char arity;  // matches ExpressionNode::operandArity
+    unsigned char prec;   // matches ExpressionNode::precedence
 };
 
 extern xpOp expressionOperatorTable[20];
 
-const char *parseExpressionTokenIntoNode(const char *s, xpNode *node, bool binary);
+const char *parseExpressionTokenIntoNode(const char *s, ExpressionNode *node, bool binary);
 
 #endif

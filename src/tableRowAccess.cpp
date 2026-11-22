@@ -1,6 +1,6 @@
 #include "loadStalls_shared.h"
 
-wtRow *workTable::getRowByIndex(int rowIndex)
+ScheduleRow *ScheduleTable::getRowByIndex(int rowIndex)
 {
     if (!rows)
         return 0;

@@ -15,7 +15,7 @@ bool loadStalls(Program *program)
             reportError("no instruction in stall\n");
             return 0;
         }
-        cls_unk30 *owner = userInstruction->ownerTable;
+        InstructionOwnerTableView *owner = userInstruction->ownerTable;
         if (!owner) {
             reportError("instruction has no owner!\n");
             return 0;
@@ -25,7 +25,7 @@ bool loadStalls(Program *program)
             return 0;
         }
         InstructionPosition *loc = &userInstruction->position;
-        wtRow *workRow = (wtRow *)owner->getIE_ck(loc->loopRow);
+        ScheduleRow *workRow = (ScheduleRow *)owner->getIE_ck(loc->loopRow);
         if (!workRow) {
             reportError("couldn't get ie for instruction\n");
             return 0;

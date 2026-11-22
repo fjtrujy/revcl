@@ -49,7 +49,7 @@ bool Processor::initializeProcessor(CpuDef *cpu)
         return false;
     }
     PoolDef *pools = cpu->pools;
-    iInfo *iinfos = cpu->iinfos;
+    OpcodeDescriptor *iinfos = cpu->iinfos;
     if (!checkTable(iinfos, 0xd6)) {
         reportError("couldnt init cpu '%s' - the idefs were bad\n", cpu->name);
         return false;
@@ -95,7 +95,7 @@ bool Processor::initializeProcessor(CpuDef *cpu)
             return false;
         }
         if (poolDefinition->zeroReg) {
-            RegPoolEntry *registerEntry = pool->findPhysicalByName(poolDefinition->zeroReg);
+            RegisterEntry *registerEntry = pool->findPhysicalByName(poolDefinition->zeroReg);
             if (!registerEntry) {
                 reportError("failed to get zero reg for pool %s\n", poolDefinition->name);
                 delete pool;
@@ -104,7 +104,7 @@ bool Processor::initializeProcessor(CpuDef *cpu)
             pool->zeroRegister = registerEntry;
         }
         if (poolDefinition->extReg) {
-            RegPoolEntry *registerEntry = pool->findPhysicalByName(poolDefinition->extReg);
+            RegisterEntry *registerEntry = pool->findPhysicalByName(poolDefinition->extReg);
             if (!registerEntry) {
                 reportError("failed to get ext reg for pool %s\n", poolDefinition->name);
                 delete pool;
@@ -147,7 +147,7 @@ void Processor::dumpRegisterPools()
             processorRegisterPools[poolIndex]->Dump();
 }
 
-int Processor::gatherInflight(ol_s **out)
+int Processor::gatherInflight(OperandLocation **out)
 {
     int inflightCount = 0;
     for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
@@ -192,7 +192,7 @@ void Processor::validateOpcodeTableCount()
     int saved = errorOccurred;
     errorOccurred = !quietDiagnostics;
     int opcodeCount = 0;
-    for (iInfo *opcodeInfo = processorInstructionTable; opcodeInfo->mnemonic; opcodeInfo++) {
+    for (OpcodeDescriptor *opcodeInfo = processorInstructionTable; opcodeInfo->mnemonic; opcodeInfo++) {
         opcodeInfo->scanOpcodeOperandDescriptors();
         opcodeCount++;
     }
@@ -240,12 +240,12 @@ bool statReset(Program *program)
     return true;
 }
 
-iInfo *getOpcodeInfoById(int opcodeId)
+OpcodeDescriptor *getOpcodeInfoById(int opcodeId)
 {
     return &processorInstructionTable[opcodeId];
 }
 
-iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
+OpcodeDescriptor *findOpcodeInfoByMnemonic(const char *tok, bool all)
 {
     if (!tok) {
         reportError("Proc::FindInstruction() - null token passed\n");
@@ -255,7 +255,7 @@ iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
         reportError("Proc::FindInstruction() - no instruction set loaded!\n");
         return 0;
     }
-    iInfo *opcodeInfo = processorInstructionTable;
+    OpcodeDescriptor *opcodeInfo = processorInstructionTable;
     if (!all)
         opcodeInfo += 12;
     for (; opcodeInfo->mnemonic; opcodeInfo++) {
@@ -323,7 +323,7 @@ inline RegPool *lookupProcessorRegisterPool(unsigned poolIndex)
     return 0;
 }
 
-RegPoolEntry *findPhysicalRegister(unsigned type, const char *name)
+RegisterEntry *findPhysicalRegister(unsigned type, const char *name)
 {
     RegPool *pool = lookupProcessorRegisterPool(type);
     if (!pool) {
@@ -333,7 +333,7 @@ RegPoolEntry *findPhysicalRegister(unsigned type, const char *name)
     return pool->findPhysicalByName(name);
 }
 
-RegPoolEntry *findPhysicalRegister(unsigned type, int index)
+RegisterEntry *findPhysicalRegister(unsigned type, int index)
 {
     RegPool *pool = lookupProcessorRegisterPool(type);
     if (!pool) {
@@ -343,12 +343,12 @@ RegPoolEntry *findPhysicalRegister(unsigned type, int index)
     return pool->findByRegisterIndex(index);
 }
 
-RegPoolEntry *findRegisterByGlobalIndex(int idx)
+RegisterEntry *findRegisterByGlobalIndex(int idx)
 {
     for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
         RegPool *pool = processorRegisterPools[poolIndex];
         if (pool) {
-            RegPoolEntry *registerEntry = pool->findByRegisterIndex(idx);
+            RegisterEntry *registerEntry = pool->findByRegisterIndex(idx);
             if (registerEntry)
                 return registerEntry;
         }
@@ -356,7 +356,7 @@ RegPoolEntry *findRegisterByGlobalIndex(int idx)
     return 0;
 }
 
-RegPoolEntry *getOperandZeroRegister(int kind)
+RegisterEntry *getOperandZeroRegister(int kind)
 {
     RegPool *pool = lookupProcessorRegisterPool(registerClassForOperandKind(kind));
     if (!pool) {
@@ -366,7 +366,7 @@ RegPoolEntry *getOperandZeroRegister(int kind)
     return pool->zeroRegister;
 }
 
-RegPoolEntry *getPoolZeroRegister(unsigned type)
+RegisterEntry *getPoolZeroRegister(unsigned type)
 {
     RegPool *pool = lookupProcessorRegisterPool(type);
     if (!pool) {
@@ -429,7 +429,7 @@ int checkDispatchEntry(Instr **pipelineEntries)
         if (!(((unsigned char)instruction->permittedPipelineMask >> pipeIndex) & 1))
             return -1;
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
-            RegPoolEntry *outputRegister = registerOperand(&instruction->operands[operandIndex], 2);
+            RegisterEntry *outputRegister = registerOperand(&instruction->operands[operandIndex], 2);
             if (!outputRegister)
                 continue;
             for (int pairedPipeIndex = pipeIndex + 1; pairedPipeIndex <= 1; pairedPipeIndex++) {
@@ -439,7 +439,7 @@ int checkDispatchEntry(Instr **pipelineEntries)
                 if (!(((unsigned char)pairedInstruction->permittedPipelineMask >> pairedPipeIndex) & 1))
                     return -1;
                 for (int pairedOperandIndex = 0; pairedOperandIndex != pairedInstruction->operandCount; pairedOperandIndex++) {
-                    RegPoolEntry *pairedOutputRegister = registerOperand(&pairedInstruction->operands[pairedOperandIndex], 2);
+                    RegisterEntry *pairedOutputRegister = registerOperand(&pairedInstruction->operands[pairedOperandIndex], 2);
                     if (pairedOutputRegister && pairedOutputRegister == outputRegister)
                         return -1;
                 }
@@ -484,7 +484,7 @@ const char *deviceNameByIndex(int deviceIndex)
     return deviceNames[deviceIndex];
 }
 
-bool isVuRegister(RegPoolEntry *registerEntry)
+bool isVuRegister(RegisterEntry *registerEntry)
 {
     return registerEntry->registerClass == 8 || registerEntry->registerClass == 9;
 }
@@ -500,11 +500,11 @@ bool resetPoolOptimizationState(Program *program)
     return true;
 }
 
-static inline int iinfoId(iInfo *opcodeInfo)
+static inline int iinfoId(OpcodeDescriptor *opcodeInfo)
 {
     if (!opcodeInfo)
         return -1;
-    int opcodeIndex = ((char *)opcodeInfo - (char *)processorInstructionTable) / sizeof(iInfo);
+    int opcodeIndex = ((char *)opcodeInfo - (char *)processorInstructionTable) / sizeof(OpcodeDescriptor);
     if (opcodeIndex < 0)
         return -1;
     if (opcodeIndex >= 0xd6)
@@ -512,14 +512,14 @@ static inline int iinfoId(iInfo *opcodeInfo)
     return opcodeIndex;
 }
 
-int getOpcodeId(iInfo *opcodeInfo)
+int getOpcodeId(OpcodeDescriptor *opcodeInfo)
 {
     return iinfoId(opcodeInfo);
 }
 
-aaDesc *findAddressAliasDescriptor(Instr *instruction)
+AddressAliasDescriptor *findAddressAliasDescriptor(Instr *instruction)
 {
-    aaDesc *foundDescriptor;
+    AddressAliasDescriptor *foundDescriptor;
     if (!instruction) {
         foundDescriptor = 0;
         return foundDescriptor;
@@ -537,7 +537,7 @@ aaDesc *findAddressAliasDescriptor(Instr *instruction)
         foundDescriptor = 0;
         return foundDescriptor;
     }
-    aaDesc *candidateDescriptor = (aaDesc *)processorSourceSpecs;
+    AddressAliasDescriptor *candidateDescriptor = (AddressAliasDescriptor *)processorSourceSpecs;
     if (candidateDescriptor->opcodeId) {
         do {
             if (candidateDescriptor->opcodeId == opcodeId) {
@@ -551,7 +551,7 @@ aaDesc *findAddressAliasDescriptor(Instr *instruction)
     return foundDescriptor;
 }
 
-aaUse *findAddressAliasUse(Instr *instruction)
+AddressAliasUse *findAddressAliasUse(Instr *instruction)
 {
     if (!instruction)
         return 0;
@@ -564,7 +564,7 @@ aaUse *findAddressAliasUse(Instr *instruction)
     }
     if (!processorSourceSpecs)
         return 0;
-    for (aaUse *candidateUse = (aaUse *)processorDestinationSpecs; candidateUse->opcodeId; candidateUse++)
+    for (AddressAliasUse *candidateUse = (AddressAliasUse *)processorDestinationSpecs; candidateUse->opcodeId; candidateUse++)
         if (candidateUse->opcodeId == opcodeId)
             return candidateUse;
     return 0;
@@ -637,7 +637,7 @@ const char *Processor::getUniqueName()
 
 int nextInstructionSerial = 1;
 bool staggerMemoryAccess = false;
-iInfo *processorInstructionTable;
+OpcodeDescriptor *processorInstructionTable;
 RegPool *processorRegisterPools[13];
 VclPtrWord freeMoveRecordsByType[3];
 void *processorDeviceTable;

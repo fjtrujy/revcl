@@ -202,10 +202,10 @@ bool Operand::validateKindAndMask()
     return false;
 }
 
-void Operand::diagnoseOperand(int)
+void Operand::diagnoseOperand(int unusedDiagnosticMode)
 {
     if (validateKindAndMask()) {
-        bool ok = true;
+        bool operandValueValid = true;
         switch (operandKind) {
         case 0:
             break;
@@ -215,7 +215,7 @@ void Operand::diagnoseOperand(int)
         case 32:
         case 33:
         case 46:
-            ok = immediateValue.isValid();
+            operandValueValid = immediateValue.isValid();
             break;
         case 27:
             immediateValue.dump();
@@ -225,7 +225,7 @@ void Operand::diagnoseOperand(int)
         default:
             return;
         }
-        if (!ok)
+        if (!operandValueValid)
             return;
     }
 }
@@ -240,7 +240,7 @@ static inline int operandZeroValue(Operand *operand)
     return isZeroRegister;
 }
 
-char *Operand::emitOperandText(char *outputBuffer, bool, bool symbolic)
+char *Operand::emitOperandText(char *outputBuffer, bool unusedUppercaseFlag, bool symbolic)
 {
     const char *registerNameText = 0;
     if (isImplicit)
@@ -263,7 +263,7 @@ char *Operand::emitOperandText(char *outputBuffer, bool, bool symbolic)
             registerNameText = originalRegister->registerName();
         }
     } else {
-        RegPoolEntry *registerEntry = assignedRegister;
+        RegisterEntry *registerEntry = assignedRegister;
         if (registerEntry) {
             if (registerEntry->isVirtual) {
                 reportError("non symbolic emit.. but found a virtual register in an operand!\n");
@@ -345,7 +345,7 @@ char *Operand::emitOperandText(char *outputBuffer, bool, bool symbolic)
         outputBuffer += formatIntoBuffer(outputBuffer, "%s", registerNameText);
         break;
     case 27: {
-        mValue *imm = &immediateValue;
+        TypedValue *imm = &immediateValue;
         if (!imm->isNumeric()) {
             char *immediateText = imm->asChars();
             if (!immediateText) {
@@ -450,7 +450,7 @@ bool Operand::resetOptimizationSlots()
     return true;
 }
 
-bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
+bool buildImplicitOperand(int kind, ImplicitOperandDescription *out, bool unusedSyntaxFlag)
 {
     out->branchLabelText[0] = 0;
     out->immediateText[0] = 0;
@@ -499,20 +499,20 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
     }
 }
 
-bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
+bool oDecodeToken(int kind, char *tok, ImplicitOperandDescription *out, bool newSyntax)
 {
     bool bad2;
     bool *pbad = &bad2;
     int mask;
     int *pmask = &mask;
     bool bad;
-    int m;
+    int parsedComponentMask;
     int field;
     int count;
-    char *p;
-    char *q;
-    char *s;
-    char *d;
+    char *closingParenCursor;
+    char *openingParenCursor;
+    char *sourceCursor;
+    char *destinationCursor;
     char *end;
     char *start;
 
@@ -520,7 +520,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return false;
     int savedTokenWord1;
     int savedTokenWord2;
-    char zG;
+    char savedTokenCharacter;
     if (checkedStringLength(tok) > 2047) {
         reportError("odecodeToken: token was too long\n");
         return false;
@@ -588,22 +588,22 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return false;
     }
     case 35: {
-        d = out->name;
+        destinationCursor = out->name;
         out->forcePhysicalBinding = 1;
         tokenEnd = tok;
         while (*tokenEnd && *tokenEnd != '(')
-            *d++ = *tokenEnd++;
-        *d = 0;
+            *destinationCursor++ = *tokenEnd++;
+        *destinationCursor = 0;
         if (*tokenEnd) {
             if (*tokenEnd != '(') {
                 reportError("oDecodeToken: bad fl4s\n");
                 return false;
             }
             tokenEnd++;
-            d = out->physicalRegisterName;
+            destinationCursor = out->physicalRegisterName;
             while (*tokenEnd && *tokenEnd != ')')
-                *d++ = *tokenEnd++;
-            *d = 0;
+                *destinationCursor++ = *tokenEnd++;
+            *destinationCursor = 0;
         }
         if (newSyntax) {
             {
@@ -619,12 +619,12 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             return true;
         } else {
             *pbad = false;
-            bool ok = parseTrailingComponentMask(out->name, &out->componentMask, pbad);
+            bool componentMaskParsed = parseTrailingComponentMask(out->name, &out->componentMask, pbad);
             if (*pbad) {
                 reportUserMessage("bad mod bits in operand\n");
                 return false;
             }
-            if (!ok) {
+            if (!componentMaskParsed) {
                 int svk_35b = ((int *)tok)[kind];
                 int zsk_35b = (unsigned char)tok[2];
                 zsk_35b >>= 4;
@@ -643,22 +643,22 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     }
     case 42:
-        d = out->name;
+        destinationCursor = out->name;
         out->forcePhysicalBinding = 1;
-        s = tok;
-        while (*s && *s != '(')
-            *d++ = *s++;
-        *d = 0;
-        if (*s) {
-            if (*s != '(') {
+        sourceCursor = tok;
+        while (*sourceCursor && *sourceCursor != '(')
+            *destinationCursor++ = *sourceCursor++;
+        *destinationCursor = 0;
+        if (*sourceCursor) {
+            if (*sourceCursor != '(') {
                 reportError("oDecodeToken: bad gprs\n");
                 return false;
             }
-            s++;
-            d = out->physicalRegisterName;
-            while (*s && *s != ')')
-                *d++ = *s++;
-            *d = 0;
+            sourceCursor++;
+            destinationCursor = out->physicalRegisterName;
+            while (*sourceCursor && *sourceCursor != ')')
+                *destinationCursor++ = *sourceCursor++;
+            *destinationCursor = 0;
         }
         {
             int svO_c42 = ((int *)tok)[kind];
@@ -886,9 +886,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         field = 7;
     fieldSel:
         if (newSyntax) {
-            m = 0;
-            if (parseBracketedComponentMask(tok, &m)) {
-                if (m != field) {
+            parsedComponentMask = 0;
+            if (parseBracketedComponentMask(tok, &parsedComponentMask)) {
+                if (parsedComponentMask != field) {
                     reportUserMessage("instruction and operand have mismatching field select\n");
                     return false;
                 }
@@ -941,13 +941,13 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         savedTokenWord1 = (unsigned char)tok[1];
         if (count <= 2)
             return false;
-        zG = tok[savedTokenWord1];
+        savedTokenCharacter = tok[savedTokenWord1];
         int z0 = (unsigned char)*tok;
         z0 >>= 4;
         z0 >>= 4;
         if (z0)
             return false;
-        tok[savedTokenWord1] = zG;
+        tok[savedTokenWord1] = savedTokenCharacter;
         char *closingDelimiter = tokenEnd - 1;
         if (*closingDelimiter != ')' || *tok != '(')
             return false;
@@ -956,22 +956,22 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         goto copyName;
     }
     case 36:
-        d = out->name;
+        destinationCursor = out->name;
         out->forcePhysicalBinding = 1;
         tokenEnd = tok;
         while (*tokenEnd && *tokenEnd != '(')
-            *d++ = *tokenEnd++;
-        *d = 0;
+            *destinationCursor++ = *tokenEnd++;
+        *destinationCursor = 0;
         if (*tokenEnd) {
             if (*tokenEnd != '(') {
                 reportError("oDecodeToken: bad ints\n");
                 return false;
             }
             tokenEnd++;
-            d = out->physicalRegisterName;
+            destinationCursor = out->physicalRegisterName;
             while (*tokenEnd && *tokenEnd != ')')
-                *d++ = *tokenEnd++;
-            *d = 0;
+                *destinationCursor++ = *tokenEnd++;
+            *destinationCursor = 0;
         }
         {
             int svO_c36 = ((int *)tok)[kind];
@@ -1006,69 +1006,69 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         savedTokenWord2 = (unsigned char)tok[2];
         if (count <= 3)
             return false;
-        zG = tok[savedTokenWord2];
+        savedTokenCharacter = tok[savedTokenWord2];
         int z1 = (unsigned char)*tok;
         z1 >>= 4;
         z1 >>= 4;
         if (z1)
             return false;
-        tok[savedTokenWord2] = zG;
+        tok[savedTokenWord2] = savedTokenCharacter;
         if (*tok != '(')
             return false;
-        p = tokenEnd - 1;
-        while (p != tok && *p != ')') {
-            switch (*p) {
+        closingParenCursor = tokenEnd - 1;
+        while (closingParenCursor != tok && *closingParenCursor != ')') {
+            switch (*closingParenCursor) {
             case 'x': out->addressComponentMask |= 1; break;
             case 'y': out->addressComponentMask |= 2; break;
             case 'z': out->addressComponentMask |= 4; break;
             case 'w': out->addressComponentMask |= 8; break;
             default: return false;
             }
-            p--;
+            closingParenCursor--;
         }
-        if (*p != ')')
+        if (*closingParenCursor != ')')
             return false;
         start = tok + 1;
-        end = p;
+        end = closingParenCursor;
         goto copyName;
     }
     case 31:
         out->componentMask = 1;
         if (count <= 4)
             return false;
-        p = tokenEnd - 1;
-        while (p != tok && *p != ')') {
-            switch (*p) {
+        closingParenCursor = tokenEnd - 1;
+        while (closingParenCursor != tok && *closingParenCursor != ')') {
+            switch (*closingParenCursor) {
             case 'x': out->addressComponentMask |= 1; break;
             case 'y': out->addressComponentMask |= 2; break;
             case 'z': out->addressComponentMask |= 4; break;
             case 'w': out->addressComponentMask |= 8; break;
             default: return false;
             }
-            p--;
+            closingParenCursor--;
         }
-        if (*p != ')')
+        if (*closingParenCursor != ')')
             return false;
-        end = p;
-        q = tokenEnd;
-        while (q != tok && *q != '(')
-            q--;
-        if (*q != '(')
+        end = closingParenCursor;
+        openingParenCursor = tokenEnd;
+        while (openingParenCursor != tok && *openingParenCursor != '(')
+            openingParenCursor--;
+        if (*openingParenCursor != '(')
             return false;
-        d = out->immediateText;
-        for (s = tok; s != q; )
-            *d++ = *s++;
-        *d = 0;
+        destinationCursor = out->immediateText;
+        for (sourceCursor = tok; sourceCursor != openingParenCursor; )
+            *destinationCursor++ = *sourceCursor++;
+        *destinationCursor = 0;
         if (!out->immediateText[0]) {
             out->immediateText[0] = '0';
             out->immediateText[1] = 0;
         }
-        start = q + 1;
+        start = openingParenCursor + 1;
     copyName:
-        s = start;
-        for (d = out->name; s != end; )
-            *d++ = *s++;
-        *d = 0;
+        sourceCursor = start;
+        for (destinationCursor = out->name; sourceCursor != end; )
+            *destinationCursor++ = *sourceCursor++;
+        *destinationCursor = 0;
         return true;
     case 32: {
         out->componentMask = 1;
@@ -1140,22 +1140,22 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         checkedStringCopy(out->name, tok);
         return true;
     case 44:
-        d = out->name;
+        destinationCursor = out->name;
         out->forcePhysicalBinding = 1;
-        s = tok;
-        while (*s && *s != '(')
-            *d++ = *s++;
-        *d = 0;
-        if (*s) {
-            if (*s != '(') {
+        sourceCursor = tok;
+        while (*sourceCursor && *sourceCursor != '(')
+            *destinationCursor++ = *sourceCursor++;
+        *destinationCursor = 0;
+        if (*sourceCursor) {
+            if (*sourceCursor != '(') {
                 reportError("oDecodeToken: bad fprs\n");
                 return false;
             }
-            s++;
-            d = out->physicalRegisterName;
-            while (*s && *s != ')')
-                *d++ = *s++;
-            *d = 0;
+            sourceCursor++;
+            destinationCursor = out->physicalRegisterName;
+            while (*sourceCursor && *sourceCursor != ')')
+                *destinationCursor++ = *sourceCursor++;
+            *destinationCursor = 0;
         }
         {
             int sv1_c44 = ((int *)tok)[kind];
@@ -1173,20 +1173,20 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         if (count <= 2)
             return false;
         out->componentMask = 1;
-        p = tokenEnd - 1;
-        if (*p != ')')
+        closingParenCursor = tokenEnd - 1;
+        if (*closingParenCursor != ')')
             return false;
         do
-            p--;
-        while (*p != '(');
-        start = p + 1;
-        p = tok;
+            closingParenCursor--;
+        while (*closingParenCursor != '(');
+        start = closingParenCursor + 1;
+        closingParenCursor = tok;
         char *stop = start - 1;
         end = tokenEnd - 1;
-        d = out->immediateText;
-        for (s = tok; s != stop; )
-            *d++ = *s++;
-        *d = 0;
+        destinationCursor = out->immediateText;
+        for (sourceCursor = tok; sourceCursor != stop; )
+            *destinationCursor++ = *sourceCursor++;
+        *destinationCursor = 0;
         if (!out->immediateText[0]) {
             out->immediateText[0] = '0';
             out->immediateText[1] = 0;
@@ -1194,18 +1194,18 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         goto copyName;
     }
     default: {
-        s = tok + kind;
-        int zd = (unsigned char)tok[2];
-        zd >>= 4;
-        zd >>= 4;
-        if (zd) {
-            d = out->physicalRegisterName;
-            while (*s && *s != ')')
-                *d++ = *s++;
+        sourceCursor = tok + kind;
+        int discardedUpperNibbleCheck = (unsigned char)tok[2];
+        discardedUpperNibbleCheck >>= 4;
+        discardedUpperNibbleCheck >>= 4;
+        if (discardedUpperNibbleCheck) {
+            destinationCursor = out->physicalRegisterName;
+            while (*sourceCursor && *sourceCursor != ')')
+                *destinationCursor++ = *sourceCursor++;
         }
         reportError("oDecode: general BAD '%s'\n", opKindName(kind));
         tokenEnd = 0;
-        q = 0;
+        openingParenCursor = 0;
         break;
     }
     }

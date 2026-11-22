@@ -43,7 +43,7 @@ loopDebris::~loopDebris() throw()
     m_exitName = 0;
 }
 
-bool loopDebris::init(const char *baseName, int a, bool flag)
+bool loopDebris::init(const char *baseName, int requestedAllocationModeArg, bool flag)
 {
     char buf[4096];
     if (!baseName) {
@@ -56,7 +56,7 @@ bool loopDebris::init(const char *baseName, int a, bool flag)
     sourceWorkTable = 0;
     m_nPro = 0;
     m_nEpi = 0;
-    requestedAllocationMode = a;
+    requestedAllocationMode = requestedAllocationModeArg;
     m_baseName = baseName;
     formatIntoBuffer(buf, "%s_ENTRY_POINT", baseName);
     m_entryName = dupString(buf);
@@ -67,18 +67,18 @@ bool loopDebris::init(const char *baseName, int a, bool flag)
 
 void loopDebris::validateLoopDebrisName()
 {
-    int i;
+    int unusedRegionIndex;
     if (!m_entryName) {
         reportError("LoopDebris - no entry name\n");
         exitAfterCleanup(-1);
     }
-    for (i = 0; i != m_nPro; i++)
+    for (unusedRegionIndex = 0; unusedRegionIndex != m_nPro; unusedRegionIndex++)
         ;
-    for (i = 0; i != m_nEpi; i++)
+    for (unusedRegionIndex = 0; unusedRegionIndex != m_nEpi; unusedRegionIndex++)
         ;
 }
 
-instStream *loopDebris::getEnterStream()
+InstructionStream *loopDebris::getEnterStream()
 {
     epiRec *region = &m_enter;
     if (!region) {
@@ -88,7 +88,7 @@ instStream *loopDebris::getEnterStream()
     return region->stream;
 }
 
-instStream *loopDebris::getExitStream()
+InstructionStream *loopDebris::getExitStream()
 {
     epiRec *region = &m_exit;
     if (!region) {
@@ -98,7 +98,7 @@ instStream *loopDebris::getExitStream()
     return region->stream;
 }
 
-instStream *loopDebris::getMainStream()
+InstructionStream *loopDebris::getMainStream()
 {
     epiRec *region = &m_main;
     if (!region) {
@@ -108,7 +108,7 @@ instStream *loopDebris::getMainStream()
     return region->stream;
 }
 
-instStream *loopDebris::getProStream(int prologueIndex)
+InstructionStream *loopDebris::getProStream(int prologueIndex)
 {
     epiRec *region = getPrologueRecordByIndex(this, prologueIndex);
     if (!region) {
@@ -118,7 +118,7 @@ instStream *loopDebris::getProStream(int prologueIndex)
     return region->stream;
 }
 
-instStream *loopDebris::getEpiStream(int epilogueIndex)
+InstructionStream *loopDebris::getEpiStream(int epilogueIndex)
 {
     epiRec *region = getEpilogueRecordByIndex(this, epilogueIndex);
     if (!region) {
@@ -128,7 +128,7 @@ instStream *loopDebris::getEpiStream(int epilogueIndex)
     return region->stream;
 }
 
-static inline void setDebrisMode(workTable *table, unsigned char mode)
+static inline void setDebrisMode(ScheduleTable *table, unsigned char mode)
 {
     table->setTableRawMode(mode);
 }
@@ -270,7 +270,7 @@ extern short g_streamSerial;
 
 const char *getUniqueName(Program *p);
 char *dupString(const char *s);
-bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName);
+bool explodeLoop(InstructionStream *s, loopDebris *ld, const char *baseName);
 
 inline int loopDebris::getPrologueRegionCount()
 {
@@ -282,7 +282,7 @@ inline int loopDebris::getEpilogueRegionCount()
     return m_nEpi;
 }
 
-static inline instStream *checkedProStream(loopDebris *loopRecord, int prologueIndex)
+static inline InstructionStream *checkedProStream(loopDebris *loopRecord, int prologueIndex)
 {
     epiRec *region = getPrologueRecordByIndex(loopRecord, prologueIndex);
     if (!region) {
@@ -302,7 +302,7 @@ static inline epiRec *proRecord(loopDebris *loopRecord, int recordIndex, int cou
 bool epiRec::init(int size, const char *name)
 {
     reset();
-    stream = new instStream;
+    stream = new InstructionStream;
     if (!stream) {
         reportError("setup: failed to get iStream\n");
         exitAfterCleanup(-1);
@@ -312,12 +312,12 @@ bool epiRec::init(int size, const char *name)
         reportError("failed to add a name to iStream\n");
         exitAfterCleanup(-1);
     }
-    workTable *scheduleTable = &stream->sourceTable;
+    ScheduleTable *scheduleTable = &stream->sourceTable;
     if (!scheduleTable->init(3, size)) {
         reportError("failed to init it_pro for size %d\n", size);
         exitAfterCleanup(-1);
     }
-    instStream *ownerStream = stream;
+    InstructionStream *ownerStream = stream;
     int serial = g_streamSerial;
     table = scheduleTable;
     ownerStream->streamSerial = serial;
@@ -337,9 +337,9 @@ const char *epiRec::getName()
     return stream->streamName();
 }
 
-int expandOneLoopIntoRegions(Program *program, instStream *stream)
+int expandOneLoopIntoRegions(Program *program, InstructionStream *stream)
 {
-    workTable *table = stream->getTable();
+    ScheduleTable *table = stream->getTable();
     if (!table->getLoopSize()) {
         reportError("BuildEP - loopsize not set in input stream\n");
         return -1;
@@ -356,17 +356,17 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         reportError("BuildEPSTreams - failed to explode %s\n", stream->streamName());
         exitAfterCleanup(-1);
     }
-    instStream *enter = loopRegions.m_enter.stream;
+    InstructionStream *enter = loopRegions.m_enter.stream;
     if (!enter) {
         reportError("no entry istream\n");
         exitAfterCleanup(-1);
     }
-    instStream *exit = loopRegions.m_exit.stream;
+    InstructionStream *exit = loopRegions.m_exit.stream;
     if (!exit) {
         reportError("had no exit istream\n");
         exitAfterCleanup(-1);
     }
-    instStream *fall = stream->outputLinks.getStream(0);
+    InstructionStream *fall = stream->outputLinks.getStream(0);
     if (!fall) {
         reportError("epipro:failed to get default output stream\n");
         return -1;
@@ -388,7 +388,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         exitAfterCleanup(-1);
     }
 
-    instStream *prev = enter;
+    InstructionStream *prev = enter;
     epiRec *region;
     loopDebris *loopRecord;
     for (regionIndex = 0; regionIndex != (loopRecord = &loopRegions)->getPrologueRegionCount(); regionIndex++) {
@@ -397,7 +397,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
             reportError("failed to get prologue\n");
             return -1;
         }
-        instStream *prologueStream = prologueRegion->stream;
+        InstructionStream *prologueStream = prologueRegion->stream;
         if (!prologueStream) {
             reportError("failed to get stream for prologue\n");
             return -1;
@@ -415,7 +415,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
                 reportError("failed to find epilogue\n");
                 return -1;
             }
-            instStream *epilogueStream = epilogueRegion->stream;
+            InstructionStream *epilogueStream = epilogueRegion->stream;
             if (!epilogueStream) {
                 reportError("failed to find epi for a prologue\n");
                 return -1;
@@ -428,7 +428,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
             reportError("not last prologue, but no conditional\n");
             exitAfterCleanup(-1);
         }
-        instStream *next;
+        InstructionStream *next;
         if (regionIndex == loopRegions.getPrologueRegionCount() - 1) {
             next = loopRegions.m_main.stream;
         } else {
@@ -444,7 +444,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         }
     }
 
-    instStream *main = loopRegions.m_main.stream;
+    InstructionStream *main = loopRegions.m_main.stream;
     if (!main) {
         reportError("not find new main!\n");
         return -1;
@@ -458,7 +458,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         return -1;
     }
 
-    instStream *succ = exit;
+    InstructionStream *succ = exit;
     if (loopRegions.getEpilogueRegionCount()) {
         epiRec *e0 = getEpilogueRecordByIndex(&loopRegions, 0);
         if (!e0) {
@@ -482,7 +482,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
             reportError("failed to get epi \n");
             return -1;
         }
-        instStream *epilogueStream = region->stream;
+        InstructionStream *epilogueStream = region->stream;
         if (!epilogueStream) {
             reportError("failed to get istream epi\n");
             return -1;
@@ -505,7 +505,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         return -1;
     }
 
-    instStream *last = stream->previousStream;
+    InstructionStream *last = stream->previousStream;
     if (!program->removeStream(stream)) {
         reportError("failed to unlink istream\n");
         exitAfterCleanup(-1);
@@ -548,7 +548,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
     return loopRegions.getPrologueRegionCount() + loopRegions.getEpilogueRegionCount() + 3;
 }
 
-static inline void initDebris(loopDebris *loopRecord, const char *baseName, int a, bool flag)
+static inline void initDebris(loopDebris *loopRecord, const char *baseName, int requestedAllocationMode, bool flag)
 {
     char buf[4096];
     if (!baseName) {
@@ -561,7 +561,7 @@ static inline void initDebris(loopDebris *loopRecord, const char *baseName, int 
     loopRecord->preserveAllocationMode = flag;
     loopRecord->m_nPro = 0;
     loopRecord->m_nEpi = 0;
-    loopRecord->requestedAllocationMode = a;
+    loopRecord->requestedAllocationMode = requestedAllocationMode;
     loopRecord->m_baseName = baseName;
     formatIntoBuffer(buf, "%s_ENTRY_POINT", baseName);
     loopRecord->m_entryName = dupString(buf);
@@ -575,7 +575,7 @@ static inline const char *recName(epiRec *epilogueRegion)
     if (!name)
         name = (VclPtrWord)"!UNNAMED!";
     else
-        name = (VclPtrWord)((instStream *)name)->streamName();
+        name = (VclPtrWord)((InstructionStream *)name)->streamName();
     return (const char *)name;
 }
 
@@ -584,14 +584,14 @@ static inline epiRec &mainRec(loopDebris *loopRecord)
     return loopRecord->m_main;
 }
 
-bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseName)
+bool explodeLoop(InstructionStream *stream, loopDebris *loopRecord, const char *baseName)
 {
     if (!baseName) {
         reportError("ExplodeLoop - basename not set\n");
         exitAfterCleanup(-1);
     }
     g_streamSerial++;
-    workTable *scheduleTable = stream->getTable();
+    ScheduleTable *scheduleTable = stream->getTable();
     if (!scheduleTable->getLoopSize()) {
         reportError("work table is not looping!\n");
         return false;
@@ -721,8 +721,8 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
             reportError("failed to get next\n");
             exitAfterCleanup(-1);
         }
-        instStream *nextStream = next->stream;
-        instStream *proStream = prologueRegion->stream;
+        InstructionStream *nextStream = next->stream;
+        InstructionStream *proStream = prologueRegion->stream;
         if (!proStream || !nextStream) {
             reportError("no istream set for prologue or next\n");
             exitAfterCleanup(-1);
@@ -759,12 +759,12 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
             reportError("failed to get epi\n");
             exitAfterCleanup(-1);
         }
-        instStream *ist = epilogueRegion->stream;
+        InstructionStream *ist = epilogueRegion->stream;
         if (!ist) {
             reportError("failed to get ist\n");
             exitAfterCleanup(-1);
         }
-        workTable *table = epilogueRegion->table;
+        ScheduleTable *table = epilogueRegion->table;
         if (!table) {
             reportError("no itable for e\n");
             exitAfterCleanup(-1);
@@ -782,9 +782,9 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
             }
             secondInstruction->position.loopIteration = 0;
             secondInstruction->parsedLoopId = -1;
-            secondInstruction->setOwner((cls_unk30 *)table);
+            secondInstruction->setOwner((InstructionOwnerTableView *)table);
             epilogueRegion->conditionalBranch = secondInstruction;
-            wtRow *row = table->getRowByIndex(table->getRangeEnd() - 2);
+            ScheduleRow *row = table->getRowByIndex(table->getRangeEnd() - 2);
             if (!row) {
                 reportError("failed to get ie for branch insert\n");
                 return false;

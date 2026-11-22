@@ -2,21 +2,21 @@
 #ifndef LINKLIST_H
 #define LINKLIST_H
 
-class instStream;
+class InstructionStream;
 
-struct linkNode {
-    char unk_00[4];
-    linkNode *previous;
-    linkNode *next;
-    instStream *otherStream;
+struct StreamLinkNode {
+    char reservedLinkHeaderBytes[4];
+    StreamLinkNode *previous;
+    StreamLinkNode *next;
+    InstructionStream *otherStream;
     char includedInPathTraversal;
     char active;
-    char unk_12[2];
+    char reservedLinkStateBytes[2];
     int linkType;
 
     enum InitTag { INIT };
-    linkNode();
-    inline linkNode(InitTag)
+    StreamLinkNode();
+    inline StreamLinkNode(InitTag)
     {
         linkType = -1;
         previous = 0;
@@ -24,26 +24,26 @@ struct linkNode {
         otherStream = 0;
         active = 1;
     }
-    ~linkNode();
+    ~StreamLinkNode();
     // Next node (after this one) with the given link type.
-    linkNode *nextLinkOfType(int type);
+    StreamLinkNode *nextLinkOfType(int type);
     int linkedStreamId();
 };
 
-struct linkList {
-    linkNode *head;
-    linkNode *tail;
+struct StreamLinkList {
+    StreamLinkNode *head;
+    StreamLinkNode *tail;
     int count;
-    linkList();
-    ~linkList();
-    linkNode *findType(int type);
-    instStream *getStream(int type);
+    StreamLinkList();
+    ~StreamLinkList();
+    StreamLinkNode *findType(int type);
+    InstructionStream *getStream(int type);
     void dump();
     bool removeAll();
-    bool relink(linkNode *n);
-    bool unlink(linkNode *n);
-    linkNode *findLinkToStream(instStream *s, int type);
-    bool addNewRef(instStream *s, int type);
+    bool relink(StreamLinkNode *n);
+    bool unlink(StreamLinkNode *n);
+    StreamLinkNode *findLinkToStream(InstructionStream *s, int type);
+    bool addNewRef(InstructionStream *s, int type);
     int countMarkedLinks();
 };
 

@@ -11,15 +11,15 @@ bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
 int countSetBits(unsigned int);
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 static inline int bitSet(int m, int i)
 {
     return (m >> i) & 1;
 }
 bool initRegMask(RegPool *pool);
 int firstEmptyMask(RegPool *pool);
-bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always);
-bool haveSimultaneousRegisterOutputs(workTable *wt, RegPoolEntry *a, RegPoolEntry *b);
+bool regRefLiveRange(RegisterUse *ru, int part, int *s, int *e, bool *always);
+bool haveSimultaneousRegisterOutputs(ScheduleTable *wt, RegisterEntry *a, RegisterEntry *b);
 extern int maximumAllocationParts;
 extern int allocationRegisterCount;
 extern int allocationTimelineStart;

@@ -1,16 +1,16 @@
 #include "Instr.h"
 #include "os.h"
 
-iGroupList::iGroupList()
+InstructionGroupList::InstructionGroupList()
 {
     head = 0;
 }
 
-iGroupList::~iGroupList()
+InstructionGroupList::~InstructionGroupList()
 {
-    iGroupNode *groupNode = head;
+    InstructionGroupNode *groupNode = head;
     while (groupNode) {
-        iGroupNode *next = groupNode->next;
+        InstructionGroupNode *next = groupNode->next;
         if (groupNode)
             ::operator delete(groupNode);
         groupNode = next;
@@ -18,13 +18,13 @@ iGroupList::~iGroupList()
     head = 0;
 }
 
-void iGroupList::init()
+void InstructionGroupList::init()
 {
     if (head)
         reportWarning("igrouplist::init - first set!\n");
-    iGroupNode *instructionGroupNode = head;
+    InstructionGroupNode *instructionGroupNode = head;
     while (instructionGroupNode) {
-        iGroupNode *next = instructionGroupNode->next;
+        InstructionGroupNode *next = instructionGroupNode->next;
         if (instructionGroupNode)
             ::operator delete(instructionGroupNode);
         instructionGroupNode = next;
@@ -32,11 +32,11 @@ void iGroupList::init()
     head = 0;
 }
 
-void iGroupList::clear()
+void InstructionGroupList::clear()
 {
-    iGroupNode *groupNode = head;
+    InstructionGroupNode *groupNode = head;
     while (groupNode) {
-        iGroupNode *next = groupNode->next;
+        InstructionGroupNode *next = groupNode->next;
         if (groupNode)
             ::operator delete(groupNode);
         groupNode = next;
@@ -44,18 +44,18 @@ void iGroupList::clear()
     head = 0;
 }
 
-inline iGroupNode::iGroupNode(InitTag)
+inline InstructionGroupNode::InstructionGroupNode(InitTag unusedInitializationTag)
 {
     itemPointer = 0;
     itemSize = 0;
 }
 
 
-bool iGroupList::add(void *data, int byteCount)
+bool InstructionGroupList::add(void *data, int byteCount)
 {
     if (byteCount <= 0)
         return 1;
-    iGroupNode *instructionGroupNode = new iGroupNode(iGroupNode::INIT);
+    InstructionGroupNode *instructionGroupNode = new InstructionGroupNode(InstructionGroupNode::INIT);
     if (!instructionGroupNode) {
         reportError("failed to get a new iGroupNode\n");
         return 0;
@@ -67,9 +67,9 @@ bool iGroupList::add(void *data, int byteCount)
     return 1;
 }
 
-void iGroupList::dump()
+void InstructionGroupList::dump()
 {
-    iGroupNode *groupNode;
+    InstructionGroupNode *groupNode;
     int groupIndex = 0;
     for (groupNode = head; groupNode; groupNode = groupNode->next, groupIndex++)
         reportInfo(" [%4d ] [%d sz=%d]\n", groupIndex, groupNode->itemPointer, groupNode->itemSize);
@@ -78,13 +78,13 @@ void iGroupList::dump()
 }
 
 
-iGroupNode::iGroupNode()
+InstructionGroupNode::InstructionGroupNode()
 {
     itemPointer = 0;
     itemSize = 0;
 }
 
-iGroupNode::~iGroupNode()
+InstructionGroupNode::~InstructionGroupNode()
 {
 }
 
@@ -158,14 +158,14 @@ int iGroupLog::add(Instr *ins)
     return count++;
 }
 
-int iGroupLog::logTable(workTable *sourceTable)
+int iGroupLog::logTable(ScheduleTable *sourceTable)
 {
     if (table) {
         reportError("logTable - called - but the table is already open\n");
         return 0;
     }
-    for (regUse *previousUse = sourceTable->registerUses.head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *reg = previousUse->registerEntry;
+    for (RegisterUse *previousUse = sourceTable->registerUses.head; previousUse; previousUse = previousUse->next) {
+        RegisterEntry *reg = previousUse->registerEntry;
         for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
             if (((previousUse->externalInputMask & previousUse->externalOutputMask) >> partIndex) & 1) {
             Instr *instruction;
@@ -174,7 +174,7 @@ int iGroupLog::logTable(workTable *sourceTable)
             for (Instr *cur = (instruction = sourceTable->linearInstructions.head); instruction; cur = (instruction = instruction->linearLink.nextInstruction))
                 for (int operandIndex = 0; operandIndex != cur->operandCount; operandIndex++) {
                     Operand *operand = &cur->operands[operandIndex];
-                    RegPoolEntry *registerEntry = operand->assignedRegister;
+                    RegisterEntry *registerEntry = operand->assignedRegister;
                     if (registerEntry == reg && operand->externalPartMask)
                         for (int dependencyPartIndex = 0; dependencyPartIndex != registerEntry->partCount; dependencyPartIndex++) {
                             if (isRegisterOperand(operand, 2) && ((operand->externalPartMask >> dependencyPartIndex) & 1))
@@ -190,23 +190,23 @@ int iGroupLog::logTable(workTable *sourceTable)
                     if (instruction->inputDependencyReachable)
                         for (int dependencyOperandIndex = 0; dependencyOperandIndex != instruction->operandCount; dependencyOperandIndex++) {
                             Operand *operand = &instruction->operands[dependencyOperandIndex];
-                            RegPoolEntry *registerEntry = registerOperand(operand, 2);
+                            RegisterEntry *registerEntry = registerOperand(operand, 2);
                             if (registerEntry)
                                 for (int dependencyPartIndex = 0; dependencyPartIndex != registerEntry->partCount; dependencyPartIndex++)
-                                    for (ol_s *operandLocation = operand->parts[dependencyPartIndex].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation()) {
+                                    for (OperandLocation *operandLocation = operand->parts[dependencyPartIndex].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation()) {
                                         Instr *linkedInstruction = operandLocation->instruction;
                                         changed = changed || linkedInstruction->markDependencyInputReachable();
                                     }
                         }
-                wtInstrList *list = &sourceTable->linearInstructions;
+                InstructionList *list = &sourceTable->linearInstructions;
                 for (instruction = list->tail; instruction; instruction = instruction->linearLink.previousInstruction)
                     if (instruction->outputDependencyReachable)
                         for (int dependencyOperandIndex = 0; dependencyOperandIndex != instruction->operandCount; dependencyOperandIndex++) {
                             Operand *operand = &instruction->operands[dependencyOperandIndex];
-                            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+                            RegisterEntry *registerEntry = registerOperand(operand, 1);
                             if (registerEntry)
                                 for (int dependencyPartIndex = 0; dependencyPartIndex != registerEntry->partCount; dependencyPartIndex++)
-                                    for (ol_s *operandLocation = operand->parts[dependencyPartIndex].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation())
+                                    for (OperandLocation *operandLocation = operand->parts[dependencyPartIndex].operandLocations.firstInternalLocation(); operandLocation; operandLocation = operandLocation->nextInternalLocation())
                                         operandLocation->instruction->outputDependencyReachable = 1;
                         }
             } while (changed);

@@ -9,28 +9,28 @@
 
 class RegWeb {
 public:
-    RegPoolEntry *assignedRegister;
-    RegPoolEntry *virtualRegister;
-    RegPoolEntry *forcedRegister;
+    RegisterEntry *assignedRegister;
+    RegisterEntry *virtualRegister;
+    RegisterEntry *forcedRegister;
     RegWeb *parentWeb;
     unsigned short memberCount;
     short webIndex;
     unsigned char componentMask;
-    char unk_15[3];
+    char reservedRegisterWebTailBytes[3];
 
     RegWeb() {}
     ~RegWeb() {}
 
     static bool collectInstructionRegisterWebs(Instr *instruction);
-    static RegWeb *createRegisterWeb(RegPoolEntry *registerEntry);
+    static RegWeb *createRegisterWeb(RegisterEntry *registerEntry);
     static bool merge(RegWeb *firstWeb, RegWeb *secondWeb);
-    static bool setForcedRegisterMapping(RegWeb *registerWeb, RegPoolEntry *forcedRegister);
-    static bool collectTableRegisterWebs(workTable *scheduleTable);
+    static bool setForcedRegisterMapping(RegWeb *registerWeb, RegisterEntry *forcedRegister);
+    static bool collectTableRegisterWebs(ScheduleTable *scheduleTable);
     static bool applyRegisterWebToOperand(Operand *operand);
     static bool applyRegisterWebsToInstruction(Instr *instruction);
-    static bool applyRegisterWebsToTable(workTable *scheduleTable);
+    static bool applyRegisterWebsToTable(ScheduleTable *scheduleTable);
     static void checkRegisterWebInvariants();
-    static bool clearTableRegisterWebs(workTable *scheduleTable);
+    static bool clearTableRegisterWebs(ScheduleTable *scheduleTable);
 };
 
 extern RegWeb regWebs[0x4000];

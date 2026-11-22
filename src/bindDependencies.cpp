@@ -6,14 +6,14 @@
 #include "os.h"
 #include "decodedLine.h"
 
-Instr *addXinFor(instStream *s, RegPoolEntry *r);
-Instr *addXoutFor(instStream *s, RegPoolEntry *r);
-bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int flag);
-RegPoolEntry *getTagRegister(RegPool *pool, char *name);
+Instr *addXinFor(InstructionStream *s, RegisterEntry *r);
+Instr *addXoutFor(InstructionStream *s, RegisterEntry *r);
+bool addNewOperand(Instr *in, RegisterEntry *r, int bits, int kind, int dir, int flag);
+RegisterEntry *getTagRegister(RegPool *pool, char *name);
 int getPoolsByClassID(int cls, RegPool **tab, int max);
 RegPool *getRegisterPoolByIndex(unsigned t);
 
-static inline bool addNewInputInl(Instr *instruction, RegPoolEntry *registerEntry, int bits)
+static inline bool addNewInputInl(Instr *instruction, RegisterEntry *registerEntry, int bits)
 {
     if (!addNewOperand(instruction, registerEntry, bits, 0x37, 1, false)) {
         reportError("add new input failed\n");
@@ -22,7 +22,7 @@ static inline bool addNewInputInl(Instr *instruction, RegPoolEntry *registerEntr
     return true;
 }
 
-static inline bool addNewOutputInl(Instr *instruction, RegPoolEntry *registerEntry, int bits, bool externalFlag)
+static inline bool addNewOutputInl(Instr *instruction, RegisterEntry *registerEntry, int bits, bool externalFlag)
 {
     if (!addNewOperand(instruction, registerEntry, bits, 0x37, 2, externalFlag)) {
         reportError("add new output failed\n");
@@ -35,14 +35,14 @@ static inline bool addNewOutputInl(Instr *instruction, RegPoolEntry *registerEnt
 bool bindDependencies(Program *program)
 {
     RegPool *pools[8];
-    instStream *stream;
+    InstructionStream *stream;
     int hardwarePoolCount = getPoolsByClassID(3, pools, 8);
     if (hardwarePoolCount < 0) {
         reportError("bindDependencies() - Processor failed to enumerate hardware register classes\n");
         return false;
     }
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *scheduleTable = stream->getTable();
+        ScheduleTable *scheduleTable = stream->getTable();
         for (Instr *streamInstruction = scheduleTable->linearInstructions.head; streamInstruction; streamInstruction = streamInstruction->linearLink.nextInstruction) {
             int bits = streamInstruction->getRamBits();
             if (!streamInstruction->branchLabelTags)
@@ -70,7 +70,7 @@ bool bindDependencies(Program *program)
                         end++;
                     if (*end)
                         *end++ = 0;
-                    RegPoolEntry *registerEntry = getTagRegister(registerPool, tag);
+                    RegisterEntry *registerEntry = getTagRegister(registerPool, tag);
                     if (!registerEntry) {
                         reportError("failed to create a tag register\n");
                         return false;
@@ -103,12 +103,12 @@ bool bindDependencies(Program *program)
         bool xin = stream->startType == 2;
         bool xout = stream->endType == 3;
         if (xin) {
-            RegPoolEntry *sticky39 = findRegisterByGlobalIndex(0x39);
+            RegisterEntry *sticky39 = findRegisterByGlobalIndex(0x39);
             if (!addXinFor(stream, sticky39)) {
                 reportError("failed to add the fpu sticky flags as xin\n");
                 return false;
             }
-            RegPoolEntry *sticky3a = findRegisterByGlobalIndex(0x3a);
+            RegisterEntry *sticky3a = findRegisterByGlobalIndex(0x3a);
             if (!addXinFor(stream, sticky3a)) {
                 reportError("failed to add the div sticky flags as xin\n");
                 return false;
@@ -117,7 +117,7 @@ bool bindDependencies(Program *program)
         if (xin || xout) {
             for (int poolIndex = 0; poolIndex != hardwarePoolCount; poolIndex++) {
                 RegPool *hardwarePool = pools[poolIndex];
-                RegPoolEntry *ext = hardwarePool->externalRegister;
+                RegisterEntry *ext = hardwarePool->externalRegister;
                 if (!ext) {
                     reportError("failed to get EXT for pool %s\n", hardwarePool->poolName);
                     return false;
@@ -130,7 +130,7 @@ bool bindDependencies(Program *program)
                     reportError("failed to add external output to %s\n", stream->streamName());
                     return false;
                 }
-                for (RegPoolEntry *virtualRegister = hardwarePool->virtualHead; virtualRegister; virtualRegister = virtualRegister->next) {
+                for (RegisterEntry *virtualRegister = hardwarePool->virtualHead; virtualRegister; virtualRegister = virtualRegister->next) {
                     if (xin && !addXinFor(stream, virtualRegister)) {
                         reportError("failed to add external input to %s\n", stream->streamName());
                         return false;
@@ -147,9 +147,9 @@ bool bindDependencies(Program *program)
     return true;
 }
 
-Instr *addXinFor(instStream *stream, RegPoolEntry *registerEntry)
+Instr *addXinFor(InstructionStream *stream, RegisterEntry *registerEntry)
 {
-    iInfo *opcodeInfo = getOpcodeInfoById(0xbe);
+    OpcodeDescriptor *opcodeInfo = getOpcodeInfoById(0xbe);
     if (!opcodeInfo) {
         reportError("addXinFor - cant get xin_hw\n");
         return 0;
@@ -174,7 +174,7 @@ Instr *addXinFor(instStream *stream, RegPoolEntry *registerEntry)
     }
     externalInputOperand->assignedRegister = registerEntry;
     externalInputOperand->componentMask = (1 << registerEntry->partCount) - 1;
-    workTable *scheduleTable = stream->getTable();
+    ScheduleTable *scheduleTable = stream->getTable();
     if (!scheduleTable) {
         reportError("can't get work table\n");
         delete newInputInstruction;
@@ -187,9 +187,9 @@ Instr *addXinFor(instStream *stream, RegPoolEntry *registerEntry)
     return newInputInstruction;
 }
 
-Instr *addXoutFor(instStream *stream, RegPoolEntry *registerEntry)
+Instr *addXoutFor(InstructionStream *stream, RegisterEntry *registerEntry)
 {
-    iInfo *opcodeInfo = getOpcodeInfoById(0xbf);
+    OpcodeDescriptor *opcodeInfo = getOpcodeInfoById(0xbf);
     if (!opcodeInfo) {
         reportError("addxoutFor - can't get xout_hw\n");
         return 0;
@@ -214,7 +214,7 @@ Instr *addXoutFor(instStream *stream, RegPoolEntry *registerEntry)
     }
     externalOutputOperand->assignedRegister = registerEntry;
     externalOutputOperand->componentMask = (1 << registerEntry->partCount) - 1;
-    workTable *scheduleTable = stream->getTable();
+    ScheduleTable *scheduleTable = stream->getTable();
     if (!scheduleTable) {
         reportError("can't get work table\n");
         delete newOutputInstruction;
@@ -227,7 +227,7 @@ Instr *addXoutFor(instStream *stream, RegPoolEntry *registerEntry)
     return newOutputInstruction;
 }
 
-bool addNewOperand(Instr *targetInstruction, RegPoolEntry *registerEntry, int bits, int kind, int dir, int flag)
+bool addNewOperand(Instr *targetInstruction, RegisterEntry *registerEntry, int bits, int kind, int dir, int flag)
 {
     if (!registerEntry) {
         reportError("add new output - passed a null rg pointer\n");
@@ -241,7 +241,7 @@ bool addNewOperand(Instr *targetInstruction, RegPoolEntry *registerEntry, int bi
         reportError("add new output - out of bounds mod bits requested\n");
         return false;
     }
-    iInfo *opcodeInfo = targetInstruction->opcodeInfo;
+    OpcodeDescriptor *opcodeInfo = targetInstruction->opcodeInfo;
     if (!opcodeInfo) {
         reportError("instruction has no m_Inst\n");
         return false;
@@ -275,7 +275,7 @@ bool addNewOperand(Instr *targetInstruction, RegPoolEntry *registerEntry, int bi
     return targetInstruction->validateOperands();
 }
 
-bool addNewInput(Instr *instruction, RegPoolEntry *registerEntry, int bits)
+bool addNewInput(Instr *instruction, RegisterEntry *registerEntry, int bits)
 {
     if (!addNewOperand(instruction, registerEntry, bits, 0x37, 1, false)) {
         reportError("add new input failed\n");
@@ -284,7 +284,7 @@ bool addNewInput(Instr *instruction, RegPoolEntry *registerEntry, int bits)
     return true;
 }
 
-bool addNewOutput(Instr *instruction, RegPoolEntry *registerEntry, int bits, int flag)
+bool addNewOutput(Instr *instruction, RegisterEntry *registerEntry, int bits, int flag)
 {
     if (!addNewOperand(instruction, registerEntry, bits, 0x37, 2, flag)) {
         reportError("add new output failed\n");
@@ -293,13 +293,13 @@ bool addNewOutput(Instr *instruction, RegPoolEntry *registerEntry, int bits, int
     return true;
 }
 
-RegPoolEntry *getTagRegister(RegPool *pool, char *name)
+RegisterEntry *getTagRegister(RegPool *pool, char *name)
 {
     if (RegPool::isReservedNameForClass(name, pool->registerClass)) {
         reportUserMessage("can't use %s as a name for one of the %s\n", name, pool->poolName);
         return 0;
     }
-    RegPoolEntry *registerEntry = pool->findVirtualByName(name);
+    RegisterEntry *registerEntry = pool->findVirtualByName(name);
     if (!registerEntry) {
         registerEntry = pool->createVirtualRegister(name);
         if (!registerEntry) {

@@ -4,14 +4,14 @@
 #include "RegPool.h"
 #include "instStream.h"
 
-bool prepareReductionCandidates(Program *program, instStream *stream, workTable *scheduleTable)
+bool prepareReductionCandidates(Program *program, InstructionStream *stream, ScheduleTable *scheduleTable)
 {
     if (stream->usesFreeRawLayout()) {
         stream->allowUpwardReduction = 1;
         stream->allowDownwardReduction = 1;
         stream->reductionSkipped = 0;
         bool ext = false;
-        workTable *reductionTable = stream->getTable();
+        ScheduleTable *reductionTable = stream->getTable();
         int len = reductionTable->getRangeEnd() - reductionTable->getRangeStart();
         if (stream->participatesInStall || len < reductionTable->externalMinimumLength) {
             reductionTable->setTableRawMode(2);
@@ -22,8 +22,8 @@ bool prepareReductionCandidates(Program *program, instStream *stream, workTable 
                           stream->streamName());
             return true;
         }
-        regUseList *registerUseList = &scheduleTable->registerUses;
-        for (regUse *registerUse = registerUseList->head; registerUse; registerUse = registerUse->next)
+        RegisterUseList *registerUseList = &scheduleTable->registerUses;
+        for (RegisterUse *registerUse = registerUseList->head; registerUse; registerUse = registerUse->next)
             if (registerUse->hazardBroadcastMask)
                 ext = true;
         if (ext) {
@@ -34,11 +34,11 @@ bool prepareReductionCandidates(Program *program, instStream *stream, workTable 
         for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
-                RegPoolEntry *registerEntry = operand->assignedRegister;
+                RegisterEntry *registerEntry = operand->assignedRegister;
                 operand->reductionHazardMask = 0;
                 if (!registerEntry)
                     continue;
-                regUse *currentRegisterUse = registerUseList->findByRegister(registerEntry);
+                RegisterUse *currentRegisterUse = registerUseList->findByRegister(registerEntry);
                 if (isRegisterOperand(operand, 1))
                     operand->reductionHazardMask = currentRegisterUse->hazardMask & operand->externalPartMask;
                 if (isRegisterOperand(operand, 2))

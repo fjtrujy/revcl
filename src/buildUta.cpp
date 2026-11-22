@@ -8,7 +8,7 @@
 extern int errorOccurred;
 extern bool quietDiagnostics;
 void resetRange();
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 char *dupString(const char *s);
 
 static inline void dumpUtaInstruction(Instr *instruction)
@@ -17,9 +17,9 @@ static inline void dumpUtaInstruction(Instr *instruction)
 }
 
 
-bool buildUta(Program *program, instStream *targetStream, DecodedLine *blocks, int count)
+bool buildUta(Program *program, InstructionStream *targetStream, DecodedLine *blocks, int count)
 {
-    workTable *scheduleTable = &targetStream->sourceTable;
+    ScheduleTable *scheduleTable = &targetStream->sourceTable;
     if (!scheduleTable) {
         reportError("build: failed to get input table from ist\n");
         return false;
@@ -81,4 +81,4 @@ bool buildUta(Program *program, instStream *targetStream, DecodedLine *blocks, i
 
 int branchLinkTypeForFlags(int flags);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
-bool fixupBtorBranch(Program *p, instStream *s, int *changed);
+bool fixupBtorBranch(Program *p, InstructionStream *s, int *changed);

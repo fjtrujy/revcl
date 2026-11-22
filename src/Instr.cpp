@@ -28,7 +28,7 @@ opCount_s operandCountOverrides[] = {
     {155, 1}, {160, 1}, {156, 1}, {161, 1}, {0, 0},
 };
 
-Instr::Instr(iInfo *info)
+Instr::Instr(OpcodeDescriptor *info)
 {
     if (!info) {
         reportError("constructor called with null iInfo -... later will make this a NOP, but , for now..halt!\n");
@@ -107,7 +107,7 @@ Instr::~Instr()
         delete[] branchLabelTags;
         branchLabelTags = 0;
     }
-    mValue *value = &addressImmediateValue;
+    TypedValue *value = &addressImmediateValue;
     value->clear();
     predecessorDependencies.clear();
     successorDependencies.clear();
@@ -146,7 +146,7 @@ void Instr::dumpOperandDiagnostics(int flags)
         if (flags & 1) {
             for (int diagnosticOperandIndex = 0; diagnosticOperandIndex != operandCount; diagnosticOperandIndex++) {
                 Operand *operand = &operands[diagnosticOperandIndex];
-                RegPoolEntry *registerEntry = operand->assignedRegister;
+                RegisterEntry *registerEntry = operand->assignedRegister;
                 if (registerEntry && registerEntry->isVirtual)
                     for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++)
                         if ((operand->componentMask >> partIndex) & 1)
@@ -163,7 +163,7 @@ bool Instr::isNop()
     return opcodeInfo->isNop();
 }
 
-instStream *Instr::getOwningStream()
+InstructionStream *Instr::getOwningStream()
 {
     return ownerTable ? ownerTable->ownerStream : 0;
 }
@@ -242,12 +242,12 @@ bool hasDirectOperandDependency(Instr *firstInstruction, Instr *secondInstructio
         return false;
     for (int operandIndex = 0; operandIndex != secondInstruction->operandCount; operandIndex++) {
         Operand *operand = &secondInstruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
             int registerPartCount = registerEntry->partCount;
             for (int partIndex = 0; partIndex != registerPartCount; partIndex++)
                 if (((operand->componentMask & ~operand->externalPartMask) >> partIndex) & 1)
-                    for (ol_s *currentLocation = operand->parts[partIndex].operandLocations.head; currentLocation; currentLocation = currentLocation->next)
+                    for (OperandLocation *currentLocation = operand->parts[partIndex].operandLocations.head; currentLocation; currentLocation = currentLocation->next)
                         if (currentLocation->instruction == firstInstruction)
                             return true;
         }
@@ -261,7 +261,7 @@ bool writesInputRegisterOf(Instr *firstInstruction, Instr *secondInstruction)
         return false;
     for (int readerOperandIndex = 0; readerOperandIndex != secondInstruction->operandCount; readerOperandIndex++) {
         Operand *operand = &secondInstruction->operands[readerOperandIndex];
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
             int want = operand->componentMask;
             int mask = 0;
@@ -282,7 +282,7 @@ Instr *Instr::clone()
 {
     if (!this)
         return 0;
-    iInfo *info = opcodeInfo;
+    OpcodeDescriptor *info = opcodeInfo;
     if (!info)
         return 0;
     Instr *cloneInstruction = new Instr(info);
@@ -429,13 +429,13 @@ bool Instr::resetOptimizationState()
     return true;
 }
 
-int Instr::collectOutputRegisterMask(RegPoolEntry *reg, bool *paired)
+int Instr::collectOutputRegisterMask(RegisterEntry *reg, bool *paired)
 {
     int mask = 0;
     *paired = false;
     Operand *operand;
     for (int operandIndex = 0; (operand = getOp(operandIndex)) != 0; operandIndex++) {
-        RegPoolEntry *registerEntry;
+        RegisterEntry *registerEntry;
         if (operand->isOutput())
             registerEntry = operand->assignedRegister;
         else
@@ -448,13 +448,13 @@ int Instr::collectOutputRegisterMask(RegPoolEntry *reg, bool *paired)
     return mask;
 }
 
-int Instr::collectInputRegisterMask(RegPoolEntry *reg, bool *paired)
+int Instr::collectInputRegisterMask(RegisterEntry *reg, bool *paired)
 {
     int mask = 0;
     *paired = false;
     Operand *operand;
     for (int operandIndex = 0; (operand = getOp(operandIndex)) != 0; operandIndex++) {
-        RegPoolEntry *registerEntry;
+        RegisterEntry *registerEntry;
         if (operand->isInput())
             registerEntry = operand->assignedRegister;
         else
@@ -519,10 +519,10 @@ bool linkOperandParts(Instr *instruction, int aOp, int slot, Instr *secondInstru
     }
     OpSlot *firstOperandSlot = &instruction->operands[aOp].parts[slot];
     OpSlot *secondOperandSlot = &secondInstruction->operands[bOp].parts[slot];
-    ol_s *location = firstOperandSlot->operandLocations.addOperandLocation(secondInstruction, bOp, slot, false);
+    OperandLocation *location = firstOperandSlot->operandLocations.addOperandLocation(secondInstruction, bOp, slot, false);
     if (location) {
         olList *locationList = &secondOperandSlot->operandLocations;
-        ol_s *reciprocalLocation = locationList->addOperandLocation(instruction, aOp, slot, false);
+        OperandLocation *reciprocalLocation = locationList->addOperandLocation(instruction, aOp, slot, false);
         if (!reciprocalLocation) {
             reportError("failed to add ol\n");
             return false;
@@ -538,7 +538,7 @@ static inline void dumpLinkOperand(Operand *operand)
     operand->diagnoseOperand(0);
 }
 
-bool linkOperandParts(ol_s *location, ol_s *inputLocation, int minimumPathKey, int maximumPathKey)
+bool linkOperandParts(OperandLocation *location, OperandLocation *inputLocation, int minimumPathKey, int maximumPathKey)
 {
     if (!location) {
         reportError("link_oParts, null arg pointer2!\n");
@@ -593,13 +593,13 @@ bool linkOperandParts(ol_s *location, ol_s *inputLocation, int minimumPathKey, i
     OpSlot *outputOperandSlot = out->parts + inputComponentIndex;
     OpSlot *inputOperandSlot = operand->parts + inputComponentIndex;
     olList *locationList = &outputOperandSlot->operandLocations;
-    ol_s *linkedInputLocation = locationList->copyOperandLocation(inputLocation, true);
+    OperandLocation *linkedInputLocation = locationList->copyOperandLocation(inputLocation, true);
     if (!linkedInputLocation) {
         reportError("failed to add ol_input to output\n");
         return false;
     }
     olList *inputLocationList = &inputOperandSlot->operandLocations;
-    ol_s *linkedOutputLocation = inputLocationList->copyOperandLocation(location, true);
+    OperandLocation *linkedOutputLocation = inputLocationList->copyOperandLocation(location, true);
     if (!linkedOutputLocation) {
         reportError("failed to add ol_ouput to input\n");
         return false;
@@ -616,7 +616,7 @@ bool linkOperandParts(ol_s *location, ol_s *inputLocation, int minimumPathKey, i
     return true;
 }
 
-bool Instr::setOwner(cls_unk30 *ownerTablePointer)
+bool Instr::setOwner(InstructionOwnerTableView *ownerTablePointer)
 {
     if (ownerTable && ownerTable != ownerTablePointer) {
         reportError("in->setOwner - already owned..but by wrong stream!\n");
@@ -650,11 +650,11 @@ const char *branchTypeNameByCode(int branchType)
     }
 }
 
-char *Instr::emitExpectedSyntax(bool flag, char *outputBuffer, int)
+char *Instr::emitExpectedSyntax(bool flag, char *outputBuffer, int unusedFormatMode)
 {
     if (!outputBuffer)
         return 0;
-    iInfo *info = opcodeInfo;
+    OpcodeDescriptor *info = opcodeInfo;
     if (info) {
         outputBuffer += formatIntoBuffer(outputBuffer, info->mnemonic);
         switch ((char)info->destinationMaskMode) {
@@ -684,7 +684,7 @@ char *Instr::emitExpectedSyntax(bool flag, char *outputBuffer, int)
     return outputBuffer;
 }
 
-int Instr::outputMaskForRegister(RegPoolEntry *registerEntry, int mask)
+int Instr::outputMaskForRegister(RegisterEntry *registerEntry, int mask)
 {
     int result = 0;
     if (registerEntry) {
@@ -697,7 +697,7 @@ int Instr::outputMaskForRegister(RegPoolEntry *registerEntry, int mask)
     return result & mask;
 }
 
-int Instr::inputMaskForRegister(RegPoolEntry *registerEntry, int mask)
+int Instr::inputMaskForRegister(RegisterEntry *registerEntry, int mask)
 {
     int result = 0;
     if (registerEntry) {
@@ -740,7 +740,7 @@ bool Instr::hasRawTableOrImmediateToken()
 
 char *Instr::getBranchTargetImmediate()
 {
-    iInfo *branchOpcodeInfo = opcodeInfo;
+    OpcodeDescriptor *branchOpcodeInfo = opcodeInfo;
     if (!branchFlags)
         return 0;
     if (!branchOpcodeInfo) {
@@ -762,9 +762,9 @@ char *Instr::getBranchTargetImmediate()
     return 0;
 }
 
-RegPoolEntry *Instr::getBranchTargetRegister()
+RegisterEntry *Instr::getBranchTargetRegister()
 {
-    iInfo *branchOpcodeInfo = opcodeInfo;
+    OpcodeDescriptor *branchOpcodeInfo = opcodeInfo;
     if (!(branchFlags & 2))
         return 0;
     if (!branchOpcodeInfo) {
@@ -783,7 +783,7 @@ RegPoolEntry *Instr::getBranchTargetRegister()
     }
     if (operand->operandKind == 0x1b)
         return 0;
-    RegPoolEntry *registerEntry = operand->assignedRegister;
+    RegisterEntry *registerEntry = operand->assignedRegister;
     if (!registerEntry) {
         reportError("branch target register wasn't set\n");
         exitAfterCleanup(-1);
@@ -796,7 +796,7 @@ int Instr::constantZeroInstructionHook()
     return 0;
 }
 
-Operand *Instr::findInputOperand(RegPoolEntry *registerEntry, int mask)
+Operand *Instr::findInputOperand(RegisterEntry *registerEntry, int mask)
 {
     for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
         Operand *operand = &operands[operandIndex];
@@ -806,7 +806,7 @@ Operand *Instr::findInputOperand(RegPoolEntry *registerEntry, int mask)
     return 0;
 }
 
-Operand *Instr::findOutputOperand(RegPoolEntry *registerEntry, int mask)
+Operand *Instr::findOutputOperand(RegisterEntry *registerEntry, int mask)
 {
     for (int operandIndex = 0; operandIndex != operandCount; operandIndex++) {
         Operand *operand = &operands[operandIndex];
@@ -822,7 +822,7 @@ bool Instr::hasLinkedOutputFrom(unsigned int operandIndex)
         return false;
     for (; operandIndex < operandCount; operandIndex++) {
         Operand *operand = &operands[operandIndex];
-        RegPoolEntry *registerEntry = registerOperand(operand, 2);
+        RegisterEntry *registerEntry = registerOperand(operand, 2);
         if (registerEntry) {
             if (operand->externalPartMask)
                 return true;
@@ -857,7 +857,7 @@ bool Instr::classifySchedulingCategory()
 
 Instr **Instr::getIE()
 {
-    cls_unk30 *table = ownerTable;
+    InstructionOwnerTableView *table = ownerTable;
     if (!table) {
         reportError("failed to get itable from instruction\n");
         return 0;
@@ -906,9 +906,9 @@ int Instr::opcodeId()
     return getOpcodeId(opcodeInfo);
 }
 
-static inline bool isLiteral(mValue *value)
+static inline bool isLiteral(TypedValue *value)
 {
-    return value->type == mValue::STRING;
+    return value->type == TypedValue::STRING;
 }
 
 bool Instr::expandVirtualStatOperand()
@@ -967,11 +967,11 @@ bool Instr::expandVirtualStatOperand()
                 reportError("not immediate predecessor in fs test\n");
                 return false;
             }
-            bool a = true;
-            bool b = true;
-            bool c = true;
-            bool d = true;
-            mValue *value = &operands[operandIndex - 1].immediateValue;
+            bool aluStatusInputNeeded = true;
+            bool divisionStatusInputNeeded = true;
+            bool aluStatusShadowNeeded = true;
+            bool divisionStatusShadowNeeded = true;
+            TypedValue *value = &operands[operandIndex - 1].immediateValue;
             unsigned int imm;
             if (isLiteral(value)) {
                 reportWarning("fsop has literals - so assuming the worst - if it were numerical vcl could figure out dependencies better\n");
@@ -989,10 +989,10 @@ bool Instr::expandVirtualStatOperand()
                 case 146:
                     bits = imm;
                 test:
-                    a = (bits & 0xf) != 0;
-                    b = (bits & 0x30) != 0;
-                    c = (bits & 0xc00) != 0;
-                    d = (bits & 0x3c0) != 0;
+                    aluStatusInputNeeded = (bits & 0xf) != 0;
+                    divisionStatusInputNeeded = (bits & 0x30) != 0;
+                    aluStatusShadowNeeded = (bits & 0xc00) != 0;
+                    divisionStatusShadowNeeded = (bits & 0x3c0) != 0;
                     break;
                 default:
                     reportError("bad fsop \n");
@@ -1002,9 +1002,9 @@ bool Instr::expandVirtualStatOperand()
                 reportError("failed to get immediate value\n");
                 return false;
             }
-            a = a | c;
-            b = b | d;
-            if (a) {
+            aluStatusInputNeeded = aluStatusInputNeeded | aluStatusShadowNeeded;
+            divisionStatusInputNeeded = divisionStatusInputNeeded | divisionStatusShadowNeeded;
+            if (aluStatusInputNeeded) {
                 operand->isImplicit = 1;
                 operand->operandKind = 21;
                 operand->direction = 1;
@@ -1016,7 +1016,7 @@ bool Instr::expandVirtualStatOperand()
                 operand++;
                 operandCount++;
             }
-            if (b) {
+            if (divisionStatusInputNeeded) {
                 operand->isImplicit = 1;
                 operand->operandKind = 20;
                 operand->direction = 1;
@@ -1028,7 +1028,7 @@ bool Instr::expandVirtualStatOperand()
                 operand++;
                 operandCount++;
             }
-            if (c) {
+            if (aluStatusShadowNeeded) {
                 operand->isImplicit = 1;
                 operand->operandKind = 18;
                 operand->direction = 1;
@@ -1050,7 +1050,7 @@ bool Instr::expandVirtualStatOperand()
                 operand++;
                 operandCount++;
             }
-            if (d) {
+            if (divisionStatusShadowNeeded) {
                 operand->isImplicit = 1;
                 operand->operandKind = 19;
                 operand->direction = 1;

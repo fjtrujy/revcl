@@ -2,7 +2,7 @@
 #include "Instr.h"
 #include "os.h"
 
-bool setRangeFrom(workTable *t);
+bool setRangeFrom(ScheduleTable *t);
 void resetRange();
 
 static inline void dumpRawInstruction(Instr *instruction)
@@ -10,7 +10,7 @@ static inline void dumpRawInstruction(Instr *instruction)
     instruction->dumpOperandDiagnostics(false);
 }
 
-bool workTable::prepRawTable()
+bool ScheduleTable::prepRawTable()
 {
     int mode = codeModeValue;
     if ((unsigned char)mode != 3) {
@@ -45,7 +45,7 @@ bool workTable::prepRawTable()
     if (tlen == 0)
         rawSchedulingMode = 1;
     for (int rowIndex = 0; rowIndex < rangeEnd; rowIndex++) {
-        wtRow *workRow = (wtRow *)((cls_unk30 *)this)->getIE_ck(rowIndex);
+        ScheduleRow *workRow = (ScheduleRow *)((InstructionOwnerTableView *)this)->getIE_ck(rowIndex);
         if (!workRow) {
             reportError("iTable::prepTable - failed to get ientry\n");
             return 0;
@@ -113,7 +113,7 @@ bool workTable::prepRawTable()
                 return 0;
             }
             if (rowInstruction->ownerTable) {
-                if (rowInstruction->ownerTable != (cls_unk30 *)this) {
+                if (rowInstruction->ownerTable != (InstructionOwnerTableView *)this) {
                     reportError("iTable::prep - didn't own this instruction\n");
                     return 0;
                 }
@@ -122,7 +122,7 @@ bool workTable::prepRawTable()
                 return 0;
             }
             rowInstruction->ownerTable = 0;
-            rowInstruction->setOwner((cls_unk30 *)this);
+            rowInstruction->setOwner((InstructionOwnerTableView *)this);
             if (!logAddLinear_Tail(rowInstruction)) {
                 extern const char prepRawAddInstrError[];
                 reportError(prepRawAddInstrError);

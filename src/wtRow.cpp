@@ -9,7 +9,7 @@
 extern const char wtRowGetIPMaxError[];
 extern const char wtRowAddStallLenError[];
 
-wtRow::wtRow()
+ScheduleRow::ScheduleRow()
 {
     cycleTime = 0;
     skip = 0;
@@ -17,7 +17,7 @@ wtRow::wtRow()
     maxStallLength = 0;
 }
 
-wtRow::~wtRow()
+ScheduleRow::~ScheduleRow()
 {
 }
 
@@ -39,7 +39,7 @@ wtEntry::~wtEntry()
 
 static inline bool clearWtEntry(wtEntryInl *rowEntry) { rowEntry->instruction = 0; return 1; }
 
-bool wtRow::clearEntries()
+bool ScheduleRow::clearEntries()
 {
     for (int entryIndex = 0; entryIndex != 2; entryIndex++)
         if (!clearWtEntry(&entries[entryIndex]))
@@ -53,7 +53,7 @@ bool wtEntry::clearInstruction()
     return 1;
 }
 
-void wtRow::refreshInstructionOperands(int)
+void ScheduleRow::refreshInstructionOperands(int unusedRowIndex)
 {
     for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
         Instr *instruction = entries[entryIndex].instruction;
@@ -65,7 +65,7 @@ void wtRow::refreshInstructionOperands(int)
     }
 }
 
-Instr *wtRow::getEntry(int entryIndex)
+Instr *ScheduleRow::getEntry(int entryIndex)
 {
     if (entryIndex < 0) {
         reportError("iEntry::GetI() - p<0\n");
@@ -98,7 +98,7 @@ Instr *getInstructionInPipe(Instr **instructionSlot, int pipeIndex)
     return instruction;
 }
 
-int wtRow::countEntries()
+int ScheduleRow::countEntries()
 {
     int entryCount = 0;
     for (int entryIndex = 0; entryIndex != 2; entryIndex++)
@@ -107,7 +107,7 @@ int wtRow::countEntries()
     return entryCount;
 }
 
-Instr *wtRow::onlyEntry()
+Instr *ScheduleRow::onlyEntry()
 {
     Instr *onlyInstruction = 0;
     for (int entryIndex = 0; entryIndex != 2; entryIndex++) {
@@ -120,20 +120,20 @@ Instr *wtRow::onlyEntry()
     return onlyInstruction;
 }
 
-bool wtRow::clearStalls()
+bool ScheduleRow::clearStalls()
 {
     stallTypeMask = 0;
     maxStallLength = 0;
     return 1;
 }
 
-void wtRow::resetStallMetadata()
+void ScheduleRow::resetStallMetadata()
 {
     stallTypeMask = 0;
     maxStallLength = 0;
 }
 
-bool wtRow::addStall(int type, int len)
+bool ScheduleRow::addStall(int type, int len)
 {
     if (len <= 0) {
         reportError(wtRowAddStallLenError);
@@ -151,7 +151,7 @@ bool wtRow::addStall(int type, int len)
     return 1;
 }
 
-int wtRow::outputMaskFor(RegPoolEntry *registerEntry, unsigned char mask)
+int ScheduleRow::outputMaskFor(RegisterEntry *registerEntry, unsigned char mask)
 {
     int outputMask = 0;
     if (!skip) {
@@ -164,7 +164,7 @@ int wtRow::outputMaskFor(RegPoolEntry *registerEntry, unsigned char mask)
     return outputMask;
 }
 
-int wtRow::inputMaskFor(RegPoolEntry *registerEntry, unsigned char mask)
+int ScheduleRow::inputMaskFor(RegisterEntry *registerEntry, unsigned char mask)
 {
     int inputMask = 0;
     if (!skip) {
@@ -177,7 +177,7 @@ int wtRow::inputMaskFor(RegPoolEntry *registerEntry, unsigned char mask)
     return inputMask;
 }
 
-unsigned int wtRow::getMinimumExtraLatencyAge()
+unsigned int ScheduleRow::getMinimumExtraLatencyAge()
 {
     Instr *instruction = getInstructionInPipe(&entries[0].instruction, 1);
     unsigned int minimumCycleAge = 0;

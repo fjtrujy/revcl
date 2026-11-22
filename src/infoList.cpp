@@ -16,7 +16,7 @@ inline iHolder::iHolder()
     componentMask = 0;
 }
 
-static inline int iHolderMatches(iHolder *holder, ol_s *location)
+static inline int iHolderMatches(iHolder *holder, OperandLocation *location)
 {
     if (!location || !holder->instruction)
         return 0;
@@ -30,7 +30,7 @@ static inline int iHolderMatches(iHolder *holder, ol_s *location)
     return matches;
 }
 
-int iHolder::matchesOperandLocation(ol_s *location)
+int iHolder::matchesOperandLocation(OperandLocation *location)
 {
     return iHolderMatches(this, location);
 }
@@ -51,7 +51,7 @@ inline void iHolder::dump()
         reportMessage(" UNSET_INST\n");
 }
 
-bool iHolder::catInit(ol_s *location)
+bool iHolder::catInit(OperandLocation *location)
 {
     if (!location) {
         reportError("iHolder - passed a null ol\n");
@@ -111,18 +111,18 @@ void infoList::dumpEntries()
         currentNode->dump();
 }
 
-inline infoNode::infoNode(InitTag)
+inline infoNode::infoNode(InitTag unusedInitializationTag)
 {
     next = 0;
 }
 
-inline stallNode::stallNode(InitTag) : infoNode(infoNode::INIT)
+inline stallNode::stallNode(InitTag unusedInitializationTag) : infoNode(infoNode::INIT)
 {
     for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++)
         stallByType[stallTypeIndex] = 0;
 }
 
-bool infoList::addStall(ol_s *location, ol_s *userLocation, int stallType, int stallDuration)
+bool infoList::addStall(OperandLocation *location, OperandLocation *userLocation, int stallType, int stallDuration)
 {
     stallNode *currentStall = (stallNode *)head;
     if (!location || !userLocation) {
@@ -198,7 +198,7 @@ void stallNode::dump()
     user.dump();
 }
 
-bool stallNode::catStall(ol_s *location, ol_s *userLocation, int type, int stallDuration)
+bool stallNode::catStall(OperandLocation *location, OperandLocation *userLocation, int type, int stallDuration)
 {
     if (!location || !userLocation) {
         reportWarning("stallNode - init called with a null input\n");
@@ -214,8 +214,8 @@ bool stallNode::catStall(ol_s *location, ol_s *userLocation, int type, int stall
         reportError("can't determine - at least one of instructions in stall pair\n");
         return false;
     }
-    instStream *stream = setterInstruction->getOwningStream();
-    instStream *userStream = userInstruction->getOwningStream();
+    InstructionStream *stream = setterInstruction->getOwningStream();
+    InstructionStream *userStream = userInstruction->getOwningStream();
     stream->participatesInStall = 1;
     userStream->participatesInStall = 1;
     if (!stream || !userStream) {
@@ -258,8 +258,8 @@ void ubsNode::dump()
     int usedBeforeSetCount;
     reportInfo("Used before set : ");
     usedBeforeSetCount = 0;
-    instStream *use = useStream;
-    workTable *scheduleTable = use->workTablePtr;
+    InstructionStream *use = useStream;
+    ScheduleTable *scheduleTable = use->workTablePtr;
     bool haveTable = scheduleTable != 0;
     if (!haveTable) {
         reportError("work table not set in %s\n", use->streamName());
@@ -267,13 +267,13 @@ void ubsNode::dump()
     }
     if (!haveTable)
         scheduleTable = use->workTablePtr;
-    regUse *registerUse;
+    RegisterUse *registerUse;
     if (scheduleTable && (registerUse = scheduleTable->registerUses.findByRegister(reg))) {
         reportInfo("register %s is used before set at instruction(s) :\n",
                       reg->registerName());
         for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
             if ((slotMask >> partIndex) & 1) {
-                for (ol_s *location = registerUse->slots[partIndex].inputLocations.head; location; location = location->next) {
+                for (OperandLocation *location = registerUse->slots[partIndex].inputLocations.head; location; location = location->next) {
                     Instr *inst = location->instruction;
                     int bit = location->componentIndex;
                     int opnd = location->operandIndex;
@@ -307,7 +307,7 @@ void ubsNode::dump()
     }
 }
 
-bool ubsNode::catInit(instStream *entry, instStream *use, RegPoolEntry *registerEntry, unsigned char bits)
+bool ubsNode::catInit(InstructionStream *entry, InstructionStream *use, RegisterEntry *registerEntry, unsigned char bits)
 {
     if (!entry) {
         reportError("catInit - entry point not set\n");
@@ -332,7 +332,7 @@ bool ubsNode::catInit(instStream *entry, instStream *use, RegPoolEntry *register
     return true;
 }
 
-bool ubsList::addUBS(instStream *entry, instStream *use, RegPoolEntry *registerEntry, unsigned char bits)
+bool ubsList::addUBS(InstructionStream *entry, InstructionStream *use, RegisterEntry *registerEntry, unsigned char bits)
 {
     ubsNode *usedBeforeSetNode = (ubsNode *)head;
     if (!entry || !use || !registerEntry || !bits) {

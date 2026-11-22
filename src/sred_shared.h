@@ -6,10 +6,10 @@
 #include "Instr.h"
 
 extern int selectedCapPipelineProperties;
-extern iInfo *selectedCapOpcodeInfo;
-extern workTable *capInsertionWorkTable;
+extern OpcodeDescriptor *selectedCapOpcodeInfo;
+extern ScheduleTable *capInsertionWorkTable;
 extern Instr *selectedCapOriginalInstruction;
-extern RegPoolEntry *selectedCapRegister;
+extern RegisterEntry *selectedCapRegister;
 extern int selectedCapMask;
 
 #endif

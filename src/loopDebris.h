@@ -3,8 +3,8 @@
 
 #include "epiRec.h"
 
-class instStream;
-class workTable;
+class InstructionStream;
+class ScheduleTable;
 
 class loopDebris {
 public:
@@ -12,11 +12,11 @@ public:
     ~loopDebris() throw();
     bool init(const char *baseName, int a, bool flag);
     void validateLoopDebrisName();
-    instStream *getEnterStream();
-    instStream *getExitStream();
-    instStream *getMainStream();
-    instStream *getProStream(int i);
-    instStream *getEpiStream(int i);
+    InstructionStream *getEnterStream();
+    InstructionStream *getExitStream();
+    InstructionStream *getMainStream();
+    InstructionStream *getProStream(int i);
+    InstructionStream *getEpiStream(int i);
     int getPrologueRegionCount();
     int getEpilogueRegionCount();
     epiRec *allocPro(int size);
@@ -29,7 +29,7 @@ public:
     epiRec *getEpiRec(int i);
     epiRec *findEpilogueByLoopKey(int key);
 
-    workTable *sourceWorkTable;
+    ScheduleTable *sourceWorkTable;
     char *m_entryName;
     char *m_exitName;
     const char *m_baseName;

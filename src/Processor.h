@@ -7,11 +7,11 @@
 #include "mList.h"
 #include "ubsList.h"
 
-class iInfo;
+class OpcodeDescriptor;
 class RegPool;
 class Instr;
 class LocTag;
-struct ol_s;
+struct OperandLocation;
 
 struct PoolDef {            // array ends at type == 0
     int type;               // 1 gen, 2 hw, 3 mem
@@ -28,13 +28,13 @@ struct CpuDef {
     int instructionsPerRawLine;
     PoolDef *pools;         // strap table
     void *devtab;
-    iInfo *iinfos;          // itable
+    OpcodeDescriptor *iinfos;          // itable
     void *srcSpecs;
     void *dstSpecs;
 };
 
 extern int nextInstructionSerial;
-extern iInfo *processorInstructionTable;
+extern OpcodeDescriptor *processorInstructionTable;
 extern RegPool *processorRegisterPools[13];
 extern VclPtrWord freeMoveRecordsByType[3];
 extern void *processorDeviceTable;    // device table
@@ -48,7 +48,7 @@ public:
     bool initializeProcessor(CpuDef *cpu);
     bool clearProcessorLists();
     void dumpRegisterPools();
-    int gatherInflight(ol_s **out);
+    int gatherInflight(OperandLocation **out);
     bool clearAllRegisterAssignmentsFirstPass();
     bool clearAllRegisterAssignmentsSecondPass();
     void validateOpcodeTableCount();
@@ -65,13 +65,13 @@ public:
     mList trailingLabels;
     char *uniqueName;          // unique name (dupString), default "FLOW"
     int instructionsPerRawLine;
-    char unk_3c;
+    char reservedProcessorDecodeByte;
     char decodeMode;
     char decodeSubMode;
     bool insideRawLoop;
     short rawLoopId;
     int mpgTargetAddress;
-    int unk_48;
+    int reservedProcessorDecodeWord;
     mList visibilityScopes;
     char uniqueAll;
     char savedDecodeSubMode;

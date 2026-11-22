@@ -5,21 +5,21 @@
 #include "Instr.h"
 #include "ol_s_inline.h"
 
-bool prepExtInfo(Program *p, instStream *s, bool b);
-int insertStreamRegisterCaps(Program *p, instStream *s);
-void initializeScheduledCycleTimes(workTable *wt);
-bool removeNops(Program *p, instStream *s);
-int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
+bool prepExtInfo(Program *p, InstructionStream *s, bool b);
+int insertStreamRegisterCaps(Program *p, InstructionStream *s);
+void initializeScheduledCycleTimes(ScheduleTable *wt);
+bool removeNops(Program *p, InstructionStream *s);
+int findCap(ScheduleTable *wt, Instr *in, int opIdx, RegisterEntry **capReg, int *capMask);
 bool insertRegisterCapInstruction(int line, int pipe, int mask);
 RegPool *getRegisterPoolByIndex(unsigned t);
 bool resetProcessorThroughput(Program *p);
-int emulateInstructionRow(Program *p, wtRow *row, int line, bool uta, bool commit);
-void splitCtime(workTable *wt, int l, int m);
+int emulateInstructionRow(Program *p, ScheduleRow *row, int line, bool uta, bool commit);
+void splitCtime(ScheduleTable *wt, int l, int m);
 
 
 bool prepareExternalSchedulingForProgram(Program *program)
 {
-    instStream *stream;
+    InstructionStream *stream;
     for (stream = program->streamHead; stream; stream = stream->nextStream)
         stream->externalSchedulingPrepared = stream->usesFreeRawLayout() ? 0 : 1;
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
@@ -38,13 +38,13 @@ bool prepareExternalSchedulingForProgram(Program *program)
     return true;
 }
 
-bool removeNops(Program *program, instStream *stream)
+bool removeNops(Program *program, InstructionStream *stream)
 {
     if (!stream->workTablePtr) {
         reportError("work table not set in %s\n", stream->streamName());
         exitAfterCleanup(-1);
     }
-    workTable *table = stream->workTablePtr;
+    ScheduleTable *table = stream->workTablePtr;
     if (!table) {
         reportError("no work table \n");
         return false;
@@ -79,9 +79,9 @@ bool removeNops(Program *program, instStream *stream)
     }
     int curTick = 0;
     int logLen = table->getRawOrSyntheticLogicalLength();
-    ol_s *inflight[1024];
+    OperandLocation *inflight[1024];
     for (int rowIndex = table->getRangeStart(); rowIndex != table->getRangeEnd(); rowIndex++) {
-        wtRow *row = (wtRow *)((cls_unk30 *)table)->getIE_ck(rowIndex);
+        ScheduleRow *row = (ScheduleRow *)((InstructionOwnerTableView *)table)->getIE_ck(rowIndex);
         if (row->skip) {
             reportError("skip already set for line\n");
             return false;
@@ -96,10 +96,10 @@ bool removeNops(Program *program, instStream *stream)
             int rangeEnd = table->getRangeEnd();
             int inflightIndex;
             for (inflightIndex = 0; inflightIndex != inflightCount; inflightIndex++) {
-                ol_s *operandLocation = inflight[inflightIndex];
+                OperandLocation *operandLocation = inflight[inflightIndex];
                 Instr *instruction = operandLocation->instruction;
                 Operand *operand = operandAtLocation(operandLocation);
-                RegPoolEntry *registerEntry = operand->assignedRegister;
+                RegisterEntry *registerEntry = operand->assignedRegister;
                 int part = operandLocation->componentIndex;
                 int lat = operandLocation->cycleOffset;
                 if (registerEntry->tracksHotOutputPaths) {
@@ -112,7 +112,7 @@ bool removeNops(Program *program, instStream *stream)
                     else if (registerEntry->registerIndex != 0x32)
                         exitWithError("non p-q has throughput?\n");
                     int nextRowIndex = rowIndex + 1;
-                    wtRow *followingRow = row;
+                    ScheduleRow *followingRow = row;
                     while (followingRow++, nextRowIndex < table->getRangeEnd()) {
                         int followingCycleTime = followingRow->cycleTime;
                         if (followingCycleTime > tNow + thr)
@@ -129,7 +129,7 @@ bool removeNops(Program *program, instStream *stream)
                         nextRowIndex++;
                     }
                 }
-                for (ol_s *userLocation = operand->parts[part].operandLocations.firstInternalLocation(); userLocation && !userLocation->isExt(); userLocation = userLocation->next) {
+                for (OperandLocation *userLocation = operand->parts[part].operandLocations.firstInternalLocation(); userLocation && !userLocation->isExt(); userLocation = userLocation->next) {
                     Instr *userInstruction = userLocation->instruction;
                     if (operandAtLocation(userLocation)->externalBlockModeFlag && operand->outputLatency > 1) {
                         int userRow = userInstruction->position.linearRow;
@@ -147,30 +147,30 @@ bool removeNops(Program *program, instStream *stream)
                     }
                 }
             }
-            bool ok = true;
+            bool canRemoveInstruction = true;
             if (rowIndex == table->getRangeEnd() - 1 && !lastOk)
-                ok = false;
-            for (inflightIndex = 0; inflightIndex != inflightCount && ok; inflightIndex++) {
-                ol_s *operandLocation = inflight[inflightIndex];
+                canRemoveInstruction = false;
+            for (inflightIndex = 0; inflightIndex != inflightCount && canRemoveInstruction; inflightIndex++) {
+                OperandLocation *operandLocation = inflight[inflightIndex];
                 Operand *operand = operandAtLocation(operandLocation);
                 int part = operandLocation->componentIndex;
                 int lat = operandLocation->cycleOffset;
-                ol_s *userLocation = operand->parts[part].operandLocations.firstInternalLocation();
+                OperandLocation *userLocation = operand->parts[part].operandLocations.firstInternalLocation();
                 if (userLocation) {
                     Instr *userInstruction = userLocation->instruction;
                     Operand *userOperand = operandAtLocation(userLocation);
                     int consumerRow = userInstruction->position.linearRow;
                     int consumerCycle = table->ctime(consumerRow) - 1;
                     if (!operand->externalBlockModeFlag && !userOperand->externalBlockModeFlag && consumerRow < rangeEnd && tNow + lat > consumerCycle)
-                        ok = false;
+                        canRemoveInstruction = false;
                 }
             }
-            if (ok && rowIndex < table->getRangeEnd() - 1 && rowIndex + 1 < rangeEnd && row[1].getMinimumExtraLatencyAge() == 1)
-                ok = false;
+            if (canRemoveInstruction && rowIndex < table->getRangeEnd() - 1 && rowIndex + 1 < rangeEnd && row[1].getMinimumExtraLatencyAge() == 1)
+                canRemoveInstruction = false;
             if (rangeEnd < table->getRangeEnd()) {
                 int boundaryCycle = table->ctime(rangeEnd);
-                wtRow *scannedRow = row + 1;
-                for (int scanIndex = rowIndex + 1; scanIndex < rangeEnd && ok; scanIndex++, scannedRow++) {
+                ScheduleRow *scannedRow = row + 1;
+                for (int scanIndex = rowIndex + 1; scanIndex < rangeEnd && canRemoveInstruction; scanIndex++, scannedRow++) {
                     int base = scannedRow->cycleTime - 1;
                     for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
                         Instr *instruction = scannedRow->getEntry(pipeIndex);
@@ -178,14 +178,14 @@ bool removeNops(Program *program, instStream *stream)
                             continue;
                         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                             Operand *otherOperand = &instruction->operands[operandIndex];
-                            RegPoolEntry *writerRegister = registerOperand(otherOperand, 2);
+                            RegisterEntry *writerRegister = registerOperand(otherOperand, 2);
                             if (otherOperand->reductionHazardMask)
-                                ok = false;
+                                canRemoveInstruction = false;
                             if (writerRegister && !otherOperand->externalBlockModeFlag) {
                                 int readyCycle = base + otherOperand->outputLatency;
                                 if (readyCycle < boundaryCycle) {
                                     int l2 = rangeEnd;
-                                    wtRow *r2 = (wtRow *)((cls_unk30 *)table)->getIE_ck(rangeEnd);
+                                    ScheduleRow *r2 = (ScheduleRow *)((InstructionOwnerTableView *)table)->getIE_ck(rangeEnd);
                                     while (l2 < table->getRangeEnd() && r2->cycleTime < readyCycle) {
                                         r2++;
                                         l2++;
@@ -193,7 +193,7 @@ bool removeNops(Program *program, instStream *stream)
                                     if (l2 < table->getRangeEnd()) {
                                         if (r2->cycleTime == readyCycle) {
                                             if (r2->inputMaskFor(writerRegister, 0xff))
-                                                ok = false;
+                                                canRemoveInstruction = false;
                                         }
                                     }
                                 }
@@ -202,9 +202,9 @@ bool removeNops(Program *program, instStream *stream)
                     }
                 }
             }
-            if (ok) {
+            if (canRemoveInstruction) {
                 if (rowIndex + 1 < rangeEnd) {
-                    wtRow *candidateRow = row + 1;
+                    ScheduleRow *candidateRow = row + 1;
                     int candidateRowIndex = rowIndex + 1;
                     do {
                         int base = candidateRow->cycleTime - 1;
@@ -215,20 +215,20 @@ bool removeNops(Program *program, instStream *stream)
                                 if (inputConstraint < instruction->externalInputPairedConstraint)
                                     inputConstraint = instruction->externalInputPairedConstraint;
                                 if (inputConstraint > base) {
-                                    ok = false;
+                                    canRemoveInstruction = false;
                                     break;
                                 }
                             }
                         }
                         candidateRowIndex++;
                         candidateRow++;
-                    } while (candidateRowIndex < rangeEnd && ok);
+                    } while (candidateRowIndex < rangeEnd && canRemoveInstruction);
                 }
-                if (ok) {
+                if (canRemoveInstruction) {
                     if (rangeEnd >= table->getRangeEnd()) {
                         int last = table->getRawOrSyntheticLogicalLength() - 1;
-                        for (int sampledRowIndex = table->getRangeStart(); sampledRowIndex < rangeEnd && ok; sampledRowIndex++) {
-                            wtRow *sampledRow = (wtRow *)((cls_unk30 *)table)->getIE_ck(sampledRowIndex);
+                        for (int sampledRowIndex = table->getRangeStart(); sampledRowIndex < rangeEnd && canRemoveInstruction; sampledRowIndex++) {
+                            ScheduleRow *sampledRow = (ScheduleRow *)((InstructionOwnerTableView *)table)->getIE_ck(sampledRowIndex);
                             int dist = last - row->cycleTime;
                             if (dist < 0)
                                 exitWithError("distance to end appears to be less than zero\n");
@@ -239,22 +239,22 @@ bool removeNops(Program *program, instStream *stream)
                                     if (outputConstraint < instruction->externalOutputPairedConstraint)
                                         outputConstraint = instruction->externalOutputPairedConstraint;
                                     if (outputConstraint < dist) {
-                                        ok = false;
+                                        canRemoveInstruction = false;
                                         break;
                                     }
                                 }
                             }
                         }
                     }
-                    if (ok) {
+                    if (canRemoveInstruction) {
                         if (rangeEnd >= table->getRangeEnd()) {
                             int last = table->getRawOrSyntheticLogicalLength() - 1;
                             if (last < table->externalMinimumLength)
-                                ok = false;
+                                canRemoveInstruction = false;
                             if (stream->endType != 1 && last <= 1)
-                                ok = false;
+                                canRemoveInstruction = false;
                         }
-                        if (ok) {
+                        if (canRemoveInstruction) {
                             row->skip = 1;
                             splitCtime(table, rowIndex, rangeEnd);
                             if (rangeEnd >= table->getRangeEnd())
@@ -286,9 +286,9 @@ bool removeNops(Program *program, instStream *stream)
     return true;
 }
 
-void initializeScheduledCycleTimes(workTable *table)
+void initializeScheduledCycleTimes(ScheduleTable *table)
 {
-    wtRow *row = table->rows + table->rangeStart;
+    ScheduleRow *row = table->rows + table->rangeStart;
     for (int rowIndex = table->rangeStart; rowIndex != table->rangeEnd; rowIndex++, row++) {
         int rel = rowIndex - table->rangeStart;
         for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
@@ -302,7 +302,7 @@ void initializeScheduledCycleTimes(workTable *table)
     }
 }
 
-void splitCtime(workTable *table, int rowIndex, int cycleTime)
+void splitCtime(ScheduleTable *table, int rowIndex, int cycleTime)
 {
     if (rowIndex < table->rangeStart || rowIndex >= table->rangeEnd)
         exitWithError("nop line is bad\n");
@@ -310,12 +310,12 @@ void splitCtime(workTable *table, int rowIndex, int cycleTime)
         exitWithError("m<l for splitCtime()\n");
     if (cycleTime > table->rangeEnd)
         cycleTime = table->rangeEnd;
-    wtRow *row = &table->rows[rowIndex];
+    ScheduleRow *row = &table->rows[rowIndex];
     for (; rowIndex < cycleTime; rowIndex++, row++)
         row->cycleTime--;
 }
 
-int getCtime(workTable *table, int rowIndex)
+int getCtime(ScheduleTable *table, int rowIndex)
 {
     if (rowIndex < table->rangeStart || rowIndex >= table->rangeEnd)
         exitWithError("nop line is bad\n");

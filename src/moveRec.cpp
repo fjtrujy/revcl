@@ -13,7 +13,7 @@ extern const char moveRecNewInstrError[];
 extern const char moveRecBaseMuidError[];
 extern const char moveDetectNoRegError[];
 
-Instr *getMove(int type, int)
+Instr *getMove(int type, int unusedTimingArgument)
 {
     if (type == 0) {
         reportError("can't get null move\n");
@@ -81,7 +81,7 @@ Instr *getMove(int type, int)
         reportError("bad move type\n");
         exitAfterCleanup(-1);
     }
-    iInfo *instructionInfo = getOpcodeInfoById(opc);
+    OpcodeDescriptor *instructionInfo = getOpcodeInfoById(opc);
     if (!instructionInfo) {
         reportError("got here - no ii\n");
         exitAfterCleanup(-1);
@@ -95,7 +95,7 @@ Instr *getMove(int type, int)
     newInstruction->instructionSerial = serial;
     newInstruction->abstractMoveOpcode = opc;
     newInstruction->concreteMoveOpcode = 0;
-    RegPoolEntry *registerEntry = registerPool->findMoveRegister(newInstruction);
+    RegisterEntry *registerEntry = registerPool->findMoveRegister(newInstruction);
     if (!registerEntry) {
         reportError("failed to get move reg\n");
         exitAfterCleanup(-1);
@@ -134,7 +134,7 @@ bool addFreeMove(Instr *freeMoveInstruction)
         reportError("not a move to free\n");
         exitAfterCleanup(-1);
     }
-    RegPoolEntry *registerEntry = moveRecord->moveRegister;
+    RegisterEntry *registerEntry = moveRecord->moveRegister;
     if (!registerEntry) {
         reportError("m_Reg not set in mr\n");
         exitAfterCleanup(-1);
@@ -160,7 +160,7 @@ bool addFreeMove(Instr *freeMoveInstruction)
         reportError(moveRecBaseMuidError);
         return false;
     }
-    iInfo *instructionInfo = getOpcodeInfoById(freeMoveInstruction->abstractMoveOpcode);
+    OpcodeDescriptor *instructionInfo = getOpcodeInfoById(freeMoveInstruction->abstractMoveOpcode);
     freeMoveInstruction->concreteMoveOpcode = 0;
     freeMoveInstruction->opcodeInfo = instructionInfo;
     freeMoveInstruction->permittedPipelineMask = instructionInfo->pipelineMask;
@@ -223,8 +223,8 @@ bool detectMove(Instr *instruction, int &opc, unsigned char &mask, int &dstOp, i
     default:
         return false;
     }
-    RegPoolEntry *registerEntry = instruction->operands[srcOp].assignedRegister;
-    RegPoolEntry *destinationRegister = instruction->operands[dstOp].assignedRegister;
+    RegisterEntry *registerEntry = instruction->operands[srcOp].assignedRegister;
+    RegisterEntry *destinationRegister = instruction->operands[dstOp].assignedRegister;
     if (!registerEntry || !destinationRegister) {
         reportError(moveDetectNoRegError);
         exitAfterCleanup(-1);
@@ -252,7 +252,7 @@ bool detectMove(Instr *instruction, int &opc, unsigned char &mask, int &dstOp, i
     return true;
 }
 
-bool resolveMovePipe(workTable *scheduleTable, Instr *instruction, int pipe)
+bool resolveMovePipe(ScheduleTable *scheduleTable, Instr *instruction, int pipe)
 {
     if (instruction->abstractMoveOpcode == 0xb2)
         instruction->concreteMoveOpcode = 0xb3;
@@ -269,7 +269,7 @@ bool resolveMovePipe(workTable *scheduleTable, Instr *instruction, int pipe)
         scheduleTable->oddPipeMoveCount--;
     else
         scheduleTable->evenPipeMoveCount--;
-    iInfo *instructionInfo = getOpcodeInfoById(instruction->concreteMoveOpcode);
+    OpcodeDescriptor *instructionInfo = getOpcodeInfoById(instruction->concreteMoveOpcode);
     instruction->opcodeInfo = instructionInfo;
     instruction->permittedPipelineMask = instructionInfo->pipelineMask;
     instruction->opcodeResourceMask = instructionInfo->resourceMask;
@@ -284,7 +284,7 @@ bool resolveMovePipe(workTable *scheduleTable, Instr *instruction, int pipe)
 
 int unresolveMove(Block *block, Instr *instruction)
 {
-    iInfo *instructionInfo = getOpcodeInfoById(instruction->abstractMoveOpcode);
+    OpcodeDescriptor *instructionInfo = getOpcodeInfoById(instruction->abstractMoveOpcode);
     if (instruction->permittedPipelineMask == 3)
         block->vectorMoveCount--;
     else if (instruction->permittedPipelineMask & 1)

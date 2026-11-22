@@ -12,7 +12,7 @@ int normal2RegCost(Instr *in);
 int vuta1RegCost(Instr *in);
 
 
-bool optHDown(workTable *scheduleTable, wrangleCand *candidate)
+bool optHDown(ScheduleTable *scheduleTable, wrangleCand *candidate)
 {
     Instr *instruction = scheduleTable->moveListHead;
     int bestA = 0x80000000;
@@ -61,7 +61,7 @@ int estimateHeightDownRegisterCost(Instr *instruction)
 {
     int cost = 0;
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
-        RegPoolEntry *registerEntry = instruction->operands[operandIndex].inRegOp2();
+        RegisterEntry *registerEntry = instruction->operands[operandIndex].inRegOp2();
         if (registerEntry) {
             switch (registerEntry->registerIndex) {
             case 55:
@@ -74,7 +74,7 @@ int estimateHeightDownRegisterCost(Instr *instruction)
     return cost;
 }
 
-bool optDUp(workTable *scheduleTable, wrangleCand *candidate)
+bool optDUp(ScheduleTable *scheduleTable, wrangleCand *candidate)
 {
     Instr *instruction = scheduleTable->moveListHead;
     Instr *best = 0;

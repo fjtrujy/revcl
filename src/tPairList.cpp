@@ -6,10 +6,10 @@
 #include "instStream.h"
 
 int reportError(const char *fmt, ...);
-bool resetStreamPathSearch(instStream *n);
-bool extendBackTrace(Program *p, instStream *n);
+bool resetStreamPathSearch(InstructionStream *n);
+bool extendBackTrace(Program *p, InstructionStream *n);
 bool processActiveList(Program *p);
-int buildMinimumPathKey(Program *p, instStream *n);
+int buildMinimumPathKey(Program *p, InstructionStream *n);
 
 bool tPairList::clear()
 {
@@ -89,7 +89,7 @@ void tPair::noopThroughputPairHook()
 {
 }
 
-bool buildCrossStreamThroughputPairs(Program *program, RegPoolEntry *registerEntry, int part, instStream *stream, void *targetStream)
+bool buildCrossStreamThroughputPairs(Program *program, RegisterEntry *registerEntry, int part, InstructionStream *stream, void *targetStream)
 {
     if (!stream) {
         reportError("int_buildTpairs - null arg\n");
@@ -101,7 +101,7 @@ bool buildCrossStreamThroughputPairs(Program *program, RegPoolEntry *registerEnt
     program->activeStreams = 0;
     program->traceStoreEnabled = 0;
     program->trackMaximumPathLength = 0;
-    for (instStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+    for (InstructionStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         if (!resetStreamPathSearch(currentStream)) {
             reportError("failed to do a local init for the back trace\n");
             return false;
@@ -111,7 +111,7 @@ bool buildCrossStreamThroughputPairs(Program *program, RegPoolEntry *registerEnt
         reportError("failed on the initial extend\n");
         return false;
     }
-    for (instStream *activeStream = program->activeStreams; activeStream; activeStream = activeStream->nextActiveStream) {
+    for (InstructionStream *activeStream = program->activeStreams; activeStream; activeStream = activeStream->nextActiveStream) {
         activeStream->shortestPathPredecessor = 0;
         activeStream->longestPathPredecessor = 0;
         activeStream->minimumPathLength = 0;
@@ -121,7 +121,7 @@ bool buildCrossStreamThroughputPairs(Program *program, RegPoolEntry *registerEnt
         reportError("failed to do internal trace for  a t pair\n");
         return false;
     }
-    regUse *registerUse = stream->backtraceRegisterUse;
+    RegisterUse *registerUse = stream->backtraceRegisterUse;
     if (!registerUse) {
         reportError("there's  no regref set in t target\n");
         return false;
@@ -130,8 +130,8 @@ bool buildCrossStreamThroughputPairs(Program *program, RegPoolEntry *registerEnt
         reportError("there's a mismatch between reg and regref\n");
         return false;
     }
-    for (instStream *sourceStream = program->sourceStreams; sourceStream; sourceStream = sourceStream->nextSourceStream) {
-        regUse *sourceRegisterUse = sourceStream->backtraceRegisterUse;
+    for (InstructionStream *sourceStream = program->sourceStreams; sourceStream; sourceStream = sourceStream->nextSourceStream) {
+        RegisterUse *sourceRegisterUse = sourceStream->backtraceRegisterUse;
         if (!sourceRegisterUse) {
             reportError("there's no regref in t src\n");
             return false;

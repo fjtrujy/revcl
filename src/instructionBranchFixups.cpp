@@ -11,7 +11,7 @@ bool Instr::patchBranchLatencies()
         operand->additionalLatency = 0;
         if (!(branchFlags & 4))
             continue;
-        for (ol_s *location = operand->parts[0].operandLocations.head; location; location = location->next) {
+        for (OperandLocation *location = operand->parts[0].operandLocations.head; location; location = location->next) {
             Instr *branchInstruction = location->instruction;
             bool found = false;
             if (branchInstruction->ramAccessType) {
@@ -20,7 +20,7 @@ bool Instr::patchBranchLatencies()
                     continue;
             }
             for (int branchOperandIndex = 0; branchOperandIndex != branchInstruction->operandCount; branchOperandIndex++) {
-                RegPoolEntry *registerEntry = registerOperand(&branchInstruction->operands[branchOperandIndex], 1);
+                RegisterEntry *registerEntry = registerOperand(&branchInstruction->operands[branchOperandIndex], 1);
                 if (registerEntry && (unsigned)(registerEntry->registerIndex - 54) <= 5) {
                     found = true;
                     break;
@@ -51,7 +51,7 @@ int Instr::simplifyBranch()
     if (branchFlags & 8)
         return 1;
     if (operandCount == 2) {
-        RegPoolEntry *registerEntry = operands[0].assignedRegister;
+        RegisterEntry *registerEntry = operands[0].assignedRegister;
         if (!registerEntry)
             return -1;
         if (registerEntry->registerIndex == 0x20) {

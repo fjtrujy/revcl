@@ -5,27 +5,27 @@
 #include "Instr.h"
 
 bool optReset(Program *p);
-int setRangeFrom(workTable *t);
-bool fixupCloneFdeps(workTable *wt);
+int setRangeFrom(ScheduleTable *t);
+bool fixupCloneFdeps(ScheduleTable *wt);
 
 static inline void copyShort(short &destination, const short &from)
 {
     destination = from;
 }
 
-workTable *prepUta(Program *p, instStream *s, int loopSize, char smart);
+ScheduleTable *prepUta(Program *p, InstructionStream *s, int loopSize, char smart);
 extern int nextReservedInstructionKey;
 
-workTable *makeForceTable(Program *program, instStream *stream)
+ScheduleTable *makeForceTable(Program *program, InstructionStream *stream)
 {
-    workTable *scheduleTable = stream->getTable();
+    ScheduleTable *scheduleTable = stream->getTable();
     int mode = scheduleTable->codeModeValue;
     if ((unsigned char)mode != 3) {
         const char *modeName = codeModeName(mode);
         reportError("it_old is not raw mode - %s\n", modeName);
         return 0;
     }
-    workTable *newWorkTable = prepUta(program, stream, 0, 0);
+    ScheduleTable *newWorkTable = prepUta(program, stream, 0, 0);
     if (!newWorkTable) {
         reportError("failed to make a lock table for makeForceTable\n");
         return 0;

@@ -10,7 +10,7 @@
 #include "os.h"
 
 extern char *stallTypeNames[3];
-int getOpcodeId(iInfo *ii);
-iInfo *findOpcodeInfoByMnemonic(const char *name, bool exact);
+int getOpcodeId(OpcodeDescriptor *ii);
+OpcodeDescriptor *findOpcodeInfoByMnemonic(const char *name, bool exact);
 
 #endif

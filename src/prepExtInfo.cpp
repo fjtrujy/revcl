@@ -12,9 +12,9 @@ int getInstructionDistanceToStreamEnd(Instr *in);
 int getInstructionDistanceFromStreamStart(Instr *in);
 int guessKeyLen(Program *p, int key, int start, int end);
 
-bool prepExtInfo(Program *program, instStream *stream, bool noExt)
+bool prepExtInfo(Program *program, InstructionStream *stream, bool noExt)
 {
-    workTable *table = stream->getTable();
+    ScheduleTable *table = stream->getTable();
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
         instruction->clearExternalTimingConstraints();
     table->externalMinimumLength = 0;
@@ -22,10 +22,10 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
         return 1;
     bool changed = 0;
     int streamId = stream->streamId;
-    regUse *registerUse;
-    regUseList *registerUseList = &table->registerUses;
+    RegisterUse *registerUse;
+    RegisterUseList *registerUseList = &table->registerUses;
     for (registerUse = registerUseList->head; registerUse; registerUse = registerUse->next) {
-        RegPoolEntry *reg = registerUse->registerEntry;
+        RegisterEntry *reg = registerUse->registerEntry;
         for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
             regUseSlot *registerUseSlot = &registerUse->slots[partIndex];
             if (!registerUseSlot) {
@@ -34,12 +34,12 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
             }
             registerUseSlot->earliestExternalCycle = 0;
             registerUseSlot->latestExternalCycle = 30000;
-            for (ol_s *operandLocation = registerUseSlot->inputLocations.head; operandLocation; operandLocation = operandLocation->next) {
+            for (OperandLocation *operandLocation = registerUseSlot->inputLocations.head; operandLocation; operandLocation = operandLocation->next) {
                 Instr *instruction = operandLocation->instruction;
                 Operand *operand = &instruction->operands[operandLocation->operandIndex];
                 OpSlot *part = operand->getPart(operandLocation->componentIndex);
                 short best = 0;
-                ol_s *location = part->operandLocations.head;
+                OperandLocation *location = part->operandLocations.head;
                 if (location) {
                     for (; location; location = location->next) {
                         int key = location->pathKey;
@@ -49,7 +49,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         }
                         Instr *setter = location->instruction;
                         Operand *sourceOperand = operandAtLocation(location);
-                        instStream *setterStream = setter->getOwningStream();
+                        InstructionStream *setterStream = setter->getOwningStream();
                         if (!setterStream) {
                             reportError("failed to get the setters ist\n");
                             return 0;
@@ -81,7 +81,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                     return 0;
                 }
             }
-            for (ol_s *operandLocation = registerUseSlot->outputLocations.head; operandLocation; operandLocation = operandLocation->next) {
+            for (OperandLocation *operandLocation = registerUseSlot->outputLocations.head; operandLocation; operandLocation = operandLocation->next) {
                 Instr *instruction = operandLocation->instruction;
                 if (!instruction) {
                     reportError("not get visible output\n");
@@ -90,7 +90,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                 short best = 0;
                 Operand *operand = &instruction->operands[operandLocation->operandIndex];
                 olList *locationList = &operand->getPart(operandLocation->componentIndex)->operandLocations;
-                ol_s *externalLocation = locationList->firstExternalLocation();
+                OperandLocation *externalLocation = locationList->firstExternalLocation();
                 if (!operandLocation->isExtUsed() || externalLocation) {
                     if (!externalLocation || operandLocation->isExtUsed()) {
                         for (; externalLocation; externalLocation = externalLocation->nextExternalLocation()) {
@@ -105,7 +105,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                                 reportError("no setting instruction/operand\n");
                                 return 0;
                             }
-                            instStream *userStream = user->getOwningStream();
+                            InstructionStream *userStream = user->getOwningStream();
                             if (!userStream) {
                                 reportError("failed to get the setters ist\n");
                                 return 0;
@@ -142,7 +142,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                 }
             }
             if (reg->tracksHotOutputPaths && !noExt) {
-                ol_s *operandLocation;
+                OperandLocation *operandLocation;
                 for (operandLocation = registerUseSlot->externalInputLocations.head; operandLocation; operandLocation = operandLocation->next) {
                     int key = operandLocation->pathKey;
                     if (!key) {
@@ -154,7 +154,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         reportError("not get visible input\n");
                         return 0;
                     }
-                    instStream *ownerStream = instruction->getOwningStream();
+                    InstructionStream *ownerStream = instruction->getOwningStream();
                     if (!ownerStream) {
                         reportError("failed to get the setters ist\n");
                         return 0;
@@ -188,7 +188,7 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                         reportError("not get visible input\n");
                         return 0;
                     }
-                    instStream *consumerStream = instruction->getOwningStream();
+                    InstructionStream *consumerStream = instruction->getOwningStream();
                     if (!consumerStream) {
                         reportError("failed to get the setters ist\n");
                         return 0;
@@ -211,14 +211,14 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
                 }
             }
             for (tPair *transitionPair = registerUseSlot->throughputPairs.head; transitionPair; transitionPair = transitionPair->next) {
-                instStream *sourceStream = (instStream *)transitionPair->a;
-                instStream *destinationStream = (instStream *)transitionPair->b;
+                InstructionStream *sourceStream = (InstructionStream *)transitionPair->a;
+                InstructionStream *destinationStream = (InstructionStream *)transitionPair->b;
                 if (!sourceStream || !destinationStream) {
                     reportError("there's no src or dst in a tpair\n");
                     return 0;
                 }
-                workTable *scheduleTable = sourceStream->getTable();
-                workTable *destinationTable = destinationStream->getTable();
+                ScheduleTable *scheduleTable = sourceStream->getTable();
+                ScheduleTable *destinationTable = destinationStream->getTable();
                 if (scheduleTable->codeModeValue == 3 && destinationTable->codeModeValue == 3) {
                     int sourceId = sourceStream->streamId;
                     int k1 = guessKeyLen(program, transitionPair->src, sourceId, streamId);
@@ -267,9 +267,9 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
         for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
-                RegPoolEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
+                RegisterEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
                 if (registerEntry && registerEntry->tracksHotOutputPaths) {
-                    regUse *currentRegisterUse = registerUseList->findByRegister(registerEntry);
+                    RegisterUse *currentRegisterUse = registerUseList->findByRegister(registerEntry);
                     if (!currentRegisterUse) {
                         reportError("failed to find regref\n");
                         exitAfterCleanup(-1);
@@ -288,9 +288,9 @@ bool prepExtInfo(Program *program, instStream *stream, bool noExt)
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
         for (int hazardOperandIndex = 0; hazardOperandIndex != instruction->operandCount; hazardOperandIndex++) {
             Operand *operand = &instruction->operands[hazardOperandIndex];
-            RegPoolEntry *reg = operand->assignedRegister;
+            RegisterEntry *reg = operand->assignedRegister;
             if (reg) {
-                regUse *hazardRegisterUse = registerUseList->findByRegister(reg);
+                RegisterUse *hazardRegisterUse = registerUseList->findByRegister(reg);
                 if (isRegisterOperand(operand, 1))
                     operand->reductionHazardMask = hazardRegisterUse->hazardMask & operand->externalPartMask;
                 if (isRegisterOperand(operand, 2))

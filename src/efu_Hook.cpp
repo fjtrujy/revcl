@@ -8,7 +8,7 @@
 extern int errorOccurred;
 extern bool quietDiagnostics;
 void resetRange();
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 char *dupString(const char *s);
 
 static inline void dumpEmitInstruction(Instr *instruction)
@@ -16,7 +16,7 @@ static inline void dumpEmitInstruction(Instr *instruction)
     instruction->dumpOperandDiagnostics(false);
 }
 
-bool rotateInputComponentMask(void *, Instr *instruction)
+bool rotateInputComponentMask(void * unusedHookContext, Instr *instruction)
 {
     Operand *operand = &instruction->operands[1];
     operand->componentMask = (((operand->componentMask & 8) >> 3) | (operand->componentMask << 1)) & 0xf;
@@ -25,7 +25,7 @@ bool rotateInputComponentMask(void *, Instr *instruction)
 
 bool efu_Hook(void *opcodeMetadata, Instr *instruction)
 {
-    iInfo *opcodeInfo = (iInfo *)opcodeMetadata;
+    OpcodeDescriptor *opcodeInfo = (OpcodeDescriptor *)opcodeMetadata;
     Operand *operand = &instruction->operands[1];
     switch (opcodeInfo->efuMaskType) {
     case 1: break;
@@ -44,8 +44,8 @@ bool asciiCaseEqual(const char *a, const char *b);
 
 bool wr2w_Hook(void *opcodeMetadata, Instr *moveInstruction)
 {
-    iInfo *opcodeInfo = (iInfo *)opcodeMetadata;
-    iInfo *instructionInfo;
+    OpcodeDescriptor *opcodeInfo = (OpcodeDescriptor *)opcodeMetadata;
+    OpcodeDescriptor *instructionInfo;
     if (asciiCaseEqual(opcodeInfo->mnemonic, "ilwr"))
         instructionInfo = findOpcodeInfoByMnemonic("ilw", false);
     else if (asciiCaseEqual(opcodeInfo->mnemonic, "iswr"))
@@ -64,7 +64,7 @@ bool wr2w_Hook(void *opcodeMetadata, Instr *moveInstruction)
     return 1;
 }
 
-char *emitClip(char *outputBuffer, Instr *instruction, bool upper, char *mods, bool symbolic, int)
+char *emitClip(char *outputBuffer, Instr *instruction, bool upper, char *mods, bool symbolic, int unusedEmissionMode)
 {
     bool comma = false;
     int len = formatIntoBuffer(outputBuffer, "clipw%s.xyz", mods);
@@ -90,7 +90,7 @@ char *emitClip(char *outputBuffer, Instr *instruction, bool upper, char *mods, b
     return outputCursor;
 }
 
-char *vmove_Emit(char *outputBuffer, Instr *instruction, bool upper, char *mods, bool symbolic, int)
+char *vmove_Emit(char *outputBuffer, Instr *instruction, bool upper, char *mods, bool symbolic, int unusedEmissionMode)
 {
     char *outputCursor;
     if (!instruction)
@@ -172,7 +172,7 @@ done:
 
 bool semSynth(void *opcodeMetadata, Instr *syntheticInstruction)
 {
-    iInfo *opcodeInfo = (iInfo *)opcodeMetadata;
+    OpcodeDescriptor *opcodeInfo = (OpcodeDescriptor *)opcodeMetadata;
     char name[32];
     char *nameDestination = name;
     const char *mnemonicSource = opcodeInfo->mnemonic;
@@ -207,7 +207,7 @@ bool semSynth(void *opcodeMetadata, Instr *syntheticInstruction)
         }
     }
     *nameDestination = 0;
-    iInfo *instructionInfo = findOpcodeInfoByMnemonic(name, false);
+    OpcodeDescriptor *instructionInfo = findOpcodeInfoByMnemonic(name, false);
     if (!instructionInfo) {
         reportError("failed to find derived instruction type '%s'\n", name);
         return 0;

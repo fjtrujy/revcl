@@ -5,7 +5,7 @@
 #include "Instr.h"
 #include "ol_s_inline.h"
 
-int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
+int earliestInsert(ScheduleTable *scheduleTable, Instr *instruction, bool *found)
 {
     short inputConstraint = instruction->externalInputConstraint;
     if (inputConstraint < instruction->externalInputPairedConstraint)
@@ -15,7 +15,7 @@ int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
     int iline = instruction->position.loopRow;
     Operand *operand;
     for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                 if ((operand->componentMask >> partIndex) & 1) {
@@ -80,7 +80,7 @@ int earliestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
     return line;
 }
 
-int latestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
+int latestInsert(ScheduleTable *scheduleTable, Instr *instruction, bool *found)
 {
     short outputConstraint = instruction->externalOutputConstraint;
     if (outputConstraint < instruction->externalOutputPairedConstraint)
@@ -90,7 +90,7 @@ int latestInsert(workTable *scheduleTable, Instr *instruction, bool *found)
     bool thru = false;
     Operand *operand;
     for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry && operand->reductionHazardMask) {
             thru = true;
             break;

@@ -11,7 +11,7 @@ bool resetProgramAllocationsForFirstPass(Program *p);
 bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
 int countSetBits(unsigned int);
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 
 
 static inline bool validPipe(int pipeIndex)
@@ -19,7 +19,7 @@ static inline bool validPipe(int pipeIndex)
     return pipeIndex == 0 || pipeIndex == 1;
 }
 
-bool regRefLiveRange(regUse *registerUse, int part, int *rangeStartOut, int *rangeEndOut, bool *always)
+bool regRefLiveRange(RegisterUse *registerUse, int part, int *rangeStartOut, int *rangeEndOut, bool *always)
 {
     *rangeStartOut = -4;
     *rangeEndOut = -3;
@@ -147,7 +147,7 @@ bool lockLiveRange(RegisterPartLockList *registerPartLocks, OperandLock *outputL
     return true;
 }
 
-bool haveSimultaneousRegisterOutputs(workTable *scheduleTable, RegPoolEntry *registerEntry, RegPoolEntry *alternateRegister)
+bool haveSimultaneousRegisterOutputs(ScheduleTable *scheduleTable, RegisterEntry *registerEntry, RegisterEntry *alternateRegister)
 {
     if (scheduleTable->codeModeValue != 3) {
         reportError("hack_slo - called - but table not raw\n");
@@ -158,7 +158,7 @@ bool haveSimultaneousRegisterOutputs(workTable *scheduleTable, RegPoolEntry *reg
         return false;
     }
     for (int rowIndex = scheduleTable->rangeStart; rowIndex < scheduleTable->rangeEnd; rowIndex++) {
-        wtRow *row = &scheduleTable->rows[rowIndex];
+        ScheduleRow *row = &scheduleTable->rows[rowIndex];
         bool hasA = false;
         bool hasB = false;
         for (int entryIndex = 0; entryIndex != 2; entryIndex++) {

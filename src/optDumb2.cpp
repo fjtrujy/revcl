@@ -4,7 +4,7 @@
 #include "RegPool.h"
 #include "wrangle.h"
 
-bool optDumb2(workTable *scheduleTable, wrangleCand *candidate)
+bool optDumb2(ScheduleTable *scheduleTable, wrangleCand *candidate)
 {
     Instr *instruction = scheduleTable->moveListHead;
     Instr *best = 0;

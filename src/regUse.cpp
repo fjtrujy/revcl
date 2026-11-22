@@ -2,7 +2,7 @@
 extern const char regUseNewFailedError[];
 #include "RegPool_shared.h"
 
-regUse::regUse(RegPoolEntry *registerEntry)
+RegisterUse::RegisterUse(RegisterEntry *registerEntry)
 {
     this->registerEntry = registerEntry;
     externalInputMask = 0;
@@ -10,7 +10,7 @@ regUse::regUse(RegPoolEntry *registerEntry)
     inputMask = 0;
     outputMask = 0;
     throughputMask = 0;
-    unk_11 = 0;
+    copiedRegisterUseFlag = 0;
     hazardMask = 0;
     sourcePathHazardMask = 0;
     hazardBroadcastMask = 0;
@@ -21,22 +21,22 @@ regUse::regUse(RegPoolEntry *registerEntry)
     definingInstruction = registerEntry->throughputWriter;
 }
 
-regUse::~regUse()
+RegisterUse::~RegisterUse()
 {
 }
 
-regUseList::regUseList()
+RegisterUseList::RegisterUseList()
 {
     tail = 0;
     head = 0;
     count = 0;
 }
 
-regUseList::~regUseList()
+RegisterUseList::~RegisterUseList()
 {
-    regUse *registerUse = head;
+    RegisterUse *registerUse = head;
     while (registerUse) {
-        regUse *next = registerUse->next;
+        RegisterUse *next = registerUse->next;
         if (registerUse->next)
             registerUse->next->previous = registerUse->previous;
         else
@@ -53,11 +53,11 @@ regUseList::~regUseList()
     }
 }
 
-bool regUseList::clear()
+bool RegisterUseList::clear()
 {
-    regUse *registerUse = head;
+    RegisterUse *registerUse = head;
     while (registerUse) {
-        regUse *next = registerUse->next;
+        RegisterUse *next = registerUse->next;
         if (registerUse->next)
             registerUse->next->previous = registerUse->previous;
         else
@@ -75,14 +75,14 @@ bool regUseList::clear()
     return true;
 }
 
-regUse *regUseList::addRegisterUse(RegPoolEntry *registerEntry)
+RegisterUse *RegisterUseList::addRegisterUse(RegisterEntry *registerEntry)
 {
     if (find(registerEntry)) {
         reportError("addnewregref - already have rg\n");
         exitAfterCleanup(-1);
         return 0;
     }
-    regUse *registerUse = new regUse(registerEntry);
+    RegisterUse *registerUse = new RegisterUse(registerEntry);
     if (!registerUse) {
         reportError(regUseNewFailedError);
         exitAfterCleanup(-1);
@@ -101,7 +101,7 @@ regUse *regUseList::addRegisterUse(RegPoolEntry *registerEntry)
     return registerUse;
 }
 
-bool regUseList::append(regUse *registerUse)
+bool RegisterUseList::append(RegisterUse *registerUse)
 {
     registerUse->previous = 0;
     registerUse->next = 0;
@@ -116,7 +116,7 @@ bool regUseList::append(regUse *registerUse)
     return true;
 }
 
-bool regUseList::remove(regUse *registerUse)
+bool RegisterUseList::remove(RegisterUse *registerUse)
 {
     if (registerUse->next)
         registerUse->next->previous = registerUse->previous;
@@ -132,10 +132,10 @@ bool regUseList::remove(regUse *registerUse)
     return true;
 }
 
-bool regUseList::hasConsistentCount()
+bool RegisterUseList::hasConsistentCount()
 {
     int consistentUseCount = 0;
-    for (regUse *registerUse = head; registerUse; registerUse = registerUse->next) {
+    for (RegisterUse *registerUse = head; registerUse; registerUse = registerUse->next) {
         if (!registerUse->registerEntry)
             return false;
         consistentUseCount++;
@@ -143,7 +143,7 @@ bool regUseList::hasConsistentCount()
     return consistentUseCount == count;
 }
 
-bool regUseList::hasEntries()
+bool RegisterUseList::hasEntries()
 {
     return tail != 0;
 }

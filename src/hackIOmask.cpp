@@ -6,14 +6,14 @@ bool rotateInputComponentMask(void *, Instr *in);
 static inline bool isOutput(Operand *operand) { return operand->direction == 2; }
 static inline bool isInput(Operand *operand) { return operand->direction == 1; }
 
-static inline RegPoolEntry *outReg(Operand *operand)
+static inline RegisterEntry *outReg(Operand *operand)
 {
     if (isOutput(operand))
         return operand->assignedRegister;
     return 0;
 }
 
-static inline RegPoolEntry *inReg(Operand *operand)
+static inline RegisterEntry *inReg(Operand *operand)
 {
     if (isInput(operand))
         return operand->assignedRegister;
@@ -28,7 +28,7 @@ bool noopIOmaskProgramHook(Program *program)
 
 int hackIOmask(Instr *instruction, int outOp, unsigned char mask, int inOp)
 {
-    iInfo *opcodeInfo = instruction->opcodeInfo;
+    OpcodeDescriptor *opcodeInfo = instruction->opcodeInfo;
     if (!opcodeInfo) {
         reportError("hackIOmask - no inst set\n");
         return -1;

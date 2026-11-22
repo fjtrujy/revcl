@@ -71,7 +71,7 @@ extern bool symbolicOutputRequested;
 extern bool cautiousMemoryAccessMode;
 extern bool disableLoopProcessing;
 extern int optimizationTimeoutSeconds;
-extern bool unk_080b3014;
+extern bool unusedPreprocessorCompatibilityFlag;
 extern bool enableCodeSizeReduction;
 extern bool disableOutputAlignment;
 extern bool disableEndBits;
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     const char *uniqueName = 0;
     bool uniqueAll = false;
     bool dumpRegs = false;
-    int mValue = -1;
+    int TypedValue = -1;
     int len;
 
     for (; argumentIndex < argc && argv[argumentIndex][0] == '-'; argumentIndex++) {
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
             labelFile = argv[argumentIndex] + 2;
             break;
         case 'm':
-            mValue = parseInteger(argv[argumentIndex] + 2);
+            TypedValue = parseInteger(argv[argumentIndex] + 2);
             break;
         case 'n':
             newSyntax = true;
@@ -286,7 +286,7 @@ int main(int argc, char **argv)
         reportError("failed to set int name for flow\n");
         exitAfterCleanup(-1);
     }
-    flow.proc.mpgTargetAddress = mValue;
+    flow.proc.mpgTargetAddress = TypedValue;
     if (!flow.decodeAndSplitStreams(&parser, true, newSyntax)) {
         reportError("failed to build flow from parser!\n");
         exitAfterCleanup(-1);

@@ -4,11 +4,11 @@
 #include "Instr.h"
 #include "os.h"
 
-static inline bool extendForEnd_inl(workTable *scheduleTable)
+static inline bool extendForEnd_inl(ScheduleTable *scheduleTable)
 {
     do {
         int rowIndex = scheduleTable->rangeEnd++;
-        wtRow *workRow = scheduleTable->getRowByIndex(rowIndex);
+        ScheduleRow *workRow = scheduleTable->getRowByIndex(rowIndex);
         if (!workRow) {
             reportError("failed to get ie for end patch\n");
             return false;
@@ -20,13 +20,13 @@ static inline bool extendForEnd_inl(workTable *scheduleTable)
 
 bool tidyProgramStreams(Program *program)
 {
-    instStream *stream;
+    InstructionStream *stream;
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
         if (!stream->workTablePtr) {
             reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *scheduleTable = stream->workTablePtr;
+        ScheduleTable *scheduleTable = stream->workTablePtr;
         switch (scheduleTable->codeModeValue) {
         case 1:
             reportError("work table code mode is uta..%s\n", stream->streamName());
@@ -42,7 +42,7 @@ bool tidyProgramStreams(Program *program)
         stream->mergeIntoSuccessor = 1;
         if (stream->endType != 1)
             stream->mergeIntoSuccessor = 0;
-        linkNode *link = stream->outputLinks.head;
+        StreamLinkNode *link = stream->outputLinks.head;
         if (!link)
             stream->mergeIntoSuccessor = 0;
         while (link) {
@@ -56,9 +56,9 @@ bool tidyProgramStreams(Program *program)
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
         if (!stream->mergeIntoSuccessor)
             continue;
-        linkNode *outgoingLink = stream->outputLinks.head;
+        StreamLinkNode *outgoingLink = stream->outputLinks.head;
         while (outgoingLink) {
-            linkNode *next = outgoingLink->next;
+            StreamLinkNode *next = outgoingLink->next;
             if (!program->unLinkStreams(stream, outgoingLink->otherStream, outgoingLink->linkType)) {
                 reportError("failed disappear linkage\n");
                 return false;
@@ -74,7 +74,7 @@ bool tidyProgramStreams(Program *program)
             reportError("work table not set in %s\n", stream->streamName());
             exitAfterCleanup(-1);
         }
-        workTable *streamTable = stream->workTablePtr;
+        ScheduleTable *streamTable = stream->workTablePtr;
         if (streamTable->codeModeValue == 4)
             continue;
         if (streamTable->getRangeStart() < 0)
@@ -89,11 +89,11 @@ bool tidyProgramStreams(Program *program)
     return true;
 }
 
-bool extendForEnd(workTable *scheduleTable)
+bool extendForEnd(ScheduleTable *scheduleTable)
 {
     do {
         int rowIndex = scheduleTable->rangeEnd++;
-        wtRow *workRow = scheduleTable->getRowByIndex(rowIndex);
+        ScheduleRow *workRow = scheduleTable->getRowByIndex(rowIndex);
         if (!workRow) {
             reportError("failed to get ie for end patch\n");
             return false;

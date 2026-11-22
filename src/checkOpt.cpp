@@ -9,8 +9,8 @@
 
 bool checkOpt1(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *scheduleTable = stream->getTable();
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        ScheduleTable *scheduleTable = stream->getTable();
         if (!scheduleTable) {
             reportError("null work table\n");
             return false;
@@ -26,8 +26,8 @@ bool checkOpt1(Program *program)
 
 bool checkOpt2(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
-        workTable *scheduleTable = stream->getTable();
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+        ScheduleTable *scheduleTable = stream->getTable();
         if (!scheduleTable) {
             reportError("null work table\n");
             return false;
@@ -59,8 +59,8 @@ bool checkOpt3(Program *program)
 {
     reportInfo("checkOpt2()\n");
     reportInfo("OLL free count = %d\n", countFreeLocationNodes());
-    for (instStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
-        workTable *scheduleTable = currentStream->getTable();
+    for (InstructionStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+        ScheduleTable *scheduleTable = currentStream->getTable();
         if (!scheduleTable) {
             reportError("null work table\n");
             return false;
@@ -96,7 +96,7 @@ bool checkOpt3(Program *program)
             int count = 0;
             Instr *prev = 0;
             for (int rowIndex = start; rowIndex != end; rowIndex++) {
-                Instr **instructionSlot = ((cls_unk30 *)scheduleTable)->getIE_ck(rowIndex);
+                Instr **instructionSlot = ((InstructionOwnerTableView *)scheduleTable)->getIE_ck(rowIndex);
                 if (!instructionSlot) {
                     reportError("failed to get ientry from table\n");
                     return false;
@@ -146,7 +146,7 @@ bool checkOpt3(Program *program)
         for (Instr *linkedInstruction = scheduleTable->linearInstructions.head; linkedInstruction; linkedInstruction = linkedInstruction->linearLink.nextInstruction) {
             for (int operandIndex = 0; operandIndex != linkedInstruction->operandCount; operandIndex++) {
                 Operand *operand = &linkedInstruction->operands[operandIndex];
-                RegPoolEntry *registerEntry;
+                RegisterEntry *registerEntry;
                 if (linkedInstruction->operands[operandIndex].pairedOperandIndexPlusOne) {
                     Operand *pairedOperand = &linkedInstruction->operands[linkedInstruction->operands[operandIndex].pairedOperandIndexPlusOne - 1];
                     if (pairedOperand->pairedOperandIndexPlusOne - 1 != operandIndex) {
@@ -160,7 +160,7 @@ bool checkOpt3(Program *program)
                     }
                 } else
                     registerEntry = linkedInstruction->operands[operandIndex].assignedRegister;
-                RegPoolEntry *mreg = (RegPoolEntry *)linkedInstruction->operands[operandIndex].forcedBaseRegister;
+                RegisterEntry *mreg = (RegisterEntry *)linkedInstruction->operands[operandIndex].forcedBaseRegister;
                 if (registerEntry && registerEntry->isVirtual && !linkedInstruction->operands[operandIndex].originalRegister) {
                     reportError("original reg not set\n");
                     return false;
@@ -185,7 +185,7 @@ bool checkOpt3(Program *program)
                         OpSlot *slot = operand->getPart(partIndex);
                         if (!slot)
                             continue;
-                        ol_s *location = slot->operandLocations.head;
+                        OperandLocation *location = slot->operandLocations.head;
                         bool seenExt = false;
                         int last = -1000;
                         for (; location; location = location->next) {

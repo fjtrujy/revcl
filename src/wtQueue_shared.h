@@ -9,39 +9,39 @@
 #include "instStream.h"
 #include "Program.h"
 
-typedef bool (*wrangleFunc)(workTable *, int *);
+typedef bool (*wrangleFunc)(ScheduleTable *, int *);
 
 struct optimiser {
     const char *name;
     int wmode;
     int flags;
     wrangleFunc func;
-    int unk_10;
+    int reservedOptimizerWord;
 };
 
 extern optimiser optTable[11];
 extern const char *currentOptimizerName;
 
-instStream *selectUninsertedStream(Program *p);
-bool prepExtInfo(Program *p, instStream *s, bool b);
-workTable *prepUta(Program *p, instStream *s, int loopSize, char smart);
+InstructionStream *selectUninsertedStream(Program *p);
+bool prepExtInfo(Program *p, InstructionStream *s, bool b);
+ScheduleTable *prepUta(Program *p, InstructionStream *s, int loopSize, char smart);
 bool statReset(Program *p);
-bool dynCalcStats(workTable *wt);
-bool scheduleMidTableMode1(workTable *wt, wrangleFunc f);
-bool scheduleMidTableMode0(workTable *wt, wrangleFunc f);
-bool reduceExtents(workTable *wt);
-bool adjustTrailingBranchLayout(workTable *wt);
-bool assignLocalRegisters(Program *p, workTable *wt);
-bool makeLpWork(instStream *s, int maxSpread);
-bool disposeLpWork(instStream *s);
-bool keepLpWork(instStream *s);
+bool dynCalcStats(ScheduleTable *wt);
+bool scheduleMidTableMode1(ScheduleTable *wt, wrangleFunc f);
+bool scheduleMidTableMode0(ScheduleTable *wt, wrangleFunc f);
+bool reduceExtents(ScheduleTable *wt);
+bool adjustTrailingBranchLayout(ScheduleTable *wt);
+bool assignLocalRegisters(Program *p, ScheduleTable *wt);
+bool makeLpWork(InstructionStream *s, int maxSpread);
+bool disposeLpWork(InstructionStream *s);
+bool keepLpWork(InstructionStream *s);
 bool optReset(Program *p);
-workTable *makeForceTable(Program *p, instStream *s);
+ScheduleTable *makeForceTable(Program *p, InstructionStream *s);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 const char *stallReasonStr(short why);
-bool sredTable(workTable *wt);
-bool prepareReductionCandidates(Program *p, instStream *s, workTable *wt);
-bool reduceLinearSchedule(Program *p, workTable *wt, unsigned char a, unsigned char b);
+bool sredTable(ScheduleTable *wt);
+bool prepareReductionCandidates(Program *p, InstructionStream *s, ScheduleTable *wt);
+bool reduceLinearSchedule(Program *p, ScheduleTable *wt, unsigned char a, unsigned char b);
 bool unlinkFromCompletedInstructions(Block *block, Instr *n);
 bool setRange(int s, int e, int lsz);
 

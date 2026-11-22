@@ -10,13 +10,13 @@ char *joinNameWithPrefix(const char *a, const char *b);
 
 bool Program::doUnique()
 {
-    instStream *stream;
+    InstructionStream *stream;
     for (stream = streamHead; stream; stream = stream->nextStream) {
-        workTable *scheduleTable = stream->getTable();
+        ScheduleTable *scheduleTable = stream->getTable();
         for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
             if (!instruction->branchFlags)
                 continue;
-            iInfo *instructionInfo = instruction->opcodeInfo;
+            OpcodeDescriptor *instructionInfo = instruction->opcodeInfo;
             if (!instructionInfo) {
                 reportError("no inst for a branch\n");
                 return false;
@@ -32,8 +32,8 @@ bool Program::doUnique()
                 exitAfterCleanup(-1);
             }
             if (branchTargetOperand->operandKind == 0x1b) {
-                mValue *expressionValue = &branchTargetOperand->immediateValue;
-                if (expressionValue->type != mValue::STRING) {
+                TypedValue *expressionValue = &branchTargetOperand->immediateValue;
+                if (expressionValue->type != TypedValue::STRING) {
                     reportError("doUnique: a branch target isn't a literal string\n");
                     return false;
                 }
@@ -89,7 +89,7 @@ bool Program::doUnique()
 
 bool Program::hasStreamLabel(const char *name)
 {
-    for (instStream *stream = streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = streamHead; stream; stream = stream->nextStream) {
         if (stream->labels.findByNameIgnoreCase(name))
             return true;
     }

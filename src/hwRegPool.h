@@ -3,18 +3,18 @@
 
 #include "RegPool.h"
 
-class instStream;
-class workTable;
+class InstructionStream;
+class ScheduleTable;
 
 class hwRegPool : public RegPool {
 public:
     hwRegPool();
     virtual ~hwRegPool();
-    virtual bool assignExt(instStream *s);                        // slot 2
-    virtual bool discardDisjointExternalRegister(instStream *s, RegPoolEntry *reg); // slot 3
-    virtual bool assignRegistersForWorkTable(workTable *t);                     // slot 4
+    virtual bool assignExt(InstructionStream *s);                        // slot 2
+    virtual bool discardDisjointExternalRegister(InstructionStream *s, RegisterEntry *reg); // slot 3
+    virtual bool assignRegistersForWorkTable(ScheduleTable *t);                     // slot 4
 
-    char unk_30[0x20];
+    char reservedHardwarePoolStorage[0x20];
 };
 
 #endif

@@ -5,14 +5,14 @@
 #include "instStream.h"
 #include "workTable.h"
 
-bool buildForwardDependencyList(workTable *wt, bool force, bool);
+bool buildForwardDependencyList(ScheduleTable *wt, bool force, bool);
 bool tagsMatch(Instr *a, Instr *b);
 bool addAdditionalClonePredecessors(Instr *in, Instr *other);
-bool copyCloneFdeps(Instr *in, ol_s *o, olList *dst);
+bool copyCloneFdeps(Instr *in, OperandLocation *o, olList *dst);
 
 Operand *getEA(Instr *instruction)
 {
-    iInfo *instructionInfo = instruction->opcodeInfo;
+    OpcodeDescriptor *instructionInfo = instruction->opcodeInfo;
     if (!instructionInfo) {
         reportError("no ii for getEA\n");
         exitAfterCleanup(-1);
@@ -57,8 +57,8 @@ bool sameEA(Instr *instruction, Instr *secondInstruction)
     }
     if (ea1->externalPartMask != ea2->externalPartMask)
         return false;
-    RegPoolEntry *r1 = ea1->assignedRegister;
-    RegPoolEntry *r2 = ea2->assignedRegister;
+    RegisterEntry *r1 = ea1->assignedRegister;
+    RegisterEntry *r2 = ea2->assignedRegister;
     if (r1 && r1 == r1->ownerPool->zeroRegister)
         r1 = 0;
     if (r2 && r2 == r2->ownerPool->zeroRegister)

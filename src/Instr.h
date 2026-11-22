@@ -8,15 +8,15 @@
 #include "mList.h"
 #include "os.h"
 
-class instStream;
+class InstructionStream;
 class LocTag;
 class Instr;
-struct ol_s;
+struct OperandLocation;
 struct Operand;
-struct regUse;
+struct RegisterUse;
 class RegWeb;
 
-// Opcode descriptor ("iInfo", from the null-argument error string).
+// Opcode descriptor: mnemonic, pipeline/resource constraints, hooks and operands.
 struct iOpDesc {
     unsigned char operandKind;   // 0 terminates the list
     unsigned char direction;     // 1 = input, 2 = output
@@ -27,34 +27,34 @@ struct iOpDesc {
     unsigned char patchedOutputIndexPlusOne;
 };
 
-class iInfo {
+class OpcodeDescriptor {
 public:
-    char *unk_00;
+    char *reservedOpcodeDescriptorPointer0;
     char *mnemonic;
-    char *unk_08;
+    char *reservedOpcodeDescriptorPointer1;
     unsigned char destinationMaskMode;
-    char unk_0d;
+    char reservedOpcodeDescriptorByte0d;
     union {
-        unsigned short unk_0e_w;
+        unsigned short pipelineAndIssueMaskWord;
         struct {
             char pipelineMask;
-            char unk_0f;
+            char reservedOpcodeDescriptorByte0f;
         };
     };
     char resourceMask;
-    char unk_11;
+    char reservedOpcodeDescriptorByte11;
     char minimumIssueSpacing;
-    char unk_13[5];
+    char reservedOpcodeDescriptorBytes13[5];
     unsigned char kindAndFlags;
     unsigned char kindData;
     unsigned char branchTargetOperandSelector;
-    char unk_1b;
+    char reservedOpcodeDescriptorByte1b;
     int efuMaskType;
     bool (*decodeHook)(void *, Instr *);
-    char unk_24[0x34 - 0x24];
+    char reservedOpcodeDescriptorBytes24[0x34 - 0x24];
     char *reverseSenseMnemonic;
     char *(*emitHook)(char *buf, Instr *in, bool upper, char *mods, bool b, int zero);
-    char unk_3c[0x44 - 0x3c];
+    char reservedOpcodeDescriptorBytes3c[0x44 - 0x3c];
     iOpDesc operandDescriptors[12];
 
     unsigned char kind() { return kindAndFlags & 7; }
@@ -76,7 +76,7 @@ public:
 // Operand-location list: list ownership and count checked by its dump helpers.
 class olList {
 public:
-    ol_s *head;
+    OperandLocation *head;
     int count;
 
     olList()
@@ -88,34 +88,29 @@ public:
     bool clear();
     void validateOperandLocations();
     void dumpOperandLocations();
-    ol_s *addOperandLocation(Instr *instruction, int op, int slot, bool ext);
-    ol_s *addInstructionLocation(Instr *instruction);
-    ol_s *copyOperandLocation(ol_s *ol, bool ext);
-    ol_s *firstInternalLocation();
-    ol_s *firstExternalLocation();
-    ol_s *insertExternalLocation(ol_s *src);
+    OperandLocation *addOperandLocation(Instr *instruction, int op, int slot, bool ext);
+    OperandLocation *addInstructionLocation(Instr *instruction);
+    OperandLocation *copyOperandLocation(OperandLocation *ol, bool ext);
+    OperandLocation *firstInternalLocation();
+    OperandLocation *firstExternalLocation();
+    OperandLocation *insertExternalLocation(OperandLocation *src);
 };
 
-// Base of OpSlot: fields 0x00..0x4f reset by resetLock (class name guessed).
-class cls0805c244;
-class cls08058718;
-class cls0805bcc4;
+// Instruction position and operand/register-part lock types retain their
+// recovered data layouts and directly use their semantic C++ type names.
+class RegisterPartLockList;
+class InstructionPosition;
+class OperandLock;
 
-// Descriptive source-level type aliases retain the original C++ class names
-// and mangled symbols required for the byte-exact historical ELF.
-typedef cls08058718 InstructionPosition;
-typedef cls0805bcc4 OperandLock;
-typedef cls0805c244 RegisterPartLockList;
-
-class cls0805bcc4 {
+class OperandLock {
 public:
     unsigned char lowerPipeInputDemand;
     unsigned char upperPipeInputDemand;
     unsigned char eitherPipeInputDemand;
-    cls0805c244 *ownerLockList;
-    cls0805bcc4 *nextSibling;
-    cls0805bcc4 *parentOrChildren;
-    cls0805bcc4 *nextSortedOutput;
+    RegisterPartLockList *ownerLockList;
+    OperandLock *nextSibling;
+    OperandLock *parentOrChildren;
+    OperandLock *nextSortedOutput;
     unsigned char lockDirection;
     char latencyModeFlag;
     char externalOutputSlotPlusOne;
@@ -123,14 +118,14 @@ public:
     char issueLatency;
     char operandStatusCode;
     char priority;
-    char unk_1b;
-    cls0805bcc4 *pairedLock;
+    char reservedOperandLockStatusByte;
+    OperandLock *pairedLock;
     short referenceCount;
     short activeReferenceCount;
     void *ownerPointer;
     unsigned char ownerComponent;
     unsigned char ownerOperandIndex;
-    short unk_2a;
+    short resetOnlyLockOwnerMetadata;
     char insertedIntoLockList;
     unsigned char ownerType;
     short scheduledConsumerCount;
@@ -144,27 +139,27 @@ public:
     short earliestConsumerFreeCycle;
     short adjustedLatestConsumerCycle;
     short latestConsumerCycle;
-    short unk_44;
+    short reservedLockTimingHalfword;
     short eitherPipeConsumerCount;
     short upperPipeConsumerCount;
     short lowerPipeConsumerCount;
     short adjustedLatestReadyCycle;
     short latestReadyCycle;
 
-    cls0805bcc4() { resetLock(); }
-    ~cls0805bcc4() {}
+    OperandLock() { resetLock(); }
+    ~OperandLock() {}
     bool resetLock();
     bool setOwner(int part, Instr *instr, int opnd);
-    bool setOwner(int part, regUse *rf);
+    bool setOwner(int part, RegisterUse *rf);
     bool clearOwner();
     Instr *ownerInstr();
-    regUse *ownerRegUse();
+    RegisterUse *ownerRegUse();
     Operand *ownerOperand();
     int ownerOpnd();
     int getPart();
     void printOwner();
-    cls0805bcc4 *getParent();
-    bool setInOut(cls0805bcc4 *olk);
+    OperandLock *getParent();
+    bool setInOut(OperandLock *olk);
     bool incRef();
     bool decRef();
     char getPriority() { return priority; }
@@ -175,7 +170,7 @@ public:
     short secondaryLockConstraint();
     bool calcStats(Instr *skip);
     void resetCalculatedStats();
-    void setFrom(cls08058718 *r);
+    void setFrom(InstructionPosition *r);
     short getCurrentLoopIteration();
     const char *regName();
     void resetStats()
@@ -193,16 +188,16 @@ public:
     }
 };
 
-class cls0805c244 {
+class RegisterPartLockList {
 public:
     short loopWrapMinimumRow;
     unsigned char componentIndex;
     unsigned char assigned;
-    RegPoolEntry *registerEntry;
-    cls0805c244 *nextLockList;
-    cls0805bcc4 *externalOutputLocks[4];
-    cls0805bcc4 *outputLocks;
-    cls0805bcc4 *sortedOutputLocks;
+    RegisterEntry *registerEntry;
+    RegisterPartLockList *nextLockList;
+    OperandLock *externalOutputLocks[4];
+    OperandLock *outputLocks;
+    OperandLock *sortedOutputLocks;
     short outputLockCount;
     short remainingLockCount;
     char containsRegisterOutput;
@@ -210,46 +205,46 @@ public:
     unsigned char externalOutputCount;
     char sharedExternalOutputFlag;
 
-    cls0805c244();
-    cls0805c244(cls0805c244 *next);
-    ~cls0805c244();
+    RegisterPartLockList();
+    RegisterPartLockList(RegisterPartLockList *next);
+    ~RegisterPartLockList();
     void checkCounts();
     bool reset();
-    bool addInput(cls0805bcc4 *outputLock, cls0805bcc4 *in, char a, unsigned char b);
-    bool addOutput(cls0805bcc4 *lk, int a, int b, unsigned char c);
-    bool removeInput(cls0805bcc4 *in);
-    bool removeOutput(cls0805bcc4 *lk);
-    bool addOutputLock(cls0805bcc4 *lk);
-    bool addInputLock(cls0805bcc4 *in);
-    bool undoInputLock(cls0805bcc4 *in);
-    bool undoOutputLock(cls0805bcc4 *lk);
+    bool addInput(OperandLock *outputLock, OperandLock *in, char a, unsigned char b);
+    bool addOutput(OperandLock *lk, int a, int b, unsigned char c);
+    bool removeInput(OperandLock *in);
+    bool removeOutput(OperandLock *lk);
+    bool addOutputLock(OperandLock *lk);
+    bool addInputLock(OperandLock *in);
+    bool undoInputLock(OperandLock *in);
+    bool undoOutputLock(OperandLock *lk);
     int maxConstraintOfFirstOutputs(int n);
-    bool isOk(cls0805bcc4 *lk, int type, bool inserted);
-    bool moveOutputLock(cls0805bcc4 *lk);
-    bool moveInputLock(cls0805bcc4 *in);
-    bool addExtOutput(cls0805bcc4 *lk, bool flag);
+    bool isOk(OperandLock *lk, int type, bool inserted);
+    bool moveOutputLock(OperandLock *lk);
+    bool moveInputLock(OperandLock *in);
+    bool addExtOutput(OperandLock *lk, bool flag);
     Instr *earliestExt();
     int countFlaggedOutputLocks();
-    bool setRepReg(RegPoolEntry *selectedRegister);
-    int checkInputLock(cls0805bcc4 *in, short *pos, int *minPos);
-    int checkOutputLock(cls0805bcc4 *outputLock, short *pos, int *minPos);
-    int checkOverlap(cls0805bcc4 *outputLock, short *pos, int *minPos);
-    bool catLocks(cls0805bcc4 *a, cls0805bcc4 *b, int *s, int *e, int *end);
-    int canMoveInputLock(cls0805bcc4 *in, short *pos, int slotBit);
-    int canMoveOutputLock(cls0805bcc4 *outputLock, short *pos, int slotBit);
+    bool setRepReg(RegisterEntry *selectedRegister);
+    int checkInputLock(OperandLock *in, short *pos, int *minPos);
+    int checkOutputLock(OperandLock *outputLock, short *pos, int *minPos);
+    int checkOverlap(OperandLock *outputLock, short *pos, int *minPos);
+    bool catLocks(OperandLock *a, OperandLock *b, int *s, int *e, int *end);
+    int canMoveInputLock(OperandLock *in, short *pos, int slotBit);
+    int canMoveOutputLock(OperandLock *outputLock, short *pos, int slotBit);
 };
 
-bool freeLockLists(cls0805c244 *p);
+bool freeLockLists(RegisterPartLockList *p);
 bool lockRangesOverlap(int s1, int e1, int s2, int e2);
-cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part);
+RegisterPartLockList *findLockList(RegisterPartLockList *p, RegisterEntry *reg, int part);
 const char *rlmtName(unsigned char t);
 
-bool checkTable(iInfo *tab, int count);
+bool checkTable(OpcodeDescriptor *tab, int count);
 int decodeImmediateCategory(unsigned char);
 int defaultImmediateFlags(unsigned char);
 unsigned char immediateFlagBit7(unsigned char);
 
-struct OpSlot : public cls0805bcc4 {
+struct OpSlot : public OperandLock {
     short conflictingOutputLockCount;
     char outputConflictMarked[2];
     olList operandLocations;
@@ -273,11 +268,11 @@ struct Operand {
     char externalBlockModeFlag;
     char addressComponentMask;
     char pairedOperandIndexPlusOne;
-    char unk_0e[2];
-    RegPoolEntry *forcedBaseRegister;
-    RegPoolEntry *originalRegister;
-    RegPoolEntry *assignedRegister;
-    mValue immediateValue;
+    char reservedOperandHeaderBytes[2];
+    RegisterEntry *forcedBaseRegister;
+    RegisterEntry *originalRegister;
+    RegisterEntry *assignedRegister;
+    TypedValue immediateValue;
     char sourceTokenStartIndex;
     char sourceTokenEndIndex;
     char operandIndex;
@@ -322,7 +317,7 @@ struct Operand {
             r = true;
         return r;
     }
-    RegPoolEntry *findPhysicalRegister() { return isReg() ? assignedRegister : 0; }
+    RegisterEntry *findPhysicalRegister() { return isReg() ? assignedRegister : 0; }
     bool isZeroReg()
     {
         bool z = false;
@@ -332,42 +327,42 @@ struct Operand {
         }
         return z;
     }
-    RegPoolEntry *inputReg()
+    RegisterEntry *inputReg()
     {
         int r = 0;
         if (direction == 1 && !isZeroReg())
             r = 1;
         return r ? assignedRegister : 0;
     }
-    RegPoolEntry *inputRegister()
+    RegisterEntry *inputRegister()
     {
         int r = 0;
         if (direction == 1 && !isZeroReg2())
             r = 1;
         return (char)r ? assignedRegister : 0;
     }
-    RegPoolEntry *outputRegister()
+    RegisterEntry *outputRegister()
     {
         int r = 0;
         if (direction == 2 && !isZero())
             r = 1;
         return (char)r ? assignedRegister : 0;
     }
-    RegPoolEntry *outputReg()
+    RegisterEntry *outputReg()
     {
         int r = 0;
         if (direction == 2 && !isZero())
             r = 1;
         return (bool)r ? assignedRegister : 0;
     }
-    RegPoolEntry *inputRegB()
+    RegisterEntry *inputRegB()
     {
         int r = 0;
         if (direction == 1 && !isZero())
             r = 1;
         return (bool)r ? assignedRegister : 0;
     }
-    RegPoolEntry *outputRegZ()
+    RegisterEntry *outputRegZ()
     {
         int r = 0;
         if (direction == 2) {
@@ -376,7 +371,7 @@ struct Operand {
         }
         return r ? assignedRegister : 0;
     }
-    RegPoolEntry *outputRegZB()
+    RegisterEntry *outputRegZB()
     {
         int r = 0;
         if (direction == 2 && !isZeroReg())
@@ -390,7 +385,7 @@ struct Operand {
             r = 1;
         return r;
     }
-    RegPoolEntry *regOp() { return isRegOp() ? assignedRegister : 0; }
+    RegisterEntry *regOp() { return isRegOp() ? assignedRegister : 0; }
     bool isInReg() { return direction == 1 && !isZero(); }
     bool isOutReg() { return direction == 2 && !isZero(); }
     bool isReg2()
@@ -422,7 +417,7 @@ struct Operand {
             r = true;
         return r;
     }
-    RegPoolEntry *outRegZ()
+    RegisterEntry *outRegZ()
     {
         bool r = false;
         if (direction == 2 && !isZeroReg2())
@@ -431,13 +426,13 @@ struct Operand {
             return assignedRegister;
         return 0;
     }
-    RegPoolEntry *getReg2()
+    RegisterEntry *getReg2()
     {
         if (isReg2())
             return assignedRegister;
         return 0;
     }
-    RegPoolEntry *inRegOp()
+    RegisterEntry *inRegOp()
     {
         bool r = false;
         if (direction == 1 && !isZeroReg())
@@ -454,14 +449,14 @@ struct Operand {
         }
         return z;
     }
-    RegPoolEntry *inRegOp2()
+    RegisterEntry *inRegOp2()
     {
         bool r = false;
         if (direction == 1 && !isZeroReg2())
             r = true;
         return r ? assignedRegister : 0;
     }
-    RegPoolEntry *outRegOp()
+    RegisterEntry *outRegOp()
     {
         bool r = false;
         if (direction == 2 && !isZeroReg())
@@ -475,21 +470,21 @@ struct Operand {
             z = 1;
         return z;
     }
-    RegPoolEntry *outputRegB()
+    RegisterEntry *outputRegB()
     {
         int r = 0;
         if (direction == 2 && !isZeroB())
             r = 1;
         return (bool)r ? assignedRegister : 0;
     }
-    RegPoolEntry *inputRegC()
+    RegisterEntry *inputRegC()
     {
         int r = 0;
         if (direction == 1 && !isZeroB())
             r = 1;
         return (bool)r ? assignedRegister : 0;
     }
-    RegPoolEntry *getRegD()
+    RegisterEntry *getRegD()
     {
         bool r = false;
         if (direction == 1 && isZeroC() == false)
@@ -522,13 +517,13 @@ struct Operand {
     bool hasRegister() { return assignedRegister != 0; }
     bool isInput() { return direction == 1; }
     bool isOutput() { return direction == 2; }
-    RegPoolEntry *inReg()
+    RegisterEntry *inReg()
     {
         if (isInput() && assignedRegister)
             return assignedRegister;
         return 0;
     }
-    RegPoolEntry *outReg()
+    RegisterEntry *outReg()
     {
         if (direction == 2)
             return assignedRegister;
@@ -538,7 +533,7 @@ struct Operand {
 
 class Instr;
 
-static inline bool isZeroRegister(RegPoolEntry *reg)
+static inline bool isZeroRegister(RegisterEntry *reg)
 {
     return reg == reg->ownerPool->zeroRegister;
 }
@@ -553,7 +548,7 @@ static inline bool isRegisterOperand(Operand *op, char direction)
     return op->direction == direction && !isZeroOperand(op);
 }
 
-static inline RegPoolEntry *registerOperand(Operand *op, char direction)
+static inline RegisterEntry *registerOperand(Operand *op, char direction)
 {
     if (isRegisterOperand(op, direction))
         return op->assignedRegister;
@@ -582,16 +577,16 @@ struct iLink {
 
 #include "iGroupList.h"
 
-class cls08058718 {
+class InstructionPosition {
 public:
     short linearRow;
     char pipelineIndex;
     char loopIteration;
     short loopRow;
-    char unk_06[2];
+    char reservedPositionTailBytes[2];
 
-    cls08058718();
-    ~cls08058718();
+    InstructionPosition();
+    ~InstructionPosition();
     void clearInstructionPosition();
     void noopInstructionPositionHook();
     void setFromLinearRow(short v);
@@ -612,26 +607,27 @@ extern bool allowInputLockLoopWrapping;
 extern int activeSchedulingRangeStart;  // range start
 extern int activeSchedulingRangeEnd;  // range end
 
-class cls0805e2e4 {
+class SchedulingStatistics {
 public:
     short reverseLatencyDepth, reverseDependencyHeight, forwardLatencyDepth, forwardDependencyHeight;
     int moveCount, moveDistance, moveChainLength, independentLatencyDepth;
 
-    cls0805e2e4();
-    ~cls0805e2e4();
+    SchedulingStatistics();
+    ~SchedulingStatistics();
     void noopStatisticsHook();
     void invalidateAllCounters();
     void zeroAllCounters();
-    void copyCountersFrom(cls0805e2e4 *src);
-    void mergeMaximumCounters(cls0805e2e4 *o);
+    void copyCountersFrom(SchedulingStatistics *src);
+    void mergeMaximumCounters(SchedulingStatistics *o);
 };
 
-// Placeholder for the object at Instr::unk_30 (type unknown).
-struct cls_unk30 {
-    char unk_00[9];
+// Partial view of an instruction's owning schedule table. Only offsets used
+// by the recovered routines are described; intervening bytes are uninterpreted.
+struct InstructionOwnerTableView {
+    char uninterpretedOwnerPrefix[9];
     char codeModeValue;
-    char unk_0a[6];
-    instStream *ownerStream;
+    char uninterpretedOwnerBytesBeforeStream[6];
+    InstructionStream *ownerStream;
 
     Instr **getIE_ck(int rl);
 };
@@ -649,16 +645,16 @@ public:
             unsigned char inputDependencyReachable : 1;
         };
     };
-    char unk_0f;
-    iGroupList instructionGroups;
+    char reservedInstructionHeaderByte;
+    InstructionGroupList instructionGroups;
     LocTag *sourceTag;
     short sourceTokenStartIndex;
     short sourceTokenEndIndex;
     iLink linearLink;
     iLink pendingLink;
     Instr *nextMoveInstruction;
-    cls_unk30 *ownerTable;
-    iInfo *opcodeInfo;  // opcode descriptor
+    InstructionOwnerTableView *ownerTable;
+    OpcodeDescriptor *opcodeInfo;  // opcode descriptor
     Operand operands[12];
     unsigned char branchFlags;     // flags
     char instructionModifierBits;
@@ -668,7 +664,7 @@ public:
     unsigned char opcodeResourceMask;
     char schedulerCategory;
     unsigned char destinationMask;
-    char unk_1390;
+    char reservedSchedulerFlagByte;
     char reverseBranchSense;
     char tildePrefix;
     short scheduledCycle;
@@ -681,7 +677,7 @@ public:
     short externalInputConstraint;
     short externalOutputPairedConstraint;
     short externalOutputConstraint;
-    mList unk_13b8;
+    mList reservedInstructionMetadataList;
     char pruningRestricted;
     char syntheticKind;
     char ramAccessType;
@@ -693,23 +689,23 @@ public:
     char addressAliasDirection;
     char addressAliasOperandIndex;
     char originalPipelineMask;
-    mValue addressImmediateValue;
+    TypedValue addressImmediateValue;
     int instructionSerial;
     int linearOrderIndex;
-    cls08058718 position;
+    InstructionPosition position;
     void clearSlot() { position.clearInstructionPosition(); }
-    cls0805e2e4 schedulingStatistics;
+    SchedulingStatistics schedulingStatistics;
     short dynamicUpperBound, dynamicEarliestStart, dynamicReverseStart, dynamicReverseEnd;
     short hasExtraPredecessors;     // fdep "has extra pre deps" flag
     short specialRegisterReadMask;     // slot mask read of reg idx 48
     short specialRegisterWriteMask;     // slot mask written of reg idx 48
-    char unk_1416[2];
+    char reservedInstructionTimingBytes[2];
     short candidateAttemptCount;
     short candidateAttemptLimit;
     short candidateCostOffset;
     short candidateBaseRow;
     short parsedLoopId;
-    char unk_1422[6];
+    char reservedInstructionMoveBytes[6];
     VclPtrWord moveRecordWord;
     short abstractMoveOpcode;
     short concreteMoveOpcode;
@@ -725,7 +721,7 @@ public:
     {
         return abstractMoveOpcode && !concreteMoveOpcode;
     }
-    Instr(iInfo *info);
+    Instr(OpcodeDescriptor *info);
     ~Instr();
     void hasImmValue();
     bool hasImmFixup();
@@ -744,7 +740,7 @@ public:
     bool validateOperands();
     void dumpOperandDiagnostics(int flags);
     bool isNop();
-    instStream *getOwningStream();  // owner instruction stream
+    InstructionStream *getOwningStream();  // owner instruction stream
     bool resetFlowDependencies();
     unsigned char getBranchType() { return branchFlags; }
     bool isNonSynthetic();
@@ -768,20 +764,20 @@ public:
     Instr *clone();
     int getRamBits();
     bool resetOptimizationState();
-    int collectOutputRegisterMask(RegPoolEntry *reg, bool *paired);
-    int collectInputRegisterMask(RegPoolEntry *reg, bool *paired);
+    int collectOutputRegisterMask(RegisterEntry *reg, bool *paired);
+    int collectInputRegisterMask(RegisterEntry *reg, bool *paired);
     bool getImmediateOperand(int n, int *out);
     bool changeBranchImmediate(const char *s);
-    bool setOwner(cls_unk30 *s);
+    bool setOwner(InstructionOwnerTableView *s);
     char *emitExpectedSyntax(bool flag, char *outputBuffer, int n);
-    int outputMaskForRegister(RegPoolEntry *registerEntry, int mask);
-    int inputMaskForRegister(RegPoolEntry *registerEntry, int mask);
+    int outputMaskForRegister(RegisterEntry *registerEntry, int mask);
+    int inputMaskForRegister(RegisterEntry *registerEntry, int mask);
     bool hasRawTableOrImmediateToken();
     char *getBranchTargetImmediate();
-    RegPoolEntry *getBranchTargetRegister();
+    RegisterEntry *getBranchTargetRegister();
     int constantZeroInstructionHook();
-    Operand *findInputOperand(RegPoolEntry *reg, int mask);
-    Operand *findOutputOperand(RegPoolEntry *reg, int mask);
+    Operand *findInputOperand(RegisterEntry *reg, int mask);
+    Operand *findOutputOperand(RegisterEntry *reg, int mask);
     bool hasLinkedOutputFrom(unsigned int n);
     bool classifySchedulingCategory();
     Instr **getIE();
@@ -797,17 +793,17 @@ public:
     void raiseExternalOutputConstraint(short v);
 };
 
-iInfo *getOpcodeInfoById(int id);
-iInfo *findOpcodeInfoByMnemonic(const char *name, bool);
-RegPoolEntry *findRegisterByGlobalIndex(int idx);
-int getOpcodeId(iInfo *op);
+OpcodeDescriptor *getOpcodeInfoById(int id);
+OpcodeDescriptor *findOpcodeInfoByMnemonic(const char *name, bool);
+RegisterEntry *findRegisterByGlobalIndex(int idx);
+int getOpcodeId(OpcodeDescriptor *op);
 Instr *getInstructionInPipe(Instr **ie, int p);
 int checkDispatchEntry(Instr **ie);
 bool wouldPair(Instr **ie, Instr *in, unsigned p);
-bool isVuRegister(RegPoolEntry *r);
+bool isVuRegister(RegisterEntry *r);
 
-// Address-alias descriptor per opcode (12-byte entries, names guessed).
-struct aaDesc {
+// Address-alias descriptor per opcode (12-byte entries).
+struct AddressAliasDescriptor {
     int opcodeId;
     char aliasMode;
     unsigned char inputOperandIndex;
@@ -816,33 +812,33 @@ struct aaDesc {
     int literalImmediate;
 };
 
-// Address-alias use entry per opcode (8-byte entries, names guessed).
-struct aaUse {
+// Address-alias operand-use entry per opcode (8-byte entries).
+struct AddressAliasUse {
     int opcodeId;
     unsigned char operandIndex;
 };
 
-aaDesc *findAddressAliasDescriptor(Instr *in);
-aaUse *findAddressAliasUse(Instr *in);
-RegPoolEntry *getOperandZeroRegister(int kind);
+AddressAliasDescriptor *findAddressAliasDescriptor(Instr *in);
+AddressAliasUse *findAddressAliasUse(Instr *in);
+RegisterEntry *getOperandZeroRegister(int kind);
 bool hasDirectOperandDependency(Instr *a, Instr *b);
 bool writesInputRegisterOf(Instr *a, Instr *b);
-Operand *operandAtLocation(ol_s *ol);
-void markLocationExternallyUsed(ol_s *ol);
-int hasRawOrImmediateInstructionAtLocation(ol_s *ol);
-int instructionSerialAtLocation(ol_s *ol);
-bool sameOperandLocation(ol_s *a, ol_s *b);
-instStream *locationOwningStream(ol_s *ol);
-int locationRow(ol_s *ol);
-ol_s *allocateLocationNode();
+Operand *operandAtLocation(OperandLocation *ol);
+void markLocationExternallyUsed(OperandLocation *ol);
+int hasRawOrImmediateInstructionAtLocation(OperandLocation *ol);
+int instructionSerialAtLocation(OperandLocation *ol);
+bool sameOperandLocation(OperandLocation *a, OperandLocation *b);
+InstructionStream *locationOwningStream(OperandLocation *ol);
+int locationRow(OperandLocation *ol);
+OperandLocation *allocateLocationNode();
 int countFreeLocationNodes();
 bool linkOperandParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot);
-bool linkOperandParts(ol_s *o, ol_s *i, int x, int y);
+bool linkOperandParts(OperandLocation *o, OperandLocation *i, int x, int y);
 const char *branchTypeNameByCode(int t);
 const char *syntheticTypeName(int t);
 
-// Implicit operand description (name guessed).
-struct ImplicitOp {
+// Parsed implicit operand name, physical binding, component masks and literals.
+struct ImplicitOperandDescription {
     char name[0x800];
     char physicalRegisterName[0x800];
     char immediateText[0x800];
@@ -851,16 +847,16 @@ struct ImplicitOp {
     int addressComponentMask;
     int genericOperandForm;
     char forcePhysicalBinding;
-    char unk_200d[3];
+    char reservedImplicitOperandTail[3];
 };
 
-bool buildImplicitOperand(int kind, ImplicitOp *out, bool);
+bool buildImplicitOperand(int kind, ImplicitOperandDescription *out, bool);
 const char *opKindName(int kind);
 int registerClassForOperandKind(int kind);
 bool isScalarFloatingOperandKind(int kind);
 bool isVectorOrAccumulatorOperandKind(int kind);
 const char *immediateTypeName(unsigned char);
-extern ol_s *olFreeList;
+extern OperandLocation *olFreeList;
 
 struct opPair_s {
     int opcode;

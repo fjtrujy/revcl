@@ -8,7 +8,7 @@
 extern int errorOccurred;
 extern bool quietDiagnostics;
 void resetRange();
-int setRangeFrom(workTable *t);
+int setRangeFrom(ScheduleTable *t);
 char *dupString(const char *s);
 
 static inline void dumpEmitInstruction(Instr *instruction)
@@ -16,9 +16,9 @@ static inline void dumpEmitInstruction(Instr *instruction)
     instruction->dumpOperandDiagnostics(false);
 }
 
-char *emitGenericInstructionText(char *outputBuffer, Instr *instruction, bool upper, char *mods, bool symbolic, int)
+char *emitGenericInstructionText(char *outputBuffer, Instr *instruction, bool upper, char *mods, bool symbolic, int unusedEmissionMode)
 {
-    iInfo *opcodeInfo = instruction->opcodeInfo;
+    OpcodeDescriptor *opcodeInfo = instruction->opcodeInfo;
     bool comma = false;
     if (!mods)
         mods = "";
@@ -50,9 +50,9 @@ char *emitGenericInstructionText(char *outputBuffer, Instr *instruction, bool up
     return outputCursor;
 }
 
-char *emitReversibleBranch(char *outputBuffer, Instr *branchInstruction, bool upper, char *mods, bool symbolic, int)
+char *emitReversibleBranch(char *outputBuffer, Instr *branchInstruction, bool upper, char *mods, bool symbolic, int unusedEmissionMode)
 {
-    iInfo *opcodeInfo = branchInstruction->opcodeInfo;
+    OpcodeDescriptor *opcodeInfo = branchInstruction->opcodeInfo;
     bool comma = false;
     if (!mods)
         mods = "";
@@ -95,9 +95,9 @@ char *emitReversibleBranch(char *outputBuffer, Instr *branchInstruction, bool up
     return outputCursor;
 }
 
-RegPoolEntry *findPhysicalRegister(unsigned type, const char *name);
+RegisterEntry *findPhysicalRegister(unsigned type, const char *name);
 
-bool extHook(void *, Instr *instruction)
+bool extHook(void * unusedHookContext, Instr *instruction)
 {
     int done = 0;
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
@@ -108,7 +108,7 @@ bool extHook(void *, Instr *instruction)
             reportError("extHook - register already set\n");
             return 0;
         }
-        RegPoolEntry *registerEntry = findPhysicalRegister((unsigned char)operand->immediateDataType, "EXT");
+        RegisterEntry *registerEntry = findPhysicalRegister((unsigned char)operand->immediateDataType, "EXT");
         if (!registerEntry) {
             reportError("couldn't get ext register for pool\n");
             return 0;

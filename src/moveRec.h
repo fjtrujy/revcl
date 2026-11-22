@@ -10,7 +10,7 @@ public:
     moveRec *nextFree;
     unsigned char moveType;
     Instr *instruction;
-    RegPoolEntry *moveRegister;
+    RegisterEntry *moveRegister;
     RegisterPartLockList partLocks[4];
 
     moveRec(char type)

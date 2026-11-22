@@ -11,7 +11,7 @@
 extern int errorOccurred;
 extern bool quietDiagnostics;
 
-static inline bool isRegLock(cls0805bcc4 *lk)
+static inline bool isRegLock(OperandLock *lk)
 {
     return lk->ownerType == 2;
 }

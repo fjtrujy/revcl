@@ -11,7 +11,7 @@ regUseSlot::~regUseSlot()
 {
 }
 
-void regUseList::dumpRegisterUses()
+void RegisterUseList::dumpRegisterUses()
 {
     if (hasConsistentCount()) {
         for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
@@ -24,13 +24,13 @@ void regUseList::dumpRegisterUses()
 
 extern const char regUseNewFailedError[] = "AddNewRegRef() - new failed\n";
 
-int regUseList::dumpRegisterClassUses(int regClass)
+int RegisterUseList::dumpRegisterClassUses(int regClass)
 {
     int registerUseCount = 0;
-    regUse *listHead = head;
-    regUse *registerUse;
+    RegisterUse *listHead = head;
+    RegisterUse *registerUse;
     for (registerUse = listHead; registerUse; registerUse = registerUse->next) {
-        RegPoolEntry *registerEntry = registerUse->registerEntry;
+        RegisterEntry *registerEntry = registerUse->registerEntry;
         if (!registerEntry) {
             reportError("found reg ref with no reg!\n");
             exitAfterCleanup(-1);
@@ -48,9 +48,9 @@ int regUseList::dumpRegisterClassUses(int regClass)
     return registerUseCount;
 }
 
-void regUse::validateAndDumpParts()
+void RegisterUse::validateAndDumpParts()
 {
-    RegPoolEntry *reg = registerEntry;
+    RegisterEntry *reg = registerEntry;
     int partIndex;
     int validatedPartIndex = 0;
     if (reg->partCount != 0)
@@ -70,16 +70,16 @@ void regUse::validateAndDumpParts()
     }
 }
 
-regUse *regUseList::findByRegister(RegPoolEntry *registerEntry)
+RegisterUse *RegisterUseList::findByRegister(RegisterEntry *registerEntry)
 {
     return find(registerEntry);
 }
 
-regUse *regUseList::firstReal()
+RegisterUse *RegisterUseList::firstReal()
 {
-    regUse *previousUse;
+    RegisterUse *previousUse;
     for (previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        RegisterEntry *registerEntry = previousUse->registerEntry;
         if (!registerEntry) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -90,11 +90,11 @@ regUse *regUseList::firstReal()
     return previousUse;
 }
 
-regUse *regUse::nextReal()
+RegisterUse *RegisterUse::nextReal()
 {
-    regUse *previousUse;
+    RegisterUse *previousUse;
     for (previousUse = next; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        RegisterEntry *registerEntry = previousUse->registerEntry;
         if (!registerEntry) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -105,11 +105,11 @@ regUse *regUse::nextReal()
     return previousUse;
 }
 
-regUse *regUseList::firstVirtual()
+RegisterUse *RegisterUseList::firstVirtual()
 {
-    regUse *previousUse;
+    RegisterUse *previousUse;
     for (previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        RegisterEntry *registerEntry = previousUse->registerEntry;
         if (!registerEntry) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -120,11 +120,11 @@ regUse *regUseList::firstVirtual()
     return previousUse;
 }
 
-regUse *regUse::nextVirtual()
+RegisterUse *RegisterUse::nextVirtual()
 {
-    regUse *previousUse;
+    RegisterUse *previousUse;
     for (previousUse = next; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *registerEntry = previousUse->registerEntry;
+        RegisterEntry *registerEntry = previousUse->registerEntry;
         if (!registerEntry) {
             reportError("regref has no register!\n");
             exitAfterCleanup(-1);
@@ -135,9 +135,9 @@ regUse *regUse::nextVirtual()
     return previousUse;
 }
 
-bool regUseList::optReset()
+bool RegisterUseList::optReset()
 {
-    for (regUse *registerUse = head; registerUse; registerUse = registerUse->next) {
+    for (RegisterUse *registerUse = head; registerUse; registerUse = registerUse->next) {
         for (int partIndex = 0; partIndex != 4; partIndex++) {
             registerUse->slots[partIndex].assignmentPayload = 0;
             registerUse->slots[partIndex].registerLock.resetLock();
@@ -146,7 +146,7 @@ bool regUseList::optReset()
     return true;
 }
 
-bool regUse::optReset()
+bool RegisterUse::optReset()
 {
     for (int partIndex = 0; partIndex != 4; partIndex++) {
         slots[partIndex].assignmentPayload = 0;
@@ -162,7 +162,7 @@ bool regUseSlot::optReset()
     return true;
 }
 
-bool regUseSlot::addOutput(ol_s *operandLocation)
+bool regUseSlot::addOutput(OperandLocation *operandLocation)
 {
     if (!outputLocations.insertExternalLocation(operandLocation)) {
         reportError("failed to add oploc to output list sort\n");
@@ -186,14 +186,14 @@ OperandLock *regUseSlot::getRegisterLock()
     return &registerLock;
 }
 
-regUse *regUse::Clone()
+RegisterUse *RegisterUse::Clone()
 {
-    RegPoolEntry *reg = registerEntry;
+    RegisterEntry *reg = registerEntry;
     if (!reg) {
         reportError("regref::Clone - input had no register\n");
         return 0;
     }
-    regUse *registerUse = new regUse(reg);
+    RegisterUse *registerUse = new RegisterUse(reg);
     if (!registerUse) {
         reportError("failed to get new regref in clone\n");
         return 0;
@@ -209,8 +209,8 @@ regUse *regUse::Clone()
     registerUse->inputMask = inputMask;
     registerUse->outputMask = outputMask;
     registerUse->throughputMask = throughputMask;
-    registerUse->unk_16 = unk_16;
-    registerUse->unk_11 = unk_11;
+    registerUse->copiedRegisterUseMetadata = copiedRegisterUseMetadata;
+    registerUse->copiedRegisterUseFlag = copiedRegisterUseFlag;
     registerUse->externalBlockMode = externalBlockMode;
     for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
         registerUse->slots[partIndex].throughputSums[0] = slots[partIndex].throughputSums[0];
@@ -238,19 +238,19 @@ regUse *regUse::Clone()
     return registerUse;
 }
 
-const char *regUse::regName()
+const char *RegisterUse::regName()
 {
     if (!registerEntry)
         return "REGREG_NOREG";
     return registerEntry->registerName();
 }
 
-ol_s *regUseSlot::findPreviousOutputAtPosition(int pos, bool all)
+OperandLocation *regUseSlot::findPreviousOutputAtPosition(int pos, bool all)
 {
     if (all)
         pos = 0xff;
-    ol_s *prev = 0;
-    for (ol_s *currentLocation = outputLocations.head; currentLocation; currentLocation = currentLocation->next) {
+    OperandLocation *prev = 0;
+    for (OperandLocation *currentLocation = outputLocations.head; currentLocation; currentLocation = currentLocation->next) {
         if (pos < currentLocation->cycleOffset)
             break;
         prev = currentLocation;
@@ -258,11 +258,11 @@ ol_s *regUseSlot::findPreviousOutputAtPosition(int pos, bool all)
     return prev;
 }
 
-int regUseList::countUncoveredRegisterClassUses(int regClass)
+int RegisterUseList::countUncoveredRegisterClassUses(int regClass)
 {
     int uncoveredUseCount = 0;
-    for (regUse *previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *registerEntry = previousUse->registerEntry;
+    for (RegisterUse *previousUse = head; previousUse; previousUse = previousUse->next) {
+        RegisterEntry *registerEntry = previousUse->registerEntry;
         if (registerEntry->registerClass != regClass || registerEntry == registerEntry->ownerPool->zeroRegister)
             continue;
         if (~previousUse->inputMask & previousUse->throughputMask)
@@ -273,7 +273,7 @@ int regUseList::countUncoveredRegisterClassUses(int regClass)
     return uncoveredUseCount;
 }
 
-void regUseList::dumpVirtualRegisterUses()
+void RegisterUseList::dumpVirtualRegisterUses()
 {
     if (hasConsistentCount()) {
         for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
@@ -286,19 +286,19 @@ void regUseList::dumpVirtualRegisterUses()
     }
 }
 
-static inline bool isVirtualRegister(RegPoolEntry *registerEntry)
+static inline bool isVirtualRegister(RegisterEntry *registerEntry)
 {
     if (registerEntry->isVirtual == true)
         return true;
     return false;
 }
 
-void regUseList::dumpRegisterClassAllocations(int regClass)
+void RegisterUseList::dumpRegisterClassAllocations(int regClass)
 {
-    regUse *previousUse;
+    RegisterUse *previousUse;
     for (previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *registerEntry = previousUse->registerEntry;
-        RegPoolEntry *phys = registerEntry->assignedPhysicalRegister;
+        RegisterEntry *registerEntry = previousUse->registerEntry;
+        RegisterEntry *phys = registerEntry->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();
@@ -313,8 +313,8 @@ void regUseList::dumpRegisterClassAllocations(int regClass)
         }
     }
     for (previousUse = head; previousUse; previousUse = previousUse->next) {
-        RegPoolEntry *registerEntry = previousUse->registerEntry;
-        RegPoolEntry *phys = registerEntry->assignedPhysicalRegister;
+        RegisterEntry *registerEntry = previousUse->registerEntry;
+        RegisterEntry *phys = registerEntry->assignedPhysicalRegister;
         const char *alloc = "UNALLOCATED";
         if (phys)
             alloc = phys->registerName();

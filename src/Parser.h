@@ -5,7 +5,7 @@
 
 // GASP source-location stack entry (8 bytes).
 struct LocRef {
-    Line *sourceLocation;
+    SourceLocationEntry *sourceLocation;
     int gaspLineNumber;
 };
 
@@ -68,7 +68,7 @@ public:
     bool decodeGaspLine(char *line);
     bool isAssignmentLine(int i);
 
-    Line lines[0x2000];
+    SourceLocationEntry lines[0x2000];
     int locationTagCount;        // unique source locations in lines[]
     char *pendingIncludeName;    // last ".include" name (location kind 1)
     char *pendingMacroName;      // last macro label (location kind 2)

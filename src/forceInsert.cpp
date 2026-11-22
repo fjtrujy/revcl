@@ -7,7 +7,7 @@
 bool unlinkFromPendingInstructions(Block *blk, Instr *n);
 bool appendCompletedInstruction(Block *blk, Instr *n);
 
-bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *position)
+bool ScheduleTable::forceInsert(Instr *candidateInstruction, InstructionPosition *position)
 {
     int operandIndex = 0;
     if (!candidateInstruction) {
@@ -29,7 +29,7 @@ bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *po
         reportError("ForceInsert - after end\n");
         return false;
     }
-    Instr **instructionSlot = ((cls_unk30 *)this)->getIE_ck(row);
+    Instr **instructionSlot = ((InstructionOwnerTableView *)this)->getIE_ck(row);
     if (!instructionSlot) {
         reportError("couldn't get ie\n");
         return false;
@@ -52,7 +52,7 @@ bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *po
     nextInsertionSerial++;
     for (operandIndex = 0; operandIndex != candidateInstruction->operandCount; operandIndex++) {
         Operand *operand = &candidateInstruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (!registerEntry)
             continue;
         for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
@@ -77,7 +77,7 @@ bool workTable::forceInsert(Instr *candidateInstruction, InstructionPosition *po
     }
     for (operandIndex = 0; operandIndex != candidateInstruction->operandCount; operandIndex++) {
         Operand *outputOperand = &candidateInstruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = registerOperand(outputOperand, 2);
+        RegisterEntry *registerEntry = registerOperand(outputOperand, 2);
         if (!registerEntry)
             continue;
         for (int outputPartIndex = 0; outputPartIndex != registerEntry->partCount; outputPartIndex++) {

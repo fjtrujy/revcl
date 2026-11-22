@@ -6,19 +6,19 @@
 #include "Instr.h"
 #include "ol_s.h"
 
-extern RegPoolEntry *collapseImmediateSourceRegister;
-extern mValue *collapseImmediateValue;
+extern RegisterEntry *collapseImmediateSourceRegister;
+extern TypedValue *collapseImmediateValue;
 extern int collapseImmediateOffset;
 int decodeCollapsibleMoveImmediate(Instr *in);
-int expandOneLoopIntoRegions(Program *p, instStream *s);
+int expandOneLoopIntoRegions(Program *p, InstructionStream *s);
 
 
 bool explodeRaw(Program *program)
 {
-    instStream *next;
-    for (instStream *currentStream = program->streamHead; currentStream; currentStream = next) {
+    InstructionStream *next;
+    for (InstructionStream *currentStream = program->streamHead; currentStream; currentStream = next) {
         next = currentStream->nextStream;
-        workTable *scheduleTable = currentStream->getTable();
+        ScheduleTable *scheduleTable = currentStream->getTable();
         if (!scheduleTable) {
             reportError("floBuild - there's no work table!\n");
             return false;

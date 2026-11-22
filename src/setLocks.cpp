@@ -12,9 +12,9 @@ bool appendCompletedInstruction(Block *blk, Instr *n);
 bool unlinkFromCompletedInstructions(Block *blk, Instr *n);
 bool prependPendingInstruction(Block *blk, Instr *n);
 bool setRange(int start, int end, int lsz);
-int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
-int pullSpecialRegisterWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos);
-int pullLatencyWritersEarlier(workTable *wt, Instr *in, InstructionPosition *pos);
+int checkPlacementInAllowedPipelines(ScheduleTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int pullSpecialRegisterWritersEarlier(ScheduleTable *wt, Instr *in, InstructionPosition *pos);
+int pullLatencyWritersEarlier(ScheduleTable *wt, Instr *in, InstructionPosition *pos);
 int countSetBits(unsigned int x);
 extern bool staggerMemoryAccess;
 
@@ -27,7 +27,7 @@ bool setLocks(Instr *instruction)
 {
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *operand = &instruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = operand->assignedRegister;
+        RegisterEntry *registerEntry = operand->assignedRegister;
         if (!registerEntry)
             continue;
         if (isRegisterOperand(operand, 2)) {
@@ -66,7 +66,7 @@ bool undoLocks(Instr *instruction)
 {
     for (int operandIndex = instruction->operandCount - 1; operandIndex >= 0; operandIndex--) {
         Operand *operand = &instruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = operand->assignedRegister;
+        RegisterEntry *registerEntry = operand->assignedRegister;
         if (!registerEntry)
             continue;
         if (isRegisterOperand(operand, 2)) {
@@ -101,7 +101,7 @@ int checkLocks(Instr *instruction, short *pos, int *minPos)
 
     for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *operand = &instruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = isRegisterOperand(operand, 1) ? operand->assignedRegister : 0;
+        RegisterEntry *registerEntry = isRegisterOperand(operand, 1) ? operand->assignedRegister : 0;
         if (!registerEntry)
             continue;
         for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
@@ -143,7 +143,7 @@ int checkLocks(Instr *instruction, short *pos, int *minPos)
     }
     for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *operand = &instruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
+        RegisterEntry *registerEntry = isRegisterOperand(operand, 2) ? operand->assignedRegister : 0;
         if (!registerEntry)
             continue;
         for (int lockPartIndex = 0; lockPartIndex != registerEntry->partCount; lockPartIndex++) {
@@ -199,7 +199,7 @@ int canMoveLocks(Instr *instruction, short *pos)
 
     for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *operand = &instruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (!registerEntry)
             continue;
         for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
@@ -215,7 +215,7 @@ int canMoveLocks(Instr *instruction, short *pos)
     }
     for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *operand = &instruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
             for (int lockPartIndex = 0; lockPartIndex != registerEntry->partCount; lockPartIndex++) {
                 if ((operand->componentMask >> lockPartIndex) & 1) {
@@ -257,7 +257,7 @@ bool moveLocks(Instr *const instruction, InstructionPosition *pos)
     position->pipelineIndex = pos->pipelineIndex;
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *operand = &instruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = operand->assignedRegister;
+        RegisterEntry *registerEntry = operand->assignedRegister;
         if (!registerEntry)
             continue;
         if (isRegisterOperand(operand, 2)) {
@@ -304,7 +304,7 @@ bool setPipeBits(Instr *instruction)
     }
     for (operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *operand = &instruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = operand->inputRegister();
+        RegisterEntry *registerEntry = operand->inputRegister();
         if (!registerEntry)
             continue;
         for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
@@ -339,7 +339,7 @@ bool setPipeBits(Instr *instruction)
     return true;
 }
 
-int checkInsert(workTable *table, Instr *instruction, InstructionPosition *position, int *minPos)
+int checkInsert(ScheduleTable *table, Instr *instruction, InstructionPosition *position, int *minPos)
 {
     int row = position->linearRow;
     int pipe = position->pipelineIndex;
@@ -407,7 +407,7 @@ int checkInsert(workTable *table, Instr *instruction, InstructionPosition *posit
         }
     }
 
-    Instr **pipelineEntries = ((cls_unk30 *)table)->getIE_ck(position->loopRow);
+    Instr **pipelineEntries = ((InstructionOwnerTableView *)table)->getIE_ck(position->loopRow);
     if (pipelineEntries[pipe] != (Instr *)instruction->replacedInstructionWord) {
         *minPos = row + 1;
         return 0x40;
@@ -419,7 +419,7 @@ int checkInsert(workTable *table, Instr *instruction, InstructionPosition *posit
     return checkLocks(instruction, &position->linearRow, minPos);
 }
 
-bool insertInstructionWithLocks(workTable *const table, Instr *instruction, InstructionPosition *position)
+bool insertInstructionWithLocks(ScheduleTable *const table, Instr *instruction, InstructionPosition *position)
 {
     short moveOpcode = instruction->abstractMoveOpcode;
     if (__builtin_expect(moveOpcode != 0, 1) && !(moveOpcode = instruction->concreteMoveOpcode)) {
@@ -436,7 +436,7 @@ bool insertInstructionWithLocks(workTable *const table, Instr *instruction, Inst
             return insertRowIndex != pipeIndex;
     }
     insertRowIndex = position->loopRow;
-    wtRow *row = &table->rows[insertRowIndex];
+    ScheduleRow *row = &table->rows[insertRowIndex];
     InstructionPosition *instructionPosition = &instruction->position;
     moveOpcode = position->linearRow;
     instructionPosition->loopRow = insertRowIndex;
@@ -472,7 +472,7 @@ bool insertInstructionWithLocks(workTable *const table, Instr *instruction, Inst
     return true;
 }
 
-bool undoInstructionWithLocks(workTable *table, Instr *instruction)
+bool undoInstructionWithLocks(ScheduleTable *table, Instr *instruction)
 {
     if (instruction->branchFlags)
         table->loopBoundaryInstruction = 0;
@@ -508,14 +508,14 @@ bool undoInstructionWithLocks(workTable *table, Instr *instruction)
     return true;
 }
 
-bool reduceExtents(workTable *table)
+bool reduceExtents(ScheduleTable *table)
 {
     setRange(table->rangeStart, table->rangeEnd, table->loopSize);
     int moved;
     do {
         moved = 0;
         for (int rowIndex = table->rangeStart; __builtin_expect(rowIndex != table->rangeEnd, 1); rowIndex++) {
-            wtRow *row = table->getRowByIndex(rowIndex);
+            ScheduleRow *row = table->getRowByIndex(rowIndex);
             for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
                 Instr *instruction = row->getEntry(pipeIndex);
                 if (!instruction)
@@ -525,7 +525,7 @@ bool reduceExtents(workTable *table)
                 int minEnd = 30000;
                 Operand *operand;
                 for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-                    RegPoolEntry *registerEntry = registerOperand(operand, 2);
+                    RegisterEntry *registerEntry = registerOperand(operand, 2);
                     if (registerEntry) {
                         for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
                             if ((operand->componentMask >> partIndex) & 1) {
@@ -575,7 +575,7 @@ bool reduceExtents(workTable *table)
     return true;
 }
 
-int drag(workTable *table, Instr *instruction, InstructionPosition *position, int back, int depth)
+int drag(ScheduleTable *table, Instr *instruction, InstructionPosition *position, int back, int depth)
 {
     if (!table->loopSize)
         return 0;
@@ -587,7 +587,7 @@ int drag(workTable *table, Instr *instruction, InstructionPosition *position, in
         movedLockCount = 0;
         Operand *operand;
         for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            RegisterEntry *registerEntry = registerOperand(operand, 1);
             if (!registerEntry)
                 continue;
             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
@@ -669,7 +669,7 @@ int drag(workTable *table, Instr *instruction, InstructionPosition *position, in
     return total;
 }
 
-RegisterPartLockList *workTable::getLockList(RegPoolEntry *registerEntry, int part)
+RegisterPartLockList *ScheduleTable::getLockList(RegisterEntry *registerEntry, int part)
 {
     RegisterPartLockList *lockList = findLockList(registerLockLists, registerEntry, part);
     if (lockList)
@@ -689,7 +689,7 @@ RegisterPartLockList *workTable::getLockList(RegPoolEntry *registerEntry, int pa
     return lockList;
 }
 
-int checkInstructionPlacementConstraints(workTable *table, Instr *instruction, InstructionPosition *position)
+int checkInstructionPlacementConstraints(ScheduleTable *table, Instr *instruction, InstructionPosition *position)
 {
     int row = position->linearRow;
     int pipe = position->pipelineIndex;
@@ -735,7 +735,7 @@ int checkInstructionPlacementConstraints(workTable *table, Instr *instruction, I
     if (latestDependencyRow <= row)
         return 0x100000;
 
-    Instr **pipelineEntries = ((cls_unk30 *)table)->getIE_ck(position->loopRow);
+    Instr **pipelineEntries = ((InstructionOwnerTableView *)table)->getIE_ck(position->loopRow);
     if (pipelineEntries[pipe] != (Instr *)instruction->replacedInstructionWord && pipelineEntries[pipe] != instruction)
         return 0x40;
     if (!wouldPair(pipelineEntries, instruction, pipe))
@@ -743,7 +743,7 @@ int checkInstructionPlacementConstraints(workTable *table, Instr *instruction, I
     return canMoveLocks(instruction, &position->linearRow);
 }
 
-int pullSpecialRegisterWritersEarlier(workTable *table, Instr *instruction, InstructionPosition *position)
+int pullSpecialRegisterWritersEarlier(ScheduleTable *table, Instr *instruction, InstructionPosition *position)
 {
     int row = instruction->position.getRow() < 0 ? position->getRow() : instruction->position.getRow();
     if (row < 0) {
@@ -752,7 +752,7 @@ int pullSpecialRegisterWritersEarlier(workTable *table, Instr *instruction, Inst
     }
     Operand *operand;
     for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (!registerEntry)
             continue;
         for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
@@ -804,7 +804,7 @@ int pullSpecialRegisterWritersEarlier(workTable *table, Instr *instruction, Inst
     return 1;
 }
 
-int checkPlacementInAllowedPipelines(workTable *table, Instr *instruction, InstructionPosition *position, bool upwards)
+int checkPlacementInAllowedPipelines(ScheduleTable *table, Instr *instruction, InstructionPosition *position, bool upwards)
 {
     int result = 0;
     if (instruction->permittedPipelineMask == 3) {
@@ -831,7 +831,7 @@ int checkPlacementInAllowedPipelines(workTable *table, Instr *instruction, Instr
     return checkInstructionPlacementConstraints(table, instruction, position);
 }
 
-int pullLatencyWritersEarlier(workTable *table, Instr *instruction, InstructionPosition *position)
+int pullLatencyWritersEarlier(ScheduleTable *table, Instr *instruction, InstructionPosition *position)
 {
     int row = instruction->position.getRow() < 0 ? position->getRow() : instruction->position.getRow();
     if (row < 0) {
@@ -840,7 +840,7 @@ int pullLatencyWritersEarlier(workTable *table, Instr *instruction, InstructionP
     }
     Operand *operand;
     for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (!registerEntry)
             continue;
         for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {

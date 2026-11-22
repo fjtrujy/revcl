@@ -22,7 +22,7 @@ int Instr::normalizeZeroSources()
 
 swapSources:
     if (isZeroOperand(&operands[1]) && !isZeroOperand(&operands[2])) {
-        RegPoolEntry *registerEntry = operands[1].assignedRegister;
+        RegisterEntry *registerEntry = operands[1].assignedRegister;
         operands[1].assignedRegister = operands[2].assignedRegister;
         operands[2].assignedRegister = registerEntry;
         operands[1].forcedBaseRegister = operands[2].forcedBaseRegister;
@@ -38,7 +38,7 @@ resetSources:
     {
         Operand *operand = &operands[1];
         if (operand->assignedRegister == operands[2].assignedRegister) {
-            RegPoolEntry *zeroRegister = getOperandZeroRegister(operand->operandKind);
+            RegisterEntry *zeroRegister = getOperandZeroRegister(operand->operandKind);
             if (!zeroRegister) {
                 reportError("failed to get a zero register");
                 return 0;

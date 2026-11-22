@@ -12,7 +12,7 @@ int branchLinkTypeForFlags(int flags);
 
 bool globalPrune(Program *program)
 {
-    instStream *currentStream;
+    InstructionStream *currentStream;
     for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         if (currentStream->startType == 2) {
             currentStream->reachableFromEntry = 1;
@@ -33,8 +33,8 @@ bool globalPrune(Program *program)
         for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
             if (currentStream->visitState == 1) {
                 currentStream->visitState = 2;
-                for (linkNode *link = currentStream->outputLinks.head; link; link = link->next) {
-                    instStream *destinationStream = link->otherStream;
+                for (StreamLinkNode *link = currentStream->outputLinks.head; link; link = link->next) {
+                    InstructionStream *destinationStream = link->otherStream;
                     if (!destinationStream) {
                         reportError("null outist\n");
                         return false;
@@ -49,13 +49,13 @@ bool globalPrune(Program *program)
         }
     } while (changed);
 
-    instStream *next;
+    InstructionStream *next;
     for (currentStream = program->streamHead; currentStream; currentStream = next) {
         next = currentStream->nextStream;
         if (currentStream->reachableFromEntry)
             continue;
         reportInfo("prune inaccessible stream %s\n", currentStream->streamName());
-        workTable *scheduleTable = currentStream->getTable();
+        ScheduleTable *scheduleTable = currentStream->getTable();
         for (Instr *currentInstruction = scheduleTable->linearInstructions.head; currentInstruction; currentInstruction = currentInstruction->linearLink.nextInstruction)
             if (!currentInstruction->isNop()) {
                 reportInfo("REMOVE INST: ");
@@ -64,7 +64,7 @@ bool globalPrune(Program *program)
                 currentInstruction->dumpInstructionContext();
                 errorOccurred = saved;
             }
-        linkNode *incomingLink;
+        StreamLinkNode *incomingLink;
         while ((incomingLink = currentStream->inputLinks.head) != 0) {
             if (!program->unlinkStreams(incomingLink->otherStream, currentStream, incomingLink->linkType)) {
                 reportError("unlink failed for input\n");
@@ -84,13 +84,13 @@ bool globalPrune(Program *program)
         delete currentStream;
     }
 
-    instStream *follow;
+    InstructionStream *follow;
     for (currentStream = program->streamHead; currentStream; currentStream = follow) {
         follow = currentStream->nextStream;
-        instStream *next = follow;
+        InstructionStream *next = follow;
         if (next && currentStream->branchType && currentStream->getRawSchedulingMode() != 4) {
             bool keepLink = false;
-            linkNode *outgoingLink;
+            StreamLinkNode *outgoingLink;
             for (outgoingLink = currentStream->outputLinks.head; outgoingLink; outgoingLink = outgoingLink->next) {
                 if (outgoingLink->otherStream != next)
                     break;

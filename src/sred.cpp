@@ -4,23 +4,23 @@
 
 bool setRange(int start, int end, int lsz);
 bool moveLocks(Instr *i, InstructionPosition *pos);
-int earliestInsert(workTable *wt, Instr *in, bool *found);
-int latestInsert(workTable *wt, Instr *in, bool *found);
-int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int earliestInsert(ScheduleTable *wt, Instr *in, bool *found);
+int latestInsert(ScheduleTable *wt, Instr *in, bool *found);
+int checkPlacementInAllowedPipelines(ScheduleTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 int countSetBits(unsigned int x);
-RegPoolEntry *getPoolZeroRegister(unsigned int type);
+RegisterEntry *getPoolZeroRegister(unsigned int type);
 
-static inline bool isRawTable(workTable *scheduleTable)
+static inline bool isRawTable(ScheduleTable *scheduleTable)
 {
     return scheduleTable->codeModeValue == 3;
 }
 
-static inline bool isPipeMode(workTable *scheduleTable)
+static inline bool isPipeMode(ScheduleTable *scheduleTable)
 {
     return isRawTable(scheduleTable) && (scheduleTable->rawSchedulingMode == 1 || scheduleTable->rawSchedulingMode == 3);
 }
 
-inline bool atEarliest(workTable *scheduleTable, Instr *instruction)
+inline bool atEarliest(ScheduleTable *scheduleTable, Instr *instruction)
 {
     bool found = false;
     if (!instruction)
@@ -29,7 +29,7 @@ inline bool atEarliest(workTable *scheduleTable, Instr *instruction)
     return found && earliestAllowedRow == instruction->position.loopRow;
 }
 
-bool isAtEarliest(workTable *scheduleTable, Instr *instruction)
+bool isAtEarliest(ScheduleTable *scheduleTable, Instr *instruction)
 {
     bool found = false;
     if (!instruction)
@@ -48,7 +48,7 @@ extern const char sredMoveInstError[];
 extern const char sredLatestBeforeError[];
 extern const char sredBadlyPlacedError[];
 
-bool sredInstr(workTable *scheduleTable, Instr *instruction, bool reduceUpward)
+bool sredInstr(ScheduleTable *scheduleTable, Instr *instruction, bool reduceUpward)
 {
     InstructionPosition pos;
     int iline = instruction->position.loopRow;
@@ -89,7 +89,7 @@ bool sredInstr(workTable *scheduleTable, Instr *instruction, bool reduceUpward)
     }
     for (; tline != iline; tline += step) {
         pos.setFromLinearRow(tline);
-        wtRow *row = scheduleTable->getRowByIndex(tline);
+        ScheduleRow *row = scheduleTable->getRowByIndex(tline);
         if (row->countEntries() == 1
             && !checkPlacementInAllowedPipelines(scheduleTable, instruction, &pos, upwards))
             goto move;
@@ -104,7 +104,7 @@ move:
     return true;
 }
 
-bool sredTable(workTable *scheduleTable)
+bool sredTable(ScheduleTable *scheduleTable)
 {
     if (!isPipeMode(scheduleTable))
         return true;
@@ -157,8 +157,8 @@ bool sredTable(workTable *scheduleTable)
 }
 
 int selectedCapPipelineProperties;
-iInfo *selectedCapOpcodeInfo;
-workTable *capInsertionWorkTable;
+OpcodeDescriptor *selectedCapOpcodeInfo;
+ScheduleTable *capInsertionWorkTable;
 Instr *selectedCapOriginalInstruction;
-RegPoolEntry *selectedCapRegister;
+RegisterEntry *selectedCapRegister;
 int selectedCapMask;

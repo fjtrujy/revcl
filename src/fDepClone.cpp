@@ -7,10 +7,10 @@
 
 Operand *getEA(Instr *i);
 bool sameEA(Instr *a, Instr *b);
-bool buildForwardDependencyList(workTable *wt, bool force, bool);
+bool buildForwardDependencyList(ScheduleTable *wt, bool force, bool);
 bool tagsMatch(Instr *a, Instr *b);
 bool addAdditionalClonePredecessors(Instr *in, Instr *other);
-bool copyCloneFdeps(Instr *in, ol_s *o, olList *dst);
+bool copyCloneFdeps(Instr *in, OperandLocation *o, olList *dst);
 
 static inline bool linkForwardDependencyInline(Instr *pre, Instr *post)
 {
@@ -33,7 +33,7 @@ static inline bool linkForwardDependencyInline(Instr *pre, Instr *post)
 bool calculateEarliestDependencyRow(Instr *instruction, int *row)
 {
     *row = 0;
-    for (ol_s *operandLocation = instruction->predecessorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
+    for (OperandLocation *operandLocation = instruction->predecessorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
         Instr *dependencyInstruction = operandLocation->instruction;
         if (!dependencyInstruction) {
             reportError("BuildCandidateList - in_f not set in ol\n");
@@ -55,7 +55,7 @@ bool calculateEarliestDependencyRow(Instr *instruction, int *row)
 bool calculateLatestDependencyRow(Instr *instruction, int *row)
 {
     *row = 30000;
-    for (ol_s *operandLocation = instruction->successorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
+    for (OperandLocation *operandLocation = instruction->successorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
         Instr *dependencyInstruction = operandLocation->instruction;
         if (!dependencyInstruction) {
             reportError("BuildCandidateList - in_f not set in ol\n");
@@ -68,16 +68,16 @@ bool calculateLatestDependencyRow(Instr *instruction, int *row)
     return true;
 }
 
-bool instStream::buildForwardDependencies(bool forceDependencyChecks, bool b)
+bool InstructionStream::buildForwardDependencies(bool forceDependencyChecks, bool unusedDependencyMode)
 {
     if (!workTablePtr) {
         reportWarning("BuildfDepList - no work table set for %s!\n", streamName());
         return false;
     }
-    return buildForwardDependencyList(workTablePtr, forceDependencyChecks, b);
+    return buildForwardDependencyList(workTablePtr, forceDependencyChecks, unusedDependencyMode);
 }
 
-bool buildForwardDependencyList(workTable *table, bool force, bool)
+bool buildForwardDependencyList(ScheduleTable *table, bool force, bool unusedDependencyMode)
 {
     Instr *instruction;
     Instr *phaseHead;
@@ -174,14 +174,14 @@ bool buildForwardDependencyList(workTable *table, bool force, bool)
             for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
                 Operand *operand = &instruction->operands[operandIndex];
                 if (operand) {
-                    RegPoolEntry *registerEntry = registerOperand(operand, 2);
+                    RegisterEntry *registerEntry = registerOperand(operand, 2);
                     if (registerEntry) {
                         if (registerEntry->registerIndex == 48)
                             instruction->specialRegisterWriteMask = operand->componentMask;
                         if (registerEntry->registerIndex == 48 || registerEntry->registerIndex == 49) {
                             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++)
                                 if ((operand->componentMask >> partIndex) & 1)
-                                    for (ol_s *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                                    for (OperandLocation *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                                         Instr *linkedInstruction = operandLocation->instruction;
                                         if (linkedInstruction)
                                             addAdditionalClonePredecessors(instruction, linkedInstruction);
@@ -212,7 +212,7 @@ finalize_ready:
             if ((instruction->specialRegisterReadMask >> specialPartIndex) & 1) {
                 Instr *writerInstruction = last[specialPartIndex];
                 if (writerInstruction)
-                    for (ol_s *operandLocation = instruction->predecessorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
+                    for (OperandLocation *operandLocation = instruction->predecessorDependencies.head; operandLocation; operandLocation = operandLocation->next) {
                         Instr *pre = operandLocation->instruction;
                         if (pre->linearOrderIndex < writerInstruction->linearOrderIndex) {
                             writerInstruction->hasExtraPredecessors = 1;
@@ -259,7 +259,7 @@ bool tagsMatch(Instr *instruction, Instr *secondInstruction)
     return false;
 }
 
-bool fixupCloneFdeps(workTable *table)
+bool fixupCloneFdeps(ScheduleTable *table)
 {
     int cloneCount = 0;
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
@@ -300,7 +300,7 @@ bool linkForwardDependency(Instr *pre, Instr *post)
     return true;
 }
 
-bool copyCloneFdeps(Instr *, ol_s *operandLocation, olList *dst)
+bool copyCloneFdeps(Instr * unusedInstruction, OperandLocation *operandLocation, olList *dst)
 {
     for (; operandLocation; operandLocation = operandLocation->next) {
         Instr *instruction = operandLocation->instruction;
@@ -327,11 +327,11 @@ bool addAdditionalClonePredecessors(Instr *instruction, Instr *other)
     other->dumpOperandDiagnostics(false);
     for (int operandIndex = 0; operandIndex != other->operandCount; operandIndex++) {
         Operand *operand = &other->operands[operandIndex];
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (registerEntry) {
             for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++)
                 if ((operand->componentMask >> partIndex) & 1)
-                    for (ol_s *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                    for (OperandLocation *operandLocation = operand->parts[partIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                         Instr *linkedInstruction = operandLocation->instruction;
                         if (linkedInstruction && linkedInstruction != instruction && linkedInstruction->linearOrderIndex < instruction->linearOrderIndex) {
                             instruction->hasExtraPredecessors = 1;

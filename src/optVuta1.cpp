@@ -6,7 +6,7 @@
 
 int vuta1RegCost(Instr *in);
 
-bool optVuta1(workTable *scheduleTable, wrangleCand *candidate)
+bool optVuta1(ScheduleTable *scheduleTable, wrangleCand *candidate)
 {
     Instr *instruction = scheduleTable->moveListHead;
     int bestA = 0x80000000;
@@ -52,7 +52,7 @@ int vuta1RegCost(Instr *instruction)
 {
     int cost = 0;
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
-        RegPoolEntry *registerEntry = instruction->operands[operandIndex].inRegOp2();
+        RegisterEntry *registerEntry = instruction->operands[operandIndex].inRegOp2();
         if (registerEntry && registerEntry->registerIndex == 59)
             cost += 400;
     }

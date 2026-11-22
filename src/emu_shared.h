@@ -9,7 +9,7 @@
 #include "RegPool.h"
 #include "ol_s_inline.h"
 
-int emulateInstructionRow(Program *p, wtRow *row, int line, bool uta, bool commit);
+int emulateInstructionRow(Program *p, ScheduleRow *row, int line, bool uta, bool commit);
 bool advanceProcessorCycle(Program *p, bool flag);
 
 static inline int clampByte(int v)

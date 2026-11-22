@@ -17,7 +17,7 @@ inline bool resetRegisterWebs()
     return true;
 }
 
-inline bool RegWeb::collectTableRegisterWebs(workTable *scheduleTable)
+inline bool RegWeb::collectTableRegisterWebs(ScheduleTable *scheduleTable)
 {
     if (!scheduleTable) {
         reportError("RegWeb::AddiTable - passed a null pointer\n");
@@ -40,7 +40,7 @@ inline bool RegWeb::collectInstructionRegisterWebs(Instr *instruction)
         return false;
     for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
         Operand *operand = &instruction->operands[operandIndex];
-        RegPoolEntry *registerEntry = operand->assignedRegister;
+        RegisterEntry *registerEntry = operand->assignedRegister;
         if (!registerEntry || !operand->isForwardable())
             continue;
         RegWeb *registerWeb = operand->registerWeb;
@@ -60,7 +60,7 @@ inline bool RegWeb::collectInstructionRegisterWebs(Instr *instruction)
             }
         }
         if (operand->forcedBaseRegister) {
-            RegPoolEntry *forcedRegister = operand->forcedBaseRegister;
+            RegisterEntry *forcedRegister = operand->forcedBaseRegister;
             if (forcedRegister->isVirtual) {
                 reportError("can't have a virtual forced register\n");
                 return false;
@@ -80,7 +80,7 @@ inline bool RegWeb::collectInstructionRegisterWebs(Instr *instruction)
                 bool partUsed = (operand->componentMask >> partIndex) & 1;
                 if (!partUsed)
                     continue;
-                ol_s *sourceLocation = operand->parts[partIndex].operandLocations.head;
+                OperandLocation *sourceLocation = operand->parts[partIndex].operandLocations.head;
                 if (!sourceLocation) {
                     reportError("found input operand part with empty olList..\n");
                     reportError("this should have been caught by now..\n");
@@ -115,7 +115,7 @@ inline bool RegWeb::collectInstructionRegisterWebs(Instr *instruction)
     return true;
 }
 
-inline RegWeb *RegWeb::createRegisterWeb(RegPoolEntry *registerEntry)
+inline RegWeb *RegWeb::createRegisterWeb(RegisterEntry *registerEntry)
 {
     if (regWebCount >= 0x4000) {
         reportError("oh no! ran out of regweb entries\n");
@@ -205,7 +205,7 @@ inline bool RegWeb::merge(RegWeb *firstWeb, RegWeb *secondWeb)
     return true;
 }
 
-inline RegWeb *RegPoolEntry::getRootRegisterWeb()
+inline RegWeb *RegisterEntry::getRootRegisterWeb()
 {
     RegWeb *rootWeb = registerWeb;
     if (!rootWeb)
@@ -252,7 +252,7 @@ inline bool assignRegisterWebs()
     for (webIndex = 0; webIndex != regWebCount; webIndex++) {
         RegWeb *registerWeb = &regWebs[webIndex];
         if (registerWeb->memberCount && registerWeb->forcedRegister) {
-            RegPoolEntry *registerEntry = registerWeb->forcedRegister;
+            RegisterEntry *registerEntry = registerWeb->forcedRegister;
             if (registerEntry->isVirtual == 1) {
                 reportError("forced to a non-base register\n");
                 return false;
@@ -269,7 +269,7 @@ inline bool assignRegisterWebs()
     for (webIndex = 0; webIndex != regWebCount; webIndex++) {
         RegWeb *registerWeb = &regWebs[webIndex];
         if (registerWeb->memberCount) {
-            RegPoolEntry *registerEntry = registerWeb->virtualRegister;
+            RegisterEntry *registerEntry = registerWeb->virtualRegister;
             if (!registerEntry) {
                 reportError("GatherWeb:: oh no - dReg not set\n");
                 exitAfterCleanup(-1);
@@ -313,7 +313,7 @@ inline bool RegWeb::applyRegisterWebToOperand(Operand *operand)
             reportError("patch operand - web has no reg\n");
             return false;
         }
-        RegPoolEntry *registerEntry = registerWeb->assignedRegister;
+        RegisterEntry *registerEntry = registerWeb->assignedRegister;
         operand->assignedRegister = registerEntry;
         if (operand->forcedBaseRegister && operand->forcedBaseRegister != registerEntry) {
             reportError("not forcing to a base reg after all - in PatchOperands %s isn't %s\n",
@@ -339,7 +339,7 @@ inline bool RegWeb::applyRegisterWebsToInstruction(Instr *instruction)
     return true;
 }
 
-inline bool RegWeb::applyRegisterWebsToTable(workTable *scheduleTable)
+inline bool RegWeb::applyRegisterWebsToTable(ScheduleTable *scheduleTable)
 {
     if (scheduleTable) {
         for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
@@ -367,7 +367,7 @@ inline void RegWeb::checkRegisterWebInvariants()
     }
 }
 
-inline bool RegWeb::setForcedRegisterMapping(RegWeb *registerWeb, RegPoolEntry *forcedRegister)
+inline bool RegWeb::setForcedRegisterMapping(RegWeb *registerWeb, RegisterEntry *forcedRegister)
 {
     while (registerWeb->parentWeb)
         registerWeb = registerWeb->parentWeb;
@@ -400,7 +400,7 @@ inline bool buildRegisterWebs(Program *program)
         reportError("flow:: reset the webs\n");
         return false;
     }
-    instStream *stream;
+    InstructionStream *stream;
     for (stream = program->streamHead; stream; stream = stream->nextStream)
         RegWeb::clearTableRegisterWebs(stream->getWorkTable());
     for (stream = program->streamHead; stream; stream = stream->nextStream) {
@@ -422,7 +422,7 @@ inline bool buildRegisterWebs(Program *program)
     return true;
 }
 
-inline bool RegWeb::clearTableRegisterWebs(workTable *scheduleTable)
+inline bool RegWeb::clearTableRegisterWebs(ScheduleTable *scheduleTable)
 {
     for (Instr *instruction = scheduleTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++)

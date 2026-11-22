@@ -5,8 +5,8 @@
 #include "Instr.h"
 
 bool optReset(Program *p);
-int setRangeFrom(workTable *t);
-bool fixupCloneFdeps(workTable *wt);
+int setRangeFrom(ScheduleTable *t);
+bool fixupCloneFdeps(ScheduleTable *wt);
 
 extern const char lpWorkSavedTableError[];
 extern const char lpWorkHtNewError[];
@@ -21,9 +21,9 @@ extern const char lsqChainAddError[];
 extern const char lsqChainNewInstrError[];
 
 
-bool makeLpWork(instStream *stream, int maxSpread)
+bool makeLpWork(InstructionStream *stream, int maxSpread)
 {
-    workTable *table = stream->workTablePtr;
+    ScheduleTable *table = stream->workTablePtr;
     if (!table) {
         reportError(lpWorkNoTableError);
         return false;
@@ -34,7 +34,7 @@ bool makeLpWork(instStream *stream, int maxSpread)
     }
     stream->savedTable = table;
     stream->workTablePtr = 0;
-    workTable *scheduleTable = table->localClone();
+    ScheduleTable *scheduleTable = table->localClone();
     stream->workTablePtr = scheduleTable;
     if (!scheduleTable) {
         reportError(lpWorkCloneTableError);
@@ -45,10 +45,10 @@ bool makeLpWork(instStream *stream, int maxSpread)
         int latest = 0;
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
             Operand *operand = &instruction->operands[operandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            RegisterEntry *registerEntry = registerOperand(operand, 1);
             if (registerEntry) {
                 for (int partIndex = 0; partIndex != registerEntry->partCount; partIndex++) {
-                    ol_s *operandLocation = operand->parts[partIndex].operandLocations.head;
+                    OperandLocation *operandLocation = operand->parts[partIndex].operandLocations.head;
                     if (operandLocation) {
                         Instr *sourceInstruction = operandLocation->instruction;
                         Operand *otherOperand = operandAtLocation(operandLocation);
@@ -69,10 +69,10 @@ bool makeLpWork(instStream *stream, int maxSpread)
         int earliest = 30000;
         for (int sourceOperandIndex = 0; sourceOperandIndex != instruction->operandCount; sourceOperandIndex++) {
             Operand *operand = &instruction->operands[sourceOperandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 2);
+            RegisterEntry *registerEntry = registerOperand(operand, 2);
             if (registerEntry) {
                 for (int sourcePartIndex = 0; sourcePartIndex != registerEntry->partCount; sourcePartIndex++) {
-                    for (ol_s *operandLocation = operand->parts[sourcePartIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
+                    for (OperandLocation *operandLocation = operand->parts[sourcePartIndex].operandLocations.head; operandLocation; operandLocation = operandLocation->next) {
                         Instr *destinationInstruction = operandLocation->instruction;
                         Operand *otherOperand = operandAtLocation(operandLocation);
                         if (!destinationInstruction || !otherOperand) {
@@ -101,14 +101,14 @@ bool makeLpWork(instStream *stream, int maxSpread)
         char *outputCursor = buf;
         for (int destinationOperandIndex = 0; destinationOperandIndex != instruction->operandCount; destinationOperandIndex++) {
             Operand *operand = &instruction->operands[destinationOperandIndex];
-            RegPoolEntry *registerEntry = registerOperand(operand, 1);
+            RegisterEntry *registerEntry = registerOperand(operand, 1);
             if (registerEntry) {
                 outputCursor += formatIntoBuffer(outputCursor, " %s: ", registerEntry->registerName());
                 int rlo = 30000, rhi = 0;
                 bool any = false;
                 for (int destinationPartIndex = 0; destinationPartIndex != registerEntry->partCount; destinationPartIndex++) {
                     if ((operand->componentMask >> destinationPartIndex) & 1) {
-                        ol_s *operandLocation = operand->parts[destinationPartIndex].operandLocations.head;
+                        OperandLocation *operandLocation = operand->parts[destinationPartIndex].operandLocations.head;
                         if (operandLocation) {
                             Instr *sourceInstruction = operandLocation->instruction;
                             int dependencyDistance = instruction->instructionId - sourceInstruction->instructionId;
@@ -142,7 +142,7 @@ bool makeLpWork(instStream *stream, int maxSpread)
     return true;
 }
 
-bool disposeLpWork(instStream *stream)
+bool disposeLpWork(InstructionStream *stream)
 {
     if (stream->workTablePtr == 0) {
         reportError(lpWorkDisposeNoTableError);
@@ -158,7 +158,7 @@ bool disposeLpWork(instStream *stream)
     return true;
 }
 
-bool keepLpWork(instStream *stream)
+bool keepLpWork(InstructionStream *stream)
 {
     stream->savedTable = 0;
     return true;
@@ -166,12 +166,12 @@ bool keepLpWork(instStream *stream)
 
 bool modLsqq(Instr *in, int imm);
 
-bool lsqChain(workTable *table)
+bool lsqChain(ScheduleTable *table)
 {
     reportError(lsqChainHopeError);
     abortAfterError();
-    for (regUse *registerUse = table->registerUses.head; registerUse; registerUse = registerUse->next) {
-        RegPoolEntry *registerEntry = registerUse->registerEntry;
+    for (RegisterUse *registerUse = table->registerUses.head; registerUse; registerUse = registerUse->next) {
+        RegisterEntry *registerEntry = registerUse->registerEntry;
         if (registerEntry->registerClass != 8)
             continue;
         Instr *list[1024];
@@ -179,12 +179,12 @@ bool lsqChain(workTable *table)
         reportInfo("lsqi- scan %s\n", registerEntry->registerName());
         int chainedInstructionCount = 0;
         bool bad = false;
-        bool ok = true;
+        bool validShiftChain = true;
         for (; instruction; instruction = instruction->linearLink.nextInstruction) {
             int opc = instruction->opcodeId();
             if (instruction->outputMaskForRegister(registerEntry, 0xff)) {
                 if (!(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4) || bad) {
-                    ok = false;
+                    validShiftChain = false;
                     break;
                 }
                 list[chainedInstructionCount++] = instruction;
@@ -193,7 +193,7 @@ bool lsqChain(workTable *table)
                 && !(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4))
                 bad = true;
         }
-        if (!ok || chainedInstructionCount <= 1)
+        if (!validShiftChain || chainedInstructionCount <= 1)
             continue;
         reportInfo("lsChain for %s\n", registerEntry->registerName());
         Operand *sourceOperand = &list[0]->operands[1];
@@ -224,7 +224,7 @@ bool lsqChain(workTable *table)
                 name = instruction->opcodeInfo->mnemonic;
             reportInfo("  %3d : %s\n", instructionIndex, name);
         }
-        iInfo *opcodeInfo;
+        OpcodeDescriptor *opcodeInfo;
         if (total < 0) {
             opcodeInfo = getOpcodeInfoById(0x70);
             total = -total;
@@ -274,7 +274,7 @@ bool splitStreams()
 
 bool modLsqq(Instr *instruction, int imm)
 {
-    iInfo *opcodeInfo;
+    OpcodeDescriptor *opcodeInfo;
     switch ((unsigned char)instruction->ramAccessType) {
     case 1:
         opcodeInfo = getOpcodeInfoById(0x9b);

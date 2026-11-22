@@ -6,7 +6,7 @@
 #include "instStream.h"
 #include "Program.h"
 
-typedef bool (*wrangleFunc)(workTable *, int *);
+typedef bool (*wrangleFunc)(ScheduleTable *, int *);
 
 struct optimiser {
     const char *name;
@@ -19,39 +19,39 @@ struct optimiser {
 extern optimiser optTable[11];
 extern const char *currentOptimizerName;
 
-instStream *selectUninsertedStream(Program *p);
-bool prepExtInfo(Program *p, instStream *s, bool b);
-workTable *prepUta(Program *p, instStream *s, int loopSize, char smart);
+InstructionStream *selectUninsertedStream(Program *p);
+bool prepExtInfo(Program *p, InstructionStream *s, bool b);
+ScheduleTable *prepUta(Program *p, InstructionStream *s, int loopSize, char smart);
 bool statReset(Program *p);
-bool dynCalcStats(workTable *wt);
-bool scheduleMidTableMode1(workTable *wt, wrangleFunc f);
-bool scheduleMidTableMode0(workTable *wt, wrangleFunc f);
-bool reduceExtents(workTable *wt);
-bool adjustTrailingBranchLayout(workTable *wt);
-bool assignLocalRegisters(Program *p, workTable *wt);
-bool makeLpWork(instStream *s, int maxSpread);
-bool disposeLpWork(instStream *s);
-bool keepLpWork(instStream *s);
+bool dynCalcStats(ScheduleTable *wt);
+bool scheduleMidTableMode1(ScheduleTable *wt, wrangleFunc f);
+bool scheduleMidTableMode0(ScheduleTable *wt, wrangleFunc f);
+bool reduceExtents(ScheduleTable *wt);
+bool adjustTrailingBranchLayout(ScheduleTable *wt);
+bool assignLocalRegisters(Program *p, ScheduleTable *wt);
+bool makeLpWork(InstructionStream *s, int maxSpread);
+bool disposeLpWork(InstructionStream *s);
+bool keepLpWork(InstructionStream *s);
 bool optReset(Program *p);
-workTable *makeForceTable(Program *p, instStream *s);
+ScheduleTable *makeForceTable(Program *p, InstructionStream *s);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 const char *stallReasonStr(short why);
-bool sredTable(workTable *wt);
-bool prepareReductionCandidates(Program *p, instStream *s, workTable *wt);
-bool reduceLinearSchedule(Program *p, workTable *wt, unsigned char a, unsigned char b);
+bool sredTable(ScheduleTable *wt);
+bool prepareReductionCandidates(Program *p, InstructionStream *s, ScheduleTable *wt);
+bool reduceLinearSchedule(Program *p, ScheduleTable *wt, unsigned char a, unsigned char b);
 
-bool workTable::queueRegisterUse(regUse *registerUse)
+bool ScheduleTable::queueRegisterUse(RegisterUse *registerUse)
 {
     if (!registerUse) {
         reportError("qRegRef: passed a null pointer\n");
         exitAfterCleanup(-1);
     }
-    regUse *clonedRegisterUse = registerUse->Clone();
+    RegisterUse *clonedRegisterUse = registerUse->Clone();
     if (!clonedRegisterUse) {
         reportError("failed to clone regref\n");
         exitAfterCleanup(-1);
     }
-    RegPoolEntry *registerEntry = clonedRegisterUse->registerEntry;
+    RegisterEntry *registerEntry = clonedRegisterUse->registerEntry;
     if (!registerEntry) {
         reportError("no register attached to cloned rf during qRegRef\n");
         delete clonedRegisterUse;
@@ -154,7 +154,7 @@ static inline unsigned char operandLockMode(Operand *operand)
     return operand->operandStatus;
 }
 
-bool workTable::queueInstruction(Instr *instruction)
+bool ScheduleTable::queueInstruction(Instr *instruction)
 {
     int operandIndex;
     if (!instruction->isNonSynthetic()) {
@@ -188,10 +188,10 @@ bool workTable::queueInstruction(Instr *instruction)
             reportError("qInstruction failed to get an operand\n");
             return false;
         }
-        RegPoolEntry *registerEntry = destinationOperand->assignedRegister;
+        RegisterEntry *registerEntry = destinationOperand->assignedRegister;
         if (!registerEntry)
             continue;
-        regUse *registerUse = registerUses.findByRegister(registerEntry);
+        RegisterUse *registerUse = registerUses.findByRegister(registerEntry);
         if (!registerUse) {
             reportError("find reg ref failed to find rr from owner.. by now - this is fatal.. register %s\n",
                           registerEntry->registerName());
@@ -216,7 +216,7 @@ bool workTable::queueInstruction(Instr *instruction)
                 lock->setOwner(partIndex, cloneInstruction, operandIndex);
                 OperandLock *out;
                 if ((destinationOperand->externalPartMask >> partIndex) & 1) {
-                    regUse *ownerRegisterUse = registerUses.findByRegister(registerEntry);
+                    RegisterUse *ownerRegisterUse = registerUses.findByRegister(registerEntry);
                     if (!ownerRegisterUse) {
                         reportError("failed to find regref owner for input\n");
                         return false;
@@ -224,7 +224,7 @@ bool workTable::queueInstruction(Instr *instruction)
                     out = ownerRegisterUse->slots[partIndex].getRegisterLock();
                 } else {
                     olList *uses = &sourceOperand->parts[partIndex].operandLocations;
-                    ol_s *operandLocation = uses->head;
+                    OperandLocation *operandLocation = uses->head;
                     if (!operandLocation || operandLocation->next) {
                         reportError("more or less than one oploc for non-extern input\n");
                         exitAfterCleanup(-1);
@@ -239,7 +239,7 @@ bool workTable::queueInstruction(Instr *instruction)
                         reportError("qInstruction - setter had null work clone set\n");
                         return false;
                     }
-                    if ((workTable *)img->ownerTable != this) {
+                    if ((ScheduleTable *)img->ownerTable != this) {
                         reportError("qInstruction  - image of setter wasn't in this table\n");
                         return false;
                     }
@@ -265,7 +265,7 @@ bool workTable::queueInstruction(Instr *instruction)
 
     for (operandIndex = 0; operandIndex != cloneInstruction->operandCount; operandIndex++) {
         Operand *operand = cloneInstruction->getOp(operandIndex);
-        RegPoolEntry *registerEntry = registerOperand(operand, 2);
+        RegisterEntry *registerEntry = registerOperand(operand, 2);
         if (!registerEntry)
             continue;
         for (int outputPartIndex = 0; outputPartIndex != registerEntry->partCount; outputPartIndex++) {
@@ -299,7 +299,7 @@ bool workTable::queueInstruction(Instr *instruction)
 
     for (operandIndex = 0; operandIndex != cloneInstruction->operandCount; operandIndex++) {
         Operand *operand = cloneInstruction->getOp(operandIndex);
-        RegPoolEntry *registerEntry = registerOperand(operand, 1);
+        RegisterEntry *registerEntry = registerOperand(operand, 1);
         if (!registerEntry)
             continue;
         Operand *o2;

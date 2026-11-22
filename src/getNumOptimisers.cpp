@@ -8,23 +8,23 @@
 #include "instStream.h"
 #include "Program.h"
 
-typedef bool (*wrangleFunc)(workTable *, int *);
+typedef bool (*wrangleFunc)(ScheduleTable *, int *);
 
 
 const char *currentOptimizerName;
 
 struct wrangleCand;
-bool selectDumbSchedulingCandidate(workTable *wt, wrangleCand *c);
-bool selectLoopDumbSchedulingCandidate(workTable *wt, wrangleCand *c);
-bool optNormal1(workTable *wt, wrangleCand *c);
-bool optHDown(workTable *wt, wrangleCand *c);
-bool optVuta(workTable *wt, wrangleCand *c);
-bool optDUp(workTable *wt, wrangleCand *c);
-bool optNormal(workTable *wt, wrangleCand *c);
-bool optAnother(workTable *wt, wrangleCand *c);
-bool optVuta1(workTable *wt, wrangleCand *c);
-bool optNormal2(workTable *wt, wrangleCand *c);
-bool optDumb2(workTable *wt, wrangleCand *c);
+bool selectDumbSchedulingCandidate(ScheduleTable *wt, wrangleCand *c);
+bool selectLoopDumbSchedulingCandidate(ScheduleTable *wt, wrangleCand *c);
+bool optNormal1(ScheduleTable *wt, wrangleCand *c);
+bool optHDown(ScheduleTable *wt, wrangleCand *c);
+bool optVuta(ScheduleTable *wt, wrangleCand *c);
+bool optDUp(ScheduleTable *wt, wrangleCand *c);
+bool optNormal(ScheduleTable *wt, wrangleCand *c);
+bool optAnother(ScheduleTable *wt, wrangleCand *c);
+bool optVuta1(ScheduleTable *wt, wrangleCand *c);
+bool optNormal2(ScheduleTable *wt, wrangleCand *c);
+bool optDumb2(ScheduleTable *wt, wrangleCand *c);
 
 optimiser optTable[11] = {
     {"dumb", 1, 3, (wrangleFunc)selectDumbSchedulingCandidate, 0},
@@ -45,14 +45,14 @@ int getOptimizerCount()
     return 11;
 }
 
-static inline void dumpLinearStream(instStream *stream)
+static inline void dumpLinearStream(InstructionStream *stream)
 {
     stream->dump(0);
 }
 
 bool scheduleLinearStreams(Program *program, int smart)
 {
-    instStream *selectedStream;
+    InstructionStream *selectedStream;
     while ((selectedStream = selectUninsertedStream(program)) != 0) {
         if (selectedStream->getCodeMode() != 1) {
             reportError("doLinear() - asked to process a non-uta\n");
@@ -67,7 +67,7 @@ bool scheduleLinearStreams(Program *program, int smart)
             reportError("failed to prep external info for stream\n");
             return false;
         }
-        workTable *scheduleTable = selectedStream->getTable();
+        ScheduleTable *scheduleTable = selectedStream->getTable();
         if (!scheduleTable) {
             reportError("flowMon::Optimise() - couldn't get work table for %s!\n", selectedStream->streamName());
             return false;
@@ -76,13 +76,13 @@ bool scheduleLinearStreams(Program *program, int smart)
             reportError("loop size set for linear table opt %s\n", selectedStream->streamName());
             return false;
         }
-        workTable *best = 0;
+        ScheduleTable *best = 0;
         int optimizerIndex = smart ? 10 : 0;
         for (; optimizerIndex >= 0 && (optimizerIndex != 0 || !best); optimizerIndex--) {
             optimiser *optimizer = &optTable[optimizerIndex];
             if (optimizer->flags & 2) {
                 currentOptimizerName = optimizer->name;
-                workTable *candidateTable = prepUta(program, selectedStream, 0, 1);
+                ScheduleTable *candidateTable = prepUta(program, selectedStream, 0, 1);
                 if (!candidateTable) {
                     reportError("failed to prepUta istream\n");
                     return false;
@@ -159,18 +159,18 @@ bool scheduleLinearStreams(Program *program, int smart)
     return true;
 }
 
-static inline const char *loopStallReason(instStream *stream)
+static inline const char *loopStallReason(InstructionStream *stream)
 {
     return stallReasonStr(stream->savedStallReason);
 }
 
 bool scheduleLoopStreams(Program *program, int smart)
 {
-    for (instStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+    for (InstructionStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         int optimizerIndex;
         if (!currentStream->canLoop() || !currentStream->knownMinimumLoopCount)
             continue;
-        workTable *best = 0;
+        ScheduleTable *best = 0;
         if (!prepExtInfo(program, currentStream, 1)) {
             reportError("failed to prep external info for stream\n");
             return false;
@@ -201,7 +201,7 @@ bool scheduleLoopStreams(Program *program, int smart)
                     const char *why = loopStallReason(currentStream);
                     reportInfo("lpgen[%d](limit: %s) - '%s' flow %s\n",
                                   size, why, optTable[optimizerIndex].name, currentStream->streamName());
-                    workTable *scheduleTable = prepUta(program, currentStream, size, 1);
+                    ScheduleTable *scheduleTable = prepUta(program, currentStream, size, 1);
                     if (!scheduleTable) {
                         reportError("failed to prepUta istream\n");
                         return false;
@@ -287,7 +287,7 @@ bool scheduleLoopStreams(Program *program, int smart)
 
 bool prepareRawAndSyntheticStreams(Program *program, int smart)
 {
-    for (instStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+    for (InstructionStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         if (currentStream->getCodeMode() == 3) {
             if (!prepExtInfo(program, currentStream, 0)) {
                 reportError("failed to prep external info for stream\n");
@@ -301,7 +301,7 @@ bool prepareRawAndSyntheticStreams(Program *program, int smart)
                 reportError("failed to optReset cpu\n");
                 exitAfterCleanup(-1);
             }
-            workTable *scheduleTable = makeForceTable(program, currentStream);
+            ScheduleTable *scheduleTable = makeForceTable(program, currentStream);
             if (!scheduleTable) {
                 currentStream->dump(0);
                 reportError("failed to prepUta istream\n");
@@ -336,7 +336,7 @@ bool prepareRawAndSyntheticStreams(Program *program, int smart)
             }
         }
         if (currentStream->getCodeMode() == 4) {
-            workTable *currentOptimizationTable = currentStream->getTable();
+            ScheduleTable *currentOptimizationTable = currentStream->getTable();
             if (currentStream->getAllocMode() != 2) {
                 reportError("flowMon::doLinear() - table hasn't had external allocation .. %s mode %d!\n",
                               currentStream->streamName(), currentStream->getAllocMode());
@@ -350,15 +350,15 @@ bool prepareRawAndSyntheticStreams(Program *program, int smart)
 
 bool relaxOpt(Program *program)
 {
-    for (instStream *stream = program->streamHead; stream; stream = stream->nextStream) {
+    for (InstructionStream *stream = program->streamHead; stream; stream = stream->nextStream) {
         switch (stream->getCodeMode()) {
         case 3: {
-            workTable *opt = stream->optimizedTable;
+            ScheduleTable *opt = stream->optimizedTable;
             if (!opt) {
                 reportError("relaxopt - no opt for %s\n", stream->streamName());
                 return false;
             }
-            workTable *scheduleTable = stream->getTable();
+            ScheduleTable *scheduleTable = stream->getTable();
             if (opt != scheduleTable) {
                 reportError("relaxOpt - work and opt not same\n");
                 return false;
@@ -387,7 +387,7 @@ bool relaxOpt(Program *program)
 
 bool optimizeProgramScheduling(Program *program, int smart, bool sizeReduce)
 {
-    for (instStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+    for (InstructionStream *currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
         if (currentStream->getCodeMode() == 3) {
             if (!prepExtInfo(program, currentStream, 0)) {
                 reportError("failed to prep external info for stream\n");
@@ -397,7 +397,7 @@ bool optimizeProgramScheduling(Program *program, int smart, bool sizeReduce)
                 reportError("failed to optReset cpu\n");
                 exitAfterCleanup(-1);
             }
-            workTable *scheduleTable = makeForceTable(program, currentStream);
+            ScheduleTable *scheduleTable = makeForceTable(program, currentStream);
             if (!scheduleTable) {
                 reportError("failed to prepUta istream\n");
                 return false;
