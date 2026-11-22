@@ -251,7 +251,7 @@ ol_s *regUseSlot::findPreviousOutputAtPosition(int pos, bool all)
         pos = 0xff;
     ol_s *prev = 0;
     for (ol_s *p = outputLocations.head; p; p = p->next) {
-        if (pos < p->unk_12)
+        if (pos < p->cycleOffset)
             break;
         prev = p;
     }

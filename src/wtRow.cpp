@@ -23,21 +23,21 @@ wtRow::~wtRow()
 
 wtEntry::wtEntry()
 {
-    unk_00 = 0;
+    instruction = 0;
 }
 
 wtEntry::~wtEntry()
 {
-    if (unk_00 && !((VclPtrWord)unk_00 & 1)) {
-        if (unk_00->moveRecordWord)
-            addFreeMove(unk_00);
+    if (instruction && !((VclPtrWord)instruction & 1)) {
+        if (instruction->moveRecordWord)
+            addFreeMove(instruction);
         else
-            delete unk_00;
+            delete instruction;
     }
-    unk_00 = 0;
+    instruction = 0;
 }
 
-static inline bool clearWtEntry(wtEntryInl *e) { e->unk_00 = 0; return 1; }
+static inline bool clearWtEntry(wtEntryInl *e) { e->instruction = 0; return 1; }
 
 bool wtRow::clearEntries()
 {
@@ -49,14 +49,14 @@ bool wtRow::clearEntries()
 
 bool wtEntry::clearInstruction()
 {
-    unk_00 = 0;
+    instruction = 0;
     return 1;
 }
 
 void wtRow::refreshInstructionOperands(int)
 {
     for (int i = 0; i != 2; i++) {
-        Instr *in = entries[i].unk_00;
+        Instr *in = entries[i].instruction;
         if (!in)
             continue;
         if ((VclPtrWord)in & 1)
@@ -77,7 +77,7 @@ Instr *wtRow::getEntry(int p)
         exitAfterCleanup(-1);
         return 0;
     }
-    return entries[p].unk_00;
+    return entries[p].instruction;
 }
 
 Instr *GetI(Instr **ie, int p)
@@ -102,7 +102,7 @@ int wtRow::countEntries()
 {
     int n = 0;
     for (int i = 0; i != 2; i++)
-        if (entries[i].unk_00)
+        if (entries[i].instruction)
             n++;
     return n;
 }
@@ -111,10 +111,10 @@ Instr *wtRow::onlyEntry()
 {
     Instr *r = 0;
     for (int i = 0; i != 2; i++) {
-        if (entries[i].unk_00) {
+        if (entries[i].instruction) {
             if (r)
                 return 0;
-            r = entries[i].unk_00;
+            r = entries[i].instruction;
         }
     }
     return r;
@@ -156,7 +156,7 @@ int wtRow::outputMaskFor(RegPoolEntry *reg, unsigned char mask)
     int r = 0;
     if (!skip) {
         for (int i = 0; i != 2; i++) {
-            Instr *in = GetI(&entries[0].unk_00, i);
+            Instr *in = GetI(&entries[0].instruction, i);
             if (in)
                 r |= in->outputMaskForRegister(reg, mask);
         }
@@ -169,7 +169,7 @@ int wtRow::inputMaskFor(RegPoolEntry *reg, unsigned char mask)
     int r = 0;
     if (!skip) {
         for (int i = 0; i != 2; i++) {
-            Instr *in = GetI(&entries[0].unk_00, i);
+            Instr *in = GetI(&entries[0].instruction, i);
             if (in)
                 r |= in->inputMaskForRegister(reg, mask);
         }
@@ -179,7 +179,7 @@ int wtRow::inputMaskFor(RegPoolEntry *reg, unsigned char mask)
 
 unsigned int wtRow::getMinimumExtraLatencyAge()
 {
-    Instr *in = GetI(&entries[0].unk_00, 1);
+    Instr *in = GetI(&entries[0].instruction, 1);
     unsigned int m = 0;
     if (in) {
         for (int i = 0; i != in->operandCount; i++) {

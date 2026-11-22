@@ -3,8 +3,8 @@
 #include "xpTree_inline.h"
 #include "os.h"
 
-const char *func_0804ca58(int type);
-extern bool g_080b3088;
+const char *immediateValueTypeName(int type);
+extern bool parseFloatImmediateMode;
 
 
 int fitsSigned(int v, int bits)

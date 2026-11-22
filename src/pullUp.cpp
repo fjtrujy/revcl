@@ -8,10 +8,10 @@ class Program;
 
 int setRangeFrom(workTable *t);
 bool moveLocks(Instr *i, InstructionPosition *pos);
-int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
-int func_0807dc44(workTable *wt, Instr *i, InstructionPosition *pos);
+int checkInstructionPlacementConstraints(workTable *wt, Instr *i, InstructionPosition *pos);
 bool setRange(int start, int end, int lsz);
 int pullUp(workTable *wt);
 int dragDown(workTable *wt);
@@ -36,7 +36,7 @@ int pullUp(workTable *wt)
     Instr *lbdli = 0;
     Instr *br = wt->getBranch();
     if (br) {
-        lbdli = wt->rows[wt->rangeEnd - 1].entries[1].unk_00;
+        lbdli = wt->rows[wt->rangeEnd - 1].entries[1].instruction;
         if (lbdli)
             lbdli = writesInputRegisterOf(lbdli, br) ? lbdli : 0;
     }
@@ -97,7 +97,7 @@ int pullUp(workTable *wt)
             InstructionPosition pos;
             pos.setInstructionPipe(br->position.pipelineIndex);
             pos.setFromLinearRow(l);
-            if (func_0807dc44(wt, br, &pos)) {
+            if (checkInstructionPlacementConstraints(wt, br, &pos)) {
                 l++;
             } else {
                 if (!wt->takeOut(br)) {
@@ -122,7 +122,7 @@ int pullUp(workTable *wt)
                         reportError("over run for bdli\n");
                         return -1;
                     }
-                    if (func_0807dc44(wt, lbdli, &pos))
+                    if (checkInstructionPlacementConstraints(wt, lbdli, &pos))
                         continue;
                     if (!wt->takeOut(lbdli)) {
                         reportError("failed to take out lbdli instruction\n");

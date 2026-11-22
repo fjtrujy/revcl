@@ -52,7 +52,7 @@ bool extendBackTrace(Program *p, instStream *n)
     linkNode *l;
     for (l = n->inputLinks.head; l; l = l->next) {
         if (l->linkType == 3 || l->linkType == 4) {
-            if (l->unk_10)
+            if (l->includedInPathTraversal)
                 break;
             cnt++;
         }
@@ -92,10 +92,10 @@ bool extendBackTrace(Program *p, instStream *n)
                     reportError("destination had no link back\n");
                     return false;
                 }
-                back->unk_10 = 1;
+                back->includedInPathTraversal = 1;
             }
         }
-        if (all || l->unk_10) {
+        if (all || l->includedInPathTraversal) {
             instStream *o = l->otherStream;
             if (!o) {
                 reportError("can't get input stream for ir during trace\n");

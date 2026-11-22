@@ -6,7 +6,7 @@
 #include "Processor.h"
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
@@ -50,7 +50,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             if (!s->processCmdSynth(in)) {
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
-                errorOccurred = !quiet_080bbd98;
+                errorOccurred = !quietDiagnostics;
                 in->dumpOperandDiagnostics(false);
                 errorOccurred = saved;
             }
@@ -108,16 +108,16 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                 branchRow = rows;
                 branch = in;
             }
-            row->entries[j].unk_00 = in;
+            row->entries[j].instruction = in;
             in->setOwner((cls_unk30 *)t);
             valid++;
             n++;
         }
         if (n) {
-            if (checkDispatchEntry(&row->entries[0].unk_00)) {
+            if (checkDispatchEntry(&row->entries[0].instruction)) {
                 reportUserMessage("invalid instruction combination\n");
                 int saved = errorOccurred;
-                errorOccurred = !quiet_080bbd98;
+                errorOccurred = !quietDiagnostics;
                 dumpRow(row);
                 errorOccurred = saved;
                 return false;
@@ -158,7 +158,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
             return false;
         }
         for (int j = 0; j != 2; j++) {
-            Instr *in = row->entries[j].unk_00;
+            Instr *in = row->entries[j].instruction;
             if (!in)
                 continue;
             int lid, pos;

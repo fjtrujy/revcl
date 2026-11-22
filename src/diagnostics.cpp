@@ -11,22 +11,22 @@
 
 #include "os.h"
 
-bool flag_080b3038 = false;
+bool suppressErrorReports = false;
 int errorOccurred;
-bool quiet_080bbd98;
+bool quietDiagnostics;
 bool g_080bbd99;
 bool g_080bbd9a;
-char *outName_080b303c = 0;
+char *currentOutputFileName = 0;
 
 
 void suppressFurtherErrors()
 {
-    flag_080b3038 = 1;
+    suppressErrorReports = 1;
 }
 
 int reportMessage(const char *fmt, ...)
 {
-    if (quiet_080bbd98)
+    if (quietDiagnostics)
         return 0;
     va_list ap;
     va_start(ap, fmt);
@@ -43,7 +43,7 @@ int reportWarning(const char *fmt, ...)
 
 int reportInfo(const char *fmt, ...)
 {
-    if (quiet_080bbd98)
+    if (quietDiagnostics)
         return 0;
     va_list ap;
     va_start(ap, fmt);
@@ -53,7 +53,7 @@ int reportInfo(const char *fmt, ...)
 
 int reportVerboseInfo(const char *fmt, ...)
 {
-    if (quiet_080bbd98)
+    if (quietDiagnostics)
         return 0;
     va_list ap;
     va_start(ap, fmt);
@@ -63,7 +63,7 @@ int reportVerboseInfo(const char *fmt, ...)
 
 int reportError(const char *fmt, ...)
 {
-    if (flag_080b3038)
+    if (suppressErrorReports)
         return 0;
     va_list ap;
     va_start(ap, fmt);
@@ -76,7 +76,7 @@ int reportUserMessage(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    flag_080b3038 = 1;
+    suppressErrorReports = 1;
     fprintf(stderr, "USER: ");
     return vfprintf(stderr, fmt, ap);
 }
@@ -96,8 +96,8 @@ int parseInteger(const char *s)
 void exitAfterCleanup(int status)
 {
     if (status) {
-        if (outName_080b303c)
-            printf("ERROR: something went wrong, making '%s' vcl's outta here.\n", outName_080b303c);
+        if (currentOutputFileName)
+            printf("ERROR: something went wrong, making '%s' vcl's outta here.\n", currentOutputFileName);
         else
             puts("ERROR: something went wrong, vcl's outta here.");
     }
@@ -109,13 +109,13 @@ void exitWithError(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    if (!flag_080b3038) {
+    if (!suppressErrorReports) {
         errorOccurred = 1;
         fprintf(stderr, "ERROR: ");
         vfprintf(stderr, fmt, ap);
     }
-    if (outName_080b303c)
-        printf("ERROR: something went wrong, making '%s' vcl's outta here.\n", outName_080b303c);
+    if (currentOutputFileName)
+        printf("ERROR: something went wrong, making '%s' vcl's outta here.\n", currentOutputFileName);
     else
         puts("ERROR: something went wrong, vcl's outta here.");
     OS_End();

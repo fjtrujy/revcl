@@ -7,7 +7,7 @@
 
 bool prepExtInfo(Program *p, instStream *s, bool b);
 int insertStreamRegisterCaps(Program *p, instStream *s);
-void func_0807bb84(workTable *wt);
+void initializeScheduledCycleTimes(workTable *wt);
 bool removeNops(Program *p, instStream *s);
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
 bool doCap(int line, int pipe, int mask);
@@ -65,7 +65,7 @@ bool removeNops(Program *p, instStream *s)
         reportError("failed to get hw register pool - maybe this isn't vpu?\n");
         return false;
     }
-    func_0807bb84(wt);
+    initializeScheduledCycleTimes(wt);
     if (!resetProcessorThroughput(p)) {
         reportError("failed to reset for emu\n");
         return false;
@@ -78,7 +78,7 @@ bool removeNops(Program *p, instStream *s)
         lastOk = false;
     }
     int curTick = 0;
-    int logLen = wt->func_08072eec();
+    int logLen = wt->getRawOrSyntheticLogicalLength();
     ol_s *inflight[1024];
     for (int rl = wt->getRangeStart(); rl != wt->getRangeEnd(); rl++) {
         wtRow *row = (wtRow *)((cls_unk30 *)wt)->getIE_ck(rl);
@@ -101,7 +101,7 @@ bool removeNops(Program *p, instStream *s)
                 Operand *op = operandAtLocation(ol);
                 RegPoolEntry *reg = op->assignedRegister;
                 int part = ol->componentIndex;
-                int lat = ol->unk_12;
+                int lat = ol->cycleOffset;
                 if (reg->unk_2c) {
                     int tv = in->baseIssueSpacing;
                     if (tv <= 6)
@@ -154,7 +154,7 @@ bool removeNops(Program *p, instStream *s)
                 ol_s *ol = inflight[k];
                 Operand *op = operandAtLocation(ol);
                 int part = ol->componentIndex;
-                int lat = ol->unk_12;
+                int lat = ol->cycleOffset;
                 ol_s *u = op->parts[part].operandLocations.firstInternalLocation();
                 if (u) {
                     Instr *ui = u->instruction;
@@ -179,7 +179,7 @@ bool removeNops(Program *p, instStream *s)
                         for (int i = 0; i != in->operandCount; i++) {
                             Operand *o = &in->operands[i];
                             RegPoolEntry *w = registerOperand(o, 2);
-                            if (o->unk_28)
+                            if (o->reductionHazardMask)
                                 ok = false;
                             if (w && !o->unk_0b) {
                                 int t = base + o->outputLatency;
@@ -226,7 +226,7 @@ bool removeNops(Program *p, instStream *s)
                 }
                 if (ok) {
                     if (m >= wt->getRangeEnd()) {
-                        int last = wt->func_08072eec() - 1;
+                        int last = wt->getRawOrSyntheticLogicalLength() - 1;
                         for (int l = wt->getRangeStart(); l < m && ok; l++) {
                             wtRow *r = (wtRow *)((cls_unk30 *)wt)->getIE_ck(l);
                             int dist = last - row->cycleTime;
@@ -248,7 +248,7 @@ bool removeNops(Program *p, instStream *s)
                     }
                     if (ok) {
                         if (m >= wt->getRangeEnd()) {
-                            int last = wt->func_08072eec() - 1;
+                            int last = wt->getRawOrSyntheticLogicalLength() - 1;
                             if (last < wt->externalMinimumLength)
                                 ok = false;
                             if (s->endType != 1 && last <= 1)
@@ -258,7 +258,7 @@ bool removeNops(Program *p, instStream *s)
                             row->skip = 1;
                             splitCtime(wt, rl, m);
                             if (m >= wt->getRangeEnd())
-                                wt->unk_0c = --logLen;
+                                wt->declaredRawLength = --logLen;
                         }
                     }
                 }
@@ -279,14 +279,14 @@ bool removeNops(Program *p, instStream *s)
             return false;
         }
     }
-    if (wt->func_08072eec() != p->emulatedCycleCount) {
+    if (wt->getRawOrSyntheticLogicalLength() != p->emulatedCycleCount) {
         reportError("at end of table logical len not correct\n");
         return false;
     }
     return true;
 }
 
-void func_0807bb84(workTable *wt)
+void initializeScheduledCycleTimes(workTable *wt)
 {
     wtRow *row = wt->rows + wt->rangeStart;
     for (int l = wt->rangeStart; l != wt->rangeEnd; l++, row++) {

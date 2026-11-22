@@ -58,7 +58,7 @@ bool bindDependencies(Program *p)
                     reportError("failed to get a hw pool\n");
                     return false;
                 }
-                if (hw->unk_0e != 3) {
+                if (hw->poolKind != 3) {
                     reportError("umm - not a hardware register\n");
                     return false;
                 }

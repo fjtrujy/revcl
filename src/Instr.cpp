@@ -11,9 +11,9 @@
 char *dupString(const char *s);
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 
-opPair_s opPairTable_080b32e0[] = {
+opPair_s pairedOperandDescriptions[] = {
     {109, {1, 1, 0, 2}, 0},
     {110, {1, 1, 0, 2}, 0},
     {112, {2, 1, 0, 2}, 0},
@@ -24,7 +24,7 @@ opPair_s opPairTable_080b32e0[] = {
     {0, {0}, 0},
 };
 
-opCount_s opCountTable_080b3340[] = {
+opCount_s operandCountOverrides[] = {
     {155, 1}, {160, 1}, {156, 1}, {161, 1}, {0, 0},
 };
 
@@ -214,7 +214,7 @@ void Instr::leDump(int opnd, int mask)
         return;
     }
     int saved = errorOccurred;
-    errorOccurred = !quiet_080bbd98;
+    errorOccurred = !quietDiagnostics;
     if (sourceTag) {
         int idx = unk_18;
         if (opnd >= 0) {
@@ -363,7 +363,7 @@ Instr *Instr::clone()
         d->externalPartMask = s->externalPartMask;
         d->operandStatus = 0;
         d->externalComponentMask = s->externalComponentMask;
-        d->unk_28 = s->unk_28;
+        d->reductionHazardMask = s->reductionHazardMask;
     }
     return c;
 }
@@ -604,13 +604,13 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
         reportError("failed to add ol_ouput to input\n");
         return false;
     }
-    int s = o->unk_12;
+    int s = o->cycleOffset;
     if (s > 0xff)
         s = 0xff;
-    a->unk_12 = s;
+    a->cycleOffset = s;
     a->pathKey = x;
     a->unk_0c = y;
-    b->unk_12 = 0;
+    b->cycleOffset = 0;
     b->pathKey = x;
     b->unk_0c = y;
     return true;

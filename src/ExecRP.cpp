@@ -5,91 +5,91 @@
 #include "os.h"
 
 char *dupString(const char *s);
-extern bool noAlign_080b3016;
+extern bool disableOutputAlignment;
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 
 bool asciiCaseEqual(const char *a, const char *b);
 RegPool *GetRP(unsigned t);
-bool func_080519f8(LocTag *t, RegPool *pool, bool b);
-bool func_08051d6c(Program *prog, LocTag *t, int v);
-bool func_08051e34(Program *prog, LocTag *t, int v);
-bool func_08088f20(RegPool *pool, const char *name, int size);
+bool setRegisterRangeEnabled(LocTag *t, RegPool *pool, bool b);
+bool pushVisibilityScope(Program *prog, LocTag *t, int v);
+bool popVisibilityScope(Program *prog, LocTag *t, int v);
+bool initializeMemoryRegisterArea(RegPool *pool, const char *name, int size);
 int mstrlen(const char *s);
-bool func_0805116c(Program *prog, LocTag *t);
-bool func_0805118c(Program *prog, LocTag *t);
-bool func_080511ac(Program *prog, LocTag *t);
-bool func_080511cc(Program *prog, LocTag *t);
-bool func_080511ec(Program *prog, LocTag *t);
-bool func_08051228(Program *prog, LocTag *t);
-bool func_08051264(Program *prog, LocTag *t);
-bool func_08051284(Program *prog, LocTag *t);
-bool func_080512a4(Program *prog, LocTag *t);
-bool func_08051308(Program *prog, LocTag *t);
-bool func_0805131c(Program *prog, LocTag *t);
-bool func_0805137c(Program *prog, LocTag *t);
-bool func_080513cc(Program *prog, LocTag *t);
-bool func_080514a0(Program *prog, LocTag *t);
-bool func_080514e8(Program *prog, LocTag *t);
-bool func_080515a0(Program *prog, LocTag *t);
-bool func_080515f0(Program *prog, LocTag *t);
-bool func_08051808(Program *prog, LocTag *t);
-bool func_08051830(Program *prog, LocTag *t);
-bool func_08051848(Program *prog, LocTag *t);
-bool func_08051860(Program *prog, LocTag *t);
-bool func_08051878(Program *prog, LocTag *t);
-bool func_08051890(Program *prog, LocTag *t);
-bool func_08051908(Program *prog, LocTag *t);
+bool handleInitVfDirective(Program *prog, LocTag *t);
+bool handleInitViDirective(Program *prog, LocTag *t);
+bool handleRemoveVfDirective(Program *prog, LocTag *t);
+bool handleRemoveViDirective(Program *prog, LocTag *t);
+bool handleInitAllVfDirective(Program *prog, LocTag *t);
+bool handleInitAllViDirective(Program *prog, LocTag *t);
+bool handleDisableAlignmentDirective(Program *prog, LocTag *t);
+bool handleDisableEbitDirective(Program *prog, LocTag *t);
+bool handleProgramNameDirective(Program *prog, LocTag *t);
+bool handleVuDirective(Program *prog, LocTag *t);
+bool handleMpgDirective(Program *prog, LocTag *t);
+bool handleGlobalDirective(Program *prog, LocTag *t);
+bool handleBeginRawDirective(Program *prog, LocTag *t);
+bool handleEndRawDirective(Program *prog, LocTag *t);
+bool handleBeginRawLoopDirective(Program *prog, LocTag *t);
+bool handleEndRawLoopDirective(Program *prog, LocTag *t);
+bool handleVuWorkAreaDirective(Program *prog, LocTag *t);
+bool handleAlignmentDirective(Program *prog, LocTag *t);
+bool handleHideDirective(Program *prog, LocTag *t);
+bool handleShowDirective(Program *prog, LocTag *t);
+bool handleEndHideDirective(Program *prog, LocTag *t);
+bool handleEndShowDirective(Program *prog, LocTag *t);
+bool handleUniqueDirective(Program *prog, LocTag *t);
+bool handleSyntaxDirective(Program *prog, LocTag *t);
 
-Directive directives_080b3160[28] = {
-    {".vu", func_08051308},
-    {".mpg", func_0805131c},
-    {".vsm", func_080513cc},
-    {".endvsm", func_080514a0},
-    {".vsmloop", func_080514e8},
-    {".endvsmloop", func_080515a0},
-    {".init_vf", func_0805116c},
-    {".init_vi", func_0805118c},
-    {".rem_vf", func_080511ac},
-    {".rem_vi", func_080511cc},
-    {".init_vf_all", func_080511ec},
-    {".init_vi_all", func_08051228},
-    {".vu_work_area", func_080515f0},
-    {".name", func_080512a4},
-    {".syntax", func_08051908},
-    {".align", func_08051808},
-    {".global", func_0805137c},
-    {".noaligns", func_08051264},
-    {".noebits", func_08051284},
-    {".raw", func_080513cc},
-    {".endraw", func_080514a0},
-    {".rawloop", func_080514e8},
-    {".endrawloop", func_080515a0},
-    {".unique", func_08051890},
-    {".show", func_08051848},
-    {".hide", func_08051830},
-    {".endshow", func_08051878},
-    {".endhide", func_08051860},
+Directive directiveDispatchTable[28] = {
+    {".vu", handleVuDirective},
+    {".mpg", handleMpgDirective},
+    {".vsm", handleBeginRawDirective},
+    {".endvsm", handleEndRawDirective},
+    {".vsmloop", handleBeginRawLoopDirective},
+    {".endvsmloop", handleEndRawLoopDirective},
+    {".init_vf", handleInitVfDirective},
+    {".init_vi", handleInitViDirective},
+    {".rem_vf", handleRemoveVfDirective},
+    {".rem_vi", handleRemoveViDirective},
+    {".init_vf_all", handleInitAllVfDirective},
+    {".init_vi_all", handleInitAllViDirective},
+    {".vu_work_area", handleVuWorkAreaDirective},
+    {".name", handleProgramNameDirective},
+    {".syntax", handleSyntaxDirective},
+    {".align", handleAlignmentDirective},
+    {".global", handleGlobalDirective},
+    {".noaligns", handleDisableAlignmentDirective},
+    {".noebits", handleDisableEbitDirective},
+    {".raw", handleBeginRawDirective},
+    {".endraw", handleEndRawDirective},
+    {".rawloop", handleBeginRawLoopDirective},
+    {".endrawloop", handleEndRawLoopDirective},
+    {".unique", handleUniqueDirective},
+    {".show", handleShowDirective},
+    {".hide", handleHideDirective},
+    {".endshow", handleEndShowDirective},
+    {".endhide", handleEndHideDirective},
 };
 
-bool func_0805116c(Program *prog, LocTag *t)
+bool handleInitVfDirective(Program *prog, LocTag *t)
 {
-    return func_080519f8(t, GetRP(9), true);
+    return setRegisterRangeEnabled(t, GetRP(9), true);
 }
 
-bool func_0805118c(Program *prog, LocTag *t)
+bool handleInitViDirective(Program *prog, LocTag *t)
 {
-    return func_080519f8(t, GetRP(8), true);
+    return setRegisterRangeEnabled(t, GetRP(8), true);
 }
 
-bool func_080511ac(Program *prog, LocTag *t)
+bool handleRemoveVfDirective(Program *prog, LocTag *t)
 {
-    return func_080519f8(t, GetRP(9), false);
+    return setRegisterRangeEnabled(t, GetRP(9), false);
 }
 
-bool func_080511cc(Program *prog, LocTag *t)
+bool handleRemoveViDirective(Program *prog, LocTag *t)
 {
-    return func_080519f8(t, GetRP(8), false);
+    return setRegisterRangeEnabled(t, GetRP(8), false);
 }
 
 inline bool ExecRP_init_reg_all(RegPool *pool)
@@ -101,31 +101,31 @@ inline bool ExecRP_init_reg_all(RegPool *pool)
     return pool->markAllocatablePhysicalRegistersUsed();
 }
 
-bool func_080511ec(Program *prog, LocTag *t)
+bool handleInitAllVfDirective(Program *prog, LocTag *t)
 {
     return ExecRP_init_reg_all(GetRP(9));
 }
 
-bool func_08051228(Program *prog, LocTag *t)
+bool handleInitAllViDirective(Program *prog, LocTag *t)
 {
     return ExecRP_init_reg_all(GetRP(8));
 }
 
-bool func_08051264(Program *prog, LocTag *t)
+bool handleDisableAlignmentDirective(Program *prog, LocTag *t)
 {
-    noAlign_080b3016 = true;
+    disableOutputAlignment = true;
     reportInfo("dh_align_disable() - disabling .align emit\n");
     return 1;
 }
 
-bool func_08051284(Program *prog, LocTag *t)
+bool handleDisableEbitDirective(Program *prog, LocTag *t)
 {
-    noAlign_080b3016 = true;
+    disableOutputAlignment = true;
     reportInfo("dh_no_ebits() - disabling [e]bit emit\n");
     return 1;
 }
 
-bool func_080512a4(Program *prog, LocTag *t)
+bool handleProgramNameDirective(Program *prog, LocTag *t)
 {
     char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (!s) {
@@ -137,13 +137,13 @@ bool func_080512a4(Program *prog, LocTag *t)
     return 1;
 }
 
-bool func_08051308(Program *prog, LocTag *t)
+bool handleVuDirective(Program *prog, LocTag *t)
 {
-    prog->proc.unk_63 = true;
+    prog->proc.vuDirectiveSeen = true;
     return 1;
 }
 
-bool func_0805131c(Program *prog, LocTag *t)
+bool handleMpgDirective(Program *prog, LocTag *t)
 {
     char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (!s) {
@@ -154,7 +154,7 @@ bool func_0805131c(Program *prog, LocTag *t)
     return 1;
 }
 
-bool func_0805137c(Program *prog, LocTag *t)
+bool handleGlobalDirective(Program *prog, LocTag *t)
 {
     char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (s)
@@ -162,7 +162,7 @@ bool func_0805137c(Program *prog, LocTag *t)
     return 1;
 }
 
-bool func_080513cc(Program *prog, LocTag *t)
+bool handleBeginRawDirective(Program *prog, LocTag *t)
 {
     if (prog->proc.insideRawLoop) {
         reportUserMessage("hit a raw directive in a rawloop block\n");
@@ -186,7 +186,7 @@ bool func_080513cc(Program *prog, LocTag *t)
     return 1;
 }
 
-bool func_080514a0(Program *prog, LocTag *t)
+bool handleEndRawDirective(Program *prog, LocTag *t)
 {
     if (prog->proc.decodeMode == 1) {
         reportWarning("hit an endraw directive while not in raw mode\n");
@@ -201,7 +201,7 @@ bool func_080514a0(Program *prog, LocTag *t)
     return 1;
 }
 
-bool func_080514e8(Program *prog, LocTag *t)
+bool handleBeginRawLoopDirective(Program *prog, LocTag *t)
 {
     if (prog->proc.insideRawLoop) {
         reportUserMessage("encountered a .rawloop directive, while already in loop mode\n");
@@ -226,7 +226,7 @@ bool func_080514e8(Program *prog, LocTag *t)
     return 1;
 }
 
-bool func_080515a0(Program *prog, LocTag *t)
+bool handleEndRawLoopDirective(Program *prog, LocTag *t)
 {
     if (!prog->proc.insideRawLoop) {
         reportUserMessage("reached an .endloop directive but when wasn't in loop mode\n");
@@ -242,7 +242,7 @@ bool func_080515a0(Program *prog, LocTag *t)
     return 1;
 }
 
-bool func_080515f0(Program *prog, LocTag *t)
+bool handleVuWorkAreaDirective(Program *prog, LocTag *t)
 {
     int device = -1;
     int limit = -1;
@@ -296,7 +296,7 @@ bool func_080515f0(Program *prog, LocTag *t)
         reportError("init work area - failed to get vu mem pool\n");
         return 0;
     }
-    if (!func_08088f20(pool, ea, size)) {
+    if (!initializeMemoryRegisterArea(pool, ea, size)) {
         reportError("failed to init the mem area!\n");
         return 0;
     }
@@ -311,32 +311,32 @@ inline bool ExecRP_skip_directive(LocTag *t)
     return true;
 }
 
-bool func_08051808(Program *prog, LocTag *t)
+bool handleAlignmentDirective(Program *prog, LocTag *t)
 {
     return ExecRP_skip_directive(t);
 }
 
-bool func_08051830(Program *prog, LocTag *t)
+bool handleHideDirective(Program *prog, LocTag *t)
 {
-    return func_08051d6c(prog, t, 0);
+    return pushVisibilityScope(prog, t, 0);
 }
 
-bool func_08051848(Program *prog, LocTag *t)
+bool handleShowDirective(Program *prog, LocTag *t)
 {
-    return func_08051d6c(prog, t, 1);
+    return pushVisibilityScope(prog, t, 1);
 }
 
-bool func_08051860(Program *prog, LocTag *t)
+bool handleEndHideDirective(Program *prog, LocTag *t)
 {
-    return func_08051e34(prog, t, 0);
+    return popVisibilityScope(prog, t, 0);
 }
 
-bool func_08051878(Program *prog, LocTag *t)
+bool handleEndShowDirective(Program *prog, LocTag *t)
 {
-    return func_08051e34(prog, t, 1);
+    return popVisibilityScope(prog, t, 1);
 }
 
-bool func_08051890(Program *prog, LocTag *t)
+bool handleUniqueDirective(Program *prog, LocTag *t)
 {
     char *name = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (name) {
@@ -350,7 +350,7 @@ bool func_08051890(Program *prog, LocTag *t)
     return 1;
 }
 
-bool func_08051908(Program *prog, LocTag *t)
+bool handleSyntaxDirective(Program *prog, LocTag *t)
 {
     char *arg = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (!arg) {
@@ -374,19 +374,19 @@ inline char *ExecRP_directive_name(LocTag *t)
     return t->tokenTextAt(0, 0);
 }
 
-Directive *func_080519a0(LocTag *t)
+Directive *findRegisteredDirective(LocTag *t)
 {
     if (!t)
         return 0;
     char *name = ExecRP_directive_name(t);
-    Directive *d = directives_080b3160;
+    Directive *d = directiveDispatchTable;
     for (int i = 0; i != 28; i++, d++)
         if (asciiCaseEqual(name, d->name))
             return d;
     return 0;
 }
 
-bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
+bool setRegisterRangeEnabled(LocTag *t, RegPool *pool, bool flag)
 {
     char buf[2][0x800];
     int i = 1;
@@ -454,33 +454,33 @@ bool func_080519f8(LocTag *t, RegPool *pool, bool flag)
                 reportError("init_reg: reg is virtual! %s\n", r->registerName());
                 return false;
             }
-            r->unk_16 = flag;
+            r->enabledPhysicalRegister = flag;
         }
     }
     return true;
 }
 
-int func_08051c30(Program *prog, LocTag *t)
+int handleInitHwRegisterType1(Program *prog, LocTag *t)
 {
-    return func_080519f8(t, GetRP(1), true);
+    return setRegisterRangeEnabled(t, GetRP(1), true);
 }
 
-int func_08051c50(Program *prog, LocTag *t)
+int handleInitHwRegisterType2(Program *prog, LocTag *t)
 {
-    return func_080519f8(t, GetRP(2), true);
+    return setRegisterRangeEnabled(t, GetRP(2), true);
 }
 
-int func_08051c70(Program *prog, LocTag *t)
+int handleRemoveHwRegisterType1(Program *prog, LocTag *t)
 {
-    return func_080519f8(t, GetRP(1), false);
+    return setRegisterRangeEnabled(t, GetRP(1), false);
 }
 
-int func_08051c90(Program *prog, LocTag *t)
+int handleRemoveHwRegisterType2(Program *prog, LocTag *t)
 {
-    return func_080519f8(t, GetRP(2), false);
+    return setRegisterRangeEnabled(t, GetRP(2), false);
 }
 
-int func_08051cb0(LocTag *t, RegPool *pool)
+int enableAllRegistersInPool(LocTag *t, RegPool *pool)
 {
     if (!pool) {
         reportError("ExecRP_init_reg_all: passed a null pool\n");
@@ -489,27 +489,27 @@ int func_08051cb0(LocTag *t, RegPool *pool)
     return pool->markAllocatablePhysicalRegistersUsed();
 }
 
-int func_08051ce0(Program *prog, LocTag *t)
+int handleInitAllHwRegisterType1(Program *prog, LocTag *t)
 {
     return ExecRP_init_reg_all(GetRP(1));
 }
 
-int func_08051d1c(Program *prog, LocTag *t)
+int handleInitAllHwRegisterType2(Program *prog, LocTag *t)
 {
     return ExecRP_init_reg_all(GetRP(2));
 }
 
-int func_08051d58(Program *prog, LocTag *t)
+int alwaysAcceptDirective(Program *prog, LocTag *t)
 {
     return 1;
 }
 
-int func_08051d64(Program *prog, LocTag *t)
+int alwaysRejectDirective(Program *prog, LocTag *t)
 {
     return 0;
 }
 
-bool func_08051d6c(Program *prog, LocTag *t, int v)
+bool pushVisibilityScope(Program *prog, LocTag *t, int v)
 {
     char buf[0x800];
     int left = 0x7ff;
@@ -542,13 +542,13 @@ inline void ExecRP_show_line(LocTag *t)
     t->dumpSourceLine(-1);
 }
 
-bool func_08051e34(Program *prog, LocTag *t, int v)
+bool popVisibilityScope(Program *prog, LocTag *t, int v)
 {
     mNode *n = prog->proc.visibilityScopes.tail;
     if (!n) {
         reportWarning("closing visibility directive and no tail at:\n");
         int saved = errorOccurred;
-        errorOccurred = !quiet_080bbd98;
+        errorOccurred = !quietDiagnostics;
         ExecRP_show_line(t);
         errorOccurred = saved;
         return true;
@@ -556,7 +556,7 @@ bool func_08051e34(Program *prog, LocTag *t, int v)
     if (n->flags != v) {
         reportUserMessage("mode mismatch closing a visibility scope\n");
         int saved = errorOccurred;
-        errorOccurred = !quiet_080bbd98;
+        errorOccurred = !quietDiagnostics;
         ExecRP_show_line(t);
         errorOccurred = saved;
         return false;

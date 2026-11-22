@@ -8,10 +8,10 @@ bool equalExactStrings(const char *a, const char *b);
 bool asciiCaseEqual(const char *a, const char *b);
 bool matchesLeadingKeyword(const char *s, const char *kw);
 
-char *g_080b3144 = "0123456789.";    // gasp line-number chars
-char *g_080b3148 = "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?;";    // token (non-whitespace) char set
-char *g_080b314c = "----*";    // block-start keyword
-char *g_080b3150 = "*----";    // block-end keyword
+char *gaspLineNumberCharacters = "0123456789.";    // gasp line-number chars
+char *tokenizerCharacterSet = "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?;";    // token (non-whitespace) char set
+char *blockStartKeyword = "----*";    // block-start keyword
+char *blockEndKeyword = "*----";    // block-end keyword
 
 Parser::Parser()
 {
@@ -157,7 +157,7 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
             process = false;
         }
         int checkBlock = process;
-        if ((char)checkBlock && matchesLeadingKeyword(line, g_080b314c)) {
+        if ((char)checkBlock && matchesLeadingKeyword(line, blockStartKeyword)) {
             char *q = next;
             t = &parsedLines[parsedLineCount++];
             t->sourceLineNumber = lineNo;
@@ -165,7 +165,7 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
             for (;;) {
                 if (!rawHead)
                     break;
-                if (matchesLeadingKeyword(q, g_080b3150)) {
+                if (matchesLeadingKeyword(q, blockEndKeyword)) {
                     rawHead = *q;
                     break;
                 }
@@ -203,7 +203,7 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
             char *s = line;
             char c;
             while ((c = *s) && !({
-                const char *q = g_080b3148;
+                const char *q = tokenizerCharacterSet;
                 char tok;
                 while ((tok = *q) && tok != c)
                     q++;
@@ -235,7 +235,7 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
 
 static inline bool isWhite(const char *s)
 {
-    const char *q = g_080b3148;
+    const char *q = tokenizerCharacterSet;
     while (*q && *q != *s)
         q++;
     return *q != 0;
@@ -325,7 +325,7 @@ int Parser::FindLocTag(const char *name, int n)
 
 static inline bool isGaspDigit(unsigned char c)
 {
-    for (const char *q = g_080b3144; *q; q++)
+    for (const char *q = gaspLineNumberCharacters; *q; q++)
         if ((unsigned char)*q == c)
             return true;
     return false;
@@ -432,7 +432,7 @@ bool hasTrailingLabelColon(const char *s)
 
 bool isTokenSeparatorCharacter(char c)
 {
-    const char *q = g_080b3148;
+    const char *q = tokenizerCharacterSet;
     char ch;
     while ((ch = *q) && ch != c)
         q++;
@@ -468,12 +468,12 @@ bool matchesLeadingKeyword(const char *s, const char *kw)
 
 bool matchesFirstSpecialKeyword(const char *s)
 {
-    return matchesLeadingKeyword(s, g_080b314c);
+    return matchesLeadingKeyword(s, blockStartKeyword);
 }
 
 bool matchesSecondSpecialKeyword(const char *s)
 {
-    return matchesLeadingKeyword(s, g_080b3150);
+    return matchesLeadingKeyword(s, blockEndKeyword);
 }
 
 extern const char locTagInvalidCommentError[] = "invalid comment mode at start of lineEntry::Tokenise\n";

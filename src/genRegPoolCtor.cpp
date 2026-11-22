@@ -16,14 +16,14 @@ int setRangeFrom(workTable *t);
 
 genRegPool::genRegPool()
 {
-    unk_0e = 1;
+    poolKind = 1;
 }
 
 genRegPool::~genRegPool()
 {
 }
 
-bool genRegPool::func_08088e54(workTable *t)
+bool genRegPool::assignRegistersForWorkTable(workTable *t)
 {
     if (!t) {
         reportError("failed to get itable in nassign - which is not really likely\n");
@@ -154,7 +154,7 @@ bool genRegPool::assignExt(instStream *s)
         if (ownsRegisterClass(reg) && ru->isExternal() && !reg->assignedPhysicalRegister) {
             initRegMask(this);
             for (instStream *p = owner->streamHead; p; p = p->nextStream) {
-                if (!func_08088e6c(p, reg)) {
+                if (!discardDisjointExternalRegister(p, reg)) {
                     reportError("generic external allocator had internal error.. ret<0 for DiscardDisjoint\n");
                     return false;
                 }
@@ -179,7 +179,7 @@ bool genRegPool::assignExt(instStream *s)
     return true;
 }
 
-bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
+bool genRegPool::discardDisjointExternalRegister(instStream *s, RegPoolEntry *reg)
 {
     if (!reg || !ownsRegisterClass(reg)) {
         reportError("discard disjoint called, but this pool doesn't own this register!\n");
@@ -276,7 +276,7 @@ bool genRegPool::func_08088e6c(instStream *s, RegPoolEntry *reg)
             reportError("tmpr is virtual\n");
             return false;
         }
-        regMask_080dde40[tmpr->regIndex()] |= m;
+        allocationRegisterMask[tmpr->regIndex()] |= m;
     }
     return true;
 }

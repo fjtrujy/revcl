@@ -53,11 +53,11 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
     } else
         nt->setRange();
     setRangeFrom(nt);
-    g_080de284 = smart;
+    fatalReadBeforeReady = smart;
     nt->statistics.copyCountersFrom(&s->schedulingStatistics);
     copyShort(nt->unk_74, wt->unk_74);
     copyShort(nt->unk_76, wt->unk_76);
-    copyShort(nt->unk_78, wt->unk_78);
+    copyShort(nt->logicalInstructionLength, wt->logicalInstructionLength);
     int mode = (unsigned char)wt->allocationMode;
     nt->allocationMode = mode;
     nt->unk_40 = 0;

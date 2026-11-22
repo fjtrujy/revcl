@@ -3,8 +3,8 @@
 
 struct iGroupNode {
     iGroupNode *next;
-    void *unk_04;
-    int unk_08;     // size
+    void *itemPointer;
+    int itemSize;
 
     enum InitTag { INIT };
     iGroupNode();

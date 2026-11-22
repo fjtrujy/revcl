@@ -6,7 +6,7 @@ bool setRange(int start, int end, int lsz);
 bool moveLocks(Instr *i, InstructionPosition *pos);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
 int latestInsert(workTable *wt, Instr *in, bool *found);
-int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
+int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
 int countSetBits(unsigned int x);
 RegPoolEntry *getZeroReg(unsigned int type);
 
@@ -83,7 +83,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
         return true;
     if (found) {
         pos.setFromLinearRow(tline);
-        if (!func_0807e130(wt, in, &pos, upwards))
+        if (!checkPlacementInAllowedPipelines(wt, in, &pos, upwards))
             goto move;
         tline += step;
     }
@@ -91,7 +91,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
         pos.setFromLinearRow(tline);
         wtRow *row = wt->getRowByIndex(tline);
         if (row->countEntries() == 1
-            && !func_0807e130(wt, in, &pos, upwards))
+            && !checkPlacementInAllowedPipelines(wt, in, &pos, upwards))
             goto move;
     }
     return true;
@@ -160,5 +160,5 @@ int g_080de734;
 iInfo *g_080de738;
 workTable *g_080de73c;
 Instr *g_080de740;
-RegPoolEntry *g_080de744;
-int g_080de748;
+RegPoolEntry *selectedCapRegister;
+int selectedCapMask;

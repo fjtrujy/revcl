@@ -292,10 +292,10 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
             if (reg) {
                 regUse *u = ul->findByRegister(reg);
                 if (isRegisterOperand(op, 1))
-                    op->unk_28 = u->hazardMask & op->externalPartMask;
+                    op->reductionHazardMask = u->hazardMask & op->externalPartMask;
                 if (isRegisterOperand(op, 2))
-                    op->unk_28 = u->unk_13 & op->externalPartMask;
-                op->unk_28 |= u->hazardBroadcastMask;
+                    op->reductionHazardMask = u->unk_13 & op->externalPartMask;
+                op->reductionHazardMask |= u->hazardBroadcastMask;
             }
         }
     int endType = s->getEndType();

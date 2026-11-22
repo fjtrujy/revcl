@@ -40,8 +40,8 @@ instStream::instStream()
     leadingLabelFlags = 0;
     trailingLabelFlags = 0;
     participatesInStall = 0;
-    unk_261 = 0;
-    unk_262 = 0;
+    allowUpwardReduction = 0;
+    allowDownwardReduction = 0;
     unk_2b6 = -1;
     unk_2b4 = -1;
     branchType = 0;

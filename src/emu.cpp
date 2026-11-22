@@ -24,7 +24,7 @@ bool emuTable(Program *p, workTable *wt)
         reportError("mlid is set, or loop size is set for emu..which is now kinda tricky..\n");
         return false;
     }
-    wt->unk_0c = -1;
+    wt->declaredRawLength = -1;
     switch (wt->codeModeValue) {
     case 3: {
         int skipped = 0;
@@ -33,7 +33,7 @@ bool emuTable(Program *p, workTable *wt)
             if (r) {
                 if (r->skip) {
                     for (int k = 0; k != 2; k++)
-                        if (r->entries[k].unk_00) {
+                        if (r->entries[k].instruction) {
                             reportError("m_bSkip set .. but line contains instructions\n");
                             return false;
                         }
@@ -50,7 +50,7 @@ bool emuTable(Program *p, workTable *wt)
                 return false;
             }
         }
-        wt->unk_0c = p->emulatedCycleCount;
+        wt->declaredRawLength = p->emulatedCycleCount;
         skipped += p->emulatedCycleCount;
         if (skipped < wt->getPhysicalLen()) {
             reportError("logical len < physical len.. %d<%d!\n", p->emulatedCycleCount, wt->getPhysicalLen());
@@ -67,9 +67,9 @@ fail:
         wtRow row;
         for (; i; i = i->linearLink.nextInstruction) {
             row.clearEntries();
-            row.entries[0].unk_00 = i;
+            row.entries[0].instruction = i;
             int r = emuInst(p, &row, -1, true, true);
-            row.entries[0].unk_00 = 0;
+            row.entries[0].instruction = 0;
             if (r < 0) {
                 reportError("failed to uta emu instruction\n");
                 i->dumpOperandDiagnostics(false);
@@ -92,7 +92,7 @@ static inline void reportRegRefFailure()
     reportError("failed to add reg ref\n");
 }
 
-bool func_080642ec(Program *p, instStream *s)
+bool emulateAndCollectRegisterUses(Program *p, instStream *s)
 {
     int count;
     Instr *i;
@@ -200,7 +200,7 @@ bool func_080642ec(Program *p, instStream *s)
                         reportError("failed to get a pool entry\n");
                         return false;
                     }
-                    if (ol->unk_12 && !slot->addOutput(ol)) {
+                    if (ol->cycleOffset && !slot->addOutput(ol)) {
                         reportError("failed to add a pending output to an rrp\n");
                         return false;
                     }

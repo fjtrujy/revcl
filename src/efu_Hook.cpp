@@ -6,7 +6,7 @@
 #include "Processor.h"
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
@@ -16,7 +16,7 @@ static inline void dumpEmitInstruction(Instr *in)
     in->dumpOperandDiagnostics(false);
 }
 
-bool func_08087860(void *, Instr *in)
+bool rotateInputComponentMask(void *, Instr *in)
 {
     Operand *op = &in->operands[1];
     op->componentMask = (((op->componentMask & 8) >> 3) | (op->componentMask << 1)) & 0xf;

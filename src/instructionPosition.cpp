@@ -3,9 +3,9 @@
 #include "tPairList.h"
 #include "workTable.h"
 
-int g_080b336c = -1;
-int g_080b3370 = -2;
-int g_080b3374 = -3;
+int activeLoopSize = -1;
+int activeSchedulingRangeStart = -2;
+int activeSchedulingRangeEnd = -3;
 
 void cls08058718::clearInstructionPosition()
 {
@@ -27,13 +27,13 @@ cls08058718::~cls08058718()
 {
 }
 
-void cls08058718::func_08058744()
+void cls08058718::noopInstructionPositionHook()
 {
 }
 
 void cls08058718::setFromLinearRow(short v)
 {
-    int g = g_080b336c;
+    int g = activeLoopSize;
     if (g == 0 || v < g) {
         loopRow = v;
         linearRow = v;
@@ -57,9 +57,9 @@ int alwaysOnePositionCheck()
 
 void resetRange()
 {
-    g_080b336c = -1;
-    g_080b3370 = -2;
-    g_080b3374 = -3;
+    activeLoopSize = -1;
+    activeSchedulingRangeStart = -2;
+    activeSchedulingRangeEnd = -3;
 }
 
 bool setRange(int start, int end, int lsz);
@@ -109,8 +109,8 @@ bool setRange(int start, int end, int lsz)
         exitAfterCleanup(-1);
         return false;
     }
-    g_080b3370 = start;
-    g_080b3374 = end;
-    g_080b336c = lsz;
+    activeSchedulingRangeStart = start;
+    activeSchedulingRangeEnd = end;
+    activeLoopSize = lsz;
     return true;
 }

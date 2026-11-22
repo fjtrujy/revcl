@@ -81,7 +81,7 @@ struct RegPoolEntry {
     int uniqueNameSerial;
     bool isVirtual;        // virtual
     bool allocatable;        // allocable
-    bool unk_16;
+    bool enabledPhysicalRegister;
     char unk_17;
     RegPoolEntry* assignedPhysicalRegister;   // allocated physical register
     char nonBlockId;
@@ -110,8 +110,8 @@ public:
     RegPool();
     virtual ~RegPool();
     virtual bool assignExt(instStream *s) = 0;                        // slot 2
-    virtual bool func_08088e6c(instStream *s, RegPoolEntry *reg) = 0; // slot 3
-    virtual bool func_08088e54(workTable *t) = 0;                     // slot 4
+    virtual bool discardDisjointExternalRegister(instStream *s, RegPoolEntry *reg) = 0; // slot 3
+    virtual bool assignRegistersForWorkTable(workTable *t) = 0;                     // slot 4
     bool Init(VclPtrWord registerPrefix, const char* name, int cls, int virtualRegisterParts);
     void Dump();
     RegPoolEntry* findByRegisterIndex(int index);
@@ -144,7 +144,7 @@ public:
     RegPoolEntry* registerEntries;
     int entryCount;
     short registerClass;
-    short unk_0e;
+    short poolKind;
     RegPoolEntry* zeroRegister;   // zero register
     RegPoolEntry* externalRegister;   // ext register
     int virtualPartCount;

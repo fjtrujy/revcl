@@ -1,7 +1,7 @@
 #include "os.h"
 #include "Instr.h"
 
-bool func_08087860(void *, Instr *in);
+bool rotateInputComponentMask(void *, Instr *in);
 
 static inline bool isOutput(Operand *op) { return op->direction == 2; }
 static inline bool isInput(Operand *op) { return op->direction == 1; }
@@ -21,7 +21,7 @@ static inline RegPoolEntry *inReg(Operand *op)
 }
 
 class Program;
-bool func_0806b4f0(Program *p)
+bool noopIOmaskProgramHook(Program *p)
 {
     return true;
 }
@@ -59,7 +59,7 @@ int hackIOmask(Instr *in, int outOp, unsigned char mask, int inOp)
     if (!mask)
         return 0;
     if ((ip->operandKind == 1 || ip->operandKind == 9) && (out->operandKind == 1 || out->operandKind == 9)) {
-        if (info->decodeHook == func_08087860)
+        if (info->decodeHook == rotateInputComponentMask)
             return ((bits << 1) & 0xf) | ((mask & 8) >> 3);
         return bits;
     }

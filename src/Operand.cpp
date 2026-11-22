@@ -24,7 +24,7 @@ Operand::Operand()
     unk_24 = -1;
     pairedOperandIndexPlusOne = 0;
     originalRegister = 0;
-    unk_28 = 0;
+    reductionHazardMask = 0;
     externalComponentMask = 0;
     externalPartMask = 0;
     operandStatus = 0;
@@ -421,7 +421,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
 bool Operand::resetFlowState()
 {
     int i = 0;
-    unk_28 = 0;
+    reductionHazardMask = 0;
     externalComponentMask = 0;
     externalPartMask = 0;
     operandStatus = 0;

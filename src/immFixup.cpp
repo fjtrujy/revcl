@@ -6,7 +6,7 @@
 #include "os.h"
 
 bool aaFixup(instStream *s);
-bool func_08069e7c(Instr *in);
+bool resolveInstructionImmediateFixup(Instr *in);
 int maddImmediate(Operand *op, mValue *v, int n);
 
 static inline void initImm(Instr *in)
@@ -33,7 +33,7 @@ static inline bool initStreamImm(instStream *s)
 
 static inline void fixInst(Instr *in)
 {
-    if (!func_08069e7c(in)) {
+    if (!resolveInstructionImmediateFixup(in)) {
         reportError("do_immFixup - failed for an inst\n");
         exitAfterCleanup(-1);
     }
@@ -392,7 +392,7 @@ static inline bool isCinput(Operand *op)
     return op->direction == 1;
 }
 
-bool func_08069e7c(Instr *in)
+bool resolveInstructionImmediateFixup(Instr *in)
 {
     instStream *s = in->getOwningStream();
     if (!s) {

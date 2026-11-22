@@ -17,7 +17,7 @@ bool rPart::flushPending()
 ol_s* rPart::acquireFreePendingLocation()
 {
     for (int i = 0; i != 4; i++) {
-        if (!pendingLocations[i].unk_12) {
+        if (!pendingLocations[i].cycleOffset) {
             pendingLocations[i].reset();
             return &pendingLocations[i];
         }
@@ -36,24 +36,24 @@ bool rPart::cycle(bool flag)
         for (int i = 0; i != 4; i++)
             pendingLocations[i].reset();
         ol_s* cur = &currentLocation;
-        if (cur->unk_12)
-            cur->unk_12 = 0;
+        if (cur->cycleOffset)
+            cur->cycleOffset = 0;
     } else {
         int n = 0;
         ol_s* cur = &currentLocation;
-        int c = cur->unk_12;
+        int c = cur->cycleOffset;
         if (c) {
             int v = c - 1;
-            cur->unk_12 = v > 255 ? 255 : v;
+            cur->cycleOffset = v > 255 ? 255 : v;
             n = 1;
         }
         for (int i = 0; i != 4; i++) {
             ol_s* p = &pendingLocations[i];
-            int c = p->unk_12;
+            int c = p->cycleOffset;
             if (!c)
                 continue;
             int v = c - 1;
-            p->unk_12 = v > 255 ? 255 : v;
+            p->cycleOffset = v > 255 ? 255 : v;
             if (v == 0) {
                 if (++n > 1) {
                     reportError("WARNING !! CYCLE wrote thru more than once!\n");
@@ -173,7 +173,7 @@ RegPoolEntry::RegPoolEntry()
     ownerPool = 0;
     registerWeb = 0;
     uniqueNameSerial = 0;
-    unk_16 = false;
+    enabledPhysicalRegister = false;
     usedSlotMask = 0;
     nonBlockId = 0;
     unk_2c = false;

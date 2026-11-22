@@ -375,7 +375,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 RegPoolEntry *e = pool->findPhysicalByName(op.name);
                 if (e && e != e->ownerPool->zeroRegister)
                     opd->forcedBaseRegister = e;
-            } else if (r->isVirtual != 1 && !r->unk_16)
+            } else if (r->isVirtual != 1 && !r->enabledPhysicalRegister)
                 opd->forcedBaseRegister = r;
             opd->assignedRegister = r;
             opd->originalRegister = r;
@@ -579,7 +579,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
             continue;
         }
         if (t->startsWithDirective()) {
-            Directive *d = func_080519a0(t);
+            Directive *d = findRegisteredDirective(t);
             if (!d) {
                 reportUserMessage("failed to find a directive from line : \n");
                 t->dumpSourceLine(-1);

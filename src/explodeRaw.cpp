@@ -6,10 +6,10 @@
 #include "Instr.h"
 #include "ol_s.h"
 
-extern RegPoolEntry *g_080de6ac;
-extern mValue *g_080de6b0;
-extern int g_080de6b4;
-int func_0806aa54(Instr *in);
+extern RegPoolEntry *collapseImmediateSourceRegister;
+extern mValue *collapseImmediateValue;
+extern int collapseImmediateOffset;
+int decodeCollapsibleMoveImmediate(Instr *in);
 int expandOneLoopIntoRegions(Program *p, instStream *s);
 
 

@@ -6,12 +6,12 @@
 #include "subCache.h"
 #include "VisitCache.h"
 
-int buildDepCount_080b33a4 = 0;
+int dependencyBuildCount = 0;
 
 bool flowReset(Program *p);
 bool recalcFlowUIDs(Program *p);
 bool resetProcessorThroughput(Program *p);
-bool func_080642ec(Program *p, instStream *s);
+bool emulateAndCollectRegisterUses(Program *p, instStream *s);
 bool initBackTrace(Program *p);
 bool disposeBackTrace(Program *p);
 bool doBackTrace(Program *p, instStream *s, RegPoolEntry *reg, int part, int depth, int mode, bool hot);
@@ -19,7 +19,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
 
 bool rebuildFlowDependencies(Program *p, bool b)
 {
-    buildDepCount_080b33a4++;
+    dependencyBuildCount++;
     if (!flowReset(p)) {
         reportError("failed to reset cpu\n");
         return false;
@@ -40,7 +40,7 @@ bool rebuildFlowDependencies(Program *p, bool b)
             reportError("flowInit - failed for stream %s\n", s->streamName());
             return false;
         }
-        if (!func_080642ec(p, s)) {
+        if (!emulateAndCollectRegisterUses(p, s)) {
             reportError("build dependency - failed to %s stream..\n", s->getCodeModeName());
             return false;
         }

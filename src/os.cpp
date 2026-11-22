@@ -11,25 +11,25 @@
 
 #include "os.h"
 
-extern bool flag_080b3038;
-extern bool quiet_080bbd98;
+extern bool suppressErrorReports;
+extern bool quietDiagnostics;
 extern int errorOccurred;
-extern char *outName_080b303c;
+extern char *currentOutputFileName;
 
-int osTime_080bbd8c;
-char *watchdogFlag_080bbd90;
+int hostClockCounter;
+char *watchdogTimeoutFlag;
 
-void func_0804ac30(int sig);
+void watchdogSignalHandler(int sig);
 
-int func_0804aaa8()
+int nextHostClockTick()
 {
-    return ++osTime_080bbd8c;
+    return ++hostClockCounter;
 }
 
 bool OS_Init()
 {
     reportInfo("OS_Init(Linux)\n");
-    osTime_080bbd8c = time(0);
+    hostClockCounter = time(0);
     return true;
 }
 
@@ -47,8 +47,8 @@ bool setWatchdog(char *flag, unsigned int seconds)
     alarm(0);
     resetWatchdogSignal();
     *flag = 0;
-    watchdogFlag_080bbd90 = flag;
-    signal(SIGALRM, func_0804ac30);
+    watchdogTimeoutFlag = flag;
+    signal(SIGALRM, watchdogSignalHandler);
     alarm(seconds);
     return true;
 }
@@ -57,11 +57,11 @@ bool clearWatchdog()
 {
     alarm(0);
     signal(SIGALRM, SIG_DFL);
-    watchdogFlag_080bbd90 = 0;
+    watchdogTimeoutFlag = 0;
     return true;
 }
 
-int func_0804ab6c(const char *name, char *pathOut)
+int createTemporaryFile(const char *name, char *pathOut)
 {
     char buf[1024];
     int fd = -1;
@@ -96,8 +96,8 @@ int OS_End()
     return 1;
 }
 
-void func_0804ac30(int sig)
+void watchdogSignalHandler(int sig)
 {
-    if (watchdogFlag_080bbd90)
-        *watchdogFlag_080bbd90 = 1;
+    if (watchdogTimeoutFlag)
+        *watchdogTimeoutFlag = 1;
 }

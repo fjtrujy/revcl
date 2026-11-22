@@ -50,7 +50,7 @@ Instr *getMove(int type, int)
             }
             l->nextLockList = 0;
             l->reset();
-            l->unk_29 = 0;
+            l->calculateLoopStats = 0;
             mr->moveRegister->setPartPayload(i, (VclPtrWord)l);
         }
         in->nextMoveInstruction = 0;
@@ -115,7 +115,7 @@ Instr *getMove(int type, int)
         RegisterPartLockList *l = &mr->partLocks[i];
         l->nextLockList = 0;
         l->reset();
-        l->unk_29 = 0;
+        l->calculateLoopStats = 0;
         reg->setPartPayload(i, (VclPtrWord)l);
     }
     mr->instruction = in;

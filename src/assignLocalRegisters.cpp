@@ -66,7 +66,7 @@ bool assignLocalRegisters(Program *p, workTable *wt)
         setRange(wt->getRangeStart(), wt->getRangeEnd(), wt->getLoopSize());
         for (unsigned i = 0; i != 12; i++) {
             RegPool *rp = GetRP(i);
-            if (rp && !rp->func_08088e54(wt))
+            if (rp && !rp->assignRegistersForWorkTable(wt))
                 return false;
         }
         if (!resetProgramAllocationsForSecondPass(p)) {
@@ -81,22 +81,22 @@ bool assignLocalRegisters(Program *p, workTable *wt)
 
 void clearATab()
 {
-    clearRawBytes(aTab_080bce40, 0x20000);
+    clearRawBytes(allocationRegisterTimeline, 0x20000);
 }
 
 void clearTTab()
 {
-    clearRawBytes(tTab_080dce40, 0x1000);
+    clearRawBytes(candidateRegisterTimeline, 0x1000);
 }
 
-void genRegPool::func_08089a4c()
+void genRegPool::clearRegisterAllocationMask()
 {
     clearRawBytes(unk_30, 0x20);
 }
 
 bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
 {
-    clearRawBytes(tTab_080dce40, 0x1000);
+    clearRawBytes(candidateRegisterTimeline, 0x1000);
     if (!mask)
         return true;
     char set = 0;
@@ -104,7 +104,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         reportError(buildTTabNullError);
         return false;
     }
-    int lsz = g_080b336c;
+    int lsz = activeLoopSize;
     for (int i = 0; i != reg->partCount; i++) {
         bool on = (mask >> i) & 1;
         if (!on)
@@ -149,16 +149,16 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                 if (lsz)
                     e = s + lsz - s % lsz;
                 else
-                    e = tEnd_080bce2c;
+                    e = allocationTimelineEnd;
             }
-            int r = lk->unk_30;
+            int r = lk->loopRow;
             if (r >= 0)
-                tTab_080dce40[r] |= 0x80;
+                candidateRegisterTimeline[r] |= 0x80;
             for (int c = s; c < e; c++) {
                 int idx = c;
                 if (lsz)
                     idx = c % lsz;
-                unsigned char v = tTab_080dce40[idx];
+                unsigned char v = candidateRegisterTimeline[idx];
                 if (((v >> i) & 1) && !shared) {
                     int overlap = ll->unk_2b != 0;
                     reportError(buildTTabOverlapError, overlap);
@@ -166,7 +166,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
                     dumpTTab();
                     return false;
                 }
-                tTab_080dce40[idx] = v | (1 << i);
+                candidateRegisterTimeline[idx] = v | (1 << i);
             }
         }
     }
@@ -179,7 +179,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
 
 bool genRegPool::initAlloc(int start, int end)
 {
-    clearRawBytes(aTab_080bce40, 0x20000);
+    clearRawBytes(allocationRegisterTimeline, 0x20000);
     clearRawBytes(unk_30, 0x20);
     if (start) {
         reportError(initAllocNonZeroBaseError);
@@ -189,10 +189,10 @@ bool genRegPool::initAlloc(int start, int end)
         reportError(initAllocDoneTableError);
         return false;
     }
-    if (g_080b336c && end != g_080b336c)
+    if (activeLoopSize && end != activeLoopSize)
         reportError("loop mismatch\n");
-    tStart_080bce28 = start;
-    tEnd_080bce2c = end;
+    allocationTimelineStart = start;
+    allocationTimelineEnd = end;
     if (end > 0xfff) {
         reportError(initAllocTooBigError);
         return false;
@@ -206,15 +206,15 @@ bool genRegPool::initAlloc(int start, int end)
         reportError(initAllocMaxDevError);
         return false;
     }
-    nRegs_080bce24 = entryCount;
-    maxParts_080bce20 = 0;
+    allocationRegisterCount = entryCount;
+    maximumAllocationParts = 0;
     int i = 0;
     int count = entryCount;
     for (; i != count; i++, e++) {
-        if (e->unk_16)
+        if (e->enabledPhysicalRegister)
             unk_30[i] = (1 << e->partCount) - 1;
-        if (e->partCount > maxParts_080bce20) {
-            maxParts_080bce20 = e->partCount;
+        if (e->partCount > maximumAllocationParts) {
+            maximumAllocationParts = e->partCount;
             count = entryCount;
         }
     }
@@ -223,8 +223,8 @@ bool genRegPool::initAlloc(int start, int end)
 
 void genRegPool::dumpTTab()
 {
-    for (int i = tStart_080bce28; i < tEnd_080bce2c; i++) {
-        char c = tTab_080dce40[i];
+    for (int i = allocationTimelineStart; i < allocationTimelineEnd; i++) {
+        char c = candidateRegisterTimeline[i];
         if (c)
             ;
     }
@@ -233,8 +233,8 @@ void genRegPool::dumpTTab()
 int genRegPool::countTTab()
 {
     int n = 0;
-    for (int i = tStart_080bce28; i < tEnd_080bce2c; i++)
-        if (tTab_080dce40[i])
+    for (int i = allocationTimelineStart; i < allocationTimelineEnd; i++)
+        if (candidateRegisterTimeline[i])
             n++;
     return n;
 }
@@ -242,21 +242,21 @@ int genRegPool::countTTab()
 int genRegPool::fitCost(int reg)
 {
     int total = 0;
-    for (int i = tStart_080bce28; i < tEnd_080bce2c; i++) {
-        unsigned char t = tTab_080dce40[i];
+    for (int i = allocationTimelineStart; i < allocationTimelineEnd; i++) {
+        unsigned char t = candidateRegisterTimeline[i];
         int m = t & 0x7f;
         if (((unsigned char)unk_30[reg] & m) != m)
             return -1;
-        char *row = &aTab_080bce40[i * 32];
+        char *row = &allocationRegisterTimeline[i * 32];
         unsigned char a = row[reg];
         if (t & a)
             return -1;
         int n = countSetBits((t | a) & 0x7f);
-        if (n > maxParts_080bce20) {
+        if (n > maximumAllocationParts) {
             reportError("nbits overrun \n");
             exitAfterCleanup(-1);
         }
-        total += maxParts_080bce20 - n;
+        total += maximumAllocationParts - n;
     }
     if (total < 0)
         total = 0;
@@ -265,15 +265,15 @@ int genRegPool::fitCost(int reg)
 
 bool genRegPool::set_t_in_aTab(int reg)
 {
-    int end = tEnd_080bce2c;
-    for (int i = tStart_080bce28; i < end; i++) {
-        unsigned char c = tTab_080dce40[i];
+    int end = allocationTimelineEnd;
+    for (int i = allocationTimelineStart; i < end; i++) {
+        unsigned char c = candidateRegisterTimeline[i];
         int t = c;
         if (((unsigned char)unk_30[reg] & t & 0x7f) != (c & 0x7f)) {
             reportError(setTInATabAccessError, reg);
             return false;
         }
-        char *row = &aTab_080bce40[i * 32];
+        char *row = &allocationRegisterTimeline[i * 32];
         unsigned char a = row[reg];
         if (a & t) {
             reportError(setTInATabOverlapError,
@@ -287,9 +287,9 @@ bool genRegPool::set_t_in_aTab(int reg)
 
 void genRegPool::dumpATab()
 {
-    for (int i = tStart_080bce28; i != tEnd_080bce2c; i++)
-        for (int r = 0; r != nRegs_080bce24; r++) {
-            for (int p = 0; p != maxParts_080bce20; p++) {
+    for (int i = allocationTimelineStart; i != allocationTimelineEnd; i++)
+        for (int r = 0; r != allocationRegisterCount; r++) {
+            for (int p = 0; p != maximumAllocationParts; p++) {
                 int bit = (unsigned char)unk_30[r] & (1 << p);
                 if (bit != 0)
                     bit = 1;
@@ -301,7 +301,7 @@ int genRegPool::bestReg()
 {
     int best = 100000000;
     int which = -1;
-    for (int r = 0; r != nRegs_080bce24; r++) {
+    for (int r = 0; r != allocationRegisterCount; r++) {
         int c = fitCost(r);
         if (c < 0)
             continue;
@@ -333,7 +333,7 @@ bool genRegPool::set_in_aTab(regUse *ru)
             reportError(setInATabLocalIdError);
             exitAfterCleanup(-1);
         }
-        if (reg->unk_16) {
+        if (reg->enabledPhysicalRegister) {
             unsigned char mask = ru->inputMask | ru->outputMask | ru->throughputMask;
             if (!mask) {
                 reportError("error here\n");

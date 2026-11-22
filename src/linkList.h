@@ -9,7 +9,7 @@ struct linkNode {
     linkNode *previous;
     linkNode *next;
     instStream *otherStream;
-    char unk_10;
+    char includedInPathTraversal;
     char active;
     char unk_12[2];
     int linkType;

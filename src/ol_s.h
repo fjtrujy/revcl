@@ -17,7 +17,7 @@ struct ol_s {
         };
         short packedOperandComponent;
     };
-    unsigned char unk_12;
+    unsigned char cycleOffset;
     union {
         unsigned char stateFlags;
         struct {

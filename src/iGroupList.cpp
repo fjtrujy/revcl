@@ -46,8 +46,8 @@ void iGroupList::clear()
 
 inline iGroupNode::iGroupNode(InitTag)
 {
-    unk_04 = 0;
-    unk_08 = 0;
+    itemPointer = 0;
+    itemSize = 0;
 }
 
 
@@ -60,8 +60,8 @@ bool iGroupList::add(void *p, int sz)
         reportError("failed to get a new iGroupNode\n");
         return 0;
     }
-    n->unk_04 = p;
-    n->unk_08 = sz;
+    n->itemPointer = p;
+    n->itemSize = sz;
     n->next = head;
     head = n;
     return 1;
@@ -72,7 +72,7 @@ void iGroupList::dump()
     iGroupNode *n;
     int i = 0;
     for (n = head; n; n = n->next, i++)
-        reportInfo(" [%4d ] [%d sz=%d]\n", i, n->unk_04, n->unk_08);
+        reportInfo(" [%4d ] [%d sz=%d]\n", i, n->itemPointer, n->itemSize);
     if (i)
         reportInfo(" .. %d nodes\n", i);
 }
@@ -80,8 +80,8 @@ void iGroupList::dump()
 
 iGroupNode::iGroupNode()
 {
-    unk_04 = 0;
-    unk_08 = 0;
+    itemPointer = 0;
+    itemSize = 0;
 }
 
 iGroupNode::~iGroupNode()

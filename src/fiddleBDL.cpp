@@ -4,7 +4,7 @@
 
 bool setRange(int start, int end, int lsz);
 bool moveLocks(Instr *i, InstructionPosition *pos);
-int func_0807dc44(workTable *wt, Instr *i, InstructionPosition *pos);
+int checkInstructionPlacementConstraints(workTable *wt, Instr *i, InstructionPosition *pos);
 
 static inline bool isRawMode(workTable *wt)
 {
@@ -78,11 +78,11 @@ bool fiddleBDL(workTable *wt)
             row -= 2;
             posB.setRow(row);
             bool ok = true;
-            if (br != brow->entries[1].unk_00) {
+            if (br != brow->entries[1].instruction) {
                 reportError(fiddleBranchPosError);
                 return false;
             }
-            Instr *prev = prow->entries[1].unk_00;
+            Instr *prev = prow->entries[1].instruction;
             if (writesInputRegisterOf(prev, br))
                 return true;
 
@@ -90,7 +90,7 @@ bool fiddleBDL(workTable *wt)
                 reportError("failed to takeout in_p\n");
                 return false;
             }
-            if (func_0807dc44(wt, br, &posP))
+            if (checkInstructionPlacementConstraints(wt, br, &posP))
                 ok = false;
             if (prev) {
                 if (!moveLocks(prev, &posP)) {
@@ -110,7 +110,7 @@ bool fiddleBDL(workTable *wt)
                     reportError("failed to takeout in_b\n");
                     return false;
                 }
-                if (func_0807dc44(wt, prev, &posB))
+                if (checkInstructionPlacementConstraints(wt, prev, &posB))
                     ok = false;
                 int m2 = prev->externalOutputConstraint < prev->externalOutputPairedConstraint ? prev->externalOutputPairedConstraint : prev->externalOutputConstraint;
                 if ((short)m2)

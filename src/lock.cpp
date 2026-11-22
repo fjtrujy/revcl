@@ -6,24 +6,24 @@
 #include "statCounts.h"
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
-bool g_080de284;
+extern bool quietDiagnostics;
+bool fatalReadBeforeReady;
 
 bool cls0805bcc4::resetLock()
 {
-    unk_22 = 0;
+    activeReferenceCount = 0;
     referenceCount = 0;
     parentOrChildren = 0;
     nextSibling = 0;
-    unk_16 = 0;
-    unk_17 = 0;
+    externalOutputSlotPlusOne = 0;
+    throughputSpacing = 0;
     issueLatency = 0;
-    unk_15 = 0;
+    latencyModeFlag = 0;
     pairedLock = 0;
-    unk_2c = 0;
+    insertedIntoLockList = 0;
     unk_19 = 0;
     nextSortedOutput = 0;
-    unk_2e = 0;
+    scheduledConsumerCount = 0;
     unk_48 = 0;
     unk_4a = 0;
     unk_46 = 0;
@@ -36,18 +36,18 @@ bool cls0805bcc4::resetLock()
     ownerLockList = 0;
     ownerComponent = -1;
     ownerOperandIndex = -1;
-    unk_32 = -1;
-    unk_30 = -1;
-    unk_34 = -1;
-    unk_36 = -1;
-    unk_38 = -1;
-    unk_3a = -1;
-    unk_3c = -1;
-    unk_3e = -1;
-    unk_40 = -1;
-    unk_42 = -1;
-    unk_4e = -1;
-    unk_4c = -1;
+    linearRow = -1;
+    loopRow = -1;
+    adjustedEarliestReadyCycle = -1;
+    earliestReadyCycle = -1;
+    adjustedFullLatencyReadyCycle = -1;
+    fullLatencyReadyCycle = -1;
+    adjustedEarliestConsumerFreeCycle = -1;
+    earliestConsumerFreeCycle = -1;
+    adjustedLatestConsumerCycle = -1;
+    latestConsumerCycle = -1;
+    latestReadyCycle = -1;
+    adjustedLatestReadyCycle = -1;
     return true;
 }
 
@@ -106,8 +106,8 @@ bool cls0805bcc4::setOwner(int part, regUse *rf)
     unk_2a = 0;
     ownerType = 2;
     ownerPointer = rf;
-    unk_32 = -1;
-    unk_30 = -1;
+    linearRow = -1;
+    loopRow = -1;
     return true;
 }
 
@@ -253,13 +253,13 @@ bool cls0805bcc4::setInOut(cls0805bcc4 *olk)
 
 bool cls0805bcc4::incRef()
 {
-    unk_22++;
+    activeReferenceCount++;
     return true;
 }
 
 bool cls0805bcc4::decRef()
 {
-    unk_22--;
+    activeReferenceCount--;
     return true;
 }
 
@@ -288,8 +288,8 @@ cls0805c244::cls0805c244()
     outputLocks = 0;
     outputLockCount = 0;
     remainingLockCount = 0;
-    unk_28 = 0;
-    unk_29 = 1;
+    containsRegisterOutput = 0;
+    calculateLoopStats = 1;
     sortedOutputLocks = 0;
     unk_00 = 0;
 }
@@ -305,8 +305,8 @@ cls0805c244::cls0805c244(cls0805c244 *next)
     outputLocks = 0;
     outputLockCount = 0;
     remainingLockCount = 0;
-    unk_28 = 0;
-    unk_29 = 1;
+    containsRegisterOutput = 0;
+    calculateLoopStats = 1;
     sortedOutputLocks = 0;
     unk_00 = 0;
 }
@@ -337,8 +337,8 @@ bool cls0805c244::reset()
     outputLocks = 0;
     outputLockCount = 0;
     remainingLockCount = 0;
-    unk_28 = 0;
-    unk_29 = 1;
+    containsRegisterOutput = 0;
+    calculateLoopStats = 1;
     sortedOutputLocks = 0;
     unk_00 = 0;
     return true;
@@ -348,12 +348,12 @@ bool cls0805c244::addInput(cls0805bcc4 *out, cls0805bcc4 *in, char a, unsigned c
 {
     in->lockDirection = 1;
     in->ownerLockList = this;
-    out->unk_15 = b;
+    out->latencyModeFlag = b;
     in->issueLatency = a;
     out->unk_46 += in->unk_02;
     out->unk_48 += in->unk_01;
     out->referenceCount++;
-    out->unk_22++;
+    out->activeReferenceCount++;
     in->parentOrChildren = out;
     out->unk_4a += in->unk_00;
     return true;
@@ -367,12 +367,12 @@ static inline bool isRegLock(cls0805bcc4 *lk)
 bool cls0805c244::addOutput(cls0805bcc4 *lk, int a, int b, unsigned char c)
 {
     if (isRegLock(lk))
-        unk_28 = 1;
+        containsRegisterOutput = 1;
     lk->lockDirection = 2;
-    lk->unk_17 = a;
+    lk->throughputSpacing = a;
     lk->issueLatency = b;
     lk->ownerLockList = this;
-    lk->unk_15 = c;
+    lk->latencyModeFlag = c;
     remainingLockCount++;
     outputLockCount++;
     return true;
@@ -384,7 +384,7 @@ bool cls0805c244::removeInput(cls0805bcc4 *in)
     out->unk_46 -= in->unk_02;
     out->unk_48 -= in->unk_01;
     out->referenceCount--;
-    out->unk_22--;
+    out->activeReferenceCount--;
     out->unk_4a -= in->unk_00;
     in->ownerLockList = 0;
     in->lockDirection = 0;
@@ -416,7 +416,7 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
         reportError("Addoutputlock - bad type\n");
         return false;
     }
-    if (lk->unk_2c) {
+    if (lk->insertedIntoLockList) {
         reportError("Addoutputlock - already inserted\n");
         exitAfterCleanup(-1);
         return false;
@@ -431,7 +431,7 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
         exitAfterCleanup(-1);
         return false;
     }
-    if (lk->unk_22 != lk->referenceCount) {
+    if (lk->activeReferenceCount != lk->referenceCount) {
         reportError("Addoutputlock - mRefCount!=m_RefCount\n");
         exitAfterCleanup(-1);
         return false;
@@ -455,19 +455,19 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
         checkCounts();
         exitAfterCleanup(-1);
     }
-    lk->unk_2c = 1;
+    lk->insertedIntoLockList = 1;
     lk->nextSortedOutput = 0;
     cls0805bcc4 *prev = 0;
     for (cls0805bcc4 *cur = sortedOutputLocks; cur; cur = cur->nextSortedOutput) {
-        int rl = lk->unk_30;
-        int crl = cur->unk_30;
+        int rl = lk->loopRow;
+        int crl = cur->loopRow;
         if ((short)rl == (short)crl && (short)rl >= 0) {
             reportError("during a lock sort for output locks, two had the same rline..\n");
             checkCounts();
             exitAfterCleanup(-1);
         }
-        int line = lk->unk_32;
-        int cline = cur->unk_32;
+        int line = lk->linearRow;
+        int cline = cur->linearRow;
         if ((short)line < (short)cline)
             break;
         prev = cur;
@@ -485,21 +485,21 @@ bool cls0805c244::addOutputLock(cls0805bcc4 *lk)
 bool cls0805c244::addInputLock(cls0805bcc4 *in)
 {
     cls0805bcc4 *out = in->parentOrChildren;
-    out->unk_22--;
+    out->activeReferenceCount--;
     in->nextSibling = out->parentOrChildren;
     out->parentOrChildren = in;
     if (!out->calcStats(0)) {
         reportError("AddInputLock failed to calcStats\n");
         exitAfterCleanup(-1);
     }
-    in->unk_2c = 1;
+    in->insertedIntoLockList = 1;
     return true;
 }
 
 bool cls0805c244::undoInputLock(cls0805bcc4 *in)
 {
     cls0805bcc4 *out = in->parentOrChildren;
-    out->unk_22++;
+    out->activeReferenceCount++;
     out->parentOrChildren = in->nextSibling;
     in->nextSibling = 0;
     if (!out->calcStats(0)) {
@@ -507,7 +507,7 @@ bool cls0805c244::undoInputLock(cls0805bcc4 *in)
         exitAfterCleanup(-1);
         return false;
     }
-    in->unk_2c = 0;
+    in->insertedIntoLockList = 0;
     in->resetStats();
     return true;
 }
@@ -523,7 +523,7 @@ bool cls0805c244::undoOutputLock(cls0805bcc4 *lk)
         exitAfterCleanup(-1);
         return false;
     }
-    lk->unk_2c = 0;
+    lk->insertedIntoLockList = 0;
     cls0805bcc4 *prev = 0;
     cls0805bcc4 *cur = sortedOutputLocks;
     while (cur && cur != lk) {
@@ -548,9 +548,9 @@ int cls0805c244::maxConstraintOfFirstOutputs(int n)
     int best = 0;
     for (cls0805bcc4 *lk = sortedOutputLocks; lk; lk = lk->nextSortedOutput) {
         n--;
-        if (lk->unk_42 > best)
-            best = lk->unk_42;
-        if (lk->unk_22 != 0)
+        if (lk->latestConsumerCycle > best)
+            best = lk->latestConsumerCycle;
+        if (lk->activeReferenceCount != 0)
             return 30000;
         if (n <= 0)
             break;
@@ -570,12 +570,12 @@ static inline Operand *lockOperand(cls0805bcc4 *lk)
 
 static inline bool isInserted(cls0805bcc4 *lk)
 {
-    return lk->unk_2c != 0;
+    return lk->insertedIntoLockList != 0;
 }
 
 bool cls0805bcc4::isOk(int type, bool inserted)
 {
-    int loopSize = g_080b336c;
+    int loopSize = activeLoopSize;
     bool ok = true;
     regUse *rf = ownerType == 2 ? (regUse *)ownerPointer : 0;
     Operand *op = lockOperand(this);
@@ -605,7 +605,7 @@ bool cls0805bcc4::isOk(int type, bool inserted)
         }
         break;
     case 2: {
-        if (!inserted && referenceCount != unk_22) {
+        if (!inserted && referenceCount != activeReferenceCount) {
             reportError("output lock - ref count mismatch\n");
             return false;
         }
@@ -615,17 +615,17 @@ bool cls0805bcc4::isOk(int type, bool inserted)
                 reportError("external input had latency for loop\n");
                 ok = false;
             }
-            if (unk_17 > 1) {
+            if (throughputSpacing > 1) {
                 reportError("external input had thruput for loop\n");
                 ok = false;
             }
         }
         if (loopSize) {
-            if (issueLatency > loopSize && unk_15 && referenceCount) {
+            if (issueLatency > loopSize && latencyModeFlag && referenceCount) {
                 reportError("latency bigger than loop!\n");
                 ok = false;
             }
-            if (unk_17 > loopSize) {
+            if (throughputSpacing > loopSize) {
                 reportError("thruput bigger than loop!\n");
                 ok = false;
             }
@@ -693,24 +693,24 @@ bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
 
 short cls0805bcc4::maximumLockConstraint()
 {
-    return unk_42;
+    return latestConsumerCycle;
 }
 
 short cls0805bcc4::secondaryLockConstraint()
 {
-    return unk_3e;
+    return earliestConsumerFreeCycle;
 }
 
 static inline bool hasPartFlag(cls0805bcc4 *lk)
 {
-    return lk->unk_16 && lk->ownerLockList->unk_28;
+    return lk->externalOutputSlotPlusOne && lk->ownerLockList->containsRegisterOutput;
 }
 
 bool cls0805bcc4::calcStats(Instr *skip)
 {
-    int lsz = g_080b336c;
+    int lsz = activeLoopSize;
     cls0805c244 *ll = ownerLockList;
-    unk_2e = 0;
+    scheduledConsumerCount = 0;
     int maxT = -30000;
     int minFree = 30000;
     int minUse = 30000;
@@ -722,7 +722,7 @@ bool cls0805bcc4::calcStats(Instr *skip)
         }
         if (c->unk_19 == 2)
             continue;
-        int t = c->unk_32;
+        int t = c->linearRow;
         if (t > maxT)
             maxT = t;
         if (t < minUse)
@@ -730,83 +730,83 @@ bool cls0805bcc4::calcStats(Instr *skip)
         t -= c->issueLatency;
         if (t < minFree)
             minFree = t;
-        unk_2e++;
+        scheduledConsumerCount++;
     }
-    if (ll->unk_29 && lsz) {
+    if (ll->calculateLoopStats && lsz) {
         minFree = 0;
         maxT = lsz - 1;
-        unk_2e = 0;
+        scheduledConsumerCount = 0;
     }
-    if (unk_2e != 0) {
-        unk_3e = minFree;
-        unk_42 = maxT;
+    if (scheduledConsumerCount != 0) {
+        earliestConsumerFreeCycle = minFree;
+        latestConsumerCycle = maxT;
         if (lsz) {
             if (isRegLock(this)) {
-                unk_36 = minFree;
-                unk_3a = minFree;
+                earliestReadyCycle = minFree;
+                fullLatencyReadyCycle = minFree;
             } else {
-                if (unk_15)
-                    unk_36 = unk_32 + 1;
+                if (latencyModeFlag)
+                    earliestReadyCycle = linearRow + 1;
                 else
-                    unk_36 = unk_32 + issueLatency;
-                unk_3a = unk_32 + issueLatency;
+                    earliestReadyCycle = linearRow + issueLatency;
+                fullLatencyReadyCycle = linearRow + issueLatency;
             }
         } else if (isRegLock(this)) {
             if (issueLatency == 0) {
-                unk_36 = 0;
-                unk_3a = 0;
+                earliestReadyCycle = 0;
+                fullLatencyReadyCycle = 0;
             } else {
-                if (unk_15)
-                    unk_36 = 0;
+                if (latencyModeFlag)
+                    earliestReadyCycle = 0;
                 else
-                    unk_36 = unk_32 + issueLatency;
-                unk_3a = unk_32 + issueLatency;
+                    earliestReadyCycle = linearRow + issueLatency;
+                fullLatencyReadyCycle = linearRow + issueLatency;
             }
         } else {
-            if (unk_15)
-                unk_36 = unk_32 + 1;
+            if (latencyModeFlag)
+                earliestReadyCycle = linearRow + 1;
             else
-                unk_36 = unk_32 + issueLatency;
-            unk_3a = unk_32 + issueLatency;
+                earliestReadyCycle = linearRow + issueLatency;
+            fullLatencyReadyCycle = linearRow + issueLatency;
         }
-        if (unk_3e < unk_3a) {
-            if (g_080de284) {
-                reportError("rLock::calcStats - rfUsed before result ready..rfu=%d rr=%d!\n", unk_3e, unk_3a);
+        if (earliestConsumerFreeCycle < fullLatencyReadyCycle) {
+            if (fatalReadBeforeReady) {
+                reportError("rLock::calcStats - rfUsed before result ready..rfu=%d rr=%d!\n", earliestConsumerFreeCycle, fullLatencyReadyCycle);
                 print();
                 return false;
             }
-            if (minUse < unk_36)
-                reportWarning("rLock::calcStats - stalls non fatal, but.. rfUsed_nolh before result write..rfu=%d rw=%d..this maybe important\n", minUse, unk_36);
+            if (minUse < earliestReadyCycle)
+                reportWarning("rLock::calcStats - stalls non fatal, but.. rfUsed_nolh before result write..rfu=%d rw=%d..this maybe important\n", minUse, earliestReadyCycle);
         }
     } else {
         if (isRegLock(this)) {
             if (issueLatency == 0) {
-                unk_36 = 0;
-                unk_3a = 0;
+                earliestReadyCycle = 0;
+                fullLatencyReadyCycle = 0;
             } else {
-                if (unk_15)
-                    unk_36 = 0;
+                if (latencyModeFlag)
+                    earliestReadyCycle = 0;
                 else
-                    unk_36 = unk_32 + issueLatency;
-                unk_3a = unk_32 + issueLatency;
+                    earliestReadyCycle = linearRow + issueLatency;
+                fullLatencyReadyCycle = linearRow + issueLatency;
             }
         } else {
-            if (unk_15)
-                unk_36 = unk_32 + 1;
+            if (latencyModeFlag)
+                earliestReadyCycle = linearRow + 1;
             else
-                unk_36 = unk_32 + issueLatency;
-            unk_3a = unk_32 + issueLatency;
+                earliestReadyCycle = linearRow + issueLatency;
+            fullLatencyReadyCycle = linearRow + issueLatency;
         }
-        unk_3e = unk_36;
-        unk_42 = unk_36;
+        earliestConsumerFreeCycle = earliestReadyCycle;
+        latestConsumerCycle = earliestReadyCycle;
     }
-    int shift = unk_30 - unk_32;
-    unk_34 = shift + unk_36;
-    unk_38 = shift + unk_3a;
-    unk_3c = shift + unk_3e;
-    unk_40 = shift + unk_42;
+    int shift = loopRow - linearRow;
+    adjustedEarliestReadyCycle = shift + earliestReadyCycle;
+    adjustedFullLatencyReadyCycle = shift + fullLatencyReadyCycle;
+    adjustedEarliestConsumerFreeCycle = shift + earliestConsumerFreeCycle;
+    adjustedLatestConsumerCycle = shift + latestConsumerCycle;
     if (referenceCount != 0 || hasPartFlag(this)) {
-        unk_4e = unk_42;
+        latestReadyCycle = latestConsumerCycle;
         if (!lsz || ownerType != 2) {
             int hi, lo;
             int a = unk_48, b = unk_4a;
@@ -819,13 +819,13 @@ bool cls0805bcc4::calcStats(Instr *skip)
                 hi += (len + 1) >> 1;
             if (hi > 0)
                 hi--;
-            hi += unk_3a;
-            if (hi > unk_42)
-                unk_4e = hi;
+            hi += fullLatencyReadyCycle;
+            if (hi > latestConsumerCycle)
+                latestReadyCycle = hi;
         }
     } else
-        unk_4e = unk_36;
-    unk_4c = shift + unk_4e;
+        latestReadyCycle = earliestReadyCycle;
+    adjustedLatestReadyCycle = shift + latestReadyCycle;
     return true;
 }
 
@@ -838,16 +838,16 @@ void cls0805bcc4::resetCalculatedStats()
 void cls0805bcc4::setFrom(InstructionPosition *r)
 {
     int rline = r->linearRow;
-    unk_32 = rline;
+    linearRow = rline;
     int loop = r->loopRow;
-    unk_30 = loop;
-    int lsz = g_080b336c;
+    loopRow = loop;
+    int lsz = activeLoopSize;
     if (lsz) {
-        if (unk_32 % lsz == unk_30)
+        if (linearRow % lsz == loopRow)
             return;
-        reportError("rLock::setFrom: rline/loop mismatch %d vs %d (lsz%d)\n", unk_32, unk_30, lsz);
+        reportError("rLock::setFrom: rline/loop mismatch %d vs %d (lsz%d)\n", linearRow, loopRow, lsz);
     } else {
-        if (unk_32 == unk_30)
+        if (linearRow == loopRow)
             return;
         reportError("setFrom rline/non-loop mismatch\n");
     }
@@ -856,8 +856,8 @@ void cls0805bcc4::setFrom(InstructionPosition *r)
 
 short cls0805bcc4::getCurrentLoopIteration()
 {
-    if (g_080b336c)
-        return unk_32 / g_080b336c;
+    if (activeLoopSize)
+        return linearRow / activeLoopSize;
     return 0;
 }
 
@@ -871,7 +871,7 @@ bool cls0805c244::moveOutputLock(cls0805bcc4 *lk)
         reportError("moveoutputlock - bad type\n");
         return false;
     }
-    if (!lk->unk_2c) {
+    if (!lk->insertedIntoLockList) {
         reportError("moveoutputlock - not already inserted\n");
         exitAfterCleanup(-1);
         return false;
@@ -898,15 +898,15 @@ bool cls0805c244::moveOutputLock(cls0805bcc4 *lk)
     }
     prev = 0;
     for (cur = sortedOutputLocks; cur; cur = cur->nextSortedOutput) {
-        int rl = lk->unk_30;
-        int crl = cur->unk_30;
+        int rl = lk->loopRow;
+        int crl = cur->loopRow;
         if ((short)rl == (short)crl) {
             reportError("during a lock sort for output locks, two had the same rline..\n");
             checkCounts();
             exitAfterCleanup(-1);
         }
-        int line = lk->unk_32;
-        int cline = cur->unk_32;
+        int line = lk->linearRow;
+        int cline = cur->linearRow;
         if ((short)line < (short)cline)
             break;
         prev = cur;
@@ -932,14 +932,14 @@ bool cls0805c244::moveInputLock(cls0805bcc4 *in)
 
 static inline bool singleExtOutputMode()
 {
-    if (g_080de284 == 1)
+    if (fatalReadBeforeReady == 1)
         return true;
     return false;
 }
 
 bool cls0805c244::addExtOutput(cls0805bcc4 *lk, bool flag)
 {
-    if (lk->unk_16) {
+    if (lk->externalOutputSlotPlusOne) {
         reportError("lock is already external output\n");
         return false;
     }
@@ -956,7 +956,7 @@ bool cls0805c244::addExtOutput(cls0805bcc4 *lk, bool flag)
     }
     unk_2b = flag;
     externalOutputLocks[externalOutputCount] = lk;
-    lk->unk_16 = ++externalOutputCount;
+    lk->externalOutputSlotPlusOne = ++externalOutputCount;
     return true;
 }
 
@@ -997,7 +997,7 @@ int cls0805c244::countFlaggedOutputLocks()
     cls0805bcc4 *lk = outputLocks;
     int n = 0;
     while (lk) {
-        if (lk->unk_22)
+        if (lk->activeReferenceCount)
             n++;
         lk = lk->nextSibling;
     }
@@ -1066,17 +1066,17 @@ bool cls0805c244::setRepReg(RegPoolEntry *rg)
 
 static inline void wrapRange(int &s, int &e)
 {
-    if (g_080b336c) {
-        while (s >= g_080b336c) {
-            s -= g_080b336c;
-            e -= g_080b336c;
+    if (activeLoopSize) {
+        while (s >= activeLoopSize) {
+            s -= activeLoopSize;
+            e -= activeLoopSize;
         }
     }
 }
 
 static inline void wrapRangeLocal(int &s, int &e)
 {
-    int n = g_080b336c;
+    int n = activeLoopSize;
     if (n) {
         while (s >= n) {
             s -= n;

@@ -6,7 +6,7 @@
 #include "Processor.h"
 
 extern int errorOccurred;
-extern bool quiet_080bbd98;
+extern bool quietDiagnostics;
 void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);

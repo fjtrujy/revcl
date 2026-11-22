@@ -37,7 +37,7 @@ RegPool::RegPool()
     virtualCount = 0;
     zeroRegister = 0;
     externalRegister = 0;
-    unk_0e = 0;
+    poolKind = 0;
 }
 
 RegPool::~RegPool()
@@ -221,7 +221,7 @@ bool RegPool::clearVirtualRegistersForParse()
     virtualCount = 0;
     RegPoolEntry* e = registerEntries;
     for (int i = 0; i != entryCount; i++, e++) {
-        e->unk_16 = false;
+        e->enabledPhysicalRegister = false;
         e->isVirtual = false;
     }
     return true;
@@ -397,7 +397,7 @@ bool RegPool::markAllocatablePhysicalRegistersUsed()
     RegPoolEntry* e = registerEntries;
     for (int i = 0; i != entryCount; i++, e++)
         if (e->allocatable)
-            e->unk_16 = true;
+            e->enabledPhysicalRegister = true;
     return true;
 }
 
@@ -447,13 +447,13 @@ fail:
     return false;
 }
 
-int maxParts_080bce20;
-int nRegs_080bce24;
-int tStart_080bce28;
-int tEnd_080bce2c;
-char aTab_080bce40[0x20000];
-char tTab_080dce40[0x1000];
-char regMask_080dde40[32];
+int maximumAllocationParts;
+int allocationRegisterCount;
+int allocationTimelineStart;
+int allocationTimelineEnd;
+char allocationRegisterTimeline[0x20000];
+char candidateRegisterTimeline[0x1000];
+char allocationRegisterMask[32];
 int moveRegCount;
 
 RegPoolEntry* RegPool::getMoveReg(Instr* move)
@@ -541,7 +541,7 @@ int RegPool::countMarkedPhysicalRegisters()
     int n = 0;
     if (registerEntries) {
         for (int i = 0; i != entryCount; i++)
-            if (registerEntries[i].unk_16)
+            if (registerEntries[i].enabledPhysicalRegister)
                 n++;
     }
     return n;
@@ -554,12 +554,12 @@ int RegPoolEntry::gatherInflight(ol_s** out)
     for (i = 0; i != partCount; i++) {
         rPart* s = getRP(i);
         ol_s* c = &s->currentLocation;
-        if (c->unk_12)
+        if (c->cycleOffset)
             out[n++] = c;
         int j;
         ol_s* p;
         for (j = 0, p = s->pendingLocations; j != 4; j++, p++)
-            if (p->unk_12)
+            if (p->cycleOffset)
                 out[n++] = p;
     }
     return n;

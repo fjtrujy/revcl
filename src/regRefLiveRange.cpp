@@ -95,7 +95,7 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
         }
         InstructionPosition *rl = &ins->position;
         int line = rl->getRow();
-        int want = out->unk_32;
+        int want = out->linearRow;
         if ((short)line != (short)want) {
             reportError("rLine mismatch\n");
             return false;
@@ -108,9 +108,9 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
     } else {
         *s = -1;
     }
-    if (out->unk_16) {
-        if (g_080b336c && *s >= 0)
-            *e = *s + g_080b336c - *s % g_080b336c;
+    if (out->externalOutputSlotPlusOne) {
+        if (activeLoopSize && *s >= 0)
+            *e = *s + activeLoopSize - *s % activeLoopSize;
         else
             *e = 30000;
     } else {
@@ -126,7 +126,7 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
         }
         InstructionPosition *rl = &ci->position;
         int line = rl->getRow();
-        int want = c->unk_32;
+        int want = c->linearRow;
         if ((short)line != (short)want) {
             reportError("rline mismatch for input locks\n");
             return false;
@@ -162,7 +162,7 @@ bool hack_slo(workTable *wt, RegPoolEntry *a, RegPoolEntry *b)
         bool hasA = false;
         bool hasB = false;
         for (int j = 0; j != 2; j++) {
-            Instr *in = row->entries[j].unk_00;
+            Instr *in = row->entries[j].instruction;
             if (!in)
                 continue;
             for (int i = 0; i != in->operandCount; i++) {

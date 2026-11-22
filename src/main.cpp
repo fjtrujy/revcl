@@ -59,25 +59,25 @@ void reportUBS(Program *p);
 void reportStalls(Program *p);
 
 extern int errorOccurred;
-extern char *outName_080b303c;
-extern bool quiet_080bbd98;
+extern char *currentOutputFileName;
+extern bool quietDiagnostics;
 extern bool g_080bbd99;
 extern bool g_080bbd9a;
-extern bool stagger_080b33ac;
+extern bool staggerMemoryAccess;
 struct CpuDef;
-extern CpuDef cpu_080bbb50;
+extern CpuDef vuProcessorDefinition;
 
-extern bool symbolic_080b300c;
-extern bool flag_080b300d;
-extern bool noLoops_080b300e;
-extern int timeout_080b3010;
+extern bool symbolicOutputRequested;
+extern bool cautiousMemoryAccessMode;
+extern bool disableLoopProcessing;
+extern int optimizationTimeoutSeconds;
 extern bool unk_080b3014;
-extern bool sizeReduce_080b3015;
-extern bool noAlign_080b3016;
-extern bool noEbit_080b3017;
-extern bool flag_080b3018;
+extern bool enableCodeSizeReduction;
+extern bool disableOutputAlignment;
+extern bool disableEndBits;
+extern bool enableInstructionCollapse;
 
-void func_08048c30()
+void noopMainStartupHook()
 {
 }
 
@@ -109,11 +109,11 @@ int main(int argc, char **argv)
             exitAfterCleanup(0);
         case 'o':
             outFile = argv[i] + 2;
-            outName_080b303c = outFile;
+            currentOutputFileName = outFile;
             break;
         case 'C':
             reportInfo("disabling code size reduction pass..\n");
-            sizeReduce_080b3015 = false;
+            enableCodeSizeReduction = false;
             break;
         case 'D':
             dumpRegs = true;
@@ -126,10 +126,10 @@ int main(int argc, char **argv)
             keepTemps = true;
             break;
         case 'L':
-            noLoops_080b300e = true;
+            disableLoopProcessing = true;
             break;
         case 'M':
-            flag_080b300d = true;
+            cautiousMemoryAccessMode = true;
             reportWarning("timid memory access mode enabled\n");
             break;
         case 'P':
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
             break;
         case 'S':
             reportInfo("stagger ram access...\n");
-            stagger_080b33ac = true;
+            staggerMemoryAccess = true;
             break;
         case 'U':
             uniqueAll = true;
@@ -153,15 +153,15 @@ int main(int argc, char **argv)
             break;
         case 'd':
             dumb = true;
-            noLoops_080b300e = true;
+            disableLoopProcessing = true;
             break;
         case 'e':
-            noEbit_080b3017 = true;
+            disableEndBits = true;
             reportInfo("disabling [e] bit setting\n");
             break;
         case 'F':
         case 'f':
-            noAlign_080b3016 = true;
+            disableOutputAlignment = true;
             reportInfo("will skip align emit\n");
             break;
         case 'A':
@@ -192,15 +192,15 @@ int main(int argc, char **argv)
             g_080bbd9a = true;
             break;
         case 'q':
-            quiet_080bbd98 = true;
+            quietDiagnostics = true;
             break;
         case 's':
-            symbolic_080b300c = true;
+            symbolicOutputRequested = true;
             break;
         case 't':
-            timeout_080b3010 = atoi(argv[i] + 2);
-            if (timeout_080b3010 <= 0)
-                timeout_080b3010 = 1;
+            optimizationTimeoutSeconds = atoi(argv[i] + 2);
+            if (optimizationTimeoutSeconds <= 0)
+                optimizationTimeoutSeconds = 1;
             break;
         case 'u':
             uniqueName = argv[i] + 2;
@@ -237,7 +237,7 @@ int main(int argc, char **argv)
         reportMessage("can't have infile==outfile\n");
         exitAfterCleanup(-1);
     }
-    if (symbolic_080b300c)
+    if (symbolicOutputRequested)
         comments = 2;
 
     int fd;
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
         fd = 0;
     }
 
-    char *buf = func_0804aff0(fd, &len, true);
+    char *buf = readDescriptorIntoBuffer(fd, &len, true);
     if (!buf) {
         reportError("failed to read input file\n");
         exitAfterCleanup(-1);
@@ -281,8 +281,8 @@ int main(int argc, char **argv)
         exitAfterCleanup(-1);
     }
 
-    Program flow(symbolic_080b300c);
-    if (!flow.Init(&cpu_080bbb50, uniqueName, uniqueAll)) {
+    Program flow(symbolicOutputRequested);
+    if (!flow.Init(&vuProcessorDefinition, uniqueName, uniqueAll)) {
         reportError("failed to set int name for flow\n");
         exitAfterCleanup(-1);
     }
@@ -299,7 +299,7 @@ int main(int argc, char **argv)
         reportError("failed to do a global prune\n");
         exitAfterCleanup(-1);
     }
-    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, true, false)) {
+    if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, true, false)) {
         reportError("generic dependency failed\n");
         exitAfterCleanup(-1);
     }
@@ -311,13 +311,13 @@ int main(int argc, char **argv)
         reportError("failed to bind dependency info into the stream\n");
         return 0;
     }
-    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
         exitAfterCleanup(-1);
     if (!Prune(&flow)) {
         reportError("Failed to prune..\n");
         exitAfterCleanup(-1);
     }
-    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false)) {
+    if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false)) {
         reportError("generic dependency code decided to die\n");
         exitAfterCleanup(-1);
     }
@@ -325,7 +325,7 @@ int main(int argc, char **argv)
         reportError("failed to gather flow\n");
         exitAfterCleanup(-1);
     }
-    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false)) {
+    if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false)) {
         reportError("generic dependency code decided to die\n");
         exitAfterCleanup(-1);
     }
@@ -340,12 +340,12 @@ int main(int argc, char **argv)
         reportError("failed to assign externally visible stream registers\n");
         exitAfterCleanup(-1);
     }
-    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false)) {
+    if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false)) {
         reportError("generic dependency code decided to die\n");
         exitAfterCleanup(-1);
     }
     int smart = dumb = !dumb;
-    if (!noLoops_080b300e) {
+    if (!disableLoopProcessing) {
         if (!resolveProgramImmediateFixups(&flow, true)) {
             reportError("failed to initialise immediate fixups\n");
             exitAfterCleanup(-1);
@@ -362,7 +362,7 @@ int main(int argc, char **argv)
             reportError("failed to explode raw loops after loop opt\n");
             exitAfterCleanup(-1);
         }
-        if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false)) {
+        if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false)) {
             reportError("generic dependency failed after loop explode\n");
             exitAfterCleanup(-1);
         }
@@ -374,7 +374,7 @@ int main(int argc, char **argv)
             reportError("Failed to prune..\n");
             exitAfterCleanup(-1);
         }
-        if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
+        if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
             exitAfterCleanup(-1);
         if (!bindExternals(&flow)) {
             reportError("failed to bind externals\n");
@@ -384,7 +384,7 @@ int main(int argc, char **argv)
             reportError("failed to gather flow\n");
             exitAfterCleanup(-1);
         }
-        if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
+        if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
             exitAfterCleanup(-1);
     }
     if (!analyzeAndPropagateMoves(&flow))
@@ -401,7 +401,7 @@ int main(int argc, char **argv)
         reportError("failed to convert all uta linear->raw\n");
         exitAfterCleanup(-1);
     }
-    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
         exitAfterCleanup(-1);
     if (!resolveProgramImmediateFixups(&flow, false)) {
         reportError("imm fixup failed to patch something\n");
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
         reportError("failed to concatenate streams\n");
         exitAfterCleanup(-1);
     }
-    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
         exitAfterCleanup(-1);
     if (!analyzeAndPropagateMoves(&flow)) {
         reportError("basic operation pass failed\n");
@@ -425,7 +425,7 @@ int main(int argc, char **argv)
         reportError("imm fixup failed to patch something\n");
         exitAfterCleanup(-1);
     }
-    if (!optimizeProgramScheduling(&flow, smart, sizeReduce_080b3015)) {
+    if (!optimizeProgramScheduling(&flow, smart, enableCodeSizeReduction)) {
         reportError("raw and Synth pass2 failed\n");
         dumpProgramStreamsAndRegisters(&flow, false);
         exitAfterCleanup(-1);
@@ -434,22 +434,22 @@ int main(int argc, char **argv)
         reportError("failed to concatenate streams\n");
         exitAfterCleanup(-1);
     }
-    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
         exitAfterCleanup(-1);
     if (!resolveProgramImmediateFixups(&flow, false)) {
         reportError("imm fixup failed to patch something\n");
         exitAfterCleanup(-1);
     }
-    if (sizeReduce_080b3015) {
+    if (enableCodeSizeReduction) {
         int n = insertAllRegisterCaps(&flow);
         if (n < 0)
             exitWithError("failed to add capping instructions for non-blocking operands, or something\n");
-        if (n && !validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, false))
+        if (n && !validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
             exitWithError("after adding capping instructions - failed to chase dependencies\n");
         if (!prepareExternalSchedulingForProgram(&flow))
             exitWithError("failed to remove nops from the sequence\n");
     }
-    if (!validateFlowDependenciesAndHazards(&flow, flag_080b300d, false, true))
+    if (!validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, true))
         exitAfterCleanup(-1);
     if (!loadStalls(&flow)) {
         reportError("failed to load stalls!\n");
@@ -596,7 +596,7 @@ bool validateFlowDependenciesAndHazards(Program *p, bool a, bool b, bool c)
 
 bool analyzeAndPropagateMoves(Program *p)
 {
-    if (flag_080b3018 && !collapseProgramStreams(p)) {
+    if (enableInstructionCollapse && !collapseProgramStreams(p)) {
         reportError("failed to collapse instructions\n");
         return false;
     }
@@ -604,7 +604,7 @@ bool analyzeAndPropagateMoves(Program *p)
         reportError("failed to detect moves!\n");
         return false;
     }
-    if (!validateFlowDependenciesAndHazards(p, flag_080b300d, false, false)) {
+    if (!validateFlowDependenciesAndHazards(p, cautiousMemoryAccessMode, false, false)) {
         reportError("generic dependency code decided to die\n");
         return false;
     }
@@ -612,7 +612,7 @@ bool analyzeAndPropagateMoves(Program *p)
         reportError("failed to prune moves\n");
         return false;
     }
-    if (!validateFlowDependenciesAndHazards(p, flag_080b300d, false, false))
+    if (!validateFlowDependenciesAndHazards(p, cautiousMemoryAccessMode, false, false))
         return false;
     return true;
 }

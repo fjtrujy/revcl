@@ -17,15 +17,15 @@ struct optimiser {
 };
 
 extern optimiser optTable[11];
-extern const char *g_080de730;
+extern const char *currentOptimizerName;
 
 instStream *selectUninsertedStream(Program *p);
 bool prepExtInfo(Program *p, instStream *s, bool b);
 workTable *prepUta(Program *p, instStream *s, int loopSize, char smart);
 bool statReset(Program *p);
 bool dynCalcStats(workTable *wt);
-bool func_0807f360(workTable *wt, wrangleFunc f);
-bool func_0808061c(workTable *wt, wrangleFunc f);
+bool scheduleMidTableMode1(workTable *wt, wrangleFunc f);
+bool scheduleMidTableMode0(workTable *wt, wrangleFunc f);
 bool reduceExtents(workTable *wt);
 bool fiddleBDL(workTable *wt);
 bool assignLocalRegisters(Program *p, workTable *wt);
@@ -38,7 +38,7 @@ void dumpProgramStreamsAndRegisters(Program *p, int a);
 const char *stallReasonStr(short why);
 bool sredTable(workTable *wt);
 bool prepareReductionCandidates(Program *p, instStream *s, workTable *wt);
-bool func_0807e740(Program *p, workTable *wt, unsigned char a, unsigned char b);
+bool reduceLinearSchedule(Program *p, workTable *wt, unsigned char a, unsigned char b);
 
 bool workTable::qRegRef(regUse *ru)
 {
@@ -94,11 +94,11 @@ bool workTable::qRegRef(regUse *ru)
             exitAfterCleanup(-1);
         }
         if ((c->outputMask >> i) & 1)
-            ll->unk_29 = 0;
+            ll->calculateLoopStats = 0;
         char xi = (c->externalInputMask >> i) & 1;
         char t = (c->throughputMask >> i) & 1;
         bool sync = false;
-        if (reg->unk_2c && g_080b336c == 0)
+        if (reg->unk_2c && activeLoopSize == 0)
             sync = true;
         char nb = reg->nonBlockId;
         if (!nb && (c->throughputMask & (c->outputMask | c->externalOutputMask))) {
@@ -202,7 +202,7 @@ bool workTable::qInstruction(Instr *in)
                 dst->direction = 3;
         }
         if (isRegisterOperand(dst, 1)) {
-            if (g_080b336c && isVuRegister(reg) && dst->operandStatus != 2)
+            if (activeLoopSize && isVuRegister(reg) && dst->operandStatus != 2)
                 dst->operandStatus = 1;
             for (int k = 0; k != reg->partCount; k++) {
                 if ((dst->componentMask >> k) & 1) {
@@ -259,7 +259,7 @@ bool workTable::qInstruction(Instr *in)
                 }
             }
         }
-        if (isRegisterOperand(dst, 2) && dst->operandStatus != 2 && g_080b336c && isVuRegister(reg) && !rr->externalOutputMask)
+        if (isRegisterOperand(dst, 2) && dst->operandStatus != 2 && activeLoopSize && isVuRegister(reg) && !rr->externalOutputMask)
             dst->operandStatus = 1;
     }
 

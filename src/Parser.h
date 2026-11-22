@@ -96,6 +96,6 @@ struct Directive {
     bool (*fn)(Program *, LocTag *);
 };
 
-Directive *func_080519a0(LocTag *t);
+Directive *findRegisteredDirective(LocTag *t);
 
 #endif

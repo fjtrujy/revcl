@@ -69,8 +69,8 @@ struct xpOp {
     unsigned char prec;   // -> xpNode::unk_03
 };
 
-extern xpOp opTable_080b30a0[20];
+extern xpOp expressionOperatorTable[20];
 
-const char *func_0804ec74(const char *s, xpNode *node, bool binary);
+const char *parseExpressionTokenIntoNode(const char *s, xpNode *node, bool binary);
 
 #endif

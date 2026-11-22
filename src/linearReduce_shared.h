@@ -9,10 +9,10 @@ class Program;
 
 int setRangeFrom(workTable *t);
 bool moveLocks(Instr *i, cls08058718 *pos);
-int func_0807e130(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
+int checkPlacementInAllowedPipelines(workTable *wt, Instr *in, cls08058718 *pos, bool upwards);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
-int func_0807dc44(workTable *wt, Instr *i, cls08058718 *pos);
+int checkInstructionPlacementConstraints(workTable *wt, Instr *i, cls08058718 *pos);
 bool setRange(int start, int end, int lsz);
 int pullUp(workTable *wt);
 int dragDown(workTable *wt);

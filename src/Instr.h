@@ -117,39 +117,39 @@ public:
     cls0805bcc4 *parentOrChildren;
     cls0805bcc4 *nextSortedOutput;
     unsigned char lockDirection;
-    char unk_15;
-    char unk_16;
-    char unk_17;
+    char latencyModeFlag;
+    char externalOutputSlotPlusOne;
+    char throughputSpacing;
     char issueLatency;
     char unk_19;
     char priority;
     char unk_1b;
     cls0805bcc4 *pairedLock;
     short referenceCount;
-    short unk_22;
+    short activeReferenceCount;
     void *ownerPointer;
     unsigned char ownerComponent;
     unsigned char ownerOperandIndex;
     short unk_2a;
-    char unk_2c;
+    char insertedIntoLockList;
     unsigned char ownerType;
-    short unk_2e;
-    short unk_30;
-    short unk_32;
-    short unk_34;
-    short unk_36;
-    short unk_38;
-    short unk_3a;
-    short unk_3c;
-    short unk_3e;
-    short unk_40;
-    short unk_42;
+    short scheduledConsumerCount;
+    short loopRow;
+    short linearRow;
+    short adjustedEarliestReadyCycle;
+    short earliestReadyCycle;
+    short adjustedFullLatencyReadyCycle;
+    short fullLatencyReadyCycle;
+    short adjustedEarliestConsumerFreeCycle;
+    short earliestConsumerFreeCycle;
+    short adjustedLatestConsumerCycle;
+    short latestConsumerCycle;
     short unk_44;
     short unk_46;
     short unk_48;
     short unk_4a;
-    short unk_4c;
-    short unk_4e;
+    short adjustedLatestReadyCycle;
+    short latestReadyCycle;
 
     cls0805bcc4() { resetLock(); }
     ~cls0805bcc4() {}
@@ -180,16 +180,16 @@ public:
     const char *regName();
     void resetStats()
     {
-        unk_30 = unk_32 = -1;
-        unk_34 = -1;
-        unk_36 = -1;
-        unk_38 = -1;
-        unk_3a = -1;
-        unk_3c = -1;
-        unk_3e = -1;
-        unk_40 = -1;
-        unk_42 = -1;
-        unk_4c = unk_4e = -1;
+        loopRow = linearRow = -1;
+        adjustedEarliestReadyCycle = -1;
+        earliestReadyCycle = -1;
+        adjustedFullLatencyReadyCycle = -1;
+        fullLatencyReadyCycle = -1;
+        adjustedEarliestConsumerFreeCycle = -1;
+        earliestConsumerFreeCycle = -1;
+        adjustedLatestConsumerCycle = -1;
+        latestConsumerCycle = -1;
+        adjustedLatestReadyCycle = latestReadyCycle = -1;
     }
 };
 
@@ -205,8 +205,8 @@ public:
     cls0805bcc4 *sortedOutputLocks;
     short outputLockCount;
     short remainingLockCount;
-    char unk_28;
-    char unk_29;
+    char containsRegisterOutput;
+    char calculateLoopStats;
     unsigned char externalOutputCount;
     char unk_2b;
 
@@ -282,7 +282,7 @@ struct Operand {
     char unk_25;
     char operandIndex;
     unsigned char externalPartMask;
-    char unk_28;
+    char reductionHazardMask;
     char additionalLatency;
     unsigned char pruneMask;
     char operandStatus;
@@ -593,7 +593,7 @@ public:
     cls08058718();
     ~cls08058718();
     void clearInstructionPosition();
-    void func_08058744();
+    void noopInstructionPositionHook();
     void setFromLinearRow(short v);
     void setInstructionPipe(char c);
     short getRow() { return linearRow; }
@@ -606,11 +606,11 @@ public:
     }
 };
 
-extern int g_080b336c;  // range lsz
-extern bool g_080de284; // rfUsed before result ready is fatal (name guessed)
+extern int activeLoopSize;  // range lsz
+extern bool fatalReadBeforeReady; // rfUsed before result ready is fatal (name guessed)
 extern bool g_080de288;
-extern int g_080b3370;  // range start
-extern int g_080b3374;  // range end
+extern int activeSchedulingRangeStart;  // range start
+extern int activeSchedulingRangeEnd;  // range end
 
 class cls0805e2e4 {
 public:
@@ -682,7 +682,7 @@ public:
     short externalOutputPairedConstraint;
     short externalOutputConstraint;
     mList unk_13b8;
-    char unk_13cc;
+    char pruningRestricted;
     char syntheticKind;
     char ramAccessType;
     unsigned char baseIssueSpacing;
@@ -829,7 +829,7 @@ bool hasDirectOperandDependency(Instr *a, Instr *b);
 bool writesInputRegisterOf(Instr *a, Instr *b);
 Operand *operandAtLocation(ol_s *ol);
 void markLocationExternallyUsed(ol_s *ol);
-int func_080585a8(ol_s *ol);
+int hasRawOrImmediateInstructionAtLocation(ol_s *ol);
 int instructionSerialAtLocation(ol_s *ol);
 bool sameOperandLocation(ol_s *a, ol_s *b);
 instStream *locationOwningStream(ol_s *ol);
@@ -873,7 +873,7 @@ struct opCount_s {
     int unk_04;
 };
 
-extern opPair_s opPairTable_080b32e0[];
-extern opCount_s opCountTable_080b3340[];
+extern opPair_s pairedOperandDescriptions[];
+extern opCount_s operandCountOverrides[];
 
 #endif
