@@ -135,7 +135,7 @@ bool Instr::validateOperands()
     return true;
 }
 
-void Instr::func_08054008(int flags)
+void Instr::dumpOperandDiagnostics(int flags)
 {
     if (isValid()) {
         int count = operandCount;
@@ -231,12 +231,12 @@ void Instr::leDump(int opnd, int mask)
         unk_14->dumpSourceLine(idx);
     } else {
         reportMessage("operand %d modbits %x..\n", opnd, mask);
-        func_08054008(false);
+        dumpOperandDiagnostics(false);
     }
     errorOccurred = saved;
 }
 
-bool func_080543bc(Instr *a, Instr *b)
+bool hasDirectOperandDependency(Instr *a, Instr *b)
 {
     if (!a || !b)
         return false;
@@ -255,7 +255,7 @@ bool func_080543bc(Instr *a, Instr *b)
     return false;
 }
 
-bool func_0805449c(Instr *a, Instr *b)
+bool writesInputRegisterOf(Instr *a, Instr *b)
 {
     if (!a || !b)
         return false;
@@ -386,7 +386,7 @@ int Instr::getRamBits()
             break;
         default:
             reportError("got here! - end of get rambits?\n");
-            func_08054008(false);
+            dumpOperandDiagnostics(false);
             exitAfterCleanup(-1);
             memset(&r, 0, sizeof(r));
             return r;
@@ -626,7 +626,7 @@ bool Instr::setOwner(cls_unk30 *s)
     return true;
 }
 
-const char *func_08055254(int t)
+const char *branchTypeNameByCode(int t)
 {
     switch (t) {
     case 0:
@@ -650,7 +650,7 @@ const char *func_08055254(int t)
     }
 }
 
-char *Instr::func_080552a8(bool flag, char *buf, int)
+char *Instr::emitExpectedSyntax(bool flag, char *buf, int)
 {
     if (!buf)
         return 0;
@@ -710,7 +710,7 @@ int Instr::inputMaskForRegister(RegPoolEntry *reg, int mask)
     return result & mask;
 }
 
-const char *func_080554e4(int t)
+const char *syntheticTypeName(int t)
 {
     const char *s = "SYNTH_UNKNOWN";
     switch (t) {
@@ -834,7 +834,7 @@ bool Instr::hasLinkedOutputFrom(unsigned int n)
     return false;
 }
 
-bool Instr::func_080558f4()
+bool Instr::classifySchedulingCategory()
 {
     if (ramAccessType == 2) {
         schedulerCategory = 1;
@@ -899,7 +899,7 @@ bool Instr::func_08055aa8()
     return r;
 }
 
-int Instr::func_08055ac4()
+int Instr::opcodeId()
 {
     if (!opcodeInfo)
         return -1;
@@ -1147,7 +1147,7 @@ void OpSlot::func_080560bc()
 
 bool OpSlot::resetSlotLock()
 {
-    func_0805bcc4();
+    resetLock();
     unk_50 = 0;
     unk_52[0] = 0;
     return true;

@@ -96,7 +96,7 @@ public:
     ol_s *insertExternalLocation(ol_s *src);
 };
 
-// Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).
+// Base of OpSlot: fields 0x00..0x4f reset by resetLock (class name guessed).
 class cls0805c244;
 class cls08058718;
 class cls0805bcc4;
@@ -112,27 +112,27 @@ public:
     unsigned char unk_00;
     unsigned char unk_01;
     unsigned char unk_02;
-    cls0805c244 *unk_04;    // owning locklist
-    cls0805bcc4 *unk_08;    // next sibling in parent's child list
-    cls0805bcc4 *unk_0c;    // input: parent output lock; output: child list head
-    cls0805bcc4 *unk_10;    // next in locklist sorted output list
-    unsigned char unk_14;   // 1 = input lock, 2 = output lock
+    cls0805c244 *ownerLockList;
+    cls0805bcc4 *nextSibling;
+    cls0805bcc4 *parentOrChildren;
+    cls0805bcc4 *nextSortedOutput;
+    unsigned char lockDirection;
     char unk_15;
     char unk_16;
     char unk_17;
-    char unk_18;
+    char issueLatency;
     char unk_19;
-    char unk_1a;
+    char priority;
     char unk_1b;
-    cls0805bcc4 *unk_1c;    // in/out partner lock
-    short unk_20;
+    cls0805bcc4 *pairedLock;
+    short referenceCount;
     short unk_22;
-    void *unk_24;           // owner: Instr* (oType 1) or regUse* (oType 2)
-    unsigned char unk_28;   // part
-    unsigned char unk_29;   // operand index
+    void *ownerPointer;
+    unsigned char ownerComponent;
+    unsigned char ownerOperandIndex;
     short unk_2a;
     char unk_2c;
-    unsigned char unk_2d;   // owner type: 0 none, 1 Instr, 2 regUse
+    unsigned char ownerType;
     short unk_2e;
     short unk_30;
     short unk_32;
@@ -151,9 +151,9 @@ public:
     short unk_4c;
     short unk_4e;
 
-    cls0805bcc4() { func_0805bcc4(); }
+    cls0805bcc4() { resetLock(); }
     ~cls0805bcc4() {}
-    bool func_0805bcc4();
+    bool resetLock();
     bool setOwner(int part, Instr *instr, int opnd);
     bool setOwner(int part, regUse *rf);
     bool clearOwner();
@@ -167,16 +167,16 @@ public:
     bool setInOut(cls0805bcc4 *olk);
     bool incRef();
     bool decRef();
-    char getPriority() { return unk_1a; }
-    short getRefCount() { return unk_20; }
+    char getPriority() { return priority; }
+    short getRefCount() { return referenceCount; }
     void print();
     bool isOk(int type, bool inserted);
     short func_0805ccc8();
     short func_0805ccd4();
     bool calcStats(Instr *skip);
-    void func_0805d020();
+    void resetCalculatedStats();
     void setFrom(cls08058718 *r);
-    short func_0805d0dc();
+    short getCurrentLoopIteration();
     const char *regName();
     void resetStats()
     {
@@ -196,18 +196,18 @@ public:
 class cls0805c244 {
 public:
     short unk_00;
-    unsigned char unk_02;   // part
-    unsigned char unk_03;   // assigned flag
-    RegPoolEntry *unk_04;   // register
-    cls0805c244 *unk_08;    // next locklist
-    cls0805bcc4 *unk_0c[4]; // external output locks
-    cls0805bcc4 *unk_1c;    // output lock list (linked by lock->unk_08)
-    cls0805bcc4 *unk_20;    // sorted output list head (by unk_32, linked by unk_10)
-    short unk_24;           // nOutLocks
-    short unk_26;           // nToGo
+    unsigned char componentIndex;
+    unsigned char assigned;
+    RegPoolEntry *registerEntry;
+    cls0805c244 *nextLockList;
+    cls0805bcc4 *externalOutputLocks[4];
+    cls0805bcc4 *outputLocks;
+    cls0805bcc4 *sortedOutputLocks;
+    short outputLockCount;
+    short remainingLockCount;
     char unk_28;
     char unk_29;
-    unsigned char unk_2a;   // extern output count
+    unsigned char externalOutputCount;
     char unk_2b;
 
     cls0805c244();
@@ -223,13 +223,13 @@ public:
     bool addInputLock(cls0805bcc4 *in);
     bool undoInputLock(cls0805bcc4 *in);
     bool undoOutputLock(cls0805bcc4 *lk);
-    int func_0805c938(int n);
+    int maxConstraintOfFirstOutputs(int n);
     bool isOk(cls0805bcc4 *lk, int type, bool inserted);
     bool moveOutputLock(cls0805bcc4 *lk);
     bool moveInputLock(cls0805bcc4 *in);
     bool addExtOutput(cls0805bcc4 *lk, bool flag);
     Instr *earliestExt();
-    int func_0805d3c4();
+    int countFlaggedOutputLocks();
     bool setRepReg(RegPoolEntry *rg);
     int checkInputLock(cls0805bcc4 *in, short *pos, int *minPos);
     int checkOutputLock(cls0805bcc4 *out, short *pos, int *minPos);
@@ -245,9 +245,9 @@ cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part);
 const char *rlmtName(unsigned char t);
 
 bool checkTable(iInfo *tab, int count);
-int func_08070300(unsigned char);
+int decodeImmediateCategory(unsigned char);
 int func_0807031c(unsigned char);
-unsigned char func_08070324(unsigned char);
+unsigned char immediateFlagBit7(unsigned char);
 
 struct OpSlot : public cls0805bcc4 {
     short unk_50;
@@ -742,7 +742,7 @@ public:
     }
     bool clearDynamicData();
     bool validateOperands();
-    void func_08054008(int flags);
+    void dumpOperandDiagnostics(int flags);
     bool isNop();
     instStream *getOwningStream();  // owner instruction stream
     bool resetFlowDependencies();
@@ -755,7 +755,7 @@ public:
     bool patchBranchLatencies();
     int simplifyBranch();
     int normalizeZeroSources();
-    int func_08055ac4();
+    int opcodeId();
     Operand *getOp(int n)
     {
         if (n < 0) {
@@ -773,7 +773,7 @@ public:
     bool getImmediateOperand(int n, int *out);
     bool changeBranchImmediate(const char *s);
     bool setOwner(cls_unk30 *s);
-    char *func_080552a8(bool flag, char *buf, int n);
+    char *emitExpectedSyntax(bool flag, char *buf, int n);
     int outputMaskForRegister(RegPoolEntry *reg, int mask);
     int inputMaskForRegister(RegPoolEntry *reg, int mask);
     bool func_08055548();
@@ -783,7 +783,7 @@ public:
     Operand *findInputOperand(RegPoolEntry *reg, int mask);
     Operand *findOutputOperand(RegPoolEntry *reg, int mask);
     bool hasLinkedOutputFrom(unsigned int n);
-    bool func_080558f4();
+    bool classifySchedulingCategory();
     Instr **getIE();
     int getFirstOutputLatency();
     bool func_08055a88();
@@ -825,8 +825,8 @@ struct aaUse {
 aaDesc *findAddressAliasDescriptor(Instr *in);
 aaUse *findAddressAliasUse(Instr *in);
 RegPoolEntry *getOperandZeroReg(int kind);
-bool func_080543bc(Instr *a, Instr *b);
-bool func_0805449c(Instr *a, Instr *b);
+bool hasDirectOperandDependency(Instr *a, Instr *b);
+bool writesInputRegisterOf(Instr *a, Instr *b);
 Operand *operandAtLocation(ol_s *ol);
 void markLocationExternallyUsed(ol_s *ol);
 int func_080585a8(ol_s *ol);
@@ -838,8 +838,8 @@ ol_s *allocateLocationNode();
 int countFreeLocationNodes();
 bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot);
 bool link_oParts(ol_s *o, ol_s *i, int x, int y);
-const char *func_08055254(int t);
-const char *func_080554e4(int t);
+const char *branchTypeNameByCode(int t);
+const char *syntheticTypeName(int t);
 
 // Implicit operand description (name guessed).
 struct ImplicitOp {
@@ -856,10 +856,10 @@ struct ImplicitOp {
 
 bool buildImplicitOperand(int kind, ImplicitOp *out, bool);
 const char *opKindName(int kind);
-int func_08057a34(int kind);
+int registerClassForOperandKind(int kind);
 bool func_08057d60(int kind);
 bool func_08057d9c(int kind);
-const char *func_0806a33c(unsigned char);
+const char *immediateTypeName(unsigned char);
 extern ol_s *olFreeList;
 
 struct opPair_s {

@@ -24,7 +24,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                     if (slot->unk_19 != 2) {
                         int s = par->unk_32;
                         if ((short)s >= 0) {
-                            int t = s + par->unk_18 + slot->unk_18;
+                            int t = s + par->issueLatency + slot->issueLatency;
                             if (t >= line) {
                                 line = t;
                                 if (op->unk_0b && !op->additionalLatency)
@@ -45,7 +45,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
             for (int p = 0; p != reg->partCount; p++) {
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *slot = &op->parts[p];
-                    OperandLock *lk = slot->unk_04->unk_20;
+                    OperandLock *lk = slot->ownerLockList->sortedOutputLocks;
                     while (lk && lk != slot) {
                         int s = lk->unk_32;
                         if (s > iline) {
@@ -61,7 +61,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                                 exitAfterCleanup(-1);
                             }
                         }
-                        lk = lk->unk_10;
+                        lk = lk->nextSortedOutput;
                     }
                     if (!lk) {
                         reportError("sorted lock not  on list for get earliest!\n");

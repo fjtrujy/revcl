@@ -221,7 +221,7 @@ finalize_ready:
                     }
             }
         }
-        in->func_08054008(false);
+        in->dumpOperandDiagnostics(false);
         in->predecessorDependencies.validateOperandLocations();
         in->successorDependencies.validateOperandLocations();
     }
@@ -323,8 +323,8 @@ bool copyCloneFdeps(Instr *, ol_s *o, olList *dst)
 
 bool func_08065fd4(Instr *in, Instr *other)
 {
-    in->func_08054008(false);
-    other->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
+    other->dumpOperandDiagnostics(false);
     for (int k = 0; k != other->operandCount; k++) {
         Operand *op = &other->operands[k];
         RegPoolEntry *r = registerOperand(op, 1);
@@ -339,7 +339,7 @@ bool func_08065fd4(Instr *in, Instr *other)
                                 reportError("failed to add\n");
                                 exitAfterCleanup(-1);
                             }
-                            x->func_08054008(false);
+                            x->dumpOperandDiagnostics(false);
                         }
                     }
         }

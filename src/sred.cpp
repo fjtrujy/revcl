@@ -40,7 +40,7 @@ bool isAtEarliest(workTable *wt, Instr *in)
 
 static inline void dumpSredInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 extern const char sredEarliestAfterError[];
@@ -63,7 +63,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
             short mfs = in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2;
             reportError(sredEarliestAfterError,
                           tline, iline, mfs);
-            in->func_08054008(false);
+            in->dumpOperandDiagnostics(false);
             reportError("iline=%d tline=%d\n", iline, tline);
             return false;
         }

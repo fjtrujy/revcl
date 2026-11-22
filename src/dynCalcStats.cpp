@@ -27,7 +27,7 @@ void Instr::resetDynamicSchedulingStats()
     }
 }
 
-bool func_0805f550(Block *b)
+bool resetBlockDynamicStats(Block *b)
 {
     b->unk_04 = -1;
     b->unk_06 = -1;
@@ -46,7 +46,7 @@ static inline bool isAAInputLock(OperandLock *in)
 
 static inline int lockLatency(OperandLock *input, OperandLock *parent)
 {
-    return input->unk_18 + parent->unk_18;
+    return input->issueLatency + parent->issueLatency;
 }
 
 bool dynCalcStats(workTable *wt)
@@ -54,7 +54,7 @@ bool dynCalcStats(workTable *wt)
     Block *b = (Block *)wt;
     int i;
     Instr *in;
-    func_0805f550(b);
+    resetBlockDynamicStats(b);
 
     for (in = b->completedInstructions.head; in; in = in->unk_24.unk_00) {
         int v = in->position.unk_00;
@@ -166,9 +166,9 @@ bool dynCalcStats(workTable *wt)
                             int v = in->dynamicEarliestStart - lat;
                             if (v < 0) {
                                 reportError("-ve ip?\n");
-                                in->func_08054008(false);
+                                in->dumpOperandDiagnostics(false);
                                 wt->dump();
-                                in->func_08054008(false);
+                                in->dumpOperandDiagnostics(false);
                                 exitAfterCleanup(-1);
                             }
                             if (pi->dynamicReverseStart > v)
@@ -196,7 +196,7 @@ bool dynCalcStats(workTable *wt)
                             if (s->unk_15)
                                 lat = 1;
                             else
-                                lat = par->unk_18;
+                                lat = par->issueLatency;
                             int v = pi->dynamicReverseStart + lat;
                             if (v < in->dynamicUpperBound)
                                 in->dynamicUpperBound = v;

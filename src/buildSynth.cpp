@@ -13,7 +13,7 @@ char *dupString(const char *s);
 
 static inline void dumpSynthInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 
@@ -65,8 +65,8 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
         case 1:
         case 3:
             if (stype) {
-                const char *a = func_080554e4((unsigned char)in->syntheticKind);
-                reportError("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", a, func_080554e4(stype));
+                const char *a = syntheticTypeName((unsigned char)in->syntheticKind);
+                reportError("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", a, syntheticTypeName(stype));
                 in->leDump();
                 return false;
             }

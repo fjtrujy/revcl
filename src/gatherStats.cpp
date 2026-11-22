@@ -256,7 +256,7 @@ bool instStream::gatherStats()
         iLink *link = &in->unk_1c;
         Instr *m = link->unk_04;
         for (; m; m = m->unk_1c.unk_04) {
-            if (func_080543bc(m, in)) {
+            if (hasDirectOperandDependency(m, in)) {
                 m->unk_13f0.unk_08++;
                 m->unk_13f0.unk_0c += in->unk_13f0.unk_0c + 1;
                 m->unk_13f0.unk_10 = in->unk_13f0.unk_10 + 1;

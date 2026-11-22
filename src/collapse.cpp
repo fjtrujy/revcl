@@ -64,7 +64,7 @@ bool func_0806a74c(Program *p)
     for (s = p->streamHead; s; s = s->nextStream) {
         workTable *t = s->getTable();
         for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
-            if (__builtin_expect(in->func_08055ac4() != 0x6d, 1))
+            if (__builtin_expect(in->opcodeId() != 0x6d, 1))
                 continue;
             mValue *v = &in->operands[2].immediateValue;
             if (v->type != mValue::STRING) {
@@ -153,7 +153,7 @@ static inline bool isStringValue(mValue *v)
 
 int func_0806aa54(Instr *in)
 {
-    int opc = in->func_08055ac4();
+    int opc = in->opcodeId();
     int bits = 0;
     int idx = -1;
     bool neg = false;
@@ -213,7 +213,7 @@ bool immCalc(Instr *in, int *srcOp, int *immOp, int *val, int *opc)
 {
     *srcOp = -1;
     *immOp = -1;
-    *opc = in->func_08055ac4();
+    *opc = in->opcodeId();
     bool sgn = false;
     bool sub = false;
     switch (*opc) {

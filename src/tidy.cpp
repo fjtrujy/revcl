@@ -79,7 +79,7 @@ bool func_08062a88(Program *p)
             continue;
         if (wt->getRangeStart() < 0)
             continue;
-        if (wt->getPhysicalLen() > 1 && wt->func_08073854())
+        if (wt->getPhysicalLen() > 1 && wt->hasSafeTrailingInstructions())
             continue;
         if (!extendForEnd_inl(wt)) {
             reportError("failed to extend for e\n");

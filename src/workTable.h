@@ -103,7 +103,7 @@ struct wtRow {
     int outputMaskFor(RegPoolEntry *reg, unsigned char mask);
     int outputMask(RegPoolEntry *reg) { return outputMaskFor(reg, 0xff); }
     int inputMaskFor(RegPoolEntry *reg, unsigned char mask);
-    unsigned int func_08072494();
+    unsigned int getMinimumExtraLatencyAge();
     char *emit(char *buf, int flags, bool upper, bool unused);
 };
 
@@ -216,7 +216,7 @@ public:
     bool reserveEntry(int key, int row, int slot);
     Instr *getConditionalBranch();
     const char *ownerName();
-    bool func_08073854();
+    bool hasSafeTrailingInstructions();
     bool dispose();
     bool resetFlowStalls();
     char *emit(char *buf, int a, int *p1, int *p2);
@@ -281,6 +281,6 @@ const char *allocModeName(unsigned int mode);
 
 bool cloneAppend(workTable *from, workTable *to, int lidS, int lidE, bool a5, bool a6, bool a7);
 extern Instr *g_080de72c;   // instr with smallest insertionSerial
-void func_080737b8(Instr *in);
+void trackEarliestInsertion(Instr *in);
 
 #endif

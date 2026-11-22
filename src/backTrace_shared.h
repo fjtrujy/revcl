@@ -22,6 +22,6 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part);
 bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int ofs, bool ext);
 bool processActiveList(Program *p);
 bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part);
-void func_0806ed78(Program *p, int a);
+void dumpProgramStreamsAndRegisters(Program *p, int a);
 
 #endif

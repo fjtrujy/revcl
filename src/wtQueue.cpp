@@ -34,7 +34,7 @@ bool disposeLpWork(instStream *s);
 bool keepLpWork(instStream *s);
 bool optReset(Program *p);
 workTable *makeForceTable(Program *p, instStream *s);
-void func_0806ed78(Program *p, int a);
+void dumpProgramStreamsAndRegisters(Program *p, int a);
 const char *stallReasonStr(short why);
 bool sredTable(workTable *wt);
 bool func_0807e528(Program *p, instStream *s, workTable *wt);

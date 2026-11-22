@@ -48,7 +48,7 @@ Instr *getMove(int type, int)
                 reportError(moveRecNullRllError);
                 abortAfterError();
             }
-            l->unk_08 = 0;
+            l->nextLockList = 0;
             l->reset();
             l->unk_29 = 0;
             mr->moveRegister->setPartPayload(i, (VclPtrWord)l);
@@ -113,7 +113,7 @@ Instr *getMove(int type, int)
     }
     for (int i = 0; i != reg->partCount; i++) {
         RegisterPartLockList *l = &mr->partLocks[i];
-        l->unk_08 = 0;
+        l->nextLockList = 0;
         l->reset();
         l->unk_29 = 0;
         reg->setPartPayload(i, (VclPtrWord)l);
@@ -142,7 +142,7 @@ bool addFreeMove(Instr *in)
     reg->moveReset();
     for (int i = 0; i != reg->partCount; i++) {
         RegisterPartLockList *l = &mr->partLocks[i];
-        l->unk_08 = 0;
+        l->nextLockList = 0;
         l->reset();
     }
     if (in != mr->instruction) {

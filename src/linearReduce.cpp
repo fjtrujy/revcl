@@ -7,7 +7,7 @@ class Program;
 int setRangeFrom(workTable *t);
 bool moveLocks(Instr *i, InstructionPosition *pos);
 int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
-void func_0806ed78(Program *p, int a);
+void dumpProgramStreamsAndRegisters(Program *p, int a);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
 int func_0807dc44(workTable *wt, Instr *i, InstructionPosition *pos);
 bool setRange(int start, int end, int lsz);
@@ -22,7 +22,7 @@ static inline bool isPipeMode(workTable *wt)
 
 static inline void dumpLinearReduce(Program *p)
 {
-    func_0806ed78(p, 0);
+    dumpProgramStreamsAndRegisters(p, 0);
 }
 
 bool func_0807e740(Program *p, workTable *wt, unsigned char up, unsigned char down)

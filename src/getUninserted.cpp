@@ -182,7 +182,7 @@ int getToEnd(Instr *in)
             reportError("te<0... for getLLen.. eTim=%d tSiz=%d\n", et, len, te);
             wt->dump();
             reportError("instruction is\n");
-            img->func_08054008(false);
+            img->dumpOperandDiagnostics(false);
             break;
         }
         return te;

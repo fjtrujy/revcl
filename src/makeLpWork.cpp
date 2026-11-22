@@ -181,7 +181,7 @@ bool lsqChain(workTable *wt)
         bool bad = false;
         bool ok = true;
         for (; in; in = in->unk_1c.unk_00) {
-            int opc = in->func_08055ac4();
+            int opc = in->opcodeId();
             if (in->outputMaskForRegister(reg, 0xff)) {
                 if (!(opc == 0x9e || opc == 0x9f || opc == 0xa3 || opc == 0xa4) || bad) {
                     ok = false;
@@ -204,7 +204,7 @@ bool lsqChain(workTable *wt)
         int total = 0;
         for (int i = 0; i != n; i++) {
             Instr *in = list[i];
-            int opc = in->func_08055ac4();
+            int opc = in->opcodeId();
             int delta = 0;
             switch (opc) {
             case 0x9e:

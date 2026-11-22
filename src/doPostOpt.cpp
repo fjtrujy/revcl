@@ -16,7 +16,7 @@ typedef bool (*wrangleFunc)(workTable *, int *);
 
 static inline void dumpOptInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 union RawLength { int value; float bits; };

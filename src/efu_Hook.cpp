@@ -13,7 +13,7 @@ char *dupString(const char *s);
 
 static inline void dumpEmitInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 bool func_08087860(void *, Instr *in)

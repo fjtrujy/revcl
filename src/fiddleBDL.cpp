@@ -83,7 +83,7 @@ bool fiddleBDL(workTable *wt)
                 return false;
             }
             Instr *prev = prow->entries[1].unk_00;
-            if (func_0805449c(prev, br))
+            if (writesInputRegisterOf(prev, br))
                 return true;
 
             if (prev && !wt->takeOut(prev)) {

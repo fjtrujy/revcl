@@ -64,7 +64,7 @@ bool addFreeMove(Instr *mv);
 bool setPipeBits(Instr *in);
 bool AddToDo_Head(Block *blk, Instr *n);
 bool logInstr(Block *blk, Instr *in);
-void func_080737b8(Instr *in);
+void trackEarliestInsertion(Instr *in);
 
 short g_streamSerial = 1;
 int g_080b33ec = 0;
@@ -105,7 +105,7 @@ int getMove(Block *blk, Instr *in, int now)
                         score = 10000;
                     if (lk->getPriority() == 1 && score < 20000)
                         score = 20000;
-                    if (parent->unk_2d != 2) {
+                    if (parent->ownerType != 2) {
                         int row = parent->unk_32;
                         int z = op2->componentMask;
                         if (row < 0) {
@@ -117,7 +117,7 @@ int getMove(Block *blk, Instr *in, int now)
                             }
                         }
                         int lo = row + 1;
-                        int hi = row + parent->unk_18;
+                        int hi = row + parent->issueLatency;
                         if (lo < reg->minimumMoveRow)
                             reg->minimumMoveRow = lo;
                         if (hi > reg->maximumMoveRow)
@@ -128,10 +128,10 @@ int getMove(Block *blk, Instr *in, int now)
                             abortAfterError();
                         }
                         RegPoolEntry *uA = op2->forcedBaseRegister;
-                        RegisterPartLockList *u04 = parent->unk_04;
+                        RegisterPartLockList *u04 = parent->ownerLockList;
                         if (d > score) {
                             op2->forcedBaseRegister = uA;
-                            parent->unk_04 = u04;
+                            parent->ownerLockList = u04;
                             score = d;
                         }
                         RegPoolEntry *u14b = op2->originalRegister;
@@ -165,7 +165,7 @@ int getMove(Block *blk, Instr *in, int now)
     int mask = 0;
     int p;
     for (p = 0; p != bestReg->partCount; p++) {
-        OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->unk_1c;
+        OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
         if (o && o->unk_22)
             mask |= 1 << p;
     }
@@ -174,7 +174,7 @@ int getMove(Block *blk, Instr *in, int now)
     no_move:
         Instr *earliest = 0;
         for (p = 0; p != bestReg->partCount; p++) {
-            OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->unk_1c;
+            OperandLock *o = ((RegisterPartLockList *)bestReg->getPartPayload(p))->outputLocks;
             if (((mask >> p) & 1) && o && o->unk_22) {
                 Instr *oi = o->ownerInstr();
                 if (oi && (!earliest || oi->position.getRow() < earliest->position.getRow()))
@@ -183,7 +183,7 @@ int getMove(Block *blk, Instr *in, int now)
         }
         if (!earliest)
             earliest = blk->completedInstructions.head;
-        func_080737b8(earliest);
+        trackEarliestInsertion(earliest);
         return 1;
     }
     {
@@ -242,7 +242,7 @@ int getMove(Block *blk, Instr *in, int now)
                             RegisterPartLockList *oldL = (RegisterPartLockList *)bestReg->getPartPayload(p);
                             RegisterPartLockList *newL = (RegisterPartLockList *)newReg->getPartPayload(p);
                             if (par->unk_2c) {
-                                OperandLock *oldOut = oldL->unk_1c;
+                                OperandLock *oldOut = oldL->outputLocks;
                                 if (!((moved >> p) & 1)) {
                                     OperandLock *moveInLock = &mvIn->parts[p];
                                     if (!moveInLock->setOwner(p, mv, 1)) {
@@ -276,7 +276,7 @@ int getMove(Block *blk, Instr *in, int now)
                                 }
                                 op->assignedRegister = newReg;
                             } else {
-                                if (par->unk_04 == newL) {
+                                if (par->ownerLockList == newL) {
                                     if (!oldL->removeInput(lk)) {
                                         reportError("failed to deregister an input during move create\n");
                                         return -1;

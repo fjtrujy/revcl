@@ -27,7 +27,7 @@ bool func_0808061c(workTable *wt, wrangleFunc f)
     wt->evenPipeMoveCount = 0;
     for (Instr *in = wt->pendingInstructions.head; in; in = in->unk_24.unk_00) {
         adjustMoveCount((Block *)wt, in, 1);
-        if (!in->func_080558f4()) {
+        if (!in->classifySchedulingCategory()) {
             reportError("failed to set loop sfx type\n");
             abortAfterError();
         }
@@ -122,7 +122,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                             break;
                         case 1:
                             if (in->position.unk_00 < lim1)
-                                func_080737b8(in);
+                                trackEarliestInsertion(in);
                             break;
                         case 2:
                             if (in->position.unk_00 < lim2) {
@@ -130,7 +130,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                                 errorOccurred = !quiet_080bbd98;
                                 in->leDump();
                                 errorOccurred = saved;
-                                func_080737b8(in);
+                                trackEarliestInsertion(in);
                             }
                             break;
                         default:
@@ -377,7 +377,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
 
 static inline void clearCand(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 bool buildCandidateList2(workTable *wt)
@@ -447,7 +447,7 @@ bool buildCandidateList2(workTable *wt)
                         if (!p->unk_2c)
                             goto next;
                         if (s->unk_19 != 2) {
-                            int t = p->unk_32 + p->unk_18 + s->unk_18;
+                            int t = p->unk_32 + p->issueLatency + s->issueLatency;
                             if (t > minRow)
                                 minRow = t;
                         }

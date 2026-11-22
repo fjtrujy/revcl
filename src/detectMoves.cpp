@@ -20,7 +20,7 @@ static inline bool isPipeMode(workTable *wt)
 
 static inline void dumpMove(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 bool detectMoves(Program *p)

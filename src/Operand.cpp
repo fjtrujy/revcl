@@ -354,7 +354,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             }
             buf += formatIntoBuffer(buf, "%s", s);
         } else {
-            if (func_08070300(unk_05) == 2)
+            if (decodeImmediateCategory(unk_05) == 2)
                 buf += formatIntoBuffer(buf, "%d", imm->i);
             else
                 buf += formatIntoBuffer(buf, "0x%08x", imm->u);
@@ -436,7 +436,7 @@ bool Operand::resetFlowState()
 
 static inline bool resetOperandLock(OperandLock *lock)
 {
-    return lock->func_0805bcc4();
+    return lock->resetLock();
 }
 
 bool Operand::resetOptimizationSlots()
@@ -1272,7 +1272,7 @@ const char *opKindName(int kind)
     return s;
 }
 
-int func_08057a34(int kind)
+int registerClassForOperandKind(int kind)
 {
     switch (kind) {
     case 1:
@@ -1391,7 +1391,7 @@ char *Operand::emitExpectedOperandType(bool flag, char *buf)
     case 14: buf += formatIntoBuffer(buf, "vf_regy"); break;
     case 15: buf += formatIntoBuffer(buf, "vf_regz"); break;
     case 16: buf += formatIntoBuffer(buf, "vf_regw"); break;
-    case 27: buf += formatIntoBuffer(buf, "IMMEDIATE(%s)", func_0806a33c(unk_05)); break;
+    case 27: buf += formatIntoBuffer(buf, "IMMEDIATE(%s)", immediateTypeName(unk_05)); break;
     case 28: buf += formatIntoBuffer(buf, "(vi_reg)"); break;
     case 29: buf += formatIntoBuffer(buf, "OFFSET(vi_reg)"); break;
     case 30: buf += formatIntoBuffer(buf, "(vi_reg)[x/y/z/w]"); break;
@@ -1425,8 +1425,8 @@ bool func_08057d9c(int kind)
 
 int Operand::getRegFrom(Operand *src)
 {
-    int a = func_08057a34(operandKind);
-    int b = func_08057a34(src->operandKind);
+    int a = registerClassForOperandKind(operandKind);
+    int b = registerClassForOperandKind(src->operandKind);
     if (b != a) {
         reportError("incompatible type request getting type for operand\n");
         return 0;

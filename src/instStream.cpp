@@ -2,7 +2,7 @@
 #include "instStream.h"
 
 bool isReferencedLabel(Program *p, char *name);
-bool func_0806f4e8(Program *p, char *name);
+bool isExportedSymbol(Program *p, char *name);
 
 instStream::instStream()
 {
@@ -162,12 +162,12 @@ const char *istEndTypeName(int t)
 
 const char *istBranchTypeName(int t)
 {
-    return func_08055254(t);
+    return branchTypeNameByCode(t);
 }
 
 const char *instStream::branchTypeName()
 {
-    return func_08055254(branchType);
+    return branchTypeNameByCode(branchType);
 }
 
 const char *istStartTypeName(int t)
@@ -272,7 +272,7 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
     }
     for (mNode *n = labels.head; n; n = n->next) {
         if (n->name && (isReferencedLabel(owningProgram, n->name)
-                          || func_0806f4e8(owningProgram, n->name) || n->flags))
+                          || isExportedSymbol(owningProgram, n->name) || n->flags))
             buf += formatIntoBuffer(buf, "%s:\n", n->name);
     }
     if (passThroughText) {
@@ -471,10 +471,10 @@ bool instStream::isOutsideRawMode()
     return true;
 }
 
-bool instStream::func_0806da58()
+bool instStream::hasSafeTrailingInstructions()
 {
     if (workTablePtr)
-        return workTablePtr->func_08073854();
+        return workTablePtr->hasSafeTrailingInstructions();
     return false;
 }
 

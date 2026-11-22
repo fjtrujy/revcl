@@ -45,7 +45,7 @@ static inline bool testTstore_inl(Program *p, unsigned *t, unsigned bit)
 
 static inline void dumpBackTrace(Program *p)
 {
-    func_0806ed78(p, 0);
+    dumpProgramStreamsAndRegisters(p, 0);
 }
 
 bool doBackTrace(Program *p, instStream *t, RegPoolEntry *reg, int part, int earliestUse, int ioMode, bool thruput)

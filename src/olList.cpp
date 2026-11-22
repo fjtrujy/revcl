@@ -13,7 +13,7 @@ void olList::validateOperandLocations()
         for (; p; p = p->next) {
             if (p->instruction) {
                 p->instruction->getOwningStream();
-                p->instruction->func_08054008(false);
+                p->instruction->dumpOperandDiagnostics(false);
             }
             n++;
         }
@@ -50,7 +50,7 @@ void ol_s::dumpInstructionContext()
 {
     if (instruction) {
         instruction->getOwningStream();
-        instruction->func_08054008(false);
+        instruction->dumpOperandDiagnostics(false);
     }
 }
 

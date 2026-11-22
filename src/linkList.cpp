@@ -5,7 +5,7 @@
 #include "Program.h"
 
 const char *linkTypeName(int type);
-bool func_0806f4e8(Program *p, char *name);
+bool isExportedSymbol(Program *p, char *name);
 const char *getUniqueName(Program *p);
 char *mprefix_del(const char *a, const char *b);
 

@@ -75,7 +75,7 @@ bool regRefLiveRange(regUse *ru, int part, int *s, int *e, bool *always)
 
 static inline bool isInternalLock(OperandLock *lk)
 {
-    return lk->unk_2d == 2;
+    return lk->ownerType == 2;
 }
 
 static inline bool isInternalIn(OperandLock *lk)
@@ -116,7 +116,7 @@ bool lockLiveRange(RegisterPartLockList *ll, OperandLock *out, int *s, int *e)
     } else {
         *e = -1;
     }
-    for (OperandLock *c = out->unk_0c; c; c = c->unk_08) {
+    for (OperandLock *c = out->parentOrChildren; c; c = c->nextSibling) {
         if (isInternalIn(c))
             continue;
         Instr *ci = c->ownerInstr();

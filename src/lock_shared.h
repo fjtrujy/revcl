@@ -13,7 +13,7 @@ extern bool quiet_080bbd98;
 
 static inline bool isRegLock(cls0805bcc4 *lk)
 {
-    return lk->unk_2d == 2;
+    return lk->ownerType == 2;
 }
 
 static inline void wrapRange(int &s, int &e)

@@ -288,7 +288,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     goto fail;
                 }
             } else
-                cls = func_08057a34(opd->operandKind);
+                cls = registerClassForOperandKind(opd->operandKind);
             RegPool *pool = GetRP(cls);
             if (!pool) {
                 reportError("oDecode: not find expected register ! regtype= '%d' operand = %d\n", cls, i);
@@ -409,7 +409,7 @@ fail:
         if (in) {
             reportUserMessage("couldn't decode instruction .. problem is at:\n");
             t->dumpSourceLine(cur);
-            if (in->func_080552a8(newSyntax, fmtBuf, g_080b34dc))
+            if (in->emitExpectedSyntax(newSyntax, fmtBuf, g_080b34dc))
                 reportUserMessage("expected format is: %s\n", fmtBuf);
             delete in;
             in = 0;
@@ -727,7 +727,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
             default:
                 reportError("iStream::ValidateSynthetics() - unhandled/unexpected synthetic type (%d)\n",
                               (unsigned char)in->syntheticKind);
-                in->func_08054008(false);
+                in->dumpOperandDiagnostics(false);
                 goto done;
             }
         } else if (p->proc.decodeMode == 3) {

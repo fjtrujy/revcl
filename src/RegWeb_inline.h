@@ -26,7 +26,7 @@ inline bool RegWeb::AddiTable(workTable *t)
     for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         if (!AddiInstr(in)) {
             reportError("RegWeb::AddiTable: failed to add an isn\n");
-            in->func_08054008(false);
+            in->dumpOperandDiagnostics(false);
             t->dump();
             return false;
         }
@@ -345,7 +345,7 @@ inline bool RegWeb::PatchITable(workTable *t)
         for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             if (!PatchInstr(in)) {
                 reportError("patchiTable - failed\n");
-                in->func_08054008(false);
+                in->dumpOperandDiagnostics(false);
                 goto fail;
             }
         }

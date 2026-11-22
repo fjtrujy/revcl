@@ -13,7 +13,7 @@ char *dupString(const char *s);
 
 static inline void dumpUtaInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 
@@ -80,5 +80,5 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
 }
 
 int branchLinkTypeForFlags(int flags);
-void func_0806ed78(Program *p, int a);
+void dumpProgramStreamsAndRegisters(Program *p, int a);
 bool fixupBtorBranch(Program *p, instStream *s, int *changed);

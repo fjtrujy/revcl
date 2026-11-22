@@ -7,7 +7,7 @@ void resetRange();
 
 static inline void dumpRawInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 bool workTable::prepRawTable()
@@ -65,7 +65,7 @@ bool workTable::prepRawTable()
             }
             if (in->parsedLoopId != -1) {
                 reportError("parseLid isn't cleared in prepTab\n");
-                in->func_08054008(false);
+                in->dumpOperandDiagnostics(false);
                 exitAfterCleanup(-1);
             }
             int lid = 0;

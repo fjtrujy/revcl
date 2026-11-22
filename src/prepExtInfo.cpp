@@ -309,7 +309,7 @@ success:
     return 1;
 branchBound:
     for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
-        if (in->func_08055ac4() == 0xa5)
+        if (in->opcodeId() == 0xa5)
             in->raiseExternalOutputConstraint(2);
     goto success;
 }

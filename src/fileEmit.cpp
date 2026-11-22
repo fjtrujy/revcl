@@ -104,7 +104,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 (*p1)++;
             (*p2)++;
         }
-        if (isEnd && !func_08073854()) {
+        if (isEnd && !hasSafeTrailingInstructions()) {
             (*p2)++;
             (*p1)++;
         }
@@ -154,7 +154,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         *p1 = 0;
         *p2 = 0;
         int end = rangeEnd;
-        if (isEnd && !func_08073854())
+        if (isEnd && !hasSafeTrailingInstructions())
             end++;
         wtRow blank;
         blank.clearEntries();

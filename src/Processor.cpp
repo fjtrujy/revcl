@@ -358,7 +358,7 @@ RegPoolEntry *findRegisterByGlobalIndex(int idx)
 
 RegPoolEntry *getOperandZeroReg(int kind)
 {
-    RegPool *pool = getRP(func_08057a34(kind));
+    RegPool *pool = getRP(registerClassForOperandKind(kind));
     if (!pool) {
         reportError("getRP failed for operand getZeroReg\n");
         exitAfterCleanup(-1);

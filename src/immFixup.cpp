@@ -157,7 +157,7 @@ bool aaFixup(instStream *s)
             if (u && olOpIndex(ol) == aaUseOp(u) && opSlotMask(vop) == 1) {
                 if (hasAaData(vi)) {
                     reportError("instruction already has aa data loaded .. mode before\n");
-                    vi->func_08054008(false);
+                    vi->dumpOperandDiagnostics(false);
                     immValid(instrAaImm(vi));
                     return false;
                 }
@@ -200,7 +200,7 @@ bool aaFixup(instStream *s)
             if (u && olOpIndex(ol) == aaUseOp(u) && opSlotMask(vop) == 1) {
                 if (hasAaData(vi)) {
                     reportError("instruction already has aa data loaded.. mode after\n");
-                    vi->func_08054008(false);
+                    vi->dumpOperandDiagnostics(false);
                     immValid(instrAaImm(vi));
                     return false;
                 }
@@ -415,7 +415,7 @@ bool func_08069e7c(Instr *in)
         if (in->expectedAliasLoopId < 0) {
             reportError("loop, epID<0 for operand in im fixup aaDstMode=%d..epMode=%d\n",
                           in->addressAliasDirection, in->expectedAliasLoopId);
-            in->func_08054008(false);
+            in->dumpOperandDiagnostics(false);
             exitAfterCleanup(-1);
         }
         ep = in->expectedAliasLoopId;
@@ -423,7 +423,7 @@ bool func_08069e7c(Instr *in)
         if (in->expectedAliasLoopId >= 0) {
             reportError("nonloop, epID>=0 for operand in im fixup aaDstmode=%d..epMode=%d\n",
                           in->addressAliasDirection, in->expectedAliasLoopId);
-            in->func_08054008(false);
+            in->dumpOperandDiagnostics(false);
             exitAfterCleanup(-1);
         }
         ep = 0;

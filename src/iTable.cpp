@@ -112,7 +112,7 @@ void workTable::dump()
     case 1:
     case 4:
         for (Instr *p = linearInstructions.head; p; p = p->unk_1c.unk_00)
-            p->func_08054008(false);
+            p->dumpOperandDiagnostics(false);
         break;
     case 3:
     case 5:
@@ -142,7 +142,7 @@ void workTable::dump()
             r->refreshInstructionOperands(i);
         }
         for (Instr *p = pendingInstructions.head; p; p = p->unk_24.unk_00)
-            p->func_08054008(false);
+            p->dumpOperandDiagnostics(false);
         break;
     }
     default:
@@ -464,7 +464,7 @@ void workTable::dumpSynthetics()
 {
     for (Instr *i = linearInstructions.head; i; i = i->unk_1c.unk_00)
         if (i->syntheticKind)
-            i->func_08054008(false);
+            i->dumpOperandDiagnostics(false);
 }
 
 bool workTable::clearClones()
@@ -495,7 +495,7 @@ bool workTable::setTableRawMode(unsigned char mode)
 
 Instr *g_080de72c;
 
-void func_080737b8(Instr *in)
+void trackEarliestInsertion(Instr *in)
 {
     if (in) {
         if (!g_080de72c || in->insertionSerial < g_080de72c->insertionSerial)
@@ -516,7 +516,7 @@ bool workTable::resetFlowStalls()
     return 1;
 }
 
-bool workTable::func_08073854()
+bool workTable::hasSafeTrailingInstructions()
 {
     if (rangeStart < 0)
         return 0;

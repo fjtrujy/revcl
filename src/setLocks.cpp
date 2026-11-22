@@ -20,7 +20,7 @@ extern bool stagger_080b33ac;
 
 static inline void dumpLockInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 bool setLocks(Instr *in)
@@ -34,7 +34,7 @@ bool setLocks(Instr *in)
             for (int p = 0; p != r->partCount; p++) {
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *s = &op->parts[p];
-                    RegisterPartLockList *ll = s->unk_04;
+                    RegisterPartLockList *ll = s->ownerLockList;
                     s->setFrom(&in->position);
                     if (!ll->addOutputLock(s)) {
                         reportError("oh no - add output lock failed %d.%d\n", i, p);
@@ -48,7 +48,7 @@ bool setLocks(Instr *in)
             for (int p = 0; p != r->partCount; p++) {
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *s = &op->parts[p];
-                    RegisterPartLockList *ll = s->unk_04;
+                    RegisterPartLockList *ll = s->ownerLockList;
                     s->setFrom(&in->position);
                     if (!ll->addInputLock(s)) {
                         reportError("SetLocks: oh no - add input lock failed %d.%d\n", i, p);
@@ -74,7 +74,7 @@ bool undoLocks(Instr *in)
                 op->parts[p].unk_52[0] = 0;
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *s = &op->parts[p];
-                    if (!s->unk_04->undoOutputLock(s))
+                    if (!s->ownerLockList->undoOutputLock(s))
                         return false;
                 }
             }
@@ -83,7 +83,7 @@ bool undoLocks(Instr *in)
             for (int p = 0; p != r->partCount; p++) {
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *s = &op->parts[p];
-                    if (!s->unk_04->undoInputLock(s))
+                    if (!s->ownerLockList->undoInputLock(s))
                         return false;
                 }
             }
@@ -107,7 +107,7 @@ int checkLocks(Instr *in, short *pos, int *minPos)
         for (int p = 0; p != r->partCount; p++) {
             if ((op->componentMask >> p) & 1) {
                 OpSlot *s = &op->parts[p];
-                RegisterPartLockList *ll = s->unk_04;
+                RegisterPartLockList *ll = s->ownerLockList;
                 if (*minPos < ll->unk_00) {
                     ret |= 0x80000;
                     *minPos = ll->unk_00;
@@ -124,14 +124,14 @@ int checkLocks(Instr *in, short *pos, int *minPos)
                             o->parts[p].unk_52[0] = 1;
                             o->parts[p].unk_50++;
                         }
-                        func_080737b8(oi);
-                        oi->func_08054008(false);
+                        trackEarliestInsertion(oi);
+                        oi->dumpOperandDiagnostics(false);
                     } else
                         reportWarning("failed to get setting operand .. so it's a regref??\n");
                     *minPos = 30000;
                     goto done;
                 }
-                if (s->unk_1c) {
+                if (s->pairedLock) {
                     OperandLock *par = s->getParent();
                     if (!par)
                         exitAfterCleanup(0);
@@ -149,9 +149,9 @@ int checkLocks(Instr *in, short *pos, int *minPos)
         for (int p = 0; p != r->partCount; p++) {
             if ((op->componentMask >> p) & 1) {
                 OpSlot *s = &op->parts[p];
-                RegisterPartLockList *ll = op->parts[p].unk_04;
+                RegisterPartLockList *ll = op->parts[p].ownerLockList;
                 if (op->parts[p].unk_50) {
-                    int v = ll->func_0805c938(op->parts[p].unk_50);
+                    int v = ll->maxConstraintOfFirstOutputs(op->parts[p].unk_50);
                     if (v > *minPos) {
                         ret |= 0x80000;
                         *minPos = v;
@@ -165,7 +165,7 @@ int checkLocks(Instr *in, short *pos, int *minPos)
                         reportError("late extern, loop overrun, but no loop\n");
                         abortAfterError();
                     }
-                    int d = *pos + s->unk_18 - g_080b336c;
+                    int d = *pos + s->issueLatency - g_080b336c;
                     if (d > 0) {
                         ll->unk_00 = d;
                         Instr *e = ll->earliestExt();
@@ -176,7 +176,7 @@ int checkLocks(Instr *in, short *pos, int *minPos)
                             in->leDump(i, p);
                             abortAfterError();
                         } else
-                            func_080737b8(e);
+                            trackEarliestInsertion(e);
                         *minPos = 30000;
                         goto done;
                     }
@@ -220,7 +220,7 @@ int canMoveLocks(Instr *in, short *pos)
             for (int p = 0; p != r->partCount; p++) {
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *s = &op->parts[p];
-                    ret |= s->unk_04->canMoveInputLock(s, pos, (op->componentMask >> p) & 1);
+                    ret |= s->ownerLockList->canMoveInputLock(s, pos, (op->componentMask >> p) & 1);
                     if (ret)
                         goto done;
                 }
@@ -231,7 +231,7 @@ int canMoveLocks(Instr *in, short *pos)
             for (int p = 0; p != r->partCount; p++) {
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *s = &op->parts[p];
-                    ret |= s->unk_04->canMoveOutputLock(s, pos, (op->componentMask >> p) & 1);
+                    ret |= s->ownerLockList->canMoveOutputLock(s, pos, (op->componentMask >> p) & 1);
                     if (ret)
                         goto done;
                 }
@@ -264,7 +264,7 @@ bool moveLocks(Instr *const in, InstructionPosition *pos)
             for (int p = 0; p != r->partCount; p++) {
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *s = &op->parts[p];
-                    RegisterPartLockList *ll = s->unk_04;
+                    RegisterPartLockList *ll = s->ownerLockList;
                     s->setFrom(&in->position);
                     if (!ll->moveOutputLock(s)) {
                         reportError("oh no - move output lock failed %d.%d\n", i, p);
@@ -279,7 +279,7 @@ bool moveLocks(Instr *const in, InstructionPosition *pos)
             for (int p = 0; p != r->partCount; p++) {
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *s = &op->parts[p];
-                    RegisterPartLockList *ll = s->unk_04;
+                    RegisterPartLockList *ll = s->ownerLockList;
                     s->setFrom(&in->position);
                     if (!ll->moveInputLock(s)) {
                         reportError("oh no - move input lock failed %d.%d\n", i, p);
@@ -597,12 +597,12 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 Instr *oi = par->ownerInstr();
                 if (!oi)
                     continue;
-                int maxPos = pos->unk_00 - par->unk_18 - s->unk_18;
+                int maxPos = pos->unk_00 - par->issueLatency - s->issueLatency;
                 int start = pos->unk_00 - back;
                 if (!back)
                     start = oi->position.unk_00 + 1;
                 if (!par->unk_15)
-                    start -= par->unk_18;
+                    start -= par->issueLatency;
                 bool single = true;
                 if (oi->unk_13d1) {
                     start = oi->position.unk_00 + 1;
@@ -685,7 +685,7 @@ RegisterPartLockList *workTable::getLockList(RegPoolEntry *reg, int part)
         reportError("failed to set representative reg\n");
         return 0;
     }
-    ll->unk_02 = part;
+    ll->componentIndex = part;
     return ll;
 }
 
@@ -765,7 +765,7 @@ int func_0807de00(workTable *wt, Instr *in, InstructionPosition *pos)
                 Instr *oi = par->ownerInstr();
                 if (!oi)
                     continue;
-                int t = in->position.unk_00 - par->unk_18 - s->unk_18;
+                int t = in->position.unk_00 - par->issueLatency - s->issueLatency;
                 int oiRow = oi->position.unk_00;
                 if (t <= oiRow)
                     continue;
@@ -854,7 +854,7 @@ int func_0807e1f8(workTable *wt, Instr *in, InstructionPosition *pos)
                     continue;
                 if (oi->ramAccessType != 1 && oi->unk_13f0.unk_04 != 0)
                     continue;
-                int t = in->position.unk_00 - par->unk_18 - s->unk_18;
+                int t = in->position.unk_00 - par->issueLatency - s->issueLatency;
                 int oiRow = oi->position.unk_00;
                 if (t <= oiRow)
                     continue;

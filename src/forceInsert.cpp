@@ -62,7 +62,7 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
                     reportError("failed to get lock \n");
                     return false;
                 }
-                RegisterPartLockList *ll = lk->unk_04;
+                RegisterPartLockList *ll = lk->ownerLockList;
                 if (!ll) {
                     reportError("lock had no lock list\n");
                     return false;
@@ -87,7 +87,7 @@ bool workTable::forceInsert(Instr *in, InstructionPosition *pos)
                     reportError("failed to get lock \n");
                     return false;
                 }
-                RegisterPartLockList *ll = lk->unk_04;
+                RegisterPartLockList *ll = lk->ownerLockList;
                 if (!ll) {
                     reportError("lock had no lock list\n");
                     return false;

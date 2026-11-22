@@ -165,7 +165,7 @@ bool removeNops(Program *p, instStream *s)
                         ok = false;
                 }
             }
-            if (ok && rl < wt->getRangeEnd() - 1 && rl + 1 < m && row[1].func_08072494() == 1)
+            if (ok && rl < wt->getRangeEnd() - 1 && rl + 1 < m && row[1].getMinimumExtraLatencyAge() == 1)
                 ok = false;
             if (m < wt->getRangeEnd()) {
                 int tm = wt->ctime(m);

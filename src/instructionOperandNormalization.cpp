@@ -5,7 +5,7 @@
 int Instr::normalizeZeroSources()
 {
     int r = 0;
-    int opcode = func_08055ac4();
+    int opcode = opcodeId();
     if (opcode == 0x6c)
         goto swapSources;
     if (opcode > 0x6c)

@@ -51,7 +51,7 @@ bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int 
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
                 errorOccurred = !quiet_080bbd98;
-                in->func_08054008(false);
+                in->dumpOperandDiagnostics(false);
                 errorOccurred = saved;
             }
             continue;

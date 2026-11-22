@@ -11,7 +11,7 @@ void func_0807f308(Block *blk)
 {
     int n = 0;
     for (Instr *in = blk->moveListHead; in; in = in->unk_2c, n++)
-        in->func_08054008(false);
+        in->dumpOperandDiagnostics(false);
     if (n != blk->unk_50) {
         reportError("oh no! consistency\n");
         abortAfterError();

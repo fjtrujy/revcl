@@ -57,7 +57,7 @@ int dragDown(workTable *wt)
                                 if ((op->componentMask >> j) & 1) {
                                     int e = wt->rangeEnd - 1;
                                     if (sl->unk_2e)
-                                        e = sl->unk_3e - sl->unk_18;
+                                        e = sl->unk_3e - sl->issueLatency;
                                     if (e < mn)
                                         mn = e;
                                 }

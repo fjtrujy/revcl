@@ -102,7 +102,7 @@ public:
     bool usesFixedRawLayout();
     unsigned char getAllocMode();
     bool isOutsideRawMode();         // not raw mode
-    bool func_0806da58();
+    bool hasSafeTrailingInstructions();
     int checkStartEndStatus();          // out-of-line checkStartEnd
     bool disposeInputTable();
     bool processCmdSynth(Instr *i);

@@ -72,7 +72,7 @@ fail:
             row.entries[0].unk_00 = 0;
             if (r < 0) {
                 reportError("failed to uta emu instruction\n");
-                i->func_08054008(false);
+                i->dumpOperandDiagnostics(false);
                 goto fail;
             }
         }

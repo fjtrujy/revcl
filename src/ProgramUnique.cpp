@@ -4,7 +4,7 @@
 #include "instStream.h"
 #include "Program.h"
 
-bool func_0806f4e8(Program *p, char *name);
+bool isExportedSymbol(Program *p, char *name);
 const char *getUniqueName(Program *p);
 char *mprefix_del(const char *a, const char *b);
 
@@ -42,7 +42,7 @@ bool Program::doUnique()
                     reportError("failed to get name\n");
                     return false;
                 }
-                if (!func_0806f4e8(this, name)) {
+                if (!isExportedSymbol(this, name)) {
                     char *nn = mprefix_del(getUniqueName(this), name);
                     if (!nn) {
                         reportError("failed to cat name\n");
@@ -58,7 +58,7 @@ bool Program::doUnique()
     }
     for (s = streamHead; s; s = s->nextStream) {
         for (mNode *n = s->labels.head; n; n = n->next) {
-            if (!func_0806f4e8(this, n->name)) {
+            if (!isExportedSymbol(this, n->name)) {
                 char *nn = mprefix_del(getUniqueName(this), n->name);
                 if (!nn) {
                     reportError("failed to cat\n");
@@ -72,7 +72,7 @@ bool Program::doUnique()
         }
     }
     for (mNode *n = uniqueNamePrefixes.head; n; n = n->next) {
-        if (!func_0806f4e8(this, n->name)) {
+        if (!isExportedSymbol(this, n->name)) {
             char *nn = mprefix_del(getUniqueName(this), n->name);
             if (!nn) {
                 reportError("failed to cat\n");
@@ -87,7 +87,7 @@ bool Program::doUnique()
     return true;
 }
 
-bool Program::func_0806e878(const char *name)
+bool Program::hasStreamLabel(const char *name)
 {
     for (instStream *s = streamHead; s; s = s->nextStream) {
         if (s->labels.findByNameIgnoreCase(name))

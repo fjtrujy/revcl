@@ -140,7 +140,7 @@ bool regUseList::optReset()
     for (regUse *p = head; p; p = p->next) {
         for (int i = 0; i != 4; i++) {
             p->slots[i].assignmentPayload = 0;
-            p->slots[i].registerLock.func_0805bcc4();
+            p->slots[i].registerLock.resetLock();
         }
     }
     return true;
@@ -150,7 +150,7 @@ bool regUse::optReset()
 {
     for (int i = 0; i != 4; i++) {
         slots[i].assignmentPayload = 0;
-        slots[i].registerLock.func_0805bcc4();
+        slots[i].registerLock.resetLock();
     }
     return true;
 }
@@ -158,7 +158,7 @@ bool regUse::optReset()
 bool regUseSlot::optReset()
 {
     assignmentPayload = 0;
-    registerLock.func_0805bcc4();
+    registerLock.resetLock();
     return true;
 }
 
@@ -233,7 +233,7 @@ regUse *regUse::Clone()
         n->slots[i].earliestExternalCycle = slots[i].earliestExternalCycle;
         n->slots[i].latestExternalCycle = slots[i].latestExternalCycle;
         n->slots[i].assignmentPayload = 0;
-        n->slots[i].registerLock.func_0805bcc4();
+        n->slots[i].registerLock.resetLock();
     }
     return n;
 }

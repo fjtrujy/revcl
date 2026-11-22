@@ -12,7 +12,7 @@ int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 int branchLinkTypeForFlags(int flags);
 bool fixupBtorBranch(Program *p, instStream *s, int *changed);
-void func_0806ed78(Program *p, int a);
+void dumpProgramStreamsAndRegisters(Program *p, int a);
 
 
 bool resolveStreamBranches(Program *p)
@@ -136,7 +136,7 @@ bool resolveStreamBranches(Program *p)
         }
     } while (again);
 
-    func_0806ed78(p, 0);
+    dumpProgramStreamsAndRegisters(p, 0);
     for (s = p->streamHead; s; s = s->nextStream) {
         Instr *br = s->getBranch();
         if (br && br->branchLabelTags) {
@@ -165,7 +165,7 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
         br->leDump();
         return false;
     }
-    br->func_08054008(false);
+    br->dumpOperandDiagnostics(false);
     instStream *t;
     for (t = p->streamHead; t; t = t->nextStream)
         t->visitState = 0;
@@ -189,7 +189,7 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
             }
             for (; in; in = in->unk_1c.unk_04) {
                 if (in->outputMaskForRegister(reg, 0xff)) {
-                    in->func_08054008(false);
+                    in->dumpOperandDiagnostics(false);
                     break;
                 }
             }
@@ -209,9 +209,9 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
                     }
                 } else if (!br->branchLabelTags) {
                     reportError("VCL has found a branch to register at :\n");
-                    br->func_08054008(false);
+                    br->dumpOperandDiagnostics(false);
                     reportError("that's apparently set by:\n");
-                    in->func_08054008(false);
+                    in->dumpOperandDiagnostics(false);
                     reportError("unfortunately vcl can't figure out where the branch should go..\n");
                     reportError("try adding a tag list to the branch\n");
                     return false;

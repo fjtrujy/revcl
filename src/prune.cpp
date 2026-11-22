@@ -132,7 +132,7 @@ int tryPrune(Program *p)
 
 static inline void dumpPruneInstruction(Instr *in)
 {
-    in->func_08054008(false);
+    in->dumpOperandDiagnostics(false);
 }
 
 int tryPrune(instStream *s)

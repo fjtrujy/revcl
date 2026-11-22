@@ -319,7 +319,7 @@ bool doRawAndSynth(Program *p, int smart)
             case 2:
                 if (!assignLocalRegisters(p, wt)) {
                     reportError("failed to assign reg for vsm table!\n");
-                    func_0806ed78(p, 0);
+                    dumpProgramStreamsAndRegisters(p, 0);
                     reportError("here is %s\n", s->streamName());
                     return false;
                 }

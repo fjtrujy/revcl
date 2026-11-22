@@ -170,5 +170,5 @@ regUseSlot::regUseSlot()
     earliestExternalCycle = -1;
     latestExternalCycle = -1;
     assignmentPayload = 0;
-    registerLock.func_0805bcc4();
+    registerLock.resetLock();
 }
