@@ -6,47 +6,47 @@ bool func_0806f4e8(Program *p, char *name);
 
 instStream::instStream()
 {
-    unk_290.clear();
+    stats.clear();
     unk_2d8 = 0;
     unk_144 = 0;
     unk_140 = 0;
     unk_2b8 = 0;
     unk_2ba = 0;
-    unk_2e0 = -1;
-    unk_2e4 = -1;
+    dependencyLength = -1;
+    logicalLength = -1;
     unk_2bc = 0x4000;
     unk_2dc = 0;
     unk_268 = 0;
     unk_26c = 0;
     unk_2c4 = 0;
-    unk_270 = 0;
-    unk_274 = 0;
+    knownMinimumLoopCount = 0;
+    safeMinimumLoopCount = 0;
     unk_2c8 = -1;
-    unk_238 = 0;
-    unk_2d0 = 0;
+    traceStore = 0;
+    endDirectiveText = 0;
     nextStream = 0;
     previousStream = 0;
-    unk_2c0 = 0;
-    unk_2c2 = 0;
+    streamId = 0;
+    streamSerial = 0;
     unk_2c6 = 0;
     owningProgram = 0;
     workTablePtr = 0;
-    unk_220 = 0;
-    unk_214 = 0;
-    unk_21c = 0;
-    unk_124 = 0;
+    savedTable = 0;
+    optimizedTable = 0;
+    emissionTable = 0;
+    passThroughText = 0;
     unk_2d6 = 0;
     unk_2d7 = 0;
     unk_2d4 = 0;
     unk_2d5 = 0;
-    unk_260 = 0;
+    participatesInStall = 0;
     unk_261 = 0;
     unk_262 = 0;
     unk_2b6 = -1;
     unk_2b4 = -1;
-    unk_2ce = 0;
-    unk_2cd = 1;
-    unk_2cc = 1;
+    branchType = 0;
+    endType = 1;
+    startType = 1;
     unk_00 = 0;
 }
 
@@ -59,38 +59,38 @@ bool instStream::reset()
 {
     unk_2b8 = 0;
     unk_2ba = 0;
-    unk_110.clearNodes();
-    unk_2c0 = -1;
+    labels.clearNodes();
+    streamId = -1;
     owningProgram = 0;
-    unk_2ce = 0;
-    if (unk_238)
-        delete[] unk_238;
-    unk_238 = 0;
-    if (unk_2d0)
-        delete[] unk_2d0;
-    unk_2d0 = 0;
-    unk_128.removeAll();
-    unk_134.removeAll();
-    if (unk_124)
-        delete[] unk_124;
-    unk_124 = 0;
+    branchType = 0;
+    if (traceStore)
+        delete[] traceStore;
+    traceStore = 0;
+    if (endDirectiveText)
+        delete[] endDirectiveText;
+    endDirectiveText = 0;
+    inputLinks.removeAll();
+    outputLinks.removeAll();
+    if (passThroughText)
+        delete[] passThroughText;
+    passThroughText = 0;
     return true;
 }
 
 void instStream::dump(int)
 {
-    unk_110.func_0804b534();
-    unk_128.dump();
+    labels.func_0804b534();
+    inputLinks.dump();
     canLoop();
     workTable *wt = workTablePtr;
     if (!wt) {
         reportWarning("iStream:: dump - null work table - defaulting to inputTable\n");
-        wt = &unk_148;
+        wt = &sourceTable;
     }
     wt->dump();
-    unk_134.dump();
-    int dep = func_0805f284();
-    int log = func_0805f29c();
+    outputLinks.dump();
+    int dep = getRecordedDependencyLength();
+    int log = getRecordedLogicalLength();
     // length print compiled out in this build
     if (dep > 0 || log > 0) {
     }
@@ -102,9 +102,9 @@ void instStream::zeroStats()
         reportError("no work table set for zeroStats!\n");
         exitAfterCleanup(-1);
     }
-    for (Instr *i = workTablePtr->unk_88.head; i; i = i->unk_1c.unk_00)
-        i->unk_13f0.func_0805e340();
-    unk_278.func_0805e340();
+    for (Instr *i = workTablePtr->linearInstructions.head; i; i = i->unk_1c.unk_00)
+        i->unk_13f0.zeroAllCounters();
+    unk_278.zeroAllCounters();
 }
 
 bool instStream::iOwn(Instr *i)
@@ -113,7 +113,7 @@ bool instStream::iOwn(Instr *i)
         reportWarning("iStream::iOwn - passed a null pointer\n");
         return false;
     }
-    instStream *o = i->func_08054168();
+    instStream *o = i->getOwningStream();
     if (!o) {
         reportWarning("iStream::iOwn - no owner for instruction\n");
         return false;
@@ -129,9 +129,9 @@ bool instStream::patchLatencies()
         reportError("iStream::PatchLatencies - no work table\n");
         return false;
     }
-    for (Instr *i = wt->unk_88.head; i; i = i->unk_1c.unk_00) {
-        i->unk_13e4 = n;
-        if (!i->func_08052f84()) {
+    for (Instr *i = wt->linearInstructions.head; i; i = i->unk_1c.unk_00) {
+        i->linearOrderIndex = n;
+        if (!i->patchBranchLatencies()) {
             reportError("failed to patch latencies for instruction\n");
             return false;
         }
@@ -167,7 +167,7 @@ const char *istBranchTypeName(int t)
 
 const char *instStream::branchTypeName()
 {
-    return func_08055254(unk_2ce);
+    return func_08055254(branchType);
 }
 
 const char *istStartTypeName(int t)
@@ -189,7 +189,7 @@ const char *istStartTypeName(int t)
 
 const char *instStream::endTypeName()
 {
-    int t = unk_2cd;
+    int t = endType;
     const char *s = "ISTET_BAD";
     switch (t) {
     case 1:
@@ -211,7 +211,7 @@ const char *instStream::endTypeName()
 const char *instStream::startTypeName()
 {
     const char *s;
-    switch (unk_2cc) {
+    switch (startType) {
     case 1:
         s = "ISTST_NULL";
         break;
@@ -227,14 +227,14 @@ const char *instStream::startTypeName()
 
 bool instStream::canLoop()
 {
-    if (unk_2ce == 1 || unk_2ce == 5) {
-        instStream *s = unk_134.getStream(1);
+    if (branchType == 1 || branchType == 5) {
+        instStream *s = outputLinks.getStream(1);
         if (!s) {
             reportError("canLoop - bad return from outIST getFirst\n");
             exitAfterCleanup(-1);
         } else {
             int sv = s->unk_00;
-            unsigned char z = s->unk_2ce;
+            unsigned char z = s->branchType;
             z >>= 4;
             z >>= 4;
             if (z)
@@ -257,7 +257,7 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
     *p2 = 0;
     if (!buf)
         return 0;
-    if (!unk_110.nodeCount) {
+    if (!labels.nodeCount) {
         reportError("iStream::Emit: stream with no name\n");
         return 0;
     }
@@ -266,34 +266,34 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
         dumpEmitStream(this);
         return 0;
     }
-    if (unk_2cc != 2 && !unk_128.func_0806e4f0() && !unk_124) {
+    if (startType != 2 && !inputLinks.countMarkedLinks() && !passThroughText) {
         reportInfo("skip target emit. .coz it's no longer visible\n");
         return buf;
     }
-    for (mNode *n = unk_110.head; n; n = n->next) {
+    for (mNode *n = labels.head; n; n = n->next) {
         if (n->name && (isReferencedLabel(owningProgram, n->name)
                           || func_0806f4e8(owningProgram, n->name) || n->flags))
             buf += formatIntoBuffer(buf, "%s:\n", n->name);
     }
-    if (unk_124) {
-        buf += formatIntoBuffer(buf, "\n%s\n", unk_124);
+    if (passThroughText) {
+        buf += formatIntoBuffer(buf, "\n%s\n", passThroughText);
     } else {
-        if (!unk_21c) {
+        if (!emissionTable) {
             reportError("can't emit .. no table!\n");
             return 0;
         }
-        buf = unk_21c->emit(buf, a, p1, p2);
+        buf = emissionTable->emit(buf, a, p1, p2);
         if (!buf) {
             reportError("failed to build out table\n");
             return 0;
         }
-        if (unk_2cd == 4) {
+        if (endType == 4) {
             buf += formatIntoBuffer(buf, "\n");
-            if (!unk_2d0) {
+            if (!endDirectiveText) {
                 reportError("end string not set\n");
                 return 0;
             }
-            buf += formatIntoBuffer(buf, "         %s\n", unk_2d0);
+            buf += formatIntoBuffer(buf, "         %s\n", endDirectiveText);
         }
     }
     return buf;
@@ -309,23 +309,23 @@ bool instStream::flowReset()
         reportError("iStream::flowReset() - failed to dispose regrefs\n");
         return false;
     }
-    for (Instr *i = workTablePtr->unk_88.head; i; i = i->unk_1c.unk_00) {
-        if (!i->func_0805417c()) {
+    for (Instr *i = workTablePtr->linearInstructions.head; i; i = i->unk_1c.unk_00) {
+        if (!i->resetFlowDependencies()) {
             reportError("failed to init flow for isn\n");
             return false;
         }
     }
-    if (!workTablePtr->func_080737e4()) {
+    if (!workTablePtr->resetFlowStalls()) {
         reportError("failed to flow reset the iEntries for a work table\n");
         return false;
     }
-    unk_260 = 0;
+    participatesInStall = 0;
     return true;
 }
 
 const char *instStream::streamName()
 {
-    const char *candidateName = unk_110.firstNodeName();
+    const char *candidateName = labels.firstNodeName();
     const char *resolvedName = "UNNAMED_ISTREAM";
     if (candidateName)
         resolvedName = candidateName;
@@ -340,7 +340,7 @@ void instStream::dumpSynthetics()
 char *instStream::emitLabels(char *buf)
 {
     if (unk_2c8 >= 0) {
-        for (mNode *n = unk_110.head; n; n = n->next) {
+        for (mNode *n = labels.head; n; n = n->next) {
             if (n->name) {
                 const char *p = "__v_";
                 const char *s = n->name;
@@ -368,7 +368,7 @@ bool instStream::removeBranch()
         reportError("failed to delete branch from work table\n");
         return false;
     }
-    unk_2ce = 0;
+    branchType = 0;
     return true;
 }
 
@@ -396,7 +396,7 @@ RegPoolEntry *instStream::getBranchTargetRegister()
     return r;
 }
 
-unsigned char instStream::func_0806d908()
+unsigned char instStream::getCodeMode()
 {
     workTable *wt = workTablePtr;
     if (wt)
@@ -414,11 +414,11 @@ const char *instStream::getCodeModeName()
     return 0;
 }
 
-unsigned char instStream::func_0806d968()
+unsigned char instStream::getRawSchedulingMode()
 {
     workTable *wt = workTablePtr;
     if (wt)
-        return wt->func_08073754();
+        return wt->getTableRawMode();
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
@@ -433,7 +433,7 @@ static inline bool isFreeRawTable(workTable *wt)
     return isRawTable(wt) && (wt->unk_0a == 1 || wt->unk_0a == 3);
 }
 
-bool instStream::func_0806d9a0()
+bool instStream::usesFreeRawLayout()
 {
     workTable *wt = workTablePtr;
     if (!wt)
@@ -446,7 +446,7 @@ static inline bool isFixedRawTable(workTable *wt)
     return isRawTable(wt) && (wt->unk_0a == 2 || wt->unk_0a == 4);
 }
 
-bool instStream::func_0806d9d4()
+bool instStream::usesFixedRawLayout()
 {
     workTable *wt = workTablePtr;
     if (!wt)
@@ -463,7 +463,7 @@ unsigned char instStream::getAllocMode()
     return 0;
 }
 
-bool instStream::func_0806da34()
+bool instStream::isOutsideRawMode()
 {
     workTable *wt = workTablePtr;
     if (wt && wt->unk_09 == 3)
@@ -478,12 +478,12 @@ bool instStream::func_0806da58()
     return false;
 }
 
-int instStream::func_0806da80()
+int instStream::checkStartEndStatus()
 {
-    int st = unk_2cc;
+    int st = startType;
     int ok = 0;
     if (st == 1 || st == 2) {
-        int et = unk_2cd;
+        int et = endType;
         unsigned endTypeCount = 4;
         ok = (unsigned)(et - 1) < endTypeCount;
     }
@@ -496,38 +496,38 @@ bool instStream::processCmdSynth(Instr *i)
         reportError("processCmdSynth - passed a null ptr\n");
         return false;
     }
-    if (i->unk_1420 > 0) {
+    if (i->parsedLoopId > 0) {
         reportUserMessage("parseLid set for processCmdSynth\n");
         i->leDump();
         return false;
     }
-    switch ((unsigned char)i->unk_13cd) {
+    switch ((unsigned char)i->syntheticKind) {
     case 5:
-        if (unk_2cd != 1) {
+        if (endType != 1) {
             reportError("CONT directive encountered - but end mode isn't null\n");
             return false;
         }
-        unk_2cd = 2;
+        endType = 2;
         break;
     case 8:
-        if (!i->func_08054d64(0, &unk_270) || !i->func_08054d64(1, &unk_274)) {
+        if (!i->getImmediateOperand(0, &knownMinimumLoopCount) || !i->getImmediateOperand(1, &safeMinimumLoopCount)) {
             reportUserMessage("failed to decode the --LoopCS directive, one of the 2 expected operands failed to parse\n");
             i->leDump();
             return false;
         }
-        if (unk_270 <= 0) {
+        if (knownMinimumLoopCount <= 0) {
             reportUserMessage("for --LoopCS, the minimum known count (arg 1) must be must be >0\n");
             i->leDump();
             return false;
         }
-        if (unk_274 < 0) {
+        if (safeMinimumLoopCount < 0) {
             reportUserMessage("for --LoopCS, the minimum safe count (arg 2) must be must be >=0\n");
             i->leDump();
             return false;
         }
         break;
     case 9:
-        if (!i->func_08054d64(0, &unk_26c) || unk_26c < 0) {
+        if (!i->getImmediateOperand(0, &unk_26c) || unk_26c < 0) {
             reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopExtra. value must be >=0\n");
             i->leDump();
             return false;
@@ -535,7 +535,7 @@ bool instStream::processCmdSynth(Instr *i)
         break;
     case 10:
         if (unk_2d6) {
-            const char *s = unk_110.firstNodeName();
+            const char *s = labels.firstNodeName();
             const char *n = "UNNAMED_ISTREAM";
             if (s)
                 n = s;
@@ -548,7 +548,7 @@ bool instStream::processCmdSynth(Instr *i)
         reportUserMessage("unexpected synthetic instruction encountered\n");
         break;
     case 12:
-        if (!i->func_08054d64(0, &unk_268) || unk_268 <= 2) {
+        if (!i->getImmediateOperand(0, &unk_268) || unk_268 <= 2) {
             reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopAbs. value must be >=2\n");
             i->leDump();
             return false;
@@ -560,7 +560,7 @@ bool instStream::processCmdSynth(Instr *i)
 
 bool instStream::disposeInputTable()
 {
-    workTable *t = &unk_148;
+    workTable *t = &sourceTable;
     if (t == workTablePtr) {
         reportError("can't dispose of input table while it's the work table\n");
         abortAfterError();
@@ -568,7 +568,7 @@ bool instStream::disposeInputTable()
     return t->dispose();
 }
 
-void instStream::func_0806dc9c(instStream *src)
+void instStream::copySourceRecordsFrom(instStream *src)
 {
     unk_00 = src->unk_00;
     for (int i = 0; i != unk_00; i++)

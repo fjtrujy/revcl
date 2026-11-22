@@ -15,7 +15,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
         return false;
     }
     for (instStream *s = p->unk_d8; s; s = s->unk_254) {
-        if (s->unk_226 != 3) {
+        if (s->visitState != 3) {
             reportError("not end_match on the newmatchlist\n");
             return false;
         }
@@ -25,7 +25,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
             return false;
         }
         int maxKey = -1;
-        if (p->unk_b4) {
+        if (p->oddPipeMoveCount) {
             maxKey = getMaxPathKey(p, s);
             if (maxKey <= 0) {
                 reportError("error getting max path key\n");
@@ -37,7 +37,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
             reportError("an entry on the new match list had no regref?\n");
             return false;
         }
-        if (s->unk_226 != 3) {
+        if (s->visitState != 3) {
             reportError("newmatchlist had non -end-match \n");
             return false;
         }
@@ -52,7 +52,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                     return false;
                 }
             } else {
-                s->unk_226 = 2;
+                s->visitState = 2;
                 extended = true;
                 if (!extendBackTrace(p, s)) {
                     reportError("failed to extend this back\n");
@@ -70,14 +70,14 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                 int mx = s->unk_248;
                 if (mx < mn) {
                     reportError("max_ilen<min_ilen for a non-blocking instruction match.. %d < %d and logmax is %d\n",
-                                  mx, mn, p->unk_b4);
+                                  mx, mn, p->oddPipeMoveCount);
                     return false;
                 }
                 if (mn < 0) {
                     reportError("minimal length<0\n");
                     return false;
                 }
-                int pos = ol->unk_04->unk_1394;
+                int pos = ol->unk_04->scheduledCycle;
                 if (pos < 0) {
                     reportError("instruction not inserted or emu'd??\n");
                     return false;
@@ -90,13 +90,13 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                         return false;
                     }
                     if (min_s != max_s) {
-                        int mode = t->func_0806d968();
+                        int mode = t->getRawSchedulingMode();
                         if (mode >= 2 && mode <= 4) {
                             reportWarning("multiple same-sequence output operands match to a fixed stream %s..setting hazard flags\n",
                                           t->streamName());
                             tr->unk_12 |= 1 << part;
                             sr->unk_13 |= 1 << part;
-                            s->unk_228 = 1;
+                            s->hazardFlag = 1;
                         } else {
                             reportWarning("vcl found a RAW stream with a non blocking operation for '%s' where by going down differing paths, an operand was set in different places..\n",
                                           reg->registerName());
@@ -108,12 +108,12 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                             reportWarning("well - setting hiBits and localH this time..\n");
                             tr->unk_12 |= 1 << part;
                             sr->unk_13 |= 1 << part;
-                            s->unk_228 = 1;
+                            s->hazardFlag = 1;
                         }
                     }
                 }
                 if (min_s != last) {
-                    s->unk_228 = 1;
+                    s->hazardFlag = 1;
                     sr->unk_13 |= 1 << part;
                     tr->unk_12 |= 1 << part;
                 }

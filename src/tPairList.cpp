@@ -100,7 +100,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
     p->unk_e0 = 0;
     p->unk_e4 = 0;
     p->unk_b5 = 0;
-    p->unk_b4 = 0;
+    p->oddPipeMoveCount = 0;
     for (instStream *i = p->streamHead; i; i = i->nextStream) {
         if (!func_08061c34(i)) {
             reportError("failed to do a local init for the back trace\n");
@@ -112,8 +112,8 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
         return false;
     }
     for (instStream *i = p->unk_e4; i; i = i->unk_25c) {
-        i->unk_244 = 0;
-        i->unk_24c = 0;
+        i->shortestPathPredecessor = 0;
+        i->longestPathPredecessor = 0;
         i->unk_240 = 0;
         i->unk_248 = 0;
     }
@@ -140,7 +140,7 @@ bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, voi
             reportError("mismatch between regref reg and rg\n");
             return false;
         }
-        int dst_key = t->unk_23c;
+        int dst_key = t->destinationKey;
         int src_key = func_08061cb0(p, s);
         if (dst_key < 0) {
             reportError("dst_key is bad in tpair\n");

@@ -23,19 +23,19 @@ bool explodeRaw(Program *p)
             reportError("floBuild - there's no work table!\n");
             return false;
         }
-        if (!t->func_080741b4())
+        if (!t->getLoopSize())
             continue;
         if (t->unk_09 != 3) {
             reportError("explodeRaw: a non raw stream has a loop size set\n");
             return false;
         }
-        if (s->unk_270 <= 0) {
+        if (s->knownMinimumLoopCount <= 0) {
             reportWarning("setting known min count to 1 for %s\n", s->streamName());
-            s->unk_270 = 1;
+            s->knownMinimumLoopCount = 1;
         }
-        if (s->unk_274 < 0) {
+        if (s->safeMinimumLoopCount < 0) {
             reportWarning("setting minimum safe count to 1000 for %s\n", s->streamName());
-            s->unk_274 = 10000;
+            s->safeMinimumLoopCount = 10000;
         }
         int r = func_08067e18(p, s);
         if (r < 0) {

@@ -24,7 +24,7 @@ char *func_0808750c(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         mods = "";
     int len = formatIntoBuffer(buf, "%s%s", info->mnemonic, mods);
     char *p = buf + len;
-    p = emitDestMask(p, (char)info->destinationMaskMode, in->unk_138f);
+    p = emitDestMask(p, (char)info->destinationMaskMode, in->destinationMask);
     if (!p) {
         reportError("failed to emit inst mods\n");
         return 0;
@@ -41,7 +41,7 @@ char *func_0808750c(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         p = op->Emit(p, upper, b);
         if (!p) {
             reportError("failed to emit operand\n");
-            op->func_0805665c(0);
+            op->diagnoseOperand(0);
             reportError("from\n");
             dumpEmitInstruction(in);
             return 0;
@@ -57,11 +57,11 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
     if (!mods)
         mods = "";
     if (in->unk_1391) {
-        if ((in->unk_1388 >> 4) & 1) {
+        if ((in->branchFlags >> 4) & 1) {
             reportError("can't reverse sense of a likely branch at the emit stage\n");
             return 0;
         }
-        info = func_0806bf8c(info->reverseSenseMnemonic, false);
+        info = findOpcodeInfoByMnemonic(info->reverseSenseMnemonic, false);
         if (!info) {
             reportError("failed to find sense reversing instruction\n");
             return 0;
@@ -69,7 +69,7 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
     }
     int len = formatIntoBuffer(buf, "%s%s", info->mnemonic, mods);
     char *p = buf + len;
-    p = emitDestMask(p, (char)info->destinationMaskMode, in->unk_138f);
+    p = emitDestMask(p, (char)info->destinationMaskMode, in->destinationMask);
     if (!p) {
         reportError("failed to generate instruction mod string\n");
         return 0;
@@ -86,7 +86,7 @@ char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b,
         p = op->Emit(p, upper, b);
         if (!p) {
             reportError("failed to emit operand\n");
-            op->func_0805665c(0);
+            op->diagnoseOperand(0);
             reportError("from\n");
             dumpEmitInstruction(in);
             return 0;

@@ -1,6 +1,6 @@
 #include "loadStalls_shared.h"
 
-wtRow *workTable::func_080724f0(int rowIndex)
+wtRow *workTable::getRowByIndex(int rowIndex)
 {
     if (!unk_2c)
         return 0;

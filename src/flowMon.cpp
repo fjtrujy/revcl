@@ -44,7 +44,7 @@ bool func_08060018(Program *p, bool b)
             reportError("build dependency - failed to %s stream..\n", s->getCodeModeName());
             return false;
         }
-        if (!s->func_0806563c(b, true)) {
+        if (!s->buildForwardDependencies(b, true)) {
             reportError("failed to build memory dependencies for ist\n");
             return false;
         }
@@ -80,7 +80,7 @@ bool func_08060018(Program *p, bool b)
                 if (!hot && !mode)
                     continue;
                 int depth;
-                if (s->func_0806d908() == 3)
+                if (s->getCodeMode() == 3)
                     depth = ru->unk_20[part].unk_3c[2];
                 else {
                     depth = 30000;

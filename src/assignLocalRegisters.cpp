@@ -43,9 +43,9 @@ bool assignLocalRegisters(Program *p, workTable *wt)
         reportError(assignLocalBadTableError);
         exitAfterCleanup(-1);
     }
-    if (wt->unk_94.count) {
-        reportError(assignLocalPendingError, wt->unk_94.count);
-        for (Instr *in = wt->unk_94.head; in; in = in->unk_24.unk_00)
+    if (wt->pendingInstructions.count) {
+        reportError(assignLocalPendingError, wt->pendingInstructions.count);
+        for (Instr *in = wt->pendingInstructions.head; in; in = in->unk_24.unk_00)
             in->func_08054008(false);
         exitAfterCleanup(-1);
     }
@@ -63,7 +63,7 @@ bool assignLocalRegisters(Program *p, workTable *wt)
         exitAfterCleanup(-1);
     }
     if (len) {
-        setRange(wt->func_0807411c(), wt->func_080741c0(), wt->func_080741b4());
+        setRange(wt->getRangeStart(), wt->getRangeEnd(), wt->getLoopSize());
         for (unsigned i = 0; i != 12; i++) {
             RegPool *rp = GetRP(i);
             if (rp && !rp->func_08088e54(wt))
@@ -109,7 +109,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         bool on = (mask >> i) & 1;
         if (!on)
             continue;
-        RegisterPartLockList *ll = (RegisterPartLockList *)reg->func_0805a908(i);
+        RegisterPartLockList *ll = (RegisterPartLockList *)reg->getPartPayload(i);
         if (!ll) {
             reportError(buildTTabLockListError, reg->registerName());
             return false;
@@ -342,11 +342,11 @@ bool genRegPool::set_in_aTab(regUse *ru)
             int set = 0;
             for (int i = 0; i != reg->partCount; i++) {
                 bool on = (mask >> i) & 1;
-                if (on && !reg->func_0805a908(i)) {
+                if (on && !reg->getPartPayload(i)) {
                     reportError("failed to get rll\n");
                     return false;
                 }
-                RegisterPartLockList *ll = (RegisterPartLockList *)reg->func_0805a908(i);
+                RegisterPartLockList *ll = (RegisterPartLockList *)reg->getPartPayload(i);
                 if (ll) {
                     if (!ll->unk_03)
                         set |= 1 << i;

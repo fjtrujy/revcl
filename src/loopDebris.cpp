@@ -130,7 +130,7 @@ instStream *loopDebris::getEpiStream(int i)
 
 static inline void setDebrisMode(workTable *wt, unsigned char mode)
 {
-    wt->func_08073774(mode);
+    wt->setTableRawMode(mode);
 }
 
 epiRec *loopDebris::allocPro(int size)
@@ -205,7 +205,7 @@ epiRec *loopDebris::allocMain(int size)
     }
     m_main.unk_14->unk_2c4 = 5;
     m_main.unk_18->unk_08 = unk_14;
-    m_main.unk_18->func_08073774(2);
+    m_main.unk_18->setTableRawMode(2);
     return &m_main;
 }
 
@@ -218,7 +218,7 @@ epiRec *loopDebris::allocEnter(int size)
     }
     m_enter.unk_14->unk_2c4 = 4;
     m_enter.unk_18->unk_08 = 2;
-    m_enter.unk_18->func_08073774(1);
+    m_enter.unk_18->setTableRawMode(1);
     return &m_enter;
 }
 
@@ -231,7 +231,7 @@ epiRec *loopDebris::allocExit(int size)
     }
     m_exit.unk_14->unk_2c4 = 1;
     m_exit.unk_18->unk_08 = 2;
-    m_exit.unk_18->func_08073774(1);
+    m_exit.unk_18->setTableRawMode(1);
     return &m_exit;
 }
 
@@ -307,12 +307,12 @@ bool epiRec::init(int size, const char *name)
         reportError("setup: failed to get iStream\n");
         exitAfterCleanup(-1);
     }
-    mNode *n = unk_14->unk_110.findOrAppendByExactName(name);
+    mNode *n = unk_14->labels.findOrAppendByExactName(name);
     if (!n) {
         reportError("failed to add a name to iStream\n");
         exitAfterCleanup(-1);
     }
-    workTable *wt = &unk_14->unk_148;
+    workTable *wt = &unk_14->sourceTable;
     if (!wt->init(3, size)) {
         reportError("failed to init it_pro for size %d\n", size);
         exitAfterCleanup(-1);
@@ -320,9 +320,9 @@ bool epiRec::init(int size, const char *name)
     instStream *s = unk_14;
     int serial = g_streamSerial;
     unk_18 = wt;
-    s->unk_2c2 = serial;
+    s->streamSerial = serial;
     wt->unk_10 = unk_14;
-    unk_14->workTablePtr = &unk_14->unk_148;
+    unk_14->workTablePtr = &unk_14->sourceTable;
     return true;
 }
 
@@ -340,7 +340,7 @@ const char *epiRec::getName()
 int func_08067e18(Program *p, instStream *s)
 {
     workTable *wt = s->getTable();
-    if (!wt->func_080741b4()) {
+    if (!wt->getLoopSize()) {
         reportError("BuildEP - loopsize not set in input stream\n");
         return -1;
     }
@@ -366,7 +366,7 @@ int func_08067e18(Program *p, instStream *s)
         reportError("had no exit istream\n");
         exitAfterCleanup(-1);
     }
-    instStream *fall = s->unk_134.getStream(0);
+    instStream *fall = s->outputLinks.getStream(0);
     if (!fall) {
         reportError("epipro:failed to get default output stream\n");
         return -1;
@@ -541,7 +541,7 @@ int func_08067e18(Program *p, instStream *s)
         reportError("failed to add after\n");
         exitAfterCleanup(-1);
     }
-    if (!enter->unk_110.transferNodesFrom(&s->unk_110)) {
+    if (!enter->labels.transferNodesFrom(&s->labels)) {
         reportError("failed to grab names from the source stream during epipro\n");
         exitAfterCleanup(-1);
     }
@@ -592,22 +592,22 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     }
     g_streamSerial++;
     workTable *wt = s->getTable();
-    if (!wt->func_080741b4()) {
+    if (!wt->getLoopSize()) {
         reportError("work table is not looping!\n");
         return false;
     }
-    int count = s->unk_270;
-    if (count <= 0 || (count = s->unk_274) < 0) {
+    int count = s->knownMinimumLoopCount;
+    if (count <= 0 || (count = s->safeMinimumLoopCount) < 0) {
         reportError("ExplodeLoop - called - but - known min/ known safe is bad (%d,%d)\n",
-                      s->unk_270, s->unk_274);
+                      s->knownMinimumLoopCount, s->safeMinimumLoopCount);
         return false;
     }
     int mlid = wt->unk_3c;
     int clid = wt->getCondLid();
-    int lsz = wt->func_080741b4();
-    bool userFixed = wt->func_08073754() == 4;
+    int lsz = wt->getLoopSize();
+    bool userFixed = wt->getTableRawMode() == 4;
     initDebris(ld, baseName, (unsigned char)wt->unk_08, userFixed);
-    Instr *cond = wt->func_08073060();
+    Instr *cond = wt->getConditionalBranch();
     if (mlid < 0 || clid < 0 || clid > mlid || !cond) {
         reportError("iTable::BuildEPStreams - well - mlid or clid or no conditional ? something was wrong [clid=%d mlid=%d] %x\n",
                       clid, mlid, cond);
@@ -625,7 +625,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         return false;
     }
 
-    count = s->unk_270;
+    count = s->knownMinimumLoopCount;
     --count;
     int last = count + clid;
     if (last >= mlid)
@@ -653,11 +653,11 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
             pro->unk_00 = i + 1;
             pro->unk_04 = i - clid + 1;
             if (i == last)
-                pro->unk_14->unk_2ce = 5;
-            Instr *c = pro->unk_18->func_08073060();
+                pro->unk_14->branchType = 5;
+            Instr *c = pro->unk_18->getConditionalBranch();
             pro->unk_1c = c;
             if (c) {
-                pro->unk_14->unk_2ce = 5;
+                pro->unk_14->branchType = 5;
                 c->unk_1391 = 1;
             }
             last = i + 1;
@@ -682,11 +682,11 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     m->unk_0c = mlid;
     m->unk_00 = mlid + 1;
     m->unk_04 = mlid + 1;
-    m->unk_14->unk_2ce = 5;
+    m->unk_14->branchType = 5;
     m->unk_14->unk_144 = s->unk_144;
     m->unk_14->unk_140 = s->unk_140;
-    m->unk_14->func_0806dc9c(s);
-    m->unk_1c = m->unk_18->func_08073060();
+    m->unk_14->copySourceRecordsFrom(s);
+    m->unk_1c = m->unk_18->getConditionalBranch();
     if (!m->unk_1c) {
         reportError("mainloop had no conditional\n");
         exitAfterCleanup(-1);
@@ -770,8 +770,8 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
             exitAfterCleanup(-1);
         }
         if (i != nEpi - 1) {
-            ist->unk_2ce = 1;
-            Instr *b = new Instr(func_0806bf8c("b", false));
+            ist->branchType = 1;
+            Instr *b = new Instr(findOpcodeInfoByMnemonic("b", false));
             if (!b) {
                 reportError("failed to get branch\n");
                 return false;
@@ -780,11 +780,11 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
                 reportError("failed to change immediate\n");
                 return false;
             }
-            b->unk_13e8.unk_03 = 0;
-            b->unk_1420 = -1;
+            b->position.unk_03 = 0;
+            b->parsedLoopId = -1;
             b->setOwner((cls_unk30 *)t);
             e->unk_1c = b;
-            wtRow *row = t->func_080724f0(t->func_080741c0() - 2);
+            wtRow *row = t->getRowByIndex(t->getRangeEnd() - 2);
             if (!row) {
                 reportError("failed to get ie for branch insert\n");
                 return false;

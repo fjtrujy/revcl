@@ -54,7 +54,7 @@ bool doLinear(Program *p, int smart)
 {
     instStream *s;
     while ((s = selectUninsertedStream(p)) != 0) {
-        if (s->func_0806d908() != 1) {
+        if (s->getCodeMode() != 1) {
             reportError("doLinear() - asked to process a non-uta\n");
             return false;
         }
@@ -72,7 +72,7 @@ bool doLinear(Program *p, int smart)
             reportError("flowMon::Optimise() - couldn't get work table for %s!\n", s->streamName());
             return false;
         }
-        if (wt->func_080741b4()) {
+        if (wt->getLoopSize()) {
             reportError("loop size set for linear table opt %s\n", s->streamName());
             return false;
         }
@@ -132,7 +132,7 @@ bool doLinear(Program *p, int smart)
                                 delete nt;
                         } else
                             best = nt;
-                        if (best && best->getPhysicalLen() <= s->func_0805f284())
+                        if (best && best->getPhysicalLen() <= s->getRecordedDependencyLength())
                             break;
                         continue;
                     }
@@ -154,7 +154,7 @@ bool doLinear(Program *p, int smart)
             reportError("set opt table - failed \n");
             return false;
         }
-        reportInfo("Opt::Linear %16s  %d/%d\n", s->streamName(), len, s->func_0805f284());
+        reportInfo("Opt::Linear %16s  %d/%d\n", s->streamName(), len, s->getRecordedDependencyLength());
     }
     return true;
 }
@@ -168,14 +168,14 @@ bool doLoop(Program *p, int smart)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
         int i;
-        if (!s->canLoop() || !s->unk_270)
+        if (!s->canLoop() || !s->knownMinimumLoopCount)
             continue;
         workTable *best = 0;
         if (!prepExtInfo(p, s, 1)) {
             reportError("failed to prep external info for stream\n");
             return false;
         }
-        int size = s->func_0805f29c();
+        int size = s->getRecordedLogicalLength();
         size += s->unk_26c;
         if (s->unk_268 > 1) {
             if (size > s->unk_268)
@@ -239,12 +239,12 @@ bool doLoop(Program *p, int smart)
                             exitAfterCleanup(-1);
                         }
                         if (!assignLocalRegisters(p, nt))
-                            reportWarning("failed to assign reg size would be %d!\n", nt->func_080741b4());
+                            reportWarning("failed to assign reg size would be %d!\n", nt->getLoopSize());
                         else {
-                            s->unk_04[i].unk_04 = s->func_0805f29c();
+                            s->unk_04[i].unk_04 = s->getRecordedLogicalLength();
                             s->unk_04[i].unk_08 = nt->unk_3c;
                             s->unk_04[i].unk_0c = nt->getCondLid();
-                            s->unk_04[i].unk_00 = nt->func_080741b4();
+                            s->unk_04[i].unk_00 = nt->getLoopSize();
                             if (best && best->unk_3c < nt->unk_3c) {
                                 delete nt;
                                 nt = 0;
@@ -280,7 +280,7 @@ bool doLoop(Program *p, int smart)
             reportError("setOptTable failed\n");
             return false;
         }
-        reportInfo("Opt::Loop %16s  %d/%d\n", s->streamName(), best->func_080741b4(), s->func_0805f29c());
+        reportInfo("Opt::Loop %16s  %d/%d\n", s->streamName(), best->getLoopSize(), s->getRecordedLogicalLength());
     }
     return true;
 }
@@ -288,7 +288,7 @@ bool doLoop(Program *p, int smart)
 bool doRawAndSynth(Program *p, int smart)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (s->func_0806d908() == 3) {
+        if (s->getCodeMode() == 3) {
             if (!prepExtInfo(p, s, 0)) {
                 reportError("failed to prep external info for stream\n");
                 return false;
@@ -307,7 +307,7 @@ bool doRawAndSynth(Program *p, int smart)
                 reportError("failed to prepUta istream\n");
                 return false;
             }
-            if (!wt->doPostOpt(s->func_0806d968())) {
+            if (!wt->doPostOpt(s->getRawSchedulingMode())) {
                 reportError("failed to post opt after makeForce\n");
                 return false;
             }
@@ -335,7 +335,7 @@ bool doRawAndSynth(Program *p, int smart)
                 return false;
             }
         }
-        if (s->func_0806d908() == 4) {
+        if (s->getCodeMode() == 4) {
             workTable *wt = s->getTable();
             if (s->getAllocMode() != 2) {
                 reportError("flowMon::doLinear() - table hasn't had external allocation .. %s mode %d!\n",
@@ -351,9 +351,9 @@ bool doRawAndSynth(Program *p, int smart)
 bool relaxOpt(Program *p)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        switch (s->func_0806d908()) {
+        switch (s->getCodeMode()) {
         case 3: {
-            workTable *opt = s->unk_214;
+            workTable *opt = s->optimizedTable;
             if (!opt) {
                 reportError("relaxopt - no opt for %s\n", s->streamName());
                 return false;
@@ -364,12 +364,12 @@ bool relaxOpt(Program *p)
                 return false;
             }
             wt->dump();
-            for (Instr *i = s->getTable()->unk_88.head; i; i = i->unk_1c.unk_00) {
+            for (Instr *i = s->getTable()->linearInstructions.head; i; i = i->unk_1c.unk_00) {
                 i->unk_00 = 0;
                 i->unk_08 = 0;
                 i->unk_04 = 0;
             }
-            s->unk_214 = 0;
+            s->optimizedTable = 0;
             break;
         }
         case 4:
@@ -388,7 +388,7 @@ bool relaxOpt(Program *p)
 bool func_08079fdc(Program *p, int smart, bool sizeReduce)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (s->func_0806d908() == 3) {
+        if (s->getCodeMode() == 3) {
             if (!prepExtInfo(p, s, 0)) {
                 reportError("failed to prep external info for stream\n");
                 return false;
@@ -406,7 +406,7 @@ bool func_08079fdc(Program *p, int smart, bool sizeReduce)
                 reportError("failed to do initial reduction test\n");
                 return false;
             }
-            if (s->func_0806d9a0()) {
+            if (s->usesFreeRawLayout()) {
                 if (!func_0807e740(p, wt, s->unk_261, s->unk_262)) {
                     reportError("failed to linear reduce table\n");
                     return false;
@@ -416,7 +416,7 @@ bool func_08079fdc(Program *p, int smart, bool sizeReduce)
                     return false;
                 }
             }
-            if (!wt->doPostOpt(s->func_0806d968())) {
+            if (!wt->doPostOpt(s->getRawSchedulingMode())) {
                 wt->dump();
                 reportError("failed to post opt after makeForce\n");
                 return false;

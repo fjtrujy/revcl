@@ -374,6 +374,102 @@ owner-qualified field names**. The generated progress inventory now records
 offset-style fields out of 614. Function bodies, field types, struct layouts
 and historical translation-unit ordering have not been intentionally changed.
 
+## Extended instruction and stream reconstruction pass
+
+This larger pass groups **89 direct function renames and 68 owner-qualified
+field renames** across the instruction, operand, stream, link-graph,
+work-table, register-pool and opcode-access subsystems. It was performed on
+`refactor/semantic-naming-instruction-stream` after the preceding core-types
+PR was merged. No function-name preprocessor aliases were introduced.
+
+### Instruction and operand lifecycle
+
+- `Instr::validateOperands`, `isNop`, `getOwningStream`,
+  `resetFlowDependencies`, `clearTransientFlags`, and
+  `resetOptimizationState` are named from their function bodies and callers.
+- The input and output operand queries now expose direction explicitly:
+  `findInputOperand`, `findOutputOperand`, `collectInputRegisterMask`,
+  `collectOutputRegisterMask`, `hasLinkedOutputFrom`, and
+  `getFirstOutputLatency`. The immediate getter is `getImmediateOperand`.
+- `patchBranchLatencies`, `simplifyBranch`, and `normalizeZeroSources`
+  identify three separate branch/dependency-normalization operations.
+- Operand handling now provides `validateKindAndMask`, `diagnoseOperand`,
+  `resetFlowState`, `resetOptimizationSlots`,
+  `emitExpectedOperandType`, and `getRegisterNameOrNone`. The slot helpers
+  reset locks or clear operand locations, without changing their bodies.
+- Seventeen instruction fields were renamed from proven initialization and
+  use paths: `branchFlags`, `rawOnly`, `destinationMask`, `scheduledCycle`,
+  `predecessorDependencies`, `successorDependencies`, `syntheticKind`,
+  `ramAccessType`, `opcodeFlags`, `addressImmediateValue`,
+  `linearOrderIndex`, `position`, `hasExtraPredecessors`,
+  `specialRegisterReadMask`, `specialRegisterWriteMask`, `parsedLoopId`,
+  and `previousThroughputWriter`. For example, the forward-dependency
+  constructor writes predecessor/successor lists as a symmetric pair; the
+  instruction position is read by the insertion, scheduling and emitter
+  paths. Remaining `Instr` offset names were not guessed.
+
+### Instruction streams and graph links
+
+- The stream record describes incoming/outgoing graph links, source and
+  emission tables, back-trace state, and the flow's branch/start/end types.
+  Thirty fields now identify this information directly, including `labels`,
+  `passThroughText`, `inputLinks`, `outputLinks`, `sourceTable`,
+  `optimizedTable`, `emissionTable`, `savedTable`, `visitState`,
+  `traceStore`, `backtraceDependencyLength`, `streamId`, `streamSerial`,
+  `startType`, `endType`, `branchType`, `knownMinimumLoopCount`,
+  `safeMinimumLoopCount`, `dependencyLength` and `logicalLength`.
+- Stream methods now name the two RAW layout forms, scheduling modes,
+  recorded and clamped dependency lengths, forward-dependency building,
+  record copying, and start/end validation. These map directly to the mode
+  tests and link/dependency construction in `instStream.cpp`,
+  `gatherStats.cpp`, and `fDepClone.cpp`.
+- The intrusive stream graph uses `linkList::{head,tail,count}` and
+  `linkNode::{previous,next,otherStream,active,linkType}`. Constructor,
+  unlink, relink, graph traversal and link-type matching prove these names.
+  The still-undecoded `linkNode::unk_10` is deliberately not conflated with
+  `active` (`unk_11`). Link searches and marked-link counts have semantic
+  method names.
+
+### Work-table rows and register-pool lifecycle
+
+- `workTable` now names `linearInstructions`, `pendingInstructions`,
+  `completedInstructions`, `vectorMoveCount`, `oddPipeMoveCount`,
+  `evenPipeMoveCount` and `instructionCountsByPipe`; their queue and count
+  relationships are visible in `lists.cpp`, `iTable.cpp` and the move
+  insertion paths.
+- Accessor/helper names include the inclusive row lookup,
+  `getRangeStart`, `getRangeEnd`, `getLoopSize`, RAW scheduling mode
+  selection, the conditional branch query, and flow-stall reset.
+- `RegPool` has `registerClass`, `virtualHead`, `virtualTail`,
+  `virtualCount`, and `registerPrefix`; `RegPoolEntry::nameAliases` owns the
+  list used by both name lookup and register-name emission. The constructor
+  and virtual-register add/delete traversal provide the ownership evidence.
+  In `RegPool::Init`, the prefix assignment must explicitly use
+  `this->registerPrefix = registerPrefix` to avoid shadowing by the parameter.
+  A historical rebuild caught the accidental self-assignment during review;
+  fixing it restored the original executable SHA-256.
+- Register-part methods now have names for pending-location allocation,
+  state/timing reset, payload reads/writes, part cycling, register aliases
+  and clearing payload markers. The older and identical but distinct
+  reset functions remain numbered until their separate call semantics can
+  be established.
+
+### Opcode lookups and retained ambiguity
+
+`getOpcodeInfoById`, `findOpcodeInfoByMnemonic`, `getOpcodeId`,
+`findRegisterByGlobalIndex`, `isVuRegister`,
+`findAddressAliasDescriptor`, and `findAddressAliasUse` directly express
+their table-lookup behavior. The stat-counter methods now say whether they
+invalidate, zero, copy, or merge maxima. Methods whose bodies are empty or
+whose meaning remains ambiguous were intentionally left numbered.
+
+After this pass, the fixed-baseline report records **192 of 436 directly
+renamed functions** (244 still address-named) and **203 of 614 resolved
+offset-named fields** (411 still unresolved). Changes to actual instructions,
+ABI layouts, translation-unit ordering, and VUC were not intended. The
+historical stripped executable still matches SHA-256
+`83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274`.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout

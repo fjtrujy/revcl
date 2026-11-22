@@ -29,12 +29,12 @@ bool genRegPool::func_08088e54(workTable *t)
         reportError("failed to get itable in nassign - which is not really likely\n");
         return false;
     }
-    if (!func_08059cdc()) {
+    if (!resetPoolLocalAllocationState()) {
         reportError("failed to reset local allocation scheme for pool\n");
         return false;
     }
     setRangeFrom(t);
-    if (!initAlloc(t->func_0807411c(), t->func_080741c0())) {
+    if (!initAlloc(t->getRangeStart(), t->getRangeEnd())) {
         reportError("failed to set table range\n");
         return false;
     }
@@ -51,7 +51,7 @@ bool genRegPool::func_08088e54(workTable *t)
     }
     RegPoolEntry *todo = 0;
     Instr *in;
-    for (in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             RegPoolEntry *reg = op->unk_18;
@@ -115,7 +115,7 @@ bool genRegPool::func_08088e54(workTable *t)
         else
             todo = best->unk_40;
     }
-    for (in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
+    for (in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             RegPoolEntry *reg = op->unk_18;

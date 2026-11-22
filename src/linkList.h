@@ -6,34 +6,34 @@ class instStream;
 
 struct linkNode {
     char unk_00[4];
-    linkNode *unk_04;           // prev
-    linkNode *unk_08;           // next
-    instStream *unk_0c;         // other stream
-    char unk_10;                // marked
-    char unk_11;
+    linkNode *previous;
+    linkNode *next;
+    instStream *otherStream;
+    char unk_10;
+    char active;
     char unk_12[2];
-    int unk_14;                 // link type
+    int linkType;
 
     enum InitTag { INIT };
     linkNode();
     inline linkNode(InitTag)
     {
-        unk_14 = -1;
-        unk_04 = 0;
-        unk_08 = 0;
-        unk_0c = 0;
-        unk_11 = 1;
+        linkType = -1;
+        previous = 0;
+        next = 0;
+        otherStream = 0;
+        active = 1;
     }
     ~linkNode();
     // Next node (after this one) with the given link type.
-    linkNode *func_0806dd48(int type);
-    int func_0806e514();
+    linkNode *nextLinkOfType(int type);
+    int linkedStreamId();
 };
 
 struct linkList {
-    linkNode *unk_00;           // head
-    linkNode *unk_04;           // tail
-    int unk_08;                 // count
+    linkNode *head;
+    linkNode *tail;
+    int count;
     linkList();
     ~linkList();
     linkNode *findType(int type);
@@ -42,9 +42,9 @@ struct linkList {
     bool removeAll();
     bool relink(linkNode *n);
     bool unlink(linkNode *n);
-    linkNode *func_0806dff4(instStream *s, int type);
+    linkNode *findLinkToStream(instStream *s, int type);
     bool addNewRef(instStream *s, int type);
-    int func_0806e4f0();
+    int countMarkedLinks();
 };
 
 #endif

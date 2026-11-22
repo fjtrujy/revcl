@@ -51,7 +51,7 @@ Instr *getMove(int type, int)
             l->unk_08 = 0;
             l->reset();
             l->unk_29 = 0;
-            mr->moveRegister->func_0805a924(i, (VclPtrWord)l);
+            mr->moveRegister->setPartPayload(i, (VclPtrWord)l);
         }
         in->unk_2c = 0;
         in->unk_24.unk_04 = 0;
@@ -59,8 +59,8 @@ Instr *getMove(int type, int)
         in->unk_1c.unk_04 = 0;
         in->unk_1c.unk_00 = 0;
         in->unk_30 = 0;
-        in->unk_13e8.func_080586e0();
-        in->func_08054b84();
+        in->position.clearInstructionPosition();
+        in->resetOptimizationState();
         return in;
     }
 
@@ -81,7 +81,7 @@ Instr *getMove(int type, int)
         reportError("bad move type\n");
         exitAfterCleanup(-1);
     }
-    iInfo *ii = func_0806bf74(opc);
+    iInfo *ii = getOpcodeInfoById(opc);
     if (!ii) {
         reportError("got here - no ii\n");
         exitAfterCleanup(-1);
@@ -116,7 +116,7 @@ Instr *getMove(int type, int)
         l->unk_08 = 0;
         l->reset();
         l->unk_29 = 0;
-        reg->func_0805a924(i, (VclPtrWord)l);
+        reg->setPartPayload(i, (VclPtrWord)l);
     }
     mr->instruction = in;
     mr->moveRegister = reg;
@@ -154,13 +154,13 @@ bool addFreeMove(Instr *in)
     in->unk_1c.unk_04 = 0;
     in->unk_1c.unk_00 = 0;
     in->unk_30 = 0;
-    in->unk_13e8.func_080586e0();
-    in->func_08054b84();
+    in->position.clearInstructionPosition();
+    in->resetOptimizationState();
     if (!in->unk_142c) {
         reportError(moveRecBaseMuidError);
         return false;
     }
-    iInfo *ii = func_0806bf74(in->unk_142c);
+    iInfo *ii = getOpcodeInfoById(in->unk_142c);
     in->unk_142e = 0;
     in->opcodeInfo = ii;
     in->unk_138c = ii->unk_0e;
@@ -176,7 +176,7 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
     mask = 0;
     if (!in)
         return false;
-    int id = func_0806c72c(in->opcodeInfo);
+    int id = getOpcodeId(in->opcodeInfo);
     srcOp = -1;
     dstOp = -1;
     unsigned int v;
@@ -188,13 +188,13 @@ bool detectMove(Instr *in, int &opc, unsigned char &mask, int &dstOp, int &srcOp
         break;
     case 0x22:
     case 0x30:
-        if (in->unk_138f & 8)
+        if (in->destinationMask & 8)
             return false;
     case 0x25:
     case 0x26:
     case 0x27:
     case 0x44:
-        if (in->func_08055828(1))
+        if (in->hasLinkedOutputFrom(1))
             return false;
         if (in->operands[2].unk_18->registerIndex != 0)
             return false;
@@ -264,52 +264,52 @@ bool resolveMovePipe(workTable *wt, Instr *mv, int pipe)
         return false;
     }
     if (mv->unk_138c == 3)
-        wt->unk_b0--;
+        wt->vectorMoveCount--;
     else if (mv->unk_138c & 1)
-        wt->unk_b4--;
+        wt->oddPipeMoveCount--;
     else
-        wt->unk_b8--;
-    iInfo *ii = func_0806bf74(mv->unk_142e);
+        wt->evenPipeMoveCount--;
+    iInfo *ii = getOpcodeInfoById(mv->unk_142e);
     mv->opcodeInfo = ii;
     mv->unk_138c = ii->unk_0e;
     mv->unk_138d = ii->unk_10;
     if (mv->unk_138c == 3)
-        wt->unk_b0++;
+        wt->vectorMoveCount++;
     else if (mv->unk_138c & 1)
-        wt->unk_b4++;
+        wt->oddPipeMoveCount++;
     else
-        wt->unk_b8++;
+        wt->evenPipeMoveCount++;
     return true;
 }
 
 int unresolveMove(Block *blk, Instr *mv)
 {
-    iInfo *ii = func_0806bf74(mv->unk_142c);
+    iInfo *ii = getOpcodeInfoById(mv->unk_142c);
     if (mv->unk_138c == 3)
-        blk->unk_b0--;
+        blk->vectorMoveCount--;
     else if (mv->unk_138c & 1)
-        blk->unk_b4--;
+        blk->oddPipeMoveCount--;
     else
-        blk->unk_b8--;
+        blk->evenPipeMoveCount--;
     mv->unk_142e = 0;
     mv->opcodeInfo = ii;
     mv->unk_138c = ii->unk_0e;
     mv->unk_138d = ii->unk_10;
     if (mv->unk_138c == 3)
-        blk->unk_b0++;
+        blk->vectorMoveCount++;
     else if (mv->unk_138c & 1)
-        blk->unk_b4++;
+        blk->oddPipeMoveCount++;
     else
-        blk->unk_b8++;
+        blk->evenPipeMoveCount++;
     return 1;
 }
 
 void adjustMoveCount(Block *blk, Instr *mv, int n)
 {
     if (mv->unk_138c == 3)
-        blk->unk_b0 += n;
+        blk->vectorMoveCount += n;
     else if (mv->unk_138c & 1)
-        blk->unk_b4 += n;
+        blk->oddPipeMoveCount += n;
     else
-        blk->unk_b8 += n;
+        blk->evenPipeMoveCount += n;
 }

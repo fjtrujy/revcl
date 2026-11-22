@@ -232,7 +232,7 @@ bool parseReset(Program *p)
 bool statReset(Program *p)
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->func_080594c0()) {
+        if (g_080de6e0[i] && !g_080de6e0[i]->resetPoolPartTiming()) {
             reportError("Processor::statReset() - failed to stat %s\n",
                           g_080de6e0[i]->poolName);
             return false;
@@ -240,12 +240,12 @@ bool statReset(Program *p)
     return true;
 }
 
-iInfo *func_0806bf74(int id)
+iInfo *getOpcodeInfoById(int id)
 {
     return &g_080de6c0[id];
 }
 
-iInfo *func_0806bf8c(const char *tok, bool all)
+iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
 {
     if (!tok) {
         reportError("Proc::FindInstruction() - null token passed\n");
@@ -283,7 +283,7 @@ iInfo *func_0806bf8c(const char *tok, bool all)
 bool optReset(Program *p)
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->func_08059578()) {
+        if (g_080de6e0[i] && !g_080de6e0[i]->clearPoolPartPayloads()) {
             reportError("Processor::optReset() - failed to reset %s\n",
                           g_080de6e0[i]->poolName);
             return false;
@@ -307,7 +307,7 @@ bool func_0806c0f8(Program *p)
 {
     p->unk_80 = 0;
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->func_08059464()) {
+        if (g_080de6e0[i] && !g_080de6e0[i]->resetPoolThroughputState()) {
             reportError("Processor::emuReset() - failed to reset %s\n",
                           g_080de6e0[i]->poolName);
             return false;
@@ -343,7 +343,7 @@ RegPoolEntry *getReg(unsigned type, int index)
     return pool->findByRegisterIndex(index);
 }
 
-RegPoolEntry *func_0806c224(int idx)
+RegPoolEntry *findRegisterByGlobalIndex(int idx)
 {
     for (int i = 0; i != 12; i++) {
         RegPool *rp = g_080de6e0[i];
@@ -390,7 +390,7 @@ bool flowReset(Program *p)
     p->proc.usedBeforeSet.clear();
     p->proc.stalls.clear();
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->func_0805951c()) {
+        if (g_080de6e0[i] && !g_080de6e0[i]->resetPoolFlowState()) {
             reportError("Processor::flowReset() - failed to reset %s\n",
                           g_080de6e0[i]->poolName);
             return false;
@@ -484,12 +484,12 @@ const char *func_0806c6a0(int dev)
     return tab[dev];
 }
 
-bool func_0806c6c4(RegPoolEntry *r)
+bool isVuRegister(RegPoolEntry *r)
 {
     return r->registerClass == 8 || r->registerClass == 9;
 }
 
-bool func_0806c6dc(Program *p)
+bool resetPoolOptimizationState(Program *p)
 {
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->optReset()) {
@@ -512,12 +512,12 @@ static inline int iinfoId(iInfo *op)
     return id;
 }
 
-int func_0806c72c(iInfo *op)
+int getOpcodeId(iInfo *op)
 {
     return iinfoId(op);
 }
 
-aaDesc *func_0806c768(Instr *in)
+aaDesc *findAddressAliasDescriptor(Instr *in)
 {
     aaDesc *res;
     if (!in) {
@@ -551,7 +551,7 @@ aaDesc *func_0806c768(Instr *in)
     return res;
 }
 
-aaUse *func_0806c7f8(Instr *in)
+aaUse *findAddressAliasUse(Instr *in)
 {
     if (!in)
         return 0;

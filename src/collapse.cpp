@@ -47,7 +47,7 @@ bool pushImmediate(ol_s *ol)
             nopc = 0x6e;
         if (opc != nopc) {
             val = -val;
-            in->opcodeInfo = func_0806bf74(nopc);
+            in->opcodeInfo = getOpcodeInfoById(nopc);
         }
         if (!in->operands[immOp].unk_1c.setInt(val)) {
             reportError("failed to set new immediate value\n");
@@ -63,7 +63,7 @@ bool func_0806a74c(Program *p)
     instStream *s;
     for (s = p->streamHead; s; s = s->nextStream) {
         workTable *t = s->getTable();
-        for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             if (__builtin_expect(in->func_08055ac4() != 0x6d, 1))
                 continue;
             mValue *v = &in->operands[2].unk_1c;
@@ -79,7 +79,7 @@ bool func_0806a74c(Program *p)
                     opc = 0x70;
                 } else
                     opc = 0x6e;
-                in->opcodeInfo = func_0806bf74(opc);
+                in->opcodeInfo = getOpcodeInfoById(opc);
                 if (!in->opcodeInfo) {
                     reportError("couldn't find replacement instruction\n");
                     return false;
@@ -95,7 +95,7 @@ bool func_0806a74c(Program *p)
         changed = false;
         for (s = p->streamHead; s; s = s->nextStream) {
             workTable *t = s->getTable();
-            for (Instr *in = t->unk_88.head; in; in = in->unk_1c.unk_00) {
+            for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
                 int k = func_0806aa54(in);
                 if (k == -2) {
                     reportError("an immediate is wrong someplace\n");

@@ -85,11 +85,11 @@ bool workTable::qRegRef(regUse *ru)
             exitAfterCleanup(-1);
         }
         c->unk_20[i].unk_58 = (VclPtrWord)ll;
-        if (reg->func_0805a908(i)) {
+        if (reg->getPartPayload(i)) {
             reportError("regref register part already had locklist\n");
             exitAfterCleanup(-1);
         }
-        if (!reg->func_0805a924(i, (VclPtrWord)ll)) {
+        if (!reg->setPartPayload(i, (VclPtrWord)ll)) {
             reportError("failed to set curr lock list pointer in rf register\n");
             exitAfterCleanup(-1);
         }
@@ -157,17 +157,17 @@ static inline unsigned char operandLockMode(Operand *op)
 bool workTable::qInstruction(Instr *in)
 {
     int i;
-    if (!in->func_080541fc()) {
+    if (!in->isNonSynthetic()) {
         reportError("tried to queue a synthetic\n");
         return false;
     }
-    in->func_08054138();
+    in->isNop();
     Instr *c = in->clone();
     if (!c) {
         reportError("failed to clone instruction\n");
         exitAfterCleanup(-1);
     }
-    c->func_08055f78(in);
+    c->copyExternalTimingConstraints(in);
     if (!unk_10) {
         reportError("qInstruction - no owner\n");
         return false;
@@ -202,13 +202,13 @@ bool workTable::qInstruction(Instr *in)
                 dst->unk_09 = 3;
         }
         if (isRegisterOperand(dst, 1)) {
-            if (g_080b336c && func_0806c6c4(reg) && dst->unk_2b != 2)
+            if (g_080b336c && isVuRegister(reg) && dst->unk_2b != 2)
                 dst->unk_2b = 1;
             for (int k = 0; k != reg->partCount; k++) {
                 if ((dst->unk_07 >> k) & 1) {
                 OperandLock *lk = &dst->unk_2c[k];
                 int a = 0;
-                RegisterPartLockList *ll = (RegisterPartLockList *)reg->func_0805a908(k);
+                RegisterPartLockList *ll = (RegisterPartLockList *)reg->getPartPayload(k);
                 if (!ll) {
                     reportError("failed to get curr lock list during qinst\n");
                     exitAfterCleanup(-1);
@@ -259,7 +259,7 @@ bool workTable::qInstruction(Instr *in)
                 }
             }
         }
-        if (isRegisterOperand(dst, 2) && dst->unk_2b != 2 && g_080b336c && func_0806c6c4(reg) && !rr->unk_0d)
+        if (isRegisterOperand(dst, 2) && dst->unk_2b != 2 && g_080b336c && isVuRegister(reg) && !rr->unk_0d)
             dst->unk_2b = 1;
     }
 
@@ -270,7 +270,7 @@ bool workTable::qInstruction(Instr *in)
             continue;
         for (int k = 0; k != reg->partCount; k++) {
             if ((op->unk_07 >> k) & 1) {
-                RegisterPartLockList *ll = (RegisterPartLockList *)reg->func_0805a908(k);
+                RegisterPartLockList *ll = (RegisterPartLockList *)reg->getPartPayload(k);
                 if (!ll) {
                     reportError("couldn't get rll from reg\n");
                     exitAfterCleanup(-1);
@@ -285,7 +285,7 @@ bool workTable::qInstruction(Instr *in)
                     return false;
                 }
                 if ((op->unk_27 >> k) & 1) {
-                    RegisterPartLockList *el = (RegisterPartLockList *)reg->func_0805a908(k);
+                    RegisterPartLockList *el = (RegisterPartLockList *)reg->getPartPayload(k);
                     if (!el)
                         reportError("couldn't get curr lock list for output\n");
                     if (!el->addExtOutput(lk, false)) {
@@ -335,7 +335,7 @@ bool workTable::qInstruction(Instr *in)
         reportError("iTable::qInstruction - failed to add to linear list tail\n");
         return false;
     }
-    if (unk_38 && c->unk_1388) {
+    if (unk_38 && c->branchFlags) {
         g_080b33f0 += 2;
         c->unk_1398 = g_080b33f0;
         reserveEntry(g_080b33f0, unk_38 - 2, 1);

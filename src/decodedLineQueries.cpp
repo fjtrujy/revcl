@@ -15,7 +15,7 @@ bool DecodedLine::hasFlowStartSynthetic()
     for (int i = 0; i != 2; i++) {
         Instr *in = instructions[i];
         if (in) {
-            char t = in->unk_13cd;
+            char t = in->syntheticKind;
             if (t == 11 || t == 3 || t == 1)
                 return true;
         }

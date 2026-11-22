@@ -257,8 +257,8 @@ struct OpSlot : public cls0805bcc4 {
     OpSlot();
     ~OpSlot();
     void func_080560bc();
-    bool func_080560c4();
-    int func_080560e8();
+    bool resetSlotLock();
+    int clearSlotLocations();
 };
 
 struct Operand {
@@ -291,16 +291,16 @@ struct Operand {
     Operand();
     ~Operand();
     unsigned char getStatus() { return unk_2b; }
-    bool func_080563f8();
-    void func_0805665c(int);
+    bool validateKindAndMask();
+    void diagnoseOperand(int);
     char *Emit(char *buf, bool, bool symbolic);
-    bool func_080569cc();
-    bool func_08056a24();
+    bool resetFlowState();
+    bool resetOptimizationSlots();
     Instr *getOwner();
     OpSlot *getPart(int part);
-    char *func_08057b90(bool flag, char *buf);
+    char *emitExpectedOperandType(bool flag, char *buf);
     int getRegFrom(Operand *src);
-    const char *func_08057e40();
+    const char *getRegisterNameOrNone();
     RegWeb *GetWeb();
     bool isForwardable()
     {
@@ -592,10 +592,10 @@ public:
 
     cls08058718();
     ~cls08058718();
-    void func_080586e0();
+    void clearInstructionPosition();
     void func_08058744();
-    void func_0805874c(short v);
-    void func_0805878c(char c);
+    void setFromLinearRow(short v);
+    void setInstructionPipe(char c);
     short getRow() { return unk_00; }
     short getPipe() { return unk_02; }
     void setRow(short r)
@@ -620,10 +620,10 @@ public:
     cls0805e2e4();
     ~cls0805e2e4();
     void func_0805e2fc();
-    void func_0805e304();
-    void func_0805e340();
-    void func_0805e37c(cls0805e2e4 *src);
-    void func_0805e3c0(cls0805e2e4 *o);
+    void invalidateAllCounters();
+    void zeroAllCounters();
+    void copyCountersFrom(cls0805e2e4 *src);
+    void mergeMaximumCounters(cls0805e2e4 *o);
 };
 
 // Placeholder for the object at Instr::unk_30 (type unknown).
@@ -660,62 +660,62 @@ public:
     cls_unk30 *unk_30;
     iInfo *opcodeInfo;  // opcode descriptor
     Operand operands[12];
-    unsigned char unk_1388;     // flags
+    unsigned char branchFlags;     // flags
     char unk_1389;
-    bool unk_138a;
+    bool rawOnly;
     unsigned char operandCount;     // operand count
     char unk_138c;
     unsigned char unk_138d;
     char unk_138e;
-    unsigned char unk_138f;
+    unsigned char destinationMask;
     char unk_1390;
     char unk_1391;
     char unk_1392;
-    short unk_1394;
+    short scheduledCycle;
     short unk_1396;
     int unk_1398;
     char *unk_139c;
-    olList unk_13a0;
-    olList unk_13a8;
+    olList predecessorDependencies;
+    olList successorDependencies;
     short unk_13b0;
     short unk_13b2;
     short unk_13b4;
     short unk_13b6;
     mList unk_13b8;
     char unk_13cc;
-    char unk_13cd;
-    char unk_13ce;
+    char syntheticKind;
+    char ramAccessType;
     unsigned char unk_13cf;
-    unsigned char unk_13d0;
+    unsigned char opcodeFlags;
     char unk_13d1;
     short unk_13d2;
     char unk_13d4;
     char unk_13d5;
     char unk_13d6;
     char unk_13d7;
-    mValue unk_13d8;
+    mValue addressImmediateValue;
     int unk_13e0;
-    int unk_13e4;
-    cls08058718 unk_13e8;
-    void clearSlot() { unk_13e8.func_080586e0(); }
+    int linearOrderIndex;
+    cls08058718 position;
+    void clearSlot() { position.clearInstructionPosition(); }
     cls0805e2e4 unk_13f0;
     short unk_1408, unk_140a, unk_140c, unk_140e;
-    short unk_1410;     // fdep "has extra pre deps" flag
-    short unk_1412;     // slot mask read of reg idx 48
-    short unk_1414;     // slot mask written of reg idx 48
+    short hasExtraPredecessors;     // fdep "has extra pre deps" flag
+    short specialRegisterReadMask;     // slot mask read of reg idx 48
+    short specialRegisterWriteMask;     // slot mask written of reg idx 48
     char unk_1416[2];
     short unk_1418;
     short unk_141a;
     short unk_141c;
     short unk_141e;
-    short unk_1420;
+    short parsedLoopId;
     char unk_1422[6];
     VclPtrWord unk_1428;
     short unk_142c;
     short unk_142e;
     short unk_1430;
     short unk_1432;
-    Instr *unk_1434;        // prevThruput writer
+    Instr *previousThroughputWriter;        // prevThruput writer
 
     bool isConcreteMove()
     {
@@ -736,25 +736,25 @@ public:
         if (!opcodeInfo)
             return false;
         for (int i = 0; i != operandCount; i++)
-            if (!operands[i].func_080563f8())
+            if (!operands[i].validateKindAndMask())
                 return false;
         return true;
     }
-    bool func_08053f4c();
-    bool func_08053fac();
+    bool clearDynamicData();
+    bool validateOperands();
     void func_08054008(int flags);
-    bool func_08054138();
-    instStream *func_08054168();  // owner instruction stream
-    bool func_0805417c();
-    unsigned char getBranchType() { return unk_1388; }
-    bool func_080541fc();
-    bool func_08054214();
+    bool isNop();
+    instStream *getOwningStream();  // owner instruction stream
+    bool resetFlowDependencies();
+    unsigned char getBranchType() { return branchFlags; }
+    bool isNonSynthetic();
+    bool clearTransientFlags();
     void leDump();
     void leDump(int opnd);
     void leDump(int opnd, int mask);
-    bool func_08052f84();
-    int func_08053104();
-    int func_080532d8();
+    bool patchBranchLatencies();
+    int simplifyBranch();
+    int normalizeZeroSources();
     int func_08055ac4();
     Operand *getOp(int n)
     {
@@ -767,10 +767,10 @@ public:
     }
     Instr *clone();
     int getRamBits();
-    bool func_08054b84();
-    int func_08054c24(RegPoolEntry *reg, bool *paired);
-    int func_08054cc4(RegPoolEntry *reg, bool *paired);
-    bool func_08054d64(int n, int *out);
+    bool resetOptimizationState();
+    int collectOutputRegisterMask(RegPoolEntry *reg, bool *paired);
+    int collectInputRegisterMask(RegPoolEntry *reg, bool *paired);
+    bool getImmediateOperand(int n, int *out);
     bool changeBranchImmediate(const char *s);
     bool setOwner(cls_unk30 *s);
     char *func_080552a8(bool flag, char *buf, int n);
@@ -780,31 +780,31 @@ public:
     char *getBranchTargetImmediate();
     RegPoolEntry *getBranchTargetRegister();
     int func_08055718();
-    Operand *func_08055720(RegPoolEntry *reg, int mask);
-    Operand *func_080557a4(RegPoolEntry *reg, int mask);
-    bool func_08055828(unsigned int n);
+    Operand *findInputOperand(RegPoolEntry *reg, int mask);
+    Operand *findOutputOperand(RegPoolEntry *reg, int mask);
+    bool hasLinkedOutputFrom(unsigned int n);
     bool func_080558f4();
     Instr **getIE();
-    int func_08055a0c();
+    int getFirstOutputLatency();
     bool func_08055a88();
     bool func_08055aa8();
-    bool func_08055ae4();
-    void func_08055f4c();
-    void func_08055f78(Instr *src);
+    bool expandVirtualStatOperand();
+    void clearExternalTimingConstraints();
+    void copyExternalTimingConstraints(Instr *src);
     void func_08055fbc(short v);
     void func_08055fdc(short v);
     void func_08055ffc(short v);
     void func_0805601c(short v);
 };
 
-iInfo *func_0806bf74(int id);
-iInfo *func_0806bf8c(const char *name, bool);
-RegPoolEntry *func_0806c224(int idx);
-int func_0806c72c(iInfo *op);
+iInfo *getOpcodeInfoById(int id);
+iInfo *findOpcodeInfoByMnemonic(const char *name, bool);
+RegPoolEntry *findRegisterByGlobalIndex(int idx);
+int getOpcodeId(iInfo *op);
 Instr *GetI(Instr **ie, int p);
 int checkDispatchEntry(Instr **ie);
 bool wouldPair(Instr **ie, Instr *in, unsigned p);
-bool func_0806c6c4(RegPoolEntry *r);
+bool isVuRegister(RegPoolEntry *r);
 
 // Address-alias descriptor per opcode (12-byte entries, names guessed).
 struct aaDesc {
@@ -822,8 +822,8 @@ struct aaUse {
     unsigned char unk_04;   // operand index
 };
 
-aaDesc *func_0806c768(Instr *in);
-aaUse *func_0806c7f8(Instr *in);
+aaDesc *findAddressAliasDescriptor(Instr *in);
+aaUse *findAddressAliasUse(Instr *in);
 RegPoolEntry *getOperandZeroReg(int kind);
 bool func_080543bc(Instr *a, Instr *b);
 bool func_0805449c(Instr *a, Instr *b);

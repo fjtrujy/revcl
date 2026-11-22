@@ -24,7 +24,7 @@ bool loadStalls(Program *p)
             reportError("bad code mode for stall\n");
             return 0;
         }
-        InstructionPosition *loc = &in->unk_13e8;
+        InstructionPosition *loc = &in->position;
         wtRow *ie = (wtRow *)owner->getIE_ck(loc->unk_04);
         if (!ie) {
             reportError("couldn't get ie for instruction\n");

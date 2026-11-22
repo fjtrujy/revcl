@@ -26,7 +26,7 @@ inline bool atEarliest(workTable *wt, Instr *in)
     if (!in)
         return false;
     int e = earliestInsert(wt, in, &found);
-    return found && e == in->unk_13e8.unk_04;
+    return found && e == in->position.unk_04;
 }
 
 bool isAtEarliest(workTable *wt, Instr *in)
@@ -35,7 +35,7 @@ bool isAtEarliest(workTable *wt, Instr *in)
     if (!in)
         return false;
     int e = earliestInsert(wt, in, &found);
-    return found && e == in->unk_13e8.unk_04;
+    return found && e == in->position.unk_04;
 }
 
 static inline void dumpSredInstruction(Instr *in)
@@ -51,7 +51,7 @@ extern const char sredBadlyPlacedError[];
 bool sredInstr(workTable *wt, Instr *in, bool up)
 {
     InstructionPosition pos;
-    int iline = in->unk_13e8.unk_04;
+    int iline = in->position.unk_04;
     bool found = false;
     int step;
     bool upwards = false;
@@ -82,14 +82,14 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
     if (tline == iline)
         return true;
     if (found) {
-        pos.func_0805874c(tline);
+        pos.setFromLinearRow(tline);
         if (!func_0807e130(wt, in, &pos, upwards))
             goto move;
         tline += step;
     }
     for (; tline != iline; tline += step) {
-        pos.func_0805874c(tline);
-        wtRow *row = wt->func_080724f0(tline);
+        pos.setFromLinearRow(tline);
+        wtRow *row = wt->getRowByIndex(tline);
         if (row->countEntries() == 1
             && !func_0807e130(wt, in, &pos, upwards))
             goto move;
@@ -122,9 +122,9 @@ bool sredTable(workTable *wt)
         do {
             changed = false;
             for (i = wt->unk_30; i != wt->unk_34; i++) {
-                Instr *in = wt->func_080724f0(i)->onlyEntry();
+                Instr *in = wt->getRowByIndex(i)->onlyEntry();
                 if (in) {
-                    if (in->unk_13e8.unk_04 != i) {
+                    if (in->position.unk_04 != i) {
                         reportError(sredBadlyPlacedError);
                         return false;
                     }
@@ -139,9 +139,9 @@ bool sredTable(workTable *wt)
         do {
             changed = false;
             for (i = wt->unk_34 - 1; i >= wt->unk_30; i--) {
-                Instr *in = wt->func_080724f0(i)->onlyEntry();
+                Instr *in = wt->getRowByIndex(i)->onlyEntry();
                 if (in && !atEarliest(wt, in)) {
-                    if (in->unk_13e8.unk_04 != i) {
+                    if (in->position.unk_04 != i) {
                         reportError(sredBadlyPlacedError);
                         return false;
                     }

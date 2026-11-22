@@ -39,7 +39,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
     switch (reg->registerIndex) {
     case 52:
         cap = 0x73;
-        g_080de744 = func_0806c224(51);
+        g_080de744 = findRegisterByGlobalIndex(51);
         g_080de748 = 1;
         break;
     case 50:
@@ -48,7 +48,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
         cap = 0x74;
         break;
     case 55: case 57: case 59: {
-        if (in->unk_13e8.getPipe())
+        if (in->position.getPipe())
             break;
         RegPoolEntry *r0 = outR(&in->operands[0]);
         if (!r0) {
@@ -107,7 +107,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
 
     if (cap < 0)
         return 0;
-    iInfo *ii = func_0806bf74(cap);
+    iInfo *ii = getOpcodeInfoById(cap);
     g_080de738 = ii;
     if (!ii && cap != 0) {
         reportError("failed to get II for cap \n");
@@ -139,7 +139,7 @@ bool doCap(int line, int pipe, int mask)
         reportError("failed to make cap instruction\n");
         return false;
     }
-    ci->unk_138f = mask;
+    ci->destinationMask = mask;
     for (int i = 0; i != ci->operandCount; i++)
         ci->operands[i].unk_07 = mask;
 
@@ -168,8 +168,8 @@ bool doCap(int line, int pipe, int mask)
         ci->operands[0].unk_18 = g_080de744;
         ci->operands[0].unk_14 = g_080de744;
     }
-    ci->unk_13e8.func_0805874c(line);
-    ci->unk_13e8.func_0805878c(pipe);
+    ci->position.setFromLinearRow(line);
+    ci->position.setInstructionPipe(pipe);
     if (!g_080de73c->putIn(ci)) {
         reportError("failed to put instruction into itable\n");
         return false;

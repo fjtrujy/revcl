@@ -34,11 +34,11 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
         Instr *in = row->entries[k].unk_00;
         if (!in)
             continue;
-        if (commit && in->unk_1434) {
+        if (commit && in->previousThroughputWriter) {
             reportError("previous thruput write already set for instruction\n");
             return -1;
         }
-        int lid = (signed char)in->unk_13e8.unk_03;
+        int lid = (signed char)in->position.unk_03;
         if (uta) {
             if (lid != -1) {
                 reportError("lid>=0 for uta mode emu\n");
@@ -99,12 +99,12 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                 if (op->unk_07) {
                     if (reg->unk_2c) {
                         if (commit) {
-                            if (in->unk_1434) {
+                            if (in->previousThroughputWriter) {
                                 reportError("multiple set for prevThruput\n");
                                 return -1;
                             }
-                            in->unk_1434 = reg->throughputWriter;
-                        } else if (reg->throughputWriter != in->unk_1434) {
+                            in->previousThroughputWriter = reg->throughputWriter;
+                        } else if (reg->throughputWriter != in->previousThroughputWriter) {
                             reportError("unexpected value found in prev thru write\n");
                             return -1;
                         }
@@ -158,7 +158,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
     }
     for (k = 0; k != 2; k++)
         if (row->entries[k].unk_00)
-            row->entries[k].unk_00->unk_1394 = cyc;
+            row->entries[k].unk_00->scheduledCycle = cyc;
 
     for (k = 0; k != 2; k++) {
         in = row->entries[k].unk_00;
@@ -222,7 +222,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             rp->unk_38 = ol;
                             rp->unk_3c = 0;
                         } else {
-                            ol_s *ol = rp->func_0805a164();
+                            ol_s *ol = rp->acquireFreePendingLocation();
                             if (!ol) {
                                 reportError("EMU: failed to get OL\n");
                                 return -1;

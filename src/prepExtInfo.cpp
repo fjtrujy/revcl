@@ -15,13 +15,13 @@ int guessKeyLen(Program *p, int key, int start, int end);
 bool prepExtInfo(Program *p, instStream *s, bool noExt)
 {
     workTable *wt = s->getTable();
-    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
-        in->func_08055f4c();
+    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+        in->clearExternalTimingConstraints();
     wt->unk_44 = 0;
     if (noExt)
         return 1;
     bool changed = 0;
-    int id = s->unk_2c0;
+    int id = s->streamId;
     regUse *ru;
     regUseList *ul = &wt->unk_14;
     for (ru = ul->head; ru; ru = ru->unk_04) {
@@ -49,12 +49,12 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         }
                         Instr *setter = e->unk_04;
                         Operand *src = func_0805802c(e);
-                        instStream *ss = setter->func_08054168();
+                        instStream *ss = setter->getOwningStream();
                         if (!ss) {
                             reportError("failed to get the setters ist\n");
                             return 0;
                         }
-                        int sid = ss->unk_2c0;
+                        int sid = ss->streamId;
                         bool same = sid == id;
                         int kl = guessKeyLen(p, key, sid, id);
                         if (kl < 0) {
@@ -105,12 +105,12 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                                 reportError("no setting instruction/operand\n");
                                 return 0;
                             }
-                            instStream *ss = user->func_08054168();
+                            instStream *ss = user->getOwningStream();
                             if (!ss) {
                                 reportError("failed to get the setters ist\n");
                                 return 0;
                             }
-                            int kl = guessKeyLen(p, key, id, ss->unk_2c0);
+                            int kl = guessKeyLen(p, key, id, ss->streamId);
                             if (kl < 0) {
                                 reportError("minimal length .. bah\n");
                                 return 0;
@@ -154,12 +154,12 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         reportError("not get visible input\n");
                         return 0;
                     }
-                    instStream *ss = in->func_08054168();
+                    instStream *ss = in->getOwningStream();
                     if (!ss) {
                         reportError("failed to get the setters ist\n");
                         return 0;
                     }
-                    int sourceId = ss->unk_2c0;
+                    int sourceId = ss->streamId;
                     int kl = guessKeyLen(p, key, sourceId, id);
                     if (kl < 0) {
                         reportError("minimal length .. bah\n");
@@ -188,12 +188,12 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         reportError("not get visible input\n");
                         return 0;
                     }
-                    instStream *ss = in->func_08054168();
+                    instStream *ss = in->getOwningStream();
                     if (!ss) {
                         reportError("failed to get the setters ist\n");
                         return 0;
                     }
-                    int kl = guessKeyLen(p, key, id, ss->unk_2c0);
+                    int kl = guessKeyLen(p, key, id, ss->streamId);
                     if (kl < 0) {
                         reportError("minimal length .. bah\n");
                         return 0;
@@ -220,30 +220,30 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 workTable *wa = a->getTable();
                 workTable *wb = b->getTable();
                 if (wa->unk_09 == 3 && wb->unk_09 == 3) {
-                    int sourceId = a->unk_2c0;
+                    int sourceId = a->streamId;
                     int k1 = guessKeyLen(p, tp->src, sourceId, id);
                     if (k1 < 0) {
                         reportError("failed to guess the key length\n");
                         return 0;
                     }
-                    int k2 = guessKeyLen(p, tp->dst, id, b->unk_2c0);
+                    int k2 = guessKeyLen(p, tp->dst, id, b->streamId);
                     if (k2 < 0) {
                         reportError("distance to dst is bad\n");
                         return 0;
                     }
-                    Instr *w = wa->unk_88.tail;
+                    Instr *w = wa->linearInstructions.tail;
                     Operand *wo = 0;
                     for (; w; w = w->unk_1c.unk_04)
-                        if ((wo = w->func_080557a4(reg, 1 << k)) != 0)
+                        if ((wo = w->findOutputOperand(reg, 1 << k)) != 0)
                             break;
                     if (!wo) {
                         reportError("can't get last writer\n");
                         return 0;
                     }
-                    Instr *u = wb->unk_88.head;
+                    Instr *u = wb->linearInstructions.head;
                     Operand *uo = 0;
                     for (; u; u = u->unk_1c.unk_00)
-                        if ((uo = u->func_08055720(reg, 1 << k)) != 0)
+                        if ((uo = u->findInputOperand(reg, 1 << k)) != 0)
                             break;
                     if (!uo) {
                         reportError("can't get first user \n");
@@ -264,7 +264,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
         }
     }
     if (changed) {
-        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
+        for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
                 RegPoolEntry *r = isRegisterOperand(op, 2) ? op->unk_18 : 0;
@@ -285,7 +285,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
             }
     }
     Instr *in;
-    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
+    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
         for (int i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *reg = op->unk_18;
@@ -308,7 +308,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
 success:
     return 1;
 branchBound:
-    for (in = wt->unk_88.head; in; in = in->unk_1c.unk_00)
+    for (in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
         if (in->func_08055ac4() == 0xa5)
             in->func_0805601c(2);
     goto success;

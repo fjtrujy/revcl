@@ -86,7 +86,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         }
         p = q + 2;
     }
-    info = func_0806bf8c(p, newSyntax);
+    info = findOpcodeInfoByMnemonic(p, newSyntax);
     if (!info) {
         reportUserMessage("vcl can't find instruction '%s'\n", p);
         goto fail;
@@ -97,7 +97,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         reportUserMessage("parsed loop id is <0\n");
         goto fail;
     }
-    in->unk_1420 = loopid;
+    in->parsedLoopId = loopid;
     in->unk_1389 = mods;
     in->unk_1392 = tilde;
     mnemonicLen = mstrlen(info->mnemonic);
@@ -115,15 +115,15 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         break;
     case 1:
         if (hasMods) {
-            in->unk_138f = mask;
-            if (!in->unk_138f) {
+            in->destinationMask = mask;
+            if (!in->destinationMask) {
                 reportUserMessage("getNextInstruction: instruction had zero mod bits\n");
                 goto fail;
             }
             forcedMods = true;
             explicitMods = true;
         } else
-            in->unk_138f = 15;
+            in->destinationMask = 15;
         break;
     case 2:
         if (hasMods && mask != 7) {
@@ -131,16 +131,16 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             goto fail;
         }
         forcedMods = true;
-        in->unk_138f = 7;
+        in->destinationMask = 7;
         break;
     case 3:
         if (hasMods) {
-            if (in->unk_13ce == 1 && func_0804bf50(mask) != 1) {
+            if (in->ramAccessType == 1 && func_0804bf50(mask) != 1) {
                 reportUserMessage("getNextInstruction: MD_ONE instruction had bad mod bits. more than one?\n");
                 goto fail;
             }
             explicitMods = true;
-            in->unk_138f = mask;
+            in->destinationMask = mask;
         }
         break;
     default:
@@ -211,12 +211,12 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         opd->unk_07 = op.unk_2000;
         if (opd->unk_04 == 35 || opd->unk_04 == 42 || opd->unk_04 == 1 || opd->unk_04 == 9) {
             if (forcedMods) {
-                if (opd->unk_07 != in->unk_138f && opd->unk_07 != 15)
+                if (opd->unk_07 != in->destinationMask && opd->unk_07 != 15)
                     reportWarning("getNextInstruction: forced mod bits!\n");
-                opd->unk_07 = in->unk_138f;
+                opd->unk_07 = in->destinationMask;
             } else if (opBits < 0) {
                 opBits = opd->unk_07;
-                in->unk_138f = opBits;
+                in->destinationMask = opBits;
             } else if (opd->unk_07 != opBits) {
                 reportError("oDecode: bad mod bits in instruction.. not match opBitsStore (%x vs %x) op=%d?\n",
                               opd->unk_07, opBits, i);
@@ -226,12 +226,12 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         if (opd->unk_04 == 30 || opd->unk_04 == 31) {
             if (explicitMods) {
                 if (opd->unk_0c) {
-                    if (opd->unk_0c != in->unk_138f) {
+                    if (opd->unk_0c != in->destinationMask) {
                         reportError("ea/reg or imm(ea)reg has differing mod bits\n");
                         goto fail;
                     }
                 } else
-                    opd->unk_0c = in->unk_138f;
+                    opd->unk_0c = in->destinationMask;
             } else {
                 if (!opd->unk_0c) {
                     reportError("have to set modbits for ea/reg or imm(ea)reg somewhere\n");
@@ -241,7 +241,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     reportError("only one mod field allowed (one of x,y,z, or w)\n");
                     goto fail;
                 }
-                in->unk_138f = opd->unk_0c;
+                in->destinationMask = opd->unk_0c;
             }
         }
         if (op.name[0]) {
@@ -278,7 +278,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                         cls = 9;
                         opd->unk_04 = 1;
                     }
-                    opd->unk_07 = in->unk_138f;
+                    opd->unk_07 = in->destinationMask;
                     if (!newSyntax) {
                         reportError("new syntax off while parsing a tbd instruction\n");
                         goto fail;
@@ -384,7 +384,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         }
         cur = next;
     }
-    if (!in->func_08053fac()) {
+    if (!in->validateOperands()) {
         reportError("oDecode: sanity check failed\n");
         goto fail;
     }
@@ -392,11 +392,11 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         reportError("oDecode:: iBuildHook failed to patch instruction\n");
         goto fail;
     }
-    if (!in->func_08055ae4()) {
+    if (!in->expandVirtualStatOperand()) {
         reportError("failed to patch status register dependency\n");
         goto fail;
     }
-    if (in->func_080532d8() < 0) {
+    if (in->normalizeZeroSources() < 0) {
         reportError("failed to normalise instruction\n");
         goto fail;
     }
@@ -636,7 +636,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 t->dumpSourceLine(-1);
                 goto done;
             }
-            if (ins[i]->unk_13cd) {
+            if (ins[i]->syntheticKind) {
                 if (nOut != 1) {
                     reportUserMessage("only one synthetic allowed per line\n");
                     t->dumpSourceLine(-1);
@@ -660,7 +660,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 reportError("during the initial build, found an iEntry, which thought it was synthetic, but had no instruction\n");
                 goto done;
             }
-            switch ((unsigned char)in->unk_13cd) {
+            switch ((unsigned char)in->syntheticKind) {
             case 1:
                 if (state) {
                     reportUserMessage("encountered enter directive in bad context\n");
@@ -726,7 +726,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 break;
             default:
                 reportError("iStream::ValidateSynthetics() - unhandled/unexpected synthetic type (%d)\n",
-                              (unsigned char)in->unk_13cd);
+                              (unsigned char)in->syntheticKind);
                 in->func_08054008(false);
                 goto done;
             }
@@ -756,7 +756,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 t->dumpSourceLine(-1);
                 goto done;
             }
-            if (in->unk_138a) {
+            if (in->rawOnly) {
                 reportUserMessage("vcl: instruction '%s' is unsupported, except in RAW mode.\n", in->opcodeInfo->mnemonic);
                 in->leDump();
                 delete in;
@@ -766,8 +766,8 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
         }
         if (b->decodeMode == 1) {
             Instr *in = b->instructions[0];
-            if (in && ((in->unk_1388 >> 2) & 1)) {
-                int r = in->func_08053104();
+            if (in && ((in->branchFlags >> 2) & 1)) {
+                int r = in->simplifyBranch();
                 if (r < 0) {
                     reportError("failed to fixup a branch\n");
                     goto done;
@@ -871,7 +871,7 @@ int gatherTokens(LocTag *t, int i, bool stopAtOpcode)
                         return i;
                     }
             }
-            if (n && stopAtOpcode && func_0806bf8c(tok, false)) {
+            if (n && stopAtOpcode && findOpcodeInfoByMnemonic(tok, false)) {
                 *d = 0;
                 return i;
             }

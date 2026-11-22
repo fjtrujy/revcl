@@ -21,7 +21,7 @@ bool func_0807aee4(Program *p)
 {
     instStream *s;
     for (s = p->streamHead; s; s = s->nextStream)
-        s->unk_2dc = s->func_0806d9a0() ? 0 : 1;
+        s->unk_2dc = s->usesFreeRawLayout() ? 0 : 1;
     for (s = p->streamHead; s; s = s->nextStream) {
         if (s->unk_2dc)
             continue;
@@ -49,7 +49,7 @@ bool removeNops(Program *p, instStream *s)
         reportError("no work table \n");
         return false;
     }
-    int len = wt->func_080741c0() - wt->func_0807411c();
+    int len = wt->getRangeEnd() - wt->getRangeStart();
     if (len == 0)
         return true;
     if (wt->unk_44 < 0) {
@@ -71,8 +71,8 @@ bool removeNops(Program *p, instStream *s)
         return false;
     }
     bool lastOk = true;
-    if (!s->unk_2ce) {
-        if (s->unk_2cd != 1)
+    if (!s->branchType) {
+        if (s->endType != 1)
             lastOk = false;
     } else {
         lastOk = false;
@@ -80,7 +80,7 @@ bool removeNops(Program *p, instStream *s)
     int curTick = 0;
     int logLen = wt->func_08072eec();
     ol_s *inflight[1024];
-    for (int rl = wt->func_0807411c(); rl != wt->func_080741c0(); rl++) {
+    for (int rl = wt->getRangeStart(); rl != wt->getRangeEnd(); rl++) {
         wtRow *row = (wtRow *)((cls_unk30 *)wt)->getIE_ck(rl);
         if (row->skip) {
             reportError("skip already set for line\n");
@@ -93,7 +93,7 @@ bool removeNops(Program *p, instStream *s)
                 reportError("error gathering inflight data\n");
                 return false;
             }
-            int m = wt->func_080741c0();
+            int m = wt->getRangeEnd();
             int k;
             for (k = 0; k != n; k++) {
                 ol_s *ol = inflight[k];
@@ -113,7 +113,7 @@ bool removeNops(Program *p, instStream *s)
                         exitWithError("non p-q has throughput?\n");
                     int l = rl + 1;
                     wtRow *r = row;
-                    while (r++, l < wt->func_080741c0()) {
+                    while (r++, l < wt->getRangeEnd()) {
                         int t = r->cycleTime;
                         if (t > tNow + thr)
                             break;
@@ -132,7 +132,7 @@ bool removeNops(Program *p, instStream *s)
                 for (ol_s *u = op->unk_2c[part].unk_54.firstInternalLocation(); u && !u->isExt(); u = u->unk_00) {
                     Instr *ui = u->unk_04;
                     if (func_0805802c(u)->unk_0b && op->unk_0a > 1) {
-                        int ul = ui->unk_13e8.unk_00;
+                        int ul = ui->position.unk_00;
                         int tu = wt->ctime(ul);
                         if (tu <= tNow) {
                             reportError("user is before now .. tUser=%d tNow = %d\n", tu, tNow);
@@ -148,7 +148,7 @@ bool removeNops(Program *p, instStream *s)
                 }
             }
             bool ok = true;
-            if (rl == wt->func_080741c0() - 1 && !lastOk)
+            if (rl == wt->getRangeEnd() - 1 && !lastOk)
                 ok = false;
             for (k = 0; k != n && ok; k++) {
                 ol_s *ol = inflight[k];
@@ -159,15 +159,15 @@ bool removeNops(Program *p, instStream *s)
                 if (u) {
                     Instr *ui = u->unk_04;
                     Operand *uo = func_0805802c(u);
-                    int ul = ui->unk_13e8.unk_00;
+                    int ul = ui->position.unk_00;
                     int tu = wt->ctime(ul) - 1;
                     if (!op->unk_0b && !uo->unk_0b && ul < m && tNow + lat > tu)
                         ok = false;
                 }
             }
-            if (ok && rl < wt->func_080741c0() - 1 && rl + 1 < m && row[1].func_08072494() == 1)
+            if (ok && rl < wt->getRangeEnd() - 1 && rl + 1 < m && row[1].func_08072494() == 1)
                 ok = false;
-            if (m < wt->func_080741c0()) {
+            if (m < wt->getRangeEnd()) {
                 int tm = wt->ctime(m);
                 wtRow *r = row + 1;
                 for (int l = rl + 1; l < m && ok; l++, r++) {
@@ -186,11 +186,11 @@ bool removeNops(Program *p, instStream *s)
                                 if (t < tm) {
                                     int l2 = m;
                                     wtRow *r2 = (wtRow *)((cls_unk30 *)wt)->getIE_ck(m);
-                                    while (l2 < wt->func_080741c0() && r2->cycleTime < t) {
+                                    while (l2 < wt->getRangeEnd() && r2->cycleTime < t) {
                                         r2++;
                                         l2++;
                                     }
-                                    if (l2 < wt->func_080741c0()) {
+                                    if (l2 < wt->getRangeEnd()) {
                                         if (r2->cycleTime == t) {
                                             if (r2->inputMaskFor(w, 0xff))
                                                 ok = false;
@@ -225,9 +225,9 @@ bool removeNops(Program *p, instStream *s)
                     } while (l < m && ok);
                 }
                 if (ok) {
-                    if (m >= wt->func_080741c0()) {
+                    if (m >= wt->getRangeEnd()) {
                         int last = wt->func_08072eec() - 1;
-                        for (int l = wt->func_0807411c(); l < m && ok; l++) {
+                        for (int l = wt->getRangeStart(); l < m && ok; l++) {
                             wtRow *r = (wtRow *)((cls_unk30 *)wt)->getIE_ck(l);
                             int dist = last - row->cycleTime;
                             if (dist < 0)
@@ -247,17 +247,17 @@ bool removeNops(Program *p, instStream *s)
                         }
                     }
                     if (ok) {
-                        if (m >= wt->func_080741c0()) {
+                        if (m >= wt->getRangeEnd()) {
                             int last = wt->func_08072eec() - 1;
                             if (last < wt->unk_44)
                                 ok = false;
-                            if (s->unk_2cd != 1 && last <= 1)
+                            if (s->endType != 1 && last <= 1)
                                 ok = false;
                         }
                         if (ok) {
                             row->skip = 1;
                             splitCtime(wt, rl, m);
-                            if (m >= wt->func_080741c0())
+                            if (m >= wt->getRangeEnd())
                                 wt->unk_0c = --logLen;
                         }
                     }
@@ -293,9 +293,9 @@ void func_0807bb84(workTable *wt)
         int rel = l - wt->unk_30;
         for (int p = 0; p != 2; p++) {
             Instr *in = GetI((Instr **)row, p);
-            if (in && in->unk_1394 != rel)
+            if (in && in->scheduledCycle != rel)
                 exitWithError("l=%d exec time mismatch in instruction %d!=%d\n",
-                              l, in->unk_1394, rel);
+                              l, in->scheduledCycle, rel);
         }
         short *time = &row->cycleTime;
         *time = l - wt->unk_30;

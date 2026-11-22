@@ -156,7 +156,7 @@ void func_0806ed78(Program *p, int b)
 instStream *Program::findStreamById(int id)
 {
     instStream *s;
-    for (s = streamHead; s && s->unk_2c0 != id; s = s->nextStream)
+    for (s = streamHead; s && s->streamId != id; s = s->nextStream)
         ;
     return s;
 }
@@ -166,7 +166,7 @@ instStream *Program::findStream(const char *name)
     if (!name)
         return 0;
     instStream *s;
-    for (s = streamHead; s && !s->unk_110.findByNameIgnoreCase(name); s = s->nextStream)
+    for (s = streamHead; s && !s->labels.findByNameIgnoreCase(name); s = s->nextStream)
         ;
     return s;
 }
@@ -176,28 +176,28 @@ bool Program::retarget(instStream *from, instStream *to)
     if (from == to)
         return true;
     linkNode *next;
-    for (linkNode *in = from->unk_128.unk_00; in; in = next) {
-        next = in->unk_08;
-        instStream *src = in->unk_0c;
+    for (linkNode *in = from->inputLinks.head; in; in = next) {
+        next = in->next;
+        instStream *src = in->otherStream;
         if (!src) {
             reportError("null ist pointer found on ist list\n");
             return false;
         }
-        linkNode *out = src->unk_134.func_0806dff4(from, in->unk_14);
+        linkNode *out = src->outputLinks.findLinkToStream(from, in->linkType);
         if (!out) {
             reportError("Retarget:: failed to find matching output\n");
             return false;
         }
-        out->unk_0c = to;
-        if (!from->unk_128.unlink(in)) {
+        out->otherStream = to;
+        if (!from->inputLinks.unlink(in)) {
             reportError("Retarget::failed to unlink input from old\n");
             return false;
         }
-        if (!to->unk_128.relink(in)) {
+        if (!to->inputLinks.relink(in)) {
             reportError("Retarget::failed to relink input to new\n");
             return false;
         }
-        switch (out->unk_14) {
+        switch (out->linkType) {
         case 2:
         case 4:
         case 5:
@@ -215,9 +215,9 @@ bool Program::retarget(instStream *from, instStream *to)
             break;
         }
         default:
-            const char *typeName = linkTypeName(out->unk_14);
+            const char *typeName = linkTypeName(out->linkType);
             reportError("flowMon::Retarget - unexpected output type %d %s\n",
-                          out->unk_14, typeName);
+                          out->linkType, typeName);
             reportError("error retargeting %s->%s\n",
                           from->streamName(), to->streamName());
             return false;
@@ -342,20 +342,20 @@ char *emitLabels(Program *p, char *buf)
 bool isReferencedLabel(Program *p, char *name)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
-        if (s->unk_2cc == 2) {
-            linkNode *l = s->unk_134.unk_00;
+        if (s->startType == 2) {
+            linkNode *l = s->outputLinks.head;
             if (l) {
-                linkNode *next = l->unk_08;
+                linkNode *next = l->next;
                 if (next) {
                     reportError("found entry point with more than one exit\n");
                     exitAfterCleanup(-1);
                 }
-                instStream *t = l->unk_0c;
+                instStream *t = l->otherStream;
                 if (!t) {
                     reportError("no stream for ir\n");
                     exitAfterCleanup(-1);
                 }
-                if (t->unk_110.findByExactName(name))
+                if (t->labels.findByExactName(name))
                     return true;
             }
         }
@@ -370,7 +370,7 @@ bool isReferencedLabel(Program *p, char *name)
 
 bool func_0806f4a0(Program *p, instStream *s)
 {
-    mList *l = &s->unk_110;
+    mList *l = &s->labels;
     for (mNode *n = l->head; n; n = n->next) {
         if (p->proc.exportedSymbols.findByExactName(n->name))
             return true;
@@ -389,11 +389,11 @@ bool recalcFlowUIDs(Program *p)
     int n = 0;
     p->flowIdCount = -1;
     for (; s; s = s->nextStream) {
-        if (!s->func_0806d908()) {
+        if (!s->getCodeMode()) {
             reportError("recalcFlowUIDs - found bad code mode at %s\n", s->streamName());
             return false;
         }
-        s->unk_2c0 = n++;
+        s->streamId = n++;
     }
     if (n != p->streamCount) {
         reportError("recalcFlowUIDs - there was a hole somewhere?\n");
@@ -411,7 +411,7 @@ bool recalcFlowUIDs(Program *p)
         return false;
     }
     for (s = p->streamHead; s; s = s->nextStream)
-        p->streamsById[s->unk_2c0] = s;
+        p->streamsById[s->streamId] = s;
     return true;
 }
 
@@ -443,13 +443,13 @@ bool func_0806f6a4(Program *p)
 
 static inline void printNamedLink(const char *fmt, linkNode *l, const char *name)
 {
-    int other = l->unk_0c->unk_2c0;
-    const char *type = linkTypeName(l->unk_14);
+    int other = l->otherStream->streamId;
+    const char *type = linkTypeName(l->linkType);
     reportInfo(fmt, type, other, name);
 }
 
-static inline bool isEntryStream(instStream *s) { return s->unk_2cc == 2; }
-static inline bool isExitStream(instStream *s) { return s->unk_2cd == 3; }
+static inline bool isEntryStream(instStream *s) { return s->startType == 2; }
+static inline bool isExitStream(instStream *s) { return s->endType == 3; }
 
 void dumpFlow(Program *p)
 {
@@ -462,18 +462,18 @@ void dumpFlow(Program *p)
         if (isExitStream(s))
             tag = " ---EXIT";
         bool fallThrough = false;
-        int id = s->unk_2c0;
+        int id = s->streamId;
         reportInfo("[%5d] %s %s   <--\n", id, s->streamName(), tag);
         linkNode *l;
-        for (l = s->unk_128.unk_00; l; l = l->unk_08) {
-            if (l->unk_14) {
-                const char *name = l->unk_0c->streamName();
+        for (l = s->inputLinks.head; l; l = l->next) {
+            if (l->linkType) {
+                const char *name = l->otherStream->streamName();
                 printNamedLink("       <--[(%s) [%5d]%s]\n", l, name);
             }
         }
-        for (l = s->unk_134.unk_00; l; l = l->unk_08) {
-            if (l->unk_14) {
-                const char *name = l->unk_0c->streamName();
+        for (l = s->outputLinks.head; l; l = l->next) {
+            if (l->linkType) {
+                const char *name = l->otherStream->streamName();
                 printNamedLink("     --> %s [%5d]%s\n", l, name);
             } else
                 fallThrough = true;

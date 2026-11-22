@@ -68,7 +68,7 @@ bool assignExtRegisters(Program *p)
                 return false;
             }
         }
-        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             for (int j = 0; j != in->operandCount; j++) {
                 Operand *op = &in->operands[j];
                 RegPoolEntry *reg = op->unk_18;

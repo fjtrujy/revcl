@@ -37,8 +37,8 @@ Instr::Instr(iInfo *info)
     operandCount = 0;
     unk_13d1 = 0;
     unk_1389 = 0;
-    unk_138f = 0;
-    unk_1434 = 0;
+    destinationMask = 0;
+    previousThroughputWriter = 0;
     unk_14 = 0;
     unk_18 = 0;
     unk_1a = 0;
@@ -46,7 +46,7 @@ Instr::Instr(iInfo *info)
     unk_1432 = 0;
     unk_142c = 0;
     unk_142e = 0;
-    unk_1420 = -1;
+    parsedLoopId = -1;
     unk_139c = 0;
     unk_1398 = 0;
     unk_30 = 0;
@@ -55,7 +55,7 @@ Instr::Instr(iInfo *info)
     unk_13b2 = 0;
     unk_13b4 = 0;
     unk_13b6 = 0;
-    unk_13e4 = -1;
+    linearOrderIndex = -1;
     unk_13e0 = -1;
     unk_1418 = 0;
     unk_141a = 0;
@@ -66,7 +66,7 @@ Instr::Instr(iInfo *info)
     unk_04 = 0;
     unk_1391 = 0;
     unk_1392 = 0;
-    unk_1394 = -1;
+    scheduledCycle = -1;
     unk_141c = 0;
     unk_13d2 = -1;
     unk_138e = -1;
@@ -75,12 +75,12 @@ Instr::Instr(iInfo *info)
     unk_13d7 = info->unk_0e;
     unk_138c = info->unk_0e;
     unk_138d = info->unk_10;
-    unk_1388 = info->branchFlags();
+    branchFlags = info->branchFlags();
     unk_13cf = info->unk_12;
-    unk_13ce = info->ramType();
-    unk_13d0 = info->kindAndFlags & ~7;
-    unk_138a = info->isRawOnly();
-    unk_13cd = info->syntheticKind();
+    ramAccessType = info->ramType();
+    opcodeFlags = info->kindAndFlags & ~7;
+    rawOnly = info->isRawOnly();
+    syntheticKind = info->syntheticKind();
     for (int i = 0; info->operandDescriptors[i].operandKind; i++) {
         operandCount++;
         Operand *op = &operands[i];
@@ -107,30 +107,30 @@ Instr::~Instr()
         delete[] unk_139c;
         unk_139c = 0;
     }
-    mValue *value = &unk_13d8;
+    mValue *value = &addressImmediateValue;
     value->clear();
-    unk_13a0.clear();
-    unk_13a8.clear();
+    predecessorDependencies.clear();
+    successorDependencies.clear();
 }
 
-bool Instr::func_08053f4c()
+bool Instr::clearDynamicData()
 {
     if (unk_139c) {
         delete[] unk_139c;
         unk_139c = 0;
     }
-    unk_13d8.clear();
-    unk_13a0.clear();
-    unk_13a8.clear();
+    addressImmediateValue.clear();
+    predecessorDependencies.clear();
+    successorDependencies.clear();
     return true;
 }
 
-bool Instr::func_08053fac()
+bool Instr::validateOperands()
 {
     if (!opcodeInfo)
         return false;
     for (int i = 0; i != operandCount; i++)
-        if (!operands[i].func_080563f8())
+        if (!operands[i].validateKindAndMask())
             return false;
     return true;
 }
@@ -140,7 +140,7 @@ void Instr::func_08054008(int flags)
     if (isValid()) {
         int count = operandCount;
         for (int i = 0; i != count; i++) {
-            operands[i].func_0805665c(0);
+            operands[i].diagnoseOperand(0);
             count = operandCount;
         }
         if (flags & 1) {
@@ -156,36 +156,36 @@ void Instr::func_08054008(int flags)
     }
 }
 
-bool Instr::func_08054138()
+bool Instr::isNop()
 {
     if (!opcodeInfo)
         return true;
     return opcodeInfo->isNop();
 }
 
-instStream *Instr::func_08054168()
+instStream *Instr::getOwningStream()
 {
     return unk_30 ? unk_30->unk_10 : 0;
 }
 
-bool Instr::func_0805417c()
+bool Instr::resetFlowDependencies()
 {
-    unk_13a0.clear();
-    unk_13a8.clear();
-    unk_1394 = -1;
+    predecessorDependencies.clear();
+    successorDependencies.clear();
+    scheduledCycle = -1;
     for (int i = 0; i != operandCount; i++)
-        if (!operands[i].func_080569cc())
+        if (!operands[i].resetFlowState())
             return false;
-    unk_1434 = 0;
+    previousThroughputWriter = 0;
     return true;
 }
 
-bool Instr::func_080541fc()
+bool Instr::isNonSynthetic()
 {
-    return !unk_13cd;
+    return !syntheticKind;
 }
 
-bool Instr::func_08054214()
+bool Instr::clearTransientFlags()
 {
     unk_1418 = 0;
     unk_141c = 0;
@@ -290,22 +290,22 @@ Instr *Instr::clone()
         reportError("failed to get a new instruction during clone!\n");
         exitAfterCleanup(-1);
     }
-    if (!c->func_08054b84()) {
+    if (!c->resetOptimizationState()) {
         reportError("failed to opt reset cloned instruction\n");
         exitAfterCleanup(-1);
     }
-    c->unk_138f = unk_138f;
-    c->unk_138a = unk_138a;
+    c->destinationMask = destinationMask;
+    c->rawOnly = rawOnly;
     c->unk_1428 = 0;
     c->unk_1389 = unk_1389;
     c->unk_142c = unk_142c;
     c->unk_142e = unk_142e;
     c->unk_13d7 = unk_13d7;
-    c->unk_13f0.func_0805e37c(&unk_13f0);
-    c->unk_13e4 = unk_13e4;
+    c->unk_13f0.copyCountersFrom(&unk_13f0);
+    c->linearOrderIndex = linearOrderIndex;
     c->unk_13e0 = unk_13e0;
     c->unk_141a = unk_141a;
-    c->unk_1420 = unk_1420;
+    c->parsedLoopId = parsedLoopId;
     c->unk_1392 = unk_1392;
     c->unk_1391 = unk_1391;
     c->unk_14 = unk_14;
@@ -314,8 +314,8 @@ Instr *Instr::clone()
     c->unk_13d4 = unk_13d4;
     c->unk_13d5 = unk_13d5;
     c->unk_13d6 = unk_13d6;
-    if (unk_13d8.isValid())
-        c->unk_13d8.set(&unk_13d8);
+    if (addressImmediateValue.isValid())
+        c->addressImmediateValue.set(&addressImmediateValue);
     c->unk_13d2 = unk_13d2;
     if (unk_08) {
         reportError("during instruction clone - tmpClone was already set!\n");
@@ -374,7 +374,7 @@ Instr *Instr::clone()
 int Instr::getRamBits()
 {
     int r;
-    if (!unk_13ce) {
+    if (!ramAccessType) {
         memset(&r, 0, sizeof(r));
         return r;
     }
@@ -382,7 +382,7 @@ int Instr::getRamBits()
     if (opcodeInfo) {
         switch ((char)opcodeInfo->destinationMaskMode) {
         case 1:
-            r = unk_138f;
+            r = destinationMask;
             break;
         default:
             reportError("got here! - end of get rambits?\n");
@@ -411,9 +411,9 @@ int Instr::getRamBits()
     return r;
 }
 
-bool Instr::func_08054b84()
+bool Instr::resetOptimizationState()
 {
-    unk_13e8.func_080586e0();
+    position.clearInstructionPosition();
     unk_2c = 0;
     unk_24.unk_04 = 0;
     unk_24.unk_00 = 0;
@@ -421,7 +421,7 @@ bool Instr::func_08054b84()
     unk_1398 = 0;
     unk_141c = 0;
     for (int i = 0; i != operandCount; i++) {
-        if (!operands[i].func_08056a24()) {
+        if (!operands[i].resetOptimizationSlots()) {
             reportError("failed to optReset operand  %d\n", i);
             return false;
         }
@@ -429,7 +429,7 @@ bool Instr::func_08054b84()
     return true;
 }
 
-int Instr::func_08054c24(RegPoolEntry *reg, bool *paired)
+int Instr::collectOutputRegisterMask(RegPoolEntry *reg, bool *paired)
 {
     int mask = 0;
     *paired = false;
@@ -448,7 +448,7 @@ int Instr::func_08054c24(RegPoolEntry *reg, bool *paired)
     return mask;
 }
 
-int Instr::func_08054cc4(RegPoolEntry *reg, bool *paired)
+int Instr::collectInputRegisterMask(RegPoolEntry *reg, bool *paired)
 {
     int mask = 0;
     *paired = false;
@@ -468,7 +468,7 @@ int Instr::func_08054cc4(RegPoolEntry *reg, bool *paired)
 }
 
 
-bool Instr::func_08054d64(int n, int *out)
+bool Instr::getImmediateOperand(int n, int *out)
 {
     Operand *op = getOp(n);
     if (!op) {
@@ -486,11 +486,11 @@ bool Instr::func_08054d64(int n, int *out)
 
 bool Instr::changeBranchImmediate(const char *s)
 {
-    if (!unk_1388 || !opcodeInfo) {
+    if (!branchFlags || !opcodeInfo) {
         reportError("changeBranchImmediate: not a branch\n");
         return false;
     }
-    if (unk_1388 & 2) {
+    if (branchFlags & 2) {
         reportError("changeBranchImmediate: target is register!\n");
         return false;
     }
@@ -535,7 +535,7 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
 
 static inline void dumpLinkOperand(Operand *op)
 {
-    op->func_0805665c(0);
+    op->diagnoseOperand(0);
 }
 
 bool link_oParts(ol_s *o, ol_s *i, int x, int y)
@@ -677,7 +677,7 @@ char *Instr::func_080552a8(bool flag, char *buf, int)
             break;
         if (n)
             buf += formatIntoBuffer(buf, ",");
-        buf = operands[n].func_08057b90(flag, buf);
+        buf = operands[n].emitExpectedOperandType(flag, buf);
         if (!buf)
             break;
     }
@@ -741,7 +741,7 @@ bool Instr::func_08055548()
 char *Instr::getBranchTargetImmediate()
 {
     iInfo *ii = opcodeInfo;
-    if (!unk_1388)
+    if (!branchFlags)
         return 0;
     if (!ii) {
         reportError("branch type set - but no ii\n");
@@ -765,7 +765,7 @@ char *Instr::getBranchTargetImmediate()
 RegPoolEntry *Instr::getBranchTargetRegister()
 {
     iInfo *ii = opcodeInfo;
-    if (!(unk_1388 & 2))
+    if (!(branchFlags & 2))
         return 0;
     if (!ii) {
         reportError("branch type set - but no ii\n");
@@ -796,7 +796,7 @@ int Instr::func_08055718()
     return 0;
 }
 
-Operand *Instr::func_08055720(RegPoolEntry *reg, int mask)
+Operand *Instr::findInputOperand(RegPoolEntry *reg, int mask)
 {
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
@@ -806,7 +806,7 @@ Operand *Instr::func_08055720(RegPoolEntry *reg, int mask)
     return 0;
 }
 
-Operand *Instr::func_080557a4(RegPoolEntry *reg, int mask)
+Operand *Instr::findOutputOperand(RegPoolEntry *reg, int mask)
 {
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
@@ -816,7 +816,7 @@ Operand *Instr::func_080557a4(RegPoolEntry *reg, int mask)
     return 0;
 }
 
-bool Instr::func_08055828(unsigned int n)
+bool Instr::hasLinkedOutputFrom(unsigned int n)
 {
     if (!opcodeInfo)
         return false;
@@ -836,11 +836,11 @@ bool Instr::func_08055828(unsigned int n)
 
 bool Instr::func_080558f4()
 {
-    if (unk_13ce == 2) {
+    if (ramAccessType == 2) {
         unk_138e = 1;
         return true;
     }
-    if (unk_13d0 & 0x40) {
+    if (opcodeFlags & 0x40) {
         unk_138e = 2;
         return true;
     }
@@ -862,7 +862,7 @@ Instr **Instr::getIE()
         reportError("failed to get itable from instruction\n");
         return 0;
     }
-    InstructionPosition *pos = &unk_13e8;
+    InstructionPosition *pos = &position;
     Instr **ie = table->getIE_ck(pos->unk_00);
     if (!ie) {
         reportError("failed to get ie from table for in::getIE()\n");
@@ -875,7 +875,7 @@ Instr **Instr::getIE()
     return ie;
 }
 
-int Instr::func_08055a0c()
+int Instr::getFirstOutputLatency()
 {
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
@@ -903,7 +903,7 @@ int Instr::func_08055ac4()
 {
     if (!opcodeInfo)
         return -1;
-    return func_0806c72c(opcodeInfo);
+    return getOpcodeId(opcodeInfo);
 }
 
 static inline bool isLiteral(mValue *v)
@@ -911,7 +911,7 @@ static inline bool isLiteral(mValue *v)
     return v->type == mValue::STRING;
 }
 
-bool Instr::func_08055ae4()
+bool Instr::expandVirtualStatOperand()
 {
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
@@ -927,7 +927,7 @@ bool Instr::func_08055ae4()
             op->unk_08 = 1;
             op->unk_04 = 21;
             op->unk_09 = 2;
-            op->unk_14 = op->unk_18 = func_0806c224(55);
+            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(55);
             op->unk_07 = 1;
             op->unk_0a = 4;
             op->unk_0b = 0;
@@ -936,7 +936,7 @@ bool Instr::func_08055ae4()
             op->unk_08 = 1;
             op->unk_04 = 18;
             op->unk_09 = 1;
-            op->unk_14 = op->unk_18 = func_0806c224(57);
+            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(57);
             op->unk_07 = 1;
             op->unk_0a = -1;
             op->unk_0b = 1;
@@ -946,7 +946,7 @@ bool Instr::func_08055ae4()
             op->unk_08 = 1;
             op->unk_04 = 20;
             op->unk_09 = 2;
-            op->unk_14 = op->unk_18 = func_0806c224(56);
+            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(56);
             op->unk_07 = 1;
             op->unk_0a = operands[0].unk_0a;
             op->unk_0b = 0;
@@ -956,7 +956,7 @@ bool Instr::func_08055ae4()
             op->unk_08 = 1;
             op->unk_04 = 19;
             op->unk_09 = 1;
-            op->unk_14 = op->unk_18 = func_0806c224(58);
+            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(58);
             op->unk_07 = 1;
             op->unk_0a = -1;
             op->unk_0b = 1;
@@ -979,7 +979,7 @@ bool Instr::func_08055ae4()
                 unsigned int bits;
                 int id = -1;
                 if (opcodeInfo)
-                    id = func_0806c72c(opcodeInfo);
+                    id = getOpcodeId(opcodeInfo);
                 switch (id) {
                 case 147:
                     break;
@@ -1008,7 +1008,7 @@ bool Instr::func_08055ae4()
                 op->unk_08 = 1;
                 op->unk_04 = 21;
                 op->unk_09 = 1;
-                op->unk_14 = op->unk_18 = func_0806c224(55);
+                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(55);
                 op->unk_07 = 1;
                 op->unk_0a = -1;
                 op->unk_0b = 0;
@@ -1020,7 +1020,7 @@ bool Instr::func_08055ae4()
                 op->unk_08 = 1;
                 op->unk_04 = 20;
                 op->unk_09 = 1;
-                op->unk_14 = op->unk_18 = func_0806c224(56);
+                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(56);
                 op->unk_07 = 1;
                 op->unk_0a = -1;
                 op->unk_0b = 0;
@@ -1032,7 +1032,7 @@ bool Instr::func_08055ae4()
                 op->unk_08 = 1;
                 op->unk_04 = 18;
                 op->unk_09 = 1;
-                op->unk_14 = op->unk_18 = func_0806c224(57);
+                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(57);
                 op->unk_07 = 1;
                 op->unk_0a = -1;
                 op->unk_0b = 1;
@@ -1042,7 +1042,7 @@ bool Instr::func_08055ae4()
                 op->unk_08 = 1;
                 op->unk_04 = 18;
                 op->unk_09 = 2;
-                op->unk_14 = op->unk_18 = func_0806c224(57);
+                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(57);
                 op->unk_07 = 1;
                 op->unk_0a = 1;
                 op->unk_0b = 1;
@@ -1054,7 +1054,7 @@ bool Instr::func_08055ae4()
                 op->unk_08 = 1;
                 op->unk_04 = 19;
                 op->unk_09 = 1;
-                op->unk_14 = op->unk_18 = func_0806c224(58);
+                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(58);
                 op->unk_07 = 1;
                 op->unk_0a = -1;
                 op->unk_0b = 1;
@@ -1064,7 +1064,7 @@ bool Instr::func_08055ae4()
                 op->unk_08 = 1;
                 op->unk_04 = 19;
                 op->unk_09 = 2;
-                op->unk_14 = op->unk_18 = func_0806c224(58);
+                op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(58);
                 op->unk_07 = 1;
                 op->unk_0a = 1;
                 op->unk_0b = 1;
@@ -1076,7 +1076,7 @@ bool Instr::func_08055ae4()
             op->unk_08 = 1;
             op->unk_04 = 18;
             op->unk_09 = 2;
-            op->unk_14 = op->unk_18 = func_0806c224(57);
+            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(57);
             op->unk_07 = 1;
             op->unk_0a = 1;
             op->unk_0b = 1;
@@ -1086,7 +1086,7 @@ bool Instr::func_08055ae4()
             op->unk_08 = 1;
             op->unk_04 = 19;
             op->unk_09 = 2;
-            op->unk_14 = op->unk_18 = func_0806c224(58);
+            op->unk_14 = op->unk_18 = findRegisterByGlobalIndex(58);
             op->unk_07 = 1;
             op->unk_0a = 1;
             op->unk_0b = 1;
@@ -1097,7 +1097,7 @@ bool Instr::func_08055ae4()
     return true;
 }
 
-void Instr::func_08055f4c()
+void Instr::clearExternalTimingConstraints()
 {
     unk_13b0 = 0;
     unk_13b2 = 0;
@@ -1105,7 +1105,7 @@ void Instr::func_08055f4c()
     unk_13b6 = 0;
 }
 
-void Instr::func_08055f78(Instr *src)
+void Instr::copyExternalTimingConstraints(Instr *src)
 {
     unk_13b0 = src->unk_13b0;
     unk_13b2 = src->unk_13b2;
@@ -1145,7 +1145,7 @@ void OpSlot::func_080560bc()
 {
 }
 
-bool OpSlot::func_080560c4()
+bool OpSlot::resetSlotLock()
 {
     func_0805bcc4();
     unk_50 = 0;
@@ -1154,7 +1154,7 @@ bool OpSlot::func_080560c4()
 }
 
 
-int OpSlot::func_080560e8()
+int OpSlot::clearSlotLocations()
 {
     return unk_54.clear();
 }

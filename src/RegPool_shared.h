@@ -8,7 +8,7 @@
 #include "workTable.h"
 
 struct iInfo;
-iInfo *func_0806bf8c(const char *name, bool);
+iInfo *findOpcodeInfoByMnemonic(const char *name, bool);
 bool asciiCaseEqual(const char *a, const char *b);
 
 #endif

@@ -47,9 +47,9 @@ bool wr2w_Hook(void *p, Instr *in)
     iInfo *info = (iInfo *)p;
     iInfo *n;
     if (asciiCaseEqual(info->mnemonic, "ilwr"))
-        n = func_0806bf8c("ilw", false);
+        n = findOpcodeInfoByMnemonic("ilw", false);
     else if (asciiCaseEqual(info->mnemonic, "iswr"))
-        n = func_0806bf8c("isw", false);
+        n = findOpcodeInfoByMnemonic("isw", false);
     else {
         reportError("wr2w_Hook - couldn't find instruction '%s'\n", info->mnemonic);
         return 0;
@@ -81,7 +81,7 @@ char *emitClip(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         p = op->Emit(p, upper, b);
         if (!p) {
             reportError("failed to emit operand\n");
-            op->func_0805665c(0);
+            op->diagnoseOperand(0);
             reportError("from\n");
             dumpEmitInstruction(in);
             return 0;
@@ -121,7 +121,7 @@ char *vmove_Emit(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         break;
     case 0xb5:
         p += formatIntoBuffer(buf, "%s%s", "move", mods);
-        p = emitDestMask(p, 1, in->unk_138f);
+        p = emitDestMask(p, 1, in->destinationMask);
         if (!p) {
             reportError("failed to emit inst mods for lvfmove\n");
             return 0;
@@ -138,7 +138,7 @@ char *vmove_Emit(char *buf, Instr *in, bool upper, char *mods, bool b, int)
         break;
     case 0xb6:
         p += formatIntoBuffer(buf, "%s%s", "max", mods);
-        p = emitDestMask(p, 1, in->unk_138f);
+        p = emitDestMask(p, 1, in->destinationMask);
         if (!p) {
             reportError("failed to emit inst mods for lvfmove\n");
             return 0;
@@ -207,7 +207,7 @@ bool semSynth(void *p, Instr *in)
         }
     }
     *d = 0;
-    iInfo *ni = func_0806bf8c(name, false);
+    iInfo *ni = findOpcodeInfoByMnemonic(name, false);
     if (!ni) {
         reportError("failed to find derived instruction type '%s'\n", name);
         return 0;

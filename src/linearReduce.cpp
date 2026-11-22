@@ -29,15 +29,15 @@ bool func_0807e740(Program *p, workTable *wt, unsigned char up, unsigned char do
 {
     if (!isPipeMode(wt))
         return true;
-    if (wt->func_080741b4())
+    if (wt->getLoopSize())
         return true;
 
     int passes = up != 0;
     if (down)
         passes++;
 
-    wt->func_0807411c();
-    wt->func_080741c0();
+    wt->getRangeStart();
+    wt->getRangeEnd();
     setRangeFrom(wt);
 
     int count = passes;
@@ -90,7 +90,7 @@ bool doLocalMove(workTable *wt, Instr *in, int s_test, int e_test, int dl)
     }
 
     for (; s_test != e_test; s_test += dl) {
-        pos.func_0805874c(s_test);
+        pos.setFromLinearRow(s_test);
         if (!func_0807e130(wt, in, &pos, upwards)) {
             found = true;
             break;

@@ -18,7 +18,7 @@ bool bindExternals(Program *p)
             reportError("no worktable!\n");
             exitAfterCleanup(-1);
         }
-        for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
                 RegPoolEntry *reg = op->unk_18;

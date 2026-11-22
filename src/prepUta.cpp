@@ -48,13 +48,13 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
     }
     nt->unk_10 = s;
     if (loopSize) {
-        nt->unk_7a = s->unk_274;
+        nt->unk_7a = s->safeMinimumLoopCount;
         nt->setRange(loopSize);
     } else
         nt->setRange();
     setRangeFrom(nt);
     g_080de284 = smart;
-    nt->unk_5c.func_0805e37c(&s->unk_278);
+    nt->unk_5c.copyCountersFrom(&s->unk_278);
     copyShort(nt->unk_74, wt->unk_74);
     copyShort(nt->unk_76, wt->unk_76);
     copyShort(nt->unk_78, wt->unk_78);
@@ -71,15 +71,15 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
             return 0;
         }
     }
-    for (Instr *in = wt->unk_88.head; in; in = in->unk_1c.unk_00) {
-        if (in->func_08054168() != s) {
+    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+        if (in->getOwningStream() != s) {
             reportError("owner not set or mismatch for prepUta .. istOwner = %x we are %x!\n",
-                          in->func_08054168(), p);
+                          in->getOwningStream(), p);
             in->leDump();
             exitAfterCleanup(-1);
         }
         in->unk_141a = 0;
-        if (in->func_080541fc() && !in->func_08054138() && !nt->qInstruction(in)) {
+        if (in->isNonSynthetic() && !in->isNop() && !nt->qInstruction(in)) {
             reportError("iStream: failed to queue instruction into table for opt\n");
             exitAfterCleanup(-1);
         }

@@ -58,7 +58,7 @@ char *emitFileEnd(Program *p, char *buf)
 
 static inline unsigned char streamEndType(instStream *s)
 {
-    return s->unk_2cd;
+    return s->endType;
 }
 
 static inline void dumpFailedRow(wtRow *r)
@@ -90,7 +90,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         isEnd = 1;
         nulls = 2;
     }
-    if (owner->unk_2ce)
+    if (owner->branchType)
         nulls = 2;
     int top = (unsigned char)owner->unk_2d4;
 

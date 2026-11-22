@@ -33,10 +33,10 @@ struct Program {
     short flowIdCount;       // flow UID count
     char unk_ae[2];
     instStream **streamsById; // linear table indexed by stream id
-    bool unk_b4;        // logmax: also compute max path key
+    bool oddPipeMoveCount;        // logmax: also compute max path key
     char unk_b5;
     char unk_b6[2];
-    int unk_b8;
+    int evenPipeMoveCount;
     VisitCache backTraceVisitCache;  // back-trace visit cache
     instStream *unk_d4; // t target
     instStream *unk_d8; // new match list, chained via unk_254
