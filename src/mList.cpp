@@ -10,79 +10,79 @@ int mstrlen(const char *s);
 
 static inline bool mNode_detach_inl(mNode *n)
 {
-    if (n->unk_0c)
-        return n->unk_0c->func_0804b3e8(n);
+    if (n->ownerList)
+        return n->ownerList->detachNode(n);
     return false;
 }
 
 mList::mList()
 {
-    unk_04 = 0;
-    unk_08 = 0;
-    unk_0c = 0;
-    unk_10 = 0;
+    nodeSerial = 0;
+    nodeCount = 0;
+    head = 0;
+    tail = 0;
 }
 
 mList::~mList()
 {
-    func_0804b1b0();
+    clearNodes();
 }
 
-bool mList::func_0804b1b0()
+bool mList::clearNodes()
 {
-    mNode *node = unk_0c;
+    mNode *node = head;
     while (node) {
-        mNode *next = node->unk_04;
+        mNode *next = node->next;
         if (!mNode_detach_inl(node))
             return false;
-        if (!node->func_0804b75c())
+        if (!node->clearNameAndOwner())
             return false;
         node = next;
     }
     return true;
 }
 
-mNode *mList::func_0804b20c(void *data)
+mNode *mList::findByData(void *data)
 {
-    mNode *node = unk_0c;
-    while (node && node->unk_10 != data)
-        node = node->unk_04;
+    mNode *node = head;
+    while (node && node->data != data)
+        node = node->next;
     return node;
 }
 
-mNode *mList::func_0804b234(const char *name)
+mNode *mList::findByExactName(const char *name)
 {
-    mNode *node = unk_0c;
+    mNode *node = head;
     while (node) {
         if (name) {
-            if (node->unk_14 && func_0804c03c(name, node->unk_14))
+            if (node->name && func_0804c03c(name, node->name))
                 break;
-        } else if (!node->unk_14)
+        } else if (!node->name)
             break;
-        node = node->unk_04;
+        node = node->next;
     }
     return node;
 }
 
-mNode *mList::func_0804b284(const char *name)
+mNode *mList::findByNameIgnoreCase(const char *name)
 {
-    mNode *node = unk_0c;
+    mNode *node = head;
     while (node) {
         if (name) {
-            if (node->unk_14 && asciiCaseEqual(name, node->unk_14))
+            if (node->name && asciiCaseEqual(name, node->name))
                 break;
-        } else if (!node->unk_14)
+        } else if (!node->name)
             break;
-        node = node->unk_04;
+        node = node->next;
     }
     return node;
 }
 
-mNode *mList::func_0804b2d4(const char *name)
+mNode *mList::findOrAppendByExactName(const char *name)
 {
-    mNode *node = func_0804b234(name);
+    mNode *node = findByExactName(name);
     if (!node) {
-        node = func_0804b444(name);
+        node = appendNamedNode(name);
         if (!node) {
             reportError("create add tail failed.\n");
             exitAfterCleanup(-1);
@@ -91,90 +91,90 @@ mNode *mList::func_0804b2d4(const char *name)
     return node;
 }
 
-bool mList::func_0804b330(mNode *node)
+bool mList::prependNode(mNode *node)
 {
     if (!node)
         return false;
-    if (node->unk_0c)
+    if (node->ownerList)
         return false;
-    node->unk_08 = 0;
-    node->unk_04 = 0;
-    node->unk_10 = (void *)++unk_04;
-    unk_08++;
-    node->unk_0c = this;
-    if (unk_0c) {
-        node->unk_04 = unk_0c;
-        unk_0c->unk_08 = node;
+    node->previous = 0;
+    node->next = 0;
+    node->data = (void *)++nodeSerial;
+    nodeCount++;
+    node->ownerList = this;
+    if (head) {
+        node->next = head;
+        head->previous = node;
     } else
-        unk_10 = node;
-    unk_0c = node;
+        tail = node;
+    head = node;
     return true;
 }
 
-bool mList::func_0804b38c(mNode *node)
+bool mList::appendNode(mNode *node)
 {
     if (!node)
         return false;
-    if (node->unk_0c)
+    if (node->ownerList)
         return false;
-    node->unk_08 = 0;
-    node->unk_04 = 0;
-    node->unk_10 = (void *)++unk_04;
-    node->unk_0c = this;
-    unk_08++;
-    if (unk_10) {
-        unk_10->unk_04 = node;
-        node->unk_08 = unk_10;
-        unk_10 = node;
+    node->previous = 0;
+    node->next = 0;
+    node->data = (void *)++nodeSerial;
+    node->ownerList = this;
+    nodeCount++;
+    if (tail) {
+        tail->next = node;
+        node->previous = tail;
+        tail = node;
     } else {
-        unk_10 = node;
-        unk_0c = node;
+        tail = node;
+        head = node;
     }
     return true;
 }
 
-bool mList::func_0804b3e8(mNode *node)
+bool mList::detachNode(mNode *node)
 {
     if (!node)
         return false;
-    if (node->unk_0c != this)
+    if (node->ownerList != this)
         return false;
-    node->unk_0c = 0;
-    unk_08--;
-    node->unk_10 = 0;
-    if (node->unk_04)
-        node->unk_04->unk_08 = node->unk_08;
+    node->ownerList = 0;
+    nodeCount--;
+    node->data = 0;
+    if (node->next)
+        node->next->previous = node->previous;
     else
-        unk_10 = node->unk_08;
-    if (node->unk_08)
-        node->unk_08->unk_04 = node->unk_04;
+        tail = node->previous;
+    if (node->previous)
+        node->previous->next = node->next;
     else
-        unk_0c = node->unk_04;
+        head = node->next;
     return true;
 }
 
-mNode *mList::func_0804b444(const char *name)
+mNode *mList::appendNamedNode(const char *name)
 {
     mNode *node = new mNode(mNode::INIT);
     if (!node)
         return 0;
     if (name)
-        node->unk_14 = dupString(name);
-    if (!func_0804b38c(node)) {
+        node->name = dupString(name);
+    if (!appendNode(node)) {
         delete node;
         return 0;
     }
     return node;
 }
 
-bool mList::func_0804b4d0(mList *other)
+bool mList::transferNodesFrom(mList *other)
 {
-    mNode *node = other->unk_0c;
+    mNode *node = other->head;
     while (node) {
-        mNode *next = node->unk_04;
+        mNode *next = node->next;
         if (!mNode_detach_inl(node))
             return false;
-        if (!func_0804b38c(node))
+        if (!appendNode(node))
             return false;
         node = next;
     }
@@ -183,89 +183,89 @@ bool mList::func_0804b4d0(mList *other)
 
 void mList::func_0804b534()
 {
-    for (mNode *node = unk_0c; node; node = node->unk_04)
+    for (mNode *node = head; node; node = node->next)
         ;
 }
 
-char *mList::func_0804b550()
+char *mList::firstNodeName()
 {
-    for (mNode *node = unk_0c; node; node = node->unk_04)
-        if (node->unk_14)
-            return node->unk_14;
+    for (mNode *node = head; node; node = node->next)
+        if (node->name)
+            return node->name;
     return 0;
 }
 
-char *mList::func_0804b574(char *buf)
+char *mList::appendNamedLabels(char *buf)
 {
-    for (mNode *node = unk_0c; node; node = node->unk_04)
-        if (node->unk_14)
-            buf += formatIntoBuffer(buf, "%s:\n", node->unk_14);
+    for (mNode *node = head; node; node = node->next)
+        if (node->name)
+            buf += formatIntoBuffer(buf, "%s:\n", node->name);
     return buf;
 }
 
 mNode::mNode()
 {
-    unk_04 = 0;
-    unk_08 = 0;
-    unk_0c = 0;
-    unk_14 = 0;
-    unk_10 = 0;
-    unk_18 = 0;
+    next = 0;
+    previous = 0;
+    ownerList = 0;
+    name = 0;
+    data = 0;
+    flags = 0;
 }
 
 mNode::~mNode()
 {
-    if (unk_14)
-        delete[] unk_14;
-    unk_14 = 0;
+    if (name)
+        delete[] name;
+    name = 0;
 }
 
 
 bool mNode::detach()
 {
-    if (unk_0c)
-        return unk_0c->func_0804b3e8(this);
+    if (ownerList)
+        return ownerList->detachNode(this);
     return false;
 }
 
 bool mNode::setName(const char *name)
 {
-    if (unk_14) {
-        delete[] unk_14;
-        unk_14 = 0;
+    if (this->name) {
+        delete[] this->name;
+        this->name = 0;
     }
     if (name) {
-        unk_14 = new char[mstrlen(name) + 1];
-        if (!unk_14)
+        this->name = new char[mstrlen(name) + 1];
+        if (!this->name)
             return false;
-        mstrcpy(unk_14, name);
+        mstrcpy(this->name, name);
     }
     return true;
 }
 
-bool mNode::func_0804b75c()
+bool mNode::clearNameAndOwner()
 {
-    if (unk_14)
-        delete[] unk_14;
-    unk_14 = 0;
-    unk_0c = 0;
+    if (name)
+        delete[] name;
+    name = 0;
+    ownerList = 0;
     return true;
 }
 
-int mList::func_0804b794()
+int mList::combinedFlags()
 {
     int flags = 0;
-    for (mNode *node = unk_0c; node; node = node->unk_04)
-        flags |= node->unk_18;
+    for (mNode *node = head; node; node = node->next)
+        flags |= node->flags;
     return flags;
 }
 
-int mList::func_0804b7b4()
+int mList::takeCombinedFlags()
 {
     int flags = 0;
-    for (mNode *node = unk_0c; node; node = node->unk_04) {
-        flags |= node->unk_18;
-        node->unk_18 = 0;
+    for (mNode *node = head; node; node = node->next) {
+        flags |= node->flags;
+        node->flags = 0;
     }
     return flags;
 }

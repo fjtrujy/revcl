@@ -134,9 +134,9 @@ bool Processor::Init(CpuDef *cpu)
 
 bool Processor::func_0806bc84()
 {
-    unk_4c.func_0804b1b0();
-    unk_20.func_0804b1b0();
-    unk_04.func_0804b1b0();
+    unk_4c.clearNodes();
+    unk_20.clearNodes();
+    unk_04.clearNodes();
     return true;
 }
 
@@ -192,7 +192,7 @@ void Processor::func_0806bdd0()
     int saved = errorOccurred;
     errorOccurred = !quiet_080bbd98;
     int n = 0;
-    for (iInfo *p = g_080de6c0; p->unk_04; p++) {
+    for (iInfo *p = g_080de6c0; p->mnemonic; p++) {
         p->func_08070080();
         n++;
     }
@@ -213,9 +213,9 @@ void func_0806be68(Program *p)
 bool parseReset(Program *p)
 {
     p->proc.unk_63 = false;
-    p->proc.unk_04.func_0804b1b0();
-    p->proc.unk_20.func_0804b1b0();
-    p->proc.unk_4c.func_0804b1b0();
+    p->proc.unk_04.clearNodes();
+    p->proc.unk_20.clearNodes();
+    p->proc.unk_4c.clearNodes();
     p->proc.unk_3d = 0;
     p->proc.unk_3e = 0;
     p->proc.unk_62 = 0;
@@ -258,9 +258,9 @@ iInfo *func_0806bf8c(const char *tok, bool all)
     iInfo *p = g_080de6c0;
     if (!all)
         p += 12;
-    for (; p->unk_04; p++) {
+    for (; p->mnemonic; p++) {
         const char *s = tok;
-        const char *m = p->unk_04;
+        const char *m = p->mnemonic;
         while (*s && *m && func_0804bf28(*s, *m)) {
             s++;
             m++;
@@ -269,7 +269,7 @@ iInfo *func_0806bf8c(const char *tok, bool all)
             continue;
         if (!*s)
             return p;
-        if (*s == '.' && p->unk_0c) {
+        if (*s == '.' && p->destinationMaskMode) {
             do {
                 s++;
                 if (!*s)

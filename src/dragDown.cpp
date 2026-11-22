@@ -83,10 +83,10 @@ int dragDown(workTable *wt)
                     if (msl < oStart) {
                         short mfs = in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2;
                         reportWarning("%s %d-%d < mSline=%d [%d,%d]\n",
-                                      in->opcodeInfo->unk_04, in->unk_13e8.getRow(),
+                                      in->opcodeInfo->mnemonic, in->unk_13e8.getRow(),
                                       mfs,
                                       msl, wt->unk_30, wt->unk_34);
-                        const char *name = in->opcodeInfo ? in->opcodeInfo->unk_04 : "NO_BASE_INST";
+                        const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
                         reportWarning("%s: fixing mSline<oStart.. oStart=%d mSline=%d\n",
                                       name,
                                       oStart, msl);

@@ -7,26 +7,26 @@ class mList {
 public:
     mList();
     virtual ~mList();
-    virtual bool func_0804b1b0();
-    virtual mNode *func_0804b444(const char *s);
-    mNode *func_0804b20c(void *data);
-    mNode *func_0804b234(const char *name);
-    mNode *func_0804b284(const char *name);
-    mNode *func_0804b2d4(const char *name);
-    bool func_0804b330(mNode *node);
-    bool func_0804b38c(mNode *node);
-    bool func_0804b3e8(mNode *node);
-    bool func_0804b4d0(mList *other);
+    virtual bool clearNodes();
+    virtual mNode *appendNamedNode(const char *s);
+    mNode *findByData(void *data);
+    mNode *findByExactName(const char *name);
+    mNode *findByNameIgnoreCase(const char *name);
+    mNode *findOrAppendByExactName(const char *name);
+    bool prependNode(mNode *node);
+    bool appendNode(mNode *node);
+    bool detachNode(mNode *node);
+    bool transferNodesFrom(mList *other);
     void func_0804b534();
-    char *func_0804b550();
-    char *func_0804b574(char *buf);
-    int func_0804b794();
-    int func_0804b7b4();
+    char *firstNodeName();
+    char *appendNamedLabels(char *buf);
+    int combinedFlags();
+    int takeCombinedFlags();
 
-    int unk_04;
-    int unk_08;     // node count
-    mNode *unk_0c;  // head
-    mNode *unk_10;  // tail
+    int nodeSerial; // monotonically increasing ID assigned when a node joins
+    int nodeCount;
+    mNode *head;
+    mNode *tail;
 };
 
 class mNode {
@@ -35,25 +35,25 @@ public:
     mNode();
     mNode(InitTag)
     {
-        unk_04 = 0;
-        unk_08 = 0;
-        unk_0c = 0;
-        unk_14 = 0;
-        unk_10 = 0;
-        unk_18 = 0;
+        next = 0;
+        previous = 0;
+        ownerList = 0;
+        name = 0;
+        data = 0;
+        flags = 0;
     }
     virtual ~mNode();
-    virtual bool func_0804b75c();
+    virtual bool clearNameAndOwner();
 
     bool detach();
     bool setName(const char *name);
 
-    mNode *unk_04;  // next
-    mNode *unk_08;  // prev
-    mList *unk_0c;  // owning list
-    void *unk_10;   // data/key
-    char *unk_14;
-    int unk_18;
+    mNode *next;
+    mNode *previous;
+    mList *ownerList;
+    void *data;     // generic pointer data or generated node key
+    char *name;
+    int flags;
 };
 
 #endif

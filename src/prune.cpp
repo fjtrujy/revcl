@@ -99,7 +99,7 @@ bool initPrune(Instr *in)
 {
     in->unk_13cc = 0;
     if (in->opcodeInfo) {
-        char ok = in->opcodeInfo->func_0807026c();
+        char ok = in->opcodeInfo->canPruneOperands();
         if (!ok)
             in->unk_13cc = 1;
         for (int i = 0;; i++) {
@@ -315,7 +315,7 @@ int doPrune(Instr *in)
     }
     if (in->unk_142c && in->operands[0].unk_18 == in->operands[1].unk_18)
         return 0;
-    if (info->unk_0c == 1) {
+    if (info->destinationMaskMode == 1) {
         int m, nIn = 0, inOR = 0, outOR = 0, nOut = 0;
         for (i = 0; (op = in->getOp(i)) != 0; i++) {
             if (op->unk_04 != 1 && op->unk_04 != 9)
@@ -338,7 +338,7 @@ int doPrune(Instr *in)
             }
         }
         if (!nOut && !nIn) {
-            reportError("MD_ANY set - but couldn't find any fl4 or acc operands for %s\n", info->unk_04);
+            reportError("MD_ANY set - but couldn't find any fl4 or acc operands for %s\n", info->mnemonic);
             return -1;
         }
         if (nOut > 1) {
@@ -346,7 +346,7 @@ int doPrune(Instr *in)
             in->leDump();
             return -1;
         }
-        if (info->unk_20 == func_08087860)
+        if (info->decodeHook == func_08087860)
             inOR = (inOR >> 1) | ((inOR & 1) << 3);
         if (nIn) {
             if (outOR & ~inOR) {
@@ -376,7 +376,7 @@ int doPrune(Instr *in)
             if (op->unk_04 == 1 || op->unk_04 == 9)
                 op->unk_07 = m;
         }
-        if (info->unk_20 == func_08087860)
+        if (info->decodeHook == func_08087860)
             in->operands[1].unk_07 = (((m & 8) >> 3) | (m << 1)) & 0xf;
     }
     for (i = 0; (op = in->getOp(i)) != 0; i++) {

@@ -8,7 +8,7 @@ void DecodedLine::initialize()
     rawLoopId = 0;
     decodeSubMode = 0;
     flowId = -1;
-    labels.func_0804b1b0();
+    labels.clearNodes();
     passThroughText = 0;
     instructions[0] = 0;
     instructions[1] = 0;
@@ -17,7 +17,7 @@ void DecodedLine::initialize()
 void DecodedLine::refreshInstructionOperands(int index)
 {
     mList *labelList = &labels;
-    if (labelList->unk_08)
+    if (labelList->nodeCount)
         labelList->func_0804b534();
     for (int i = 0; i != 2; i++) {
         if (instructions[i]) {
@@ -36,7 +36,7 @@ void refreshDecodedLineOperands(DecodedLine *blocks, int count)
 
 void DecodedLine::releaseContents()
 {
-    labels.func_0804b1b0();
+    labels.clearNodes();
     if (passThroughText)
         delete[] passThroughText;
     passThroughText = 0;
@@ -50,7 +50,7 @@ void DecodedLine::releaseContents()
 DecodedLine *findDecodedLineByLabel(DecodedLine *blocks, int count, const char *name)
 {
     for (int i = 0; i != count; i++)
-        if (blocks[i].labels.func_0804b284(name))
+        if (blocks[i].labels.findByNameIgnoreCase(name))
             return &blocks[i];
     return 0;
 }

@@ -75,12 +75,12 @@ Instr::Instr(iInfo *info)
     unk_13d7 = info->unk_0e;
     unk_138c = info->unk_0e;
     unk_138d = info->unk_10;
-    unk_1388 = info->func_0806ffb4();
+    unk_1388 = info->branchFlags();
     unk_13cf = info->unk_12;
     unk_13ce = info->ramType();
-    unk_13d0 = info->unk_18 & ~7;
-    unk_138a = info->func_08070044();
-    unk_13cd = info->func_08070020();
+    unk_13d0 = info->kindAndFlags & ~7;
+    unk_138a = info->isRawOnly();
+    unk_13cd = info->syntheticKind();
     for (int i = 0; info->operandDescriptors[i].operandKind; i++) {
         operandCount++;
         Operand *op = &operands[i];
@@ -95,7 +95,7 @@ Instr::Instr(iInfo *info)
         if (op->unk_0d)
             operands[op->unk_0d - 1].unk_0d = i + 1;
         if (d->direction == 2)
-            op->unk_0a = d->unk_03;
+            op->unk_0a = d->outputLatency;
         else
             op->unk_0a = 0;
     }
@@ -160,7 +160,7 @@ bool Instr::func_08054138()
 {
     if (!opcodeInfo)
         return true;
-    return opcodeInfo->func_0807005c();
+    return opcodeInfo->isNop();
 }
 
 instStream *Instr::func_08054168()
@@ -380,7 +380,7 @@ int Instr::getRamBits()
     }
     r = 0;
     if (opcodeInfo) {
-        switch ((char)opcodeInfo->unk_0c) {
+        switch ((char)opcodeInfo->destinationMaskMode) {
         case 1:
             r = unk_138f;
             break;
@@ -656,8 +656,8 @@ char *Instr::func_080552a8(bool flag, char *buf, int)
         return 0;
     iInfo *info = opcodeInfo;
     if (info) {
-        buf += formatIntoBuffer(buf, info->unk_04);
-        switch ((char)info->unk_0c) {
+        buf += formatIntoBuffer(buf, info->mnemonic);
+        switch ((char)info->destinationMaskMode) {
         case 1:
             buf += formatIntoBuffer(buf, ".[xyzw]");
             break;

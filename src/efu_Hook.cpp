@@ -27,7 +27,7 @@ bool efu_Hook(void *p, Instr *in)
 {
     iInfo *info = (iInfo *)p;
     Operand *op = &in->operands[1];
-    switch (info->unk_1c) {
+    switch (info->efuMaskType) {
     case 1: break;
     case 2: op->unk_07 = 3; break;
     case 3: op->unk_07 = 5; break;
@@ -46,12 +46,12 @@ bool wr2w_Hook(void *p, Instr *in)
 {
     iInfo *info = (iInfo *)p;
     iInfo *n;
-    if (asciiCaseEqual(info->unk_04, "ilwr"))
+    if (asciiCaseEqual(info->mnemonic, "ilwr"))
         n = func_0806bf8c("ilw", false);
-    else if (asciiCaseEqual(info->unk_04, "iswr"))
+    else if (asciiCaseEqual(info->mnemonic, "iswr"))
         n = func_0806bf8c("isw", false);
     else {
-        reportError("wr2w_Hook - couldn't find instruction '%s'\n", info->unk_04);
+        reportError("wr2w_Hook - couldn't find instruction '%s'\n", info->mnemonic);
         return 0;
     }
     if (!n) {
@@ -175,7 +175,7 @@ bool semSynth(void *p, Instr *in)
     iInfo *info = (iInfo *)p;
     char name[32];
     char *d = name;
-    const char *s = info->unk_04;
+    const char *s = info->mnemonic;
     while (*s)
         *d++ = *s++;
     if (in->operands[0].unk_04 == 9) {

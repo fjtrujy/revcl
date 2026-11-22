@@ -57,9 +57,9 @@ bool Program::doUnique()
         }
     }
     for (s = streamHead; s; s = s->nextStream) {
-        for (mNode *n = s->unk_110.unk_0c; n; n = n->unk_04) {
-            if (!func_0806f4e8(this, n->unk_14)) {
-                char *nn = mprefix_del(getUniqueName(this), n->unk_14);
+        for (mNode *n = s->unk_110.head; n; n = n->next) {
+            if (!func_0806f4e8(this, n->name)) {
+                char *nn = mprefix_del(getUniqueName(this), n->name);
                 if (!nn) {
                     reportError("failed to cat\n");
                     return false;
@@ -71,9 +71,9 @@ bool Program::doUnique()
             }
         }
     }
-    for (mNode *n = uniqueNamePrefixes.unk_0c; n; n = n->unk_04) {
-        if (!func_0806f4e8(this, n->unk_14)) {
-            char *nn = mprefix_del(getUniqueName(this), n->unk_14);
+    for (mNode *n = uniqueNamePrefixes.head; n; n = n->next) {
+        if (!func_0806f4e8(this, n->name)) {
+            char *nn = mprefix_del(getUniqueName(this), n->name);
             if (!nn) {
                 reportError("failed to cat\n");
                 return false;
@@ -90,7 +90,7 @@ bool Program::doUnique()
 bool Program::func_0806e878(const char *name)
 {
     for (instStream *s = streamHead; s; s = s->nextStream) {
-        if (s->unk_110.func_0804b284(name))
+        if (s->unk_110.findByNameIgnoreCase(name))
             return true;
     }
     return false;

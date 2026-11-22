@@ -156,7 +156,7 @@ RegPoolEntry* RegPool::func_08059418(const char* name)
 {
     RegPoolEntry* e = registerEntries;
     for (int i = 0; i != entryCount; i++, e++)
-        if (e->unk_2b8.func_0804b284(name))
+        if (e->unk_2b8.findByNameIgnoreCase(name))
             return e;
     return 0;
 }

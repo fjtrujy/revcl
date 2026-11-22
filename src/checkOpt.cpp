@@ -112,7 +112,7 @@ bool checkOpt3(Program *p)
                     if (in->unk_1c.unk_04 != prev) {
                         const char *name = "NO_BASE_INST";
                         if (in->opcodeInfo)
-                            name = in->opcodeInfo->unk_04;
+                            name = in->opcodeInfo->mnemonic;
                         reportError("linear list isn't in order at guid=%d %s prev=%p\n",
                                       in->unk_13e0, name, in->unk_1c.unk_04);
                         wt->dump();

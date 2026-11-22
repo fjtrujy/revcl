@@ -188,15 +188,15 @@ rPart::rPart()
 
 mNode* RegPoolEntry::func_0805a8a4(const char* name)
 {
-    mNode* n = unk_2b8.func_0804b234(name);
+    mNode* n = unk_2b8.findByExactName(name);
     if (n)
         return n;
-    return unk_2b8.func_0804b444(name);
+    return unk_2b8.appendNamedNode(name);
 }
 
 const char* RegPoolEntry::registerName()
 {
-    const char* name = unk_2b8.func_0804b550();
+    const char* name = unk_2b8.firstNodeName();
     if (!name)
         name = "UNNAMED_REGISTER!";
     return name;
@@ -266,7 +266,7 @@ char* RegPoolEntry::maskName(int mask)
     if (regNameBufPos > 512)
         regNameBufPos = 0;
     char* buf = &regNameBuf[regNameBufPos];
-    const char* name = unk_2b8.func_0804b550();
+    const char* name = unk_2b8.firstNodeName();
     if (!name)
         name = "UNNAMED_REGISTER!";
     char* p = buf + formatIntoBuffer(buf, "%s", name);

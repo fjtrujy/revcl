@@ -100,7 +100,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     in->unk_1420 = loopid;
     in->unk_1389 = mods;
     in->unk_1392 = tilde;
-    mnemonicLen = mstrlen(info->unk_04);
+    mnemonicLen = mstrlen(info->mnemonic);
     {
         char *suffix = p + mnemonicLen;
         bad = false;
@@ -110,7 +110,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         reportUserMessage("instruction has bad .modifier bits\n");
         goto fail;
     }
-    switch ((char)info->unk_0c) {
+    switch ((char)info->destinationMaskMode) {
     case 0:
         break;
     case 1:
@@ -186,7 +186,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             next = gatherTokens(t, cur, last);
             if (next < 0)
                 goto fail;
-            if (info->func_08070020() == 11 && !gatheredToken[0]) {
+            if (info->syntheticKind() == 11 && !gatheredToken[0]) {
                 gatheredToken[0] = ' ';
                 gatheredToken[1] = 0;
             }
@@ -237,7 +237,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     reportError("have to set modbits for ea/reg or imm(ea)reg somewhere\n");
                     goto fail;
                 }
-                if (info->unk_0c == 3 && func_0804bf50(opd->unk_0c) != 1) {
+                if (info->destinationMaskMode == 3 && func_0804bf50(opd->unk_0c) != 1) {
                     reportError("only one mod field allowed (one of x,y,z, or w)\n");
                     goto fail;
                 }
@@ -295,9 +295,9 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                 goto fail;
             }
             s = nameBuf;
-            if (pool->virtualPartCount && unk_4c.unk_10 && !pool->func_08059418(op.name) && op.name[0] != '_') {
-                for (mNode *n = unk_4c.unk_10; n; n = n->unk_08) {
-                    char *np = n->unk_14;
+            if (pool->virtualPartCount && unk_4c.tail && !pool->func_08059418(op.name) && op.name[0] != '_') {
+                for (mNode *n = unk_4c.tail; n; n = n->previous) {
+                    char *np = n->name;
                     if (!np) {
                         reportError("null name in parsep\n");
                         goto fail;
@@ -319,8 +319,8 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                                 np++;
                         }
                     }
-                    if ((found && n->unk_18 == 0) || (!found && n->unk_18 == 1)) {
-                        s += formatIntoBuffer(s, "%d", (int)(VclPtrWord)n->unk_10);
+                    if ((found && n->flags == 0) || (!found && n->flags == 1)) {
+                        s += formatIntoBuffer(s, "%d", (int)(VclPtrWord)n->data);
                         break;
                     }
                 }
@@ -388,7 +388,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         reportError("oDecode: sanity check failed\n");
         goto fail;
     }
-    if (info->unk_20 && !info->unk_20(info, in)) {
+    if (info->decodeHook && !info->decodeHook(info, in)) {
         reportError("oDecode:: iBuildHook failed to patch instruction\n");
         goto fail;
     }
@@ -453,12 +453,12 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
             while (*p && *p != ':')
                 p++;
             *p = 0;
-            n = labels->func_0804b444(buf);
+            n = labels->appendNamedNode(buf);
             if (!n) {
                 reportError("Processor::decodeLE() - couldn't create tail for label list\n");
                 return false;
             }
-            n->unk_18 = mods;
+            n->flags = mods;
             (*pos)++;
             if (getLineTokenCount(t) > 1) {
                 char *tok2 = t->tokenTextAt(1, 0);
@@ -472,11 +472,11 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                         *d = 0;
                     }
                     i = func_080521f0(buf);
-                    n->unk_18 |= i;
+                    n->flags |= i;
                     (*pos)++;
                 }
             }
-            if (!func_080522c4(n->unk_18, unk_3d, true)) {
+            if (!func_080522c4(n->flags, unk_3d, true)) {
                 int mode = unk_3d;
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(mode));
@@ -625,7 +625,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
         }
         DecodedLine *b = &blocks[n];
         b->initialize();
-        if (!b->labels.func_0804b4d0(&labels)) {
+        if (!b->labels.transferNodesFrom(&labels)) {
             reportError("failed to grab labels from current list\n");
             goto done;
         }
@@ -757,7 +757,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 goto done;
             }
             if (in->unk_138a) {
-                reportUserMessage("vcl: instruction '%s' is unsupported, except in RAW mode.\n", in->opcodeInfo->unk_04);
+                reportUserMessage("vcl: instruction '%s' is unsupported, except in RAW mode.\n", in->opcodeInfo->mnemonic);
                 in->leDump();
                 delete in;
                 goto done;
@@ -784,7 +784,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
         }
         n++;
     }
-    if (labels.unk_08) {
+    if (labels.nodeCount) {
         if (n < 0) {
             reportError("out of bounds rLine extending table\n");
             goto done;
@@ -794,14 +794,14 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
             goto done;
         }
         reportWarning("gathering labels at end of code into the final namelist\n");
-        if (!p->proc.unk_20.func_0804b4d0(&labels)) {
+        if (!p->proc.unk_20.transferNodesFrom(&labels)) {
             reportError("failed to grab ending labels\n");
             goto done;
         }
-        for (mNode *nd = p->proc.unk_20.unk_0c; nd; nd = nd->unk_04) {
-            if (nd->unk_18) {
+        for (mNode *nd = p->proc.unk_20.head; nd; nd = nd->next) {
+            if (nd->flags) {
                 reportUserMessage("can't attach [modifiers] to labels at the end of code\n");
-                reportUserMessage("Label '%s:' has '%s'\n", nd->unk_14, func_08052314(nd->unk_18));
+                reportUserMessage("Label '%s:' has '%s'\n", nd->name, func_08052314(nd->flags));
                 goto done;
             }
         }
@@ -820,14 +820,14 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
     }
     for (int i = 0; i != n - 1; i++) {
         mList *a = &blocks[i].labels;
-        if (!a->unk_0c)
+        if (!a->head)
             continue;
         for (int j = i + 1; j != n; j++) {
             mList *c = &blocks[j].labels;
-            if (c->unk_0c) {
-                for (mNode *nd = a->unk_0c; nd; nd = nd->unk_04) {
-                    if (c->func_0804b284(nd->unk_14)) {
-                        reportUserMessage("found at least two uses of the label '%s' in the source\n", nd->unk_14);
+            if (c->head) {
+                for (mNode *nd = a->head; nd; nd = nd->next) {
+                    if (c->findByNameIgnoreCase(nd->name)) {
+                        reportUserMessage("found at least two uses of the label '%s' in the source\n", nd->name);
                         goto done;
                     }
                 }
@@ -841,9 +841,9 @@ done:
         delete[] blocks;
         blocks = 0;
         *count = 0;
-    } else if (p->proc.unk_4c.unk_08)
-        reportWarning("scope stack open (depth %d) at end of source\n", p->proc.unk_4c.unk_08);
-    p->proc.unk_4c.func_0804b1b0();
+    } else if (p->proc.unk_4c.nodeCount)
+        reportWarning("scope stack open (depth %d) at end of source\n", p->proc.unk_4c.nodeCount);
+    p->proc.unk_4c.clearNodes();
     return blocks;
 }
 

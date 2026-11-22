@@ -69,7 +69,7 @@ bool Program::dispose()
         delete[] streamsById;
     streamsById = 0;
     disposeBackTrace(this);
-    uniqueNamePrefixes.func_0804b1b0();
+    uniqueNamePrefixes.clearNodes();
     return true;
 }
 
@@ -166,7 +166,7 @@ instStream *Program::findStream(const char *name)
     if (!name)
         return 0;
     instStream *s;
-    for (s = streamHead; s && !s->unk_110.func_0804b284(name); s = s->nextStream)
+    for (s = streamHead; s && !s->unk_110.findByNameIgnoreCase(name); s = s->nextStream)
         ;
     return s;
 }
@@ -355,7 +355,7 @@ bool isReferencedLabel(Program *p, char *name)
                     reportError("no stream for ir\n");
                     exitAfterCleanup(-1);
                 }
-                if (t->unk_110.func_0804b234(name))
+                if (t->unk_110.findByExactName(name))
                     return true;
             }
         }
@@ -365,14 +365,14 @@ bool isReferencedLabel(Program *p, char *name)
                 return true;
         }
     }
-    return p->uniqueNamePrefixes.func_0804b234(name) != 0;
+    return p->uniqueNamePrefixes.findByExactName(name) != 0;
 }
 
 bool func_0806f4a0(Program *p, instStream *s)
 {
     mList *l = &s->unk_110;
-    for (mNode *n = l->unk_0c; n; n = n->unk_04) {
-        if (p->proc.unk_04.func_0804b234(n->unk_14))
+    for (mNode *n = l->head; n; n = n->next) {
+        if (p->proc.unk_04.findByExactName(n->name))
             return true;
     }
     return false;
@@ -380,7 +380,7 @@ bool func_0806f4a0(Program *p, instStream *s)
 
 bool func_0806f4e8(Program *p, char *name)
 {
-    return p->proc.unk_04.func_0804b234(name) != 0;
+    return p->proc.unk_04.findByExactName(name) != 0;
 }
 
 bool recalcFlowUIDs(Program *p)

@@ -214,7 +214,7 @@ int iGroupLog::logTable(workTable *wt)
             int n = 0;
             for (in = wt->unk_88.unk_00; in; in = in->unk_1c.unk_00)
                 if (in->unk_0e == 3) {
-                    const char *name = in->opcodeInfo ? in->opcodeInfo->unk_04 : "NO_BASE_INST";
+                    const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
                     reportInfo("  [%4d] %d %s\n", n++, in->unk_0c, name);
                 }
             reportInfo("  ..%d matches\n", n);

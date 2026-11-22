@@ -158,7 +158,7 @@ bool func_0805137c(Program *prog, LocTag *t)
 {
     char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
     if (s)
-        prog->proc.unk_04.func_0804b2d4(s);
+        prog->proc.unk_04.findOrAppendByExactName(s);
     return 1;
 }
 
@@ -528,12 +528,12 @@ bool func_08051d6c(Program *prog, LocTag *t, int v)
         *d++ = ':';
     }
     *d = 0;
-    mNode *n = prog->proc.unk_4c.func_0804b444(buf);
+    mNode *n = prog->proc.unk_4c.appendNamedNode(buf);
     if (!n) {
         reportError("failed to process  a visibility directive\n");
         return false;
     }
-    n->unk_18 = v;
+    n->flags = v;
     return true;
 }
 
@@ -544,7 +544,7 @@ inline void ExecRP_show_line(LocTag *t)
 
 bool func_08051e34(Program *prog, LocTag *t, int v)
 {
-    mNode *n = prog->proc.unk_4c.unk_10;
+    mNode *n = prog->proc.unk_4c.tail;
     if (!n) {
         reportWarning("closing visibility directive and no tail at:\n");
         int saved = errorOccurred;
@@ -553,7 +553,7 @@ bool func_08051e34(Program *prog, LocTag *t, int v)
         errorOccurred = saved;
         return true;
     }
-    if (n->unk_18 != v) {
+    if (n->flags != v) {
         reportUserMessage("mode mismatch closing a visibility scope\n");
         int saved = errorOccurred;
         errorOccurred = !quiet_080bbd98;
@@ -561,7 +561,7 @@ bool func_08051e34(Program *prog, LocTag *t, int v)
         errorOccurred = saved;
         return false;
     }
-    if (!prog->proc.unk_4c.func_0804b3e8(n)) {
+    if (!prog->proc.unk_4c.detachNode(n)) {
         reportError("failed to remove tail node\n");
         return false;
     }

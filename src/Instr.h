@@ -21,7 +21,7 @@ struct iOpDesc {
     unsigned char operandKind;   // 0 terminates the list
     unsigned char direction;     // 1 = input, 2 = output
     unsigned char isImplicit;
-    unsigned char unk_03;
+    unsigned char outputLatency;  // forwarded to output operand timing
     unsigned char unk_04;
     unsigned char unk_05;
     unsigned char patchedOutputIndexPlusOne;
@@ -30,9 +30,9 @@ struct iOpDesc {
 class iInfo {
 public:
     char *unk_00;
-    char *unk_04;           // mnemonic
+    char *mnemonic;
     char *unk_08;
-    unsigned char unk_0c;
+    unsigned char destinationMaskMode;
     char unk_0d;
     union {
         unsigned short unk_0e_w;
@@ -45,32 +45,32 @@ public:
     char unk_11;
     char unk_12;
     char unk_13[5];
-    unsigned char unk_18;
-    unsigned char unk_19;
+    unsigned char kindAndFlags;
+    unsigned char kindData;
     unsigned char unk_1a;   // branch target operand index + 1
     char unk_1b;
-    int unk_1c;             // EFU mod-bits type (efu_Hook)
-    bool (*unk_20)(void *, Instr *);     // per-opcode handler
+    int efuMaskType;
+    bool (*decodeHook)(void *, Instr *);
     char unk_24[0x34 - 0x24];
-    char *unk_34;           // mnemonic of the sense-reversed instruction
-    char *(*unk_38)(char *buf, Instr *in, bool upper, char *mods, bool b, int zero); // emit hook
+    char *reverseSenseMnemonic;
+    char *(*emitHook)(char *buf, Instr *in, bool upper, char *mods, bool b, int zero);
     char unk_3c[0x44 - 0x3c];
     iOpDesc operandDescriptors[12];
 
-    unsigned char kind() { return unk_18 & 7; }
+    unsigned char kind() { return kindAndFlags & 7; }
 
-    unsigned char func_0806ffb4();
+    unsigned char branchFlags();
     unsigned char ramType();
-    int func_08070020();
-    bool func_08070044();
-    char func_0807005c();
+    int syntheticKind();
+    bool isRawOnly();
+    char isNop();
     void func_08070080();
     void func_080700a4();
     bool check();
     int func_080701f4();
     int func_0807021c();
     int func_08070244();
-    int func_0807026c();
+    int canPruneOperands();
 };
 
 // Operand-location list: list ownership and count checked by its dump helpers.
