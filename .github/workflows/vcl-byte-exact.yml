@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -29,7 +29,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends rpm2cpio cpio curl ca-certificates
 
       - name: Cache historical RPM downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: tools/rh9/rpms
           key: rh9-rpms-${{ hashFiles('tools/rh9/rpms.sha256') }}
@@ -56,7 +56,7 @@ jobs:
 
       - name: Preserve diagnostics on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vcl-byte-exact-failure
           path: |
