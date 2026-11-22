@@ -4,12 +4,12 @@ Tracked naming-review snapshot. The **baseline** is the pre-refactor `main` sour
 
 | Area | Baseline | Current | Change |
 | --- | ---: | ---: | ---: |
-| Files with address-based filenames | 16 | 10 | -6 |
+| Files with address-based filenames | 16 | 0 | -16 |
 | Classes with numeric names and no source alias | 4 | 1 | -3 |
 | Classes with provisional names (manual review) | 4 | 4 | +0 |
 | Structs with provisional names (manual review) | 5 | 5 | +0 |
 | Functions with numeric names and no source alias | 436 | 404 | -32 |
-| Fields with offset names (owner-qualified) | 614 | 581 | -33 |
+| Fields with offset names (owner-qualified) | 614 | 559 | -55 |
 | Parameters with short/generic names (AST review) | 879 | 865 | -14 |
 | Local variables with short/generic names (AST review) | 2291 | 2246 | -45 |
 | Address-suffixed globals/other identifiers | 85 | 85 | +0 |

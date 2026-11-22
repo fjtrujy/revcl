@@ -78,15 +78,6 @@ opaque_field	unk_1c	Instr
 opaque_field	unk_24	Instr
 opaque_field	unk_2c	Instr
 opaque_field	unk_30	Instr
-opaque_field	unk_00	Line
-opaque_field	unk_04	Line
-opaque_field	unk_00	LocRef
-opaque_field	unk_04	LocRef
-opaque_field	unk_00	LocTag
-opaque_field	unk_04	LocTag
-opaque_field	unk_08	LocTag
-opaque_field	unk_0a	LocTag
-opaque_field	unk_0c	LocTag
 opaque_field	unk_50	OpSlot
 opaque_field	unk_52	OpSlot
 opaque_field	unk_54	OpSlot

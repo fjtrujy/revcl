@@ -184,6 +184,27 @@ For `wrangleCore.cpp`, the special per-unit compiler flags were migrated in
 `config/vcl-link-order.cmake` was preserved. **The historical executable remains
 byte-identical** after this last file-renaming pass.
 
+## Post-merge parser and location naming
+
+The local parser refinement was reapplied on top of the merged naming PR
+without reverting its wider field and filename renames:
+
+- `Line` owns `locationName` and `locationKind` (file or macro), with semantic
+  source-level aliases for `setLocation`, `clearLocation`, `dumpLocation`.
+- `LocTag` owns `lineText`, `sourceLineNumber`, `isRawMacroBlock`, `gaspDepth`
+  and `gaspStack`. `LocRef` entries hold `sourceLocation` and
+  `gaspLineNumber`. The parser's GASP location-stack writer and the line-dump
+  reader independently confirm these interpretations.
+- Five additional parser helpers now read `isLocTagValid`,
+  `getLineTokenCount`, `startsWithDirective`, `isCommentToken` and
+  `hasAssignmentMarker` at their call sites. Preprocessor aliases preserve
+  the ABI-visible original function symbols.
+
+The nine corresponding owner-qualified field review entries were removed from
+`naming-fields.tsv`, with already-resolved short Line declarations removed
+from the separate AST review queue. The generated progress report reflects
+the merged branch rather than the older local source snapshot.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
@@ -207,9 +228,8 @@ byte-identical** after this last file-renaming pass.
 
 ## Next targets
 
-- Owner-qualified `LocTag` and `LocRef` fields, especially source text,
-  location stack and line numbers: inspect every use before renaming common
-  field spellings like `unk_00` across unrelated classes.
+- Remaining owner-qualified fields in types unrelated to `LocTag`/`LocRef`:
+  inspect their use before renaming common offsets such as `unk_00`.
 - `Instr`, `instStream`, `workTable`, `Program` and `Processor`: largest
   unresolved field clusters; investigate owner-qualified fields using the AST
   field inventory rather than guessing from offsets.

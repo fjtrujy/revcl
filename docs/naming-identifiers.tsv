@@ -93,7 +93,6 @@ function	func_0805802c	24	13	src/Instr.cpp:551
 function	func_0805a908	23	7	src/RegPool.h:70
 function	func_0804bf50	22	13	src/Operand.cpp:8
 function	func_0804adf0	19	5	src/Instr.h:763
-function	func_08050f18	18	4	src/ExecRP.cpp:130
 function	func_0807411c	18	15	src/assignLocalRegisters.cpp:66
 function	func_0804a2b4	17	1	src/main.cpp:17
 function	func_0804b1b0	17	10	src/Processor.cpp:137
@@ -126,7 +125,6 @@ function	func_0806c72c	9	7	src/Instr.cpp:906
 function	func_080721f8	9	7	src/buildRaw.cpp:64
 function	func_08072304	9	7	src/capping.cpp:103
 function	func_0804c03c	8	4	src/Parser.cpp:7
-function	func_0805085c	8	4	src/ExecRP.cpp:397
 function	func_08054c24	8	3	src/Instr.cpp:432
 function	func_0805b51c	8	4	src/genRegPoolCtor.cpp:106
 function	func_0806558c	8	5	src/fDepClone.cpp:33
@@ -179,8 +177,6 @@ function	func_0804ac44	5	3	src/diagnostics.cpp:22
 function	func_0804b2d4	5	5	src/ExecRP.cpp:161
 function	func_0804b3e8	5	3	src/ExecRP.cpp:564
 function	func_0804ca58	5	3	src/fitsSigned.cpp:6
-function	func_08050f48	5	4	src/LocTag.cpp:223
-function	func_080510cc	5	4	src/Line.cpp:50
 function	func_08051f08	5	4	src/Operand.cpp:622
 function	func_08051f78	5	3	src/Operand.cpp:724
 function	func_080521f0	5	3	src/VUStr.cpp:148
@@ -292,9 +288,6 @@ function	func_0804f75c	3	2	src/xpNode.cpp:616
 function	func_0804f8f0	3	3	src/immediate.cpp:32
 function	func_080506e0	3	3	src/Parser.cpp:424
 function	func_08050708	3	3	src/LocTag.cpp:49
-function	func_08050eec	3	3	src/LocTag.cpp:208
-function	func_08051054	3	3	src/Line.cpp:31
-function	func_0805109c	3	3	src/Line.cpp:42
 function	func_0805116c	3	1	src/ExecRP.cpp:19
 function	func_0805118c	3	1	src/ExecRP.cpp:20
 function	func_080511ac	3	1	src/ExecRP.cpp:21
@@ -414,7 +407,6 @@ function	func_0804f6ec	2	2	src/xpNode.cpp:603
 function	func_0804f844	2	2	src/xpNode.cpp:642
 function	func_080507f4	2	2	src/Parser.cpp:469
 function	func_08050810	2	2	src/Parser.cpp:474
-function	func_0805082c	2	2	src/LocTag.cpp:5
 function	func_0805219c	2	2	src/VUStr.cpp:131
 function	func_08052380	2	2	src/infoList.cpp:33
 function	func_080523b8	2	2	src/infoList.cpp:38
@@ -503,9 +495,17 @@ function	func_080501d4	1	1	src/Parser.cpp:261
 function	func_0805030c	1	1	src/Parser.h:11
 function	func_0805041c	1	1	src/Parser.h:12
 function	func_08050738	1	1	src/Parser.h:13
+function	func_0805082c	1	1	src/Parser.h:17
+function	func_0805085c	1	1	src/Parser.h:18
 function	func_0805086c	1	1	src/Parser.h:14
 function	func_08050be4	1	1	src/Parser.h:15
 function	func_08050c40	1	1	src/Parser.h:16
+function	func_08050eec	1	1	src/Parser.h:19
+function	func_08050f18	1	1	src/Parser.h:20
+function	func_08050f48	1	1	src/Parser.h:21
+function	func_08051054	1	1	src/Line.h:6
+function	func_0805109c	1	1	src/Line.h:7
+function	func_080510cc	1	1	src/Line.h:8
 function	func_08051c30	1	1	src/ExecRP.cpp:463
 function	func_08051c50	1	1	src/ExecRP.cpp:468
 function	func_08051c70	1	1	src/ExecRP.cpp:473
@@ -520,11 +520,11 @@ function	func_0805879c	1	1	src/instructionPosition.cpp:53
 function	func_0805a8e0	1	1	src/RegPool.h:43
 function	func_0806b4f0	1	1	src/hackIOmask.cpp:24
 function	func_0807f308	1	1	src/moveListConsistency.cpp:10
-offset-field	unk_00	1024	116	src/ExecRP.cpp:361
-offset-field	unk_04	765	107	src/ExecRP.cpp:161
-offset-field	unk_08	417	90	src/Instr.cpp:64
+offset-field	unk_00	986	111	src/ExecRP.cpp:361
+offset-field	unk_04	749	102	src/ExecRP.cpp:161
+offset-field	unk_08	413	88	src/Instr.cpp:64
 offset-field	unk_18	351	62	src/ExecRP.cpp:135
-offset-field	unk_0c	299	77	src/Instr.cpp:349
+offset-field	unk_0c	294	74	src/Instr.cpp:349
 offset-field	unk_14	283	59	src/Instr.cpp:42
 offset-field	unk_1c	238	55	src/Instr.cpp:354
 offset-field	unk_10	230	61	src/ExecRP.cpp:547
@@ -541,7 +541,7 @@ offset-field	unk_13e8	108	30	src/Instr.cpp:416
 offset-field	unk_3c	106	23	src/Instr.h:57
 offset-field	unk_88	105	30	src/ProgramUnique.cpp:16
 offset-field	unk_02	95	24	src/Instr.cpp:92
-offset-field	unk_0a	88	32	src/Instr.cpp:98
+offset-field	unk_0a	80	29	src/Instr.cpp:98
 offset-field	unk_06	73	25	src/Instr.cpp:94
 offset-field	unk_44	70	25	src/ExecRP.cpp:153
 offset-field	unk_2000	67	3	src/Instr.h:850
