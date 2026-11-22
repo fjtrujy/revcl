@@ -1,6 +1,6 @@
 #include "os.h"
 #include "instStream.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 #include "Program.h"
 #include "fileEmit.h"
 #include "Processor.h"
@@ -16,7 +16,7 @@ static inline void dumpRow(wtRow *row)
     row->func_0807222c(-1);
 }
 
-bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int loopMode)
+bool buildRaw(Program *prog, instStream *s, DecodedLine *blocks, int count, int loopMode)
 {
     workTable *t = &s->unk_148;
     if (!t) {
@@ -39,13 +39,13 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
     int branchRow = -1;
     int branchType = 0;
     for (; i != count; i++) {
-        flowBlock *b = &blocks[i];
-        if (b->unk_14.func_0804b794()) {
+        DecodedLine *b = &blocks[i];
+        if (b->labels.func_0804b794()) {
             reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
         }
-        b->unk_14.func_0804b1b0();
-        Instr *in = b->unk_0c[0];
+        b->labels.func_0804b1b0();
+        Instr *in = b->instructions[0];
         if (in && in->unk_13cd) {
             if (!s->processCmdSynth(in)) {
                 reportUserMessage("failed to process an instruction\n");
@@ -65,14 +65,14 @@ bool buildRaw(Program *prog, instStream *s, flowBlock *blocks, int count, int lo
         int n = 0;
         int valid = 0;
         for (int j = 0; j != 2; j++) {
-            Instr *in = b->unk_0c[j];
+            Instr *in = b->instructions[j];
             if (!in)
                 continue;
             if (in->unk_13cd) {
                 reportError("encountered a synth instruction in raw mode\n");
                 return false;
             }
-            b->unk_0c[j] = 0;
+            b->instructions[j] = 0;
             if (!t->logAddLinear_Tail(in)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;

@@ -4,7 +4,7 @@
 #include "Instr.h"
 #include "RegPool.h"
 #include "os.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 
 extern const char bindExtForcedBaseError[];
 extern const char bindExtVirtualRegError[];

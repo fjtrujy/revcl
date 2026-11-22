@@ -1,6 +1,6 @@
 #include "os.h"
 #include "instStream.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 #include "Program.h"
 #include "fileEmit.h"
 #include "Processor.h"
@@ -17,7 +17,7 @@ static inline void dumpUtaInstruction(Instr *in)
 }
 
 
-bool buildUta(Program *prog, instStream *s, flowBlock *blocks, int count)
+bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
 {
     workTable *t = &s->unk_148;
     if (!t) {
@@ -32,13 +32,13 @@ bool buildUta(Program *prog, instStream *s, flowBlock *blocks, int count)
     int flags = 0;
     int branch = -1;
     for (int i = 0; i != count; i++) {
-        flowBlock *b = &blocks[i];
-        if (b->unk_14.func_0804b794()) {
+        DecodedLine *b = &blocks[i];
+        if (b->labels.func_0804b794()) {
             reportError("started to build the stream.. but there was a label decorated with debug info in the way!\n");
             return false;
         }
-        b->unk_14.func_0804b1b0();
-        Instr *in = b->unk_0c[0];
+        b->labels.func_0804b1b0();
+        Instr *in = b->instructions[0];
         if (!in)
             continue;
         if (in->unk_1420 > 0) {
@@ -57,7 +57,7 @@ bool buildUta(Program *prog, instStream *s, flowBlock *blocks, int count)
             }
             flags |= in->unk_1389;
         } else {
-            b->unk_0c[0] = 0;
+            b->instructions[0] = 0;
             if (!t->logAddLinear_Tail(in)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;

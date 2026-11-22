@@ -7,7 +7,7 @@
 #include "Instr.h"
 #include "RegPool.h"
 #include "os.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 
 Instr *addXinFor(instStream *s, RegPoolEntry *r);
 Instr *addXoutFor(instStream *s, RegPoolEntry *r);
@@ -20,8 +20,8 @@ int mstrlen(const char *s);
 bool expandRawTables(Program *p);
 bool resolveStreamBranches(Program *p);
 bool recalcFlowUIDs(Program *p);
-bool buildUta(Program *prog, instStream *s, flowBlock *blocks, int count);
-bool buildSynth(Program *prog, instStream *s, flowBlock *blocks, int count);
+bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count);
+bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count);
 bool bindDependencies(Program *p);
 
 #endif

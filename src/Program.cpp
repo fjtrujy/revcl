@@ -2,7 +2,7 @@
 #include "Processor.h"
 #include "instStream.h"
 #include "os.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 
 void disposeBackTrace(Program *p);
 void func_0806be68(Program *p);
@@ -233,7 +233,7 @@ bool Program::func_0806efc4(Parser *parser, int a, bool newSyntax)
         return false;
     }
     int count = 0;
-    flowBlock *blocks = func_08083768(this, parser, a, newSyntax, &count);
+    DecodedLine *blocks = decodeSourceLines(this, parser, a, newSyntax, &count);
     if (!blocks) {
         reportError("flow: failed to build it from parse\n");
         return false;
@@ -246,7 +246,7 @@ bool Program::func_0806efc4(Parser *parser, int a, bool newSyntax)
     bool ok = splitParserStream(this, blocks, count);
     if (!ok) {
         for (int i = 0; i != count; i++)
-            blocks[i].func_080842f0();
+            blocks[i].releaseContents();
         reportError("flow: failed to split parser stream\n");
     }
     delete[] blocks;

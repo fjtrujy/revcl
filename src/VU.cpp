@@ -1,5 +1,5 @@
 #include "Instr.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 #include "fileEmit.h"
 #include "Processor.h"
 char *emitReversibleBranch(char *buf, Instr *in, bool upper, char *mods, bool b, int);
