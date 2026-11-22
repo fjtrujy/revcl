@@ -414,7 +414,7 @@ local_review	op	src/bindExternals.cpp	23	bindExternals	Operand *
 local_review	ru	src/bindExternals.cpp	27	bindExternals	regUse *
 local_review	t	src/buildRaw.cpp	21	buildRaw	workTable *
 local_review	i	src/buildRaw.cpp	35	buildRaw	int
-local_review	b	src/buildRaw.cpp	42	buildRaw	flowBlock *
+local_review	b	src/buildRaw.cpp	42	buildRaw	DecodedLine *
 local_review	in	src/buildRaw.cpp	48	buildRaw	Instr *
 local_review	n	src/buildRaw.cpp	65	buildRaw	int
 local_review	j	src/buildRaw.cpp	67	buildRaw	int
@@ -424,12 +424,12 @@ local_review	j	src/buildRaw.cpp	160	buildRaw	int
 local_review	in	src/buildRaw.cpp	161	buildRaw	Instr *
 local_review	t	src/buildSynth.cpp	22	buildSynth	workTable *
 local_review	i	src/buildSynth.cpp	37	buildSynth	int
-local_review	b	src/buildSynth.cpp	38	buildSynth	flowBlock *
+local_review	b	src/buildSynth.cpp	38	buildSynth	DecodedLine *
 local_review	in	src/buildSynth.cpp	44	buildSynth	Instr *
 local_review	a	src/buildSynth.cpp	68	buildSynth	const char *
 local_review	t	src/buildUta.cpp	22	buildUta	workTable *
 local_review	i	src/buildUta.cpp	34	buildUta	int
-local_review	b	src/buildUta.cpp	35	buildUta	flowBlock *
+local_review	b	src/buildUta.cpp	35	buildUta	DecodedLine *
 local_review	in	src/buildUta.cpp	41	buildUta	Instr *
 local_review	s	src/capping.cpp	21	func_0807aa28	instStream *
 local_review	n	src/capping.cpp	34	func_0807aa28	int
@@ -842,15 +842,15 @@ local_review	ru	src/findCap.cpp	157	doCap	regUse *
 local_review	r	src/fitsSigned.cpp	12	fitsSigned	int
 local_review	hi	src/fitsSigned.cpp	13	fitsSigned	int
 local_review	lo	src/fitsSigned.cpp	14	fitsSigned	int
-local_review	i	src/flowBlock.cpp	22	func_08084268	int
-local_review	in	src/flowBlock.cpp	24	func_08084268	Instr *
-local_review	i	src/flowBlock.cpp	33	func_080842b4	int
-local_review	i	src/flowBlock.cpp	43	func_080842f0	int
-local_review	i	src/flowBlock.cpp	52	func_0808435c	int
-local_review	i	src/flowBlockQueries.cpp	7	func_080843a0	int
-local_review	i	src/flowBlockQueries.cpp	15	func_080843d0	int
-local_review	in	src/flowBlockQueries.cpp	16	func_080843d0	Instr *
-local_review	t	src/flowBlockQueries.cpp	18	func_080843d0	char
+local_review	i	src/decodedLine.cpp	22	refreshInstructionOperands	int
+local_review	in	src/decodedLine.cpp	24	refreshInstructionOperands	Instr *
+local_review	i	src/decodedLine.cpp	33	refreshDecodedLineOperands	int
+local_review	i	src/decodedLine.cpp	43	releaseContents	int
+local_review	i	src/decodedLine.cpp	52	findDecodedLineByLabel	int
+local_review	i	src/decodedLineQueries.cpp	7	maximumDecodedLineFlowId	int
+local_review	i	src/decodedLineQueries.cpp	15	hasFlowStartSynthetic	int
+local_review	in	src/decodedLineQueries.cpp	16	hasFlowStartSynthetic	Instr *
+local_review	t	src/decodedLineQueries.cpp	18	hasFlowStartSynthetic	char
 local_review	s	src/flowMon.cpp	27	func_08060018	instStream *
 local_review	ru	src/flowMon.cpp	61	func_08060018	regUse *
 local_review	bm	src/flowMon.cpp	71	func_08060018	char
@@ -1635,25 +1635,25 @@ local_review	s	src/oDecode.cpp	428	decodeLE	char *
 local_review	i	src/oDecode.cpp	429	decodeLE	int
 local_review	n	src/oDecode.cpp	437	decodeLE	mNode *
 local_review	p	src/oDecode.cpp	452	decodeLE	char *
-local_review	ok	src/oDecode.cpp	525	func_08083768	bool
-local_review	n	src/oDecode.cpp	526	func_08083768	int
-local_review	t	src/oDecode.cpp	559	func_08083768	LocTag *
-local_review	b	src/oDecode.cpp	569	func_08083768	flowBlock *
-local_review	s	src/oDecode.cpp	571	func_08083768	char *
-local_review	d	src/oDecode.cpp	582	func_08083768	Directive *
-local_review	b	src/oDecode.cpp	626	func_08083768	flowBlock *
-local_review	i	src/oDecode.cpp	633	func_08083768	int
-local_review	in	src/oDecode.cpp	657	func_08083768	Instr *
-local_review	j	src/oDecode.cpp	741	func_08083768	int
-local_review	in	src/oDecode.cpp	753	func_08083768	Instr *
-local_review	in	src/oDecode.cpp	768	func_08083768	Instr *
-local_review	r	src/oDecode.cpp	770	func_08083768	int
-local_review	nd	src/oDecode.cpp	801	func_08083768	mNode *
-local_review	i	src/oDecode.cpp	821	func_08083768	int
-local_review	a	src/oDecode.cpp	822	func_08083768	mList *
-local_review	j	src/oDecode.cpp	825	func_08083768	int
-local_review	c	src/oDecode.cpp	826	func_08083768	mList *
-local_review	nd	src/oDecode.cpp	828	func_08083768	mNode *
+local_review	ok	src/oDecode.cpp	525	decodeSourceLines	bool
+local_review	n	src/oDecode.cpp	526	decodeSourceLines	int
+local_review	t	src/oDecode.cpp	559	decodeSourceLines	LocTag *
+local_review	b	src/oDecode.cpp	569	decodeSourceLines	DecodedLine *
+local_review	s	src/oDecode.cpp	571	decodeSourceLines	char *
+local_review	d	src/oDecode.cpp	582	decodeSourceLines	Directive *
+local_review	b	src/oDecode.cpp	626	decodeSourceLines	DecodedLine *
+local_review	i	src/oDecode.cpp	633	decodeSourceLines	int
+local_review	in	src/oDecode.cpp	657	decodeSourceLines	Instr *
+local_review	j	src/oDecode.cpp	741	decodeSourceLines	int
+local_review	in	src/oDecode.cpp	753	decodeSourceLines	Instr *
+local_review	in	src/oDecode.cpp	768	decodeSourceLines	Instr *
+local_review	r	src/oDecode.cpp	770	decodeSourceLines	int
+local_review	nd	src/oDecode.cpp	801	decodeSourceLines	mNode *
+local_review	i	src/oDecode.cpp	821	decodeSourceLines	int
+local_review	a	src/oDecode.cpp	822	decodeSourceLines	mList *
+local_review	j	src/oDecode.cpp	825	decodeSourceLines	int
+local_review	c	src/oDecode.cpp	826	decodeSourceLines	mList *
+local_review	nd	src/oDecode.cpp	828	decodeSourceLines	mNode *
 local_review	d	src/oDecode.cpp	852	gatherTokens	char *
 local_review	n	src/oDecode.cpp	853	gatherTokens	int
 local_review	p	src/oDecode.cpp	868	gatherTokens	char *
@@ -2027,21 +2027,21 @@ local_review	s	src/setLocks.cpp	848	func_0807e1f8	OpSlot *
 local_review	oi	src/setLocks.cpp	852	func_0807e1f8	Instr *
 local_review	t	src/setLocks.cpp	857	func_0807e1f8	int
 local_review	i	src/splitParserStream.cpp	14	splitParserStream	int
-local_review	b	src/splitParserStream.cpp	25	splitParserStream	flowBlock *
+local_review	b	src/splitParserStream.cpp	25	splitParserStream	DecodedLine *
 local_review	k	src/splitParserStream.cpp	26	splitParserStream	int
 local_review	in	src/splitParserStream.cpp	27	splitParserStream	VclPtrWord
-local_review	f	src/splitParserStream.cpp	32	splitParserStream	flowBlock *
+local_review	f	src/splitParserStream.cpp	32	splitParserStream	DecodedLine *
 local_review	d	src/splitParserStream.cpp	49	splitParserStream	char *
-local_review	f	src/splitParserStream.cpp	53	splitParserStream	flowBlock *
-local_review	b	src/splitParserStream.cpp	76	splitParserStream	flowBlock *
+local_review	f	src/splitParserStream.cpp	53	splitParserStream	DecodedLine *
+local_review	b	src/splitParserStream.cpp	76	splitParserStream	DecodedLine *
 local_review	f	src/splitParserStream.cpp	104	splitParserStream	int
 local_review	id	src/splitParserStream.cpp	120	splitParserStream	int
 local_review	k	src/splitParserStream.cpp	121	splitParserStream	int
 local_review	in	src/splitParserStream.cpp	122	splitParserStream	Instr *
 local_review	t	src/splitParserStream.cpp	127	splitParserStream	char
-local_review	b	src/splitParserStream.cpp	169	splitParserStream	flowBlock *
+local_review	b	src/splitParserStream.cpp	169	splitParserStream	DecodedLine *
 local_review	id	src/splitParserStream.cpp	171	splitParserStream	short
-local_review	q	src/splitParserStream.cpp	175	splitParserStream	flowBlock *
+local_review	q	src/splitParserStream.cpp	175	splitParserStream	DecodedLine *
 local_review	n	src/splitParserStream.cpp	192	splitParserStream	int
 local_review	s	src/splitParserStream.cpp	193	splitParserStream	instStream *
 local_review	k	src/splitParserStream.cpp	258	splitParserStream	int
@@ -2913,7 +2913,7 @@ parameter_review	mv	src/moveRec.cpp	307	adjustMoveCount	Instr *
 parameter_review	n	src/moveRec.cpp	307	adjustMoveCount	int
 parameter_review	t	src/oDecode.cpp	24	getNextInstruction	LocTag *
 parameter_review	t	src/oDecode.cpp	425	decodeLE	LocTag *
-parameter_review	p	src/oDecode.cpp	518	func_08083768	Program *
+parameter_review	p	src/oDecode.cpp	518	decodeSourceLines	Program *
 parameter_review	i	src/oDecode.cpp	850	gatherTokens	int
 parameter_review	t	src/oDecode.cpp	850	gatherTokens	LocTag *
 parameter_review	ol	src/olList.cpp	65	func_0805802c	ol_s *
