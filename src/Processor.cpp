@@ -70,8 +70,8 @@ bool Processor::Init(CpuDef *cpu)
         return false;
     }
     processorInstructionTable = iinfos;
-    for (int i = 0; pools[i].type; i++) {
-        PoolDef *poolDefinition = &pools[i];
+    for (int poolDefinitionIndex = 0; pools[poolDefinitionIndex].type; poolDefinitionIndex++) {
+        PoolDef *poolDefinition = &pools[poolDefinitionIndex];
         RegPool *pool;
         switch (poolDefinition->type) {
         case 1:
@@ -95,22 +95,22 @@ bool Processor::Init(CpuDef *cpu)
             return false;
         }
         if (poolDefinition->zeroReg) {
-            RegPoolEntry *e = pool->findPhysicalByName(poolDefinition->zeroReg);
-            if (!e) {
+            RegPoolEntry *registerEntry = pool->findPhysicalByName(poolDefinition->zeroReg);
+            if (!registerEntry) {
                 reportError("failed to get zero reg for pool %s\n", poolDefinition->name);
                 delete pool;
                 return false;
             }
-            pool->zeroRegister = e;
+            pool->zeroRegister = registerEntry;
         }
         if (poolDefinition->extReg) {
-            RegPoolEntry *e = pool->findPhysicalByName(poolDefinition->extReg);
-            if (!e) {
+            RegPoolEntry *registerEntry = pool->findPhysicalByName(poolDefinition->extReg);
+            if (!registerEntry) {
                 reportError("failed to get ext reg for pool %s\n", poolDefinition->name);
                 delete pool;
                 return false;
             }
-            pool->externalRegister = e;
+            pool->externalRegister = registerEntry;
         }
         if (processorRegisterPools[poolDefinition->cls]) {
             reportError("already initialised reg type %d\n", poolDefinition->cls);
@@ -149,18 +149,18 @@ void Processor::dumpRegisterPools()
 
 int Processor::gatherInflight(ol_s **out)
 {
-    int n = 0;
-    for (int i = 0; i != 12; i++) {
-        if (processorRegisterPools[i]) {
-            int r = processorRegisterPools[i]->gatherInflight(out + n);
-            if (r < 0) {
+    int inflightCount = 0;
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
+        if (processorRegisterPools[poolIndex]) {
+            int gatheredCount = processorRegisterPools[poolIndex]->gatherInflight(out + inflightCount);
+            if (gatheredCount < 0) {
                 reportError("error during inflight gather\n");
                 return -1;
             }
-            n += r;
+            inflightCount += gatheredCount;
         }
     }
-    return n;
+    return inflightCount;
 }
 
 bool Processor::clearAllRegisterAssignmentsFirstPass()
@@ -191,35 +191,35 @@ void Processor::validateOpcodeTableCount()
     }
     int saved = errorOccurred;
     errorOccurred = !quietDiagnostics;
-    int n = 0;
-    for (iInfo *p = processorInstructionTable; p->mnemonic; p++) {
-        p->scanOpcodeOperandDescriptors();
-        n++;
+    int opcodeCount = 0;
+    for (iInfo *opcodeInfo = processorInstructionTable; opcodeInfo->mnemonic; opcodeInfo++) {
+        opcodeInfo->scanOpcodeOperandDescriptors();
+        opcodeCount++;
     }
-    if (n != 0xd6) {
+    if (opcodeCount != 0xd6) {
         reportError("error processing inst table\n");
         exitAfterCleanup(-1);
     }
     errorOccurred = saved;
 }
 
-void dumpProcessorRegisterPools(Program *p)
+void dumpProcessorRegisterPools(Program *program)
 {
     for (int i = 0; i != 12; i++)
         if (processorRegisterPools[i])
             processorRegisterPools[i]->Dump();
 }
 
-bool parseReset(Program *p)
+bool parseReset(Program *program)
 {
-    p->proc.vuDirectiveSeen = false;
-    p->proc.exportedSymbols.clearNodes();
-    p->proc.trailingLabels.clearNodes();
-    p->proc.visibilityScopes.clearNodes();
-    p->proc.decodeMode = 0;
-    p->proc.decodeSubMode = 0;
-    p->proc.savedDecodeMode = 0;
-    p->proc.savedDecodeSubMode = 0;
+    program->proc.vuDirectiveSeen = false;
+    program->proc.exportedSymbols.clearNodes();
+    program->proc.trailingLabels.clearNodes();
+    program->proc.visibilityScopes.clearNodes();
+    program->proc.decodeMode = 0;
+    program->proc.decodeSubMode = 0;
+    program->proc.savedDecodeMode = 0;
+    program->proc.savedDecodeSubMode = 0;
     for (int i = 0; i != 12; i++)
         if (processorRegisterPools[i] && !processorRegisterPools[i]->clearVirtualRegistersForParse()) {
             reportError("Processor::parseReset() - failed to reset %s\n",
@@ -229,7 +229,7 @@ bool parseReset(Program *p)
     return true;
 }
 
-bool statReset(Program *p)
+bool statReset(Program *program)
 {
     for (int i = 0; i != 12; i++)
         if (processorRegisterPools[i] && !processorRegisterPools[i]->resetPoolPartTiming()) {
@@ -255,32 +255,32 @@ iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
         reportError("Proc::FindInstruction() - no instruction set loaded!\n");
         return 0;
     }
-    iInfo *p = processorInstructionTable;
+    iInfo *opcodeInfo = processorInstructionTable;
     if (!all)
-        p += 12;
-    for (; p->mnemonic; p++) {
-        const char *s = tok;
-        const char *m = p->mnemonic;
-        while (*s && *m && equalAsciiCaseInsensitive(*s, *m)) {
-            s++;
-            m++;
+        opcodeInfo += 12;
+    for (; opcodeInfo->mnemonic; opcodeInfo++) {
+        const char *inputCursor = tok;
+        const char *mnemonicCursor = opcodeInfo->mnemonic;
+        while (*inputCursor && *mnemonicCursor && equalAsciiCaseInsensitive(*inputCursor, *mnemonicCursor)) {
+            inputCursor++;
+            mnemonicCursor++;
         }
-        if (*m)
+        if (*mnemonicCursor)
             continue;
-        if (!*s)
-            return p;
-        if (*s == '.' && p->destinationMaskMode) {
+        if (!*inputCursor)
+            return opcodeInfo;
+        if (*inputCursor == '.' && opcodeInfo->destinationMaskMode) {
             do {
-                s++;
-                if (!*s)
-                    return p;
-            } while (*s != '.');
+                inputCursor++;
+                if (!*inputCursor)
+                    return opcodeInfo;
+            } while (*inputCursor != '.');
         }
     }
     return 0;
 }
 
-bool optReset(Program *p)
+bool optReset(Program *program)
 {
     for (int i = 0; i != 12; i++)
         if (processorRegisterPools[i] && !processorRegisterPools[i]->clearPoolPartPayloads()) {
@@ -291,9 +291,9 @@ bool optReset(Program *p)
     return true;
 }
 
-bool Cycle(Program *p, bool flag)
+bool Cycle(Program *program, bool flag)
 {
-    p->emulatedCycleCount++;
+    program->emulatedCycleCount++;
     for (int i = 0; i != 12; i++)
         if (processorRegisterPools[i] && !processorRegisterPools[i]->cycleRegisters(flag)) {
             reportError("Processor::Cycle() - failed to cycle %s\n",
@@ -303,9 +303,9 @@ bool Cycle(Program *p, bool flag)
     return true;
 }
 
-bool resetProcessorThroughput(Program *p)
+bool resetProcessorThroughput(Program *program)
 {
-    p->emulatedCycleCount = 0;
+    program->emulatedCycleCount = 0;
     for (int i = 0; i != 12; i++)
         if (processorRegisterPools[i] && !processorRegisterPools[i]->resetPoolThroughputState()) {
             reportError("Processor::emuReset() - failed to reset %s\n",
@@ -315,11 +315,11 @@ bool resetProcessorThroughput(Program *p)
     return true;
 }
 
-inline RegPool *getRP(unsigned t)
+inline RegPool *getRP(unsigned poolIndex)
 {
-    if (t < 12)
-        return processorRegisterPools[t];
-    reportWarning("Processor::GetRP - out of range register type (%d)\n", t);
+    if (poolIndex < 12)
+        return processorRegisterPools[poolIndex];
+    reportWarning("Processor::GetRP - out of range register type (%d)\n", poolIndex);
     return 0;
 }
 
@@ -345,12 +345,12 @@ RegPoolEntry *getReg(unsigned type, int index)
 
 RegPoolEntry *findRegisterByGlobalIndex(int idx)
 {
-    for (int i = 0; i != 12; i++) {
-        RegPool *rp = processorRegisterPools[i];
-        if (rp) {
-            RegPoolEntry *e = rp->findByRegisterIndex(idx);
-            if (e)
-                return e;
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
+        RegPool *pool = processorRegisterPools[poolIndex];
+        if (pool) {
+            RegPoolEntry *registerEntry = pool->findByRegisterIndex(idx);
+            if (registerEntry)
+                return registerEntry;
         }
     }
     return 0;
@@ -376,19 +376,19 @@ RegPoolEntry *getZeroReg(unsigned type)
     return pool->zeroRegister;
 }
 
-RegPool *GetRP(unsigned t)
+RegPool *GetRP(unsigned poolIndex)
 {
-    if (t > 11) {
-        reportWarning("Processor::GetRP - out of range register type (%d)\n", t);
+    if (poolIndex > 11) {
+        reportWarning("Processor::GetRP - out of range register type (%d)\n", poolIndex);
         return 0;
     }
-    return processorRegisterPools[t];
+    return processorRegisterPools[poolIndex];
 }
 
-bool flowReset(Program *p)
+bool flowReset(Program *program)
 {
-    p->proc.usedBeforeSet.clear();
-    p->proc.stalls.clear();
+    program->proc.usedBeforeSet.clear();
+    program->proc.stalls.clear();
     for (int i = 0; i != 12; i++)
         if (processorRegisterPools[i] && !processorRegisterPools[i]->resetPoolFlowState()) {
             reportError("Processor::flowReset() - failed to reset %s\n",
@@ -398,49 +398,49 @@ bool flowReset(Program *p)
     return true;
 }
 
-void reportUBS(Program *p)
+void reportUBS(Program *program)
 {
-    ubsList *ubs = &p->proc.usedBeforeSet;
+    ubsList *ubs = &program->proc.usedBeforeSet;
     if (ubs->count) {
         reportInfo("uh-oh, VCL thinks the following operands were used before set:\n");
         ubs->dumpEntries();
     }
 }
 
-void reportStalls(Program *p)
+void reportStalls(Program *program)
 {
-    infoList *st = &p->proc.stalls;
-    if (st->count) {
+    infoList *stallRecords = &program->proc.stalls;
+    if (stallRecords->count) {
         reportInfo("VCL thinks the following instructions caused stalls:\n");
-        st->dumpEntries();
+        stallRecords->dumpEntries();
     }
 }
 
-int checkDispatchEntry(Instr **ie)
+int checkDispatchEntry(Instr **pipelineEntries)
 {
-    if (!ie) {
+    if (!pipelineEntries) {
         reportError("checkDispatchEntry - passed a null pointer\n");
         exitAfterCleanup(-1);
     }
-    for (int p = 0; p != 2; p++) {
-        Instr *in = GetI(ie, p);
-        if (!in)
+    for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
+        Instr *instruction = GetI(pipelineEntries, pipeIndex);
+        if (!instruction)
             continue;
-        if (!(((unsigned char)in->permittedPipelineMask >> p) & 1))
+        if (!(((unsigned char)instruction->permittedPipelineMask >> pipeIndex) & 1))
             return -1;
-        for (int i = 0; i != in->operandCount; i++) {
-            RegPoolEntry *r = registerOperand(&in->operands[i], 2);
-            if (!r)
+        for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
+            RegPoolEntry *outputRegister = registerOperand(&instruction->operands[operandIndex], 2);
+            if (!outputRegister)
                 continue;
-            for (int q = p + 1; q <= 1; q++) {
-                Instr *o = GetI(ie, q);
-                if (!o)
+            for (int pairedPipeIndex = pipeIndex + 1; pairedPipeIndex <= 1; pairedPipeIndex++) {
+                Instr *pairedInstruction = GetI(pipelineEntries, pairedPipeIndex);
+                if (!pairedInstruction)
                     continue;
-                if (!(((unsigned char)o->permittedPipelineMask >> q) & 1))
+                if (!(((unsigned char)pairedInstruction->permittedPipelineMask >> pairedPipeIndex) & 1))
                     return -1;
-                for (int j = 0; j != o->operandCount; j++) {
-                    RegPoolEntry *r2 = registerOperand(&o->operands[j], 2);
-                    if (r2 && r2 == r)
+                for (int pairedOperandIndex = 0; pairedOperandIndex != pairedInstruction->operandCount; pairedOperandIndex++) {
+                    RegPoolEntry *pairedOutputRegister = registerOperand(&pairedInstruction->operands[pairedOperandIndex], 2);
+                    if (pairedOutputRegister && pairedOutputRegister == outputRegister)
                         return -1;
                 }
             }
@@ -449,47 +449,47 @@ int checkDispatchEntry(Instr **ie)
     return 0;
 }
 
-bool wouldPair(Instr **ie, Instr *in, unsigned p)
+bool wouldPair(Instr **pipelineEntries, Instr *candidateInstruction, unsigned pipeIndex)
 {
-    if (!ie || !in || p > 1) {
+    if (!pipelineEntries || !candidateInstruction || pipeIndex > 1) {
         reportError("wouldPair - bad args\n");
         exitAfterCleanup(-1);
     }
-    int i;
-    for (i = 0; i != 2; i++)
-        if (ie[i] == in) {
-            ie[i] = (Instr *)in->replacedInstructionWord;
+    int originalSlotIndex;
+    for (originalSlotIndex = 0; originalSlotIndex != 2; originalSlotIndex++)
+        if (pipelineEntries[originalSlotIndex] == candidateInstruction) {
+            pipelineEntries[originalSlotIndex] = (Instr *)candidateInstruction->replacedInstructionWord;
             break;
         }
-    if (ie[p] != (Instr *)in->replacedInstructionWord) {
-        if (i != 2)
-            ie[i] = in;
+    if (pipelineEntries[pipeIndex] != (Instr *)candidateInstruction->replacedInstructionWord) {
+        if (originalSlotIndex != 2)
+            pipelineEntries[originalSlotIndex] = candidateInstruction;
         return false;
     }
-    ie[p] = in;
-    int r = checkDispatchEntry(ie);
-    ie[p] = (Instr *)in->replacedInstructionWord;
-    if (i != 2)
-        ie[i] = in;
-    return r == 0;
+    pipelineEntries[pipeIndex] = candidateInstruction;
+    int dispatchStatus = checkDispatchEntry(pipelineEntries);
+    pipelineEntries[pipeIndex] = (Instr *)candidateInstruction->replacedInstructionWord;
+    if (originalSlotIndex != 2)
+        pipelineEntries[originalSlotIndex] = candidateInstruction;
+    return dispatchStatus == 0;
 }
 
-const char *deviceNameByIndex(int dev)
+const char *deviceNameByIndex(int deviceIndex)
 {
-    const char **tab = (const char **)processorDeviceTable;
-    if (!tab)
+    const char **deviceNames = (const char **)processorDeviceTable;
+    if (!deviceNames)
         return "NO_DEVTAB";
-    if ((unsigned)dev > 8)
+    if ((unsigned)deviceIndex > 8)
         return "UNKNOWN_DEV";
-    return tab[dev];
+    return deviceNames[deviceIndex];
 }
 
-bool isVuRegister(RegPoolEntry *r)
+bool isVuRegister(RegPoolEntry *registerEntry)
 {
-    return r->registerClass == 8 || r->registerClass == 9;
+    return registerEntry->registerClass == 8 || registerEntry->registerClass == 9;
 }
 
-bool resetPoolOptimizationState(Program *p)
+bool resetPoolOptimizationState(Program *program)
 {
     for (int i = 0; i != 12; i++)
         if (processorRegisterPools[i] && !processorRegisterPools[i]->optReset()) {
@@ -500,11 +500,11 @@ bool resetPoolOptimizationState(Program *p)
     return true;
 }
 
-static inline int iinfoId(iInfo *op)
+static inline int iinfoId(iInfo *opcodeInfo)
 {
-    if (!op)
+    if (!opcodeInfo)
         return -1;
-    int id = ((char *)op - (char *)processorInstructionTable) / sizeof(iInfo);
+    int id = ((char *)opcodeInfo - (char *)processorInstructionTable) / sizeof(iInfo);
     if (id < 0)
         return -1;
     if (id >= 0xd6)
@@ -512,65 +512,65 @@ static inline int iinfoId(iInfo *op)
     return id;
 }
 
-int getOpcodeId(iInfo *op)
+int getOpcodeId(iInfo *opcodeInfo)
 {
-    return iinfoId(op);
+    return iinfoId(opcodeInfo);
 }
 
-aaDesc *findAddressAliasDescriptor(Instr *in)
+aaDesc *findAddressAliasDescriptor(Instr *instruction)
 {
-    aaDesc *res;
-    if (!in) {
-        res = 0;
-        return res;
+    aaDesc *foundDescriptor;
+    if (!instruction) {
+        foundDescriptor = 0;
+        return foundDescriptor;
     }
-    if (!in->opcodeInfo) {
-        res = 0;
-        return res;
+    if (!instruction->opcodeInfo) {
+        foundDescriptor = 0;
+        return foundDescriptor;
     }
-    int id = iinfoId(in->opcodeInfo);
-    if (id < 0) {
+    int opcodeId = iinfoId(instruction->opcodeInfo);
+    if (opcodeId < 0) {
         reportError("couldn't deduce instruction uid\n");
         exitAfterCleanup(-1);
     }
     if (!processorSourceSpecs) {
-        res = 0;
-        return res;
+        foundDescriptor = 0;
+        return foundDescriptor;
     }
-    aaDesc *t = (aaDesc *)processorSourceSpecs;
-    if (t->opcodeId) {
+    aaDesc *candidateDescriptor = (aaDesc *)processorSourceSpecs;
+    if (candidateDescriptor->opcodeId) {
         do {
-            if (t->opcodeId == id) {
-                res = t;
-                return res;
+            if (candidateDescriptor->opcodeId == opcodeId) {
+                foundDescriptor = candidateDescriptor;
+                return foundDescriptor;
             }
-            t++;
-        } while (t->opcodeId);
+            candidateDescriptor++;
+        } while (candidateDescriptor->opcodeId);
     }
-    res = 0;
-    return res;
+    foundDescriptor = 0;
+    return foundDescriptor;
 }
 
-aaUse *findAddressAliasUse(Instr *in)
+aaUse *findAddressAliasUse(Instr *instruction)
 {
-    if (!in)
+    if (!instruction)
         return 0;
-    if (!in->opcodeInfo)
+    if (!instruction->opcodeInfo)
         return 0;
-    int id = iinfoId(in->opcodeInfo);
-    if (id < 0) {
+    int opcodeId = iinfoId(instruction->opcodeInfo);
+    if (opcodeId < 0) {
         reportError("couldn't deduce instruction uid\n");
         exitAfterCleanup(-1);
     }
     if (!processorSourceSpecs)
         return 0;
-    for (aaUse *t = (aaUse *)processorDestinationSpecs; t->opcodeId; t++)
-        if (t->opcodeId == id)
-            return t;
+    for (aaUse *candidateUse = (aaUse *)processorDestinationSpecs; candidateUse->opcodeId; candidateUse++)
+        if (candidateUse->opcodeId == opcodeId)
+            return candidateUse;
     return 0;
 }
 
-bool emitReset(Program *p)
+bool emitReset(Program *program)
 {
     for (int i = 0; i != 12; i++)
         if (processorRegisterPools[i] && !processorRegisterPools[i]->emitReset()) {
@@ -581,7 +581,7 @@ bool emitReset(Program *p)
     return true;
 }
 
-char *emitStats(Program *p, char *buf)
+char *emitStats(Program *program, char *buf)
 {
     buf += formatIntoBuffer(buf, "; register stats:\n");
     for (int i = 0; i != 12; i++)
@@ -596,24 +596,24 @@ char *emitStats(Program *p, char *buf)
     return buf;
 }
 
-int getPoolsByClassID(int cls, RegPool **tab, int max)
+int getPoolsByClassID(int poolClass, RegPool **matchingPools, int maximumPools)
 {
-    if (!tab) {
+    if (!matchingPools) {
         reportError("Processor :: passed a null table pointer to getPoolsByClassID()\n");
         return -1;
     }
-    int n = 0;
-    for (int i = 0; i != 12; i++) {
-        RegPool *rp = processorRegisterPools[i];
-        if (rp && rp->poolKind == cls) {
-            if (n >= max) {
+    int matchedPoolCount = 0;
+    for (int poolIndex = 0; poolIndex != 12; poolIndex++) {
+        RegPool *pool = processorRegisterPools[poolIndex];
+        if (pool && pool->poolKind == poolClass) {
+            if (matchedPoolCount >= maximumPools) {
                 reportError("Processor:: more pools than space provided in getPoolsByClassID()\n");
                 return -1;
             }
-            tab[n++] = rp;
+            matchingPools[matchedPoolCount++] = pool;
         }
     }
-    return n;
+    return matchedPoolCount;
 }
 
 bool Processor::setUniqueName(const char *name)
@@ -623,9 +623,9 @@ bool Processor::setUniqueName(const char *name)
     uniqueName = 0;
     if (name) {
         uniqueName = dupString(name);
-        for (char *s = uniqueName; *s; s++)
-            if (!isIdentifierAlphabetCharacter(*s))
-                *s = '_';
+        for (char *nameCursor = uniqueName; *nameCursor; nameCursor++)
+            if (!isIdentifierAlphabetCharacter(*nameCursor))
+                *nameCursor = '_';
     }
     return true;
 }

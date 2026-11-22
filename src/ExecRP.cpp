@@ -72,24 +72,24 @@ Directive directiveDispatchTable[28] = {
     {".endhide", handleEndHideDirective},
 };
 
-bool handleInitVfDirective(Program *prog, LocTag *t)
+bool handleInitVfDirective(Program *prog, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(t, GetRP(9), true);
+    return setRegisterRangeEnabled(sourceLine, GetRP(9), true);
 }
 
-bool handleInitViDirective(Program *prog, LocTag *t)
+bool handleInitViDirective(Program *prog, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(t, GetRP(8), true);
+    return setRegisterRangeEnabled(sourceLine, GetRP(8), true);
 }
 
-bool handleRemoveVfDirective(Program *prog, LocTag *t)
+bool handleRemoveVfDirective(Program *prog, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(t, GetRP(9), false);
+    return setRegisterRangeEnabled(sourceLine, GetRP(9), false);
 }
 
-bool handleRemoveViDirective(Program *prog, LocTag *t)
+bool handleRemoveViDirective(Program *prog, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(t, GetRP(8), false);
+    return setRegisterRangeEnabled(sourceLine, GetRP(8), false);
 }
 
 inline bool ExecRP_init_reg_all(RegPool *pool)
@@ -101,68 +101,68 @@ inline bool ExecRP_init_reg_all(RegPool *pool)
     return pool->markAllocatablePhysicalRegistersUsed();
 }
 
-bool handleInitAllVfDirective(Program *prog, LocTag *t)
+bool handleInitAllVfDirective(Program *prog, LocTag *sourceLine)
 {
     return ExecRP_init_reg_all(GetRP(9));
 }
 
-bool handleInitAllViDirective(Program *prog, LocTag *t)
+bool handleInitAllViDirective(Program *prog, LocTag *sourceLine)
 {
     return ExecRP_init_reg_all(GetRP(8));
 }
 
-bool handleDisableAlignmentDirective(Program *prog, LocTag *t)
+bool handleDisableAlignmentDirective(Program *prog, LocTag *sourceLine)
 {
     disableOutputAlignment = true;
     reportInfo("dh_align_disable() - disabling .align emit\n");
     return 1;
 }
 
-bool handleDisableEbitDirective(Program *prog, LocTag *t)
+bool handleDisableEbitDirective(Program *prog, LocTag *sourceLine)
 {
     disableOutputAlignment = true;
     reportInfo("dh_no_ebits() - disabling [e]bit emit\n");
     return 1;
 }
 
-bool handleProgramNameDirective(Program *prog, LocTag *t)
+bool handleProgramNameDirective(Program *prog, LocTag *sourceLine)
 {
-    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
-    if (!s) {
+    char *nameToken = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
+    if (!nameToken) {
         reportError("failed to get global name\n");
         return 0;
     } else {
-        prog->proc.globalName = dupString(s);
+        prog->proc.globalName = dupString(nameToken);
     }
     return 1;
 }
 
-bool handleVuDirective(Program *prog, LocTag *t)
+bool handleVuDirective(Program *prog, LocTag *sourceLine)
 {
     prog->proc.vuDirectiveSeen = true;
     return 1;
 }
 
-bool handleMpgDirective(Program *prog, LocTag *t)
+bool handleMpgDirective(Program *prog, LocTag *sourceLine)
 {
-    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
-    if (!s) {
+    char *addressToken = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
+    if (!addressToken) {
         reportError("must specify target address for mpg mode!\n");
         return 0;
     }
-    prog->proc.mpgTargetAddress = parseInteger(s);
+    prog->proc.mpgTargetAddress = parseInteger(addressToken);
     return 1;
 }
 
-bool handleGlobalDirective(Program *prog, LocTag *t)
+bool handleGlobalDirective(Program *prog, LocTag *sourceLine)
 {
-    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
-    if (s)
-        prog->proc.exportedSymbols.findOrAppendByExactName(s);
+    char *symbolToken = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
+    if (symbolToken)
+        prog->proc.exportedSymbols.findOrAppendByExactName(symbolToken);
     return 1;
 }
 
-bool handleBeginRawDirective(Program *prog, LocTag *t)
+bool handleBeginRawDirective(Program *prog, LocTag *sourceLine)
 {
     if (prog->proc.insideRawLoop) {
         reportUserMessage("hit a raw directive in a rawloop block\n");
@@ -172,21 +172,21 @@ bool handleBeginRawDirective(Program *prog, LocTag *t)
         reportWarning("hit a raw directive while already in a raw block\n");
     prog->proc.decodeMode = 3;
     prog->proc.decodeSubMode = 4;
-    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
-    if (s) {
-        if (asciiCaseEqual(s, "reorder"))
+    char *reorderOption = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
+    if (reorderOption) {
+        if (asciiCaseEqual(reorderOption, "reorder"))
             prog->proc.decodeSubMode = 3;
-        else if (asciiCaseEqual(s, "noreorder"))
+        else if (asciiCaseEqual(reorderOption, "noreorder"))
             prog->proc.decodeSubMode = 4;
         else {
-            reportUserMessage("bad option '%s' to raw directive\n", s);
+            reportUserMessage("bad option '%s' to raw directive\n", reorderOption);
             return 0;
         }
     }
     return 1;
 }
 
-bool handleEndRawDirective(Program *prog, LocTag *t)
+bool handleEndRawDirective(Program *prog, LocTag *sourceLine)
 {
     if (prog->proc.decodeMode == 1) {
         reportWarning("hit an endraw directive while not in raw mode\n");
@@ -201,7 +201,7 @@ bool handleEndRawDirective(Program *prog, LocTag *t)
     return 1;
 }
 
-bool handleBeginRawLoopDirective(Program *prog, LocTag *t)
+bool handleBeginRawLoopDirective(Program *prog, LocTag *sourceLine)
 {
     if (prog->proc.insideRawLoop) {
         reportUserMessage("encountered a .rawloop directive, while already in loop mode\n");
@@ -212,21 +212,21 @@ bool handleBeginRawLoopDirective(Program *prog, LocTag *t)
     prog->proc.decodeMode = 3;
     prog->proc.decodeSubMode = 4;
     prog->proc.insideRawLoop = true;
-    char *s = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
-    if (s) {
-        if (asciiCaseEqual(s, "reorder"))
+    char *reorderOption = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
+    if (reorderOption) {
+        if (asciiCaseEqual(reorderOption, "reorder"))
             prog->proc.decodeSubMode = 3;
-        else if (asciiCaseEqual(s, "noreorder"))
+        else if (asciiCaseEqual(reorderOption, "noreorder"))
             prog->proc.decodeSubMode = 4;
         else {
-            reportUserMessage("bad option '%s' to raw loop directive\n", s);
+            reportUserMessage("bad option '%s' to raw loop directive\n", reorderOption);
             return 0;
         }
     }
     return 1;
 }
 
-bool handleEndRawLoopDirective(Program *prog, LocTag *t)
+bool handleEndRawLoopDirective(Program *prog, LocTag *sourceLine)
 {
     if (!prog->proc.insideRawLoop) {
         reportUserMessage("reached an .endloop directive but when wasn't in loop mode\n");
@@ -242,11 +242,11 @@ bool handleEndRawLoopDirective(Program *prog, LocTag *t)
     return 1;
 }
 
-bool handleVuWorkAreaDirective(Program *prog, LocTag *t)
+bool handleVuWorkAreaDirective(Program *prog, LocTag *sourceLine)
 {
     int device = -1;
     int limit = -1;
-    char *cpu = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
+    char *cpu = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
     if (!cpu) {
         reportError("failed to get token cpu (1) from .work directive\n");
         return 0;
@@ -267,18 +267,18 @@ bool handleVuWorkAreaDirective(Program *prog, LocTag *t)
         reportError("work: target device not set defining a work area.. must be one of core,vu0 or vu1!\n");
         return 0;
     }
-    char *ea = t->isCommentToken(2) ? 0 : t->tokenTextAt(2, 0);
-    if (!ea) {
+    char *addressToken = sourceLine->isCommentToken(2) ? 0 : sourceLine->tokenTextAt(2, 0);
+    if (!addressToken) {
         reportError("failed to get effective address token (2) from .work directive\n");
         return 0;
     }
-    char *sz = t->isCommentToken(3) ? 0 : t->tokenTextAt(3, 0);
-    if (!sz) {
+    char *sizeToken = sourceLine->isCommentToken(3) ? 0 : sourceLine->tokenTextAt(3, 0);
+    if (!sizeToken) {
         reportError("failed to get size token (3) from .work directive\n");
         return 0;
     }
-    int addr = parseInteger(ea);
-    int size = parseInteger(sz);
+    int addr = parseInteger(addressToken);
+    int size = parseInteger(sizeToken);
     if (size <= 0) {
         reportError("size is <=0 for a work area\n");
         return 0;
@@ -296,7 +296,7 @@ bool handleVuWorkAreaDirective(Program *prog, LocTag *t)
         reportError("init work area - failed to get vu mem pool\n");
         return 0;
     }
-    if (!initializeMemoryRegisterArea(pool, ea, size)) {
+    if (!initializeMemoryRegisterArea(pool, addressToken, size)) {
         reportError("failed to init the mem area!\n");
         return 0;
     }
@@ -304,41 +304,41 @@ bool handleVuWorkAreaDirective(Program *prog, LocTag *t)
     return 1;
 }
 
-inline bool ExecRP_skip_directive(LocTag *t)
+inline bool ExecRP_skip_directive(LocTag *sourceLine)
 {
     reportWarning("skipping directive:\n");
-    t->dumpSourceLine(-1);
+    sourceLine->dumpSourceLine(-1);
     return true;
 }
 
-bool handleAlignmentDirective(Program *prog, LocTag *t)
+bool handleAlignmentDirective(Program *prog, LocTag *sourceLine)
 {
-    return ExecRP_skip_directive(t);
+    return ExecRP_skip_directive(sourceLine);
 }
 
-bool handleHideDirective(Program *prog, LocTag *t)
+bool handleHideDirective(Program *prog, LocTag *sourceLine)
 {
-    return pushVisibilityScope(prog, t, 0);
+    return pushVisibilityScope(prog, sourceLine, 0);
 }
 
-bool handleShowDirective(Program *prog, LocTag *t)
+bool handleShowDirective(Program *prog, LocTag *sourceLine)
 {
-    return pushVisibilityScope(prog, t, 1);
+    return pushVisibilityScope(prog, sourceLine, 1);
 }
 
-bool handleEndHideDirective(Program *prog, LocTag *t)
+bool handleEndHideDirective(Program *prog, LocTag *sourceLine)
 {
-    return popVisibilityScope(prog, t, 0);
+    return popVisibilityScope(prog, sourceLine, 0);
 }
 
-bool handleEndShowDirective(Program *prog, LocTag *t)
+bool handleEndShowDirective(Program *prog, LocTag *sourceLine)
 {
-    return popVisibilityScope(prog, t, 1);
+    return popVisibilityScope(prog, sourceLine, 1);
 }
 
-bool handleUniqueDirective(Program *prog, LocTag *t)
+bool handleUniqueDirective(Program *prog, LocTag *sourceLine)
 {
-    char *name = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
+    char *name = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
     if (name) {
         if (mstrlen(name) > 128) {
             reportUserMessage("unique name too long\n");
@@ -350,18 +350,18 @@ bool handleUniqueDirective(Program *prog, LocTag *t)
     return 1;
 }
 
-bool handleSyntaxDirective(Program *prog, LocTag *t)
+bool handleSyntaxDirective(Program *prog, LocTag *sourceLine)
 {
-    char *arg = t->isCommentToken(1) ? 0 : t->tokenTextAt(1, 0);
-    if (!arg) {
+    char *syntaxOption = sourceLine->isCommentToken(1) ? 0 : sourceLine->tokenTextAt(1, 0);
+    if (!syntaxOption) {
         reportUserMessage("must specify an argument to '.syntax', valid ones are 'new' or 'old'\n");
         return 0;
     }
-    if (asciiCaseEqual(arg, "new")) {
+    if (asciiCaseEqual(syntaxOption, "new")) {
         prog->proc.newSyntax = true;
         return 1;
     }
-    if (asciiCaseEqual(arg, "old")) {
+    if (asciiCaseEqual(syntaxOption, "old")) {
         prog->proc.newSyntax = false;
         return 1;
     }
@@ -369,118 +369,118 @@ bool handleSyntaxDirective(Program *prog, LocTag *t)
     return 0;
 }
 
-inline char *ExecRP_directive_name(LocTag *t)
+inline char *ExecRP_directive_name(LocTag *sourceLine)
 {
-    return t->tokenTextAt(0, 0);
+    return sourceLine->tokenTextAt(0, 0);
 }
 
-Directive *findRegisteredDirective(LocTag *t)
+Directive *findRegisteredDirective(LocTag *sourceLine)
 {
-    if (!t)
+    if (!sourceLine)
         return 0;
-    char *name = ExecRP_directive_name(t);
-    Directive *d = directiveDispatchTable;
-    for (int i = 0; i != 28; i++, d++)
-        if (asciiCaseEqual(name, d->name))
-            return d;
+    char *name = ExecRP_directive_name(sourceLine);
+    Directive *directive = directiveDispatchTable;
+    for (int directiveIndex = 0; directiveIndex != 28; directiveIndex++, directive++)
+        if (asciiCaseEqual(name, directive->name))
+            return directive;
     return 0;
 }
 
-bool setRegisterRangeEnabled(LocTag *t, RegPool *pool, bool flag)
+bool setRegisterRangeEnabled(LocTag *sourceLine, RegPool *pool, bool flag)
 {
     char buf[2][0x800];
-    int i = 1;
+    int tokenIndex = 1;
     if (!pool) {
         reportError("ExecRP_init_reg: passed a null pool\n");
         return false;
     }
-    for (; i < getLineTokenCount(t); i++) {
-        char *tok = t->isCommentToken(i) ? 0 : t->tokenTextAt(i, 0);
+    for (; tokenIndex < getLineTokenCount(sourceLine); tokenIndex++) {
+        char *tok = sourceLine->isCommentToken(tokenIndex) ? 0 : sourceLine->tokenTextAt(tokenIndex, 0);
         if (!tok)
             continue;
         int range = 0;
-        char *d = buf[0];
-        for (char *s = tok; *s; s++) {
-            if (*s == '-') {
+        char *outputCursor = buf[0];
+        for (char *inputCursor = tok; *inputCursor; inputCursor++) {
+            if (*inputCursor == '-') {
                 if (range) {
                     reportUserMessage("too many '-' chars in %s\n", tok);
                     return false;
                 }
                 range = 1;
-                *d = 0;
-                d = buf[1];
+                *outputCursor = 0;
+                outputCursor = buf[1];
             } else
-                *d++ = *s;
+                *outputCursor++ = *inputCursor;
         }
-        *d = 0;
+        *outputCursor = 0;
         int first = -1, last;
         int j;
         for (j = 0; j <= range; j++) {
-            RegPoolEntry *r = pool->findPhysicalByName(buf[j]);
-            if (!r) {
+            RegPoolEntry *registerEntry = pool->findPhysicalByName(buf[j]);
+            if (!registerEntry) {
                 reportError("not find %s\n", tok);
                 return false;
             }
-            if (!r->allocatable) {
-                reportError("init_reg: %s is not allocable\n", r->registerName());
+            if (!registerEntry->allocatable) {
+                reportError("init_reg: %s is not allocable\n", registerEntry->registerName());
                 return false;
             }
-            if (r->isVirtual) {
-                reportError("init_reg: reg is virtual! %s\n", r->registerName());
+            if (registerEntry->isVirtual) {
+                reportError("init_reg: reg is virtual! %s\n", registerEntry->registerName());
                 return false;
             }
             if (j == 0)
-                first = last = r->registerIndex;
+                first = last = registerEntry->registerIndex;
             else
-                last = r->registerIndex;
+                last = registerEntry->registerIndex;
         }
         if (last < first) {
             reportWarning("range %s decreasing\n", tok);
-            int tmp = last;
+            int swapIndex = last;
             last = first;
-            first = tmp;
+            first = swapIndex;
         }
         for (j = first; j <= last; j++) {
-            RegPoolEntry *r = pool->findByRegisterIndex(j);
-            if (!r) {
+            RegPoolEntry *registerEntry = pool->findByRegisterIndex(j);
+            if (!registerEntry) {
                 reportError("not find %s\n", tok);
                 return false;
             }
-            if (!r->allocatable) {
-                reportError("init_reg: %s is not allocable\n", r->registerName());
+            if (!registerEntry->allocatable) {
+                reportError("init_reg: %s is not allocable\n", registerEntry->registerName());
                 return false;
             }
-            if (r->isVirtual) {
-                reportError("init_reg: reg is virtual! %s\n", r->registerName());
+            if (registerEntry->isVirtual) {
+                reportError("init_reg: reg is virtual! %s\n", registerEntry->registerName());
                 return false;
             }
-            r->enabledPhysicalRegister = flag;
+            registerEntry->enabledPhysicalRegister = flag;
         }
     }
     return true;
 }
 
-int handleInitHwRegisterType1(Program *prog, LocTag *t)
+int handleInitHwRegisterType1(Program *prog, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(t, GetRP(1), true);
+    return setRegisterRangeEnabled(sourceLine, GetRP(1), true);
 }
 
-int handleInitHwRegisterType2(Program *prog, LocTag *t)
+int handleInitHwRegisterType2(Program *prog, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(t, GetRP(2), true);
+    return setRegisterRangeEnabled(sourceLine, GetRP(2), true);
 }
 
-int handleRemoveHwRegisterType1(Program *prog, LocTag *t)
+int handleRemoveHwRegisterType1(Program *prog, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(t, GetRP(1), false);
+    return setRegisterRangeEnabled(sourceLine, GetRP(1), false);
 }
 
-int handleRemoveHwRegisterType2(Program *prog, LocTag *t)
+int handleRemoveHwRegisterType2(Program *prog, LocTag *sourceLine)
 {
-    return setRegisterRangeEnabled(t, GetRP(2), false);
+    return setRegisterRangeEnabled(sourceLine, GetRP(2), false);
 }
 
-int enableAllRegistersInPool(LocTag *t, RegPool *pool)
+int enableAllRegistersInPool(LocTag *sourceLine, RegPool *pool)
 {
     if (!pool) {
         reportError("ExecRP_init_reg_all: passed a null pool\n");
@@ -489,82 +489,82 @@ int enableAllRegistersInPool(LocTag *t, RegPool *pool)
     return pool->markAllocatablePhysicalRegistersUsed();
 }
 
-int handleInitAllHwRegisterType1(Program *prog, LocTag *t)
+int handleInitAllHwRegisterType1(Program *prog, LocTag *sourceLine)
 {
     return ExecRP_init_reg_all(GetRP(1));
 }
 
-int handleInitAllHwRegisterType2(Program *prog, LocTag *t)
+int handleInitAllHwRegisterType2(Program *prog, LocTag *sourceLine)
 {
     return ExecRP_init_reg_all(GetRP(2));
 }
 
-int alwaysAcceptDirective(Program *prog, LocTag *t)
+int alwaysAcceptDirective(Program *prog, LocTag *sourceLine)
 {
     return 1;
 }
 
-int alwaysRejectDirective(Program *prog, LocTag *t)
+int alwaysRejectDirective(Program *prog, LocTag *sourceLine)
 {
     return 0;
 }
 
-bool pushVisibilityScope(Program *prog, LocTag *t, int v)
+bool pushVisibilityScope(Program *prog, LocTag *sourceLine, int visibilityMode)
 {
     char buf[0x800];
     int left = 0x7ff;
-    char *d = buf;
-    for (int i = 1; i < getLineTokenCount(t); i++) {
-        char *tok = t->isCommentToken(i) ? 0 : t->tokenTextAt(i, 0);
+    char *outputCursor = buf;
+    for (int tokenIndex = 1; tokenIndex < getLineTokenCount(sourceLine); tokenIndex++) {
+        char *tok = sourceLine->isCommentToken(tokenIndex) ? 0 : sourceLine->tokenTextAt(tokenIndex, 0);
         if (!tok)
             continue;
         while (*tok) {
-            *d++ = *tok++;
+            *outputCursor++ = *tok++;
             if (--left == 0) {
                 reportError("ran out of local space for visible list\n");
                 return false;
             }
         }
-        *d++ = ':';
+        *outputCursor++ = ':';
     }
-    *d = 0;
-    mNode *n = prog->proc.visibilityScopes.appendNamedNode(buf);
-    if (!n) {
+    *outputCursor = 0;
+    mNode *scopeNode = prog->proc.visibilityScopes.appendNamedNode(buf);
+    if (!scopeNode) {
         reportError("failed to process  a visibility directive\n");
         return false;
     }
-    n->flags = v;
+    scopeNode->flags = visibilityMode;
     return true;
 }
 
-inline void ExecRP_show_line(LocTag *t)
+inline void ExecRP_show_line(LocTag *sourceLine)
 {
-    t->dumpSourceLine(-1);
+    sourceLine->dumpSourceLine(-1);
 }
 
-bool popVisibilityScope(Program *prog, LocTag *t, int v)
+bool popVisibilityScope(Program *prog, LocTag *sourceLine, int visibilityMode)
 {
-    mNode *n = prog->proc.visibilityScopes.tail;
-    if (!n) {
+    mNode *scopeNode = prog->proc.visibilityScopes.tail;
+    if (!scopeNode) {
         reportWarning("closing visibility directive and no tail at:\n");
-        int saved = errorOccurred;
+        int savedErrorFlag = errorOccurred;
         errorOccurred = !quietDiagnostics;
-        ExecRP_show_line(t);
-        errorOccurred = saved;
+        ExecRP_show_line(sourceLine);
+        errorOccurred = savedErrorFlag;
         return true;
     }
-    if (n->flags != v) {
+    if (scopeNode->flags != visibilityMode) {
         reportUserMessage("mode mismatch closing a visibility scope\n");
-        int saved = errorOccurred;
+        int savedErrorFlag = errorOccurred;
         errorOccurred = !quietDiagnostics;
-        ExecRP_show_line(t);
-        errorOccurred = saved;
+        ExecRP_show_line(sourceLine);
+        errorOccurred = savedErrorFlag;
         return false;
     }
-    if (!prog->proc.visibilityScopes.detachNode(n)) {
+    if (!prog->proc.visibilityScopes.detachNode(scopeNode)) {
         reportError("failed to remove tail node\n");
         return false;
     }
-    delete n;
+    delete scopeNode;
     return true;
 }

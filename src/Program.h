@@ -17,9 +17,9 @@ struct Program {
     ~Program();
     bool Init(CpuDef *cpu, const char *uniqueName, bool uniqueAll);
     bool dispose();
-    bool addStream(instStream *s);
-    bool insertStreamAfter(instStream *after, instStream *s);
-    bool decodeAndSplitStreams(Parser *parser, int a, bool newSyntax);
+    bool addStream(instStream *stream);
+    bool insertStreamAfter(instStream *after, instStream *stream);
+    bool decodeAndSplitStreams(Parser *parser, int buildType, bool newSyntax);
 
     Processor proc;
     int emulatedCycleCount;
@@ -51,8 +51,8 @@ struct Program {
     bool unLinkStreams(instStream *from, instStream *to, int type);
     bool doUnique();
     bool hasStreamLabel(const char *name);
-    bool removeStream(instStream *s);
-    instStream *findStreamById(int id);
+    bool removeStream(instStream *stream);
+    instStream *findStreamById(int streamId);
     instStream *findStream(const char *name);
     bool retarget(instStream *from, instStream *to);
 };
