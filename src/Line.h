@@ -2,18 +2,23 @@
 #ifndef LINE_H
 #define LINE_H
 
+// Keep the recovered binary symbols for these member functions.
+#define setLocation func_08051054
+#define clearLocation func_0805109c
+#define dumpLocation func_080510cc
+
 class Line {
 public:
-    char *unk_00;
-    int unk_04;
+    char *locationName;
+    int locationKind; // 1 = source file, 2 = macro
 
     Line();
     ~Line();
-    bool func_08051054(const char *s, int n);
-    void func_0805109c();
-    void func_080510cc();
+    bool setLocation(const char *name, int kind);
+    void clearLocation();
+    void dumpLocation();
 
-    static const char *typeName(int t);
+    static const char *typeName(int kind);
 };
 
 #endif

@@ -14,11 +14,16 @@
 #define tokenizeSourceLine func_0805086c
 #define tokenTextAt func_08050be4
 #define dumpSourceLine func_08050c40
+#define isLocTagValid func_0805082c
+#define getLineTokenCount func_0805085c
+#define startsWithDirective func_08050eec
+#define isCommentToken func_08050f18
+#define hasAssignmentMarker func_08050f48
 
-// Loctag stack entry (8 bytes); layout from Parser::func_0804fb94.
+// GASP source-location stack entry (8 bytes).
 struct LocRef {
-    Line *unk_00;
-    int unk_04;
+    Line *sourceLocation;
+    int gaspLineNumber;
 };
 
 // Token entry of a lineEntry, 4 bytes.
@@ -31,27 +36,27 @@ struct TokenEntry {
 // Line table entry (probably "lineEntry", see Tokenise error string), sizeof 0x3b0.
 class LocTag {
 public:
-    char *unk_00;           // line data
-    int unk_04;             // source line number
-    char unk_08;            // 1 = raw macro block
-    short unk_0a;           // loctag depth, -1 = none
-    LocRef unk_0c[16];
+    char *lineText;
+    int sourceLineNumber;
+    char isRawMacroBlock;
+    short gaspDepth;        // -1 = no expanded location stack
+    LocRef gaspStack[16];
     int tokenCount;
     TokenEntry tokens[200];
 
-    LocTag() { unk_00 = 0; tokenCount = 0; unk_08 = 0; unk_0a = 0; }
+    LocTag() { lineText = 0; tokenCount = 0; isRawMacroBlock = 0; gaspDepth = 0; }
     ~LocTag() {}
     char *tokenizeSourceLine(int *commentMode, char *input);
     void dumpSourceLine(int highlightedToken);
     char *tokenTextAt(int tokenIndex, char *separatorOut);
     char *tokenTextAt(int tokenIndex) { return tokenTextAt(tokenIndex, 0); }
-    bool func_08050eec();
-    bool func_08050f18(int i);
-    bool func_08050f48();
+    bool startsWithDirective();
+    bool isCommentToken(int tokenIndex);
+    bool hasAssignmentMarker();
     bool func_08050f7c(int i);
 
     bool isValid() {
-        return (unk_00 && tokenCount) || (!unk_00 && !tokenCount);
+        return (lineText && tokenCount) || (!lineText && !tokenCount);
     }
     bool inComment(int tokenIndex) {
         if (tokenIndex >= 0 && tokenIndex < tokenCount) {
@@ -97,8 +102,8 @@ bool func_08050708(char c);
 bool func_08050780(const char *s, const char *kw);
 bool func_080507f4(const char *s);
 bool func_08050810(const char *s);
-bool func_0805082c(LocTag *t);
-int func_0805085c(LocTag *t);
+bool isLocTagValid(LocTag *t);
+int getLineTokenCount(LocTag *t);
 
 struct Program;
 

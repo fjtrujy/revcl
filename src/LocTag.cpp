@@ -2,12 +2,12 @@
 #include "Parser.h"
 #include "os.h"
 
-bool func_0805082c(LocTag *t)
+bool isLocTagValid(LocTag *t)
 {
-    return (t->unk_00 && t->tokenCount) || (!t->unk_00 && !t->tokenCount);
+    return (t->lineText && t->tokenCount) || (!t->lineText && !t->tokenCount);
 }
 
-int func_0805085c(LocTag *t)
+int getLineTokenCount(LocTag *t)
 {
     return t->tokenCount;
 }
@@ -25,7 +25,7 @@ extern const char locTagInvalidDumpError[];
 
 char *LocTag::tokenizeSourceLine(int *commentMode, char *input)
 {
-    if (!unk_00) {
+    if (!lineText) {
         reportError(locTagNullLineDataError);
         return 0;
     }
@@ -43,7 +43,7 @@ char *LocTag::tokenizeSourceLine(int *commentMode, char *input)
     int processedCharCount = 0;
     TokenEntry *currentToken = 0;
     TokenEntry *previousToken = 0;
-    char *writeCursor = unk_00;
+    char *writeCursor = lineText;
     while (*readCursor) {
         bool splitHere = false;
         bool isTokenChar = func_08050708(*readCursor);
@@ -111,7 +111,7 @@ char *LocTag::tokenizeSourceLine(int *commentMode, char *input)
                     return 0;
                 }
                 currentToken = &tokens[tokenCount];
-                currentToken->textOffset = writeCursor - unk_00;
+                currentToken->textOffset = writeCursor - lineText;
                 currentToken->separator = 0;
                 currentToken->inComment = *commentMode != 0;
                 previousToken = currentToken;
@@ -140,7 +140,7 @@ char *LocTag::tokenizeSourceLine(int *commentMode, char *input)
     if (*commentMode != 2)
         *commentMode = 0;
     if (!tokenCount)
-        unk_00 = 0;
+        lineText = 0;
     return writeCursor;
 }
 
@@ -150,13 +150,13 @@ char *LocTag::tokenTextAt(int tokenIndex, char *separatorOut)
         return 0;
     if (tokenIndex < 0 || tokenIndex >= tokenCount)
         return 0;
-    if (!unk_00) {
+    if (!lineText) {
         reportError(locTagGetTokenNullError);
         return 0;
     }
     if (separatorOut)
         *separatorOut = tokens[tokenIndex].separator;
-    return unk_00 + tokens[tokenIndex].textOffset;
+    return lineText + tokens[tokenIndex].textOffset;
 }
 
 void LocTag::dumpSourceLine(int highlightedToken)
@@ -165,18 +165,18 @@ void LocTag::dumpSourceLine(int highlightedToken)
         reportError(locTagInvalidDumpError);
         return;
     }
-    if (unk_0a > 0) {
-        for (int d = 0; d != unk_0a; d++) {
+    if (gaspDepth > 0) {
+        for (int d = 0; d != gaspDepth; d++) {
             for (int k = 0; k != d; k++)
                 reportMessage("  ");
-            if (!unk_0c[d].unk_00)
-                reportError(locTagDumpNoPtrError, d, unk_0a);
-            reportMessage(" line %4d ", unk_0c[d].unk_04);
-            unk_0c[d].unk_00->func_080510cc();
+            if (!gaspStack[d].sourceLocation)
+                reportError(locTagDumpNoPtrError, d, gaspDepth);
+            reportMessage(" line %4d ", gaspStack[d].gaspLineNumber);
+            gaspStack[d].sourceLocation->dumpLocation();
         }
     }
-    if (!tokenCount && unk_00) {
-        reportMessage("  ---> '%s'", unk_00);
+    if (!tokenCount && lineText) {
+        reportMessage("  ---> '%s'", lineText);
     } else {
         reportMessage("  ---> ");
         bool wasInComment = false;
@@ -205,7 +205,7 @@ void LocTag::dumpSourceLine(int highlightedToken)
     reportMessage("\n");
 }
 
-bool LocTag::func_08050eec()
+bool LocTag::startsWithDirective()
 {
     char *s = tokenTextAt(0, 0);
     if (s && *s == '.')
@@ -213,14 +213,14 @@ bool LocTag::func_08050eec()
     return false;
 }
 
-bool LocTag::func_08050f18(int i)
+bool LocTag::isCommentToken(int i)
 {
     if (i >= 0 && i < tokenCount)
         return tokens[i].inComment != 0;
     return true;
 }
 
-bool LocTag::func_08050f48()
+bool LocTag::hasAssignmentMarker()
 {
     char *s = tokenTextAt(0, 0);
     if (s && s[0] == '=' && s[1] == 0)

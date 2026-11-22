@@ -53,7 +53,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         reportError("getNextInstruction - passed null pointer\n");
         goto fail;
     }
-    if (t->func_08050f18(cur)) {
+    if (t->isCommentToken(cur)) {
         reportError("getNextInstruction - tried to parse a comment\n");
         goto fail;
     }
@@ -435,7 +435,7 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
     if (*pos == 0) {
         char *tok = t->tokenTextAt(0, 0);
         mNode *n;
-        if (func_080506e0(tok) && !t->func_08050f18(0)) {
+        if (func_080506e0(tok) && !t->isCommentToken(0)) {
             if (*nOut != 0) {
                 reportUserMessage("found a label on a continued line\n");
                 return false;
@@ -460,7 +460,7 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
             }
             n->unk_18 = mods;
             (*pos)++;
-            if (func_0805085c(t) > 1) {
+            if (getLineTokenCount(t) > 1) {
                 char *tok2 = t->tokenTextAt(1, 0);
                 if (*tok2 == '[') {
                     {
@@ -485,11 +485,11 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
             }
         }
     }
-    if (t->func_08050f48())
+    if (t->hasAssignmentMarker())
         (*pos)++;
 next:
-    while (*pos < func_0805085c(t)) {
-        if (!t->func_08050f18(*pos)) {
+    while (*pos < getLineTokenCount(t)) {
+        if (!t->isCommentToken(*pos)) {
             if (t->func_08050f7c(*pos)) {
                 (*pos)++;
                 goto done;
@@ -561,14 +561,14 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             reportError("NULL LE return\n");
             goto done;
         }
-        if (t->func_08050f48()) {
+        if (t->hasAssignmentMarker()) {
             reportUserMessage("unexpected line continue\n");
             goto done;
         }
-        if (t->unk_08) {
+        if (t->isRawMacroBlock) {
             flowBlock *b = &blocks[n];
             b->unk_05 = 6;
-            char *s = dupString(t->unk_00);
+            char *s = dupString(t->lineText);
             if (!s) {
                 reportError("failed to dupe the pass thru text\n");
                 goto done;
@@ -578,7 +578,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             lineIdx++;
             continue;
         }
-        if (t->func_08050eec()) {
+        if (t->startsWithDirective()) {
             Directive *d = func_080519a0(t);
             if (!d) {
                 reportUserMessage("failed to find a directive from line : \n");
@@ -605,7 +605,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
                 reportError("failed to build list of instructions for line\n");
                 goto done;
             }
-            if (pos >= func_0805085c(t)) {
+            if (pos >= getLineTokenCount(t)) {
                 lineIdx++;
                 pos = 0;
             } else if (old >= pos) {
@@ -853,13 +853,13 @@ int gatherTokens(LocTag *t, int i, bool stopAtOpcode)
     int n = 0;
     char sep;
 
-    for (; i < func_0805085c(t); i++) {
+    for (; i < getLineTokenCount(t); i++) {
         char *tok = t->tokenTextAt(i, &sep);
         if (!tok) {
             reportError("gatherTokens() - failed to get token\n");
             return -1;
         }
-        if (!t->func_08050f18(i)) {
+        if (!t->isCommentToken(i)) {
             if (t->func_08050f7c(i)) {
                 *d = 0;
                 return i;
