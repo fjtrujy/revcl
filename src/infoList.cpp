@@ -7,7 +7,7 @@
 #include "ubsList.h"
 #include "os.h"
 
-char *stallTypeNames[3] = { "LATENCY", "THRUPUT", "RFWRITE" };
+char *stallTypeNames[VCL_STALL_TYPE_COUNT] = { "LATENCY", "THRUPUT", "RFWRITE" };
 
 inline iHolder::iHolder()
 {
@@ -118,7 +118,7 @@ inline infoNode::infoNode(InitTag unusedInitializationTag)
 
 inline stallNode::stallNode(InitTag unusedInitializationTag) : infoNode(infoNode::INIT)
 {
-    for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++)
+    for (int stallTypeIndex = 0; stallTypeIndex != VCL_STALL_TYPE_COUNT; stallTypeIndex++)
         stallByType[stallTypeIndex] = 0;
 }
 
@@ -164,7 +164,7 @@ infoNode::~infoNode()
 
 stallNode::stallNode() : infoNode(infoNode::INIT)
 {
-    for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++)
+    for (int stallTypeIndex = 0; stallTypeIndex != VCL_STALL_TYPE_COUNT; stallTypeIndex++)
         stallByType[stallTypeIndex] = 0;
 }
 
@@ -178,7 +178,7 @@ void stallNode::dump()
     char *outputCursor = buf;
     outputCursor += formatIntoBuffer(outputCursor, "STALL");
     int max = 0;
-    for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++) {
+    for (int stallTypeIndex = 0; stallTypeIndex != VCL_STALL_TYPE_COUNT; stallTypeIndex++) {
         unsigned short stallDuration = stallByType[stallTypeIndex];
         if (stallDuration > max)
             max = stallDuration;
@@ -227,7 +227,7 @@ bool stallNode::catStall(OperandLocation *location, OperandLocation *userLocatio
         reportError("stallInit - failed to add in a user loc\n");
         return false;
     }
-    if (type < 0 || type > 2) {
+    if (type < 0 || type > VCL_STALL_TYPE_REGISTER_WRITE) {
         reportError("bad stall type\n");
         return false;
     }

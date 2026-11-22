@@ -396,7 +396,7 @@ RegisterEntry *InstructionStream::getBranchTargetRegister()
     return registerEntry;
 }
 
-unsigned char InstructionStream::getCodeMode()
+VclCodeModeByte InstructionStream::getCodeMode()
 {
     ScheduleTable *table = workTablePtr;
     if (table)
@@ -414,11 +414,11 @@ const char *InstructionStream::getCodeModeName()
     return 0;
 }
 
-unsigned char InstructionStream::getRawSchedulingMode()
+VclRawSchedulingModeByte InstructionStream::getRawSchedulingMode()
 {
     ScheduleTable *table = workTablePtr;
     if (table)
-        return table->getTableRawMode();
+        return (VclRawSchedulingModeByte)table->getTableRawMode();
     reportError("getCodeMode - work table not set\n");
     return 0;
 }
@@ -454,7 +454,7 @@ bool InstructionStream::usesFixedRawLayout()
     return isFixedRawTable(table);
 }
 
-unsigned char InstructionStream::getAllocMode()
+VclAllocationModeByte InstructionStream::getAllocMode()
 {
     ScheduleTable *table = workTablePtr;
     if (table)

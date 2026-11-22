@@ -138,11 +138,11 @@ public:
     int optimizerIndex;
     short maximumDynamicStartRow;
     short resetOnlyDynamicStatisticsMarker;  // dynamic statistics high-watermark (written as a short)
-    char allocationMode;
-    unsigned char codeModeValue;
-    unsigned char rawSchedulingMode;
+    VclAllocationModeByte allocationMode;
+    VclCodeModeByte codeModeValue;
+    VclRawSchedulingModeByte rawSchedulingMode;
     bool isAbstract() { return codeModeValue == VCL_CODE_UTA; }
-    unsigned char codeMode() { return codeModeValue; }
+    VclCodeModeByte codeMode() { return codeModeValue; }
     char postOptimizationPrepared;
     int declaredRawLength;
     InstructionStream *ownerStream;

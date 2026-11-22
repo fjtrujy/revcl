@@ -54,7 +54,7 @@ public:
     bool isLocal;
     iHolder setter;
     iHolder user;
-    unsigned short stallByType[3];
+    unsigned short stallByType[VCL_STALL_TYPE_COUNT];
 };
 
 class RegisterEntry;

@@ -2,10 +2,17 @@
 #ifndef LINE_H
 #define LINE_H
 
+// Selects an existing diagnostic label; the label text stays in Line.cpp.
+enum VclSourceLocationKind {
+    VCL_SOURCE_LOCATION_NONE = 0,
+    VCL_SOURCE_LOCATION_FILE = 1,
+    VCL_SOURCE_LOCATION_MACRO = 2
+};
+
 class SourceLocationEntry {
 public:
     char *locationName;
-    int locationKind; // 1 = source file, 2 = macro
+    VclSourceLocationKind locationKind;
 
     SourceLocationEntry();
     ~SourceLocationEntry();

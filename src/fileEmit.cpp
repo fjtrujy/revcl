@@ -222,7 +222,7 @@ fail:
 }
 
 extern bool disableEndBits;
-extern char *stallTypeNames[3];
+extern char *stallTypeNames[VCL_STALL_TYPE_COUNT];
 int countSetBits(unsigned int);
 char *emitNop(char *buf, int flags, int *len);
 char *emitInstr(Instr *in, char *buf, bool upper, int flags, bool b);
@@ -262,7 +262,7 @@ char *ScheduleRow::emit(char *outputBuffer, int flags, bool upper, bool unused)
     if (maxStallLength) {
         outputBuffer += formatIntoBuffer(outputBuffer, "       ;\tSTALL");
         bool any = false;
-        for (int stallTypeIndex = 0; stallTypeIndex != 3; stallTypeIndex++) {
+        for (int stallTypeIndex = 0; stallTypeIndex != VCL_STALL_TYPE_COUNT; stallTypeIndex++) {
             int bit = (stallTypeMask >> stallTypeIndex) & 1;
             if (bit) {
                 outputBuffer += formatIntoBuffer(outputBuffer, "_%s", stallTypeNames[stallTypeIndex]);
