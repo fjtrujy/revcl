@@ -6,7 +6,7 @@
 #include "VUStr.h"
 #include "Instr.h"
 #include "workTable.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 #include "Program.h"
 
 char gatheredToken[1024];
@@ -515,7 +515,7 @@ done:
     return true;
 }
 
-flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, int *count)
+DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyntax, int *count)
 {
     mList labels;
     int nOut;
@@ -531,7 +531,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
     int maxLines = 0x1000;
     p->proc.unk_64 = type;
     p->proc.unk_00 = newSyntax;
-    flowBlock *blocks = 0;
+    DecodedLine *blocks = 0;
 
     switch (type) {
     case 1:
@@ -549,7 +549,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
     p->proc.unk_62 = 0;
     p->proc.unk_40 = 1;
     p->proc.unk_3f = 0;
-    blocks = new flowBlock[0x1000];
+    blocks = new DecodedLine[0x1000];
     if (!blocks) {
         reportError("Processor::Build() new failed for decLine table\n");
         goto done;
@@ -566,14 +566,14 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             goto done;
         }
         if (t->isRawMacroBlock) {
-            flowBlock *b = &blocks[n];
-            b->unk_05 = 6;
+            DecodedLine *b = &blocks[n];
+            b->decodeMode = 6;
             char *s = dupString(t->lineText);
             if (!s) {
                 reportError("failed to dupe the pass thru text\n");
                 goto done;
             }
-            b->unk_00 = s;
+            b->passThroughText = s;
             n++;
             lineIdx++;
             continue;
@@ -623,9 +623,9 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
             reportError("out of bounds rLine getting decoded instructions\n");
             goto done;
         }
-        flowBlock *b = &blocks[n];
-        b->func_08084220();
-        if (!b->unk_14.func_0804b4d0(&labels)) {
+        DecodedLine *b = &blocks[n];
+        b->initialize();
+        if (!b->labels.func_0804b4d0(&labels)) {
             reportError("failed to grab labels from current list\n");
             goto done;
         }
@@ -651,11 +651,11 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
                 goto done;
             }
         }
-        b->unk_05 = p->proc.unk_3d;
-        b->unk_06 = p->proc.unk_3e;
+        b->decodeMode = p->proc.unk_3d;
+        b->decodeSubMode = p->proc.unk_3e;
         if (synth) {
             Instr *in = ins[0];
-            b->unk_0c[0] = in;
+            b->instructions[0] = in;
             if (!in) {
                 reportError("during the initial build, found an iEntry, which thought it was synthetic, but had no instruction\n");
                 goto done;
@@ -713,14 +713,14 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
                 break;
             case 9:
             case 12:
-                if (b->unk_05 == 3) {
+                if (b->decodeMode == 3) {
                     reportUserMessage("a loop size directive is an invalid directive for raw mode vsm..\n");
                     goto done;
                 }
                 /* fall through */
             case 8:
                 if (p->proc.unk_3f)
-                    b->unk_0a = p->proc.unk_40;
+                    b->rawLoopId = p->proc.unk_40;
                 break;
             case 10:
                 break;
@@ -737,9 +737,9 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
                 goto done;
             }
             if (p->proc.unk_3f)
-                b->unk_0a = p->proc.unk_40;
+                b->rawLoopId = p->proc.unk_40;
             for (int j = 0; j != p->proc.instructionsPerRawLine; j++)
-                b->unk_0c[j] = ins[j];
+                b->instructions[j] = ins[j];
         } else {
             if (p->proc.unk_3f) {
                 reportError("Build() - was in loop mode during uta\n");
@@ -762,10 +762,10 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
                 delete in;
                 goto done;
             }
-            b->unk_0c[0] = in;
+            b->instructions[0] = in;
         }
-        if (b->unk_05 == 1) {
-            Instr *in = b->unk_0c[0];
+        if (b->decodeMode == 1) {
+            Instr *in = b->instructions[0];
             if (in && ((in->unk_1388 >> 2) & 1)) {
                 int r = in->func_08053104();
                 if (r < 0) {
@@ -774,7 +774,7 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
                 }
                 if (r == 0) {
                     in->leDump();
-                    b->unk_0c[0] = 0;
+                    b->instructions[0] = 0;
                     delete in;
                     in = 0;
                 }
@@ -819,11 +819,11 @@ flowBlock *func_08083768(Program *p, Parser *parser, int type, bool newSyntax, i
         goto done;
     }
     for (int i = 0; i != n - 1; i++) {
-        mList *a = &blocks[i].unk_14;
+        mList *a = &blocks[i].labels;
         if (!a->unk_0c)
             continue;
         for (int j = i + 1; j != n; j++) {
-            mList *c = &blocks[j].unk_14;
+            mList *c = &blocks[j].labels;
             if (c->unk_0c) {
                 for (mNode *nd = a->unk_0c; nd; nd = nd->unk_04) {
                     if (c->func_0804b284(nd->unk_14)) {

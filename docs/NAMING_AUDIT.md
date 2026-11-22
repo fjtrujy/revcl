@@ -90,7 +90,8 @@ methods or ABI-facing types may affect byte matching.
   `InstructionPosition`, `OperandLock`, `RegisterPartLockList`. C++ source uses
   these instead of 201 occurrences of the address-coded type names.
 - `src/f080724f0.cpp` -> `src/tableRowAccess.cpp` and
-  `src/f080843a0.cpp` -> `src/flowBlockQueries.cpp`.
+  `src/f080843a0.cpp` -> `src/decodedLineQueries.cpp` (the latter was
+  further renamed in the decoded-line naming pass).
 - Recovered function names also include `abortAfterError`,
   `asciiCaseEqual`, `streamName`, and `registerName`.
 
@@ -228,6 +229,48 @@ fields were not touched.
 These seven owner-qualified field declarations were removed from the field
 review queue. The updated progress report counts 40 direct function renames
 relative to the original 436 address-based function names.
+
+## Decoded source-line and operand-descriptor naming
+
+The old `flowBlock` type was a provisional name for a **decoded source-line
+entry**, not an actual control-flow basic block. The decoder creates one entry
+for a raw pass-through block, a synthetic instruction, or a UTA/RAW line; the
+stream splitter then assigns a flow ID and groups entries. It is now named
+`DecodedLine`, with its implementation in `decodedLine.cpp` and the query
+helpers in `decodedLineQueries.cpp`. The original translation-unit order is
+unchanged in `config/vcl-link-order.cmake`.
+
+Eight owner-qualified `DecodedLine` fields now follow the evidence in
+`oDecode.cpp`, `splitParserStream.cpp`, and the stream builders:
+
+| Previous field | Direct C++ name | Evidence |
+| --- | --- | --- |
+| `unk_00` | `passThroughText` | Owned raw source string, transferred to the pass-through stream |
+| `unk_04` | `isBranchTarget` | Marked by branch-target label resolution |
+| `unk_05` | `decodeMode` | Selects UTA, RAW, synthetic and pass-through dispatch |
+| `unk_06` | `decodeSubMode` | Checked during stream grouping and RAW construction |
+| `unk_08` | `flowId` | Assigned during flow identification, then used to group entries |
+| `unk_0a` | `rawLoopId` | Copied from the parser's active RAW loop ID |
+| `unk_0c` | `instructions` | One or two decoded instructions per source line |
+| `unk_14` | `labels` | Owned list used for duplicate-label checks and stream naming |
+
+Eight numeric function names have also been replaced with direct names:
+`DecodedLine::initialize`, `DecodedLine::refreshInstructionOperands`,
+`DecodedLine::releaseContents`, `DecodedLine::hasFlowStartSynthetic`,
+`refreshDecodedLineOperands`, `findDecodedLineByLabel`,
+`maximumDecodedLineFlowId`, and `decodeSourceLines`.
+
+The `iOpDesc` operand descriptor now exposes four independently verified
+fields: `operandKind` (zero terminates the descriptor array), `direction`
+(1=input, 2=output), `isImplicit`, and `patchedOutputIndexPlusOne` (the
+one-based output operand referenced by an implicit-input patch). The
+`iInfo::operandDescriptors` array is also named directly. The three remaining
+opaque `iOpDesc` bytes were intentionally left unresolved: their meanings
+are not yet proven by the current callers.
+
+This pass resolves 13 further owner-qualified fields and eight address-based
+function names, without source-level `#define` function aliases or changes
+to struct field order, field types, alignment, or the historical executable.
 
 ## Rules for future iterations
 

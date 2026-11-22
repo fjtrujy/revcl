@@ -1,6 +1,6 @@
 #include "os.h"
 #include "instStream.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 #include "Program.h"
 #include "fileEmit.h"
 #include "Processor.h"
@@ -11,15 +11,15 @@ void resetRange();
 int setRangeFrom(workTable *t);
 char *dupString(const char *s);
 
-bool buildPassThru(Program *prog, instStream *s, flowBlock *blocks, int count)
+bool buildPassThru(Program *prog, instStream *s, DecodedLine *blocks, int count)
 {
     reportInfo("BLD_PASS\n");
     if (count != 1) {
         reportError("cnum isn't one for pass thru case.. it's %d\n", count);
         return false;
     }
-    s->unk_124 = blocks->unk_00;
-    blocks->unk_00 = 0;
+    s->unk_124 = blocks->passThroughText;
+    blocks->passThroughText = 0;
     workTable *uta = &s->unk_148;
     if (!uta->init(1, 0)) {
         reportError("failed to init uta\n");

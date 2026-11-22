@@ -18,13 +18,13 @@ class RegWeb;
 
 // Opcode descriptor ("iInfo", from the null-argument error string).
 struct iOpDesc {
-    unsigned char unk_00;   // operand kind, 0 terminates the list
-    unsigned char unk_01;   // direction: 1 = input, 2 = output
-    unsigned char unk_02;   // implicit operand
+    unsigned char operandKind;   // 0 terminates the list
+    unsigned char direction;     // 1 = input, 2 = output
+    unsigned char isImplicit;
     unsigned char unk_03;
     unsigned char unk_04;
     unsigned char unk_05;
-    unsigned char unk_06;   // patch: paired operand index + 1
+    unsigned char patchedOutputIndexPlusOne;
 };
 
 class iInfo {
@@ -55,7 +55,7 @@ public:
     char *unk_34;           // mnemonic of the sense-reversed instruction
     char *(*unk_38)(char *buf, Instr *in, bool upper, char *mods, bool b, int zero); // emit hook
     char unk_3c[0x44 - 0x3c];
-    iOpDesc unk_44[12];     // operand descriptors
+    iOpDesc operandDescriptors[12];
 
     unsigned char kind() { return unk_18 & 7; }
 

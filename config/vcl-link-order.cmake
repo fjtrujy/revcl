@@ -110,8 +110,8 @@ set(VCL_SOURCES
   src/optNormal2.cpp
   src/optVuta1.cpp
   src/oDecode.cpp
-  src/flowBlock.cpp
-  src/flowBlockQueries.cpp
+  src/decodedLine.cpp
+  src/decodedLineQueries.cpp
   src/fileEmit.cpp
   src/bindExternals.cpp
   src/bindDependencies.cpp

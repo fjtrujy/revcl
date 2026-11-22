@@ -6,10 +6,10 @@
 #include "Instr.h"
 #include "RegPool.h"
 #include "os.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 
 
-bool splitParserStream(Program *p, flowBlock *blocks, int count)
+bool splitParserStream(Program *p, DecodedLine *blocks, int count)
 {
     int i = 0;
     if (!blocks) {
@@ -22,20 +22,20 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
     }
 
     for (; i != count; i++) {
-        flowBlock *b = &blocks[i];
+        DecodedLine *b = &blocks[i];
         for (int k = 0; k != 2; k++) {
-            VclPtrWord in = (VclPtrWord)b->unk_0c[k];
+            VclPtrWord in = (VclPtrWord)b->instructions[k];
             if (!in || !((Instr *)in)->unk_1388)
                 continue;
             char *target = ((Instr *)in)->getBranchTargetImmediate();
             if (target) {
-                flowBlock *f = func_0808435c(blocks, count, target);
+                DecodedLine *f = findDecodedLineByLabel(blocks, count, target);
                 if (!f) {
                     reportUserMessage("vcl couldn't find the label '%s' refered to in instruction :\n", target);
                     ((Instr *)in)->leDump(-1);
                     return false;
                 }
-                f->unk_04 = 1;
+                f->isBranchTarget = 1;
             } else {
                 char *tags = ((Instr *)in)->unk_139c;
                 if (!tags)
@@ -50,7 +50,7 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
                     while (*scan != ':')
                         *d++ = *scan++;
                     *d = 0;
-                    flowBlock *f = func_0808435c(blocks, count, buf);
+                    DecodedLine *f = findDecodedLineByLabel(blocks, count, buf);
                     if (!f) {
                         reportError("failed to find a tagged label '%s' attached to branch:\n", buf);
                         ((Instr *)in)->leDump(-1);
@@ -60,7 +60,7 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
                         reportError("failed to add tag name '%s' to the global tag list\n", buf);
                         return false;
                     }
-                    f->unk_04 = 1;
+                    f->isBranchTarget = 1;
                     tag = scan + 1;
                 } while (*tag);
             }
@@ -73,16 +73,16 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
     unsigned char sub = 0;
     short uid = 1;
     for (i = 0; i != count; i++) {
-        flowBlock *b = &blocks[i];
-        char kind = b->unk_05;
+        DecodedLine *b = &blocks[i];
+        char kind = b->decodeMode;
         switch ((unsigned char)kind) {
         case 1:
         case 3: {
             unsigned int nextMode = (unsigned char)kind;
-            if (mode != nextMode || sub != (unsigned char)b->unk_06) {
+            if (mode != nextMode || sub != (unsigned char)b->decodeSubMode) {
                 uid++;
                 mode = nextMode;
-                sub = b->unk_06;
+                sub = b->decodeSubMode;
             }
             break;
         }
@@ -91,17 +91,17 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
             break;
         case 0:
             reportError("flow::Build : hit a bad ientry.at line %d\n", i);
-            b->func_08084268(i);
+            b->refreshInstructionOperands(i);
             return false;
         default:
             reportError("calculateFlowAndGLobalUID's : hit a totally bogus ientry\n");
             return false;
         }
-        if (i && b[-1].unk_05 == 6)
+        if (i && b[-1].decodeMode == 6)
             uid++;
-        if (b->unk_14.func_0804b794())
+        if (b->labels.func_0804b794())
             uid++;
-        int f = b->unk_0a;
+        int f = b->rawLoopId;
         if ((short)f > 0) {
             if (mode != 3) {
                 reportError("+ve flow uid in non raw sequence\n");
@@ -115,11 +115,11 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
             lastUid = 0;
             uid++;
         }
-        if (b->unk_04)
+        if (b->isBranchTarget)
             uid++;
         int id = uid;
         for (int k = 0; k != 2; k++) {
-            Instr *in = b->unk_0c[k];
+            Instr *in = b->instructions[k];
             if (!in)
                 continue;
             int serial = g_080b33a8++;
@@ -159,25 +159,25 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
                 uid++;
             delay--;
         }
-        b->unk_08 = id;
+        b->flowId = id;
     }
     p->flowIdCount = uid;
 
     mList unused;
     i = 0;
     while (i < count) {
-        flowBlock *b = &blocks[i];
+        DecodedLine *b = &blocks[i];
         int end = i;
-        short id = b->unk_08;
-        mode = b->unk_05;
-        sub = b->unk_06;
+        short id = b->flowId;
+        mode = b->decodeMode;
+        sub = b->decodeSubMode;
         if (end < count) {
-            flowBlock *q = b;
+            DecodedLine *q = b;
             do {
-                int candidateId = q->unk_08;
+                int candidateId = q->flowId;
                 if (id != (short)candidateId)
                     break;
-                if (q->func_080843d0()) {
+                if (q->hasFlowStartSynthetic()) {
                     if (mode == 1) {
                         mode = 4;
                     } else {
@@ -198,7 +198,7 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
             return false;
         afterNHandler:;
         s->unk_2c0 = id;
-        mList *labels = &b->unk_14;
+        mList *labels = &b->labels;
         if (!labels->unk_08) {
             int nameLength = mstrlen(getUniqueName(p));
             char *name = new char[nameLength + 128];
@@ -256,7 +256,7 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
             return false;
         }
         for (int k = 0; k != n; k++)
-            blocks[i + k].func_080842f0();
+            blocks[i + k].releaseContents();
         if (!p->addStream(s))
             goto streamError;
         s->workTablePtr = &s->unk_148;

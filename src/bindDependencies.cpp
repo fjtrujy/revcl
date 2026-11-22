@@ -4,7 +4,7 @@
 #include "Instr.h"
 #include "RegPool.h"
 #include "os.h"
-#include "flowBlock.h"
+#include "decodedLine.h"
 
 Instr *addXinFor(instStream *s, RegPoolEntry *r);
 Instr *addXoutFor(instStream *s, RegPoolEntry *r);

@@ -1,19 +1,19 @@
-#include "flowBlock.h"
+#include "decodedLine.h"
 #include "Instr.h"
 
-int func_080843a0(flowBlock *blocks, int count)
+int maximumDecodedLineFlowId(DecodedLine *blocks, int count)
 {
     int max = 0;
     for (int i = 0; i != count; i++)
-        if (blocks[i].unk_08 > max)
-            max = blocks[i].unk_08;
+        if (blocks[i].flowId > max)
+            max = blocks[i].flowId;
     return max;
 }
 
-bool flowBlock::func_080843d0()
+bool DecodedLine::hasFlowStartSynthetic()
 {
     for (int i = 0; i != 2; i++) {
-        Instr *in = unk_0c[i];
+        Instr *in = instructions[i];
         if (in) {
             char t = in->unk_13cd;
             if (t == 11 || t == 3 || t == 1)
