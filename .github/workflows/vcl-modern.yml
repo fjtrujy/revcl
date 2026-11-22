@@ -12,113 +12,38 @@ permissions:
   contents: read
 
 jobs:
-  linux-native:
-    name: Linux x86_64 native ${{ matrix.compiler }} + tests
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - compiler: g++
-            preset: linux-gcc
-            label: gcc
-          - compiler: clang++
-            preset: linux-clang
-            label: clang
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install native C++ compilers and CMake
-        run: |
-          test "$(uname -m)" = "x86_64"
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake g++ clang
-
-      - name: Build native 64-bit Linux executable
-        run: |
-          cmake --preset ${{ matrix.preset }}
-          cmake --build --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)"
-          file tmp/cmake/${{ matrix.preset }}/vcl
-
-      - name: Run Python-free CTest checks in parallel
-        run: ctest --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: vcl-native-linux-x86_64-${{ matrix.label }}
-          path: tmp/cmake/${{ matrix.preset }}/vcl
-          if-no-files-found: error
-
-  linux-arm64:
-    name: Linux arm64 native ${{ matrix.compiler }} + tests
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - compiler: g++
-            preset: linux-gcc
-            label: gcc
-          - compiler: clang++
-            preset: linux-clang
-            label: clang
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install native ARM64 compilers and CMake
-        run: |
-          test "$(uname -m)" = "aarch64"
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake g++ clang
-
-      - name: Build native ARM64 executable
-        run: |
-          cmake --preset ${{ matrix.preset }}
-          cmake --build --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)"
-          file tmp/cmake/${{ matrix.preset }}/vcl
-
-      - name: Run Python-free CTest checks in parallel
-        run: ctest --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: vcl-native-linux-arm64-${{ matrix.label }}
-          path: tmp/cmake/${{ matrix.preset }}/vcl
-          if-no-files-found: error
-
-  macos-native:
-    name: macOS ${{ matrix.arch }} native + tests
+  native:
+    name: ${{ matrix.platform }} ${{ matrix.arch }} ${{ matrix.compiler }} + tests
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-15
-            arch: arm64
-          - runner: macos-15-intel
-            arch: x86_64
+          - {platform: Linux, arch: x86_64, compiler: GCC, runner: ubuntu-24.04, preset: linux-gcc, artifact: vcl-native-linux-x86_64-gcc}
+          - {platform: Linux, arch: x86_64, compiler: Clang, runner: ubuntu-24.04, preset: linux-clang, artifact: vcl-native-linux-x86_64-clang}
+          - {platform: Linux, arch: aarch64, compiler: GCC, runner: ubuntu-24.04-arm, preset: linux-gcc, artifact: vcl-native-linux-arm64-gcc}
+          - {platform: Linux, arch: aarch64, compiler: Clang, runner: ubuntu-24.04-arm, preset: linux-clang, artifact: vcl-native-linux-arm64-clang}
+          - {platform: macOS, arch: arm64, compiler: Apple-Clang, runner: macos-15, preset: macos, artifact: vcl-native-macos-arm64}
+          - {platform: macOS, arch: x86_64, compiler: Apple-Clang, runner: macos-15-intel, preset: macos, artifact: vcl-native-macos-x86_64}
+
     steps:
       - uses: actions/checkout@v7
 
-      - name: Configure native macOS build
+      - name: Configure and build native VCL
         run: |
           test "$(uname -m)" = "${{ matrix.arch }}"
-          cmake --preset macos
-
-      - name: Compile native Mach-O executable
-        run: |
-          cmake --build --preset macos --parallel "$(sh scripts/ci/cpu-count.sh)"
-          file tmp/cmake/macos/vcl
+          cmake --version
+          cmake --preset ${{ matrix.preset }}
+          cmake --build --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)"
+          file tmp/cmake/${{ matrix.preset }}/vcl
 
       - name: Run Python-free CTest checks in parallel
-        run: ctest --preset macos --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
+        run: ctest --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
 
-      - name: Upload native macOS executable
+      - name: Upload native executable
         uses: actions/upload-artifact@v7
         with:
-          name: vcl-native-macos-${{ matrix.arch }}
-          path: tmp/cmake/macos/vcl
+          name: ${{ matrix.artifact }}
+          path: tmp/cmake/${{ matrix.preset }}/vcl
           if-no-files-found: error
