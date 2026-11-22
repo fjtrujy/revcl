@@ -44,15 +44,15 @@ int propagateMoves(workTable *scheduleTable)
         Instr *n = instruction->linearLink.next();
         Instr *cur = n;
         if (row >= 0) {
-            Instr *p = instruction->linearLink.prev();
-            if (p && p->position.linearRow == row) {
+            Instr *previousInstruction = instruction->linearLink.prev();
+            if (previousInstruction && previousInstruction->position.linearRow == row) {
                 bool a;
-                if (p->collectOutputRegisterMask(dst, &a)) {
+                if (previousInstruction->collectOutputRegisterMask(dst, &a)) {
                     reportError(propagateTwoWritesError);
                     return 0;
                 }
                 bool b;
-                srcWritten = p->collectOutputRegisterMask(src, &b);
+                srcWritten = previousInstruction->collectOutputRegisterMask(src, &b);
             }
             if (n && n->position.linearRow == row) {
                 bool a;

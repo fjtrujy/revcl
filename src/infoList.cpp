@@ -94,11 +94,11 @@ infoList::~infoList()
 
 bool infoList::clear()
 {
-    infoNode *p = head;
-    while (p) {
-        infoNode *n = p->next;
-        delete p;
-        p = n;
+    infoNode *currentNode = head;
+    while (currentNode) {
+        infoNode *nextNode = currentNode->next;
+        delete currentNode;
+        currentNode = nextNode;
     }
     head = 0;
     count = 0;
@@ -107,8 +107,8 @@ bool infoList::clear()
 
 void infoList::dumpEntries()
 {
-    for (infoNode *p = head; p; p = p->next)
-        p->dump();
+    for (infoNode *currentNode = head; currentNode; currentNode = currentNode->next)
+        currentNode->dump();
 }
 
 inline infoNode::infoNode(InitTag)
@@ -122,31 +122,31 @@ inline stallNode::stallNode(InitTag) : infoNode(infoNode::INIT)
         stallByType[stallTypeIndex] = 0;
 }
 
-bool infoList::addStall(ol_s *location, ol_s *b, int x, int val)
+bool infoList::addStall(ol_s *location, ol_s *userLocation, int stallType, int stallDuration)
 {
-    stallNode *p = (stallNode *)head;
-    if (!location || !b) {
+    stallNode *currentStall = (stallNode *)head;
+    if (!location || !userLocation) {
         reportError("infoList:: addStall - null input ptr\n");
         return false;
     }
-    if (val <= 0) {
+    if (stallDuration <= 0) {
         reportError("infoList:: add stall - val <=0\n");
         return false;
     }
-    for (; p; p = (stallNode *)p->next)
-        if ((char)iHolderMatches(&p->setter, location) && (char)iHolderMatches(&p->user, b))
+    for (; currentStall; currentStall = (stallNode *)currentStall->next)
+        if ((char)iHolderMatches(&currentStall->setter, location) && (char)iHolderMatches(&currentStall->user, userLocation))
             break;
-    if (!p) {
-        p = new stallNode(stallNode::INIT);
-        if (!p) {
+    if (!currentStall) {
+        currentStall = new stallNode(stallNode::INIT);
+        if (!currentStall) {
             reportError("infoList::addStall - failed to get new stall\n");
             return false;
         }
-        p->next = head;
+        currentStall->next = head;
         count++;
-        head = p;
+        head = currentStall;
     }
-    if (!p->catStall(location, b, x, val)) {
+    if (!currentStall->catStall(location, userLocation, stallType, stallDuration)) {
         reportError("infoList::addStall - failed to cat a stall\n");
         return false;
     }
@@ -198,9 +198,9 @@ void stallNode::dump()
     user.dump();
 }
 
-bool stallNode::catStall(ol_s *location, ol_s *b, int type, int val)
+bool stallNode::catStall(ol_s *location, ol_s *userLocation, int type, int stallDuration)
 {
-    if (!location || !b) {
+    if (!location || !userLocation) {
         reportWarning("stallNode - init called with a null input\n");
         return false;
     }
@@ -208,22 +208,22 @@ bool stallNode::catStall(ol_s *location, ol_s *b, int type, int val)
         reportError("stallInit - failed to add in a source loc\n");
         return false;
     }
-    Instr *ia = location->instruction;
-    Instr *ib = b->instruction;
-    if (!ia || !ib) {
+    Instr *setterInstruction = location->instruction;
+    Instr *userInstruction = userLocation->instruction;
+    if (!setterInstruction || !userInstruction) {
         reportError("can't determine - at least one of instructions in stall pair\n");
         return false;
     }
-    instStream *stream = ia->getOwningStream();
-    instStream *sb = ib->getOwningStream();
+    instStream *stream = setterInstruction->getOwningStream();
+    instStream *userStream = userInstruction->getOwningStream();
     stream->participatesInStall = 1;
-    sb->participatesInStall = 1;
-    if (!stream || !sb) {
+    userStream->participatesInStall = 1;
+    if (!stream || !userStream) {
         reportError("can't determine owner ist for one of inputs to stall\n");
         return false;
     }
-    isLocal = stream->streamId == sb->streamId;
-    if (!user.catInit(b)) {
+    isLocal = stream->streamId == userStream->streamId;
+    if (!user.catInit(userLocation)) {
         reportError("stallInit - failed to add in a user loc\n");
         return false;
     }
@@ -231,8 +231,8 @@ bool stallNode::catStall(ol_s *location, ol_s *b, int type, int val)
         reportError("bad stall type\n");
         return false;
     }
-    if (val > stallByType[type])
-        stallByType[type] = val;
+    if (stallDuration > stallByType[type])
+        stallByType[type] = stallDuration;
     return true;
 }
 
@@ -255,9 +255,9 @@ void ubsNode::dump()
         int opnd;
         int mask;
     } list[64];
-    int n;
+    int usedBeforeSetCount;
     reportInfo("Used before set : ");
-    n = 0;
+    usedBeforeSetCount = 0;
     instStream *use = useStream;
     workTable *scheduleTable = use->workTablePtr;
     bool haveTable = scheduleTable != 0;
@@ -279,15 +279,15 @@ void ubsNode::dump()
                     int opnd = location->operandIndex;
                     bit = 1 << bit;
                     int j;
-                    for (j = 0; j < n &&
+                    for (j = 0; j < usedBeforeSetCount &&
                          (list[j].inst != inst || list[j].opnd != opnd); j++)
                         ;
                     ubsEntry *usedBeforeSetEntry = 0;
-                    if (j == n) {
-                        if (n < 64) {
-                            usedBeforeSetEntry = &list[n];
+                    if (j == usedBeforeSetCount) {
+                        if (usedBeforeSetCount < 64) {
+                            usedBeforeSetEntry = &list[usedBeforeSetCount];
                             usedBeforeSetEntry->mask = 0;
-                            n++;
+                            usedBeforeSetCount++;
                         }
                     } else
                         usedBeforeSetEntry = &list[j];
@@ -297,7 +297,7 @@ void ubsNode::dump()
                 }
             }
         }
-        for (int k = 0; k != n; k++) {
+        for (int k = 0; k != usedBeforeSetCount; k++) {
             reportInfo("   ");
             list[k].inst->leDump(list[k].opnd, list[k].mask);
         }

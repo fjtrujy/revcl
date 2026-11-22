@@ -39,7 +39,7 @@ bool resolveMovePipe(workTable *wt, Instr *mv, int pipe);
 extern int errorOccurred;
 extern bool quietDiagnostics;
 
-bool scheduleMidTableMode1(workTable *table, wrangleFunc f)
+bool scheduleMidTableMode1(workTable *table, wrangleFunc candidateSelector)
 {
     allowInputLockLoopWrapping = 0;
     if (table->codeModeValue != 2) {
@@ -80,7 +80,7 @@ bool scheduleMidTableMode1(workTable *table, wrangleFunc f)
             return false;
         }
     }
-    if (!f) {
+    if (!candidateSelector) {
         reportError("Wrangle: passed a bad func\n");
         return false;
     }
@@ -95,7 +95,7 @@ bool scheduleMidTableMode1(workTable *table, wrangleFunc f)
         reportError("failed to set OS_setWatchdog\n");
         return false;
     }
-    bool schedulingSucceeded = wrangleMode1Worker(table, f);
+    bool schedulingSucceeded = wrangleMode1Worker(table, candidateSelector);
     if (!clearWatchdog()) {
         reportError("failed to clear watchdog timer\n");
         return false;
@@ -103,7 +103,7 @@ bool scheduleMidTableMode1(workTable *table, wrangleFunc f)
     return schedulingSucceeded;
 }
 
-bool wrangleMode1Worker(workTable *table, wrangleFunc f)
+bool wrangleMode1Worker(workTable *table, wrangleFunc candidateSelector)
 {
     InstructionPosition pos;
     for (;;) {
@@ -133,13 +133,13 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc f)
             if (!todo) {
                 table->rangeStart = 0;
                 if (!table->loopSize) {
-                    int sz = table->getCurrentDoneSize();
-                    if (sz < 0) {
+                    int currentDoneSize = table->getCurrentDoneSize();
+                    if (currentDoneSize < 0) {
                         reportError("error getting current done size\n");
                         abortAfterError();
                         return false;
                     }
-                    table->rangeEnd = sz;
+                    table->rangeEnd = currentDoneSize;
                 } else {
                     table->rangeEnd = table->loopSize;
                     int maxLid = 0;
@@ -206,7 +206,7 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc f)
             mor.candidateInstruction = 0;
             mor.candidateRow = -1;
             mor.candidatePipe = 0;
-            if (!f(table, (int *)&c))
+            if (!candidateSelector(table, (int *)&c))
                 goto faulted;
             tmp = table->loopSize;
             bool isLoop = tmp != 0;
@@ -282,16 +282,16 @@ bool wrangleMode1Worker(workTable *table, wrangleFunc f)
                     reportError("failed to lock line again\n");
                     abortAfterError();
                 }
-                int n = drag(table, c.candidateInstruction, &pos, table->loopSize, 4);
+                int dragResult = drag(table, c.candidateInstruction, &pos, table->loopSize, 4);
                 if (!table->unlockLine(&pos)) {
                     reportError("failed to unlock line again\n");
                     abortAfterError();
                 }
-                if (n < 0) {
+                if (dragResult < 0) {
                     reportError("failed to drag setters\n");
                     abortAfterError();
                 }
-                if (n)
+                if (dragResult)
                     ret = checkInsert(table, c.candidateInstruction, &pos, &minPos);
                 if ((ret & 0x100) && !pending) {
                     Instr *cand = c.candidateInstruction;

@@ -33,24 +33,24 @@ Operand *getEA(Instr *instruction)
     return 0;
 }
 
-static inline bool sameValue(Operand *operand, Operand *b)
+static inline bool sameValue(Operand *operand, Operand *secondOperand)
 {
-    return sameImmediateValue(&operand->immediateValue, &b->immediateValue);
+    return sameImmediateValue(&operand->immediateValue, &secondOperand->immediateValue);
 }
 
-static inline bool sameOwner(Instr *instruction, Instr *b)
+static inline bool sameOwner(Instr *instruction, Instr *secondInstruction)
 {
-    if (instruction->ownerTable == b->ownerTable)
+    if (instruction->ownerTable == secondInstruction->ownerTable)
         return true;
     return false;
 }
 
-bool sameEA(Instr *instruction, Instr *b)
+bool sameEA(Instr *instruction, Instr *secondInstruction)
 {
-    if (!instruction || !b || !instruction->ramAccessType || !b->ramAccessType || !sameOwner(instruction, b))
+    if (!instruction || !secondInstruction || !instruction->ramAccessType || !secondInstruction->ramAccessType || !sameOwner(instruction, secondInstruction))
         return false;
     Operand *ea1 = getEA(instruction);
-    Operand *ea2 = getEA(b);
+    Operand *ea2 = getEA(secondInstruction);
     if (!ea1 || !ea2) {
         reportError("failed to get effective address operand\n");
         exitAfterCleanup(-1);

@@ -160,9 +160,9 @@ bool instStream::gatherStats()
                                     reportError("failed to get setting operand for instruction\n");
                                     return false;
                                 }
-                                int l = sourceOperand->outputLatency + operand->additionalLatency;
-                                if (maxLat < l)
-                                    maxLat = l;
+                                int totalLatency = sourceOperand->outputLatency + operand->additionalLatency;
+                                if (maxLat < totalLatency)
+                                    maxLat = totalLatency;
                             }
                         }
                     }
@@ -307,37 +307,37 @@ bool instStream::gatherStats()
                                 nOther++;
                         }
                     }
-                    int hi = n1;
-                    int lo = nOther;
+                    int higherPipeCount = n1;
+                    int lowerPipeCount = nOther;
                     if (n1 < nOther) {
-                        hi = nOther;
-                        lo = n1;
+                        higherPipeCount = nOther;
+                        lowerPipeCount = n1;
                     }
-                    int rem = nBoth - (hi - lo);
+                    int rem = nBoth - (higherPipeCount - lowerPipeCount);
                     if (rem > 0)
-                        hi += (rem + 1) >> 1;
-                    if (hi)
-                        hi--;
-                    hi += operand->outputLatency;
-                    if (hi > maxIssue)
-                        maxIssue = hi;
+                        higherPipeCount += (rem + 1) >> 1;
+                    if (higherPipeCount)
+                        higherPipeCount--;
+                    higherPipeCount += operand->outputLatency;
+                    if (higherPipeCount > maxIssue)
+                        maxIssue = higherPipeCount;
                 }
             }
         }
     }
 
     {
-        int u = upper;
+        int upperPipeCount = upper;
         int l = lower;
         for (; both; both--) {
-            if (u < l)
-                u++;
+            if (upperPipeCount < l)
+                upperPipeCount++;
             else
                 l++;
         }
-        if (u > best) {
+        if (upperPipeCount > best) {
             currentStallReason = 3;
-            best = u;
+            best = upperPipeCount;
         }
         if (l > best) {
             currentStallReason = 4;
@@ -361,12 +361,12 @@ bool instStream::gatherStats()
         for (int p = 0; p != registerEntry->partCount; p++) {
             if ((registerUse->outputMask >> p) & 1) {
                 regUseSlot *useSlot = &registerUse->slots[p];
-                int h = useSlot->throughputSums[0];
-                if (h > thru)
-                    thru = h;
-                int d = h - useSlot->throughputSums[3];
-                if (d > depth)
-                    depth = d;
+                int totalThroughput = useSlot->throughputSums[0];
+                if (totalThroughput > thru)
+                    thru = totalThroughput;
+                int throughputDepth = totalThroughput - useSlot->throughputSums[3];
+                if (throughputDepth > depth)
+                    depth = throughputDepth;
                 physSum += useSlot->throughputSums[1];
             }
         }
@@ -384,9 +384,9 @@ bool instStream::gatherStats()
             reportError("bad stat\n");
             exitAfterCleanup(-1);
         }
-        int n = (statistics->resourceInstructionCounts[i] + 1) >> 1;
-        if (n > best) {
-            best = n;
+        int resourceInstructionCount = (statistics->resourceInstructionCounts[i] + 1) >> 1;
+        if (resourceInstructionCount > best) {
+            best = resourceInstructionCount;
             currentStallReason = (i << 8) | 9;
         }
     }
@@ -418,10 +418,10 @@ bool instStream::gatherStats()
     }
     Instr *branchInstruction = table->getBranch();
     if (branchInstruction) {
-        int h = branchInstruction->schedulingStatistics.forwardLatencyDepth + 2;
-        if (best <= h) {
+        int branchLatencyDepth = branchInstruction->schedulingStatistics.forwardLatencyDepth + 2;
+        if (best <= branchLatencyDepth) {
             currentStallReason = 8;
-            best = h;
+            best = branchLatencyDepth;
         }
     }
     dependencyLength = best;
@@ -520,12 +520,12 @@ bool statCounts::add(Instr *instruction)
     return true;
 }
 
-int statCounts::get(int i)
+int statCounts::get(int statisticIndex)
 {
-    if (i < 0 || i > 8) {
+    if (statisticIndex < 0 || statisticIndex > 8) {
         reportError("bad stat\n");
         exitAfterCleanup(-1);
     }
-    return (resourceInstructionCounts[i] + 1) >> 1;
+    return (resourceInstructionCounts[statisticIndex] + 1) >> 1;
 }
 

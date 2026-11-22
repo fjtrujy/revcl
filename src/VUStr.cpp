@@ -15,9 +15,9 @@ bool parseTrailingComponentMask(const char *componentText, int *mask, bool *bad)
     while (componentCursor != componentText && *componentCursor != '.')
         componentCursor--;
     if (*componentCursor == '.') {
-        int m = decodeComponentMaskLetters(componentCursor + 1);
-        *mask = m;
-        if (m == -1) {
+        int decodedMask = decodeComponentMaskLetters(componentCursor + 1);
+        *mask = decodedMask;
+        if (decodedMask == -1) {
             *bad = true;
             return false;
         }
@@ -130,19 +130,19 @@ int readTrailingComponentMask(const char *componentText)
 
 int lastComponentBit(const char *componentText)
 {
-    int r = 0;
+    int lastComponentMask = 0;
     if (!componentText || !*componentText)
         return 0;
     const char *componentCursor = componentText;
     while (*componentCursor)
         componentCursor++;
     switch (componentCursor[-1]) {
-    case 'x': case 'X': r = 1; break;
-    case 'y': case 'Y': r = 2; break;
-    case 'z': case 'Z': r = 4; break;
-    case 'w': case 'W': r = 8; break;
+    case 'x': case 'X': lastComponentMask = 1; break;
+    case 'y': case 'Y': lastComponentMask = 2; break;
+    case 'z': case 'Z': lastComponentMask = 4; break;
+    case 'w': case 'W': lastComponentMask = 8; break;
     }
-    return r;
+    return lastComponentMask;
 }
 
 int removeInstructionModifierGroups(char *modifierText)
@@ -159,14 +159,14 @@ int removeInstructionModifierGroups(char *modifierText)
             }
             if (*src == '[') {
                 char *modifierCursor = src + 1;
-                int m = 0;
+                int modifierMask = 0;
                 bool ok = true;
                 while (*modifierCursor && *modifierCursor != ']') {
                     switch (*modifierCursor) {
-                    case 'E': case 'e': m |= 2; break;
-                    case 'D': case 'd': m |= 4; break;
-                    case 'M': case 'm': m |= 1; break;
-                    case 'T': case 't': m |= 8; break;
+                    case 'E': case 'e': modifierMask |= 2; break;
+                    case 'D': case 'd': modifierMask |= 4; break;
+                    case 'M': case 'm': modifierMask |= 1; break;
+                    case 'T': case 't': modifierMask |= 8; break;
                     default: ok = false; break;
                     }
                     modifierCursor++;
@@ -174,7 +174,7 @@ int removeInstructionModifierGroups(char *modifierText)
                 if (*modifierCursor != ']')
                     ok = false;
                 if (ok) {
-                    mods |= m;
+                    mods |= modifierMask;
                     src = modifierCursor + 1;
                 } else {
                     reportWarning("possibly misformed instruction modifier detected\n");

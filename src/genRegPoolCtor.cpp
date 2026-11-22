@@ -53,7 +53,7 @@ bool genRegPool::assignRegistersForWorkTable(workTable *table)
     Instr *instruction;
     for (instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
         Operand *operand;
-        for (int o = 0; (operand = instruction->getOp(o)) != 0; o++) {
+        for (int operandIndex = 0; (operand = instruction->getOp(operandIndex)) != 0; operandIndex++) {
             RegPoolEntry *reg = operand->assignedRegister;
             if (ownsRegisterClass(reg) && reg->isVirtual && reg->assignmentCostTableSize < 0) {
                 if (!build_tTab(reg, (1 << reg->partCount) - 1)) {
@@ -240,21 +240,21 @@ bool genRegPool::discardDisjointExternalRegister(instStream *stream, RegPoolEntr
         }
         case 3:
             for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
-                int as = 0, ae = 0;
+                int firstRangeStart = 0, firstRangeEnd = 0;
                 bool aa = false;
-                int bs = 0, be = 0;
+                int secondRangeStart = 0, secondRangeEnd = 0;
                 bool ba = false;
-                if (!regRefLiveRange(registerUse, partIndex, &as, &ae, &aa)) {
+                if (!regRefLiveRange(registerUse, partIndex, &firstRangeStart, &firstRangeEnd, &aa)) {
                     reportError("couldn't determine live range_a\n");
                     return false;
                 }
-                if (!regRefLiveRange(o, partIndex, &bs, &be, &ba)) {
+                if (!regRefLiveRange(o, partIndex, &secondRangeStart, &secondRangeEnd, &ba)) {
                     reportError("couldn't determine live range_b.%d\n", partIndex);
                     o->validateAndDumpParts();
                     table->dump();
                     return false;
                 }
-                if (!(aa && ba) && (be >= 0 || ae >= 0) && as < be && ae > bs)
+                if (!(aa && ba) && (secondRangeEnd >= 0 || firstRangeEnd >= 0) && firstRangeStart < secondRangeEnd && firstRangeEnd > secondRangeStart)
                     m |= 1 << partIndex;
             }
             if (registerUse->outputMask && o->outputMask && hack_slo(table, reg, registerEntry))

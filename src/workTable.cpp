@@ -26,7 +26,7 @@ extern const char regUseNewFailedError[] = "AddNewRegRef() - new failed\n";
 
 int regUseList::dumpRegisterClassUses(int regClass)
 {
-    int n = 0;
+    int registerUseCount = 0;
     regUse *listHead = head;
     regUse *registerUse;
     for (registerUse = listHead; registerUse; registerUse = registerUse->next) {
@@ -37,15 +37,15 @@ int regUseList::dumpRegisterClassUses(int regClass)
             return 0;
         }
         if (reg->registerClass == regClass)
-            n++;
+            registerUseCount++;
     }
-    if (n == 0)
+    if (registerUseCount == 0)
         return 0;
     for (registerUse = listHead; registerUse; registerUse = registerUse->next) {
         if (registerUse->registerEntry->isClass(regClass))
             registerUse->validateAndDumpParts();
     }
-    return n;
+    return registerUseCount;
 }
 
 void regUse::validateAndDumpParts()
@@ -260,17 +260,17 @@ ol_s *regUseSlot::findPreviousOutputAtPosition(int pos, bool all)
 
 int regUseList::countUncoveredRegisterClassUses(int regClass)
 {
-    int n = 0;
+    int uncoveredUseCount = 0;
     for (regUse *previousUse = head; previousUse; previousUse = previousUse->next) {
         RegPoolEntry *reg = previousUse->registerEntry;
         if (reg->registerClass != regClass || reg == reg->ownerPool->zeroRegister)
             continue;
         if (~previousUse->inputMask & previousUse->throughputMask)
-            n++;
+            uncoveredUseCount++;
         else if (!previousUse->outputMask)
-            n++;
+            uncoveredUseCount++;
     }
-    return n;
+    return uncoveredUseCount;
 }
 
 void regUseList::dumpVirtualRegisterUses()

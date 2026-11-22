@@ -41,46 +41,46 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
             return false;
         }
         decodedLine->labels.clearNodes();
-        Instr *in = decodedLine->instructions[0];
-        if (!in)
+        Instr *decodedInstruction = decodedLine->instructions[0];
+        if (!decodedInstruction)
             continue;
         bool isIO = false;
-        if (in->parsedLoopId > 0) {
+        if (decodedInstruction->parsedLoopId > 0) {
             reportUserMessage("parseLid set for a synth instruction\n");
-            in->leDump();
+            decodedInstruction->leDump();
             return false;
         }
-        in->parsedLoopId = -1;
-        switch ((unsigned char)in->syntheticKind) {
+        decodedInstruction->parsedLoopId = -1;
+        switch ((unsigned char)decodedInstruction->syntheticKind) {
         case 11:
             if (s->endDirectiveText) {
                 reportUserMessage("istream already has end macro attached\n");
                 return false;
             }
-            if (!in->operands[0].immediateValue.getString()) {
+            if (!decodedInstruction->operands[0].immediateValue.getString()) {
                 reportError("EXITM has no macro string attached\n");
                 return false;
             }
-            s->endDirectiveText = dupString(in->operands[0].immediateValue.getString());
+            s->endDirectiveText = dupString(decodedInstruction->operands[0].immediateValue.getString());
         case 1:
         case 3:
             if (stype) {
-                const char *syntheticName = syntheticTypeName((unsigned char)in->syntheticKind);
+                const char *syntheticName = syntheticTypeName((unsigned char)decodedInstruction->syntheticKind);
                 reportError("flow related synthetic (%s) encountered.. but stype not null (%s)!\n", syntheticName, syntheticTypeName(stype));
-                in->leDump();
+                decodedInstruction->leDump();
                 return false;
             }
-            inSynth = stype = (unsigned char)in->syntheticKind;
+            inSynth = stype = (unsigned char)decodedInstruction->syntheticKind;
             break;
         case 2:
             if (stype != 1) {
                 reportError("unexpected --endenter encountered\n");
-                in->leDump();
+                decodedInstruction->leDump();
                 return false;
             }
             if (!inSynth) {
                 reportError("flow related synthetic encountered.. but the block didn't appear to be wholly synthetic\n");
-                in->leDump();
+                decodedInstruction->leDump();
                 return false;
             }
             inSynth = 0;
@@ -88,12 +88,12 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
         case 4:
             if (!inSynth) {
                 reportError("end exit encountered, but not in synthetic mode\n");
-                in->leDump();
+                decodedInstruction->leDump();
                 return false;
             }
             if (stype != 3 && stype != 11) {
                 reportError("unexpected --endexit encountered\n");
-                in->leDump();
+                decodedInstruction->leDump();
                 return false;
             }
             inSynth = 0;
@@ -102,31 +102,31 @@ bool buildSynth(Program *prog, instStream *s, DecodedLine *blocks, int count)
             isIO = true;
             if (stype != 1) {
                 reportUserMessage("synthetic input not in enter block\n");
-                in->leDump();
+                decodedInstruction->leDump();
                 return false;
             }
             break;
         case 7:
             if (stype != 3 && stype != 11) {
                 reportUserMessage("synthetic output not in exit block\n");
-                in->leDump();
+                decodedInstruction->leDump();
                 return false;
             }
             isIO = true;
             break;
         default:
             reportUserMessage("encountered an misplaced instruction in a enter or exit block\n");
-            dumpSynthInstruction(in);
+            dumpSynthInstruction(decodedInstruction);
             return false;
         }
         if (isIO) {
             decodedLine->instructions[0] = 0;
-            if (!scheduleTable->logAddLinear_Tail(in)) {
+            if (!scheduleTable->logAddLinear_Tail(decodedInstruction)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
             }
         } else
-            flags |= in->instructionModifierBits;
+            flags |= decodedInstruction->instructionModifierBits;
     }
     switch (stype) {
     case 11:

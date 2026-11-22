@@ -17,20 +17,20 @@ void dumpProgramStreamsAndRegisters(Program *p, int a);
 
 bool resolveStreamBranches(Program *program)
 {
-    instStream *s;
-    for (s = program->streamHead; s; s = s->nextStream) {
-        switch (s->endType) {
+    instStream *currentStream;
+    for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+        switch (currentStream->endType) {
         case 1: {
-            unsigned char bt = s->branchType;
+            unsigned char bt = currentStream->branchType;
             int headFlags = bt;
             if (!(unsigned char)headFlags || (unsigned char)(headFlags & 4)) {
-                if (s->nextStream) {
-                    if (!program->linkStreams(s, s->nextStream, 0)) {
+                if (currentStream->nextStream) {
+                    if (!program->linkStreams(currentStream, currentStream->nextStream, 0)) {
                         reportError("failed to link streams together\n");
                         return false;
                     }
-                    bt = s->branchType;
-                } else if (!s->passThroughText) {
+                    bt = currentStream->branchType;
+                } else if (!currentStream->passThroughText) {
                     reportError("fell off the bottom of code! .. last stream should either end in END or be a branch\n");
                     return false;
                 }
@@ -41,30 +41,30 @@ bool resolveStreamBranches(Program *program)
                 int btor = (bt >> 1) & btorMask;
                 if (!(unsigned char)btor) {
                     int type = branchLinkTypeForFlags(flags);
-                    char *label = s->getBranchTargetImmediate();
+                    char *label = currentStream->getBranchTargetImmediate();
                     if (!label) {
                         reportError("failed to get branch target immediate\n");
                         return false;
                     }
-                    instStream *t = program->findStream(label);
-                    if (!t) {
+                    instStream *targetStream = program->findStream(label);
+                    if (!targetStream) {
                         reportUserMessage("failed to find label '%s'\n", label);
                         return false;
                     }
-                    if (!program->linkStreams(s, t, type)) {
+                    if (!program->linkStreams(currentStream, targetStream, type)) {
                         reportError("failed to link streams together\n");
                         return false;
                     }
                 } else {
-                    Instr *br = s->getBranch();
-                    if (!br) {
+                    Instr *branchInstruction = currentStream->getBranch();
+                    if (!branchInstruction) {
                         reportError("failed to get a branch instruction for btor case\n");
                         return false;
                     }
-                    if (br->branchLabelTags) {
-                        int type = branchLinkTypeForFlags(s->branchType);
+                    if (branchInstruction->branchLabelTags) {
+                        int type = branchLinkTypeForFlags(currentStream->branchType);
                         char name[2064];
-                        for (char *labelTagCursor = br->branchLabelTags; *labelTagCursor; labelTagCursor++) {
+                        for (char *labelTagCursor = branchInstruction->branchLabelTags; *labelTagCursor; labelTagCursor++) {
                             char *tagTextCursor = labelTagCursor;
                             char *outputCursor = name;
                             while (*tagTextCursor != ':')
@@ -76,7 +76,7 @@ bool resolveStreamBranches(Program *program)
                                 reportUserMessage("branch-to-register tag, failed to find label '%s'\n", name);
                                 return false;
                             }
-                            if (!program->linkStreams(s, t, type)) {
+                            if (!program->linkStreams(currentStream, t, type)) {
                                 reportError("failed to link streams together\n");
                                 return false;
                             }
@@ -87,27 +87,27 @@ bool resolveStreamBranches(Program *program)
             break;
         }
         case 4:
-            if (!s->endDirectiveText) {
+            if (!currentStream->endDirectiveText) {
                 reportError("no macro set in end_macro\n");
                 return false;
             }
             /* fall through */
         case 3:
-            if (s->branchType) {
+            if (currentStream->branchType) {
                 reportError("branchtype not null for end / cont\n");
                 return false;
             }
             break;
         case 2:
-            if (s->branchType) {
+            if (currentStream->branchType) {
                 reportError("branchtype not null for end / cont\n");
                 return false;
             }
-            if (!s->nextStream) {
+            if (!currentStream->nextStream) {
                 reportUserMessage("fell off the bottom of code! .. last stream should either end in END or be a branch\n");
                 return false;
             }
-            if (!program->linkStreams(s, s->nextStream, 0)) {
+            if (!program->linkStreams(currentStream, currentStream->nextStream, 0)) {
                 reportError("failed to link streams together\n");
                 return false;
             }
@@ -121,12 +121,12 @@ bool resolveStreamBranches(Program *program)
     bool again;
     do {
         again = false;
-        for (s = program->streamHead; s; s = s->nextStream) {
+        for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
             int btorMask = 1;
-            int btor = (s->branchType >> 1) & btorMask;
+            int btor = (currentStream->branchType >> 1) & btorMask;
             if ((unsigned char)btor) {
                 int changed = 0;
-                if (!fixupBtorBranch(program, s, &changed)) {
+                if (!fixupBtorBranch(program, currentStream, &changed)) {
                     reportError("failed to fixup a branch-to-register instruction\n");
                     return false;
                 }
@@ -137,8 +137,8 @@ bool resolveStreamBranches(Program *program)
     } while (again);
 
     dumpProgramStreamsAndRegisters(program, 0);
-    for (s = program->streamHead; s; s = s->nextStream) {
-        Instr *br = s->getBranch();
+    for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+        Instr *br = currentStream->getBranch();
         if (br && br->branchLabelTags) {
             delete[] br->branchLabelTags;
             br->branchLabelTags = 0;
@@ -166,26 +166,26 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
         return false;
     }
     instruction->dumpOperandDiagnostics(false);
-    instStream *t;
-    for (t = program->streamHead; t; t = t->nextStream)
-        t->visitState = 0;
+    instStream *currentStream;
+    for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream)
+        currentStream->visitState = 0;
     stream->visitState = 1;
     bool first = true;
     bool again;
     do {
         again = false;
-        for (t = program->streamHead; t; t = t->nextStream) {
-            if (t->visitState != 1)
+        for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+            if (currentStream->visitState != 1)
                 continue;
-            workTable *scheduleTable = t->getTable();
+            workTable *scheduleTable = currentStream->getTable();
             Instr *in;
             if (first) {
                 in = instruction->linearLink.previousInstruction;
-                t->visitState = 0;
+                currentStream->visitState = 0;
                 first = false;
             } else {
                 in = scheduleTable->linearInstructions.tail;
-                t->visitState = 2;
+                currentStream->visitState = 2;
             }
             for (; in; in = in->linearLink.previousInstruction) {
                 if (in->outputMaskForRegister(reg, 0xff)) {
@@ -195,12 +195,12 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
             }
             if (in) {
                 if ((in->branchFlags >> 3) & 1) {
-                    if (!t->nextStream) {
+                    if (!currentStream->nextStream) {
                         reportUserMessage("no physical successor to a branch+link\n");
                         return false;
                     }
-                    if (!program->areLinkedBy(stream, t->nextStream, 2)) {
-                        if (!program->linkStreams(stream, t->nextStream, 2)) {
+                    if (!program->areLinkedBy(stream, currentStream->nextStream, 2)) {
+                        if (!program->linkStreams(stream, currentStream->nextStream, 2)) {
                             reportError("failed to fixup a branch to register\n");
                             return false;
                         }
@@ -217,7 +217,7 @@ bool fixupBtorBranch(Program *program, instStream *stream, int *changed)
                     return false;
                 }
             } else {
-                for (linkNode *n = t->inputLinks.head; n; n = n->next) {
+                for (linkNode *n = currentStream->inputLinks.head; n; n = n->next) {
                     instStream *o = n->otherStream;
                     if (!o) {
                         reportError("null outist\n");

@@ -116,23 +116,23 @@ int getMove(Block *blk, Instr *instruction, int now)
                                 abortAfterError();
                             }
                         }
-                        int lo = row + 1;
-                        int hi = row + parent->issueLatency;
-                        if (lo < reg->minimumMoveRow)
-                            reg->minimumMoveRow = lo;
-                        if (hi > reg->maximumMoveRow)
-                            reg->maximumMoveRow = hi;
-                        int d = now - lo;
-                        if (d < 0) {
+                        int earliestMoveRow = row + 1;
+                        int latestMoveRow = row + parent->issueLatency;
+                        if (earliestMoveRow < reg->minimumMoveRow)
+                            reg->minimumMoveRow = earliestMoveRow;
+                        if (latestMoveRow > reg->maximumMoveRow)
+                            reg->maximumMoveRow = latestMoveRow;
+                        int distanceToUse = now - earliestMoveRow;
+                        if (distanceToUse < 0) {
                             reportError("dff was <0\n");
                             abortAfterError();
                         }
-                        RegPoolEntry *uA = op2->forcedBaseRegister;
+                        RegPoolEntry *originalBaseRegister = op2->forcedBaseRegister;
                         RegisterPartLockList *u04 = parent->ownerLockList;
-                        if (d > score) {
-                            op2->forcedBaseRegister = uA;
+                        if (distanceToUse > score) {
+                            op2->forcedBaseRegister = originalBaseRegister;
                             parent->ownerLockList = u04;
-                            score = d;
+                            score = distanceToUse;
                         }
                         RegPoolEntry *u14b = op2->originalRegister;
                         op2->originalRegister = u14b;
@@ -169,8 +169,8 @@ int getMove(Block *blk, Instr *instruction, int now)
         if (outputLock && outputLock->activeReferenceCount)
             mask |= 1 << p;
     }
-    Instr *mv = makeMove(blk, bestReg);
-    if (!mv) {
+    Instr *moveInstruction = makeMove(blk, bestReg);
+    if (!moveInstruction) {
     no_move:
         Instr *earliest = 0;
         for (p = 0; p != bestReg->partCount; p++) {
@@ -187,33 +187,33 @@ int getMove(Block *blk, Instr *instruction, int now)
         return 1;
     }
     {
-        setPipeBits(mv);
+        setPipeBits(moveInstruction);
         if (owner) {
-            mv->linearOrderIndex = owner->linearOrderIndex + 1;
-            mv->moveChainDepth = owner->moveChainDepth + 1;
-            mv->candidateAttemptLimit = owner->candidateAttemptLimit;
-            mv->schedulingStatistics.copyCountersFrom(&owner->schedulingStatistics);
+            moveInstruction->linearOrderIndex = owner->linearOrderIndex + 1;
+            moveInstruction->moveChainDepth = owner->moveChainDepth + 1;
+            moveInstruction->candidateAttemptLimit = owner->candidateAttemptLimit;
+            moveInstruction->schedulingStatistics.copyCountersFrom(&owner->schedulingStatistics);
         } else {
-            mv->moveChainDepth = 1;
-            mv->linearOrderIndex = instruction->linearOrderIndex - 1;
-            mv->candidateAttemptLimit = instruction->candidateAttemptLimit;
-            mv->schedulingStatistics.copyCountersFrom(&instruction->schedulingStatistics);
+            moveInstruction->moveChainDepth = 1;
+            moveInstruction->linearOrderIndex = instruction->linearOrderIndex - 1;
+            moveInstruction->candidateAttemptLimit = instruction->candidateAttemptLimit;
+            moveInstruction->schedulingStatistics.copyCountersFrom(&instruction->schedulingStatistics);
         }
-        mv->candidateCostOffset = 0;
-        Operand *out = mv->getOp(0);
-        Operand *mvIn = mv->getOp(1);
+        moveInstruction->candidateCostOffset = 0;
+        Operand *out = moveInstruction->getOp(0);
+        Operand *mvIn = moveInstruction->getOp(1);
         RegPoolEntry *newReg = out->assignedRegister;
         mvIn->originalRegister = bestOp->originalRegister;
         out->originalRegister = newReg;
         short targetRow = out->outputLatency;
-        mv->moveRowOffset = now - targetRow;
+        moveInstruction->moveRowOffset = now - targetRow;
         int moved = 0;
         int oldBits = 0;
         int newBits = 0;
-        for (Instr *it = blk->pendingInstructions.head; it; it = (Instr *)it->pendingLink.nextInstruction) {
+        for (Instr *pendingInstruction = blk->pendingInstructions.head; pendingInstruction; pendingInstruction = (Instr *)pendingInstruction->pendingLink.nextInstruction) {
             int operandIndex;
-            for (operandIndex = 0; operandIndex != it->operandCount; operandIndex++) {
-                Operand *operand = &it->operands[operandIndex];
+            for (operandIndex = 0; operandIndex != pendingInstruction->operandCount; operandIndex++) {
+                Operand *operand = &pendingInstruction->operands[operandIndex];
                 RegPoolEntry *reg = registerOperand(operand, 1);
                 if (reg == bestReg) {
                     bool stale = false;
@@ -232,7 +232,7 @@ int getMove(Block *blk, Instr *instruction, int now)
                         stale = true;
                     }
                     if (stale) {
-                        mv->requiresFullLoopMoveDrag = 0;
+                        moveInstruction->requiresFullLoopMoveDrag = 0;
                         continue;
                     }
                     for (int p = 0; p != reg->partCount; p++) {
@@ -245,11 +245,11 @@ int getMove(Block *blk, Instr *instruction, int now)
                                 OperandLock *oldOut = oldL->outputLocks;
                                 if (!((moved >> p) & 1)) {
                                     OperandLock *moveInLock = &mvIn->parts[p];
-                                    if (!moveInLock->setOwner(p, mv, 1)) {
+                                    if (!moveInLock->setOwner(p, moveInstruction, 1)) {
                                         reportError("getMove : failed to set owner for input\n");
                                         return -1;
                                     }
-                                    if (!out->parts[p].setOwner(p, mv, 0)) {
+                                    if (!out->parts[p].setOwner(p, moveInstruction, 0)) {
                                         reportError("getMove :failed to set owner for output\n");
                                         return -1;
                                     }
@@ -259,7 +259,7 @@ int getMove(Block *blk, Instr *instruction, int now)
                                         return -1;
                                     }
                                     moveInLock->operandStatusCode = mvIn->getStatus();
-                                    if (!newL->addOutput(moveOutLock, mv->baseIssueSpacing, out->outputLatency, out->externalBlockModeFlag)) {
+                                    if (!newL->addOutput(moveOutLock, moveInstruction->baseIssueSpacing, out->outputLatency, out->externalBlockModeFlag)) {
                                         reportError("getMove : failed to register output lock for move\n");
                                         return -1;
                                     }
@@ -295,12 +295,12 @@ int getMove(Block *blk, Instr *instruction, int now)
                     }
                 }
             }
-            for (operandIndex = 0; operandIndex != it->operandCount; operandIndex++) {
-                Operand *operand = &it->operands[operandIndex];
+            for (operandIndex = 0; operandIndex != pendingInstruction->operandCount; operandIndex++) {
+                Operand *operand = &pendingInstruction->operands[operandIndex];
                 RegPoolEntry *reg = registerOperand(operand, 2);
                 if (reg == bestReg) {
                     if (operand->operandStatus != 1) {
-                        mv->requiresFullLoopMoveDrag = 0;
+                        moveInstruction->requiresFullLoopMoveDrag = 0;
                         oldBits |= operand->componentMask;
                     } else {
                         newBits |= operand->componentMask;
@@ -312,7 +312,7 @@ int getMove(Block *blk, Instr *instruction, int now)
                                     reportError("retargetOutputOperands: failed to deregister output\n");
                                     return -1;
                                 }
-                                if (!newL->addOutput(&operand->parts[p], it->baseIssueSpacing, operand->outputLatency, operand->externalBlockModeFlag)) {
+                                if (!newL->addOutput(&operand->parts[p], pendingInstruction->baseIssueSpacing, operand->outputLatency, operand->externalBlockModeFlag)) {
                                     reportError("retargetOutputOperands : failed to reregister output\n");
                                     return -1;
                                 }
@@ -340,19 +340,19 @@ int getMove(Block *blk, Instr *instruction, int now)
             goto no_move;
         discardedEmptyMoveCount = g1;
         if (!m) {
-            addFreeMove(mv);
+            addFreeMove(moveInstruction);
             discardedEmptyMoveCount++;
             goto no_move;
         }
-        mv->destinationMask = moved;
+        moveInstruction->destinationMask = moved;
         mvIn->componentMask = moved;
         out->componentMask = moved;
-        if (!AddToDo_Head(blk, mv)) {
+        if (!AddToDo_Head(blk, moveInstruction)) {
             reportError("getMove : failed to add move to the head of the to todo list\n");
             return -1;
         }
-        logInstr(blk, mv);
-        countCreatedMove(blk, mv);
+        logInstr(blk, moveInstruction);
+        countCreatedMove(blk, moveInstruction);
         return 0;
     }
 }
@@ -361,15 +361,15 @@ int unresolveMove(Block *blk, Instr *mv);
 bool UnlinkFromToDo(Block *blk, Instr *n);
 void decrementInstructionPipelineCounts(Block *blk, Instr *mv);
 
-bool undoMove(Block *blk, Instr *mv)
+bool undoMove(Block *blk, Instr *moveInstruction)
 {
-    if (mv->concreteMoveOpcode)
-        unresolveMove(blk, mv);
-    Operand *out = mv->getOp(0);
-    Operand *inputOperand = mv->getOp(1);
+    if (moveInstruction->concreteMoveOpcode)
+        unresolveMove(blk, moveInstruction);
+    Operand *out = moveInstruction->getOp(0);
+    Operand *inputOperand = moveInstruction->getOp(1);
     RegPoolEntry *orig = inputOperand->assignedRegister;
     RegPoolEntry *dup = out->assignedRegister;
-    if (!UnlinkFromToDo(blk, mv))
+    if (!UnlinkFromToDo(blk, moveInstruction))
         reportError("failed to unlink from todolist!\n");
     for (Instr *instruction = blk->pendingInstructions.head; instruction; instruction = (Instr *)instruction->pendingLink.nextInstruction) {
         for (int operandIndex = 0; operandIndex != instruction->operandCount; operandIndex++) {
@@ -433,13 +433,13 @@ bool undoMove(Block *blk, Instr *mv)
             }
         }
     }
-    if (mv->operandCount != 2) {
+    if (moveInstruction->operandCount != 2) {
         reportError("move with >2 operands\n");
         abortAfterError();
     }
-    decrementInstructionPipelineCounts(blk, mv);
-    adjustMoveCount(blk, mv, -1);
-    addFreeMove(mv);
+    decrementInstructionPipelineCounts(blk, moveInstruction);
+    adjustMoveCount(blk, moveInstruction, -1);
+    addFreeMove(moveInstruction);
     return true;
 }
 

@@ -18,35 +18,35 @@ static inline int thruputTail(instStream *stream, regUse *registerUse, int part)
     return length - last;
 }
 
-bool addThruputStalls(Program *program, instStream *t, RegPoolEntry *reg, int part)
+bool addThruputStalls(Program *program, instStream *targetStream, RegPoolEntry *reg, int part)
 {
-    regUse *registerUse = t->backtraceRegisterUse;
+    regUse *registerUse = targetStream->backtraceRegisterUse;
     if (!registerUse) {
         reportError("bThru enabled - but no btRegRef in the target!\n");
         return false;
     }
-    for (instStream *s = program->sourceStreams; s; s = s->nextSourceStream) {
-        regUse *sr = s->backtraceRegisterUse;
-        if (!sr) {
+    for (instStream *sourceStream = program->sourceStreams; sourceStream; sourceStream = sourceStream->nextSourceStream) {
+        regUse *sourceRegisterUse = sourceStream->backtraceRegisterUse;
+        if (!sourceRegisterUse) {
             reportError("no btRegRef for something on the match list %s.%d target=%s stream is %s!\n",
-                          reg->registerName(), part, t->streamName(), s->streamName());
+                          reg->registerName(), part, targetStream->streamName(), sourceStream->streamName());
             return false;
         }
-        int key = buildMinimumPathKey(program, s);
+        int key = buildMinimumPathKey(program, sourceStream);
         if (key <= 0) {
             reportError("minimal path key was bad\n");
             return false;
         }
-        ol_s *location = registerPart(sr, part)->sourceLocations.head;
+        ol_s *location = registerPart(sourceRegisterUse, part)->sourceLocations.head;
         if (!location)
             reportError("there's no local setters for thruput chase for ext setter\n");
         for (; location; location = location->next) {
-            ol_s *n = registerUse->slots[part].externalInputLocations.copyOperandLocation(location, true);
-            if (!n) {
+            ol_s *newInputLocation = registerUse->slots[part].externalInputLocations.copyOperandLocation(location, true);
+            if (!newInputLocation) {
                 reportError("failed to add an external setter\n");
                 return false;
             }
-            n->pathKey = key;
+            newInputLocation->pathKey = key;
         }
         location = registerPart(registerUse, part)->sourceLocations.head;
         if (!location) {
@@ -54,18 +54,18 @@ bool addThruputStalls(Program *program, instStream *t, RegPoolEntry *reg, int pa
             return false;
         }
         for (; location; location = location->next) {
-            ol_s *n = sr->slots[part].externalSourceLocations.copyOperandLocation(location, true);
-            if (!n) {
+            ol_s *newSourceLocation = sourceRegisterUse->slots[part].externalSourceLocations.copyOperandLocation(location, true);
+            if (!newSourceLocation) {
                 reportError("failed to add post setter!\n");
                 return false;
             }
-            n->pathKey = key;
+            newSourceLocation->pathKey = key;
         }
         if (isPathRaw(program, key)) {
-            int dist = s->minimumPathLength;
-            int last = sr->slots[part].timingValues[11];
-            short *lastAddress = thruputTimes(sr, part);
-            int tend = thruputTail(s, sr, part);
+            int dist = sourceStream->minimumPathLength;
+            int last = sourceRegisterUse->slots[part].timingValues[11];
+            short *lastAddress = thruputTimes(sourceRegisterUse, part);
+            int tend = thruputTail(sourceStream, sourceRegisterUse, part);
             int fst = registerUse->slots[part].timingValues[7];
             if (fst < 0 || tend < 0 || dist < 0) {
                 reportError("something wrong checking for thruput stalls fst=%d tend=%d path_dist=%d\n",
@@ -75,7 +75,7 @@ bool addThruputStalls(Program *program, instStream *t, RegPoolEntry *reg, int pa
             dist = (dist + tend) + fst;
             last = lastAddress[1];
             if (dist < last) {
-                regUseSlot *slot = &sr->slots[part];
+                regUseSlot *slot = &sourceRegisterUse->slots[part];
                 ol_s *setter = slot->findPreviousOutputAtPosition(0, true);
                 int again = lastAddress[1];
                 if (!program->proc.stalls.addStall(setter, registerUse->slots[part].sourceLocations.head, 1,

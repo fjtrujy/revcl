@@ -80,19 +80,19 @@ Instr *wtRow::getEntry(int entryIndex)
     return entries[entryIndex].instruction;
 }
 
-Instr *GetI(Instr **instructionSlot, int p)
+Instr *GetI(Instr **instructionSlot, int pipeIndex)
 {
-    if (p < 0) {
+    if (pipeIndex < 0) {
         reportError("iEntry::GetI() - p<0\n");
         exitAfterCleanup(-1);
         return 0;
     }
-    if (p >= 2) {
+    if (pipeIndex >= 2) {
         reportError(wtRowGetIPMaxError);
         exitAfterCleanup(-1);
         return 0;
     }
-    Instr *instruction = instructionSlot[p];
+    Instr *instruction = instructionSlot[pipeIndex];
     if ((VclPtrWord)instruction & 1)
         return 0;
     return instruction;

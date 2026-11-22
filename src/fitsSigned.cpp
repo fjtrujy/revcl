@@ -7,17 +7,17 @@ const char *immediateValueTypeName(int type);
 extern bool parseFloatImmediateMode;
 
 
-int fitsSigned(int v, int bits)
+int fitsSigned(int value, int bits)
 {
     int r = 0;
     int hi = 1 << (bits - 1);
     int lo = -hi;
-    if (v >= lo && v < hi)
+    if (value >= lo && value < hi)
         r = 1;
     return r;
 }
 
-bool fitsUnsigned(int v, int bits)
+bool fitsUnsigned(int value, int bits)
 {
-    return v >= 0 && v < (1 << bits);
+    return value >= 0 && value < (1 << bits);
 }

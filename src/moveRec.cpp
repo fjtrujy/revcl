@@ -27,20 +27,20 @@ Instr *getMove(int type, int)
     moveRec *moveRecord = (moveRec *)freeMoveRecordsByType[type];
     if (moveRecord) {
         freeMoveRecordsByType[type] = (VclPtrWord)moveRecord->nextFree;
-        Instr *in = moveRecord->instruction;
-        if (!in) {
+        Instr *ownedInstruction = moveRecord->instruction;
+        if (!ownedInstruction) {
             reportError("getFreeMove - inst not set\n");
             exitAfterCleanup(-1);
         }
-        if (in->moveRecordWord != (VclPtrWord)moveRecord) {
-            reportError(moveRecMismatchError, in->moveRecordWord, moveRecord);
+        if (ownedInstruction->moveRecordWord != (VclPtrWord)moveRecord) {
+            reportError(moveRecMismatchError, ownedInstruction->moveRecordWord, moveRecord);
             exitAfterCleanup(-1);
         }
         if (!moveRecord->moveRegister) {
             reportError("getFreeMove: m_Reg not set\n");
             exitAfterCleanup(-1);
         }
-        in->operands[0].assignedRegister = moveRecord->moveRegister;
+        ownedInstruction->operands[0].assignedRegister = moveRecord->moveRegister;
         moveRecord->moveRegister->moveReset();
         for (int i = 0; i != moveRecord->moveRegister->partCount; i++) {
             RegisterPartLockList *registerPartLocks = &moveRecord->partLocks[i];
@@ -53,15 +53,15 @@ Instr *getMove(int type, int)
             registerPartLocks->calculateLoopStats = 0;
             moveRecord->moveRegister->setPartPayload(i, (VclPtrWord)registerPartLocks);
         }
-        in->nextMoveInstruction = 0;
-        in->pendingLink.previousInstruction = 0;
-        in->pendingLink.nextInstruction = 0;
-        in->linearLink.previousInstruction = 0;
-        in->linearLink.nextInstruction = 0;
-        in->ownerTable = 0;
-        in->position.clearInstructionPosition();
-        in->resetOptimizationState();
-        return in;
+        ownedInstruction->nextMoveInstruction = 0;
+        ownedInstruction->pendingLink.previousInstruction = 0;
+        ownedInstruction->pendingLink.nextInstruction = 0;
+        ownedInstruction->linearLink.previousInstruction = 0;
+        ownedInstruction->linearLink.nextInstruction = 0;
+        ownedInstruction->ownerTable = 0;
+        ownedInstruction->position.clearInstructionPosition();
+        ownedInstruction->resetOptimizationState();
+        return ownedInstruction;
     }
 
     moveRecord = new moveRec(type);
@@ -86,41 +86,41 @@ Instr *getMove(int type, int)
         reportError("got here - no ii\n");
         exitAfterCleanup(-1);
     }
-    Instr *in = new Instr(instructionInfo);
-    if (!in) {
+    Instr *newInstruction = new Instr(instructionInfo);
+    if (!newInstruction) {
         reportError(moveRecNewInstrError);
         exitAfterCleanup(-1);
     }
     int serial = nextInstructionSerial++;
-    in->instructionSerial = serial;
-    in->abstractMoveOpcode = opc;
-    in->concreteMoveOpcode = 0;
-    RegPoolEntry *reg = registerPool->getMoveReg(in);
+    newInstruction->instructionSerial = serial;
+    newInstruction->abstractMoveOpcode = opc;
+    newInstruction->concreteMoveOpcode = 0;
+    RegPoolEntry *reg = registerPool->getMoveReg(newInstruction);
     if (!reg) {
         reportError("failed to get move reg\n");
         exitAfterCleanup(-1);
     }
-    in->moveRecordWord = (VclPtrWord)moveRecord;
-    Operand *operand = in->getOp(0);
+    newInstruction->moveRecordWord = (VclPtrWord)moveRecord;
+    Operand *operand = newInstruction->getOp(0);
     if (!operand) {
         reportError("failed to get move output!\n");
         exitAfterCleanup(1);
     }
     operand->assignedRegister = reg;
-    if (in->operandCount != 2) {
+    if (newInstruction->operandCount != 2) {
         reportError(moveRecSidefxError);
         exitAfterCleanup(-1);
     }
     for (int partIndex = 0; partIndex != reg->partCount; partIndex++) {
-        RegisterPartLockList *l = &moveRecord->partLocks[partIndex];
-        l->nextLockList = 0;
-        l->reset();
-        l->calculateLoopStats = 0;
-        reg->setPartPayload(partIndex, (VclPtrWord)l);
+        RegisterPartLockList *partLockList = &moveRecord->partLocks[partIndex];
+        partLockList->nextLockList = 0;
+        partLockList->reset();
+        partLockList->calculateLoopStats = 0;
+        reg->setPartPayload(partIndex, (VclPtrWord)partLockList);
     }
-    moveRecord->instruction = in;
+    moveRecord->instruction = newInstruction;
     moveRecord->moveRegister = reg;
-    return in;
+    return newInstruction;
 }
 
 bool addFreeMove(Instr *in)
@@ -224,13 +224,13 @@ bool detectMove(Instr *instruction, int &opc, unsigned char &mask, int &dstOp, i
         return false;
     }
     RegPoolEntry *registerEntry = instruction->operands[srcOp].assignedRegister;
-    RegPoolEntry *d = instruction->operands[dstOp].assignedRegister;
-    if (!registerEntry || !d) {
+    RegPoolEntry *destinationRegister = instruction->operands[dstOp].assignedRegister;
+    if (!registerEntry || !destinationRegister) {
         reportError(moveDetectNoRegError);
         exitAfterCleanup(-1);
         return false;
     }
-    if (registerEntry->registerClass != d->registerClass) {
+    if (registerEntry->registerClass != destinationRegister->registerClass) {
         reportError("move detect - bad types\n");
         exitAfterCleanup(-1);
         return false;
@@ -304,12 +304,12 @@ int unresolveMove(Block *blk, Instr *instruction)
     return 1;
 }
 
-void adjustMoveCount(Block *blk, Instr *instruction, int n)
+void adjustMoveCount(Block *blk, Instr *instruction, int moveCountDelta)
 {
     if (instruction->permittedPipelineMask == 3)
-        blk->vectorMoveCount += n;
+        blk->vectorMoveCount += moveCountDelta;
     else if (instruction->permittedPipelineMask & 1)
-        blk->oddPipeMoveCount += n;
+        blk->oddPipeMoveCount += moveCountDelta;
     else
-        blk->evenPipeMoveCount += n;
+        blk->evenPipeMoveCount += moveCountDelta;
 }

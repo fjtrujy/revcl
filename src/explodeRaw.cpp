@@ -16,9 +16,9 @@ int expandOneLoopIntoRegions(Program *p, instStream *s);
 bool explodeRaw(Program *program)
 {
     instStream *next;
-    for (instStream *s = program->streamHead; s; s = next) {
-        next = s->nextStream;
-        workTable *scheduleTable = s->getTable();
+    for (instStream *currentStream = program->streamHead; currentStream; currentStream = next) {
+        next = currentStream->nextStream;
+        workTable *scheduleTable = currentStream->getTable();
         if (!scheduleTable) {
             reportError("floBuild - there's no work table!\n");
             return false;
@@ -29,24 +29,24 @@ bool explodeRaw(Program *program)
             reportError("explodeRaw: a non raw stream has a loop size set\n");
             return false;
         }
-        if (s->knownMinimumLoopCount <= 0) {
-            reportWarning("setting known min count to 1 for %s\n", s->streamName());
-            s->knownMinimumLoopCount = 1;
+        if (currentStream->knownMinimumLoopCount <= 0) {
+            reportWarning("setting known min count to 1 for %s\n", currentStream->streamName());
+            currentStream->knownMinimumLoopCount = 1;
         }
-        if (s->safeMinimumLoopCount < 0) {
-            reportWarning("setting minimum safe count to 1000 for %s\n", s->streamName());
-            s->safeMinimumLoopCount = 10000;
+        if (currentStream->safeMinimumLoopCount < 0) {
+            reportWarning("setting minimum safe count to 1000 for %s\n", currentStream->streamName());
+            currentStream->safeMinimumLoopCount = 10000;
         }
-        int r = expandOneLoopIntoRegions(program, s);
-        if (r < 0) {
+        int expandedRegionCount = expandOneLoopIntoRegions(program, currentStream);
+        if (expandedRegionCount < 0) {
             reportError("failed to construct epilogue/prologues\n");
             return false;
         }
-        if (r == 0) {
+        if (expandedRegionCount == 0) {
             reportError("no new streams added during build?\n");
             return false;
         }
-        delete s;
+        delete currentStream;
     }
     return true;
 }

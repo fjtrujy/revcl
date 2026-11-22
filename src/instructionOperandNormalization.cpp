@@ -4,7 +4,7 @@
 
 int Instr::normalizeZeroSources()
 {
-    int r = 0;
+    int normalizedCount = 0;
     int opcode = opcodeId();
     if (opcode == 0x6c)
         goto swapSources;
@@ -31,22 +31,22 @@ swapSources:
     goto done;
 
 invalidOpcode:
-    r = -1;
+    normalizedCount = -1;
     goto done;
 
 resetSources:
     {
         Operand *operand = &operands[1];
         if (operand->assignedRegister == operands[2].assignedRegister) {
-            RegPoolEntry *z = getOperandZeroReg(operand->operandKind);
-            if (!z) {
+            RegPoolEntry *zeroRegister = getOperandZeroReg(operand->operandKind);
+            if (!zeroRegister) {
                 reportError("failed to get a zero register");
                 return 0;
             }
             for (int operandIndex = 1; operandIndex != 3; ) {
-                r = 0;
-                operands[operandIndex].assignedRegister = z;
-                r = 1;
+                normalizedCount = 0;
+                operands[operandIndex].assignedRegister = zeroRegister;
+                normalizedCount = 1;
                 if (++operandIndex == 3)
                     break;
             }
@@ -59,5 +59,5 @@ checkUpperOpcode:
         goto done;
     goto resetSources;
 done:
-    return r;
+    return normalizedCount;
 }

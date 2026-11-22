@@ -51,17 +51,17 @@ inline iGroupNode::iGroupNode(InitTag)
 }
 
 
-bool iGroupList::add(void *p, int sz)
+bool iGroupList::add(void *data, int byteCount)
 {
-    if (sz <= 0)
+    if (byteCount <= 0)
         return 1;
     iGroupNode *instructionGroupNode = new iGroupNode(iGroupNode::INIT);
     if (!instructionGroupNode) {
         reportError("failed to get a new iGroupNode\n");
         return 0;
     }
-    instructionGroupNode->itemPointer = p;
-    instructionGroupNode->itemSize = sz;
+    instructionGroupNode->itemPointer = data;
+    instructionGroupNode->itemSize = byteCount;
     instructionGroupNode->next = head;
     head = instructionGroupNode;
     return 1;
@@ -211,13 +211,13 @@ int iGroupLog::logTable(workTable *sourceTable)
                         }
             } while (changed);
             reportInfo("  dumping scan for %s\n", reg->maskName(1 << partIndex));
-            int n = 0;
+            int flaggedInstructionCount = 0;
             for (instruction = sourceTable->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction)
                 if (instruction->dependencyReachabilityFlags == 3) {
                     const char *name = instruction->opcodeInfo ? instruction->opcodeInfo->mnemonic : "NO_BASE_INST";
-                    reportInfo("  [%4d] %d %s\n", n++, instruction->instructionId, name);
+                    reportInfo("  [%4d] %d %s\n", flaggedInstructionCount++, instruction->instructionId, name);
                 }
-            reportInfo("  ..%d matches\n", n);
+            reportInfo("  ..%d matches\n", flaggedInstructionCount);
             }
         }
     }

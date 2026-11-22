@@ -13,18 +13,18 @@ char *runSinglePreprocessor(int tool, char *buf, int *len, int argFirst, int arg
 
 const char *matchedDirective;
 
-static inline char lowerCase(char c)
+static inline char lowerCase(char character)
 {
-    if (c >= 'A' && c <= 'Z')
-        c += 'a' - 'A';
-    return c;
+    if (character >= 'A' && character <= 'Z')
+        character += 'a' - 'A';
+    return character;
 }
 
-static inline bool startsWith(const char *s, const char *prefix)
+static inline bool startsWith(const char *text, const char *prefix)
 {
     const char *prefixCursor = prefix;
-    while (*prefixCursor && lowerCase(*prefixCursor) == lowerCase(*s)) {
-        s++;
+    while (*prefixCursor && lowerCase(*prefixCursor) == lowerCase(*text)) {
+        text++;
         prefixCursor++;
     }
     if (*prefixCursor == 0)

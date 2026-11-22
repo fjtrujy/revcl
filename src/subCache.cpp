@@ -1,21 +1,21 @@
 #include "os.h"
 #include "subCache.h"
 
-static inline void subCache_release_inl(subCache *sc)
+static inline void subCache_release_inl(subCache *cache)
 {
-    if (sc->cachedValues)
-        delete[] sc->cachedValues;
-    sc->cachedValues = 0;
-    sc->maximumFlowId = 0;
-    sc->wordsPerFlowRow = 0;
+    if (cache->cachedValues)
+        delete[] cache->cachedValues;
+    cache->cachedValues = 0;
+    cache->maximumFlowId = 0;
+    cache->wordsPerFlowRow = 0;
 }
 
-static inline void subCache_flush_inl(subCache *sc)
+static inline void subCache_flush_inl(subCache *cache)
 {
-    if (!sc->cachedValues)
+    if (!cache->cachedValues)
         exitWithError("subcache flush - no table\n");
-    for (unsigned i = 0; i != sc->allocatedWords; i++)
-        sc->cachedValues[i] = 0;
+    for (unsigned i = 0; i != cache->allocatedWords; i++)
+        cache->cachedValues[i] = 0;
 }
 
 void subCache::init(int fuidMax)

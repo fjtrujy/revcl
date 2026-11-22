@@ -44,13 +44,13 @@ bool reduceLinearSchedule(Program *program, workTable *scheduleTable, unsigned c
     while (count) {
         count--;
         if (up) {
-            int r = pullUp(scheduleTable);
-            if (r < 0) {
+            int reductionResult = pullUp(scheduleTable);
+            if (reductionResult < 0) {
                 reportError("failed to pull up\n");
                 dumpLinearReduce(program);
                 return false;
             }
-            if (r)
+            if (reductionResult)
                 count = passes;
         }
         if (down) {
@@ -66,30 +66,30 @@ bool reduceLinearSchedule(Program *program, workTable *scheduleTable, unsigned c
     return true;
 }
 
-bool doLocalMove(workTable *scheduleTable, Instr *instruction, int s_test, int e_test, int dl)
+bool doLocalMove(workTable *scheduleTable, Instr *instruction, int s_test, int e_test, int moveDirection)
 {
     InstructionPosition pos;
     bool found = false;
     bool upwards;
 
-    if (dl == -1) {
+    if (moveDirection == -1) {
         if (s_test < e_test) {
             reportError("do_localMove - s_test<e_test\n");
             return false;
         }
         upwards = true;
-    } else if (dl == 1) {
+    } else if (moveDirection == 1) {
         if (s_test > e_test) {
             reportError("do_localMove + s_test>e_test\n");
             return false;
         }
         upwards = false;
     } else {
-        reportError("bad dl for doLocalMove\t .. %d\n", dl);
+        reportError("bad dl for doLocalMove\t .. %d\n", moveDirection);
         return false;
     }
 
-    for (; s_test != e_test; s_test += dl) {
+    for (; s_test != e_test; s_test += moveDirection) {
         pos.setFromLinearRow(s_test);
         if (!checkPlacementInAllowedPipelines(scheduleTable, instruction, &pos, upwards)) {
             found = true;

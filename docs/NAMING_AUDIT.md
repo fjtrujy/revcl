@@ -1053,6 +1053,58 @@ passed. The stripped VCL executable retains reference SHA-256
 There are still **64 unresolved owner-qualified offset fields**;
 none was renamed without owner-specific evidence.
 
+## Lock windows, scheduling bounds and flow-detail naming
+
+After merging PR #14, the following milestone reviews **103 VCL
+implementation files**, renaming **628 function-scoped declarations**
+and **2,574 corresponding references** directly in C++ source. This
+reduces the fixed AST review queue by **157 parameters** (224 to 67)
+and **471 locals** (971 to 500). The residual queue is deliberately
+not emptied using unsupported guesses.
+
+### Source-derived terminology
+
+- **Lock scheduling and placement:** checkInputLock, catLocks, lock,
+  setLocks, earliestInsert, dragDown and pullUp now distinguish target
+  rows, loop periods, scheduling distances, wrapped range bounds,
+  lock intervals, earliest/latest ready cycles and consumer counts.
+  First/second and upper/lower lock-consumer values remain distinct
+  where the calculation uses both simultaneously.
+- **Dependency graph and external streams:** doBackTrace,
+  processActiveList, prepExtInfo and addThruputStalls distinguish
+  active, source, matched, target and resolved streams; register-use
+  records; and minimum/maximum path lengths. External locations,
+  source/destination tables, and computed distances to the start/end
+  of a stream are named for the values actually consumed.
+- **Instruction and register ownership:** RegPool's virtual-register
+  list iterations identify the current/next virtual register rather
+  than reusing a generic pointer. bindDependencies, emuInst,
+  oDecode, prune and the raw/UTA/synthetic builders distinguish
+  source/decoded/current instructions and operands. Instruction
+  pointer parameters and linked locations are renamed by their
+  source/target roles without altering callable signatures.
+- **Emission, statistics and optimizers:** output buffer lengths,
+  padding indices, runtime file descriptors, actual read counts,
+  per-pipe counts, candidate costs, dependency heights, latency
+  depths, register-live-range endpoints and optimization scores now
+  have names tied to their producer expressions and consumers.
+
+### Constraints, evidence and verification
+
+The replacements are declaration-aware AST edits. A candidate is
+accepted only when its role is supported by the type, initializer,
+field access or call context, and when the proposed spelling does
+not collide with an existing identifier in its function. Ambiguous
+short variables, unused legacy paths and all **64 outstanding
+owner-qualified offset fields** were left for future investigation.
+No function macros, class/field-layout changes, translation-unit
+order edits or VUC changes were introduced.
+
+The native macOS build and all **13 CTest fixtures** pass.
+The historical RH9/i686 GCC 3.2.2 build and its **exact-sha256**
+test also pass: the stripped VCL SHA-256 remains
+83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout

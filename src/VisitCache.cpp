@@ -18,13 +18,13 @@ static inline bool vc_release_inl(VisitCache *visitCache)
 
 static inline bool vc_extend_inl(VisitCache *visitCache, int rows)
 {
-    unsigned *p = (unsigned *)realloc(visitCache->recordData, rows * visitCache->wordsPerRecord * sizeof(unsigned));
-    if (!p) {
+    unsigned *resizedRecordData = (unsigned *)realloc(visitCache->recordData, rows * visitCache->wordsPerRecord * sizeof(unsigned));
+    if (!resizedRecordData) {
         reportError("VisitCache::Extend.. failed to realloc\n");
         vc_release_inl(visitCache);
         return false;
     }
-    visitCache->recordData = p;
+    visitCache->recordData = resizedRecordData;
     visitCache->recordCapacity = rows;
     return true;
 }
@@ -71,13 +71,13 @@ bool VisitCache::release()
 
 bool VisitCache::Extend(int rows)
 {
-    unsigned *p = (unsigned *)realloc(recordData, rows * wordsPerRecord * sizeof(unsigned));
-    if (!p) {
+    unsigned *resizedRecordData = (unsigned *)realloc(recordData, rows * wordsPerRecord * sizeof(unsigned));
+    if (!resizedRecordData) {
         reportError("VisitCache::Extend.. failed to realloc\n");
         vc_release_inl(this);
         return false;
     }
-    recordData = p;
+    recordData = resizedRecordData;
     recordCapacity = rows;
     return true;
 }
@@ -110,11 +110,11 @@ bool VisitCache::setBit(int bit)
 
 int VisitCache::endRecord()
 {
-    int n = recordCount;
-    unsigned *cur = recordData + n * wordsPerRecord;
+    int recordIndex = recordCount;
+    unsigned *cur = recordData + recordIndex * wordsPerRecord;
     unsigned *row = recordData;
     int i;
-    for (i = 0; i != n; i++) {
+    for (i = 0; i != recordIndex; i++) {
         int j;
         for (j = 0; j != wordsPerRecord; j++)
             if (row[j] != cur[j])
@@ -123,7 +123,7 @@ int VisitCache::endRecord()
             return i;
         row += wordsPerRecord;
     }
-    recordCount = n + 1;
+    recordCount = recordIndex + 1;
     return i;
 }
 

@@ -124,26 +124,26 @@ bool instStream::iOwn(Instr *instruction)
 bool instStream::patchLatencies()
 {
     workTable *table = workTablePtr;
-    int n = 0;
+    int patchedLatencyCount = 0;
     if (!table) {
         reportError("iStream::PatchLatencies - no work table\n");
         return false;
     }
     for (Instr *instruction = table->linearInstructions.head; instruction; instruction = instruction->linearLink.nextInstruction) {
-        instruction->linearOrderIndex = n;
+        instruction->linearOrderIndex = patchedLatencyCount;
         if (!instruction->patchBranchLatencies()) {
             reportError("failed to patch latencies for instruction\n");
             return false;
         }
-        n++;
+        patchedLatencyCount++;
     }
     return true;
 }
 
-const char *istEndTypeName(int t)
+const char *istEndTypeName(int streamEndType)
 {
     const char *endTypeNameText = "ISTET_BAD";
-    switch (t) {
+    switch (streamEndType) {
     case 1:
         endTypeNameText = "ISTET_NULL";
         break;
@@ -160,9 +160,9 @@ const char *istEndTypeName(int t)
     return endTypeNameText;
 }
 
-const char *istBranchTypeName(int t)
+const char *istBranchTypeName(int branchType)
 {
-    return branchTypeNameByCode(t);
+    return branchTypeNameByCode(branchType);
 }
 
 const char *instStream::branchTypeName()
@@ -170,10 +170,10 @@ const char *instStream::branchTypeName()
     return branchTypeNameByCode(branchType);
 }
 
-const char *istStartTypeName(int t)
+const char *istStartTypeName(int streamStartType)
 {
     const char *startTypeNameText;
-    switch (t) {
+    switch (streamStartType) {
     case 1:
         startTypeNameText = "ISTST_NULL";
         break;
@@ -189,9 +189,9 @@ const char *istStartTypeName(int t)
 
 const char *instStream::endTypeName()
 {
-    int t = endType;
+    int streamEndType = endType;
     const char *endTypeNameText = "ISTET_BAD";
-    switch (t) {
+    switch (streamEndType) {
     case 1:
         endTypeNameText = "ISTET_NULL";
         break;
@@ -233,13 +233,13 @@ bool instStream::canLoop()
             reportError("canLoop - bad return from outIST getFirst\n");
             exitAfterCleanup(-1);
         } else {
-            int sv = stream->optimizationRecordCount;
+            int optimizationCount = stream->optimizationRecordCount;
             unsigned char z = stream->branchType;
             z >>= 4;
             z >>= 4;
             if (z)
                 return false;
-            stream->optimizationRecordCount = sv;
+            stream->optimizationRecordCount = optimizationCount;
         }
         return stream == this;
     }
@@ -251,7 +251,7 @@ static inline void dumpEmitStream(instStream *stream)
     stream->dump(false);
 }
 
-char *instStream::emit(char *buf, int a, int *p1, int *p2)
+char *instStream::emit(char *buf, int commentMode, int *p1, int *p2)
 {
     *p1 = 0;
     *p2 = 0;
@@ -282,7 +282,7 @@ char *instStream::emit(char *buf, int a, int *p1, int *p2)
             reportError("can't emit .. no table!\n");
             return 0;
         }
-        buf = emissionTable->emit(buf, a, p1, p2);
+        buf = emissionTable->emit(buf, commentMode, p1, p2);
         if (!buf) {
             reportError("failed to build out table\n");
             return 0;
@@ -480,14 +480,14 @@ bool instStream::hasSafeTrailingInstructions()
 
 int instStream::checkStartEndStatus()
 {
-    int st = startType;
-    int ok = 0;
-    if (st == 1 || st == 2) {
-        int et = endType;
+    int streamStartType = startType;
+    int validStartEndPair = 0;
+    if (streamStartType == 1 || streamStartType == 2) {
+        int streamEndType = endType;
         unsigned endTypeCount = 4;
-        ok = (unsigned)(et - 1) < endTypeCount;
+        validStartEndPair = (unsigned)(streamEndType - 1) < endTypeCount;
     }
-    return ok;
+    return validStartEndPair;
 }
 
 bool instStream::processCmdSynth(Instr *instruction)

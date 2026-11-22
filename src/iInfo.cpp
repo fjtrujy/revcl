@@ -129,15 +129,15 @@ int iInfo::branchFlagBit2()
 
 int iInfo::canPruneOperands()
 {
-    int r = 0;
+    int canPrune = 0;
     if (!(kindAndFlags & 0xf8)) {
         int k2 = kind() == 2 ? kindData : 0;
         if (!k2) {
-            int rt;
+            int ramTypeValue;
             if (kind() == 4) {
                 unsigned char t = kindData;
                 if ((unsigned char)(t - 1) <= 1)
-                    rt = t;
+                    ramTypeValue = t;
                 else {
                     reportError(iInfoLoadstoreRamtypeError);
                     exitAfterCleanup(-1);
@@ -145,25 +145,25 @@ int iInfo::canPruneOperands()
                 }
             } else
 none:
-                rt = 0;
-            if (rt != 2) {
+                ramTypeValue = 0;
+            if (ramTypeValue != 2) {
                 int k3 = kind() == 3 ? kindData : 0;
                 if (!k3)
-                    r = 1;
+                    canPrune = 1;
             }
         }
     }
-    return r;
+    return canPrune;
 }
 
-int decodeImmediateCategory(unsigned char x)
+int decodeImmediateCategory(unsigned char immediateFlags)
 {
-    int r = 0;
-    if (x) {
-        unsigned int f = x & 0x60;
-        r = (f >> 5) + 1;
+    int category = 0;
+    if (immediateFlags) {
+        unsigned int f = immediateFlags & 0x60;
+        category = (f >> 5) + 1;
     }
-    return r;
+    return category;
 }
 
 int defaultImmediateFlags(unsigned char)
@@ -171,9 +171,9 @@ int defaultImmediateFlags(unsigned char)
     return 0;
 }
 
-unsigned char immediateFlagBit7(unsigned char x)
+unsigned char immediateFlagBit7(unsigned char immediateFlags)
 {
-    return x >> 7;
+    return immediateFlags >> 7;
 }
 
 Instr *getMove(int type, int);

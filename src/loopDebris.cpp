@@ -5,18 +5,18 @@
 
 char *dupString(const char *s);
 
-static inline epiRec *ld_getProRec_inl(loopDebris *loopRecord, int i)
+static inline epiRec *ld_getProRec_inl(loopDebris *loopRecord, int prologueIndex)
 {
-    if (i < 0 || i >= loopRecord->m_nPro)
+    if (prologueIndex < 0 || prologueIndex >= loopRecord->m_nPro)
         return 0;
-    return &loopRecord->m_pro[i];
+    return &loopRecord->m_pro[prologueIndex];
 }
 
-static inline epiRec *ld_getEpiRec_inl(loopDebris *loopRecord, int i)
+static inline epiRec *ld_getEpiRec_inl(loopDebris *loopRecord, int epilogueIndex)
 {
-    if (i < 0 || i >= loopRecord->m_nEpi)
+    if (epilogueIndex < 0 || epilogueIndex >= loopRecord->m_nEpi)
         return 0;
-    return &loopRecord->m_epi[i];
+    return &loopRecord->m_epi[epilogueIndex];
 }
 
 static inline epiRec *ld_findEpi_inl(loopDebris *loopRecord, int key)
@@ -108,9 +108,9 @@ instStream *loopDebris::getMainStream()
     return region->stream;
 }
 
-instStream *loopDebris::getProStream(int i)
+instStream *loopDebris::getProStream(int prologueIndex)
 {
-    epiRec *region = ld_getProRec_inl(this, i);
+    epiRec *region = ld_getProRec_inl(this, prologueIndex);
     if (!region) {
         reportError("failed to get pro epirec\n");
         return 0;
@@ -118,9 +118,9 @@ instStream *loopDebris::getProStream(int i)
     return region->stream;
 }
 
-instStream *loopDebris::getEpiStream(int i)
+instStream *loopDebris::getEpiStream(int epilogueIndex)
 {
-    epiRec *region = ld_getEpiRec_inl(this, i);
+    epiRec *region = ld_getEpiRec_inl(this, epilogueIndex);
     if (!region) {
         reportError("failed to get pro epirec\n");
         return 0;
@@ -236,18 +236,18 @@ epiRec *loopDebris::allocExit(int size)
 }
 
 
-epiRec *loopDebris::getProRec(int i)
+epiRec *loopDebris::getProRec(int prologueIndex)
 {
-    if (i < 0 || i >= m_nPro)
+    if (prologueIndex < 0 || prologueIndex >= m_nPro)
         return 0;
-    return &m_pro[i];
+    return &m_pro[prologueIndex];
 }
 
-epiRec *loopDebris::getEpiRec(int i)
+epiRec *loopDebris::getEpiRec(int epilogueIndex)
 {
-    if (i < 0 || i >= m_nEpi)
+    if (epilogueIndex < 0 || epilogueIndex >= m_nEpi)
         return 0;
-    return &m_epi[i];
+    return &m_epi[epilogueIndex];
 }
 
 epiRec *loopDebris::findEpilogueByLoopKey(int key)
@@ -282,9 +282,9 @@ inline int loopDebris::getNumEpi()
     return m_nEpi;
 }
 
-static inline instStream *checkedProStream(loopDebris *loopRecord, int i)
+static inline instStream *checkedProStream(loopDebris *loopRecord, int prologueIndex)
 {
-    epiRec *region = ld_getProRec_inl(loopRecord, i);
+    epiRec *region = ld_getProRec_inl(loopRecord, prologueIndex);
     if (!region) {
         reportError("failed to get pro epirec\n");
         return 0;
@@ -292,11 +292,11 @@ static inline instStream *checkedProStream(loopDebris *loopRecord, int i)
     return region->stream;
 }
 
-static inline epiRec *proRecord(loopDebris *loopRecord, int i, int count)
+static inline epiRec *proRecord(loopDebris *loopRecord, int recordIndex, int count)
 {
-    if (i < 0 || i >= count)
+    if (recordIndex < 0 || recordIndex >= count)
         return 0;
-    return &loopRecord->m_pro[i];
+    return &loopRecord->m_pro[recordIndex];
 }
 
 bool epiRec::init(int size, const char *name)
@@ -349,19 +349,19 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         return -1;
     }
     int i;
-    loopDebris ld;
+    loopDebris loopRegions;
     char buf[4096];
     formatIntoBuffer(buf, "EXPL_%s_%s_", getUniqueName(program), stream->streamName());
-    if (!explodeLoop(stream, &ld, buf)) {
+    if (!explodeLoop(stream, &loopRegions, buf)) {
         reportError("BuildEPSTreams - failed to explode %s\n", stream->streamName());
         exitAfterCleanup(-1);
     }
-    instStream *enter = ld.m_enter.stream;
+    instStream *enter = loopRegions.m_enter.stream;
     if (!enter) {
         reportError("no entry istream\n");
         exitAfterCleanup(-1);
     }
-    instStream *exit = ld.m_exit.stream;
+    instStream *exit = loopRegions.m_exit.stream;
     if (!exit) {
         reportError("had no exit istream\n");
         exitAfterCleanup(-1);
@@ -391,8 +391,8 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
     instStream *prev = enter;
     epiRec *region;
     loopDebris *loopRecord;
-    for (i = 0; i != (loopRecord = &ld)->getNumPro(); i++) {
-        epiRec *prologueRegion = proRecord(loopRecord, i, ld.getNumPro());
+    for (i = 0; i != (loopRecord = &loopRegions)->getNumPro(); i++) {
+        epiRec *prologueRegion = proRecord(loopRecord, i, loopRegions.getNumPro());
         if (!prologueRegion) {
             reportError("failed to get prologue\n");
             return -1;
@@ -410,7 +410,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
             prev = 0;
         }
         if (prologueRegion->conditionalBranch) {
-            epiRec *epilogueRegion = ld_findEpi_inl(&ld, prologueRegion->sourceLoopId + 1);
+            epiRec *epilogueRegion = ld_findEpi_inl(&loopRegions, prologueRegion->sourceLoopId + 1);
             if (!epilogueRegion) {
                 reportError("failed to find epilogue\n");
                 return -1;
@@ -424,15 +424,15 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
                 reportError("failed to link prologue to epilogue\n");
                 return -1;
             }
-        } else if (i != ld.getNumPro() - 1) {
+        } else if (i != loopRegions.getNumPro() - 1) {
             reportError("not last prologue, but no conditional\n");
             exitAfterCleanup(-1);
         }
         instStream *next;
-        if (i == ld.getNumPro() - 1) {
-            next = ld.m_main.stream;
+        if (i == loopRegions.getNumPro() - 1) {
+            next = loopRegions.m_main.stream;
         } else {
-            next = checkedProStream(&ld, i + 1);
+            next = checkedProStream(&loopRegions, i + 1);
         }
         if (!next) {
             reportError("failed to get next stream for a prologue\n");
@@ -444,7 +444,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         }
     }
 
-    instStream *main = ld.m_main.stream;
+    instStream *main = loopRegions.m_main.stream;
     if (!main) {
         reportError("not find new main!\n");
         return -1;
@@ -459,8 +459,8 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
     }
 
     instStream *succ = exit;
-    if (ld.getNumEpi()) {
-        epiRec *e0 = ld_getEpiRec_inl(&ld, 0);
+    if (loopRegions.getNumEpi()) {
+        epiRec *e0 = ld_getEpiRec_inl(&loopRegions, 0);
         if (!e0) {
             reportError("failed to get epi0\n");
             return -1;
@@ -476,8 +476,8 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         return -1;
     }
 
-    for (i = 0; i != ld.getNumEpi(); i++) {
-        region = ld_getEpiRec_inl(&ld, i);
+    for (i = 0; i != loopRegions.getNumEpi(); i++) {
+        region = ld_getEpiRec_inl(&loopRegions, i);
         if (!region) {
             reportError("failed to get epi \n");
             return -1;
@@ -489,7 +489,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         }
         int type = 0;
         if (region->conditionalBranch) {
-            if (!region->conditionalBranch->changeBranchImmediate(ld.m_exitName)) {
+            if (!region->conditionalBranch->changeBranchImmediate(loopRegions.m_exitName)) {
                 reportError("failed to change immediate\n");
                 exitAfterCleanup(-1);
             }
@@ -516,8 +516,8 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
     }
 
     last = enter;
-    for (i = 0; i != ld.getNumPro(); i++) {
-        region = ld_getProRec_inl(&ld, i);
+    for (i = 0; i != loopRegions.getNumPro(); i++) {
+        region = ld_getProRec_inl(&loopRegions, i);
         if (!program->insertStreamAfter(last, region->stream)) {
             reportError("failed to add after\n");
             exitAfterCleanup(-1);
@@ -529,8 +529,8 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         exitAfterCleanup(-1);
     }
     last = main;
-    for (i = 0; i != ld.getNumEpi(); i++) {
-        region = ld_getEpiRec_inl(&ld, i);
+    for (i = 0; i != loopRegions.getNumEpi(); i++) {
+        region = ld_getEpiRec_inl(&loopRegions, i);
         if (!program->insertStreamAfter(last, region->stream)) {
             reportError("failed to add after\n");
             exitAfterCleanup(-1);
@@ -545,7 +545,7 @@ int expandOneLoopIntoRegions(Program *program, instStream *stream)
         reportError("failed to grab names from the source stream during epipro\n");
         exitAfterCleanup(-1);
     }
-    return ld.getNumPro() + ld.getNumEpi() + 3;
+    return loopRegions.getNumPro() + loopRegions.getNumEpi() + 3;
 }
 
 static inline void initDebris(loopDebris *loopRecord, const char *baseName, int a, bool flag)
@@ -692,15 +692,15 @@ bool explodeLoop(instStream *stream, loopDebris *loopRecord, const char *baseNam
         exitAfterCleanup(-1);
     }
 
-    int n = lsz * (mlid - clid);
-    if (n) {
+    int rowOffset = lsz * (mlid - clid);
+    if (rowOffset) {
         for (int j = loopRecord->m_nPro - 1; j >= 0; j--) {
             epiRec *prologueRegion = ld_getProRec_inl(loopRecord, j);
             if (!prologueRegion) {
                 reportError("failed to get pro %d\n", j);
                 exitAfterCleanup(-1);
             }
-            epiRec *epilogueRegion = loopRecord->allocEpi(n);
+            epiRec *epilogueRegion = loopRecord->allocEpi(rowOffset);
             epilogueRegion->loopKey = prologueRegion->sourceLoopId + 1;
             int proBase = prologueRegion->regionStartIndex;
             int lid = epilogueRegion->loopKey;

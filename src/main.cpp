@@ -240,19 +240,19 @@ int main(int argc, char **argv)
     if (symbolicOutputRequested)
         comments = 2;
 
-    int fd;
+    int inputDescriptor;
     if (inFile) {
-        fd = open(inFile, O_RDONLY);
-        if (fd == -1) {
+        inputDescriptor = open(inFile, O_RDONLY);
+        if (inputDescriptor == -1) {
             reportError("failed to open file '%s'\n", inFile);
             exitAfterCleanup(-1);
         }
     } else {
         inFile = "_stdin_";
-        fd = 0;
+        inputDescriptor = 0;
     }
 
-    char *buf = readDescriptorIntoBuffer(fd, &len, true);
+    char *buf = readDescriptorIntoBuffer(inputDescriptor, &len, true);
     if (!buf) {
         reportError("failed to read input file\n");
         exitAfterCleanup(-1);
@@ -441,10 +441,10 @@ int main(int argc, char **argv)
         exitAfterCleanup(-1);
     }
     if (enableCodeSizeReduction) {
-        int n = insertAllRegisterCaps(&flow);
-        if (n < 0)
+        int insertedCapCount = insertAllRegisterCaps(&flow);
+        if (insertedCapCount < 0)
             exitWithError("failed to add capping instructions for non-blocking operands, or something\n");
-        if (n && !validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
+        if (insertedCapCount && !validateFlowDependenciesAndHazards(&flow, cautiousMemoryAccessMode, false, false))
             exitWithError("after adding capping instructions - failed to chase dependencies\n");
         if (!prepareExternalSchedulingForProgram(&flow))
             exitWithError("failed to remove nops from the sequence\n");
@@ -481,8 +481,8 @@ int main(int argc, char **argv)
             reportError("failed to create outfile\n");
             exitAfterCleanup(-1);
         }
-        int n = strlen(obuf);
-        if (write(ofd, obuf, n) != n) {
+        int outputLength = strlen(obuf);
+        if (write(ofd, obuf, outputLength) != outputLength) {
             reportError("failed to write all of out buffer\n");
             close(ofd);
             exitAfterCleanup(-1);
@@ -576,9 +576,9 @@ static inline void reportWarnings(Program *program)
     reportStalls(program);
 }
 
-bool validateFlowDependenciesAndHazards(Program *program, bool a, bool b, bool c)
+bool validateFlowDependenciesAndHazards(Program *program, bool forceDependencyChecks, bool b, bool c)
 {
-    if (!rebuildFlowDependencies(program, a)) {
+    if (!rebuildFlowDependencies(program, forceDependencyChecks)) {
         reportError("vcl found a bug in itself while chasing dependencies\n");
         return false;
     }

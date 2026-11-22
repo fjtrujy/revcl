@@ -114,14 +114,14 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         wtRow blank;
         blank.clearEntries();
         for (int i = 0; i != nulls; i++) {
-            int f = 0;
+            int emissionFlags = 0;
             if (isEnd && i == 0) {
-                f = (unsigned char)(owner->trailingLabelFlags | 2);
+                emissionFlags = (unsigned char)(owner->trailingLabelFlags | 2);
                 done = 1;
             }
-            f |= top;
+            emissionFlags |= top;
             top = 0;
-            buf = blank.emit(buf, f, false, false);
+            buf = blank.emit(buf, emissionFlags, false, false);
             if (!buf) {
                 reportError("failed to emit null ie for synth instruction!\n");
                 return 0;
@@ -159,11 +159,11 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
         wtRow blank;
         blank.clearEntries();
         for (int i = rangeStart; i != end; i++) {
-            wtRow *r = &blank;
+            wtRow *emissionRow = &blank;
             if (i < rangeEnd)
-                r = &rows[i];
+                emissionRow = &rows[i];
             int f = 0;
-            if (!r->skip)
+            if (!emissionRow->skip)
                 (*p1)++;
             (*p2)++;
             if (isEnd) {
@@ -177,35 +177,35 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
             top = 0;
             switch (mode) {
             case 0:
-                buf = r->emit(buf, f, false, true);
+                buf = emissionRow->emit(buf, f, false, true);
                 if (!buf) {
                     reportError("failed to emit instruction!\n");
-                    dumpFailedRow(r);
+                    dumpFailedRow(emissionRow);
                     return 0;
                 }
                 break;
             case 1:
                 *buf++ = ';';
-                buf = r->emit(buf, f, true, true);
+                buf = emissionRow->emit(buf, f, true, true);
                 if (!buf) {
                     reportError("failed to emit instruction!\n");
-                    dumpFailedRow(r);
+                    dumpFailedRow(emissionRow);
                     return 0;
                 }
                 *buf++ = ' ';
-                buf = r->emit(buf, f, false, true);
+                buf = emissionRow->emit(buf, f, false, true);
                 if (!buf) {
                     reportError("failed to emit instruction!\n");
-                    dumpFailedRow(r);
+                    dumpFailedRow(emissionRow);
                     return 0;
                 }
                 *buf++ = '\n';
                 break;
             case 2:
-                buf = r->emit(buf, f, true, true);
+                buf = emissionRow->emit(buf, f, true, true);
                 if (!buf) {
                     reportError("failed to emit instruction!\n");
-                    r->refreshInstructionOperands(-1);
+                    emissionRow->refreshInstructionOperands(-1);
                     goto fail;
                 }
                 break;

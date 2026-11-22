@@ -25,8 +25,8 @@ inline bool atEarliest(workTable *scheduleTable, Instr *instruction)
     bool found = false;
     if (!instruction)
         return false;
-    int e = earliestInsert(scheduleTable, instruction, &found);
-    return found && e == instruction->position.loopRow;
+    int earliestAllowedRow = earliestInsert(scheduleTable, instruction, &found);
+    return found && earliestAllowedRow == instruction->position.loopRow;
 }
 
 bool isAtEarliest(workTable *scheduleTable, Instr *instruction)
@@ -34,8 +34,8 @@ bool isAtEarliest(workTable *scheduleTable, Instr *instruction)
     bool found = false;
     if (!instruction)
         return false;
-    int e = earliestInsert(scheduleTable, instruction, &found);
-    return found && e == instruction->position.loopRow;
+    int earliestAllowedRow = earliestInsert(scheduleTable, instruction, &found);
+    return found && earliestAllowedRow == instruction->position.loopRow;
 }
 
 static inline void dumpSredInstruction(Instr *instruction)
@@ -48,7 +48,7 @@ extern const char sredMoveInstError[];
 extern const char sredLatestBeforeError[];
 extern const char sredBadlyPlacedError[];
 
-bool sredInstr(workTable *scheduleTable, Instr *instruction, bool up)
+bool sredInstr(workTable *scheduleTable, Instr *instruction, bool reduceUpward)
 {
     InstructionPosition pos;
     int iline = instruction->position.loopRow;
@@ -57,7 +57,7 @@ bool sredInstr(workTable *scheduleTable, Instr *instruction, bool up)
     bool upwards = false;
     int tline;
 
-    if (up) {
+    if (reduceUpward) {
         tline = earliestInsert(scheduleTable, instruction, &found);
         if (tline > iline) {
             short mfs = instruction->externalInputConstraint < instruction->externalInputPairedConstraint ? instruction->externalInputPairedConstraint : instruction->externalInputConstraint;

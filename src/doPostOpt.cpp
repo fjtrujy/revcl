@@ -106,9 +106,9 @@ bool workTable::doPostOpt(int rawMode)
             reportError("doPostOpt : failed to set raw mode..\n");
             return false;
         }
-        int rl;
-        for (rl = rangeStart; rl < rangeEnd; rl++) {
-            Instr **instructionSlot = ((cls_unk30 *)this)->getIE_ck(rl);
+        int rowIndex;
+        for (rowIndex = rangeStart; rowIndex < rangeEnd; rowIndex++) {
+            Instr **instructionSlot = ((cls_unk30 *)this)->getIE_ck(rowIndex);
             if (!instructionSlot) {
                 reportError("iTable::doPostOpt - failed to get ientry\n");
                 return false;
@@ -117,14 +117,14 @@ bool workTable::doPostOpt(int rawMode)
                 reportError("bSkip is set\n");
                 return false;
             }
-            for (int p = 0; p != 2; p++) {
-                Instr *in = instructionSlot[p];
-                if (in) {
+            for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
+                Instr *rowInstruction = instructionSlot[pipeIndex];
+                if (rowInstruction) {
                     int nBranch;
                     switch (rawMode) {
                     case 2: {
-                        int t = in->position.loopRow;
-                        in->scheduledCycle = t;
+                        int t = rowInstruction->position.loopRow;
+                        rowInstruction->scheduledCycle = t;
                         if (rangeStart) {
                             reportError("postopt - istart set for fixed mode \n");
                             return false;
@@ -133,65 +133,65 @@ bool workTable::doPostOpt(int rawMode)
                     }
                     case 1: {
                         nBranch = -1;
-                        int t = in->position.loopRow;
-                        in->scheduledCycle = t - rangeStart;
+                        int t = rowInstruction->position.loopRow;
+                        rowInstruction->scheduledCycle = t - rangeStart;
                         break;
                     }
                     case 3:
                     case 4: {
-                        Instr *c = in->cloneImage;
-                        if (!c) {
+                        Instr *cloneInstruction = rowInstruction->cloneImage;
+                        if (!cloneInstruction) {
                             reportError("no work clone set\n");
                             return false;
                         }
-                        short t = c->scheduledCycle;
+                        short t = cloneInstruction->scheduledCycle;
                         if (t < 0 || t >= *(int *)&length) {
                             reportError("emutick bad for raw postopt\n");
                             return false;
                         }
-                        in->scheduledCycle = t;
+                        rowInstruction->scheduledCycle = t;
                         break;
                     }
                     default:
                         reportError("raw post mode for postopt\n");
                         return false;
                     }
-                    if (!in->moveRecordWord) {
-                        if (in->ownerTable != (cls_unk30 *)this) {
-                            reportError("owner not this for non-move...%p\n", in->ownerTable);
-                            dumpOptInstruction(in);
+                    if (!rowInstruction->moveRecordWord) {
+                        if (rowInstruction->ownerTable != (cls_unk30 *)this) {
+                            reportError("owner not this for non-move...%p\n", rowInstruction->ownerTable);
+                            dumpOptInstruction(rowInstruction);
                             return false;
                         }
-                        if (!logUnlinkFromLinear(in)) {
+                        if (!logUnlinkFromLinear(rowInstruction)) {
                             reportError("doPostOpt:failed to unlink from linear list\n");
                             return false;
                         }
                         count++;
                     } else {
-                        if (in->ownerTable) {
+                        if (rowInstruction->ownerTable) {
                             reportError("owner not 0 for move\n");
                             return false;
                         }
                     }
-                    if (!UnlinkFromDone((Block *)this, in)) {
+                    if (!UnlinkFromDone((Block *)this, rowInstruction)) {
                         reportError("doPostOpt -  unlink from done list failed\n");
                         return false;
                     }
-                    if (in->branchFlags) {
+                    if (rowInstruction->branchFlags) {
                         if (nBranch + 1) {
                             reportError("doPostOpt - more than one branch\n");
                             return false;
                         }
-                        if (rl != rangeEnd - 2) {
+                        if (rowIndex != rangeEnd - 2) {
                             reportError("badly placed branch detected in postopt\n");
                             dump();
                             return false;
                         }
                     }
-                    InstructionPosition *loc = &in->position;
+                    InstructionPosition *loc = &rowInstruction->position;
                     int lid = loc->loopIteration;
                     int row = loc->loopRow;
-                    int iloc = in->position.linearRow;
+                    int iloc = rowInstruction->position.linearRow;
                     if (!loopSize && lid) {
                         reportError("i_lid set not in loop\n");
                         return false;
@@ -202,14 +202,14 @@ bool workTable::doPostOpt(int rawMode)
                         reportError("badly formed iloc in instruction\n");
                         return false;
                     }
-                    if (row != rl) {
+                    if (row != rowIndex) {
                         reportError("instruction not where it thinks it is\n");
                         return false;
                     }
                     if (lid > maxLid)
                         maxLid = lid;
-                    if (!instructionSlot[p]) {
-                        reportError("damn - lost instruction at %d:%d!\n", rl, p);
+                    if (!instructionSlot[pipeIndex]) {
+                        reportError("damn - lost instruction at %d:%d!\n", rowIndex, pipeIndex);
                         return false;
                     }
                 }
@@ -235,14 +235,14 @@ bool workTable::doPostOpt(int rawMode)
             return false;
         }
         resetCounts();
-        for (rl = rangeStart; rl < rangeEnd; rl++) {
-            Instr **ie = ((cls_unk30 *)this)->getIE_ck(rl);
-            if (!ie)
+        for (rowIndex = rangeStart; rowIndex < rangeEnd; rowIndex++) {
+            Instr **rowInstructionSlots = ((cls_unk30 *)this)->getIE_ck(rowIndex);
+            if (!rowInstructionSlots)
                 reportError("can't get ie during postopt\n");
             for (int p = 0; p != 2; p++) {
-                Instr *in = ie[p];
-                if (in) {
-                    if (!logAddLinear_Tail(in)) {
+                Instr *linearInstruction = rowInstructionSlots[p];
+                if (linearInstruction) {
+                    if (!logAddLinear_Tail(linearInstruction)) {
                         reportError("failed to add in to linear tale\n");
                         return false;
                     }
@@ -286,55 +286,55 @@ bool instStream::setOptTable(workTable *scheduleTable)
         reportError("stream already has opttable set\n");
         return false;
     }
-    for (Instr *in = scheduleTable->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
-        if (in->getOwningStream() != this) {
+    for (Instr *originalInstruction = scheduleTable->linearInstructions.head; originalInstruction; originalInstruction = originalInstruction->linearLink.nextInstruction) {
+        if (originalInstruction->getOwningStream() != this) {
             reportError("didn't own instruction\n");
             return false;
         }
-        if (in->optimizedInstructionImageWord) {
+        if (originalInstruction->optimizedInstructionImageWord) {
             reportError("doPostLinearOpt - optClone set in image?\n");
             return false;
         }
-        Instr *c = in->cloneImage;
-        if (!c) {
-            if (!in->moveRecordWord) {
+        Instr *cloneInstruction = originalInstruction->cloneImage;
+        if (!cloneInstruction) {
+            if (!originalInstruction->moveRecordWord) {
                 reportError("doPostLinearOpt - inst wasn't cloned, but not a move either\n");
-                dumpOptInstruction(in);
+                dumpOptInstruction(originalInstruction);
                 return false;
             }
         } else {
-            if (c->optimizedInstructionImageWord) {
+            if (cloneInstruction->optimizedInstructionImageWord) {
                 reportError("doPostLinear() - original had m_optClone set\n");
-                dumpOptInstruction(c);
+                dumpOptInstruction(cloneInstruction);
                 return false;
             }
-            if (c->getOwningStream() != this) {
+            if (cloneInstruction->getOwningStream() != this) {
                 reportError("setOptTable -  cloned image wsn't owned by us\n");
                 return false;
             }
-            workTable *owner = (workTable *)c->ownerTable;
+            workTable *owner = (workTable *)cloneInstruction->ownerTable;
             if (owner != getTable()) {
                 reportError("clone owner wasn't our work table\n");
                 return false;
             }
-            if (in->operandCount != c->operandCount) {
+            if (originalInstruction->operandCount != cloneInstruction->operandCount) {
                 reportError("operand count mismatch between original and opt image\n");
                 return false;
             }
-            for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
-                char inputDirection = in->operands[operandIndex].direction;
-                char cio = c->operands[operandIndex].direction;
+            for (int operandIndex = 0; operandIndex != originalInstruction->operandCount; operandIndex++) {
+                char inputDirection = originalInstruction->operands[operandIndex].direction;
+                char cio = cloneInstruction->operands[operandIndex].direction;
                 if (inputDirection != cio) {
                     if (cio != 1 && inputDirection != 3) {
                         reportError("io type mismatch for something that wasn't a whacked input\n");
                         return false;
                     }
-                    in->operands[operandIndex].assignedRegister = c->operands[operandIndex].assignedRegister;
-                    in->operands[operandIndex].direction = cio;
+                    originalInstruction->operands[operandIndex].assignedRegister = cloneInstruction->operands[operandIndex].assignedRegister;
+                    originalInstruction->operands[operandIndex].direction = cio;
                 }
             }
-            in->originalInstructionImageWord = (VclPtrWord)c;
-            c->optimizedInstructionImageWord = (VclPtrWord)in;
+            originalInstruction->originalInstructionImageWord = (VclPtrWord)cloneInstruction;
+            cloneInstruction->optimizedInstructionImageWord = (VclPtrWord)originalInstruction;
         }
     }
     scheduleTable->clearClones();

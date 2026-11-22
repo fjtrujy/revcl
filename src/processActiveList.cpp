@@ -42,52 +42,52 @@ bool processActiveList(Program *program)
     return true;
 }
 
-bool extendBackTrace(Program *program, instStream *n)
+bool extendBackTrace(Program *program, instStream *targetStream)
 {
     int cnt = 0;
-    if (n->visitState != 2 && n->visitState != 0) {
+    if (targetStream->visitState != 2 && targetStream->visitState != 0) {
         reportError("extend: called - but not visited or unvisited\n");
         return false;
     }
-    linkNode *l;
-    for (l = n->inputLinks.head; l; l = l->next) {
-        if (l->linkType == 3 || l->linkType == 4) {
-            if (l->includedInPathTraversal)
+    linkNode *incomingLink;
+    for (incomingLink = targetStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next) {
+        if (incomingLink->linkType == 3 || incomingLink->linkType == 4) {
+            if (incomingLink->includedInPathTraversal)
                 break;
             cnt++;
         }
     }
     bool all = false;
-    if (cnt && !l)
+    if (cnt && !incomingLink)
         all = true;
 
-    for (l = n->inputLinks.head; l; l = l->next) {
-        int branch = l->linkType == 2 || l->linkType == 4 || l->linkType == 5;
+    for (incomingLink = targetStream->inputLinks.head; incomingLink; incomingLink = incomingLink->next) {
+        int branch = incomingLink->linkType == 2 || incomingLink->linkType == 4 || incomingLink->linkType == 5;
         if ((char)branch) {
-            instStream *prev = n->previousStream;
+            instStream *prev = targetStream->previousStream;
             if (!prev) {
                 reportError("to register branch had no previous\n");
                 return false;
             }
-            for (linkNode *b = prev->outputLinks.head; b; b = b->next) {
-                instStream *d = b->otherStream;
-                int type = b->linkType;
-                if (!d) {
+            for (linkNode *outgoingLink = prev->outputLinks.head; outgoingLink; outgoingLink = outgoingLink->next) {
+                instStream *destinationStream = outgoingLink->otherStream;
+                int type = outgoingLink->linkType;
+                if (!destinationStream) {
                     reportError("no dest stream set for and link\n");
                     return false;
                 }
-                if (d->visitState == 2 && prev->visitState == 0) {
-                    if (!addNewActive(program, prev, n)) {
+                if (destinationStream->visitState == 2 && prev->visitState == 0) {
+                    if (!addNewActive(program, prev, targetStream)) {
                         reportError("failed to add a new active node for predecessor in bal case\n");
                         return false;
                     }
-                    if (program->traceStoreEnabled && mergeTstores(program, prev->traceStore, n->traceStore) < 0) {
+                    if (program->traceStoreEnabled && mergeTstores(program, prev->traceStore, targetStream->traceStore) < 0) {
                         reportError("failed to merge tstores\n");
                         return false;
                     }
-                    type = b->linkType;
+                    type = outgoingLink->linkType;
                 }
-                linkNode *back = d->inputLinks.findLinkToStream(prev, type);
+                linkNode *back = destinationStream->inputLinks.findLinkToStream(prev, type);
                 if (!back) {
                     reportError("destination had no link back\n");
                     return false;
@@ -95,19 +95,19 @@ bool extendBackTrace(Program *program, instStream *n)
                 back->includedInPathTraversal = 1;
             }
         }
-        if (all || l->includedInPathTraversal) {
-            instStream *o = l->otherStream;
-            if (!o) {
+        if (all || incomingLink->includedInPathTraversal) {
+            instStream *sourceStream = incomingLink->otherStream;
+            if (!sourceStream) {
                 reportError("can't get input stream for ir during trace\n");
                 return false;
             }
-            if (program->traceStoreEnabled && mergeTstores(program, o->traceStore, n->traceStore) < 0) {
+            if (program->traceStoreEnabled && mergeTstores(program, sourceStream->traceStore, targetStream->traceStore) < 0) {
                 reportError("failed to merge tstores\n");
                 return false;
             }
-            switch (o->visitState) {
+            switch (sourceStream->visitState) {
             case 0:
-                if (!addNewActive(program, o, n)) {
+                if (!addNewActive(program, sourceStream, targetStream)) {
                     reportError("failedt to add a new active\n");
                     return false;
                 }
@@ -116,45 +116,45 @@ bool extendBackTrace(Program *program, instStream *n)
             case 2:
             case 3:
             case 4: {
-                int dmin = o->minimumPathLength;
+                int dmin = sourceStream->minimumPathLength;
                 if (dmin < 0) {
                     reportError("think I've already been here, but there's no distance to target\n");
                     return false;
                 }
-                int len = n->minimumPathLength + n->backtraceDependencyLength;
+                int len = targetStream->minimumPathLength + targetStream->backtraceDependencyLength;
                 if (len < dmin) {
-                    o->shortestPathPredecessor = n;
+                    sourceStream->shortestPathPredecessor = targetStream;
                     if (!recalcMinTraceLengths(program)) {
                         reportError("failed to recalc trace lengths\n");
                         return false;
                     }
-                    if (o->minimumPathLength != len) {
+                    if (sourceStream->minimumPathLength != len) {
                         reportError("after recalculating the minimal path lengths, got an unexpected result\n");
                         return false;
                     }
                 }
                 if (program->trackMaximumPathLength) {
-                    int dmax = o->maximumPathLength;
+                    int dmax = sourceStream->maximumPathLength;
                     if (dmax < 0) {
                         reportError("think I've already been here, but there's no maximal distance to target\n");
                         return false;
                     }
                     bool notOnPath = true;
-                    for (instStream *q = n; q; q = q->longestPathPredecessor) {
-                        if (q == o) {
+                    for (instStream *pathStream = targetStream; pathStream; pathStream = pathStream->longestPathPredecessor) {
+                        if (pathStream == sourceStream) {
                             notOnPath = false;
                             break;
                         }
                     }
                     if (notOnPath) {
-                        int len2 = n->maximumPathLength + n->backtraceDependencyLength;
+                        int len2 = targetStream->maximumPathLength + targetStream->backtraceDependencyLength;
                         if (len2 > dmax) {
-                            o->longestPathPredecessor = n;
+                            sourceStream->longestPathPredecessor = targetStream;
                             if (!recalcMaxTraceLengths(program)) {
                                 reportError("failed to recalc trace lengths\n");
                                 return false;
                             }
-                            if (o->maximumPathLength != len2) {
+                            if (sourceStream->maximumPathLength != len2) {
                                 reportError("after recalculating the maximal path lengths, got an unexpected result\n");
                                 return false;
                             }
@@ -201,8 +201,8 @@ bool recalcMinTraceLengths(Program *program)
         if (!stream->visitState)
             continue;
         int len = 0;
-        for (instStream *q = stream->shortestPathPredecessor; q; q = q->shortestPathPredecessor)
-            len += q->backtraceDependencyLength;
+        for (instStream *predecessorStream = stream->shortestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->shortestPathPredecessor)
+            len += predecessorStream->backtraceDependencyLength;
         if (stream->minimumPathLength < len) {
             reportError("recalcPaths - code produced a longer path.. but should be tracking shortest ..path is %s nLen=%d, but old length was %d!\n",
                           stream->streamName(), len, stream->minimumPathLength);
@@ -219,8 +219,8 @@ bool recalcMaxTraceLengths(Program *program)
         if (!stream->visitState)
             continue;
         int len = 0;
-        for (instStream *q = stream->longestPathPredecessor; q; q = q->longestPathPredecessor)
-            len += q->backtraceDependencyLength;
+        for (instStream *predecessorStream = stream->longestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->longestPathPredecessor)
+            len += predecessorStream->backtraceDependencyLength;
         if (stream->maximumPathLength > len) {
             reportError("recalcPaths - code produced a shorter maximal path.. but should be tracking longest ..path is %s nLen=%d, but old length was %d!\n",
                           stream->streamName(), len, stream->maximumPathLength);

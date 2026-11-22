@@ -157,8 +157,8 @@ void dumpMinPathToTarget(instStream *stream)
 {
     reportInfo("%s  minPathToTarget\n", stream->streamName());
     int pathDepth = 0;
-    for (instStream *q = stream->shortestPathPredecessor; q; q = q->shortestPathPredecessor)
-        reportInfo("    %2d:   [%3d] %s\n", ++pathDepth, q->minimumPathLength, q->streamName());
+    for (instStream *predecessorStream = stream->shortestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->shortestPathPredecessor)
+        reportInfo("    %2d:   [%3d] %s\n", ++pathDepth, predecessorStream->minimumPathLength, predecessorStream->streamName());
     reportInfo("done .. %s  minPathToTarget\n", stream->streamName());
 }
 
@@ -166,7 +166,7 @@ void dumpMaxPathToTarget(instStream *stream)
 {
     reportInfo("%s  maxPathToTarget\n", stream->streamName());
     int pathDepth = 0;
-    for (instStream *q = stream->longestPathPredecessor; q; q = q->longestPathPredecessor)
-        reportInfo("    %2d:   [%3d] %s\n", ++pathDepth, q->maximumPathLength, q->streamName());
+    for (instStream *predecessorStream = stream->longestPathPredecessor; predecessorStream; predecessorStream = predecessorStream->longestPathPredecessor)
+        reportInfo("    %2d:   [%3d] %s\n", ++pathDepth, predecessorStream->maximumPathLength, predecessorStream->streamName());
     reportInfo("done .. %s  maxPathToTarget\n", stream->streamName());
 }

@@ -122,42 +122,42 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
         if (lsz && lockList->externalOutputCount)
             shared = true;
         for (; lock; lock = lock->nextSibling) {
-            int s = 0, e = 0;
-            if (!lockLiveRange(lockList, lock, &s, &e)) {
+            int liveRangeStart = 0, liveRangeEnd = 0;
+            if (!lockLiveRange(lockList, lock, &liveRangeStart, &liveRangeEnd)) {
                 reportError(buildTTabLiveRangeError);
                 exitAfterCleanup(-1);
             }
-            if (s < 0) {
+            if (liveRangeStart < 0) {
                 if (lock->ownerType != 2) {
                     reportError("not extern in .. -ve s\n");
                     return false;
                 }
                 if (lsz) {
-                    if (e == 30000)
-                        s = 0;
+                    if (liveRangeEnd == 30000)
+                        liveRangeStart = 0;
                     else
-                        s = (e / lsz) * lsz;
+                        liveRangeStart = (liveRangeEnd / lsz) * lsz;
                 } else
-                    s = 0;
+                    liveRangeStart = 0;
             } else {
                 if (lock->ownerType == 2) {
                     reportError("extern in .. rl_s>0\n");
                     return false;
                 }
             }
-            if (e == 30000) {
+            if (liveRangeEnd == 30000) {
                 if (lsz)
-                    e = s + lsz - s % lsz;
+                    liveRangeEnd = liveRangeStart + lsz - liveRangeStart % lsz;
                 else
-                    e = allocationTimelineEnd;
+                    liveRangeEnd = allocationTimelineEnd;
             }
-            int r = lock->loopRow;
-            if (r >= 0)
-                candidateRegisterTimeline[r] |= 0x80;
-            for (int c = s; c < e; c++) {
-                int idx = c;
+            int lockRow = lock->loopRow;
+            if (lockRow >= 0)
+                candidateRegisterTimeline[lockRow] |= 0x80;
+            for (int timelineRow = liveRangeStart; timelineRow < liveRangeEnd; timelineRow++) {
+                int idx = timelineRow;
                 if (lsz)
-                    idx = c % lsz;
+                    idx = timelineRow % lsz;
                 unsigned char v = candidateRegisterTimeline[idx];
                 if (((v >> partIndex) & 1) && !shared) {
                     int overlap = lockList->unk_2b != 0;
@@ -232,11 +232,11 @@ void genRegPool::dumpTTab()
 
 int genRegPool::countTTab()
 {
-    int n = 0;
+    int activeTimelineRows = 0;
     for (int i = allocationTimelineStart; i < allocationTimelineEnd; i++)
         if (candidateRegisterTimeline[i])
-            n++;
-    return n;
+            activeTimelineRows++;
+    return activeTimelineRows;
 }
 
 int genRegPool::fitCost(int reg)
@@ -244,19 +244,19 @@ int genRegPool::fitCost(int reg)
     int total = 0;
     for (int i = allocationTimelineStart; i < allocationTimelineEnd; i++) {
         unsigned char t = candidateRegisterTimeline[i];
-        int m = t & 0x7f;
-        if (((unsigned char)registerPartAvailabilityMask[reg] & m) != m)
+        int desiredPartMask = t & 0x7f;
+        if (((unsigned char)registerPartAvailabilityMask[reg] & desiredPartMask) != desiredPartMask)
             return -1;
         char *row = &allocationRegisterTimeline[i * 32];
         unsigned char a = row[reg];
         if (t & a)
             return -1;
-        int n = countSetBits((t | a) & 0x7f);
-        if (n > maximumAllocationParts) {
+        int occupiedPartCount = countSetBits((t | a) & 0x7f);
+        if (occupiedPartCount > maximumAllocationParts) {
             reportError("nbits overrun \n");
             exitAfterCleanup(-1);
         }
-        total += maximumAllocationParts - n;
+        total += maximumAllocationParts - occupiedPartCount;
     }
     if (total < 0)
         total = 0;
@@ -268,16 +268,16 @@ bool genRegPool::set_t_in_aTab(int reg)
     int end = allocationTimelineEnd;
     for (int i = allocationTimelineStart; i < end; i++) {
         unsigned char c = candidateRegisterTimeline[i];
-        int t = c;
-        if (((unsigned char)registerPartAvailabilityMask[reg] & t & 0x7f) != (c & 0x7f)) {
+        int requestedPartMask = c;
+        if (((unsigned char)registerPartAvailabilityMask[reg] & requestedPartMask & 0x7f) != (c & 0x7f)) {
             reportError(setTInATabAccessError, reg);
             return false;
         }
         char *row = &allocationRegisterTimeline[i * 32];
         unsigned char a = row[reg];
-        if (a & t) {
+        if (a & requestedPartMask) {
             reportError(setTInATabOverlapError,
-                          i, reg, a, t);
+                          i, reg, a, requestedPartMask);
             return false;
         }
         row[reg] = a | c;
@@ -288,9 +288,9 @@ bool genRegPool::set_t_in_aTab(int reg)
 void genRegPool::dumpATab()
 {
     for (int i = allocationTimelineStart; i != allocationTimelineEnd; i++)
-        for (int r = 0; r != allocationRegisterCount; r++) {
-            for (int p = 0; p != maximumAllocationParts; p++) {
-                int bit = (unsigned char)registerPartAvailabilityMask[r] & (1 << p);
+        for (int registerIndex = 0; registerIndex != allocationRegisterCount; registerIndex++) {
+            for (int partIndex = 0; partIndex != maximumAllocationParts; partIndex++) {
+                int bit = (unsigned char)registerPartAvailabilityMask[registerIndex] & (1 << partIndex);
                 if (bit != 0)
                     bit = 1;
             }
@@ -301,15 +301,15 @@ int genRegPool::bestReg()
 {
     int best = 100000000;
     int which = -1;
-    for (int r = 0; r != allocationRegisterCount; r++) {
-        int c = fitCost(r);
-        if (c < 0)
+    for (int registerIndex = 0; registerIndex != allocationRegisterCount; registerIndex++) {
+        int placementCost = fitCost(registerIndex);
+        if (placementCost < 0)
             continue;
-        if (c == 0)
-            return r;
-        if (c < best) {
-            best = c;
-            which = r;
+        if (placementCost == 0)
+            return registerIndex;
+        if (placementCost < best) {
+            best = placementCost;
+            which = registerIndex;
         }
     }
     return which;
@@ -328,8 +328,8 @@ bool genRegPool::set_in_aTab(regUse *registerUse)
                           reg->registerName());
             exitAfterCleanup(-1);
         }
-        int id = reg->regIndex();
-        if (id < 0) {
+        int localRegisterIndex = reg->regIndex();
+        if (localRegisterIndex < 0) {
             reportError(setInATabLocalIdError);
             exitAfterCleanup(-1);
         }
@@ -359,9 +359,9 @@ bool genRegPool::set_in_aTab(regUse *registerUse)
                                   reg->registerName(), reg->registerName());
                     return false;
                 }
-                if (!set_t_in_aTab(id)) {
+                if (!set_t_in_aTab(localRegisterIndex)) {
                     reportError(setInATabCheckError,
-                                  reg->registerName(), id);
+                                  reg->registerName(), localRegisterIndex);
                     dumpTTab();
                     dumpATab();
                     return false;

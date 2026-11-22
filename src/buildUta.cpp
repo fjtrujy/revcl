@@ -38,36 +38,36 @@ bool buildUta(Program *prog, instStream *s, DecodedLine *blocks, int count)
             return false;
         }
         decodedLine->labels.clearNodes();
-        Instr *in = decodedLine->instructions[0];
-        if (!in)
+        Instr *decodedInstruction = decodedLine->instructions[0];
+        if (!decodedInstruction)
             continue;
-        if (in->parsedLoopId > 0) {
+        if (decodedInstruction->parsedLoopId > 0) {
             reportUserMessage("parseLid set for a uta instruction\n");
-            in->leDump();
+            decodedInstruction->leDump();
             return false;
         }
-        in->parsedLoopId = -1;
-        if (in->syntheticKind) {
-            if (!s->processCmdSynth(in)) {
+        decodedInstruction->parsedLoopId = -1;
+        if (decodedInstruction->syntheticKind) {
+            if (!s->processCmdSynth(decodedInstruction)) {
                 reportUserMessage("failed to process an instruction\n");
                 int saved = errorOccurred;
                 errorOccurred = !quietDiagnostics;
-                dumpUtaInstruction(in);
+                dumpUtaInstruction(decodedInstruction);
                 errorOccurred = saved;
             }
-            flags |= in->instructionModifierBits;
+            flags |= decodedInstruction->instructionModifierBits;
         } else {
             decodedLine->instructions[0] = 0;
-            if (!scheduleTable->logAddLinear_Tail(in)) {
+            if (!scheduleTable->logAddLinear_Tail(decodedInstruction)) {
                 reportError("failed to attach instruction to the linear list for synth\n");
                 return false;
             }
-            if (in->branchFlags) {
+            if (decodedInstruction->branchFlags) {
                 if (branch >= 0) {
                     reportError("more than one branch in uta decode\n");
                     return false;
                 }
-                branch = in->branchFlags;
+                branch = decodedInstruction->branchFlags;
             }
         }
     }

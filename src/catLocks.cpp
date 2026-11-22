@@ -1,13 +1,13 @@
 #include "os.h"
 #include "lock_shared.h"
 
-bool cls0805c244::catLocks(OperandLock *firstLock, OperandLock *operandLock, int *s, int *e, int *end)
+bool cls0805c244::catLocks(OperandLock *firstLock, OperandLock *operandLock, int *rangeStartOut, int *rangeEndOut, int *end)
 {
     bool found = false;
     int lsz = activeLoopSize;
     if (firstLock->scheduledConsumerCount) {
-        *s = firstLock->earliestReadyCycle + lsz;
-        *e = firstLock->fullLatencyReadyCycle + lsz;
+        *rangeStartOut = firstLock->earliestReadyCycle + lsz;
+        *rangeEndOut = firstLock->fullLatencyReadyCycle + lsz;
         *end = firstLock->latestReadyCycle + lsz;
         found = true;
     }
@@ -15,12 +15,12 @@ bool cls0805c244::catLocks(OperandLock *firstLock, OperandLock *operandLock, int
     int be = operandLock->fullLatencyReadyCycle;
     int bend = operandLock->latestReadyCycle;
     if (!found) {
-        *s = bs;
-        *e = be;
+        *rangeStartOut = bs;
+        *rangeEndOut = be;
         *end = bend;
     } else {
-        *s = bs;
-        *e = be;
+        *rangeStartOut = bs;
+        *rangeEndOut = be;
         if (bend > *end)
             *end = bend;
     }
@@ -39,7 +39,7 @@ static inline bool sameLockOwner(OperandLock *firstLock, OperandLock *operandLoc
 
 int cls0805c244::canMoveInputLock(OperandLock *operandLock, short *pos, int slotBit)
 {
-    int p = *pos;
+    int targetLinearRow = *pos;
     OperandLock *lock = outputLocks;
     int lsz = activeLoopSize;
     if (calculateLoopStats)
@@ -51,38 +51,38 @@ int cls0805c244::canMoveInputLock(OperandLock *operandLock, short *pos, int slot
     } else {
         OperandLock *par = operandLock->getParent();
         bool cat = false;
-        int s, e, end;
+        int rangeStart, rangeEnd, end;
         if (lsz && isRegLock(par)) {
-            OperandLock *x = externalOutputLocks[0];
-            if (x->insertedIntoLockList) {
-                if (sameLockOwner(operandLock, x))
+            OperandLock *externalOutputLock = externalOutputLocks[0];
+            if (externalOutputLock->insertedIntoLockList) {
+                if (sameLockOwner(operandLock, externalOutputLock))
                     return 0;
-                p += lsz;
-                if (!catLocks(par, x, &s, &e, &end)) {
+                targetLinearRow += lsz;
+                if (!catLocks(par, externalOutputLock, &rangeStart, &rangeEnd, &end)) {
                     reportError("failed to concatenate reg ref with xo\n");
                     exitAfterCleanup(-1);
                 }
                 cat = true;
-                par = x;
+                par = externalOutputLock;
             } else if (par->scheduledConsumerCount) {
-                s = par->earliestReadyCycle;
-                e = par->fullLatencyReadyCycle;
+                rangeStart = par->earliestReadyCycle;
+                rangeEnd = par->fullLatencyReadyCycle;
                 end = par->latestReadyCycle;
-                if (p - operandLock->issueLatency < s)
-                    s = p - operandLock->issueLatency;
-                if (p - operandLock->issueLatency < e)
-                    e = p - operandLock->issueLatency;
-                if (p > end)
-                    end = p;
-                if (end - s >= lsz)
+                if (targetLinearRow - operandLock->issueLatency < rangeStart)
+                    rangeStart = targetLinearRow - operandLock->issueLatency;
+                if (targetLinearRow - operandLock->issueLatency < rangeEnd)
+                    rangeEnd = targetLinearRow - operandLock->issueLatency;
+                if (targetLinearRow > end)
+                    end = targetLinearRow;
+                if (end - rangeStart >= lsz)
                     return 0x2000;
             } else {
-                s = p - operandLock->issueLatency;
-                e = p;
-                end = p;
+                rangeStart = targetLinearRow - operandLock->issueLatency;
+                rangeEnd = targetLinearRow;
+                end = targetLinearRow;
             }
         } else if (lsz && containsRegisterOutput && par->externalOutputSlotPlusOne) {
-            if (!catLocks(sortedOutputLocks, par, &s, &e, &end)) {
+            if (!catLocks(sortedOutputLocks, par, &rangeStart, &rangeEnd, &end)) {
                 reportError("case B failed to cat xo\n");
                 checkCounts();
                 reportError("we are :\n");
@@ -91,20 +91,20 @@ int cls0805c244::canMoveInputLock(OperandLock *operandLock, short *pos, int slot
             }
             cat = true;
         } else {
-            s = par->earliestReadyCycle;
-            e = par->fullLatencyReadyCycle;
+            rangeStart = par->earliestReadyCycle;
+            rangeEnd = par->fullLatencyReadyCycle;
             end = par->latestReadyCycle;
         }
 
-        if (p - operandLock->issueLatency < e)
+        if (targetLinearRow - operandLock->issueLatency < rangeEnd)
             return 8;
-        if (p <= end)
+        if (targetLinearRow <= end)
             return 0;
-        end = p;
-        if (lsz && end - s >= lsz)
+        end = targetLinearRow;
+        if (lsz && end - rangeStart >= lsz)
             return 0x40000;
-        int ws = s, we = end;
-        wrapRangeLocal(ws, we);
+        int wrappedStart = rangeStart, wrappedEnd = end;
+        wrapRangeLocal(wrappedStart, wrappedEnd);
         if (lock) do {
             lock->print();
             if (lock == par)
@@ -113,13 +113,13 @@ int cls0805c244::canMoveInputLock(OperandLock *operandLock, short *pos, int slot
                 continue;
             if (cat && isRegLock(lock))
                 continue;
-            int ls = lock->adjustedEarliestReadyCycle;
-            int le = lock->adjustedLatestReadyCycle;
-            wrapRangeLocal(ls, le);
+            int lockStart = lock->adjustedEarliestReadyCycle;
+            int lockEnd = lock->adjustedLatestReadyCycle;
+            wrapRangeLocal(lockStart, lockEnd);
             if (lock->activeReferenceCount) {
-                if (ws < le && we >= ls)
+                if (wrappedStart < lockEnd && wrappedEnd >= lockStart)
                     return 0x10;
-            } else if (lockRangesOverlap(ws, we, ls, le))
+            } else if (lockRangesOverlap(wrappedStart, wrappedEnd, lockStart, lockEnd))
                 return 0x20;
         } while ((lock = lock->nextSibling) != 0);
     }
@@ -130,30 +130,30 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
 {
     int ret;
     int lsz = activeLoopSize;
-    int p = ((InstructionPosition *)pos)->linearRow;
-    int sz = ((InstructionPosition *)pos)->loopRow;
-    int mp = p;
-    ret = checkOverlap(out, pos, &mp);
+    int targetLinearRow = ((InstructionPosition *)pos)->linearRow;
+    int targetLoopRow = ((InstructionPosition *)pos)->loopRow;
+    int overlapRow = targetLinearRow;
+    ret = checkOverlap(out, pos, &overlapRow);
     if (ret)
         return ret;
-    int first = out->latencyModeFlag ? p + 1 : out->issueLatency + p;
-    int last = out->issueLatency + p;
+    int first = out->latencyModeFlag ? targetLinearRow + 1 : out->issueLatency + targetLinearRow;
+    int last = out->issueLatency + targetLinearRow;
 
     int lim;
     if (out->referenceCount) {
-        int a = out->upperPipeConsumerCount, b = out->lowerPipeConsumerCount;
-        int d = out->eitherPipeConsumerCount;
-        int hi = a, lo = b;
-        if (a < b) {
-            hi = b;
-            lo = a;
+        int upperConsumerCount = out->upperPipeConsumerCount, lowerConsumerCount = out->lowerPipeConsumerCount;
+        int eitherConsumerCount = out->eitherPipeConsumerCount;
+        int maxConsumerCount = upperConsumerCount, minConsumerCount = lowerConsumerCount;
+        if (upperConsumerCount < lowerConsumerCount) {
+            maxConsumerCount = lowerConsumerCount;
+            minConsumerCount = upperConsumerCount;
         }
-        d -= hi - lo;
-        if (d > 0)
-            hi += (d + 1) >> 1;
-        int off = hi;
-        if (hi > 0)
-            off = hi - 1;
+        eitherConsumerCount -= maxConsumerCount - minConsumerCount;
+        if (eitherConsumerCount > 0)
+            maxConsumerCount += (eitherConsumerCount + 1) >> 1;
+        int off = maxConsumerCount;
+        if (maxConsumerCount > 0)
+            off = maxConsumerCount - 1;
         lim = last + off;
     } else
         lim = first;
@@ -177,18 +177,18 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
             OperandLock *operandLock = sortedOutputLocks;
             ext = true;
             if (operandLock->scheduledConsumerCount) {
-                int hs = operandLock->earliestReadyCycle + lsz;
-                int he = operandLock->latestReadyCycle + lsz;
-                if (hs < last)
+                int nextEarliestReadyCycle = operandLock->earliestReadyCycle + lsz;
+                int nextLatestReadyCycle = operandLock->latestReadyCycle + lsz;
+                if (nextEarliestReadyCycle < last)
                     return 2;
-                if (he > lim)
-                    lim = he;
+                if (nextLatestReadyCycle > lim)
+                    lim = nextLatestReadyCycle;
             }
         }
     } else if (lsz && containsRegisterOutput) {
-        OperandLock *h = sortedOutputLocks;
-        if (h->scheduledConsumerCount) {
-            if (first < h->latestReadyCycle)
+        OperandLock *firstOutputLock = sortedOutputLocks;
+        if (firstOutputLock->scheduledConsumerCount) {
+            if (first < firstOutputLock->latestReadyCycle)
                 return 0x4000;
         } else
             ext = true;
@@ -196,32 +196,32 @@ int cls0805c244::canMoveOutputLock(OperandLock *out, short *pos, int slotBit)
     if (lsz && lim - first > lsz)
         return 0x2000;
 
-    int s = sz - p + first;
-    int e = sz - p + lim;
-    wrapRangeLocal(s, e);
+    int wrappedStart = targetLoopRow - targetLinearRow + first;
+    int wrappedEnd = targetLoopRow - targetLinearRow + lim;
+    wrapRangeLocal(wrappedStart, wrappedEnd);
     for (OperandLock *lock = outputLocks; lock; lock = lock->nextSibling) {
         if (lock == out)
             continue;
         if (ext && lock->ownerType == 2)
             continue;
-        int ls = lock->adjustedEarliestReadyCycle;
-        int le = lock->adjustedLatestReadyCycle;
-        wrapRangeLocal(ls, le);
-        if (lockRangesOverlap(s, e, ls, le))
+        int lockStart = lock->adjustedEarliestReadyCycle;
+        int lockEnd = lock->adjustedLatestReadyCycle;
+        wrapRangeLocal(lockStart, lockEnd);
+        if (lockRangesOverlap(wrappedStart, wrappedEnd, lockStart, lockEnd))
             return 2;
     }
     if (ret)
         return ret;
     if (externalOutputCount && !lsz && !out->latencyModeFlag) {
-        OperandLock *x = externalOutputLocks[0];
-        if (!x) {
+        OperandLock *externalOutputLock = externalOutputLocks[0];
+        if (!externalOutputLock) {
             reportError("external lock not set \n");
             abortAfterError();
         }
-        if (x->insertedIntoLockList) {
-            if (out->linearRow == p)
+        if (externalOutputLock->insertedIntoLockList) {
+            if (out->linearRow == targetLinearRow)
                 return 0;
-            if (p > x->linearRow)
+            if (targetLinearRow > externalOutputLock->linearRow)
                 return 0x200000;
         }
     }

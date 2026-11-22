@@ -39,13 +39,13 @@ bool rPart::cycle(bool flag)
         if (cur->cycleOffset)
             cur->cycleOffset = 0;
     } else {
-        int n = 0;
+        int expiredLocationCount = 0;
         ol_s* cur = &currentLocation;
-        int c = cur->cycleOffset;
-        if (c) {
-            int v = c - 1;
-            cur->cycleOffset = v > 255 ? 255 : v;
-            n = 1;
+        int currentCycleOffset = cur->cycleOffset;
+        if (currentCycleOffset) {
+            int nextCycleOffset = currentCycleOffset - 1;
+            cur->cycleOffset = nextCycleOffset > 255 ? 255 : nextCycleOffset;
+            expiredLocationCount = 1;
         }
         for (int i = 0; i != 4; i++) {
             ol_s* location = &pendingLocations[i];
@@ -55,7 +55,7 @@ bool rPart::cycle(bool flag)
             int v = c - 1;
             location->cycleOffset = v > 255 ? 255 : v;
             if (v == 0) {
-                if (++n > 1) {
+                if (++expiredLocationCount > 1) {
                     reportError("WARNING !! CYCLE wrote thru more than once!\n");
                     return false;
                 }
@@ -207,9 +207,9 @@ VclPtrWord RegPoolEntry::getPartPayload(int partIndex)
     return parts[partIndex].payload;
 }
 
-bool RegPoolEntry::setPartPayload(int partIndex, VclPtrWord v)
+bool RegPoolEntry::setPartPayload(int partIndex, VclPtrWord partPayload)
 {
-    parts[partIndex].payload = v;
+    parts[partIndex].payload = partPayload;
     return true;
 }
 
@@ -218,15 +218,15 @@ VclPtrWord rPart::getPayload()
     return payload;
 }
 
-bool rPart::setPayload(VclPtrWord v)
+bool rPart::setPayload(VclPtrWord newPayload)
 {
-    payload = v;
+    payload = newPayload;
     return true;
 }
 
-ol_s* rPart::getPendingLocation(int i)
+ol_s* rPart::getPendingLocation(int pendingIndex)
 {
-    return &pendingLocations[i];
+    return &pendingLocations[pendingIndex];
 }
 
 void RegPoolEntry::moveReset()

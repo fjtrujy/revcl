@@ -31,17 +31,17 @@ void cls08058718::noopInstructionPositionHook()
 {
 }
 
-void cls08058718::setFromLinearRow(short v)
+void cls08058718::setFromLinearRow(short row)
 {
-    int g = activeLoopSize;
-    if (g == 0 || v < g) {
-        loopRow = v;
-        linearRow = v;
+    int loopPeriod = activeLoopSize;
+    if (loopPeriod == 0 || row < loopPeriod) {
+        loopRow = row;
+        linearRow = row;
         loopIteration = 0;
     } else {
-        linearRow = v;
-        loopRow = v % g;
-        loopIteration = v / g;
+        linearRow = row;
+        loopRow = row % loopPeriod;
+        loopIteration = row / loopPeriod;
     }
 }
 

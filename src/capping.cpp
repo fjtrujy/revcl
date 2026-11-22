@@ -18,26 +18,26 @@ void splitCtime(workTable *wt, int l, int m);
 int insertAllRegisterCaps(Program *program)
 {
     int total = 0;
-    instStream *s;
-    for (s = program->streamHead; s; s = s->nextStream) {
-        s->externalSchedulingPrepared = 0;
-        if (!s->usesFreeRawLayout())
-            s->externalSchedulingPrepared = 1;
+    instStream *currentStream;
+    for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+        currentStream->externalSchedulingPrepared = 0;
+        if (!currentStream->usesFreeRawLayout())
+            currentStream->externalSchedulingPrepared = 1;
     }
-    for (s = program->streamHead; s; s = s->nextStream) {
-        if (s->externalSchedulingPrepared)
+    for (currentStream = program->streamHead; currentStream; currentStream = currentStream->nextStream) {
+        if (currentStream->externalSchedulingPrepared)
             continue;
-        if (!prepExtInfo(program, s, 0)) {
-            reportError("failed to prep external info for stream %s\n", s->streamName());
+        if (!prepExtInfo(program, currentStream, 0)) {
+            reportError("failed to prep external info for stream %s\n", currentStream->streamName());
             return -1;
         }
-        int n = insertStreamRegisterCaps(program, s);
-        if (n < 0) {
-            reportError("failed to sred a table from %s\n", s->streamName());
+        int insertedCapCount = insertStreamRegisterCaps(program, currentStream);
+        if (insertedCapCount < 0) {
+            reportError("failed to sred a table from %s\n", currentStream->streamName());
             return -1;
         }
-        s->externalSchedulingPrepared = 1;
-        total += n;
+        currentStream->externalSchedulingPrepared = 1;
+        total += insertedCapCount;
     }
     return total;
 }
@@ -66,23 +66,23 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
         return -1;
     }
     initializeScheduledCycleTimes(scheduleTable);
-    for (int rl = scheduleTable->getRangeStart(); rl != scheduleTable->getRangeEnd(); rl++) {
-        wtRow *row = (wtRow *)((cls_unk30 *)scheduleTable)->getIE_ck(rl);
+    for (int rowIndex = scheduleTable->getRangeStart(); rowIndex != scheduleTable->getRangeEnd(); rowIndex++) {
+        wtRow *row = (wtRow *)((cls_unk30 *)scheduleTable)->getIE_ck(rowIndex);
         int id = row->ctime();
-        for (int pp = 0; pp != 2; pp++) {
-            Instr *in = GetI((Instr **)row, pp);
-            if (!in)
+        for (int pipeIndex = 0; pipeIndex != 2; pipeIndex++) {
+            Instr *rowInstruction = GetI((Instr **)row, pipeIndex);
+            if (!rowInstruction)
                 continue;
             Operand *operand;
-            for (int operandIndex = 0; operandIndex != in->operandCount; operandIndex++) {
-                operand = &in->operands[operandIndex];
+            for (int operandIndex = 0; operandIndex != rowInstruction->operandCount; operandIndex++) {
+                operand = &rowInstruction->operands[operandIndex];
                 RegPoolEntry *reg = registerOperand(operand, 2);
                 ol_s *live = operand->parts[0].operandLocations.head;
                 if (!reg || operand->externalBlockModeFlag || !live)
                     continue;
                 RegPoolEntry *capReg = 0;
                 int capMask = 0;
-                int bits = findCap(scheduleTable, in, operandIndex, &capReg, &capMask);
+                int bits = findCap(scheduleTable, rowInstruction, operandIndex, &capReg, &capMask);
                 if (bits < 0) {
                     reportError("cancap failed\n");
                     return -1;
@@ -92,7 +92,7 @@ int insertStreamRegisterCaps(Program *program, instStream *stream)
                 int need = operand->outputLatency;
                 if (reg->registerIndex == 0x34 && need > 1)
                     need--;
-                int line = rl + 1;
+                int line = rowIndex + 1;
                 wtRow *workRow = row + 1;
                 int limit = need + id;
                 int bestMask = 0, bestLine = -1, bestPipe = -1, bestCount = 0, count = 0;

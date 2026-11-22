@@ -102,7 +102,7 @@ bool assignExtRegisters(Program *program)
     return true;
 }
 
-static inline char bitSet(int m, int i)
+static inline char bitSet(int mask, int bitIndex)
 {
-    return (m >> i) & 1;
+    return (mask >> bitIndex) & 1;
 }

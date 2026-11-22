@@ -189,7 +189,7 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
                 q++;
             } while (end < count);
         }
-        int n = end - i;
+        int streamLineCount = end - i;
         instStream *stream = new instStream;
         if (!stream) goto allocationOfStreamFailed;
         goto afterNHandler;
@@ -228,25 +228,25 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
         afterAError:;
         switch (mode) {
         case 1:
-            if (!buildUta(program, stream, b, n)) {
+            if (!buildUta(program, stream, b, streamLineCount)) {
                 reportInfo("buildUta table failed for some reason\n");
                 return false;
             }
             break;
         case 6:
-            if (!buildPassThru(program, stream, b, n)) {
+            if (!buildPassThru(program, stream, b, streamLineCount)) {
                 reportInfo("buildPass failed for some reason\n");
                 return false;
             }
             break;
         case 3:
-            if (!buildRaw(program, stream, b, n, sub)) {
+            if (!buildRaw(program, stream, b, streamLineCount, sub)) {
                 reportInfo("buildRaw table failed for some reason\n");
                 return false;
             }
             break;
         case 4:
-            if (!buildSynth(program, stream, b, n)) {
+            if (!buildSynth(program, stream, b, streamLineCount)) {
                 reportInfo("buildSynth table failed for some reason\n");
                 return false;
             }
@@ -255,7 +255,7 @@ bool splitParserStream(Program *program, DecodedLine *blocks, int count)
             reportError("bad decMode for builder switch\n");
             return false;
         }
-        for (int k = 0; k != n; k++)
+        for (int k = 0; k != streamLineCount; k++)
             blocks[i + k].releaseContents();
         if (!program->addStream(stream))
             goto streamError;

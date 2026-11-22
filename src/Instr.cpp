@@ -236,9 +236,9 @@ void Instr::leDump(int opnd, int mask)
     errorOccurred = saved;
 }
 
-bool hasDirectOperandDependency(Instr *a, Instr *secondInstruction)
+bool hasDirectOperandDependency(Instr *firstInstruction, Instr *secondInstruction)
 {
-    if (!a || !secondInstruction)
+    if (!firstInstruction || !secondInstruction)
         return false;
     for (int operandIndex = 0; operandIndex != secondInstruction->operandCount; operandIndex++) {
         Operand *operand = &secondInstruction->operands[operandIndex];
@@ -248,16 +248,16 @@ bool hasDirectOperandDependency(Instr *a, Instr *secondInstruction)
             for (int partIndex = 0; partIndex != registerPartCount; partIndex++)
                 if (((operand->componentMask & ~operand->externalPartMask) >> partIndex) & 1)
                     for (ol_s *currentLocation = operand->parts[partIndex].operandLocations.head; currentLocation; currentLocation = currentLocation->next)
-                        if (currentLocation->instruction == a)
+                        if (currentLocation->instruction == firstInstruction)
                             return true;
         }
     }
     return false;
 }
 
-bool writesInputRegisterOf(Instr *a, Instr *secondInstruction)
+bool writesInputRegisterOf(Instr *firstInstruction, Instr *secondInstruction)
 {
-    if (!a || !secondInstruction)
+    if (!firstInstruction || !secondInstruction)
         return false;
     for (int readerOperandIndex = 0; readerOperandIndex != secondInstruction->operandCount; readerOperandIndex++) {
         Operand *operand = &secondInstruction->operands[readerOperandIndex];
@@ -265,7 +265,7 @@ bool writesInputRegisterOf(Instr *a, Instr *secondInstruction)
         if (registerEntry) {
             int want = operand->componentMask;
             int mask = 0;
-            Instr *instruction = a;
+            Instr *instruction = firstInstruction;
             for (int writerOperandIndex = 0; writerOperandIndex != instruction->operandCount; writerOperandIndex++)
                 if (registerOperand(&instruction->operands[writerOperandIndex], 2) == registerEntry)
                     mask |= instruction->operands[writerOperandIndex].componentMask;
@@ -373,23 +373,23 @@ Instr *Instr::clone()
 
 int Instr::getRamBits()
 {
-    int r;
+    int ramBits;
     if (!ramAccessType) {
-        memset(&r, 0, sizeof(r));
-        return r;
+        memset(&ramBits, 0, sizeof(ramBits));
+        return ramBits;
     }
-    r = 0;
+    ramBits = 0;
     if (opcodeInfo) {
         switch ((char)opcodeInfo->destinationMaskMode) {
         case 1:
-            r = destinationMask;
+            ramBits = destinationMask;
             break;
         default:
             reportError("got here! - end of get rambits?\n");
             dumpOperandDiagnostics(false);
             exitAfterCleanup(-1);
-            memset(&r, 0, sizeof(r));
-            return r;
+            memset(&ramBits, 0, sizeof(ramBits));
+            return ramBits;
         case 3: {
             Operand *operand = getOp(1);
             if (!operand) {
@@ -398,17 +398,17 @@ int Instr::getRamBits()
             }
             if (!operand->addressComponentMask)
                 reportWarning("mb was 0 failed to get xmod bits for mod 1 inst\n");
-            r = operand->addressComponentMask;
+            ramBits = operand->addressComponentMask;
             break;
         }
         case 0:
         case 4:
         case 5:
-            r = 15;
+            ramBits = 15;
             break;
         }
     }
-    return r;
+    return ramBits;
 }
 
 bool Instr::resetOptimizationState()
@@ -468,11 +468,11 @@ int Instr::collectInputRegisterMask(RegPoolEntry *reg, bool *paired)
 }
 
 
-bool Instr::getImmediateOperand(int n, int *out)
+bool Instr::getImmediateOperand(int operandIndex, int *out)
 {
-    Operand *operand = getOp(n);
+    Operand *operand = getOp(operandIndex);
     if (!operand) {
-        reportError("failed to get operand %d\n", n);
+        reportError("failed to get operand %d\n", operandIndex);
         return false;
     }
     return operand->immediateValue.getInt(out);
@@ -507,9 +507,9 @@ bool Instr::changeBranchImmediate(const char *immediateText)
     return operand->immediateValue.setString(immediateText);
 }
 
-bool link_oParts(Instr *instruction, int aOp, int slot, Instr *b, int bOp, int bSlot)
+bool link_oParts(Instr *instruction, int aOp, int slot, Instr *secondInstruction, int bOp, int bSlot)
 {
-    if (!instruction || !b) {
+    if (!instruction || !secondInstruction) {
         reportError("link_oParts, null arg pointer!\n");
         return false;
     }
@@ -518,8 +518,8 @@ bool link_oParts(Instr *instruction, int aOp, int slot, Instr *b, int bOp, int b
         return false;
     }
     OpSlot *firstOperandSlot = &instruction->operands[aOp].parts[slot];
-    OpSlot *secondOperandSlot = &b->operands[bOp].parts[slot];
-    ol_s *location = firstOperandSlot->operandLocations.addOperandLocation(b, bOp, slot, false);
+    OpSlot *secondOperandSlot = &secondInstruction->operands[bOp].parts[slot];
+    ol_s *location = firstOperandSlot->operandLocations.addOperandLocation(secondInstruction, bOp, slot, false);
     if (location) {
         olList *locationList = &secondOperandSlot->operandLocations;
         ol_s *reciprocalLocation = locationList->addOperandLocation(instruction, aOp, slot, false);
@@ -538,7 +538,7 @@ static inline void dumpLinkOperand(Operand *operand)
     operand->diagnoseOperand(0);
 }
 
-bool link_oParts(ol_s *location, ol_s *inputLocation, int x, int y)
+bool link_oParts(ol_s *location, ol_s *inputLocation, int minimumPathKey, int y)
 {
     if (!location) {
         reportError("link_oParts, null arg pointer2!\n");
@@ -608,27 +608,27 @@ bool link_oParts(ol_s *location, ol_s *inputLocation, int x, int y)
     if (clampedCycleOffset > 0xff)
         clampedCycleOffset = 0xff;
     linkedInputLocation->cycleOffset = clampedCycleOffset;
-    linkedInputLocation->pathKey = x;
+    linkedInputLocation->pathKey = minimumPathKey;
     linkedInputLocation->maximumPathKey = y;
     linkedOutputLocation->cycleOffset = 0;
-    linkedOutputLocation->pathKey = x;
+    linkedOutputLocation->pathKey = minimumPathKey;
     linkedOutputLocation->maximumPathKey = y;
     return true;
 }
 
-bool Instr::setOwner(cls_unk30 *s)
+bool Instr::setOwner(cls_unk30 *ownerTablePointer)
 {
-    if (ownerTable && ownerTable != s) {
+    if (ownerTable && ownerTable != ownerTablePointer) {
         reportError("in->setOwner - already owned..but by wrong stream!\n");
         exitAfterCleanup(-1);
     }
-    ownerTable = s;
+    ownerTable = ownerTablePointer;
     return true;
 }
 
-const char *branchTypeNameByCode(int t)
+const char *branchTypeNameByCode(int branchType)
 {
-    switch (t) {
+    switch (branchType) {
     case 0:
         return "BTYPE_NULL";
     case 1:
@@ -710,10 +710,10 @@ int Instr::inputMaskForRegister(RegPoolEntry *reg, int mask)
     return result & mask;
 }
 
-const char *syntheticTypeName(int t)
+const char *syntheticTypeName(int syntheticKind)
 {
     const char *syntheticName = "SYNTH_UNKNOWN";
-    switch (t) {
+    switch (syntheticKind) {
     case 0: syntheticName = "SYNTH_NULL"; break;
     case 1: syntheticName = "SYNTH_ENTER"; break;
     case 2: syntheticName = "SYNTH_ENDENTER"; break;
@@ -816,12 +816,12 @@ Operand *Instr::findOutputOperand(RegPoolEntry *reg, int mask)
     return 0;
 }
 
-bool Instr::hasLinkedOutputFrom(unsigned int n)
+bool Instr::hasLinkedOutputFrom(unsigned int operandIndex)
 {
     if (!opcodeInfo)
         return false;
-    for (; n < operandCount; n++) {
-        Operand *operand = &operands[n];
+    for (; operandIndex < operandCount; operandIndex++) {
+        Operand *operand = &operands[operandIndex];
         RegPoolEntry *registerEntry = registerOperand(operand, 2);
         if (registerEntry) {
             if (operand->externalPartMask)
@@ -977,10 +977,10 @@ bool Instr::expandVirtualStatOperand()
                 reportWarning("fsop has literals - so assuming the worst - if it were numerical vcl could figure out dependencies better\n");
             } else if (value->getUInt(&imm)) {
                 unsigned int bits;
-                int id = -1;
+                int opcodeId = -1;
                 if (opcodeInfo)
-                    id = getOpcodeId(opcodeInfo);
-                switch (id) {
+                    opcodeId = getOpcodeId(opcodeInfo);
+                switch (opcodeId) {
                 case 147:
                     break;
                 case 148:
@@ -1113,24 +1113,24 @@ void Instr::copyExternalTimingConstraints(Instr *src)
     externalOutputConstraint = src->externalOutputConstraint;
 }
 
-void Instr::raiseExternalInputPairedConstraint(short v)
+void Instr::raiseExternalInputPairedConstraint(short pairedInputConstraint)
 {
-    externalInputPairedConstraint = externalInputPairedConstraint < v ? v : externalInputPairedConstraint;
+    externalInputPairedConstraint = externalInputPairedConstraint < pairedInputConstraint ? pairedInputConstraint : externalInputPairedConstraint;
 }
 
-void Instr::raiseExternalInputConstraint(short v)
+void Instr::raiseExternalInputConstraint(short inputConstraint)
 {
-    externalInputConstraint = externalInputConstraint < v ? v : externalInputConstraint;
+    externalInputConstraint = externalInputConstraint < inputConstraint ? inputConstraint : externalInputConstraint;
 }
 
-void Instr::raiseExternalOutputPairedConstraint(short v)
+void Instr::raiseExternalOutputPairedConstraint(short pairedOutputConstraint)
 {
-    externalOutputPairedConstraint = externalOutputPairedConstraint < v ? v : externalOutputPairedConstraint;
+    externalOutputPairedConstraint = externalOutputPairedConstraint < pairedOutputConstraint ? pairedOutputConstraint : externalOutputPairedConstraint;
 }
 
-void Instr::raiseExternalOutputConstraint(short v)
+void Instr::raiseExternalOutputConstraint(short outputConstraint)
 {
-    externalOutputConstraint = externalOutputConstraint < v ? v : externalOutputConstraint;
+    externalOutputConstraint = externalOutputConstraint < outputConstraint ? outputConstraint : externalOutputConstraint;
 }
 
 OpSlot::OpSlot()

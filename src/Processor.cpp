@@ -240,9 +240,9 @@ bool statReset(Program *program)
     return true;
 }
 
-iInfo *getOpcodeInfoById(int id)
+iInfo *getOpcodeInfoById(int opcodeId)
 {
-    return &processorInstructionTable[id];
+    return &processorInstructionTable[opcodeId];
 }
 
 iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
@@ -504,12 +504,12 @@ static inline int iinfoId(iInfo *opcodeInfo)
 {
     if (!opcodeInfo)
         return -1;
-    int id = ((char *)opcodeInfo - (char *)processorInstructionTable) / sizeof(iInfo);
-    if (id < 0)
+    int opcodeIndex = ((char *)opcodeInfo - (char *)processorInstructionTable) / sizeof(iInfo);
+    if (opcodeIndex < 0)
         return -1;
-    if (id >= 0xd6)
-        id = -1;
-    return id;
+    if (opcodeIndex >= 0xd6)
+        opcodeIndex = -1;
+    return opcodeIndex;
 }
 
 int getOpcodeId(iInfo *opcodeInfo)
