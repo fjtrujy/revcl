@@ -13,7 +13,7 @@ static inline void copyShort(short &to, const short &from)
     to = from;
 }
 
-int g_080b33f0 = 1;
+int nextReservedInstructionKey = 1;
 
 workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
 {
@@ -48,19 +48,19 @@ workTable *prepUta(Program *p, instStream *s, int loopSize, char smart)
     }
     nt->ownerStream = s;
     if (loopSize) {
-        nt->unk_7a = s->safeMinimumLoopCount;
+        nt->minimumSafeLoopCount = s->safeMinimumLoopCount;
         nt->setRange(loopSize);
     } else
         nt->setRange();
     setRangeFrom(nt);
     fatalReadBeforeReady = smart;
     nt->statistics.copyCountersFrom(&s->schedulingStatistics);
-    copyShort(nt->unk_74, wt->unk_74);
-    copyShort(nt->unk_76, wt->unk_76);
+    copyShort(nt->streamDependencyLength, wt->streamDependencyLength);
+    copyShort(nt->streamLogicalLength, wt->streamLogicalLength);
     copyShort(nt->logicalInstructionLength, wt->logicalInstructionLength);
     int mode = (unsigned char)wt->allocationMode;
     nt->allocationMode = mode;
-    nt->unk_40 = 0;
+    nt->nextInsertionSerial = 0;
     nt->externalMinimumLength = wt->externalMinimumLength;
     regUseList &regs = wt->registerUses;
     for (regUse *ru = regs.head; ru; ru = ru->next) {

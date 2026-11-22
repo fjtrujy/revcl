@@ -47,7 +47,7 @@ inline void xpNode::init()
 {
     depth = 0;
     operatorType = 0;
-    unk_00 = 0;
+    unmatchedOpeningParentheses = 0;
     operandArity = 0;
     childCount = 0;
     precedence = 0;
@@ -373,24 +373,24 @@ bool xpTree::evalExp(const char *s)
     p = s;
     while (*p) {
         if (*p == '(') {
-            if (cur->unk_00 == -1) {
+            if (cur->unmatchedOpeningParentheses == -1) {
                 reportError("too many open brackets!\n");
                 goto fail;
             }
-            cur->unk_00++;
+            cur->unmatchedOpeningParentheses++;
             p++;
         } else if (*p == ')') {
             if (cur->childCount < cur->operandArity) {
                 reportError("unexpected close bracket\n");
                 return false;
             }
-            while (cur && cur->unk_00 == 0)
+            while (cur && cur->unmatchedOpeningParentheses == 0)
                 cur = cur->parent;
             if (!cur) {
                 reportError("unbalanced brackets\n");
                 return false;
             }
-            cur->unk_00--;
+            cur->unmatchedOpeningParentheses--;
             p++;
         } else {
             xpNode *n = new xpNode;
@@ -410,7 +410,7 @@ bool xpTree::evalExp(const char *s)
                     delete (xpNodeDel *)n;
                     goto fail;
                 }
-                while (cur && n->precedence <= cur->precedence && cur->unk_00 == 0)
+                while (cur && n->precedence <= cur->precedence && cur->unmatchedOpeningParentheses == 0)
                     cur = cur->parent;
                 if (!cur || cur->childCount == 0) {
                     delete (xpNodeDel *)n;
@@ -441,7 +441,7 @@ bool xpTree::evalExp(const char *s)
         }
     }
     for (; cur; cur = cur->parent)
-        if (cur->unk_00 != 0)
+        if (cur->unmatchedOpeningParentheses != 0)
             goto fail;
     return true;
 fail:

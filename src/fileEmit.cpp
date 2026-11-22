@@ -144,7 +144,7 @@ char *workTable::emit(char *buf, int mode, int *p1, int *p2)
                 }
             }
             buf += formatIntoBuffer(buf, "] %d [%d %d] %d   [%s]\n",
-                                 *p1, unk_74, unk_76, *p2, s->streamName());
+                                 *p1, streamDependencyLength, streamLogicalLength, *p2, s->streamName());
         }
         if (len < nulls) {
             reportError("iTable: not fall. and too small a table\n");

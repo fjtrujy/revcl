@@ -58,7 +58,7 @@ bool assignLocalRegisters(Program *p, workTable *wt)
         reportError(assignLocalModeError, mode);
         exitAfterCleanup(-1);
     }
-    if (!wt->unk_0b) {
+    if (!wt->postOptimizationPrepared) {
         reportError(assignLocalLocksError);
         exitAfterCleanup(-1);
     }
@@ -91,7 +91,7 @@ void clearTTab()
 
 void genRegPool::clearRegisterAllocationMask()
 {
-    clearRawBytes(unk_30, 0x20);
+    clearRawBytes(registerPartAvailabilityMask, 0x20);
 }
 
 bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
@@ -180,7 +180,7 @@ bool genRegPool::build_tTab(RegPoolEntry *reg, unsigned char mask)
 bool genRegPool::initAlloc(int start, int end)
 {
     clearRawBytes(allocationRegisterTimeline, 0x20000);
-    clearRawBytes(unk_30, 0x20);
+    clearRawBytes(registerPartAvailabilityMask, 0x20);
     if (start) {
         reportError(initAllocNonZeroBaseError);
         return false;
@@ -212,7 +212,7 @@ bool genRegPool::initAlloc(int start, int end)
     int count = entryCount;
     for (; i != count; i++, e++) {
         if (e->enabledPhysicalRegister)
-            unk_30[i] = (1 << e->partCount) - 1;
+            registerPartAvailabilityMask[i] = (1 << e->partCount) - 1;
         if (e->partCount > maximumAllocationParts) {
             maximumAllocationParts = e->partCount;
             count = entryCount;
@@ -245,7 +245,7 @@ int genRegPool::fitCost(int reg)
     for (int i = allocationTimelineStart; i < allocationTimelineEnd; i++) {
         unsigned char t = candidateRegisterTimeline[i];
         int m = t & 0x7f;
-        if (((unsigned char)unk_30[reg] & m) != m)
+        if (((unsigned char)registerPartAvailabilityMask[reg] & m) != m)
             return -1;
         char *row = &allocationRegisterTimeline[i * 32];
         unsigned char a = row[reg];
@@ -269,7 +269,7 @@ bool genRegPool::set_t_in_aTab(int reg)
     for (int i = allocationTimelineStart; i < end; i++) {
         unsigned char c = candidateRegisterTimeline[i];
         int t = c;
-        if (((unsigned char)unk_30[reg] & t & 0x7f) != (c & 0x7f)) {
+        if (((unsigned char)registerPartAvailabilityMask[reg] & t & 0x7f) != (c & 0x7f)) {
             reportError(setTInATabAccessError, reg);
             return false;
         }
@@ -290,7 +290,7 @@ void genRegPool::dumpATab()
     for (int i = allocationTimelineStart; i != allocationTimelineEnd; i++)
         for (int r = 0; r != allocationRegisterCount; r++) {
             for (int p = 0; p != maximumAllocationParts; p++) {
-                int bit = (unsigned char)unk_30[r] & (1 << p);
+                int bit = (unsigned char)registerPartAvailabilityMask[r] & (1 << p);
                 if (bit != 0)
                     bit = 1;
             }

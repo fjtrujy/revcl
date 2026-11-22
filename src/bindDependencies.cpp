@@ -164,7 +164,7 @@ Instr *addXinFor(instStream *s, RegPoolEntry *r)
         delete in;
         return 0;
     }
-    int serial = g_080b33a8++;
+    int serial = nextInstructionSerial++;
     in->instructionSerial = serial;
     Operand *op = &in->operands[0];
     if (op->operandKind != 0x37) {
@@ -204,7 +204,7 @@ Instr *addXoutFor(instStream *s, RegPoolEntry *r)
         delete in;
         return 0;
     }
-    int serial = g_080b33a8++;
+    int serial = nextInstructionSerial++;
     in->instructionSerial = serial;
     Operand *op = &in->operands[0];
     if (op->operandKind != 0x37) {
@@ -261,10 +261,10 @@ bool addNewOperand(Instr *in, RegPoolEntry *r, int bits, int kind, int dir, int 
     }
     Operand *op = &in->operands[n];
     op->operandIndex = n;
-    op->unk_0b = 1;
+    op->externalBlockModeFlag = 1;
     op->direction = dir;
     op->isImplicit = 1;
-    op->unk_05 = 0;
+    op->immediateDataType = 0;
     op->pairedOperandIndexPlusOne = 0;
     op->outputLatency = flag;
     op->additionalLatency = 0;

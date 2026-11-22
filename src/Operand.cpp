@@ -20,8 +20,8 @@ Operand::Operand()
     additionalLatency = 0;
     forcedBaseRegister = 0;
     registerWeb = 0;
-    unk_25 = -1;
-    unk_24 = -1;
+    sourceTokenEndIndex = -1;
+    sourceTokenStartIndex = -1;
     pairedOperandIndexPlusOne = 0;
     originalRegister = 0;
     reductionHazardMask = 0;
@@ -354,7 +354,7 @@ char *Operand::Emit(char *buf, bool, bool symbolic)
             }
             buf += formatIntoBuffer(buf, "%s", s);
         } else {
-            if (decodeImmediateCategory(unk_05) == 2)
+            if (decodeImmediateCategory(immediateDataType) == 2)
                 buf += formatIntoBuffer(buf, "%d", imm->i);
             else
                 buf += formatIntoBuffer(buf, "0x%08x", imm->u);
@@ -444,27 +444,27 @@ bool Operand::resetOptimizationSlots()
     for (int i = 0; i != 4; i++) {
         OpSlot *s = &parts[i];
         resetOperandLock(s);
-        s->unk_50 = 0;
-        s->unk_52[0] = 0;
+        s->conflictingOutputLockCount = 0;
+        s->outputConflictMarked[0] = 0;
     }
     return true;
 }
 
 bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
 {
-    out->unk_1800[0] = 0;
-    out->unk_1000[0] = 0;
-    out->unk_2000 = 0;
-    out->unk_200c = 0;
+    out->branchLabelText[0] = 0;
+    out->immediateText[0] = 0;
+    out->componentMask = 0;
+    out->forcePhysicalBinding = 0;
     switch (kind) {
-    case 10: mstrcpy(out->name, "ACC");   out->unk_2000 = 7; return true;
-    case 4:  mstrcpy(out->name, "I");     out->unk_2000 = 1; return true;
-    case 5:  mstrcpy(out->name, "P");     out->unk_2000 = 1; return true;
-    case 6:  mstrcpy(out->name, "tt_nP"); out->unk_2000 = 1; return true;
-    case 7:  mstrcpy(out->name, "Q");     out->unk_2000 = 1; return true;
-    case 8:  mstrcpy(out->name, "R");     out->unk_2000 = 1; return true;
-    case 9:  mstrcpy(out->name, "ACC");   out->unk_2000 = 15; return true;
-    case 17: mstrcpy(out->name, "CLIP");  out->unk_2000 = 1; return true;
+    case 10: mstrcpy(out->name, "ACC");   out->componentMask = 7; return true;
+    case 4:  mstrcpy(out->name, "I");     out->componentMask = 1; return true;
+    case 5:  mstrcpy(out->name, "P");     out->componentMask = 1; return true;
+    case 6:  mstrcpy(out->name, "tt_nP"); out->componentMask = 1; return true;
+    case 7:  mstrcpy(out->name, "Q");     out->componentMask = 1; return true;
+    case 8:  mstrcpy(out->name, "R");     out->componentMask = 1; return true;
+    case 9:  mstrcpy(out->name, "ACC");   out->componentMask = 15; return true;
+    case 17: mstrcpy(out->name, "CLIP");  out->componentMask = 1; return true;
     case 18: case 19: case 20: case 21:
         reportError("odecode for a V_STAT\n");
         return false;
@@ -474,28 +474,28 @@ bool buildImplicitOperand(int kind, ImplicitOp *out, bool)
     case 22: case 23: case 24: case 25:
         out->name[0] = 0;
         return true;
-    case 26: mstrcpy(out->name, "MAC");   out->unk_2000 = 1; return true;
-    case 28: out->unk_2000 = 1; return true;
+    case 26: mstrcpy(out->name, "MAC");   out->componentMask = 1; return true;
+    case 28: out->componentMask = 1; return true;
     case 37: mstrcpy(out->name, "ramreg"); return true;
     case 54:
-        mstrcpy(out->unk_800, "$ra");
+        mstrcpy(out->physicalRegisterName, "$ra");
         mstrcpy(out->name, "$ra");
-        out->unk_2000 = 3;
+        out->componentMask = 3;
         return true;
-    case 40: out->unk_2000 = 3; return true;
-    case 45: mstrcpy(out->name, "CLIPA"); out->unk_2000 = 1; return true;
+    case 40: out->componentMask = 3; return true;
+    case 45: mstrcpy(out->name, "CLIPA"); out->componentMask = 1; return true;
     default:
         reportError("fell through building an implicit operand of type %s\n", opKindName(kind));
         out->name[0] = 0;
-        out->unk_800[0] = 0;
+        out->physicalRegisterName[0] = 0;
         return false;
-    case 47: mstrcpy(out->name, "HILO0"); out->unk_2000 = 1; return true;
-    case 48: mstrcpy(out->name, "HILO1"); out->unk_2000 = 1; return true;
-    case 49: mstrcpy(out->name, "FSTAT"); out->unk_2000 = 1; return true;
-    case 50: mstrcpy(out->name, "FCOND"); out->unk_2000 = 1; return true;
-    case 51: mstrcpy(out->name, "FACC");  out->unk_2000 = 1; return true;
-    case 52: mstrcpy(out->name, "FDIV");  out->unk_2000 = 1; return true;
-    case 53: mstrcpy(out->name, "SHFTA"); out->unk_2000 = 1; return true;
+    case 47: mstrcpy(out->name, "HILO0"); out->componentMask = 1; return true;
+    case 48: mstrcpy(out->name, "HILO1"); out->componentMask = 1; return true;
+    case 49: mstrcpy(out->name, "FSTAT"); out->componentMask = 1; return true;
+    case 50: mstrcpy(out->name, "FCOND"); out->componentMask = 1; return true;
+    case 51: mstrcpy(out->name, "FACC");  out->componentMask = 1; return true;
+    case 52: mstrcpy(out->name, "FDIV");  out->componentMask = 1; return true;
+    case 53: mstrcpy(out->name, "SHFTA"); out->componentMask = 1; return true;
     }
 }
 
@@ -532,7 +532,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         t++;
     if (c == ':') {
         *t = 0;
-        char *td = out->unk_1800;
+        char *td = out->branchLabelText;
         t++;
         int chars = 0;
         int seps = 1;
@@ -552,11 +552,11 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             td--;
         uA = ((int *)tok)[1];
         uB = ((int *)tok)[2];
-        if (td == out->unk_1800) {
+        if (td == out->branchLabelText) {
             ((int *)tok)[1] = uA;
             ((int *)tok)[2] = uB;
             reportWarning("ignoring empty tag\n");
-            out->unk_1800[0] = 0;
+            out->branchLabelText[0] = 0;
         } else {
             td[0] = ':';
             td[1] = 0;
@@ -568,15 +568,15 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         e++;
     count = e - tok;
     out->name[0] = 0;
-    out->unk_1000[0] = 0;
-    out->unk_800[0] = 0;
-    out->unk_200c = 0;
-    out->unk_2000 = 0;
-    out->unk_2004 = 0;
+    out->immediateText[0] = 0;
+    out->physicalRegisterName[0] = 0;
+    out->forcePhysicalBinding = 0;
+    out->componentMask = 0;
+    out->addressComponentMask = 0;
 
     switch (kind) {
     case 54: {
-        int *spk = &out->unk_2004;
+        int *spk = &out->addressComponentMask;
         int svx = *spk;
         int zs = (unsigned char)tok[2];
         zs >>= 4;
@@ -589,7 +589,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     }
     case 35: {
         d = out->name;
-        out->unk_200c = 1;
+        out->forcePhysicalBinding = 1;
         e = tok;
         while (*e && *e != '(')
             *d++ = *e++;
@@ -600,7 +600,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             e++;
-            d = out->unk_800;
+            d = out->physicalRegisterName;
             while (*e && *e != ')')
                 *d++ = *e++;
             *d = 0;
@@ -615,11 +615,11 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                     return false;
                 ((int *)tok)[kind] = field;
             }
-            out->unk_2000 = 15;
+            out->componentMask = 15;
             return true;
         } else {
             *pbad = false;
-            bool ok = parseTrailingComponentMask(out->name, &out->unk_2000, pbad);
+            bool ok = parseTrailingComponentMask(out->name, &out->componentMask, pbad);
             if (*pbad) {
                 reportUserMessage("bad mod bits in operand\n");
                 return false;
@@ -632,9 +632,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 if (zsk_35b)
                     return false;
                 ((int *)tok)[kind] = svk_35b;
-                out->unk_2000 = 15;
+                out->componentMask = 15;
             }
-            if (out->unk_2000 == -1) {
+            if (out->componentMask == -1) {
                 reportError("oDecodeToken: bad FL4S bits\n");
                 return false;
             }
@@ -644,7 +644,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     }
     case 42:
         d = out->name;
-        out->unk_200c = 1;
+        out->forcePhysicalBinding = 1;
         s = tok;
         while (*s && *s != '(')
             *d++ = *s++;
@@ -655,7 +655,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             s++;
-            d = out->unk_800;
+            d = out->physicalRegisterName;
             while (*s && *s != ')')
                 *d++ = *s++;
             *d = 0;
@@ -671,7 +671,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[1] = svI_c42;
             ((int *)tok)[kind] = svO_c42;
         }
-        out->unk_2000 = 15;
+        out->componentMask = 15;
         return true;
     case 1:
         {
@@ -684,15 +684,15 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[kind] = sv1_c1;
         }
         if (newSyntax) {
-            out->unk_2000 = 15;
+            out->componentMask = 15;
             mstrcpy(out->name, tok);
         } else {
             uB = readTrailingComponentMask(tok);
-            out->unk_2000 = uB;
+            out->componentMask = uB;
             if (!uB)
-                out->unk_2000 = 15;
-            if (out->unk_2000 == -1) {
-                int *spk1 = &out->unk_2004;
+                out->componentMask = 15;
+            if (out->componentMask == -1) {
+                int *spk1 = &out->addressComponentMask;
                 int svx1 = *spk1;
                 int zs1 = (unsigned char)tok[2];
                 zs1 >>= 4;
@@ -709,7 +709,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     case 2:
         mstrcpy(out->name, tok);
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         return true;
     case 38:
         {
@@ -722,12 +722,12 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[kind] = svk_c38;
         }
         if (parseBracketedComponentMask(tok, pmask)) {
-            out->unk_2008 = 1;
+            out->genericOperandForm = 1;
             if (countSetBits(mask) != 1) {
                 reportUserMessage("bad [x,y,z,w] token for scalar\n");
                 return false;
             }
-            out->unk_2000 = mask;
+            out->componentMask = mask;
             char *s = tok;
             char *d = out->name;
             while (*s)
@@ -740,19 +740,19 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             return true;
         }
         if (asciiCaseEqual(tok, "q")) {
-            out->unk_2008 = 1;
-            out->unk_2000 = 1;
+            out->genericOperandForm = 1;
+            out->componentMask = 1;
             mstrcpy(out->name, "Q");
             return true;
         }
         if (asciiCaseEqual(tok, "i")) {
-            out->unk_2008 = 1;
-            out->unk_2000 = 1;
+            out->genericOperandForm = 1;
+            out->componentMask = 1;
             mstrcpy(out->name, "I");
             return true;
         }
-        out->unk_2000 = 15;
-        out->unk_2008 = 2;
+        out->componentMask = 15;
+        out->genericOperandForm = 2;
         mstrcpy(out->name, tok);
         return true;
     case 3:
@@ -770,7 +770,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 reportError("oDecodeToken: [x/y/z/w] token for new syntax\n");
                 return false;
             }
-            out->unk_2000 = mask;
+            out->componentMask = mask;
             char *s = tok;
             char *d = out->name;
             while (*s)
@@ -786,7 +786,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 reportError("oDecodeToken: bad FL1 bits\n");
                 return false;
             }
-            out->unk_2000 = mask;
+            out->componentMask = mask;
             mstrcpy(out->name, tok);
             removeTrailingComponentSuffix(out->name);
         }
@@ -796,7 +796,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             reportError("oDecode:: arg I\n");
             return false;
         }
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         out->name[0] = 'I';
         out->name[1] = 0;
         return true;
@@ -812,7 +812,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         }
         if (count != 1 || (*tok != 'p' && *tok != 'P'))
             reportError("oDecode:: arg P\n");
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         out->name[0] = 'P';
         out->name[1] = 0;
         return true;
@@ -821,7 +821,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             reportError("oDecode:: arg Q\n");
             return false;
         }
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         out->name[0] = 'Q';
         out->name[1] = 0;
         return true;
@@ -839,7 +839,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             reportError("oDecode:: arg R\n");
             return false;
         }
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         out->name[0] = 'R';
         out->name[1] = 0;
         return true;
@@ -854,10 +854,10 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[kind] = field;
         }
         bad = false;
-        int *pm9 = &out->unk_2000;
+        int *pm9 = &out->componentMask;
         if (!parseTrailingComponentMask(tok, pm9, &bad))
-            out->unk_2000 = 15;
-        if (out->unk_2000 == -1) {
+            out->componentMask = 15;
+        if (out->componentMask == -1) {
             {
             int svk_c9 = ((int *)tok)[kind];
             int zsk_c9 = (unsigned char)tok[2];
@@ -879,7 +879,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             reportError("bad mod bits for ACCxyz\n");
             return false;
         }
-        out->unk_2000 = 7;
+        out->componentMask = 7;
         mstrcpy(out->name, "ACC");
         return true;
     case 11:
@@ -901,18 +901,18 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                     d--;
                 while (*d != '[');
                 *d = 0;
-                out->unk_2000 = field;
+                out->componentMask = field;
                 return true;
             }
             mstrcpy(out->name, tok);
-            out->unk_2000 = field;
+            out->componentMask = field;
         } else {
             mask = readTrailingComponentMask(tok);
             if (mask && mask != field) {
                 reportError("oDecode: bad FL?\n");
                 return false;
             }
-            out->unk_2000 = field;
+            out->componentMask = field;
             mstrcpy(out->name, tok);
             removeTrailingComponentSuffix(out->name);
         }
@@ -930,14 +930,14 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         field = 8;
         goto fieldSel;
     case 17:
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         mstrcpy(out->name, "CLIP");
         return true;
     case 27:
-        mstrcpy(out->unk_1000, tok);
+        mstrcpy(out->immediateText, tok);
         return true;
     case 28: {
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         uA = (unsigned char)tok[1];
         if (count <= 2)
             return false;
@@ -957,7 +957,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     }
     case 36:
         d = out->name;
-        out->unk_200c = 1;
+        out->forcePhysicalBinding = 1;
         e = tok;
         while (*e && *e != '(')
             *d++ = *e++;
@@ -968,7 +968,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             e++;
-            d = out->unk_800;
+            d = out->physicalRegisterName;
             while (*e && *e != ')')
                 *d++ = *e++;
             *d = 0;
@@ -984,7 +984,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[1] = svI_c36;
             ((int *)tok)[kind] = svO_c36;
         }
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         return true;
     case 43:
         {
@@ -999,10 +999,10 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[kind] = svO_c43;
         }
         mstrcpy(out->name, tok);
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         return true;
     case 30: {
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         uB = (unsigned char)tok[2];
         if (count <= 3)
             return false;
@@ -1018,10 +1018,10 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         p = e - 1;
         while (p != tok && *p != ')') {
             switch (*p) {
-            case 'x': out->unk_2004 |= 1; break;
-            case 'y': out->unk_2004 |= 2; break;
-            case 'z': out->unk_2004 |= 4; break;
-            case 'w': out->unk_2004 |= 8; break;
+            case 'x': out->addressComponentMask |= 1; break;
+            case 'y': out->addressComponentMask |= 2; break;
+            case 'z': out->addressComponentMask |= 4; break;
+            case 'w': out->addressComponentMask |= 8; break;
             default: return false;
             }
             p--;
@@ -1033,16 +1033,16 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         goto copyName;
     }
     case 31:
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         if (count <= 4)
             return false;
         p = e - 1;
         while (p != tok && *p != ')') {
             switch (*p) {
-            case 'x': out->unk_2004 |= 1; break;
-            case 'y': out->unk_2004 |= 2; break;
-            case 'z': out->unk_2004 |= 4; break;
-            case 'w': out->unk_2004 |= 8; break;
+            case 'x': out->addressComponentMask |= 1; break;
+            case 'y': out->addressComponentMask |= 2; break;
+            case 'z': out->addressComponentMask |= 4; break;
+            case 'w': out->addressComponentMask |= 8; break;
             default: return false;
             }
             p--;
@@ -1055,13 +1055,13 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             q--;
         if (*q != '(')
             return false;
-        d = out->unk_1000;
+        d = out->immediateText;
         for (s = tok; s != q; )
             *d++ = *s++;
         *d = 0;
-        if (!out->unk_1000[0]) {
-            out->unk_1000[0] = '0';
-            out->unk_1000[1] = 0;
+        if (!out->immediateText[0]) {
+            out->immediateText[0] = '0';
+            out->immediateText[1] = 0;
         }
         start = q + 1;
     copyName:
@@ -1071,7 +1071,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         *d = 0;
         return true;
     case 32: {
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         if (count <= 4)
             return false;
         if (e[-1] != ')' || e[-2] != '+')
@@ -1084,7 +1084,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         goto copyName;
     }
     case 33: {
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         if (count <= 4)
             return false;
         char *r = e - 1;
@@ -1108,14 +1108,14 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             reportUserMessage("oDecode:: operand has to be vi01 for this instruction..\n");
             return false;
         }
-        mstrcpy(out->unk_800, tok);
+        mstrcpy(out->physicalRegisterName, tok);
         mstrcpy(out->name, tok);
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         return true;
     case 26:
         reportError("explicit mac register - but I'm writing ASTATUS here??\n");
         exitAfterCleanup(1);
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         mstrcpy(out->name, "ASTATUS");
         return true;
     case 39:
@@ -1128,20 +1128,20 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             ((int *)tok)[kind] = svk_c39;
         }
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         mstrcpy(out->name, tok);
         return true;
     case 40:
-        out->unk_2000 = 3;
+        out->componentMask = 3;
         mstrcpy(out->name, tok);
         return true;
     case 41:
-        out->unk_2000 = 15;
+        out->componentMask = 15;
         mstrcpy(out->name, tok);
         return true;
     case 44:
         d = out->name;
-        out->unk_200c = 1;
+        out->forcePhysicalBinding = 1;
         s = tok;
         while (*s && *s != '(')
             *d++ = *s++;
@@ -1152,7 +1152,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             s++;
-            d = out->unk_800;
+            d = out->physicalRegisterName;
             while (*s && *s != ')')
                 *d++ = *s++;
             *d = 0;
@@ -1166,13 +1166,13 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             ((int *)tok)[kind] = sv1_c44;
         }
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         return true;
     case 29:
     case 46: {
         if (count <= 2)
             return false;
-        out->unk_2000 = 1;
+        out->componentMask = 1;
         p = e - 1;
         if (*p != ')')
             return false;
@@ -1183,13 +1183,13 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         p = tok;
         char *stop = start - 1;
         end = e - 1;
-        d = out->unk_1000;
+        d = out->immediateText;
         for (s = tok; s != stop; )
             *d++ = *s++;
         *d = 0;
-        if (!out->unk_1000[0]) {
-            out->unk_1000[0] = '0';
-            out->unk_1000[1] = 0;
+        if (!out->immediateText[0]) {
+            out->immediateText[0] = '0';
+            out->immediateText[1] = 0;
         }
         goto copyName;
     }
@@ -1199,7 +1199,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         zd >>= 4;
         zd >>= 4;
         if (zd) {
-            d = out->unk_800;
+            d = out->physicalRegisterName;
             while (*s && *s != ')')
                 *d++ = *s++;
         }
@@ -1391,7 +1391,7 @@ char *Operand::emitExpectedOperandType(bool flag, char *buf)
     case 14: buf += formatIntoBuffer(buf, "vf_regy"); break;
     case 15: buf += formatIntoBuffer(buf, "vf_regz"); break;
     case 16: buf += formatIntoBuffer(buf, "vf_regw"); break;
-    case 27: buf += formatIntoBuffer(buf, "IMMEDIATE(%s)", immediateTypeName(unk_05)); break;
+    case 27: buf += formatIntoBuffer(buf, "IMMEDIATE(%s)", immediateTypeName(immediateDataType)); break;
     case 28: buf += formatIntoBuffer(buf, "(vi_reg)"); break;
     case 29: buf += formatIntoBuffer(buf, "OFFSET(vi_reg)"); break;
     case 30: buf += formatIntoBuffer(buf, "(vi_reg)[x/y/z/w]"); break;
@@ -1412,13 +1412,13 @@ char *Operand::emitExpectedOperandType(bool flag, char *buf)
     return buf;
 }
 
-bool func_08057d60(int kind)
+bool isScalarFloatingOperandKind(int kind)
 {
     return kind == 43 || kind == 3 || kind == 13 || kind == 14 ||
            kind == 15 || kind == 16 || kind == 5 || kind == 7;
 }
 
-bool func_08057d9c(int kind)
+bool isVectorOrAccumulatorOperandKind(int kind)
 {
     return kind == 1 || kind == 9;
 }

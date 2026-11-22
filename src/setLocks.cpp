@@ -71,7 +71,7 @@ bool undoLocks(Instr *in)
             continue;
         if (isRegisterOperand(op, 2)) {
             for (int p = 0; p != r->partCount; p++) {
-                op->parts[p].unk_52[0] = 0;
+                op->parts[p].outputConflictMarked[0] = 0;
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *s = &op->parts[p];
                     if (!s->ownerLockList->undoOutputLock(s))
@@ -108,9 +108,9 @@ int checkLocks(Instr *in, short *pos, int *minPos)
             if ((op->componentMask >> p) & 1) {
                 OpSlot *s = &op->parts[p];
                 RegisterPartLockList *ll = s->ownerLockList;
-                if (*minPos < ll->unk_00) {
+                if (*minPos < ll->loopWrapMinimumRow) {
                     ret |= 0x80000;
-                    *minPos = ll->unk_00;
+                    *minPos = ll->loopWrapMinimumRow;
                     goto done;
                 }
                 int rc = ll->checkInputLock(s, pos, minPos);
@@ -120,9 +120,9 @@ int checkLocks(Instr *in, short *pos, int *minPos)
                     Operand *o = par->ownerOperand();
                     if (o) {
                         Instr *oi = par->ownerInstr();
-                        if (!o->parts[p].unk_52[0]) {
-                            o->parts[p].unk_52[0] = 1;
-                            o->parts[p].unk_50++;
+                        if (!o->parts[p].outputConflictMarked[0]) {
+                            o->parts[p].outputConflictMarked[0] = 1;
+                            o->parts[p].conflictingOutputLockCount++;
                         }
                         trackEarliestInsertion(oi);
                         oi->dumpOperandDiagnostics(false);
@@ -150,8 +150,8 @@ int checkLocks(Instr *in, short *pos, int *minPos)
             if ((op->componentMask >> p) & 1) {
                 OpSlot *s = &op->parts[p];
                 RegisterPartLockList *ll = op->parts[p].ownerLockList;
-                if (op->parts[p].unk_50) {
-                    int v = ll->maxConstraintOfFirstOutputs(op->parts[p].unk_50);
+                if (op->parts[p].conflictingOutputLockCount) {
+                    int v = ll->maxConstraintOfFirstOutputs(op->parts[p].conflictingOutputLockCount);
                     if (v > *minPos) {
                         ret |= 0x80000;
                         *minPos = v;
@@ -167,7 +167,7 @@ int checkLocks(Instr *in, short *pos, int *minPos)
                     }
                     int d = *pos + s->issueLatency - activeLoopSize;
                     if (d > 0) {
-                        ll->unk_00 = d;
+                        ll->loopWrapMinimumRow = d;
                         Instr *e = ll->earliestExt();
                         if (!e) {
                             reportWarning("failed to get earliest in ret=%x\n", rc);
@@ -300,7 +300,7 @@ bool setPipeBits(Instr *in)
     for (i = 0; i != in->operandCount; i++) {
         Operand *op = &in->operands[i];
         if (op->assignedRegister)
-            op->assignedRegister->unk_34 = 0;
+            op->assignedRegister->seenInputComponentMask = 0;
     }
     for (i = 0; i != in->operandCount; i++) {
         Operand *op = &in->operands[i];
@@ -310,22 +310,22 @@ bool setPipeBits(Instr *in)
         for (int p = 0; p != r->partCount; p++) {
             if ((op->componentMask >> p) & 1) {
                 OpSlot *s = &op->parts[p];
-                s->unk_01 = 0;
-                s->unk_00 = 0;
-                s->unk_02 = 0;
-                if (!(((unsigned char)r->unk_34 >> p) & 1)) {
+                s->upperPipeInputDemand = 0;
+                s->lowerPipeInputDemand = 0;
+                s->eitherPipeInputDemand = 0;
+                if (!(((unsigned char)r->seenInputComponentMask >> p) & 1)) {
                     switch ((unsigned char)in->permittedPipelineMask) {
                     case 0:
                         reportError("no physical pipe bits!\n");
                         return false;
                     case 1:
-                        s->unk_01 = 1;
+                        s->upperPipeInputDemand = 1;
                         break;
                     case 2:
-                        s->unk_00 = 1;
+                        s->lowerPipeInputDemand = 1;
                         break;
                     case 3:
-                        s->unk_02 = 1;
+                        s->eitherPipeInputDemand = 1;
                         break;
                     default:
                         reportError("unknown pipe request\n");
@@ -334,7 +334,7 @@ bool setPipeBits(Instr *in)
                 }
             }
         }
-        r->unk_34 |= op->componentMask;
+        r->seenInputComponentMask |= op->componentMask;
     }
     return true;
 }
@@ -453,8 +453,8 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
     }
     int zt;
     do {
-        in->insertionSerial = wt->unk_40;
-        wt->unk_40++;
+        in->insertionSerial = wt->nextInsertionSerial;
+        wt->nextInsertionSerial++;
         b = UnlinkFromToDo((Block *)wt, in);
         if (!(char)b) {
             reportError("failed to unlink from to do list\n");
@@ -475,7 +475,7 @@ bool DoInsert(workTable *const wt, Instr *in, InstructionPosition *pos)
 bool UndoInsert(workTable *wt, Instr *in)
 {
     if (in->branchFlags)
-        wt->unk_84 = 0;
+        wt->loopBoundaryInstruction = 0;
     if (in->abstractMoveOpcode) {
         if (!in->concreteMoveOpcode) {
             reportError("undo insert currmuid not set\n");
@@ -495,7 +495,7 @@ bool UndoInsert(workTable *wt, Instr *in)
         abortAfterError();
         return false;
     }
-    wt->unk_40--;
+    wt->nextInsertionSerial--;
     in->insertionSerial = -1;
     if (!UnlinkFromDone((Block *)wt, in)) {
         reportError("failed to unlink from done list\n");
@@ -604,7 +604,7 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 if (!par->latencyModeFlag)
                     start -= par->issueLatency;
                 bool single = true;
-                if (oi->unk_13d1) {
+                if (oi->requiresFullLoopMoveDrag) {
                     start = oi->position.linearRow + 1;
                     if (maxPos > wt->loopSize + oi->position.linearRow)
                         maxPos = wt->loopSize + oi->position.linearRow;
@@ -624,7 +624,7 @@ int drag(workTable *wt, Instr *in, InstructionPosition *pos, int back, int depth
                 np.setFromLinearRow(start);
                 if (depth <= 3) {
                     int b = back;
-                    if (oi->unk_13d1)
+                    if (oi->requiresFullLoopMoveDrag)
                         b = wt->loopSize;
                     InstructionPosition tmp;
                     n += drag(wt, oi, &np, b, depth + 1);

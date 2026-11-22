@@ -201,7 +201,7 @@ regUse *regUse::Clone()
     n->unk_18 = unk_18;
     n->hazardMask = hazardMask;
     n->definingInstruction = definingInstruction;
-    n->unk_13 = unk_13;
+    n->sourcePathHazardMask = sourcePathHazardMask;
     n->hazardBroadcastMask = hazardBroadcastMask;
     n->externalInputMask = externalInputMask;
     n->registerEntry = registerEntry;

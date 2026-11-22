@@ -12,7 +12,7 @@ regUse::regUse(RegPoolEntry *reg)
     throughputMask = 0;
     unk_11 = 0;
     hazardMask = 0;
-    unk_13 = 0;
+    sourcePathHazardMask = 0;
     hazardBroadcastMask = 0;
     externalBlockMode = -1;
     previous = 0;

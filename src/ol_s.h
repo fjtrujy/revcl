@@ -9,7 +9,7 @@ struct ol_s {
     ol_s *next;
     Instr *instruction;
     int pathKey;
-    int unk_0c;
+    int maximumPathKey;
     union {
         struct {
             char operandIndex;

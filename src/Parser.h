@@ -36,7 +36,7 @@ public:
     bool startsWithDirective();
     bool isCommentToken(int tokenIndex);
     bool hasAssignmentMarker();
-    bool func_08050f7c(int i);
+    bool probeNonCommentTokenAndReturnFalse(int i);
 
     bool isValid() {
         return (lineText && tokenCount) || (!lineText && !tokenCount);

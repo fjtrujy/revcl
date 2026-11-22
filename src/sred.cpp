@@ -156,9 +156,9 @@ bool sredTable(workTable *wt)
     return true;
 }
 
-int g_080de734;
-iInfo *g_080de738;
-workTable *g_080de73c;
-Instr *g_080de740;
+int selectedCapPipelineProperties;
+iInfo *selectedCapOpcodeInfo;
+workTable *capInsertionWorkTable;
+Instr *selectedCapOriginalInstruction;
 RegPoolEntry *selectedCapRegister;
 int selectedCapMask;

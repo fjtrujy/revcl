@@ -60,19 +60,19 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                 for (int part = 0; part != reg->partCount; part++)
                     if ((op->componentMask >> part) & 1) {
                         rPart *rp = &reg->parts[part];
-                        if (rp->unk_00[4] < 0) {
+                        if (rp->emulationTimingMetrics[4] < 0) {
                             if (uta)
-                                rp->unk_00[6] = -1;
+                                rp->emulationTimingMetrics[6] = -1;
                             else
-                                rp->unk_00[6] = p->emulatedCycleCount;
-                            rp->unk_00[4] = line;
-                            rp->unk_00[5] = k;
+                                rp->emulationTimingMetrics[6] = p->emulatedCycleCount;
+                            rp->emulationTimingMetrics[4] = line;
+                            rp->emulationTimingMetrics[5] = k;
                         }
-                        rp->unk_00[7] = line;
-                        rp->unk_00[8] = k;
+                        rp->emulationTimingMetrics[7] = line;
+                        rp->emulationTimingMetrics[8] = k;
                     }
             }
-            if (reg && op->unk_0b) {
+            if (reg && op->externalBlockModeFlag) {
                 for (int part = 0; part != reg->partCount; part++)
                     if ((op->componentMask >> part) & 1) {
                         rPart *rp = &reg->parts[part];
@@ -97,7 +97,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
             reg = registerOperand(op, 2);
             if (reg) {
                 if (op->componentMask) {
-                    if (reg->unk_2c) {
+                    if (reg->tracksHotOutputPaths) {
                         if (commit) {
                             if (in->previousThroughputWriter) {
                                 reportError("multiple set for prevThruput\n");
@@ -211,7 +211,7 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             reportError("inconsistency detected.. issuelock still non-zero\n");
                             return -1;
                         }
-                        if (op->unk_0b) {
+                        if (op->externalBlockModeFlag) {
                             if (!rp->flushPending()) {
                                 reportError("failed to flush pending outputs before a blocking output\n");
                                 return -1;
@@ -231,31 +231,31 @@ int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit)
                             ol->cycleOffset = clampByte(op->outputLatency);
                             rp->pendingSource = ol;
                         }
-                        rp->unk_00[1] += op->outputLatency;
-                        if (op->outputLatency > rp->unk_00[3])
-                            rp->unk_00[3] = op->outputLatency;
+                        rp->emulationTimingMetrics[1] += op->outputLatency;
+                        if (op->outputLatency > rp->emulationTimingMetrics[3])
+                            rp->emulationTimingMetrics[3] = op->outputLatency;
                         int tp = 1;
-                        if (reg->unk_2c)
+                        if (reg->tracksHotOutputPaths)
                             tp = in->baseIssueSpacing;
-                        if (tp > rp->unk_00[2])
-                            rp->unk_00[2] = tp;
-                        if (rp->unk_00[9] < 0) {
-                            rp->unk_00[9] = line;
-                            rp->unk_00[10] = k;
+                        if (tp > rp->emulationTimingMetrics[2])
+                            rp->emulationTimingMetrics[2] = tp;
+                        if (rp->emulationTimingMetrics[9] < 0) {
+                            rp->emulationTimingMetrics[9] = line;
+                            rp->emulationTimingMetrics[10] = k;
                             if (uta)
-                                rp->unk_00[11] = -1;
+                                rp->emulationTimingMetrics[11] = -1;
                             else
-                                rp->unk_00[11] = p->emulatedCycleCount;
+                                rp->emulationTimingMetrics[11] = p->emulatedCycleCount;
                         }
-                        rp->unk_00[12] = line;
-                        rp->unk_00[13] = k;
+                        rp->emulationTimingMetrics[12] = line;
+                        rp->emulationTimingMetrics[13] = k;
                         if (uta)
-                            rp->unk_00[14] = -1;
+                            rp->emulationTimingMetrics[14] = -1;
                         else
-                            rp->unk_00[14] = p->emulatedCycleCount;
-                        rp->unk_00[16] = op->outputLatency;
-                        rp->unk_00[15] = tp;
-                        rp->unk_00[0] += tp;
+                            rp->emulationTimingMetrics[14] = p->emulatedCycleCount;
+                        rp->emulationTimingMetrics[16] = op->outputLatency;
+                        rp->emulationTimingMetrics[15] = tp;
+                        rp->emulationTimingMetrics[0] += tp;
                         rp->issueLock = tp;
                     }
                 }

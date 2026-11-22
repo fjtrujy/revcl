@@ -170,7 +170,7 @@ int iGroupLog::logTable(workTable *wt)
             if (((p->externalInputMask & p->externalOutputMask) >> i) & 1) {
             Instr *in;
             for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-                in->unk_0e = 0;
+                in->dependencyReachabilityFlags = 0;
             for (Instr *cur = (in = wt->linearInstructions.head); in; cur = (in = in->linearLink.nextInstruction))
                 for (int j = 0; j != cur->operandCount; j++) {
                     Operand *op = &cur->operands[j];
@@ -187,7 +187,7 @@ int iGroupLog::logTable(workTable *wt)
             do {
                 changed = false;
                 for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-                    if (in->unk_0e_1)
+                    if (in->inputDependencyReachable)
                         for (int j = 0; j != in->operandCount; j++) {
                             Operand *op = &in->operands[j];
                             RegPoolEntry *r = registerOperand(op, 2);
@@ -200,20 +200,20 @@ int iGroupLog::logTable(workTable *wt)
                         }
                 wtInstrList *list = &wt->linearInstructions;
                 for (in = list->tail; in; in = in->linearLink.previousInstruction)
-                    if (in->unk_0e_0)
+                    if (in->outputDependencyReachable)
                         for (int j = 0; j != in->operandCount; j++) {
                             Operand *op = &in->operands[j];
                             RegPoolEntry *r = registerOperand(op, 1);
                             if (r)
                                 for (int k = 0; k != r->partCount; k++)
                                     for (ol_s *o = op->parts[k].operandLocations.firstInternalLocation(); o; o = o->nextInternalLocation())
-                                        o->instruction->unk_0e_0 = 1;
+                                        o->instruction->outputDependencyReachable = 1;
                         }
             } while (changed);
             reportInfo("  dumping scan for %s\n", reg->maskName(1 << i));
             int n = 0;
             for (in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
-                if (in->unk_0e == 3) {
+                if (in->dependencyReachabilityFlags == 3) {
                     const char *name = in->opcodeInfo ? in->opcodeInfo->mnemonic : "NO_BASE_INST";
                     reportInfo("  [%4d] %d %s\n", n++, in->instructionId, name);
                 }

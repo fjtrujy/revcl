@@ -3,19 +3,19 @@
 
 static inline void subCache_release_inl(subCache *sc)
 {
-    if (sc->unk_00)
-        delete[] sc->unk_00;
-    sc->unk_00 = 0;
-    sc->unk_04 = 0;
-    sc->unk_08 = 0;
+    if (sc->cachedValues)
+        delete[] sc->cachedValues;
+    sc->cachedValues = 0;
+    sc->maximumFlowId = 0;
+    sc->wordsPerFlowRow = 0;
 }
 
 static inline void subCache_flush_inl(subCache *sc)
 {
-    if (!sc->unk_00)
+    if (!sc->cachedValues)
         exitWithError("subcache flush - no table\n");
-    for (unsigned i = 0; i != sc->unk_0c; i++)
-        sc->unk_00[i] = 0;
+    for (unsigned i = 0; i != sc->allocatedWords; i++)
+        sc->cachedValues[i] = 0;
 }
 
 void subCache::init(int fuidMax)
@@ -23,11 +23,11 @@ void subCache::init(int fuidMax)
     subCache_release_inl(this);
     if (fuidMax <= 0)
         exitWithError("fuid_max is <=0 in sub cache init\n");
-    unk_08 = (unsigned)(fuidMax + 3) >> 2;
-    unk_0c = unk_08 * (fuidMax + 1);
-    unk_04 = fuidMax;
-    unk_00 = new int[unk_0c];
-    if (!unk_00)
+    wordsPerFlowRow = (unsigned)(fuidMax + 3) >> 2;
+    allocatedWords = wordsPerFlowRow * (fuidMax + 1);
+    maximumFlowId = fuidMax;
+    cachedValues = new int[allocatedWords];
+    if (!cachedValues)
         exitWithError("failed to get table for subc\n");
     subCache_flush_inl(this);
 }
@@ -44,9 +44,9 @@ void subCache::flush()
 
 int subCache::offset(unsigned fuid)
 {
-    if (!unk_00)
+    if (!cachedValues)
         exitWithError("no table set for subCache\n");
-    if (fuid > unk_04)
+    if (fuid > maximumFlowId)
         exitWithError("out of bounds fuid for subCache\n");
-    return fuid * unk_08 * 4;
+    return fuid * wordsPerFlowRow * 4;
 }

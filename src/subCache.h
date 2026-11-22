@@ -5,10 +5,10 @@
 
 class subCache {
 public:
-    int *unk_00;        // table
-    unsigned unk_04;    // fuid max
-    unsigned unk_08;    // words per row
-    unsigned unk_0c;    // total words
+    int *cachedValues;
+    unsigned maximumFlowId;
+    unsigned wordsPerFlowRow;
+    unsigned allocatedWords;
 
     void init(int fuidMax);
     void release();

@@ -296,7 +296,7 @@ bool modLsqq(Instr *in, int imm)
     iOpDesc *d = &ii->operandDescriptors[1];
     op->operandKind = d->operandKind;
     op->isImplicit = d->isImplicit != 0;
-    op->unk_05 = d->unk_05;
+    op->immediateDataType = d->immediateDataType;
     op->pairedOperandIndexPlusOne = d->patchedOutputIndexPlusOne;
     if (op->operandKind != 0x1d) {
         reportError("modded lqsq isn't ea_imm_reg\n");

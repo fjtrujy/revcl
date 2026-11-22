@@ -53,7 +53,7 @@ bool workTable::doPostOpt(int rawMode)
             reportError("not mid-code mode for doPostOpt\n");
             return false;
         }
-        unk_0b = 1;
+        postOptimizationPrepared = 1;
         if (pendingInstructions.count) {
             reportError("doPostOpt - but there's things still to do\n");
             return false;
@@ -291,7 +291,7 @@ bool instStream::setOptTable(workTable *nt)
             reportError("didn't own instruction\n");
             return false;
         }
-        if (in->unk_00) {
+        if (in->optimizedInstructionImageWord) {
             reportError("doPostLinearOpt - optClone set in image?\n");
             return false;
         }
@@ -303,7 +303,7 @@ bool instStream::setOptTable(workTable *nt)
                 return false;
             }
         } else {
-            if (c->unk_00) {
+            if (c->optimizedInstructionImageWord) {
                 reportError("doPostLinear() - original had m_optClone set\n");
                 dumpOptInstruction(c);
                 return false;
@@ -333,8 +333,8 @@ bool instStream::setOptTable(workTable *nt)
                     in->operands[i].direction = cio;
                 }
             }
-            in->unk_04 = (VclPtrWord)c;
-            c->unk_00 = (VclPtrWord)in;
+            in->originalInstructionImageWord = (VclPtrWord)c;
+            c->optimizedInstructionImageWord = (VclPtrWord)in;
         }
     }
     nt->clearClones();

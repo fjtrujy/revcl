@@ -187,12 +187,12 @@ bool semSynth(void *p, Instr *in)
         in->operands[0].outputLatency = 4;
     char k = in->operands[2].operandKind;
     if (k == 4) {
-        in->operands[2].unk_0b = 1;
+        in->operands[2].externalBlockModeFlag = 1;
         *d++ = 'i';
     }
     if (k == 7) {
         *d++ = 'q';
-        in->operands[2].unk_0b = 0;
+        in->operands[2].externalBlockModeFlag = 0;
     }
     if (k == 3) {
         unsigned char m = in->operands[2].componentMask;

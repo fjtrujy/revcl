@@ -24,9 +24,9 @@ Instr *getMove(int type, int)
         exitAfterCleanup(-1);
     }
 
-    moveRec *mr = (moveRec *)g_080de714[type];
+    moveRec *mr = (moveRec *)freeMoveRecordsByType[type];
     if (mr) {
-        g_080de714[type] = (VclPtrWord)mr->nextFree;
+        freeMoveRecordsByType[type] = (VclPtrWord)mr->nextFree;
         Instr *in = mr->instruction;
         if (!in) {
             reportError("getFreeMove - inst not set\n");
@@ -91,7 +91,7 @@ Instr *getMove(int type, int)
         reportError(moveRecNewInstrError);
         exitAfterCleanup(-1);
     }
-    int serial = g_080b33a8++;
+    int serial = nextInstructionSerial++;
     in->instructionSerial = serial;
     in->abstractMoveOpcode = opc;
     in->concreteMoveOpcode = 0;
@@ -165,8 +165,8 @@ bool addFreeMove(Instr *in)
     in->opcodeInfo = ii;
     in->permittedPipelineMask = ii->pipelineMask;
     in->opcodeResourceMask = ii->resourceMask;
-    mr->nextFree = (moveRec *)g_080de714[mr->moveType];
-    g_080de714[mr->moveType] = (VclPtrWord)mr;
+    mr->nextFree = (moveRec *)freeMoveRecordsByType[mr->moveType];
+    freeMoveRecordsByType[mr->moveType] = (VclPtrWord)mr;
     return true;
 }
 

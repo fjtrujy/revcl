@@ -12,7 +12,7 @@ inline void ol_s::reset()
     cycleOffset = 0;
     next = 0;
     componentIndex = 0;
-    unk_0c = 0;
+    maximumPathKey = 0;
     pathKey = 0;
 }
 

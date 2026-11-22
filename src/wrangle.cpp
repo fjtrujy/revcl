@@ -10,7 +10,7 @@ typedef bool (*wrangleFunc)(workTable *, int *);
 void adjustMoveCount(Block *blk, Instr *mv, int n);
 extern int optimizationTimeoutSeconds;
 
-int g_080de74c;
+int mode1SchedulingPassCount;
 int mode1WatchdogSeconds;
 volatile char mode1WatchdogExpired;
 int mode0WatchdogSeconds;
@@ -41,19 +41,19 @@ extern bool quietDiagnostics;
 
 bool scheduleMidTableMode1(workTable *wt, wrangleFunc f)
 {
-    g_080de288 = 0;
+    allowInputLockLoopWrapping = 0;
     if (wt->codeModeValue != 2) {
         reportError("can't wrangle a non MID table\n");
         abortAfterError();
     }
-    g_080de74c = 0;
+    mode1SchedulingPassCount = 0;
     wt->unk_ad = 0;
-    wt->unk_ac = 0;
+    wt->fallbackSchedulingActive = 0;
     fatalReadBeforeReady = 1;
-    wt->unk_84 = 0;
-    wt->unk_7c = -1;
-    wt->unk_80 = 0;
-    wt->unk_82 = 0;
+    wt->loopBoundaryInstruction = 0;
+    wt->recordedMaximumBranchLoopId = -1;
+    wt->fallbackAdjustedLoopLimit = 0;
+    wt->fallbackAbsoluteLoopLimit = 0;
     wt->vectorMoveCount = 0;
     wt->oddPipeMoveCount = 0;
     wt->evenPipeMoveCount = 0;
@@ -151,11 +151,11 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                         return false;
                     }
                     bool b2 = minSfx2 >= 0 && minSfx2 < maxBranchLid;
-                    bool b1 = minSfx1 >= 0 && minSfx1 < maxBranchLid - wt->unk_7a;
+                    bool b1 = minSfx1 >= 0 && minSfx1 < maxBranchLid - wt->minimumSafeLoopCount;
                     if (b2 || b1) {
-                        wt->unk_7c = maxBranchLid;
+                        wt->recordedMaximumBranchLoopId = maxBranchLid;
                         int lim2 = maxBranchLid * wt->loopSize;
-                        int lim1 = (maxBranchLid - wt->unk_7a) * wt->loopSize;
+                        int lim1 = (maxBranchLid - wt->minimumSafeLoopCount) * wt->loopSize;
                         earliestInsertionInstruction = 0;
                         for (Instr *in = wt->completedInstructions.head; in; in = in->pendingLink.nextInstruction) {
                             switch ((unsigned char)in->schedulerCategory) {
@@ -218,13 +218,13 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                         pipe = 1;
                     else if (wt->evenPipeMoveCount == tmp)
                         pipe = 0;
-                    else if (wt->unk_ac)
+                    else if (wt->fallbackSchedulingActive)
                         pipe = 0;
                     else
                         pipe = (tmp = wt->oddPipeMoveCount > wt->evenPipeMoveCount);
                 }
-                if (pipe == 1 && wt->evenPipeMoveCount == lsz && !wt->unk_ac) {
-                    wt->unk_ac = 1;
+                if (pipe == 1 && wt->evenPipeMoveCount == lsz && !wt->fallbackSchedulingActive) {
+                    wt->fallbackSchedulingActive = 1;
                     wt->unk_ad = 0;
                     earliestInsertionInstruction = wt->completedInstructions.head;
                     goto faulted;
@@ -251,7 +251,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             }
             if (wt->loopSize) {
                 Instr *in = c.candidateInstruction;
-                if (!in->unk_13d1)
+                if (!in->requiresFullLoopMoveDrag)
                     drag(wt, in, &pos, wt->loopSize >> 1, 0);
                 else
                     drag(wt, in, &pos, wt->loopSize, 0);
@@ -267,7 +267,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             ret = checkInsert(wt, c.candidateInstruction, &pos, &minPos);
             Instr **ps = &pending;
             Instr **pc = &c.candidateInstruction;
-            int *pg = &g_080de74c;
+            int *pg = &mode1SchedulingPassCount;
             if (earliestInsertionInstruction) {
                 ps = &earliestInsertionInstruction;
                 pc = &earliestInsertionInstruction;
@@ -295,7 +295,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     ret = checkInsert(wt, c.candidateInstruction, &pos, &minPos);
                 if ((ret & 0x100) && !pending) {
                     Instr *cand = c.candidateInstruction;
-                    int v0 = g_080de74c;
+                    int v0 = mode1SchedulingPassCount;
                     *pc = cand;
                     *pg = v0;
                     pending = cand;
@@ -354,8 +354,8 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     abortAfterError();
                     break;
                 case 1:
-                    if (wt->unk_ad && !wt->unk_ac) {
-                        wt->unk_ac = 1;
+                    if (wt->unk_ad && !wt->fallbackSchedulingActive) {
+                        wt->fallbackSchedulingActive = 1;
                         wt->unk_ad = 0;
                         earliestInsertionInstruction = wt->completedInstructions.head;
                     }
@@ -448,7 +448,7 @@ bool buildCandidateList(workTable *wt)
     int row = 0;
     wt->dump();
     dynCalcStats(wt);
-    g_080de74c++;
+    mode1SchedulingPassCount++;
     for (; in; in = in->pendingLink.nextInstruction) {
         short m = in->externalInputConstraint;
         if (m < in->externalInputPairedConstraint)
@@ -504,7 +504,7 @@ bool buildCandidateList(workTable *wt)
                         }
                         if (!p->insertedIntoLockList)
                             goto next;
-                        if (s->unk_19 != 2) {
+                        if (s->operandStatusCode != 2) {
                             int t = p->linearRow + p->issueLatency + s->issueLatency;
                             if (t > minRow)
                                 minRow = t;
@@ -522,16 +522,16 @@ bool buildCandidateList(workTable *wt)
             case 0:
                 break;
             case 1:
-                if (wt->unk_84)
-                    lim = (wt->unk_84->position.loopIteration - wt->unk_7a) * wt->loopSize;
+                if (wt->loopBoundaryInstruction)
+                    lim = (wt->loopBoundaryInstruction->position.loopIteration - wt->minimumSafeLoopCount) * wt->loopSize;
                 else
-                    lim = wt->unk_80;
+                    lim = wt->fallbackAdjustedLoopLimit;
                 break;
             case 2:
-                if (wt->unk_84)
-                    lim = wt->unk_84->position.loopIteration * wt->loopSize;
+                if (wt->loopBoundaryInstruction)
+                    lim = wt->loopBoundaryInstruction->position.loopIteration * wt->loopSize;
                 else
-                    lim = wt->unk_82;
+                    lim = wt->fallbackAbsoluteLoopLimit;
                 break;
             }
             if (minRow < lim)

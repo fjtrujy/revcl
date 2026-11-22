@@ -21,13 +21,13 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *slot = &op->parts[p];
                     OperandLock *par = slot->getParent();
-                    if (slot->unk_19 != 2) {
+                    if (slot->operandStatusCode != 2) {
                         int s = par->linearRow;
                         if ((short)s >= 0) {
                             int t = s + par->issueLatency + slot->issueLatency;
                             if (t >= line) {
                                 line = t;
-                                if (op->unk_0b && !op->additionalLatency)
+                                if (op->externalBlockModeFlag && !op->additionalLatency)
                                     thru = t;
                             }
                             if (t > iline) {
@@ -41,7 +41,7 @@ int earliestInsert(workTable *wt, Instr *in, bool *found)
             }
         }
         reg = registerOperand(op, 2);
-        if (reg && reg->unk_2c) {
+        if (reg && reg->tracksHotOutputPaths) {
             for (int p = 0; p != reg->partCount; p++) {
                 if ((op->componentMask >> p) & 1) {
                     OpSlot *slot = &op->parts[p];

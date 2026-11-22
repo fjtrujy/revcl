@@ -37,7 +37,7 @@ bool checkOpt2(Program *p)
                 reportError("work table isn't opt table\n");
                 return false;
             }
-            if (!wt->unk_0b) {
+            if (!wt->postOptimizationPrepared) {
                 reportError("locks aren't valid for opt table\n");
                 return false;
             }

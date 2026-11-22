@@ -24,7 +24,7 @@ public:
     int bestReg();
     bool set_in_aTab(regUse *ru);
 
-    char unk_30[0x20];
+    char registerPartAvailabilityMask[0x20];
 };
 
 #endif

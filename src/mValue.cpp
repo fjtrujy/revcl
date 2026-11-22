@@ -955,14 +955,14 @@ bool mValue::makeNumeric()
     return isNumType(type);
 }
 
-char g_080bbda0[4096];
+char immediateFormattingBuffer[4096];
 int immediateValueStringOffset;
 
 char *mValue::asChars()
 {
     if (immediateValueStringOffset > 2048)
         immediateValueStringOffset = 0;
-    char *p = g_080bbda0 + immediateValueStringOffset;
+    char *p = immediateFormattingBuffer + immediateValueStringOffset;
     switch (type) {
     case INT:
         formatIntoBuffer(p, "%d", i);

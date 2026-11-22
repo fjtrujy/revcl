@@ -95,7 +95,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                             reportWarning("multiple same-sequence output operands match to a fixed stream %s..setting hazard flags\n",
                                           t->streamName());
                             tr->hazardMask |= 1 << part;
-                            sr->unk_13 |= 1 << part;
+                            sr->sourcePathHazardMask |= 1 << part;
                             s->hazardFlag = 1;
                         } else {
                             reportWarning("vcl found a RAW stream with a non blocking operation for '%s' where by going down differing paths, an operand was set in different places..\n",
@@ -107,14 +107,14 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                             reportWarning("paths - min..\n");
                             reportWarning("well - setting hiBits and localH this time..\n");
                             tr->hazardMask |= 1 << part;
-                            sr->unk_13 |= 1 << part;
+                            sr->sourcePathHazardMask |= 1 << part;
                             s->hazardFlag = 1;
                         }
                     }
                 }
                 if (min_s != last) {
                     s->hazardFlag = 1;
-                    sr->unk_13 |= 1 << part;
+                    sr->sourcePathHazardMask |= 1 << part;
                     tr->hazardMask |= 1 << part;
                 }
                 if (min_s)

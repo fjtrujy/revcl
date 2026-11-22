@@ -116,11 +116,11 @@ static inline olList *opSlotUses0(Operand *op) { return &op->parts[0].operandLoc
 static inline Instr *olInstr(ol_s *ol) { return ol->instruction; }
 static inline char olOpIndex(ol_s *ol) { return ol->operandIndex; }
 static inline mValue *instrAaImm(Instr *in) { return &in->addressImmediateValue; }
-static inline unsigned char aaOutOp(aaDesc *aa) { return aa->unk_06; }
-static inline unsigned char aaInOp(aaDesc *aa) { return aa->unk_05; }
-static inline signed char aaImmOp(aaDesc *aa) { return aa->unk_07; }
-static inline int aaImmLit(aaDesc *aa) { return aa->unk_08; }
-static inline unsigned char aaUseOp(aaUse *u) { return u->unk_04; }
+static inline unsigned char aaOutOp(aaDesc *aa) { return aa->outputOperandIndex; }
+static inline unsigned char aaInOp(aaDesc *aa) { return aa->inputOperandIndex; }
+static inline signed char aaImmOp(aaDesc *aa) { return aa->immediateOperandIndex; }
+static inline int aaImmLit(aaDesc *aa) { return aa->literalImmediate; }
+static inline unsigned char aaUseOp(aaUse *u) { return u->operandIndex; }
 
 bool aaFixup(instStream *s)
 {
@@ -140,7 +140,7 @@ bool aaFixup(instStream *s)
         aaDesc *aa = findAddressAliasDescriptor(in);
         if (!aa || !bit0(regUseExtIn(ru)) || !bit0(regUseExtOut(ru)) || ru->unk_18 != 1)
             continue;
-        RegPoolEntry *outReg = in->operands[aa->unk_06].assignedRegister;
+        RegPoolEntry *outReg = in->operands[aa->outputOperandIndex].assignedRegister;
         if (outReg != reg || opRawReg(instrRawOp(in, aaInOp(aa))) != outReg)
             continue;
         ol_s *ol;
@@ -162,10 +162,10 @@ bool aaFixup(instStream *s)
                     return false;
                 }
                 vi->addressAliasDirection = 1;
-                vi->addressAliasMode = aa->unk_04;
-                vi->addressAliasOperandIndex = u->unk_04;
+                vi->addressAliasMode = aa->aliasMode;
+                vi->addressAliasOperandIndex = u->operandIndex;
                 mValue *v = instrAaImm(vi);
-                if (aa->unk_07 >= 0) {
+                if (aa->immediateOperandIndex >= 0) {
                     if (!v->set(opImmVal(instrRawOpS(in, aaImmOp(aa))))) {
                         reportError("failed to set xaaImm for before\n");
                         return false;
@@ -206,9 +206,9 @@ bool aaFixup(instStream *s)
                 }
                 mValue *v = instrAaImm(vi);
                 vi->addressAliasDirection = 2;
-                vi->addressAliasMode = aa->unk_04;
-                vi->addressAliasOperandIndex = u->unk_04;
-                if (aa->unk_07 >= 0) {
+                vi->addressAliasMode = aa->aliasMode;
+                vi->addressAliasOperandIndex = u->operandIndex;
+                if (aa->immediateOperandIndex >= 0) {
                     if (!v->set(opImmVal(instrRawOpS(in, aaImmOp(aa))))) {
                         reportError("failed to set xaaImm after\n");
                         return false;

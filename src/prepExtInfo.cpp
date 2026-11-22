@@ -71,7 +71,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                         if ((setter->hasRawTableOrImmediateToken() || same) && d > best)
                             best = d;
                     }
-                    if (op->unk_0b)
+                    if (op->externalBlockModeFlag)
                         in->raiseExternalInputPairedConstraint(best);
                     else
                         in->raiseExternalInputConstraint(best);
@@ -125,7 +125,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                             if (user->hasRawTableOrImmediateToken() && d > best)
                                 best = d;
                         }
-                        if (op->unk_0b)
+                        if (op->externalBlockModeFlag)
                             in->raiseExternalOutputPairedConstraint(best);
                         else
                             in->raiseExternalOutputConstraint(best);
@@ -141,7 +141,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                     return 0;
                 }
             }
-            if (reg->unk_2c && !noExt) {
+            if (reg->tracksHotOutputPaths && !noExt) {
                 ol_s *ol;
                 for (ol = sl->externalInputLocations.head; ol; ol = ol->next) {
                     int key = ol->pathKey;
@@ -268,7 +268,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
             for (int i = 0; i != in->operandCount; i++) {
                 Operand *op = &in->operands[i];
                 RegPoolEntry *r = isRegisterOperand(op, 2) ? op->assignedRegister : 0;
-                if (r && r->unk_2c) {
+                if (r && r->tracksHotOutputPaths) {
                     regUse *u = ul->findByRegister(r);
                     if (!u) {
                         reportError("failed to find regref\n");
@@ -294,7 +294,7 @@ bool prepExtInfo(Program *p, instStream *s, bool noExt)
                 if (isRegisterOperand(op, 1))
                     op->reductionHazardMask = u->hazardMask & op->externalPartMask;
                 if (isRegisterOperand(op, 2))
-                    op->reductionHazardMask = u->unk_13 & op->externalPartMask;
+                    op->reductionHazardMask = u->sourcePathHazardMask & op->externalPartMask;
                 op->reductionHazardMask |= u->hazardBroadcastMask;
             }
         }
