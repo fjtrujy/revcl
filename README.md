@@ -90,3 +90,13 @@ preserves their original object ordering and `config/build.json` preserves the
 historical compiler options. The frozen fixtures are in `tests/oracle/`.
 Reverse-engineering research material and third-party downloads are maintained
 separately rather than redistributed here.
+
+## Contributing and licensing
+
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for upstream provenance,
+what is excluded from this repository, and the limits of its MIT license.
+[CONTRIBUTING.md](CONTRIBUTING.md) describes how to submit code and tests
+without adding proprietary or unreviewed reference materials.
+
+The distinct VUC 2004.1 reconstruction is developed on the
+[`vuc` branch](https://github.com/fjtrujy/revcl/tree/vuc).
