@@ -723,34 +723,6 @@ local_review	wt	src/expandRaw.cpp	22	expandRawTables	workTable *
 local_review	s	src/explodeRaw.cpp	19	explodeRaw	instStream *
 local_review	t	src/explodeRaw.cpp	21	explodeRaw	workTable *
 local_review	r	src/explodeRaw.cpp	40	explodeRaw	int
-local_review	i	src/instructionBranchFixups.cpp	7	func_08052f84	int
-local_review	op	src/instructionBranchFixups.cpp	8	func_08052f84	Operand *
-local_review	ol	src/instructionBranchFixups.cpp	14	func_08052f84	ol_s *
-local_review	in	src/instructionBranchFixups.cpp	15	func_08052f84	Instr *
-local_review	c	src/instructionBranchFixups.cpp	18	func_08052f84	int
-local_review	j	src/instructionBranchFixups.cpp	22	func_08052f84	int
-local_review	r	src/instructionBranchFixups.cpp	23	func_08052f84	RegPoolEntry *
-local_review	id	src/instructionBranchFixups.cpp	40	func_08053104	int
-local_review	r	src/instructionBranchFixups.cpp	54	func_08053104	RegPoolEntry *
-local_review	i	src/instructionBranchFixups.cpp	75	func_08053104	int
-local_review	r	src/instructionOperandNormalization.cpp	7	func_080532d8	int
-local_review	t	src/instructionOperandNormalization.cpp	25	func_080532d8	RegPoolEntry *
-local_review	op	src/instructionOperandNormalization.cpp	39	func_080532d8	Operand *
-local_review	z	src/instructionOperandNormalization.cpp	41	func_080532d8	RegPoolEntry *
-local_review	i	src/instructionOperandNormalization.cpp	46	func_080532d8	int
-local_review	in	src/movePropagation.cpp	30	propagateMoves	Instr *
-local_review	n	src/movePropagation.cpp	44	propagateMoves	Instr *
-local_review	p	src/movePropagation.cpp	47	propagateMoves	Instr *
-local_review	a	src/movePropagation.cpp	49	propagateMoves	bool
-local_review	b	src/movePropagation.cpp	54	propagateMoves	bool
-local_review	a	src/movePropagation.cpp	58	propagateMoves	bool
-local_review	b	src/movePropagation.cpp	63	propagateMoves	bool
-local_review	r	src/movePropagation.cpp	71	propagateMoves	int
-local_review	i	src/movePropagation.cpp	82	propagateMoves	int
-local_review	op	src/movePropagation.cpp	83	propagateMoves	Operand *
-local_review	c	src/movePropagation.cpp	91	propagateMoves	bool
-local_review	d	src/movePropagation.cpp	93	propagateMoves	bool
-local_review	in	src/movePropagation.cpp	119	removeDeadMoves	Instr *
 local_review	s	src/externalStreamPreparation.cpp	22	func_0807aee4	instStream *
 local_review	wt	src/externalStreamPreparation.cpp	47	removeNops	workTable *
 local_review	hw	src/externalStreamPreparation.cpp	63	removeNops	RegPool *
@@ -800,49 +772,6 @@ local_review	d	src/externalStreamPreparation.cpp	267	removeNops	int
 local_review	l	src/externalStreamPreparation.cpp	292	func_0807bb84	int
 local_review	p	src/externalStreamPreparation.cpp	294	func_0807bb84	int
 local_review	in	src/externalStreamPreparation.cpp	295	func_0807bb84	Instr *
-local_review	n	src/moveListConsistency.cpp	12	func_0807f308	int
-local_review	in	src/moveListConsistency.cpp	13	func_0807f308	Instr *
-local_review	in	src/wrangleCore.cpp	28	func_0808061c	Instr *
-local_review	r	src/wrangleCore.cpp	66	func_0808061c	bool
-local_review	tmp	src/wrangleCore.cpp	79	wrangleMode0Worker	VclPtrWord
-local_review	c	src/wrangleCore.cpp	81	wrangleMode0Worker	wrangleCand
-local_review	sz	src/wrangleCore.cpp	96	wrangleMode0Worker	int
-local_review	in	src/wrangleCore.cpp	119	wrangleMode0Worker	Instr *
-local_review	n	src/wrangleCore.cpp	215	wrangleMode0Worker	int
-local_review	ps	src/wrangleCore.cpp	221	wrangleMode0Worker	Instr **
-local_review	p	src/wrangleCore.cpp	253	wrangleMode0Worker	Instr *
-local_review	r	src/wrangleCore.cpp	278	wrangleMode0Worker	int
-local_review	fi	src/wrangleCore.cpp	291	wrangleMode0Worker	Instr *
-local_review	fi	src/wrangleCore.cpp	315	wrangleMode0Worker	Instr *
-local_review	in	src/wrangleCore.cpp	321	wrangleMode0Worker	Instr *
-local_review	in	src/wrangleCore.cpp	339	wrangleMode0Worker	Instr *
-local_review	mv	src/wrangleCore.cpp	348	wrangleMode0Worker	int
-local_review	in	src/wrangleCore.cpp	385	buildCandidateList2	Instr *
-local_review	m	src/wrangleCore.cpp	395	buildCandidateList2	short
-local_review	d	src/wrangleCore.cpp	420	buildCandidateList2	int
-local_review	i	src/wrangleCore.cpp	432	buildCandidateList2	int
-local_review	op	src/wrangleCore.cpp	433	buildCandidateList2	Operand *
-local_review	r	src/wrangleCore.cpp	434	buildCandidateList2	RegPoolEntry *
-local_review	j	src/wrangleCore.cpp	437	buildCandidateList2	int
-local_review	s	src/wrangleCore.cpp	440	buildCandidateList2	OpSlot *
-local_review	p	src/wrangleCore.cpp	441	buildCandidateList2	OperandLock *
-local_review	t	src/wrangleCore.cpp	450	buildCandidateList2	int
-local_review	in	src/wrangleCore.cpp	505	func_0808158c	Instr *
-local_review	p	src/wrangleCore.cpp	528	findInsertPositionMode0	int
-local_review	r	src/wrangleCore.cpp	530	findInsertPositionMode0	int
-local_review	in	src/wrangleCandidateSelection.cpp	17	func_080817d4	Instr *
-local_review	in	src/wrangleCandidateSelection.cpp	37	func_0808184c	Instr *
-local_review	p	src/instructionTextEmission.cpp	26	func_0808750c	char *
-local_review	n	src/instructionTextEmission.cpp	32	func_0808750c	int
-local_review	i	src/instructionTextEmission.cpp	34	func_0808750c	int
-local_review	op	src/instructionTextEmission.cpp	35	func_0808750c	Operand *
-local_review	p	src/instructionTextEmission.cpp	71	emitReversibleBranch	char *
-local_review	n	src/instructionTextEmission.cpp	77	emitReversibleBranch	int
-local_review	i	src/instructionTextEmission.cpp	79	emitReversibleBranch	int
-local_review	op	src/instructionTextEmission.cpp	80	emitReversibleBranch	Operand *
-local_review	i	src/instructionTextEmission.cpp	103	extHook	int
-local_review	op	src/instructionTextEmission.cpp	104	extHook	Operand *
-local_review	r	src/instructionTextEmission.cpp	111	extHook	RegPoolEntry *
 local_review	ii	src/fDep.cpp	15	getEA	iInfo *
 local_review	op	src/fDep.cpp	26	getEA	Operand *
 local_review	o	src/fDepClone.cpp	36	func_0806558c	ol_s *
@@ -1337,7 +1266,33 @@ local_review	s	src/instStream.cpp	538	processCmdSynth	const char *
 local_review	n	src/instStream.cpp	539	processCmdSynth	const char *
 local_review	t	src/instStream.cpp	563	disposeInputTable	workTable *
 local_review	i	src/instStream.cpp	574	func_0806dc9c	int
+local_review	i	src/instructionBranchFixups.cpp	7	func_08052f84	int
+local_review	op	src/instructionBranchFixups.cpp	8	func_08052f84	Operand *
+local_review	ol	src/instructionBranchFixups.cpp	14	func_08052f84	ol_s *
+local_review	in	src/instructionBranchFixups.cpp	15	func_08052f84	Instr *
+local_review	c	src/instructionBranchFixups.cpp	18	func_08052f84	int
+local_review	j	src/instructionBranchFixups.cpp	22	func_08052f84	int
+local_review	r	src/instructionBranchFixups.cpp	23	func_08052f84	RegPoolEntry *
+local_review	id	src/instructionBranchFixups.cpp	40	func_08053104	int
+local_review	r	src/instructionBranchFixups.cpp	54	func_08053104	RegPoolEntry *
+local_review	i	src/instructionBranchFixups.cpp	75	func_08053104	int
+local_review	r	src/instructionOperandNormalization.cpp	7	func_080532d8	int
+local_review	t	src/instructionOperandNormalization.cpp	25	func_080532d8	RegPoolEntry *
+local_review	op	src/instructionOperandNormalization.cpp	39	func_080532d8	Operand *
+local_review	z	src/instructionOperandNormalization.cpp	41	func_080532d8	RegPoolEntry *
+local_review	i	src/instructionOperandNormalization.cpp	46	func_080532d8	int
 local_review	g	src/instructionPosition.cpp	36	func_0805874c	int
+local_review	p	src/instructionTextEmission.cpp	26	func_0808750c	char *
+local_review	n	src/instructionTextEmission.cpp	32	func_0808750c	int
+local_review	i	src/instructionTextEmission.cpp	34	func_0808750c	int
+local_review	op	src/instructionTextEmission.cpp	35	func_0808750c	Operand *
+local_review	p	src/instructionTextEmission.cpp	71	emitReversibleBranch	char *
+local_review	n	src/instructionTextEmission.cpp	77	emitReversibleBranch	int
+local_review	i	src/instructionTextEmission.cpp	79	emitReversibleBranch	int
+local_review	op	src/instructionTextEmission.cpp	80	emitReversibleBranch	Operand *
+local_review	i	src/instructionTextEmission.cpp	103	extHook	int
+local_review	op	src/instructionTextEmission.cpp	104	extHook	Operand *
+local_review	r	src/instructionTextEmission.cpp	111	extHook	RegPoolEntry *
 local_review	r	src/linearReduce.cpp	47	func_0807e740	int
 local_review	r	src/linearReduce.cpp	57	func_0807e740	int
 local_review	t	src/linkList.cpp	21	branchLinkType	int
@@ -1628,6 +1583,21 @@ local_review	l	src/makeMove.cpp	421	undoMove	RegisterPartLockList *
 local_review	i	src/makeMove.cpp	459	undoMovesTo	Instr *
 local_review	e	src/memRegPool.cpp	33	func_08088f20	RegPoolEntry *
 local_review	i	src/memRegPool.cpp	36	func_08088f20	int
+local_review	n	src/moveListConsistency.cpp	12	func_0807f308	int
+local_review	in	src/moveListConsistency.cpp	13	func_0807f308	Instr *
+local_review	in	src/movePropagation.cpp	30	propagateMoves	Instr *
+local_review	n	src/movePropagation.cpp	44	propagateMoves	Instr *
+local_review	p	src/movePropagation.cpp	47	propagateMoves	Instr *
+local_review	a	src/movePropagation.cpp	49	propagateMoves	bool
+local_review	b	src/movePropagation.cpp	54	propagateMoves	bool
+local_review	a	src/movePropagation.cpp	58	propagateMoves	bool
+local_review	b	src/movePropagation.cpp	63	propagateMoves	bool
+local_review	r	src/movePropagation.cpp	71	propagateMoves	int
+local_review	i	src/movePropagation.cpp	82	propagateMoves	int
+local_review	op	src/movePropagation.cpp	83	propagateMoves	Operand *
+local_review	c	src/movePropagation.cpp	91	propagateMoves	bool
+local_review	d	src/movePropagation.cpp	93	propagateMoves	bool
+local_review	in	src/movePropagation.cpp	119	removeDeadMoves	Instr *
 local_review	mr	src/moveRec.cpp	27	getMove	moveRec *
 local_review	in	src/moveRec.cpp	30	getMove	Instr *
 local_review	i	src/moveRec.cpp	45	getMove	int
@@ -2152,6 +2122,36 @@ local_review	t	src/wrangle.cpp	508	buildCandidateList	int
 local_review	in	src/wrangle.cpp	560	func_080803dc	Instr *
 local_review	p	src/wrangle.cpp	585	findInsertPosition	int
 local_review	r	src/wrangle.cpp	587	findInsertPosition	int
+local_review	in	src/wrangleCandidateSelection.cpp	17	func_080817d4	Instr *
+local_review	in	src/wrangleCandidateSelection.cpp	37	func_0808184c	Instr *
+local_review	in	src/wrangleCore.cpp	28	func_0808061c	Instr *
+local_review	r	src/wrangleCore.cpp	66	func_0808061c	bool
+local_review	tmp	src/wrangleCore.cpp	79	wrangleMode0Worker	VclPtrWord
+local_review	c	src/wrangleCore.cpp	81	wrangleMode0Worker	wrangleCand
+local_review	sz	src/wrangleCore.cpp	96	wrangleMode0Worker	int
+local_review	in	src/wrangleCore.cpp	119	wrangleMode0Worker	Instr *
+local_review	n	src/wrangleCore.cpp	215	wrangleMode0Worker	int
+local_review	ps	src/wrangleCore.cpp	221	wrangleMode0Worker	Instr **
+local_review	p	src/wrangleCore.cpp	253	wrangleMode0Worker	Instr *
+local_review	r	src/wrangleCore.cpp	278	wrangleMode0Worker	int
+local_review	fi	src/wrangleCore.cpp	291	wrangleMode0Worker	Instr *
+local_review	fi	src/wrangleCore.cpp	315	wrangleMode0Worker	Instr *
+local_review	in	src/wrangleCore.cpp	321	wrangleMode0Worker	Instr *
+local_review	in	src/wrangleCore.cpp	339	wrangleMode0Worker	Instr *
+local_review	mv	src/wrangleCore.cpp	348	wrangleMode0Worker	int
+local_review	in	src/wrangleCore.cpp	385	buildCandidateList2	Instr *
+local_review	m	src/wrangleCore.cpp	395	buildCandidateList2	short
+local_review	d	src/wrangleCore.cpp	420	buildCandidateList2	int
+local_review	i	src/wrangleCore.cpp	432	buildCandidateList2	int
+local_review	op	src/wrangleCore.cpp	433	buildCandidateList2	Operand *
+local_review	r	src/wrangleCore.cpp	434	buildCandidateList2	RegPoolEntry *
+local_review	j	src/wrangleCore.cpp	437	buildCandidateList2	int
+local_review	s	src/wrangleCore.cpp	440	buildCandidateList2	OpSlot *
+local_review	p	src/wrangleCore.cpp	441	buildCandidateList2	OperandLock *
+local_review	t	src/wrangleCore.cpp	450	buildCandidateList2	int
+local_review	in	src/wrangleCore.cpp	505	func_0808158c	Instr *
+local_review	p	src/wrangleCore.cpp	528	findInsertPositionMode0	int
+local_review	r	src/wrangleCore.cpp	530	findInsertPositionMode0	int
 local_review	in	src/wrangleOpts.cpp	16	optNormal	Instr *
 local_review	d	src/wrangleOpts.cpp	22	optNormal	int
 local_review	e	src/wrangleOpts.cpp	29	optNormal	int
@@ -2523,9 +2523,6 @@ parameter_review	p	src/emuInst.cpp	15	emuInst	Program *
 parameter_review	wt	src/expandRaw.cpp	6	expandRaw	workTable *
 parameter_review	p	src/expandRaw.cpp	15	expandRawTables	Program *
 parameter_review	p	src/explodeRaw.cpp	16	explodeRaw	Program *
-parameter_review	p	src/movePropagation.cpp	21	func_0806ae58	Program *
-parameter_review	t	src/movePropagation.cpp	26	propagateMoves	workTable *
-parameter_review	t	src/movePropagation.cpp	115	removeDeadMoves	workTable *
 parameter_review	p	src/externalStreamPreparation.cpp	20	func_0807aee4	Program *
 parameter_review	p	src/externalStreamPreparation.cpp	41	removeNops	Program *
 parameter_review	s	src/externalStreamPreparation.cpp	41	removeNops	instStream *
@@ -2535,31 +2532,6 @@ parameter_review	m	src/externalStreamPreparation.cpp	305	splitCtime	int
 parameter_review	wt	src/externalStreamPreparation.cpp	305	splitCtime	workTable *
 parameter_review	l	src/externalStreamPreparation.cpp	318	getCtime	int
 parameter_review	wt	src/externalStreamPreparation.cpp	318	getCtime	workTable *
-parameter_review	mv	src/localMoveResolution.cpp	11	func_0807f2c4	Instr *
-parameter_review	f	src/wrangleCore.cpp	15	func_0808061c	wrangleFunc
-parameter_review	wt	src/wrangleCore.cpp	15	func_0808061c	workTable *
-parameter_review	f	src/wrangleCore.cpp	74	wrangleMode0Worker	wrangleFunc
-parameter_review	wt	src/wrangleCore.cpp	74	wrangleMode0Worker	workTable *
-parameter_review	in	src/wrangleCore.cpp	378	clearCand	Instr *
-parameter_review	wt	src/wrangleCore.cpp	383	buildCandidateList2	workTable *
-parameter_review	c	src/wrangleCore.cpp	501	func_0808158c	wrangleCand *
-parameter_review	wt	src/wrangleCore.cpp	501	func_0808158c	workTable *
-parameter_review	in	src/wrangleCore.cpp	521	findInsertPositionMode0	Instr *
-parameter_review	wt	src/wrangleCore.cpp	521	findInsertPositionMode0	workTable *
-parameter_review	c	src/wrangleCandidateSelection.cpp	13	func_080817d4	wrangleCand *
-parameter_review	wt	src/wrangleCandidateSelection.cpp	13	func_080817d4	workTable *
-parameter_review	c	src/wrangleCandidateSelection.cpp	33	func_0808184c	wrangleCand *
-parameter_review	wt	src/wrangleCandidateSelection.cpp	33	func_0808184c	workTable *
-parameter_review	<unnamed>	src/flowBuildHooks.cpp	10	func_08085a9c	Program *
-parameter_review	in	src/instructionTextEmission.cpp	14	dumpEmitInstruction	Instr *
-parameter_review	<unnamed>	src/instructionTextEmission.cpp	19	func_0808750c	int
-parameter_review	b	src/instructionTextEmission.cpp	19	func_0808750c	bool
-parameter_review	in	src/instructionTextEmission.cpp	19	func_0808750c	Instr *
-parameter_review	<unnamed>	src/instructionTextEmission.cpp	53	emitReversibleBranch	int
-parameter_review	b	src/instructionTextEmission.cpp	53	emitReversibleBranch	bool
-parameter_review	in	src/instructionTextEmission.cpp	53	emitReversibleBranch	Instr *
-parameter_review	<unnamed>	src/instructionTextEmission.cpp	100	extHook	void *
-parameter_review	in	src/instructionTextEmission.cpp	100	extHook	Instr *
 parameter_review	i	src/fDep.cpp	13	getEA	Instr *
 parameter_review	a	src/fDep.cpp	36	sameValue	Operand *
 parameter_review	b	src/fDep.cpp	36	sameValue	Operand *
@@ -2597,6 +2569,7 @@ parameter_review	in	src/findCap.cpp	25	findCap	Instr *
 parameter_review	wt	src/findCap.cpp	25	findCap	workTable *
 parameter_review	v	src/fitsSigned.cpp	10	fitsSigned	int
 parameter_review	v	src/fitsSigned.cpp	20	fitsUnsigned	int
+parameter_review	<unnamed>	src/flowBuildHooks.cpp	10	func_08085a9c	Program *
 parameter_review	b	src/flowMon.cpp	20	func_08060018	bool
 parameter_review	p	src/flowMon.cpp	20	func_08060018	Program *
 parameter_review	p	src/flowMon.cpp	118	func_080603bc	Program *
@@ -2744,6 +2717,15 @@ parameter_review	i	src/instStream.cpp	493	processCmdSynth	Instr *
 parameter_review	v	src/instructionPosition.cpp	34	func_0805874c	short
 parameter_review	c	src/instructionPosition.cpp	48	func_0805878c	char
 parameter_review	t	src/instructionPosition.cpp	67	setRangeFrom	workTable *
+parameter_review	in	src/instructionTextEmission.cpp	14	dumpEmitInstruction	Instr *
+parameter_review	<unnamed>	src/instructionTextEmission.cpp	19	func_0808750c	int
+parameter_review	b	src/instructionTextEmission.cpp	19	func_0808750c	bool
+parameter_review	in	src/instructionTextEmission.cpp	19	func_0808750c	Instr *
+parameter_review	<unnamed>	src/instructionTextEmission.cpp	53	emitReversibleBranch	int
+parameter_review	b	src/instructionTextEmission.cpp	53	emitReversibleBranch	bool
+parameter_review	in	src/instructionTextEmission.cpp	53	emitReversibleBranch	Instr *
+parameter_review	<unnamed>	src/instructionTextEmission.cpp	100	extHook	void *
+parameter_review	in	src/instructionTextEmission.cpp	100	extHook	Instr *
 parameter_review	wt	src/linearReduce.cpp	17	isPipeMode	workTable *
 parameter_review	p	src/linearReduce.cpp	23	dumpLinearReduce	Program *
 parameter_review	p	src/linearReduce.cpp	28	func_0807e740	Program *
@@ -2796,6 +2778,7 @@ parameter_review	s	src/lists.cpp	511	mstrlen	const char *
 parameter_review	a	src/lists.cpp	541	mprefix_del	const char *
 parameter_review	b	src/lists.cpp	541	mprefix_del	const char *
 parameter_review	p	src/loadStalls.cpp	9	loadStalls	Program *
+parameter_review	mv	src/localMoveResolution.cpp	11	func_0807f2c4	Instr *
 parameter_review	rf	src/lock.cpp	82	setOwner	regUse *
 parameter_review	a	src/lock.cpp	347	addInput	char
 parameter_review	b	src/lock.cpp	347	addInput	unsigned char
@@ -2923,6 +2906,9 @@ parameter_review	mv	src/makeMove.cpp	364	undoMove	Instr *
 parameter_review	<unnamed>	src/memRegPool.cpp	51	func_08088e54	workTable *
 parameter_review	<unnamed>	src/memRegPool.cpp	56	assignExt	instStream *
 parameter_review	<unnamed>	src/memRegPool.cpp	61	func_08088e6c	RegPoolEntry *
+parameter_review	p	src/movePropagation.cpp	21	func_0806ae58	Program *
+parameter_review	t	src/movePropagation.cpp	26	propagateMoves	workTable *
+parameter_review	t	src/movePropagation.cpp	115	removeDeadMoves	workTable *
 parameter_review	<unnamed>	src/moveRec.cpp	16	getMove	int
 parameter_review	in	src/moveRec.cpp	126	addFreeMove	Instr *
 parameter_review	in	src/moveRec.cpp	173	detectMove	Instr *
@@ -3090,6 +3076,20 @@ parameter_review	c	src/wrangle.cpp	556	func_080803dc	wrangleCand *
 parameter_review	wt	src/wrangle.cpp	556	func_080803dc	workTable *
 parameter_review	in	src/wrangle.cpp	578	findInsertPosition	Instr *
 parameter_review	wt	src/wrangle.cpp	578	findInsertPosition	workTable *
+parameter_review	c	src/wrangleCandidateSelection.cpp	13	func_080817d4	wrangleCand *
+parameter_review	wt	src/wrangleCandidateSelection.cpp	13	func_080817d4	workTable *
+parameter_review	c	src/wrangleCandidateSelection.cpp	33	func_0808184c	wrangleCand *
+parameter_review	wt	src/wrangleCandidateSelection.cpp	33	func_0808184c	workTable *
+parameter_review	f	src/wrangleCore.cpp	15	func_0808061c	wrangleFunc
+parameter_review	wt	src/wrangleCore.cpp	15	func_0808061c	workTable *
+parameter_review	f	src/wrangleCore.cpp	74	wrangleMode0Worker	wrangleFunc
+parameter_review	wt	src/wrangleCore.cpp	74	wrangleMode0Worker	workTable *
+parameter_review	in	src/wrangleCore.cpp	378	clearCand	Instr *
+parameter_review	wt	src/wrangleCore.cpp	383	buildCandidateList2	workTable *
+parameter_review	c	src/wrangleCore.cpp	501	func_0808158c	wrangleCand *
+parameter_review	wt	src/wrangleCore.cpp	501	func_0808158c	workTable *
+parameter_review	in	src/wrangleCore.cpp	521	findInsertPositionMode0	Instr *
+parameter_review	wt	src/wrangleCore.cpp	521	findInsertPositionMode0	workTable *
 parameter_review	c	src/wrangleOpts.cpp	14	optNormal	wrangleCand *
 parameter_review	wt	src/wrangleOpts.cpp	14	optNormal	workTable *
 parameter_review	in	src/wrangleOpts.cpp	55	normalRegCost	Instr *

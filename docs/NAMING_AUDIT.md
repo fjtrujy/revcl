@@ -26,7 +26,7 @@ try to infer C++ member ownership or judge whether abbreviations like `i`,
 | VCL candidate category | Distinct spellings/files | Notes |
 | --- | ---: | --- |
 | Address-named functions | 436 | Includes original ABI spellings intentionally preserved at definitions; 10 diagnostic helpers have readable call aliases |
-| Offset-named fields | 242 | Identical offsets recur in many unrelated classes |
+| Offset-named fields | 237 | Identical offsets recur in many unrelated classes |
 | Address-coded globals/other identifiers | 85 | Recover names from initialization and cross-references before modifying |
 | Numeric class names | 4 | Three have semantic typedefs in the first pass |
 | Address-named source files | 0 | All original address-coded translation-unit filenames now have semantic names |
@@ -43,7 +43,7 @@ found:
 
 | Source declaration candidates | Count | Meaning |
 | --- | ---: | --- |
-| Owner-qualified `unk_` field declarations | 590 | Pairs of owning type and offset-style field name; the same `unk_04` in two classes counts twice |
+| Owner-qualified `unk_` field declarations | 568 | Pairs of owning type and offset-style field name; the same `unk_04` in two classes counts twice |
 | Short/anonymous parameter declarations | 869 | Names with at most two letters, or `arg`/`val`/`ptr`/`tmp`; includes legitimate conventional names |
 | Short local variable declarations | 2,248 | Same naming heuristic; includes loop indices that may already be appropriate |
 
@@ -140,6 +140,26 @@ Unqualified inline member uses in `RegPool.h` were checked and updated
 separately because their AST node kind differs from `MemberExpr`. No field
 layout order, alignment, data types, or original function symbols changed.
 **Native 13/13 CTest and the exact original historical SHA-256 still pass.**
+
+## Second AST owner-qualified field batch
+
+Twenty-two more high-confidence fields were renamed at **513 exact AST
+source locations across 65 files**, with no class layout or logic changes:
+
+- `RegPoolEntry`: `ownerPool`, `isVirtual`, `allocatable`,
+  `assignedPhysicalRegister`, `registerIndex`, `usedSlotMask`,
+  `throughputWriter`, `registerWeb`.
+- `RegPool`: `registerEntries`, `entryCount`, `zeroRegister`,
+  `externalRegister`, `virtualPartCount`, `poolName`.
+- `Program`: `uniqueNamePrefixes`, `flowIdCount`, `streamsById`,
+  `backTraceVisitCache`.
+- `instStream`: `owningProgram`, `nextStream`, `previousStream`,
+  `workTablePtr`.
+
+The AST tool's `MemberExpr` matching does not cover unqualified accesses in
+inline methods. The nine affected `instStream` inline accesses were patched
+separately after a compiler check, then revalidated. **13/13 native CTests
+and the original byte-exact historical SHA-256 both passed.**
 
 ## Final source-file naming pass
 
