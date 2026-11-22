@@ -4,7 +4,7 @@
 #include "os.h"
 
 bool asciiCaseEqual(const char *a, const char *b);
-bool func_0804c03c(const char *a, const char *b);
+bool equalExactStrings(const char *a, const char *b);
 char *dupString(const char *s);
 int mstrlen(const char *s);
 
@@ -55,7 +55,7 @@ mNode *mList::findByExactName(const char *name)
     mNode *node = head;
     while (node) {
         if (name) {
-            if (node->name && func_0804c03c(name, node->name))
+            if (node->name && equalExactStrings(name, node->name))
                 break;
         } else if (!node->name)
             break;
@@ -181,7 +181,7 @@ bool mList::transferNodesFrom(mList *other)
     return true;
 }
 
-void mList::func_0804b534()
+void mList::noopListTraversal()
 {
     for (mNode *node = head; node; node = node->next)
         ;

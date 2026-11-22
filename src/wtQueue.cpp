@@ -37,7 +37,7 @@ workTable *makeForceTable(Program *p, instStream *s);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 const char *stallReasonStr(short why);
 bool sredTable(workTable *wt);
-bool func_0807e528(Program *p, instStream *s, workTable *wt);
+bool prepareReductionCandidates(Program *p, instStream *s, workTable *wt);
 bool func_0807e740(Program *p, workTable *wt, unsigned char a, unsigned char b);
 
 bool workTable::qRegRef(regUse *ru)
@@ -223,7 +223,7 @@ bool workTable::qInstruction(Instr *in)
                     }
                     out = o->slots[k].getRegisterLock();
                 } else {
-                    olList *uses = &src->parts[k].unk_54;
+                    olList *uses = &src->parts[k].operandLocations;
                     ol_s *ol = uses->head;
                     if (!ol || ol->next) {
                         reportError("more or less than one oploc for non-extern input\n");
@@ -234,12 +234,12 @@ bool workTable::qInstruction(Instr *in)
                         reportError("could not get setting op for setter\n");
                         exitAfterCleanup(-1);
                     }
-                    Instr *img = setter->unk_08;
+                    Instr *img = setter->cloneImage;
                     if (!img) {
                         reportError("qInstruction - setter had null work clone set\n");
                         return false;
                     }
-                    if ((workTable *)img->unk_30 != this) {
+                    if ((workTable *)img->ownerTable != this) {
                         reportError("qInstruction  - image of setter wasn't in this table\n");
                         return false;
                     }
@@ -337,7 +337,7 @@ bool workTable::qInstruction(Instr *in)
     }
     if (loopSize && c->branchFlags) {
         g_080b33f0 += 2;
-        c->unk_1398 = g_080b33f0;
+        c->replacedInstructionWord = g_080b33f0;
         reserveEntry(g_080b33f0, loopSize - 2, 1);
     }
     return true;

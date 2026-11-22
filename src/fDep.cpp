@@ -18,12 +18,12 @@ Operand *getEA(Instr *i)
         exitAfterCleanup(-1);
     }
     if ((ii->kindAndFlags & 7) == 4) {
-        if (ii->unk_1a >= i->operandCount) {
+        if (ii->branchTargetOperandSelector >= i->operandCount) {
             reportError("eaop is out of bounds for operands st=%d\n", ii->kindData);
             i->leDump();
             exitAfterCleanup(-1);
         }
-        Operand *op = &i->operands[ii->unk_1a];
+        Operand *op = &i->operands[ii->branchTargetOperandSelector];
         if (op->direction != 1) {
             reportError("effective address specifier isn't an input\n");
             exitAfterCleanup(-1);
@@ -35,12 +35,12 @@ Operand *getEA(Instr *i)
 
 static inline bool sameValue(Operand *a, Operand *b)
 {
-    return func_0804e5c0(&a->immediateValue, &b->immediateValue);
+    return sameImmediateValue(&a->immediateValue, &b->immediateValue);
 }
 
 static inline bool sameOwner(Instr *a, Instr *b)
 {
-    if (a->unk_30 == b->unk_30)
+    if (a->ownerTable == b->ownerTable)
         return true;
     return false;
 }
@@ -72,7 +72,7 @@ bool sameEA(Instr *a, Instr *b)
             reportError("mod bits not 1 for an effective address specifier\n");
             exitAfterCleanup(-1);
         }
-        if (!sameOperandLocation(ea1->parts[0].unk_54.head, ea2->parts[0].unk_54.head))
+        if (!sameOperandLocation(ea1->parts[0].operandLocations.head, ea2->parts[0].operandLocations.head))
             return false;
     }
     return sameValue(ea1, ea2);

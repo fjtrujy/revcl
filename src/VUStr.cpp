@@ -2,7 +2,7 @@
 #include "VUStr.h"
 #include "os.h"
 
-bool func_08051f08(const char *s, int *mask, bool *bad)
+bool parseTrailingComponentMask(const char *s, int *mask, bool *bad)
 {
     const char *p = s;
     *mask = 0;
@@ -15,7 +15,7 @@ bool func_08051f08(const char *s, int *mask, bool *bad)
     while (p != s && *p != '.')
         p--;
     if (*p == '.') {
-        int m = func_08051ff0(p + 1);
+        int m = decodeComponentMaskLetters(p + 1);
         *mask = m;
         if (m == -1) {
             *bad = true;
@@ -26,7 +26,7 @@ bool func_08051f08(const char *s, int *mask, bool *bad)
     return false;
 }
 
-bool func_08051f78(const char *s, int *mask)
+bool parseBracketedComponentMask(const char *s, int *mask)
 {
     *mask = 0;
     const char *p = s;
@@ -51,7 +51,7 @@ bool func_08051f78(const char *s, int *mask)
     return true;
 }
 
-int func_08051ff0(const char *s)
+int decodeComponentMaskLetters(const char *s)
 {
     int mask = 0;
     while (*s) {
@@ -75,7 +75,7 @@ int g_080b3240 = 0;
 char g_080bcdc0[32];
 char g_080bcde0[32];
 
-char *func_08052064(int mask)
+char *formatComponentMaskLetters(int mask)
 {
     if (g_080b3240 > 24)
         g_080b3240 = 0;
@@ -93,16 +93,16 @@ char *func_08052064(int mask)
 inline char *VUStr_dot_mask(char *buf, int mask)
 {
     buf[0] = '.';
-    mstrcpy(buf + 1, func_08052064(mask));
+    mstrcpy(buf + 1, formatComponentMaskLetters(mask));
     return buf;
 }
 
-char *func_080520d4(int mask)
+char *formatDottedComponentMask(int mask)
 {
     return VUStr_dot_mask(g_080bcdc0, mask);
 }
 
-int func_08052100(const char *s)
+int readTrailingComponentMask(const char *s)
 {
     int mask = 0;
     if (!s || !*s)
@@ -128,7 +128,7 @@ int func_08052100(const char *s)
     return mask;
 }
 
-int func_0805219c(const char *s)
+int lastComponentBit(const char *s)
 {
     int r = 0;
     if (!s || !*s)
@@ -145,7 +145,7 @@ int func_0805219c(const char *s)
     return r;
 }
 
-int func_080521f0(char *s)
+int removeInstructionModifierGroups(char *s)
 {
     int mods = 0;
     if (s) {
@@ -187,7 +187,7 @@ int func_080521f0(char *s)
     return mods;
 }
 
-bool func_080522c4(int mods, unsigned char mode, bool flag)
+bool areInstructionModifiersAllowed(int mods, unsigned char mode, bool flag)
 {
     int allowed = 0;
     switch (mode) {
@@ -206,7 +206,7 @@ bool func_080522c4(int mods, unsigned char mode, bool flag)
 
 char g_080bce00[32];
 
-char *func_08052314(int mods)
+char *formatInstructionModifiers(int mods)
 {
     char *p = g_080bce00;
     if (mods)

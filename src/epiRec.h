@@ -6,33 +6,33 @@ class workTable;
 class Instr;
 
 struct epiRec {
-    int unk_00;
-    int unk_04;
-    int unk_08;
-    int unk_0c;
+    int regionEndIndex;
+    int regionStartIndex;
+    int loopKey;
+    int sourceLoopId;
     int unk_10;
-    instStream *unk_14;
-    workTable *unk_18;
-    Instr *unk_1c;
+    instStream *stream;
+    workTable *table;
+    Instr *conditionalBranch;
 
     epiRec()
     {
-        unk_08 = -1;
-        unk_0c = -1;
-        unk_04 = -1;
-        unk_00 = -1;
-        unk_14 = 0;
-        unk_1c = 0;
+        loopKey = -1;
+        sourceLoopId = -1;
+        regionStartIndex = -1;
+        regionEndIndex = -1;
+        stream = 0;
+        conditionalBranch = 0;
     }
     ~epiRec() {}
     void reset()
     {
-        unk_08 = -1;
-        unk_0c = -1;
-        unk_04 = -1;
-        unk_00 = -1;
-        unk_14 = 0;
-        unk_1c = 0;
+        loopKey = -1;
+        sourceLoopId = -1;
+        regionStartIndex = -1;
+        regionEndIndex = -1;
+        stream = 0;
+        conditionalBranch = 0;
     }
     bool init(int size, const char *name);
     void func_08067df0();

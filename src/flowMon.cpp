@@ -10,14 +10,14 @@ int buildDepCount_080b33a4 = 0;
 
 bool flowReset(Program *p);
 bool recalcFlowUIDs(Program *p);
-bool func_0806c0f8(Program *p);
+bool resetProcessorThroughput(Program *p);
 bool func_080642ec(Program *p, instStream *s);
 bool initBackTrace(Program *p);
 bool disposeBackTrace(Program *p);
 bool doBackTrace(Program *p, instStream *s, RegPoolEntry *reg, int part, int depth, int mode, bool hot);
 bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b);
 
-bool func_08060018(Program *p, bool b)
+bool rebuildFlowDependencies(Program *p, bool b)
 {
     buildDepCount_080b33a4++;
     if (!flowReset(p)) {
@@ -36,7 +36,7 @@ bool func_08060018(Program *p, bool b)
         return false;
     }
     for (s = p->streamHead; s; s = s->nextStream) {
-        if (!func_0806c0f8(p)) {
+        if (!resetProcessorThroughput(p)) {
             reportError("flowInit - failed for stream %s\n", s->streamName());
             return false;
         }
@@ -115,7 +115,7 @@ bool func_08060018(Program *p, bool b)
     return true;
 }
 
-bool func_080603bc(Program *p)
+bool gatherAllStreamStatistics(Program *p)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (!s->gatherStats()) {

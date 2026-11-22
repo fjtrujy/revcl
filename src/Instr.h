@@ -37,17 +37,17 @@ public:
     union {
         unsigned short unk_0e_w;
         struct {
-            char unk_0e;
+            char pipelineMask;
             char unk_0f;
         };
     };
-    char unk_10;
+    char resourceMask;
     char unk_11;
-    char unk_12;
+    char minimumIssueSpacing;
     char unk_13[5];
     unsigned char kindAndFlags;
     unsigned char kindData;
-    unsigned char unk_1a;   // branch target operand index + 1
+    unsigned char branchTargetOperandSelector;
     char unk_1b;
     int efuMaskType;
     bool (*decodeHook)(void *, Instr *);
@@ -64,12 +64,12 @@ public:
     int syntheticKind();
     bool isRawOnly();
     char isNop();
-    void func_08070080();
-    void func_080700a4();
+    void scanOpcodeOperandDescriptors();
+    void noopOpcodeDescriptorHook();
     bool check();
-    int func_080701f4();
-    int func_0807021c();
-    int func_08070244();
+    int branchFlagBit1();
+    int branchFlagBit3();
+    int branchFlagBit2();
     int canPruneOperands();
 };
 
@@ -171,8 +171,8 @@ public:
     short getRefCount() { return referenceCount; }
     void print();
     bool isOk(int type, bool inserted);
-    short func_0805ccc8();
-    short func_0805ccd4();
+    short maximumLockConstraint();
+    short secondaryLockConstraint();
     bool calcStats(Instr *skip);
     void resetCalculatedStats();
     void setFrom(cls08058718 *r);
@@ -246,17 +246,17 @@ const char *rlmtName(unsigned char t);
 
 bool checkTable(iInfo *tab, int count);
 int decodeImmediateCategory(unsigned char);
-int func_0807031c(unsigned char);
+int defaultImmediateFlags(unsigned char);
 unsigned char immediateFlagBit7(unsigned char);
 
 struct OpSlot : public cls0805bcc4 {
     short unk_50;
     char unk_52[2];
-    olList unk_54;          // uses
+    olList operandLocations;
 
     OpSlot();
     ~OpSlot();
-    void func_080560bc();
+    void noopOperandSlotHook();
     bool resetSlotLock();
     int clearSlotLocations();
 };
@@ -562,21 +562,21 @@ static inline RegPoolEntry *registerOperand(Operand *op, char direction)
 
 // Doubly linked list link embedded in Instr.
 struct iLink {
-    Instr *unk_00;  // next
-    Instr *unk_04;  // prev
+    Instr *nextInstruction;
+    Instr *previousInstruction;
 
-    Instr *prev() { return unk_04; }
-    Instr *next() { return unk_00; }
+    Instr *prev() { return previousInstruction; }
+    Instr *next() { return nextInstruction; }
 
     iLink()
     {
-        unk_04 = 0;
-        unk_00 = 0;
+        previousInstruction = 0;
+        nextInstruction = 0;
     }
     ~iLink()
     {
-        unk_04 = 0;
-        unk_00 = 0;
+        previousInstruction = 0;
+        nextInstruction = 0;
     }
 };
 
@@ -584,10 +584,10 @@ struct iLink {
 
 class cls08058718 {
 public:
-    short unk_00;
-    char unk_02;
-    char unk_03;
-    short unk_04;
+    short linearRow;
+    char pipelineIndex;
+    char loopIteration;
+    short loopRow;
     char unk_06[2];
 
     cls08058718();
@@ -596,13 +596,13 @@ public:
     void func_08058744();
     void setFromLinearRow(short v);
     void setInstructionPipe(char c);
-    short getRow() { return unk_00; }
-    short getPipe() { return unk_02; }
+    short getRow() { return linearRow; }
+    short getPipe() { return pipelineIndex; }
     void setRow(short r)
     {
-        unk_03 = 0;
-        unk_00 = unk_04 = r;
-        unk_02 = 1;
+        loopIteration = 0;
+        linearRow = loopRow = r;
+        pipelineIndex = 1;
     }
 };
 
@@ -614,12 +614,12 @@ extern int g_080b3374;  // range end
 
 class cls0805e2e4 {
 public:
-    short unk_00, unk_02, unk_04, unk_06;
-    int unk_08, unk_0c, unk_10, unk_14;
+    short reverseLatencyDepth, reverseDependencyHeight, forwardLatencyDepth, forwardDependencyHeight;
+    int moveCount, moveDistance, moveChainLength, independentLatencyDepth;
 
     cls0805e2e4();
     ~cls0805e2e4();
-    void func_0805e2fc();
+    void noopStatisticsHook();
     void invalidateAllCounters();
     void zeroAllCounters();
     void copyCountersFrom(cls0805e2e4 *src);
@@ -629,9 +629,9 @@ public:
 // Placeholder for the object at Instr::unk_30 (type unknown).
 struct cls_unk30 {
     char unk_00[9];
-    char unk_09;
+    char codeModeValue;
     char unk_0a[6];
-    instStream *unk_10;     // owner stream
+    instStream *ownerStream;
 
     Instr **getIE_ck(int rl);
 };
@@ -640,8 +640,8 @@ class Instr {
 public:
     VclPtrWord unk_00;
     VclPtrWord unk_04;
-    Instr *unk_08;  // tmpClone
-    short unk_0c;   // id
+    Instr *cloneImage;
+    short instructionId;
     union {
         unsigned char unk_0e;
         struct {
@@ -651,13 +651,13 @@ public:
     };
     char unk_0f;
     iGroupList unk_10;
-    LocTag *unk_14;
+    LocTag *sourceTag;
     short unk_18;
     short unk_1a;
-    iLink unk_1c;   // linear list link
-    iLink unk_24;   // ToDo/Done list link
-    Instr *unk_2c;  // next in Block move list
-    cls_unk30 *unk_30;
+    iLink linearLink;
+    iLink pendingLink;
+    Instr *nextMoveInstruction;
+    cls_unk30 *ownerTable;
     iInfo *opcodeInfo;  // opcode descriptor
     Operand operands[12];
     unsigned char branchFlags;     // flags
@@ -673,14 +673,14 @@ public:
     char tildePrefix;
     short scheduledCycle;
     short insertionSerial;
-    int unk_1398;
+    int replacedInstructionWord;
     char *branchLabelTags;
     olList predecessorDependencies;
     olList successorDependencies;
-    short unk_13b0;
-    short unk_13b2;
-    short unk_13b4;
-    short unk_13b6;
+    short externalInputPairedConstraint;
+    short externalInputConstraint;
+    short externalOutputPairedConstraint;
+    short externalOutputConstraint;
     mList unk_13b8;
     char unk_13cc;
     char syntheticKind;
@@ -698,19 +698,19 @@ public:
     int linearOrderIndex;
     cls08058718 position;
     void clearSlot() { position.clearInstructionPosition(); }
-    cls0805e2e4 unk_13f0;
+    cls0805e2e4 schedulingStatistics;
     short dynamicUpperBound, dynamicEarliestStart, dynamicReverseStart, dynamicReverseEnd;
     short hasExtraPredecessors;     // fdep "has extra pre deps" flag
     short specialRegisterReadMask;     // slot mask read of reg idx 48
     short specialRegisterWriteMask;     // slot mask written of reg idx 48
     char unk_1416[2];
-    short unk_1418;
-    short unk_141a;
-    short unk_141c;
-    short unk_141e;
+    short candidateAttemptCount;
+    short candidateAttemptLimit;
+    short candidateCostOffset;
+    short candidateBaseRow;
     short parsedLoopId;
     char unk_1422[6];
-    VclPtrWord unk_1428;
+    VclPtrWord moveRecordWord;
     short abstractMoveOpcode;
     short concreteMoveOpcode;
     short moveRowOffset;
@@ -776,7 +776,7 @@ public:
     char *emitExpectedSyntax(bool flag, char *buf, int n);
     int outputMaskForRegister(RegPoolEntry *reg, int mask);
     int inputMaskForRegister(RegPoolEntry *reg, int mask);
-    bool func_08055548();
+    bool hasRawTableOrImmediateToken();
     char *getBranchTargetImmediate();
     RegPoolEntry *getBranchTargetRegister();
     int func_08055718();
@@ -786,8 +786,8 @@ public:
     bool classifySchedulingCategory();
     Instr **getIE();
     int getFirstOutputLatency();
-    bool func_08055a88();
-    bool func_08055aa8();
+    bool markDependencyInputReachable();
+    bool markDependencyOutputReachable();
     bool expandVirtualStatOperand();
     void clearExternalTimingConstraints();
     void copyExternalTimingConstraints(Instr *src);

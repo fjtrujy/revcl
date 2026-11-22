@@ -9,7 +9,7 @@ bool moveLocks(Instr *i, InstructionPosition *pos);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
 int latestInsert(workTable *wt, Instr *in, bool *found);
 int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
-int func_0804bf50(unsigned int x);
+int countSetBits(unsigned int x);
 RegPoolEntry *getZeroReg(unsigned int type);
 
 
@@ -87,7 +87,7 @@ int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *cap
             int best = 0;
             for (i = 1; i != 32; i++) {
                 int m = in->operands[0].componentMask & mask[i];
-                int n = func_0804bf50(m);
+                int n = countSetBits(m);
                 if (n > best) {
                     RegPoolEntry *e = pool->findByRegisterIndex(i);
                     g_080de748 = m;

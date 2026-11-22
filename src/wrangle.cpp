@@ -57,7 +57,7 @@ bool func_0807f360(workTable *wt, wrangleFunc f)
     wt->vectorMoveCount = 0;
     wt->oddPipeMoveCount = 0;
     wt->evenPipeMoveCount = 0;
-    for (Instr *in = wt->pendingInstructions.head; in; in = in->unk_24.unk_00) {
+    for (Instr *in = wt->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
         adjustMoveCount((Block *)wt, in, 1);
         if (!in->classifySchedulingCategory()) {
             reportError("failed to set loop sfx type\n");
@@ -157,16 +157,16 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                         int lim2 = maxBranchLid * wt->loopSize;
                         int lim1 = (maxBranchLid - wt->unk_7a) * wt->loopSize;
                         g_080de72c = 0;
-                        for (Instr *in = wt->completedInstructions.head; in; in = in->unk_24.unk_00) {
+                        for (Instr *in = wt->completedInstructions.head; in; in = in->pendingLink.nextInstruction) {
                             switch ((unsigned char)in->schedulerCategory) {
                             case 0:
                                 break;
                             case 1:
-                                if (in->position.unk_00 < lim1)
+                                if (in->position.linearRow < lim1)
                                     trackEarliestInsertion(in);
                                 break;
                             case 2:
-                                if (in->position.unk_00 < lim2) {
+                                if (in->position.linearRow < lim2) {
                                     int saved = errorOccurred;
                                     errorOccurred = !quiet_080bbd98;
                                     in->leDump();
@@ -235,7 +235,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                 }
             }
             if (!func_080803dc(wt, &c)) {
-                c.unk_04 = c.unk_00->unk_141e;
+                c.unk_04 = c.unk_00->candidateBaseRow;
                 if (!func_080803dc(wt, &c))
                     goto faulted;
             }
@@ -392,7 +392,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     abortAfterError();
                     return false;
                 }
-                if (in->unk_1428 && !undoMovesTo((Block *)wt, in)) {
+                if (in->moveRecordWord && !undoMovesTo((Block *)wt, in)) {
                     reportError("failed to undo move\n");
                     abortAfterError();
                 }
@@ -404,11 +404,11 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     abortAfterError();
                     return false;
                 }
-                in->unk_141c++;
-                if (++in->unk_1418 <= in->unk_141a)
+                in->candidateCostOffset++;
+                if (++in->candidateAttemptCount <= in->candidateAttemptLimit)
                     break;
                 in->clearTransientFlags();
-                if (in->unk_1428) {
+                if (in->moveRecordWord) {
                     if (!undoMovesTo((Block *)wt, in)) {
                         reportError("failed to undo move\n");
                         abortAfterError();
@@ -416,10 +416,10 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                     in = 0;
                 }
                 if (in) {
-                    in->unk_1418 = 0;
-                    in->unk_141a++;
-                    if (wt->loopSize && in->unk_141a > wt->loopSize * 16) {
-                        if (in->unk_1428) {
+                    in->candidateAttemptCount = 0;
+                    in->candidateAttemptLimit++;
+                    if (wt->loopSize && in->candidateAttemptLimit > wt->loopSize * 16) {
+                        if (in->moveRecordWord) {
                             if (!undoMovesTo((Block *)wt, in)) {
                                 reportError("failed to undo move\n");
                                 abortAfterError();
@@ -427,7 +427,7 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
                             in = 0;
                         }
                         if (in)
-                            in->unk_141a = wt->loopSize * 16;
+                            in->candidateAttemptLimit = wt->loopSize * 16;
                     }
                 }
             }
@@ -449,10 +449,10 @@ bool buildCandidateList(workTable *wt)
     wt->dump();
     dynCalcStats(wt);
     g_080de74c++;
-    for (; in; in = in->unk_24.unk_00) {
-        short m = in->unk_13b2;
-        if (m < in->unk_13b0)
-            m = in->unk_13b0;
+    for (; in; in = in->pendingLink.nextInstruction) {
+        short m = in->externalInputConstraint;
+        if (m < in->externalInputPairedConstraint)
+            m = in->externalInputPairedConstraint;
         int minRow = m;
         earliest = 0;
         if (!func_0806558c(in, &earliest)) {
@@ -512,7 +512,7 @@ bool buildCandidateList(workTable *wt)
                     }
                 }
             }
-            if (r->moveInstruction && in != r->moveInstruction && r->moveInstruction->position.unk_04 < 0)
+            if (r->moveInstruction && in != r->moveInstruction && r->moveInstruction->position.loopRow < 0)
                 goto next;
         }
         if (wt->loopSize) {
@@ -523,13 +523,13 @@ bool buildCandidateList(workTable *wt)
                 break;
             case 1:
                 if (wt->unk_84)
-                    lim = (wt->unk_84->position.unk_03 - wt->unk_7a) * wt->loopSize;
+                    lim = (wt->unk_84->position.loopIteration - wt->unk_7a) * wt->loopSize;
                 else
                     lim = wt->unk_80;
                 break;
             case 2:
                 if (wt->unk_84)
-                    lim = wt->unk_84->position.unk_03 * wt->loopSize;
+                    lim = wt->unk_84->position.loopIteration * wt->loopSize;
                 else
                     lim = wt->unk_82;
                 break;
@@ -540,7 +540,7 @@ bool buildCandidateList(workTable *wt)
         row = minRow;
         pipe = 0;
         if (findInsertPosition(wt, in, &row, &pipe)) {
-            in->unk_141e = row;
+            in->candidateBaseRow = row;
             if (!func_0807f2c4((Block *)wt, in)) {
                 reportError("failed to add candidate\n");
                 return false;
@@ -560,7 +560,7 @@ bool func_080803dc(workTable *wt, wrangleCand *c)
     Instr *in = c->unk_00;
     pipe = 0;
     if (in->branchFlags)
-        row = in->unk_141e;
+        row = in->candidateBaseRow;
     if (in->permittedPipelineMask == 3)
         pipe = c->unk_06 & 1;
     else

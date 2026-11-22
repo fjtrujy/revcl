@@ -7,7 +7,7 @@ bool moveLocks(Instr *i, InstructionPosition *pos);
 int earliestInsert(workTable *wt, Instr *in, bool *found);
 int latestInsert(workTable *wt, Instr *in, bool *found);
 int func_0807e130(workTable *wt, Instr *in, InstructionPosition *pos, bool upwards);
-int func_0804bf50(unsigned int x);
+int countSetBits(unsigned int x);
 RegPoolEntry *getZeroReg(unsigned int type);
 
 static inline bool isRawTable(workTable *wt)
@@ -26,7 +26,7 @@ inline bool atEarliest(workTable *wt, Instr *in)
     if (!in)
         return false;
     int e = earliestInsert(wt, in, &found);
-    return found && e == in->position.unk_04;
+    return found && e == in->position.loopRow;
 }
 
 bool isAtEarliest(workTable *wt, Instr *in)
@@ -35,7 +35,7 @@ bool isAtEarliest(workTable *wt, Instr *in)
     if (!in)
         return false;
     int e = earliestInsert(wt, in, &found);
-    return found && e == in->position.unk_04;
+    return found && e == in->position.loopRow;
 }
 
 static inline void dumpSredInstruction(Instr *in)
@@ -51,7 +51,7 @@ extern const char sredBadlyPlacedError[];
 bool sredInstr(workTable *wt, Instr *in, bool up)
 {
     InstructionPosition pos;
-    int iline = in->position.unk_04;
+    int iline = in->position.loopRow;
     bool found = false;
     int step;
     bool upwards = false;
@@ -60,7 +60,7 @@ bool sredInstr(workTable *wt, Instr *in, bool up)
     if (up) {
         tline = earliestInsert(wt, in, &found);
         if (tline > iline) {
-            short mfs = in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2;
+            short mfs = in->externalInputConstraint < in->externalInputPairedConstraint ? in->externalInputPairedConstraint : in->externalInputConstraint;
             reportError(sredEarliestAfterError,
                           tline, iline, mfs);
             in->dumpOperandDiagnostics(false);
@@ -124,7 +124,7 @@ bool sredTable(workTable *wt)
             for (i = wt->rangeStart; i != wt->rangeEnd; i++) {
                 Instr *in = wt->getRowByIndex(i)->onlyEntry();
                 if (in) {
-                    if (in->position.unk_04 != i) {
+                    if (in->position.loopRow != i) {
                         reportError(sredBadlyPlacedError);
                         return false;
                     }
@@ -141,7 +141,7 @@ bool sredTable(workTable *wt)
             for (i = wt->rangeEnd - 1; i >= wt->rangeStart; i--) {
                 Instr *in = wt->getRowByIndex(i)->onlyEntry();
                 if (in && !atEarliest(wt, in)) {
-                    if (in->position.unk_04 != i) {
+                    if (in->position.loopRow != i) {
                         reportError(sredBadlyPlacedError);
                         return false;
                     }

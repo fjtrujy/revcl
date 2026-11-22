@@ -17,25 +17,25 @@ bool UnlinkFromToDo(Block *blk, Instr *n)
         reportError("UnlinkFromToDo asked to unlink - but zero count\n");
         return false;
     }
-    if (n->unk_24.unk_00)
-        n->unk_24.unk_00->unk_24.unk_04 = n->unk_24.unk_04;
+    if (n->pendingLink.nextInstruction)
+        n->pendingLink.nextInstruction->pendingLink.previousInstruction = n->pendingLink.previousInstruction;
     else if (n == blk->pendingInstructions.tail)
-        blk->pendingInstructions.tail = n->unk_24.unk_04;
+        blk->pendingInstructions.tail = n->pendingLink.previousInstruction;
     else {
         reportError("UnlinkFromToDono next.. but not tail!\n");
         return false;
     }
-    if (n->unk_24.unk_04)
-        n->unk_24.unk_04->unk_24.unk_00 = n->unk_24.unk_00;
+    if (n->pendingLink.previousInstruction)
+        n->pendingLink.previousInstruction->pendingLink.nextInstruction = n->pendingLink.nextInstruction;
     else if (n == blk->pendingInstructions.head)
-        blk->pendingInstructions.head = n->unk_24.unk_00;
+        blk->pendingInstructions.head = n->pendingLink.nextInstruction;
     else {
         reportError("UnlinkFromToDono next.. but not tail!\n");
         return false;
     }
     blk->pendingInstructions.count--;
-    n->unk_24.unk_04 = 0;
-    n->unk_24.unk_00 = 0;
+    n->pendingLink.previousInstruction = 0;
+    n->pendingLink.nextInstruction = 0;
     return true;
 }
 
@@ -49,25 +49,25 @@ bool UnlinkFromDone(Block *blk, Instr *n)
         reportError("UnlinkFromDone asked to unlink - but zero count\n");
         return false;
     }
-    if (n->unk_24.unk_00)
-        n->unk_24.unk_00->unk_24.unk_04 = n->unk_24.unk_04;
+    if (n->pendingLink.nextInstruction)
+        n->pendingLink.nextInstruction->pendingLink.previousInstruction = n->pendingLink.previousInstruction;
     else if (n == blk->completedInstructions.tail)
-        blk->completedInstructions.tail = n->unk_24.unk_04;
+        blk->completedInstructions.tail = n->pendingLink.previousInstruction;
     else {
         reportError("UnlinkFromDoneno next.. but not tail!\n");
         return false;
     }
-    if (n->unk_24.unk_04)
-        n->unk_24.unk_04->unk_24.unk_00 = n->unk_24.unk_00;
+    if (n->pendingLink.previousInstruction)
+        n->pendingLink.previousInstruction->pendingLink.nextInstruction = n->pendingLink.nextInstruction;
     else if (n == blk->completedInstructions.head)
-        blk->completedInstructions.head = n->unk_24.unk_00;
+        blk->completedInstructions.head = n->pendingLink.nextInstruction;
     else {
         reportError("UnlinkFromDoneno next.. but not tail!\n");
         return false;
     }
     blk->completedInstructions.count--;
-    n->unk_24.unk_04 = 0;
-    n->unk_24.unk_00 = 0;
+    n->pendingLink.previousInstruction = 0;
+    n->pendingLink.nextInstruction = 0;
     return true;
 }
 
@@ -81,25 +81,25 @@ bool UnlinkFromLinear(Block *blk, Instr *n)
         reportError("UnlinkFromLinear asked to unlink - but zero count\n");
         return false;
     }
-    if (n->unk_1c.unk_00)
-        n->unk_1c.unk_00->unk_1c.unk_04 = n->unk_1c.unk_04;
+    if (n->linearLink.nextInstruction)
+        n->linearLink.nextInstruction->linearLink.previousInstruction = n->linearLink.previousInstruction;
     else if (n == blk->linearInstructions.tail)
-        blk->linearInstructions.tail = n->unk_1c.unk_04;
+        blk->linearInstructions.tail = n->linearLink.previousInstruction;
     else {
         reportError("UnlinkFromLinearno next.. but not tail!\n");
         return false;
     }
-    if (n->unk_1c.unk_04)
-        n->unk_1c.unk_04->unk_1c.unk_00 = n->unk_1c.unk_00;
+    if (n->linearLink.previousInstruction)
+        n->linearLink.previousInstruction->linearLink.nextInstruction = n->linearLink.nextInstruction;
     else if (n == blk->linearInstructions.head)
-        blk->linearInstructions.head = n->unk_1c.unk_00;
+        blk->linearInstructions.head = n->linearLink.nextInstruction;
     else {
         reportError("UnlinkFromLinearno next.. but not tail!\n");
         return false;
     }
     blk->linearInstructions.count--;
-    n->unk_1c.unk_04 = 0;
-    n->unk_1c.unk_00 = 0;
+    n->linearLink.previousInstruction = 0;
+    n->linearLink.nextInstruction = 0;
     return true;
 }
 
@@ -109,7 +109,7 @@ bool AddToDo_Head(Block *blk, Instr *n)
         reportError("AddToDo_Head - passed a null pointer\n");
         return false;
     }
-    if (n->unk_24.unk_04 || n->unk_24.unk_00) {
+    if (n->pendingLink.previousInstruction || n->pendingLink.nextInstruction) {
         reportError("AddToDo_Head - node already appears linked\n");
         return false;
     }
@@ -124,8 +124,8 @@ bool AddToDo_Head(Block *blk, Instr *n)
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_24.unk_00 = blk->pendingInstructions.head;
-        blk->pendingInstructions.head->unk_24.unk_04 = n;
+        n->pendingLink.nextInstruction = blk->pendingInstructions.head;
+        blk->pendingInstructions.head->pendingLink.previousInstruction = n;
         blk->pendingInstructions.head = n;
     } else {
         if (blk->pendingInstructions.count) {
@@ -145,7 +145,7 @@ bool AddDone_Head(Block *blk, Instr *n)
         reportError("AddDone_Head - passed a null pointer\n");
         return false;
     }
-    if (n->unk_24.unk_04 || n->unk_24.unk_00) {
+    if (n->pendingLink.previousInstruction || n->pendingLink.nextInstruction) {
         reportError("AddDone_Head - node already appears linked\n");
         return false;
     }
@@ -160,8 +160,8 @@ bool AddDone_Head(Block *blk, Instr *n)
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_24.unk_00 = blk->completedInstructions.head;
-        blk->completedInstructions.head->unk_24.unk_04 = n;
+        n->pendingLink.nextInstruction = blk->completedInstructions.head;
+        blk->completedInstructions.head->pendingLink.previousInstruction = n;
         blk->completedInstructions.head = n;
     } else {
         if (blk->completedInstructions.count) {
@@ -181,7 +181,7 @@ bool AddLinear_Head(Block *blk, Instr *n)
         reportError("AddLinear_Head - passed a null pointer\n");
         return false;
     }
-    if (n->unk_1c.unk_04 || n->unk_1c.unk_00) {
+    if (n->linearLink.previousInstruction || n->linearLink.nextInstruction) {
         reportError("AddLinear_Head - node already appears linked\n");
         return false;
     }
@@ -196,8 +196,8 @@ bool AddLinear_Head(Block *blk, Instr *n)
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_1c.unk_00 = blk->linearInstructions.head;
-        blk->linearInstructions.head->unk_1c.unk_04 = n;
+        n->linearLink.nextInstruction = blk->linearInstructions.head;
+        blk->linearInstructions.head->linearLink.previousInstruction = n;
         blk->linearInstructions.head = n;
     } else {
         if (blk->linearInstructions.count) {
@@ -217,7 +217,7 @@ bool AddToDo_Tail(Block *blk, Instr *n)
         reportError("AddToDo_Tail - passed a null pointer\n");
         return false;
     }
-    if (n->unk_24.unk_04 || n->unk_24.unk_00) {
+    if (n->pendingLink.previousInstruction || n->pendingLink.nextInstruction) {
         reportError("AddToDo_Tail - node already appears linked\n");
         return false;
     }
@@ -232,8 +232,8 @@ bool AddToDo_Tail(Block *blk, Instr *n)
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_24.unk_04 = blk->pendingInstructions.tail;
-        blk->pendingInstructions.tail->unk_24.unk_00 = n;
+        n->pendingLink.previousInstruction = blk->pendingInstructions.tail;
+        blk->pendingInstructions.tail->pendingLink.nextInstruction = n;
         blk->pendingInstructions.tail = n;
     } else {
         if (blk->pendingInstructions.count) {
@@ -253,7 +253,7 @@ bool AddDone_Tail(Block *blk, Instr *n)
         reportError("AddDone_Tail - passed a null pointer\n");
         return false;
     }
-    if (n->unk_24.unk_04 || n->unk_24.unk_00) {
+    if (n->pendingLink.previousInstruction || n->pendingLink.nextInstruction) {
         reportError("AddDone_Tail - node already appears linked\n");
         return false;
     }
@@ -268,8 +268,8 @@ bool AddDone_Tail(Block *blk, Instr *n)
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_24.unk_04 = blk->completedInstructions.tail;
-        blk->completedInstructions.tail->unk_24.unk_00 = n;
+        n->pendingLink.previousInstruction = blk->completedInstructions.tail;
+        blk->completedInstructions.tail->pendingLink.nextInstruction = n;
         blk->completedInstructions.tail = n;
     } else {
         if (blk->completedInstructions.count) {
@@ -289,7 +289,7 @@ bool AddLinear_Tail(Block *blk, Instr *n)
         reportError("AddLinear_Tail - passed a null pointer\n");
         return false;
     }
-    if (n->unk_1c.unk_04 || n->unk_1c.unk_00) {
+    if (n->linearLink.previousInstruction || n->linearLink.nextInstruction) {
         reportError("AddLinear_Tail - node already appears linked\n");
         return false;
     }
@@ -304,8 +304,8 @@ bool AddLinear_Tail(Block *blk, Instr *n)
             exitAfterCleanup(-1);
             return false;
         }
-        n->unk_1c.unk_04 = blk->linearInstructions.tail;
-        blk->linearInstructions.tail->unk_1c.unk_00 = n;
+        n->linearLink.previousInstruction = blk->linearInstructions.tail;
+        blk->linearInstructions.tail->linearLink.nextInstruction = n;
         blk->linearInstructions.tail = n;
     } else {
         if (blk->linearInstructions.count) {
@@ -325,27 +325,27 @@ bool AddLinear_After(Block *blk, Instr *after, Instr *n)
         reportError("AddLinear_After - passed a null in_a pointer\n");
         return false;
     }
-    if (n->unk_1c.unk_04 || n->unk_1c.unk_00) {
+    if (n->linearLink.previousInstruction || n->linearLink.nextInstruction) {
         reportError("AddLinear_After - node already appears linked\n");
         return false;
     }
     if (after) {
-        n->unk_1c.unk_00 = after->unk_1c.unk_00;
-        n->unk_1c.unk_04 = after;
-        after->unk_1c.unk_00 = n;
+        n->linearLink.nextInstruction = after->linearLink.nextInstruction;
+        n->linearLink.previousInstruction = after;
+        after->linearLink.nextInstruction = n;
     } else {
-        n->unk_1c.unk_00 = blk->linearInstructions.head;
+        n->linearLink.nextInstruction = blk->linearInstructions.head;
         blk->linearInstructions.head = n;
     }
-    if (n->unk_1c.unk_00)
-        n->unk_1c.unk_00->unk_1c.unk_04 = n;
+    if (n->linearLink.nextInstruction)
+        n->linearLink.nextInstruction->linearLink.previousInstruction = n;
     else
         blk->linearInstructions.tail = n;
     blk->linearInstructions.count++;
     return true;
 }
 
-bool func_0804bf28(char a, char b)
+bool equalAsciiCaseInsensitive(char a, char b)
 {
     if (a >= 'a' && a <= 'z')
         a -= 32;
@@ -354,7 +354,7 @@ bool func_0804bf28(char a, char b)
     return a == b;
 }
 
-int func_0804bf50(unsigned int x)
+int countSetBits(unsigned int x)
 {
     int n = 0;
     while (x) {
@@ -369,7 +369,7 @@ const char *tokenChars_080b3080 =
 const char *identChars_080b3084 =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_@";
 
-bool func_0804bf6c(char c)
+bool isTokenAlphabetCharacter(char c)
 {
     const char *p = tokenChars_080b3080;
     char ch;
@@ -378,7 +378,7 @@ bool func_0804bf6c(char c)
     return ch != 0;
 }
 
-bool func_0804bf9c(char c)
+bool isIdentifierAlphabetCharacter(char c)
 {
     const char *p = identChars_080b3084;
     char ch;
@@ -408,7 +408,7 @@ bool asciiCaseEqual(const char *left, const char *right)
     return true;
 }
 
-bool func_0804c03c(const char *a, const char *b)
+bool equalExactStrings(const char *a, const char *b)
 {
     if (!a || !b)
         return false;
@@ -421,7 +421,7 @@ bool func_0804c03c(const char *a, const char *b)
     return true;
 }
 
-void func_0804c08c(char *s)
+void removeLastDotSuffix(char *s)
 {
     char *p = s;
     if (!s || !*s)
@@ -435,7 +435,7 @@ void func_0804c08c(char *s)
         *p = 0;
 }
 
-void func_0804c0c8(char *s)
+void removeTrailingComponentSuffix(char *s)
 {
     char *p = s;
     if (!s || !*s)
@@ -493,7 +493,7 @@ char *dupLabelString(const char *s)
     return d;
 }
 
-void func_0804c220(char *p, int n)
+void clearRawBytes(char *p, int n)
 {
     if (!p) {
         reportError("asked to zero memory location 0\n");

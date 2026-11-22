@@ -47,7 +47,7 @@ Instr *makeMove(Block *blk, RegPoolEntry *reg)
             reportError("failed to dup  a reg\n");
             abortAfterError();
         }
-        mv->unk_141a = blk->loopSize;
+        mv->candidateAttemptLimit = blk->loopSize;
         in->assignedRegister = reg;
         in->operandStatus = 1;
         in->forcedBaseRegister = 0;
@@ -80,7 +80,7 @@ int getMove(Block *blk, Instr *in, int now)
     int bestScore = -1;
     RegPoolEntry *bestReg = 0;
     OperandLock *bestLk = 0;
-    if (in->unk_1428)
+    if (in->moveRecordWord)
         return 2;
     Operand *op;
     int i;
@@ -191,15 +191,15 @@ int getMove(Block *blk, Instr *in, int now)
         if (owner) {
             mv->linearOrderIndex = owner->linearOrderIndex + 1;
             mv->moveChainDepth = owner->moveChainDepth + 1;
-            mv->unk_141a = owner->unk_141a;
-            mv->unk_13f0.copyCountersFrom(&owner->unk_13f0);
+            mv->candidateAttemptLimit = owner->candidateAttemptLimit;
+            mv->schedulingStatistics.copyCountersFrom(&owner->schedulingStatistics);
         } else {
             mv->moveChainDepth = 1;
             mv->linearOrderIndex = in->linearOrderIndex - 1;
-            mv->unk_141a = in->unk_141a;
-            mv->unk_13f0.copyCountersFrom(&in->unk_13f0);
+            mv->candidateAttemptLimit = in->candidateAttemptLimit;
+            mv->schedulingStatistics.copyCountersFrom(&in->schedulingStatistics);
         }
-        mv->unk_141c = 0;
+        mv->candidateCostOffset = 0;
         Operand *out = mv->getOp(0);
         Operand *mvIn = mv->getOp(1);
         RegPoolEntry *newReg = out->assignedRegister;
@@ -210,7 +210,7 @@ int getMove(Block *blk, Instr *in, int now)
         int moved = 0;
         int oldBits = 0;
         int newBits = 0;
-        for (Instr *it = blk->pendingInstructions.head; it; it = (Instr *)it->unk_24.unk_00) {
+        for (Instr *it = blk->pendingInstructions.head; it; it = (Instr *)it->pendingLink.nextInstruction) {
             int n;
             for (n = 0; n != it->operandCount; n++) {
                 Operand *op = &it->operands[n];
@@ -371,7 +371,7 @@ bool undoMove(Block *blk, Instr *mv)
     RegPoolEntry *dup = out->assignedRegister;
     if (!UnlinkFromToDo(blk, mv))
         reportError("failed to unlink from todolist!\n");
-    for (Instr *i = blk->pendingInstructions.head; i; i = (Instr *)i->unk_24.unk_00) {
+    for (Instr *i = blk->pendingInstructions.head; i; i = (Instr *)i->pendingLink.nextInstruction) {
         for (int n = 0; n != i->operandCount; n++) {
             Operand *op = &i->operands[n];
             RegPoolEntry *r = op->assignedRegister;
@@ -458,9 +458,9 @@ bool undoMovesTo(Block *blk, Instr *stop)
     bool done;
     Instr *i = blk->pendingInstructions.tail;
     do {
-        Instr *prev = i->unk_24.unk_04;
+        Instr *prev = i->pendingLink.previousInstruction;
         done = (i == stop);
-        if (i->unk_1428) {
+        if (i->moveRecordWord) {
             if (!undoMove(blk, i)) {
                 reportError("failed to undo move !\n");
                 abortAfterError();

@@ -42,14 +42,14 @@ void mValue::clear()
     type = NONE;
 }
 
-int func_0804c4e8(int a, int b)
+int maximumValueType(int a, int b)
 {
     if (b > a)
         a = b;
     return a;
 }
 
-int func_0804c4f8(int a, int b)
+int promoteIntegralValueType(int a, int b)
 {
     int t = a;
     if (b > a)
@@ -323,7 +323,7 @@ static inline bool getFloatInl(mValue *v, float *out)
     return true;
 }
 
-bool func_0804ca94(mValue *dst, mValue *a, mValue *b)
+bool addValues(mValue *dst, mValue *a, mValue *b)
 {
     float fa, fb;
     int ia, ib;
@@ -372,7 +372,7 @@ fail:
     return false;
 }
 
-bool func_0804cd68(mValue *dst, mValue *a, mValue *b)
+bool subtractValues(mValue *dst, mValue *a, mValue *b)
 {
     float fa, fb;
     int ia, ib;
@@ -421,7 +421,7 @@ fail:
     return false;
 }
 
-bool func_0804d040(mValue *dst, mValue *a, mValue *b)
+bool multiplyValues(mValue *dst, mValue *a, mValue *b)
 {
     float fa, fb;
     int ia, ib;
@@ -470,7 +470,7 @@ fail:
     return false;
 }
 
-bool func_0804d314(mValue *dst, mValue *a, mValue *b)
+bool divideValues(mValue *dst, mValue *a, mValue *b)
 {
     float fa, fb;
     int ia, ib;
@@ -534,7 +534,7 @@ static inline int promoteIntType(int a, int b)
     return t;
 }
 
-bool func_0804d5ec(mValue *dst, mValue *a, mValue *b)
+bool moduloValues(mValue *dst, mValue *a, mValue *b)
 {
     int ia, ib;
     unsigned int ua, ub;
@@ -574,7 +574,7 @@ success:
     return true;
 }
 
-bool func_0804d7d4(mValue *dst, mValue *a, mValue *b)
+bool shiftValuesLeft(mValue *dst, mValue *a, mValue *b)
 {
     int ia, ib;
     unsigned int ua, ub;
@@ -612,7 +612,7 @@ bool func_0804d7d4(mValue *dst, mValue *a, mValue *b)
     return false;
 }
 
-bool func_0804d9c0(mValue *dst, mValue *a, mValue *b)
+bool shiftValuesRight(mValue *dst, mValue *a, mValue *b)
 {
     int ia, ib;
     unsigned int ua, ub;
@@ -650,7 +650,7 @@ bool func_0804d9c0(mValue *dst, mValue *a, mValue *b)
     return false;
 }
 
-bool func_0804dbac(mValue *dst, mValue *a, mValue *b)
+bool logicalOrValues(mValue *dst, mValue *a, mValue *b)
 {
     int ia, ib;
     unsigned int ua, ub;
@@ -688,7 +688,7 @@ bool func_0804dbac(mValue *dst, mValue *a, mValue *b)
     return false;
 }
 
-bool func_0804ddc0(mValue *dst, mValue *a, mValue *b)
+bool logicalAndValues(mValue *dst, mValue *a, mValue *b)
 {
     int ia, ib;
     unsigned int ua, ub;
@@ -734,7 +734,7 @@ static inline int promoteType(int a, int b)
     return t;
 }
 
-bool func_0804dfd4(mValue *dst, mValue *a, mValue *b)
+bool bitwiseAndValues(mValue *dst, mValue *a, mValue *b)
 {
     if (!a || !b) {
         printf("xpVal::bitand null arg passed\n");
@@ -754,7 +754,7 @@ bool func_0804dfd4(mValue *dst, mValue *a, mValue *b)
     return true;
 }
 
-bool func_0804e050(mValue *dst, mValue *a, mValue *b)
+bool bitwiseOrValues(mValue *dst, mValue *a, mValue *b)
 {
     if (!a || !b) {
         printf("xpVal::bitor null arg passed\n");
@@ -774,7 +774,7 @@ bool func_0804e050(mValue *dst, mValue *a, mValue *b)
     return true;
 }
 
-bool func_0804e0cc(mValue *dst, mValue *a, mValue *b)
+bool bitwiseXorValues(mValue *dst, mValue *a, mValue *b)
 {
     if (!a || !b) {
         printf("xpVal::bitxor null arg passed\n");
@@ -794,7 +794,7 @@ bool func_0804e0cc(mValue *dst, mValue *a, mValue *b)
     return true;
 }
 
-bool func_0804e148(const char *s)
+bool hasOnlyImmediateCharacters(const char *s)
 {
     if (!s)
         return false;
@@ -985,7 +985,7 @@ char *mValue::asChars()
     return p;
 }
 
-bool func_0804e5c0(mValue *a, mValue *b)
+bool sameImmediateValue(mValue *a, mValue *b)
 {
     unsigned int za = 0;
     unsigned int zb = 0;

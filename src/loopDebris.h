@@ -11,7 +11,7 @@ public:
     loopDebris() throw();
     ~loopDebris() throw();
     bool init(const char *baseName, int a, bool flag);
-    void func_0806770c();
+    void validateLoopDebrisName();
     instStream *getEnterStream();
     instStream *getExitStream();
     instStream *getMainStream();
@@ -27,14 +27,14 @@ public:
 
     epiRec *getProRec(int i);
     epiRec *getEpiRec(int i);
-    epiRec *func_08067c70(int key);
+    epiRec *findEpilogueByLoopKey(int key);
 
-    workTable *unk_00;
+    workTable *sourceWorkTable;
     char *m_entryName;
     char *m_exitName;
     const char *m_baseName;
-    char unk_10;
-    int unk_14;
+    char preserveAllocationMode;
+    int requestedAllocationMode;
     int m_nPro;
     int m_nEpi;
     epiRec m_enter;

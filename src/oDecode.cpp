@@ -12,7 +12,7 @@
 char gatheredToken[1024];
 
 int gatherTokens(LocTag *t, int i, bool stopAtOpcode);
-int func_0804bf50(unsigned int x);
+int countSetBits(unsigned int x);
 bool asciiCaseEqual(const char *a, const char *b);
 char *dupString(const char *s);
 int mstrlen(const char *s);
@@ -65,7 +65,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
             *d++ = *s++;
         *d = 0;
     }
-    mods = func_080521f0(p);
+    mods = removeInstructionModifierGroups(p);
     q = p;
     if (buf[0] == '~') {
         q = buf + 1;
@@ -104,7 +104,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
     {
         char *suffix = p + mnemonicLen;
         bad = false;
-        hasMods = func_08051f08(suffix, &mask, &bad);
+        hasMods = parseTrailingComponentMask(suffix, &mask, &bad);
     }
     if (bad) {
         reportUserMessage("instruction has bad .modifier bits\n");
@@ -135,7 +135,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         break;
     case 3:
         if (hasMods) {
-            if (in->ramAccessType == 1 && func_0804bf50(mask) != 1) {
+            if (in->ramAccessType == 1 && countSetBits(mask) != 1) {
                 reportUserMessage("getNextInstruction: MD_ONE instruction had bad mod bits. more than one?\n");
                 goto fail;
             }
@@ -237,7 +237,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                     reportError("have to set modbits for ea/reg or imm(ea)reg somewhere\n");
                     goto fail;
                 }
-                if (info->destinationMaskMode == 3 && func_0804bf50(opd->unk_0c) != 1) {
+                if (info->destinationMaskMode == 3 && countSetBits(opd->unk_0c) != 1) {
                     reportError("only one mod field allowed (one of x,y,z, or w)\n");
                     goto fail;
                 }
@@ -401,7 +401,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
         goto fail;
     }
     ok = true;
-    in->unk_14 = t;
+    in->sourceTag = t;
     in->unk_18 = *pos;
     in->unk_1a = cur;
 fail:
@@ -435,7 +435,7 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
     if (*pos == 0) {
         char *tok = t->tokenTextAt(0, 0);
         mNode *n;
-        if (func_080506e0(tok) && !t->isCommentToken(0)) {
+        if (hasTrailingLabelColon(tok) && !t->isCommentToken(0)) {
             if (*nOut != 0) {
                 reportUserMessage("found a label on a continued line\n");
                 return false;
@@ -448,7 +448,7 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                     *d++ = *s++;
                 *d = 0;
             }
-            int mods = func_080521f0(buf);
+            int mods = removeInstructionModifierGroups(buf);
             char *p = buf;
             while (*p && *p != ':')
                 p++;
@@ -471,12 +471,12 @@ bool Processor::decodeLE(LocTag *t, int *pos, mList *labels, Instr **out, int *n
                             *d++ = *s++;
                         *d = 0;
                     }
-                    i = func_080521f0(buf);
+                    i = removeInstructionModifierGroups(buf);
                     n->flags |= i;
                     (*pos)++;
                 }
             }
-            if (!func_080522c4(n->flags, decodeMode, true)) {
+            if (!areInstructionModifiersAllowed(n->flags, decodeMode, true)) {
                 int mode = decodeMode;
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(mode));
@@ -644,7 +644,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
                 }
                 synth = true;
             }
-            if (!func_080522c4(ins[i]->instructionModifierBits, p->proc.decodeMode, false)) {
+            if (!areInstructionModifiersAllowed(ins[i]->instructionModifierBits, p->proc.decodeMode, false)) {
                 reportUserMessage("invalid combination of [E/M/D/T] for this context (%s) at instruction \n",
                               codeModeName(p->proc.decodeMode));
                 ins[i]->leDump();
@@ -801,7 +801,7 @@ DecodedLine *decodeSourceLines(Program *p, Parser *parser, int type, bool newSyn
         for (mNode *nd = p->proc.trailingLabels.head; nd; nd = nd->next) {
             if (nd->flags) {
                 reportUserMessage("can't attach [modifiers] to labels at the end of code\n");
-                reportUserMessage("Label '%s:' has '%s'\n", nd->name, func_08052314(nd->flags));
+                reportUserMessage("Label '%s:' has '%s'\n", nd->name, formatInstructionModifiers(nd->flags));
                 goto done;
             }
         }

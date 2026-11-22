@@ -5,44 +5,44 @@
 #include "Instr.h"
 
 bool prepExtInfo(Program *p, instStream *s, bool b);
-int func_0807aaf4(Program *p, instStream *s);
+int insertStreamRegisterCaps(Program *p, instStream *s);
 void func_0807bb84(workTable *wt);
 bool removeNops(Program *p, instStream *s);
 int findCap(workTable *wt, Instr *in, int opIdx, RegPoolEntry **capReg, int *capMask);
 bool doCap(int line, int pipe, int mask);
 RegPool *GetRP(unsigned t);
-bool func_0806c0f8(Program *p);
+bool resetProcessorThroughput(Program *p);
 int emuInst(Program *p, wtRow *row, int line, bool uta, bool commit);
 void splitCtime(workTable *wt, int l, int m);
 
-int func_0807aa28(Program *p)
+int insertAllRegisterCaps(Program *p)
 {
     int total = 0;
     instStream *s;
     for (s = p->streamHead; s; s = s->nextStream) {
-        s->unk_2dc = 0;
+        s->externalSchedulingPrepared = 0;
         if (!s->usesFreeRawLayout())
-            s->unk_2dc = 1;
+            s->externalSchedulingPrepared = 1;
     }
     for (s = p->streamHead; s; s = s->nextStream) {
-        if (s->unk_2dc)
+        if (s->externalSchedulingPrepared)
             continue;
         if (!prepExtInfo(p, s, 0)) {
             reportError("failed to prep external info for stream %s\n", s->streamName());
             return -1;
         }
-        int n = func_0807aaf4(p, s);
+        int n = insertStreamRegisterCaps(p, s);
         if (n < 0) {
             reportError("failed to sred a table from %s\n", s->streamName());
             return -1;
         }
-        s->unk_2dc = 1;
+        s->externalSchedulingPrepared = 1;
         total += n;
     }
     return total;
 }
 
-int func_0807aaf4(Program *p, instStream *s)
+int insertStreamRegisterCaps(Program *p, instStream *s)
 {
     int added = 0;
     if (!s->workTablePtr) {
@@ -77,7 +77,7 @@ int func_0807aaf4(Program *p, instStream *s)
             for (int i = 0; i != in->operandCount; i++) {
                 op = &in->operands[i];
                 RegPoolEntry *reg = registerOperand(op, 2);
-                ol_s *live = op->parts[0].unk_54.head;
+                ol_s *live = op->parts[0].operandLocations.head;
                 if (!reg || op->unk_0b || !live)
                     continue;
                 RegPoolEntry *capReg = 0;

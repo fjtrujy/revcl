@@ -215,7 +215,7 @@ bool splitParserStream(Program *p, DecodedLine *blocks, int count)
         } else if (!s->labels.transferNodesFrom(labels)) {
             goto transferError;
         }
-        s->unk_2d4 |= s->labels.takeCombinedFlags();
+        s->leadingLabelFlags |= s->labels.takeCombinedFlags();
         goto afterTError;
         transferError:
             reportError("failed to grab entries from in at top\n");

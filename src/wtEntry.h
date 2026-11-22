@@ -24,7 +24,7 @@ struct wtEntryInl {
     ~wtEntryInl()
     {
         if (unk_00 && !((VclPtrWord)unk_00 & 1)) {
-            if (unk_00->unk_1428)
+            if (unk_00->moveRecordWord)
                 addFreeMove(unk_00);
             else
                 delete unk_00;

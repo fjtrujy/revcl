@@ -7,7 +7,7 @@
 #include "decodedLine.h"
 
 
-bool func_08085a9c(Program *)
+bool noopFlowBuildHook(Program *)
 {
     return true;
 }

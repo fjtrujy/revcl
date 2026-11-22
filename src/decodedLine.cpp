@@ -18,7 +18,7 @@ void DecodedLine::refreshInstructionOperands(int index)
 {
     mList *labelList = &labels;
     if (labelList->nodeCount)
-        labelList->func_0804b534();
+        labelList->noopListTraversal();
     for (int i = 0; i != 2; i++) {
         if (instructions[i]) {
             Instr *in = instructions[i];

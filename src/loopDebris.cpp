@@ -22,7 +22,7 @@ static inline epiRec *ld_getEpiRec_inl(loopDebris *ld, int i)
 static inline epiRec *ld_findEpi_inl(loopDebris *ld, int key)
 {
     for (int i = 0; i != ld->m_nEpi; i++)
-        if (ld->m_epi[i].unk_08 == key)
+        if (ld->m_epi[i].loopKey == key)
             return &ld->m_epi[i];
     return 0;
 }
@@ -50,13 +50,13 @@ bool loopDebris::init(const char *baseName, int a, bool flag)
         reportError("loopDebris:: init - no base name set!\n");
         return false;
     }
-    unk_10 = flag;
+    preserveAllocationMode = flag;
     m_entryName = 0;
     m_exitName = 0;
-    unk_00 = 0;
+    sourceWorkTable = 0;
     m_nPro = 0;
     m_nEpi = 0;
-    unk_14 = a;
+    requestedAllocationMode = a;
     m_baseName = baseName;
     formatIntoBuffer(buf, "%s_ENTRY_POINT", baseName);
     m_entryName = dupString(buf);
@@ -65,7 +65,7 @@ bool loopDebris::init(const char *baseName, int a, bool flag)
     return true;
 }
 
-void loopDebris::func_0806770c()
+void loopDebris::validateLoopDebrisName()
 {
     int i;
     if (!m_entryName) {
@@ -85,7 +85,7 @@ instStream *loopDebris::getEnterStream()
         reportError("failed to get enter epirec\n");
         return 0;
     }
-    return r->unk_14;
+    return r->stream;
 }
 
 instStream *loopDebris::getExitStream()
@@ -95,7 +95,7 @@ instStream *loopDebris::getExitStream()
         reportError("failed to get exit epirec\n");
         return 0;
     }
-    return r->unk_14;
+    return r->stream;
 }
 
 instStream *loopDebris::getMainStream()
@@ -105,7 +105,7 @@ instStream *loopDebris::getMainStream()
         reportError("failed to get main epirec\n");
         return 0;
     }
-    return r->unk_14;
+    return r->stream;
 }
 
 instStream *loopDebris::getProStream(int i)
@@ -115,7 +115,7 @@ instStream *loopDebris::getProStream(int i)
         reportError("failed to get pro epirec\n");
         return 0;
     }
-    return r->unk_14;
+    return r->stream;
 }
 
 instStream *loopDebris::getEpiStream(int i)
@@ -125,7 +125,7 @@ instStream *loopDebris::getEpiStream(int i)
         reportError("failed to get pro epirec\n");
         return 0;
     }
-    return r->unk_14;
+    return r->stream;
 }
 
 static inline void setDebrisMode(workTable *wt, unsigned char mode)
@@ -148,13 +148,13 @@ epiRec *loopDebris::allocPro(int size)
             reportError("failed to init for pro\n");
             return 0;
         }
-        r->unk_14->unk_2c4 = 2;
-        if (unk_10) {
-            setDebrisMode(r->unk_18, 2);
-            r->unk_18->allocationMode = unk_14;
+        r->stream->loopRegionRole = 2;
+        if (preserveAllocationMode) {
+            setDebrisMode(r->table, 2);
+            r->table->allocationMode = requestedAllocationMode;
         } else {
-            setDebrisMode(r->unk_18, 1);
-            r->unk_18->allocationMode = 2;
+            setDebrisMode(r->table, 1);
+            r->table->allocationMode = 2;
         }
         m_nPro++;
     } else
@@ -177,13 +177,13 @@ epiRec *loopDebris::allocEpi(int size)
             reportError("failed to init for epi\n");
             return 0;
         }
-        r->unk_14->unk_2c4 = 3;
-        if (unk_10) {
-            setDebrisMode(r->unk_18, 2);
-            r->unk_18->allocationMode = unk_14;
+        r->stream->loopRegionRole = 3;
+        if (preserveAllocationMode) {
+            setDebrisMode(r->table, 2);
+            r->table->allocationMode = requestedAllocationMode;
         } else {
-            setDebrisMode(r->unk_18, 1);
-            r->unk_18->allocationMode = 2;
+            setDebrisMode(r->table, 1);
+            r->table->allocationMode = 2;
         }
         m_nEpi++;
     } else
@@ -203,9 +203,9 @@ epiRec *loopDebris::allocMain(int size)
         reportError("failed to init for epi\n");
         return 0;
     }
-    m_main.unk_14->unk_2c4 = 5;
-    m_main.unk_18->allocationMode = unk_14;
-    m_main.unk_18->setTableRawMode(2);
+    m_main.stream->loopRegionRole = 5;
+    m_main.table->allocationMode = requestedAllocationMode;
+    m_main.table->setTableRawMode(2);
     return &m_main;
 }
 
@@ -216,9 +216,9 @@ epiRec *loopDebris::allocEnter(int size)
         reportError("failed to init for epi\n");
         return 0;
     }
-    m_enter.unk_14->unk_2c4 = 4;
-    m_enter.unk_18->allocationMode = 2;
-    m_enter.unk_18->setTableRawMode(1);
+    m_enter.stream->loopRegionRole = 4;
+    m_enter.table->allocationMode = 2;
+    m_enter.table->setTableRawMode(1);
     return &m_enter;
 }
 
@@ -229,9 +229,9 @@ epiRec *loopDebris::allocExit(int size)
         reportError("failed to init for epi\n");
         return 0;
     }
-    m_exit.unk_14->unk_2c4 = 1;
-    m_exit.unk_18->allocationMode = 2;
-    m_exit.unk_18->setTableRawMode(1);
+    m_exit.stream->loopRegionRole = 1;
+    m_exit.table->allocationMode = 2;
+    m_exit.table->setTableRawMode(1);
     return &m_exit;
 }
 
@@ -250,10 +250,10 @@ epiRec *loopDebris::getEpiRec(int i)
     return &m_epi[i];
 }
 
-epiRec *loopDebris::func_08067c70(int key)
+epiRec *loopDebris::findEpilogueByLoopKey(int key)
 {
     for (int i = 0; i != m_nEpi; i++)
-        if (m_epi[i].unk_08 == key)
+        if (m_epi[i].loopKey == key)
             return &m_epi[i];
     return 0;
 }
@@ -289,7 +289,7 @@ static inline instStream *checkedProStream(loopDebris *ld, int i)
         reportError("failed to get pro epirec\n");
         return 0;
     }
-    return r->unk_14;
+    return r->stream;
 }
 
 static inline epiRec *proRecord(loopDebris *ld, int i, int count)
@@ -302,27 +302,27 @@ static inline epiRec *proRecord(loopDebris *ld, int i, int count)
 bool epiRec::init(int size, const char *name)
 {
     reset();
-    unk_14 = new instStream;
-    if (!unk_14) {
+    stream = new instStream;
+    if (!stream) {
         reportError("setup: failed to get iStream\n");
         exitAfterCleanup(-1);
     }
-    mNode *n = unk_14->labels.findOrAppendByExactName(name);
+    mNode *n = stream->labels.findOrAppendByExactName(name);
     if (!n) {
         reportError("failed to add a name to iStream\n");
         exitAfterCleanup(-1);
     }
-    workTable *wt = &unk_14->sourceTable;
+    workTable *wt = &stream->sourceTable;
     if (!wt->init(3, size)) {
         reportError("failed to init it_pro for size %d\n", size);
         exitAfterCleanup(-1);
     }
-    instStream *s = unk_14;
+    instStream *s = stream;
     int serial = g_streamSerial;
-    unk_18 = wt;
+    table = wt;
     s->streamSerial = serial;
-    wt->ownerStream = unk_14;
-    unk_14->workTablePtr = &unk_14->sourceTable;
+    wt->ownerStream = stream;
+    stream->workTablePtr = &stream->sourceTable;
     return true;
 }
 
@@ -332,12 +332,12 @@ void epiRec::func_08067df0()
 
 const char *epiRec::getName()
 {
-    if (!unk_14)
+    if (!stream)
         return "!UNNAMED!";
-    return unk_14->streamName();
+    return stream->streamName();
 }
 
-int func_08067e18(Program *p, instStream *s)
+int expandOneLoopIntoRegions(Program *p, instStream *s)
 {
     workTable *wt = s->getTable();
     if (!wt->getLoopSize()) {
@@ -356,12 +356,12 @@ int func_08067e18(Program *p, instStream *s)
         reportError("BuildEPSTreams - failed to explode %s\n", s->streamName());
         exitAfterCleanup(-1);
     }
-    instStream *enter = ld.m_enter.unk_14;
+    instStream *enter = ld.m_enter.stream;
     if (!enter) {
         reportError("no entry istream\n");
         exitAfterCleanup(-1);
     }
-    instStream *exit = ld.m_exit.unk_14;
+    instStream *exit = ld.m_exit.stream;
     if (!exit) {
         reportError("had no exit istream\n");
         exitAfterCleanup(-1);
@@ -397,7 +397,7 @@ int func_08067e18(Program *p, instStream *s)
             reportError("failed to get prologue\n");
             return -1;
         }
-        instStream *ps = pr->unk_14;
+        instStream *ps = pr->stream;
         if (!ps) {
             reportError("failed to get stream for prologue\n");
             return -1;
@@ -409,13 +409,13 @@ int func_08067e18(Program *p, instStream *s)
             }
             prev = 0;
         }
-        if (pr->unk_1c) {
-            epiRec *er = ld_findEpi_inl(&ld, pr->unk_0c + 1);
+        if (pr->conditionalBranch) {
+            epiRec *er = ld_findEpi_inl(&ld, pr->sourceLoopId + 1);
             if (!er) {
                 reportError("failed to find epilogue\n");
                 return -1;
             }
-            instStream *es = er->unk_14;
+            instStream *es = er->stream;
             if (!es) {
                 reportError("failed to find epi for a prologue\n");
                 return -1;
@@ -430,7 +430,7 @@ int func_08067e18(Program *p, instStream *s)
         }
         instStream *next;
         if (i == ld.getNumPro() - 1) {
-            next = ld.m_main.unk_14;
+            next = ld.m_main.stream;
         } else {
             next = checkedProStream(&ld, i + 1);
         }
@@ -444,7 +444,7 @@ int func_08067e18(Program *p, instStream *s)
         }
     }
 
-    instStream *main = ld.m_main.unk_14;
+    instStream *main = ld.m_main.stream;
     if (!main) {
         reportError("not find new main!\n");
         return -1;
@@ -465,7 +465,7 @@ int func_08067e18(Program *p, instStream *s)
             reportError("failed to get epi0\n");
             return -1;
         }
-        succ = e0->unk_14;
+        succ = e0->stream;
     }
     if (!succ) {
         reportError("no stream for epi0\n");
@@ -482,14 +482,14 @@ int func_08067e18(Program *p, instStream *s)
             reportError("failed to get epi \n");
             return -1;
         }
-        instStream *es = r->unk_14;
+        instStream *es = r->stream;
         if (!es) {
             reportError("failed to get istream epi\n");
             return -1;
         }
         int type = 0;
-        if (r->unk_1c) {
-            if (!r->unk_1c->changeBranchImmediate(ld.m_exitName)) {
+        if (r->conditionalBranch) {
+            if (!r->conditionalBranch->changeBranchImmediate(ld.m_exitName)) {
                 reportError("failed to change immediate\n");
                 exitAfterCleanup(-1);
             }
@@ -518,11 +518,11 @@ int func_08067e18(Program *p, instStream *s)
     last = enter;
     for (i = 0; i != ld.getNumPro(); i++) {
         r = ld_getProRec_inl(&ld, i);
-        if (!p->insertStreamAfter(last, r->unk_14)) {
+        if (!p->insertStreamAfter(last, r->stream)) {
             reportError("failed to add after\n");
             exitAfterCleanup(-1);
         }
-        last = r->unk_14;
+        last = r->stream;
     }
     if (!p->insertStreamAfter(last, main)) {
         reportError("failed to add after\n");
@@ -531,11 +531,11 @@ int func_08067e18(Program *p, instStream *s)
     last = main;
     for (i = 0; i != ld.getNumEpi(); i++) {
         r = ld_getEpiRec_inl(&ld, i);
-        if (!p->insertStreamAfter(last, r->unk_14)) {
+        if (!p->insertStreamAfter(last, r->stream)) {
             reportError("failed to add after\n");
             exitAfterCleanup(-1);
         }
-        last = r->unk_14;
+        last = r->stream;
     }
     if (!p->insertStreamAfter(last, exit)) {
         reportError("failed to add after\n");
@@ -557,11 +557,11 @@ static inline void initDebris(loopDebris *ld, const char *baseName, int a, bool 
     }
     ld->m_entryName = 0;
     ld->m_exitName = 0;
-    ld->unk_00 = 0;
-    ld->unk_10 = flag;
+    ld->sourceWorkTable = 0;
+    ld->preserveAllocationMode = flag;
     ld->m_nPro = 0;
     ld->m_nEpi = 0;
-    ld->unk_14 = a;
+    ld->requestedAllocationMode = a;
     ld->m_baseName = baseName;
     formatIntoBuffer(buf, "%s_ENTRY_POINT", baseName);
     ld->m_entryName = dupString(buf);
@@ -571,7 +571,7 @@ static inline void initDebris(loopDebris *ld, const char *baseName, int a, bool 
 
 static inline const char *recName(epiRec *e)
 {
-    VclPtrWord name = (VclPtrWord)e->unk_14;
+    VclPtrWord name = (VclPtrWord)e->stream;
     if (!name)
         name = (VclPtrWord)"!UNNAMED!";
     else
@@ -614,13 +614,13 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         wt->dump();
         return false;
     }
-    ld->unk_00 = wt;
+    ld->sourceWorkTable = wt;
     epiRec *r = ld->allocEnter(0);
     if (!r) {
         reportError("failed to get enter part\n");
         return false;
     }
-    if (!r->unk_18->prepRawTable()) {
+    if (!r->table->prepRawTable()) {
         reportError("failed to prep enter table\n");
         return false;
     }
@@ -639,25 +639,25 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
                 exitAfterCleanup(-1);
             }
         }
-        if (!cloneAppend(wt, pro->unk_18, i, 0, i >= last, true, false)) {
+        if (!cloneAppend(wt, pro->table, i, 0, i >= last, true, false)) {
             reportError("failed to clone/append main table to prologue table\n");
             exitAfterCleanup(-1);
         }
         if (i == last || i == mlid - 1) {
-            if (!pro->unk_18->prepRawTable()) {
+            if (!pro->table->prepRawTable()) {
                 reportError("failed to prep pro table!\n");
                 return false;
             }
-            pro->unk_08 = 0;
-            pro->unk_0c = i;
-            pro->unk_00 = i + 1;
-            pro->unk_04 = i - clid + 1;
+            pro->loopKey = 0;
+            pro->sourceLoopId = i;
+            pro->regionEndIndex = i + 1;
+            pro->regionStartIndex = i - clid + 1;
             if (i == last)
-                pro->unk_14->branchType = 5;
-            Instr *c = pro->unk_18->getConditionalBranch();
-            pro->unk_1c = c;
+                pro->stream->branchType = 5;
+            Instr *c = pro->table->getConditionalBranch();
+            pro->conditionalBranch = c;
             if (c) {
-                pro->unk_14->branchType = 5;
+                pro->stream->branchType = 5;
                 c->reverseBranchSense = 1;
             }
             last = i + 1;
@@ -670,24 +670,24 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         reportError("failed to get main part\n");
         exitAfterCleanup(-1);
     }
-    if (!cloneAppend(wt, m->unk_18, mlid, 0, true, true, true)) {
+    if (!cloneAppend(wt, m->table, mlid, 0, true, true, true)) {
         reportError("failed to clone/append main table to loop table\n");
         exitAfterCleanup(-1);
     }
-    if (!m->unk_18->prepRawTable()) {
+    if (!m->table->prepRawTable()) {
         reportError("failed to prep main table!\n");
         return false;
     }
-    m->unk_08 = 0;
-    m->unk_0c = mlid;
-    m->unk_00 = mlid + 1;
-    m->unk_04 = mlid + 1;
-    m->unk_14->branchType = 5;
-    m->unk_14->unk_144 = s->unk_144;
-    m->unk_14->unk_140 = s->unk_140;
-    m->unk_14->copySourceRecordsFrom(s);
-    m->unk_1c = m->unk_18->getConditionalBranch();
-    if (!m->unk_1c) {
+    m->loopKey = 0;
+    m->sourceLoopId = mlid;
+    m->regionEndIndex = mlid + 1;
+    m->regionStartIndex = mlid + 1;
+    m->stream->branchType = 5;
+    m->stream->appliedOptimizationMask = s->appliedOptimizationMask;
+    m->stream->hasLoopOptimization = s->hasLoopOptimization;
+    m->stream->copySourceRecordsFrom(s);
+    m->conditionalBranch = m->table->getConditionalBranch();
+    if (!m->conditionalBranch) {
         reportError("mainloop had no conditional\n");
         exitAfterCleanup(-1);
     }
@@ -701,11 +701,11 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
                 exitAfterCleanup(-1);
             }
             epiRec *e = ld->allocEpi(n);
-            e->unk_08 = p->unk_0c + 1;
-            int proBase = p->unk_04;
-            int lid = e->unk_08;
+            e->loopKey = p->sourceLoopId + 1;
+            int proBase = p->regionStartIndex;
+            int lid = e->loopKey;
             for (int k = clid + 1; k <= mlid; k++, lid++) {
-                if (!cloneAppend(wt, e->unk_18, lid, lid - proBase + 1, false, true, false)) {
+                if (!cloneAppend(wt, e->table, lid, lid - proBase + 1, false, true, false)) {
                     reportError("failed to attach to epi sequence!\n");
                     return false;
                 }
@@ -713,7 +713,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         }
     }
 
-    ld->func_0806770c();
+    ld->validateLoopDebrisName();
     for (int i = 0; i != ld->m_nPro; i++) {
         epiRec *p = ld_getProRec_inl(ld, i);
         epiRec *next = (i == ld->m_nPro - 1) ? &mainRec(ld) : ld_getProRec_inl(ld, i + 1);
@@ -721,15 +721,15 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
             reportError("failed to get next\n");
             exitAfterCleanup(-1);
         }
-        instStream *nextStream = next->unk_14;
-        instStream *proStream = p->unk_14;
+        instStream *nextStream = next->stream;
+        instStream *proStream = p->stream;
         if (!proStream || !nextStream) {
             reportError("no istream set for prologue or next\n");
             exitAfterCleanup(-1);
         }
-        Instr *br = p->unk_1c;
+        Instr *br = p->conditionalBranch;
         if (br) {
-            epiRec *e = ld_findEpi_inl(ld, p->unk_0c + 1);
+            epiRec *e = ld_findEpi_inl(ld, p->sourceLoopId + 1);
             if (!e) {
                 reportError("failed to find epilogue\n");
                 exitAfterCleanup(-1);
@@ -742,7 +742,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
     }
 
     epiRec *mr = &ld->m_main;
-    Instr *mc = mr->unk_1c;
+    Instr *mc = mr->conditionalBranch;
     if (!mc) {
         reportError("main had no conditional\n");
         exitAfterCleanup(-1);
@@ -759,12 +759,12 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
             reportError("failed to get epi\n");
             exitAfterCleanup(-1);
         }
-        instStream *ist = e->unk_14;
+        instStream *ist = e->stream;
         if (!ist) {
             reportError("failed to get ist\n");
             exitAfterCleanup(-1);
         }
-        workTable *t = e->unk_18;
+        workTable *t = e->table;
         if (!t) {
             reportError("no itable for e\n");
             exitAfterCleanup(-1);
@@ -780,10 +780,10 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
                 reportError("failed to change immediate\n");
                 return false;
             }
-            b->position.unk_03 = 0;
+            b->position.loopIteration = 0;
             b->parsedLoopId = -1;
             b->setOwner((cls_unk30 *)t);
-            e->unk_1c = b;
+            e->conditionalBranch = b;
             wtRow *row = t->getRowByIndex(t->getRangeEnd() - 2);
             if (!row) {
                 reportError("failed to get ie for branch insert\n");
@@ -791,7 +791,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
             }
             row->entries[1].unk_00 = b;
         }
-        if (!e->unk_18->prepRawTable()) {
+        if (!e->table->prepRawTable()) {
             reportError("failed to prep epi table!\n");
             return false;
         }
@@ -802,7 +802,7 @@ bool explodeLoop(instStream *s, loopDebris *ld, const char *baseName)
         reportError("failed to get exit part\n");
         return false;
     }
-    if (!x->unk_18->prepRawTable()) {
+    if (!x->table->prepRawTable()) {
         reportError("failed to prep exit table\n");
         return false;
     }

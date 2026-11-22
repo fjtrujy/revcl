@@ -5,12 +5,12 @@
 #include "instStream.h"
 #include "genRegPool.h"
 
-void func_0804c220(char *p, int n);
+void clearRawBytes(char *p, int n);
 RegPool *GetRP(unsigned t);
-bool func_0806f610(Program *p);
-bool func_0806f6a4(Program *p);
+bool resetProgramAllocationsForFirstPass(Program *p);
+bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
-int func_0804bf50(unsigned int);
+int countSetBits(unsigned int);
 int setRangeFrom(workTable *t);
 
 

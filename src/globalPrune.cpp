@@ -56,7 +56,7 @@ bool globalPrune(Program *p)
             continue;
         reportInfo("prune inaccessible stream %s\n", s->streamName());
         workTable *t = s->getTable();
-        for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00)
+        for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction)
             if (!in->isNop()) {
                 reportInfo("REMOVE INST: ");
                 int saved = errorOccurred;

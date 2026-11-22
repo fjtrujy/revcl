@@ -5,12 +5,12 @@
 #include "instStream.h"
 #include "genRegPool.h"
 
-void func_0804c220(char *p, int n);
+void clearRawBytes(char *p, int n);
 RegPool *GetRP(unsigned t);
-bool func_0806f610(Program *p);
-bool func_0806f6a4(Program *p);
+bool resetProgramAllocationsForFirstPass(Program *p);
+bool resetProgramAllocationsForSecondPass(Program *p);
 bool setRange(int start, int end, int lsz);
-int func_0804bf50(unsigned int);
+int countSetBits(unsigned int);
 int setRangeFrom(workTable *t);
 
 
@@ -51,7 +51,7 @@ bool genRegPool::func_08088e54(workTable *t)
     }
     RegPoolEntry *todo = 0;
     Instr *in;
-    for (in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             RegPoolEntry *reg = op->assignedRegister;
@@ -95,7 +95,7 @@ bool genRegPool::func_08088e54(workTable *t)
         if (r < 0) {
             if (!countMarkedPhysicalRegisters()) {
                 reportError("vcl failed to allocate a register of type %s, but there's no registers of this type available for it to use.. maybe adding a .init_.. directive would help\n", poolName);
-                func_0804ac44();
+                suppressFurtherErrors();
                 return false;
             } else
                 list->dumpVirtualRegisterUses();
@@ -115,7 +115,7 @@ bool genRegPool::func_08088e54(workTable *t)
         else
             todo = best->nextPendingAssignment;
     }
-    for (in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         Operand *op;
         for (int o = 0; (op = in->getOp(o)) != 0; o++) {
             RegPoolEntry *reg = op->assignedRegister;
@@ -163,14 +163,14 @@ bool genRegPool::assignExt(instStream *s)
             if (r < 0) {
                 if (!countMarkedPhysicalRegisters()) {
                     reportError("vcl failed to assign a register of type %s, but there's no registers of that type available for it to use, maybe adding a .init.. directive would help\n");
-                    func_0804ac44();
+                    suppressFurtherErrors();
                     return false;
                 }
                 reportInfo("currently at stream: %s trying to allocate external register %s\n",
                               s->streamName(), reg->registerName());
                 wt->registerUses.dumpVirtualRegisterUses();
                 reportError("failed to assign an external %s\n", reg->registerName());
-                func_0804ac44();
+                suppressFurtherErrors();
                 return false;
             }
             reg->assignedPhysicalRegister = &registerEntries[r];

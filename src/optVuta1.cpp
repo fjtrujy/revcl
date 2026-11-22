@@ -12,29 +12,29 @@ bool optVuta1(workTable *wt, wrangleCand *c)
     int bestA = 0x80000000;
     Instr *best = 0;
     int bestB = 0x80000000, bestC = 0x80000000, bestD = 0x7fffffff;
-    for (; in; in = in->unk_2c) {
+    for (; in; in = in->nextMoveInstruction) {
         int cost = vuta1RegCost(in);
-        int base = in->unk_13f0.unk_0c;
-        int a = base - in->unk_1418 + in->unk_13f0.unk_04 * 32 + cost;
+        int base = in->schedulingStatistics.moveDistance;
+        int a = base - in->candidateAttemptCount + in->schedulingStatistics.forwardLatencyDepth * 32 + cost;
         if (a > bestA) {
             best = in;
             bestA = a;
-            bestB = in->unk_13f0.unk_08 - in->unk_1418 + in->unk_13f0.unk_06 + cost;
-            bestC = in->unk_13f0.unk_00;
+            bestB = in->schedulingStatistics.moveCount - in->candidateAttemptCount + in->schedulingStatistics.forwardDependencyHeight + cost;
+            bestC = in->schedulingStatistics.reverseLatencyDepth;
         } else if (a == bestA) {
-            int e = in->unk_13f0.unk_08 - in->unk_1418 + in->unk_13f0.unk_06 + cost;
+            int e = in->schedulingStatistics.moveCount - in->candidateAttemptCount + in->schedulingStatistics.forwardDependencyHeight + cost;
             if (e > bestB) {
                 bestB = e;
-                bestC = in->unk_13f0.unk_00;
+                bestC = in->schedulingStatistics.reverseLatencyDepth;
                 best = in;
             } else if (e == bestB) {
-                int f = in->unk_141e + (in->unk_1418 >> 2);
+                int f = in->candidateBaseRow + (in->candidateAttemptCount >> 2);
                 if (f < bestD) {
                     bestD = f;
-                    bestC = in->unk_13f0.unk_00;
+                    bestC = in->schedulingStatistics.reverseLatencyDepth;
                     best = in;
-                } else if (f == bestD && in->unk_13f0.unk_00 > bestC) {
-                    bestC = in->unk_13f0.unk_00;
+                } else if (f == bestD && in->schedulingStatistics.reverseLatencyDepth > bestC) {
+                    bestC = in->schedulingStatistics.reverseLatencyDepth;
                     best = in;
                 }
             }
@@ -43,8 +43,8 @@ bool optVuta1(workTable *wt, wrangleCand *c)
     if (!best)
         return false;
     c->unk_00 = best;
-    c->unk_04 = (best->unk_1418 >> 2) + best->unk_141e;
-    c->unk_06 = (best->unk_1418 >> 3) & 1;
+    c->unk_04 = (best->candidateAttemptCount >> 2) + best->candidateBaseRow;
+    c->unk_06 = (best->candidateAttemptCount >> 3) & 1;
     return true;
 }
 

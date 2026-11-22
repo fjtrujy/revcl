@@ -180,14 +180,14 @@ bool fixupBtorBranch(Program *p, instStream *s, int *changed)
             workTable *wt = t->getTable();
             Instr *in;
             if (first) {
-                in = br->unk_1c.unk_04;
+                in = br->linearLink.previousInstruction;
                 t->visitState = 0;
                 first = false;
             } else {
                 in = wt->linearInstructions.tail;
                 t->visitState = 2;
             }
-            for (; in; in = in->unk_1c.unk_04) {
+            for (; in; in = in->linearLink.previousInstruction) {
                 if (in->outputMaskForRegister(reg, 0xff)) {
                     in->dumpOperandDiagnostics(false);
                     break;

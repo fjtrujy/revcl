@@ -46,13 +46,13 @@ int instStream::getUninsertedxInputs()
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = workTablePtr->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = workTablePtr->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         int base = getFromStart(in);
         if (base < 0) {
             reportError("iStream::: getUninsertedxInputs - failed\n");
             return -1;
         }
-        base += unk_278.unk_00 - in->unk_13f0.unk_00;
+        base += schedulingStatistics.reverseLatencyDepth - in->schedulingStatistics.reverseLatencyDepth;
         Operand *op;
         for (int i = 0; (op = in->getOp(i)) != 0; i++) {
             RegPoolEntry *reg = registerOperand(op, 1);
@@ -60,7 +60,7 @@ int instStream::getUninsertedxInputs()
                 continue;
             for (int k = 0; k != reg->partCount; k++) {
                 if ((op->externalPartMask >> k) & 1) {
-                ol_s *ol = op->parts[k].unk_54.head;
+                ol_s *ol = op->parts[k].operandLocations.head;
                 if (!ol) {
                     reportError("no setter list found during getuninstxi!\n");
                     return -1;
@@ -96,13 +96,13 @@ int instStream::getUninsertedxOutputs()
         reportError("work table not set\n");
         return -1;
     }
-    for (Instr *in = workTablePtr->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = workTablePtr->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         int base = getToEnd(in);
         if (base < 0) {
             reportError("iStream::: getUninsertedxOutputs - failed\n");
             return -1;
         }
-        base += unk_278.unk_04 - in->unk_13f0.unk_04;
+        base += schedulingStatistics.forwardLatencyDepth - in->schedulingStatistics.forwardLatencyDepth;
         Operand *op;
         for (int i = 0; (op = in->getOp(i)) != 0; i++) {
             RegPoolEntry *reg = registerOperand(op, 2);
@@ -110,7 +110,7 @@ int instStream::getUninsertedxOutputs()
                 continue;
             for (int k = 0; k != reg->partCount; k++) {
                 if ((op->externalPartMask >> k) & 1) {
-                    for (ol_s *ol = op->parts[k].unk_54.head; ol; ol = ol->next) {
+                    for (ol_s *ol = op->parts[k].operandLocations.head; ol; ol = ol->next) {
                         Instr *user = ol->instruction;
                         if (user->getOwningStream() == this || user->unk_00)
                             continue;
@@ -136,7 +136,7 @@ int instStream::getUninsertedxOutputs()
 
 int getToEnd(Instr *in)
 {
-    workTable *wt = (workTable *)in->unk_30;
+    workTable *wt = (workTable *)in->ownerTable;
     if (!wt) {
         reportError("instruction had no owner for getToEnd()\n");
         return -1;
@@ -149,7 +149,7 @@ int getToEnd(Instr *in)
     Instr *img = in;
     if (in->unk_00) {
         img = (Instr *)in->unk_00;
-        if (!img->unk_30) {
+        if (!img->ownerTable) {
             reportError("image had no owner\n");
             return -1;
         }
@@ -157,7 +157,7 @@ int getToEnd(Instr *in)
             reportError("our image was in different stream\n");
             return -1;
         }
-        wt = (workTable *)img->unk_30;
+        wt = (workTable *)img->ownerTable;
         if (wt->codeModeValue != 3) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
@@ -165,7 +165,7 @@ int getToEnd(Instr *in)
     }
     switch (wt->codeModeValue) {
     case 1:
-        return in->unk_13f0.unk_00;
+        return in->schedulingStatistics.reverseLatencyDepth;
     case 3: {
         int len = wt->func_08072eec();
         if (len < 0) {
@@ -199,7 +199,7 @@ int getToEnd(Instr *in)
 
 int getFromStart(Instr *in)
 {
-    workTable *wt = (workTable *)in->unk_30;
+    workTable *wt = (workTable *)in->ownerTable;
     if (!wt) {
         reportError("instruction had no owner for getToEnd()\n");
         return -1;
@@ -212,7 +212,7 @@ int getFromStart(Instr *in)
     Instr *img = in;
     if (in->unk_00) {
         img = (Instr *)in->unk_00;
-        if (!img->unk_30) {
+        if (!img->ownerTable) {
             reportError("image had no owner\n");
             return -1;
         }
@@ -220,7 +220,7 @@ int getFromStart(Instr *in)
             reportError("our image was in different stream\n");
             return -1;
         }
-        wt = (workTable *)img->unk_30;
+        wt = (workTable *)img->ownerTable;
         if (wt->codeModeValue != 3) {
             reportError("had opt image...but it wasn't vsm\n");
             return -1;
@@ -228,7 +228,7 @@ int getFromStart(Instr *in)
     }
     switch (wt->codeModeValue) {
     case 1:
-        return in->unk_13f0.unk_04;
+        return in->schedulingStatistics.forwardLatencyDepth;
     case 3: {
         int len = wt->func_08072eec();
         if (len < 0) {

@@ -14,14 +14,14 @@ bool addNewActive(Program *p, instStream *n, instStream *from);
 bool recalcMinTraceLengths(Program *p);
 bool recalcMaxTraceLengths(Program *p);
 int mergeTstores(Program *p, unsigned *dst, unsigned *src);
-int func_08061cb0(Program *p, instStream *n);
+int buildMinimumPathKey(Program *p, instStream *n);
 int getMaxPathKey(Program *p, instStream *n);
 bool isPathRaw(Program *p, int key);
 bool int_buildTpairs(Program *p, RegPoolEntry *reg, int part, instStream *t, void *b);
 bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part);
 bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int ofs, bool ext);
 bool processActiveList(Program *p);
-bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part);
+bool initializeRegisterBacktraceLocation(instStream *n, RegPoolEntry *reg, int part);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 
 #endif

@@ -5,9 +5,9 @@
 #include "os.h"
 #include "VUStr.h"
 
-int func_0804bf50(unsigned int);
+int countSetBits(unsigned int);
 bool asciiCaseEqual(const char *a, const char *b);
-void func_0804c0c8(char *s);
+void removeTrailingComponentSuffix(char *s);
 int mstrlen(const char *s);
 
 Operand::Operand()
@@ -30,7 +30,7 @@ Operand::Operand()
     operandStatus = 0;
     int i;
     for (i = 0; i != 4; i++) {
-        if (!parts[i].unk_54.clear()) {
+        if (!parts[i].operandLocations.clear()) {
             reportError("failed to flow reset part %d\n", i);
             break;
         }
@@ -426,7 +426,7 @@ bool Operand::resetFlowState()
     externalPartMask = 0;
     operandStatus = 0;
     for (; i != 4; i++) {
-        if (!parts[i].unk_54.clear()) {
+        if (!parts[i].operandLocations.clear()) {
             reportError("failed to flow reset part %d\n", i);
             return false;
         }
@@ -619,7 +619,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             return true;
         } else {
             *pbad = false;
-            bool ok = func_08051f08(out->name, &out->unk_2000, pbad);
+            bool ok = parseTrailingComponentMask(out->name, &out->unk_2000, pbad);
             if (*pbad) {
                 reportUserMessage("bad mod bits in operand\n");
                 return false;
@@ -638,7 +638,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 reportError("oDecodeToken: bad FL4S bits\n");
                 return false;
             }
-            func_0804c0c8(out->name);
+            removeTrailingComponentSuffix(out->name);
         }
         return true;
     }
@@ -687,7 +687,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             out->unk_2000 = 15;
             mstrcpy(out->name, tok);
         } else {
-            uB = func_08052100(tok);
+            uB = readTrailingComponentMask(tok);
             out->unk_2000 = uB;
             if (!uB)
                 out->unk_2000 = 15;
@@ -704,7 +704,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             }
             mstrcpy(out->name, tok);
-            func_0804c0c8(out->name);
+            removeTrailingComponentSuffix(out->name);
         }
         return true;
     case 2:
@@ -721,9 +721,9 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
                 return false;
             ((int *)tok)[kind] = svk_c38;
         }
-        if (func_08051f78(tok, pmask)) {
+        if (parseBracketedComponentMask(tok, pmask)) {
             out->unk_2008 = 1;
-            if (func_0804bf50(mask) != 1) {
+            if (countSetBits(mask) != 1) {
                 reportUserMessage("bad [x,y,z,w] token for scalar\n");
                 return false;
             }
@@ -766,7 +766,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             ((int *)tok)[kind] = field;
         }
         if (newSyntax) {
-            if (!func_08051f78(tok, pmask) || func_0804bf50(mask) != 1) {
+            if (!parseBracketedComponentMask(tok, pmask) || countSetBits(mask) != 1) {
                 reportError("oDecodeToken: [x/y/z/w] token for new syntax\n");
                 return false;
             }
@@ -781,14 +781,14 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             while (*d != '[');
             *d = 0;
         } else {
-            mask = func_08052100(tok);
-            if (func_0804bf50(mask) != 1) {
+            mask = readTrailingComponentMask(tok);
+            if (countSetBits(mask) != 1) {
                 reportError("oDecodeToken: bad FL1 bits\n");
                 return false;
             }
             out->unk_2000 = mask;
             mstrcpy(out->name, tok);
-            func_0804c0c8(out->name);
+            removeTrailingComponentSuffix(out->name);
         }
         return true;
     case 4:
@@ -855,7 +855,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         }
         bad = false;
         int *pm9 = &out->unk_2000;
-        if (!func_08051f08(tok, pm9, &bad))
+        if (!parseTrailingComponentMask(tok, pm9, &bad))
             out->unk_2000 = 15;
         if (out->unk_2000 == -1) {
             {
@@ -874,7 +874,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
         return true;
     }
     case 10:
-        mask = func_08052100(tok);
+        mask = readTrailingComponentMask(tok);
         if (mask && mask != 7) {
             reportError("bad mod bits for ACCxyz\n");
             return false;
@@ -887,7 +887,7 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
     fieldSel:
         if (newSyntax) {
             m = 0;
-            if (func_08051f78(tok, &m)) {
+            if (parseBracketedComponentMask(tok, &m)) {
                 if (m != field) {
                     reportUserMessage("instruction and operand have mismatching field select\n");
                     return false;
@@ -907,14 +907,14 @@ bool oDecodeToken(int kind, char *tok, ImplicitOp *out, bool newSyntax)
             mstrcpy(out->name, tok);
             out->unk_2000 = field;
         } else {
-            mask = func_08052100(tok);
+            mask = readTrailingComponentMask(tok);
             if (mask && mask != field) {
                 reportError("oDecode: bad FL?\n");
                 return false;
             }
             out->unk_2000 = field;
             mstrcpy(out->name, tok);
-            func_0804c0c8(out->name);
+            removeTrailingComponentSuffix(out->name);
         }
         return true;
     case 13:

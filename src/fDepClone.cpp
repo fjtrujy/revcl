@@ -39,7 +39,7 @@ bool func_0806558c(Instr *i, int *row)
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
         }
-        int r = in->position.unk_00;
+        int r = in->position.linearRow;
         if (r < 0) {
             *row = -1;
             return true;
@@ -61,7 +61,7 @@ bool func_080655e8(Instr *i, int *row)
             reportError("BuildCandidateList - in_f not set in ol\n");
             return false;
         }
-        int r = in->position.unk_00;
+        int r = in->position.linearRow;
         if (r >= 0 && r < *row)
             *row = r;
     }
@@ -84,7 +84,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
     in = wt->linearInstructions.head;
     if (!in)
         goto finalize;
-    for (; in; in = in->unk_1c.unk_00) {
+    for (; in; in = in->linearLink.nextInstruction) {
         in->hasExtraPredecessors = 0;
         in->specialRegisterReadMask = 0;
         in->specialRegisterWriteMask = 0;
@@ -144,7 +144,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                     reportWarning("found load instruction with no ram bits\n");
             }
             if (b20 || b10 || b40) {
-                for (Instr *o = in->unk_1c.unk_04; o; o = o->unk_1c.unk_04) {
+                for (Instr *o = in->linearLink.previousInstruction; o; o = o->linearLink.previousInstruction) {
                     bool dep = false;
                     int type = (unsigned char)o->ramAccessType;
                     if (((b20 && type == 2) || (b10 && type == 1))
@@ -181,7 +181,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                         if (r->registerIndex == 48 || r->registerIndex == 49) {
                             for (int p = 0; p != r->partCount; p++)
                                 if ((op->componentMask >> p) & 1)
-                                    for (ol_s *l = op->parts[p].unk_54.head; l; l = l->next) {
+                                    for (ol_s *l = op->parts[p].operandLocations.head; l; l = l->next) {
                                         Instr *x = l->instruction;
                                         if (x)
                                             func_08065fd4(in, x);
@@ -193,7 +193,7 @@ bool BuildfDepList(workTable *wt, bool force, bool)
                         in->specialRegisterReadMask = op->componentMask;
                 }
             }
-            in = in->unk_1c.unk_00;
+            in = in->linearLink.nextInstruction;
             haveInstruction = in != 0;
         }
     }
@@ -203,7 +203,7 @@ finalize_ready:
     in = phaseHead;
     Instr *last[4] = { 0, 0, 0, 0 };
     // After entry, phaseHead is only a non-null continuation flag.
-    for (; phaseHead; phaseHead = (Instr *)((in = in->unk_1c.unk_00) != 0)) {
+    for (; phaseHead; phaseHead = (Instr *)((in = in->linearLink.nextInstruction) != 0)) {
         int p;
         for (p = 0; p != 4; p++)
             if (((in->specialRegisterWriteMask >> p) & 1) && !((in->specialRegisterReadMask >> p) & 1))
@@ -262,8 +262,8 @@ bool tagsMatch(Instr *a, Instr *b)
 bool fixupCloneFdeps(workTable *wt)
 {
     int n = 0;
-    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
-        Instr *orig = in->unk_08;
+    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
+        Instr *orig = in->cloneImage;
         n += 8;
         in->linearOrderIndex = n;
         if (!orig) {
@@ -308,7 +308,7 @@ bool copyCloneFdeps(Instr *, ol_s *o, olList *dst)
             reportError("qInstruction.. fDepList in_f not set in ol\n");
             return false;
         }
-        Instr *clone = in->unk_08;
+        Instr *clone = in->cloneImage;
         if (!clone) {
             reportError("qInstruction - fdep list - clone image not set during rebuild\n");
             return false;
@@ -331,7 +331,7 @@ bool func_08065fd4(Instr *in, Instr *other)
         if (r) {
             for (int p = 0; p != r->partCount; p++)
                 if ((op->componentMask >> p) & 1)
-                    for (ol_s *l = op->parts[p].unk_54.head; l; l = l->next) {
+                    for (ol_s *l = op->parts[p].operandLocations.head; l; l = l->next) {
                         Instr *x = l->instruction;
                         if (x && x != in && x->linearOrderIndex < in->linearOrderIndex) {
                             in->hasExtraPredecessors = 1;

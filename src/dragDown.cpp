@@ -41,7 +41,7 @@ int dragDown(workTable *wt)
                 Instr *in = row->getEntry(p);
                 if (in && !in->branchFlags) {
                     int rl = in->position.getRow();
-                    short mte = in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6;
+                    short mte = in->externalOutputConstraint < in->externalOutputPairedConstraint ? in->externalOutputPairedConstraint : in->externalOutputConstraint;
                     int mn = wt->rangeEnd - mte - 1;
                     if (rl != l) {
                         reportError("rl not l!\n");
@@ -77,11 +77,11 @@ int dragDown(workTable *wt)
                 }
                 if (in) {
                     int s = in->position.getRow()
-                          - (in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2);
+                          - (in->externalInputConstraint < in->externalInputPairedConstraint ? in->externalInputPairedConstraint : in->externalInputConstraint);
                     if (s < msl)
                         msl = s;
                     if (msl < oStart) {
-                        short mfs = in->unk_13b2 < in->unk_13b0 ? in->unk_13b0 : in->unk_13b2;
+                        short mfs = in->externalInputConstraint < in->externalInputPairedConstraint ? in->externalInputPairedConstraint : in->externalInputConstraint;
                         reportWarning("%s %d-%d < mSline=%d [%d,%d]\n",
                                       in->opcodeInfo->mnemonic, in->position.getRow(),
                                       mfs,

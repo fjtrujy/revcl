@@ -32,8 +32,8 @@ Instr *getMove(int type, int)
             reportError("getFreeMove - inst not set\n");
             exitAfterCleanup(-1);
         }
-        if (in->unk_1428 != (VclPtrWord)mr) {
-            reportError(moveRecMismatchError, in->unk_1428, mr);
+        if (in->moveRecordWord != (VclPtrWord)mr) {
+            reportError(moveRecMismatchError, in->moveRecordWord, mr);
             exitAfterCleanup(-1);
         }
         if (!mr->moveRegister) {
@@ -53,12 +53,12 @@ Instr *getMove(int type, int)
             l->unk_29 = 0;
             mr->moveRegister->setPartPayload(i, (VclPtrWord)l);
         }
-        in->unk_2c = 0;
-        in->unk_24.unk_04 = 0;
-        in->unk_24.unk_00 = 0;
-        in->unk_1c.unk_04 = 0;
-        in->unk_1c.unk_00 = 0;
-        in->unk_30 = 0;
+        in->nextMoveInstruction = 0;
+        in->pendingLink.previousInstruction = 0;
+        in->pendingLink.nextInstruction = 0;
+        in->linearLink.previousInstruction = 0;
+        in->linearLink.nextInstruction = 0;
+        in->ownerTable = 0;
         in->position.clearInstructionPosition();
         in->resetOptimizationState();
         return in;
@@ -100,7 +100,7 @@ Instr *getMove(int type, int)
         reportError("failed to get move reg\n");
         exitAfterCleanup(-1);
     }
-    in->unk_1428 = (VclPtrWord)mr;
+    in->moveRecordWord = (VclPtrWord)mr;
     Operand *op = in->getOp(0);
     if (!op) {
         reportError("failed to get move output!\n");
@@ -129,7 +129,7 @@ bool addFreeMove(Instr *in)
         reportError("addFReeMove - null input\n");
         exitAfterCleanup(-1);
     }
-    moveRec *mr = (moveRec *)in->unk_1428;
+    moveRec *mr = (moveRec *)in->moveRecordWord;
     if (!mr) {
         reportError("not a move to free\n");
         exitAfterCleanup(-1);
@@ -149,11 +149,11 @@ bool addFreeMove(Instr *in)
         reportError("no instruction set in mr\n");
         exitAfterCleanup(-1);
     }
-    in->unk_24.unk_04 = 0;
-    in->unk_24.unk_00 = 0;
-    in->unk_1c.unk_04 = 0;
-    in->unk_1c.unk_00 = 0;
-    in->unk_30 = 0;
+    in->pendingLink.previousInstruction = 0;
+    in->pendingLink.nextInstruction = 0;
+    in->linearLink.previousInstruction = 0;
+    in->linearLink.nextInstruction = 0;
+    in->ownerTable = 0;
     in->position.clearInstructionPosition();
     in->resetOptimizationState();
     if (!in->abstractMoveOpcode) {
@@ -163,8 +163,8 @@ bool addFreeMove(Instr *in)
     iInfo *ii = getOpcodeInfoById(in->abstractMoveOpcode);
     in->concreteMoveOpcode = 0;
     in->opcodeInfo = ii;
-    in->permittedPipelineMask = ii->unk_0e;
-    in->opcodeResourceMask = ii->unk_10;
+    in->permittedPipelineMask = ii->pipelineMask;
+    in->opcodeResourceMask = ii->resourceMask;
     mr->nextFree = (moveRec *)g_080de714[mr->moveType];
     g_080de714[mr->moveType] = (VclPtrWord)mr;
     return true;
@@ -271,8 +271,8 @@ bool resolveMovePipe(workTable *wt, Instr *mv, int pipe)
         wt->evenPipeMoveCount--;
     iInfo *ii = getOpcodeInfoById(mv->concreteMoveOpcode);
     mv->opcodeInfo = ii;
-    mv->permittedPipelineMask = ii->unk_0e;
-    mv->opcodeResourceMask = ii->unk_10;
+    mv->permittedPipelineMask = ii->pipelineMask;
+    mv->opcodeResourceMask = ii->resourceMask;
     if (mv->permittedPipelineMask == 3)
         wt->vectorMoveCount++;
     else if (mv->permittedPipelineMask & 1)
@@ -293,8 +293,8 @@ int unresolveMove(Block *blk, Instr *mv)
         blk->evenPipeMoveCount--;
     mv->concreteMoveOpcode = 0;
     mv->opcodeInfo = ii;
-    mv->permittedPipelineMask = ii->unk_0e;
-    mv->opcodeResourceMask = ii->unk_10;
+    mv->permittedPipelineMask = ii->pipelineMask;
+    mv->opcodeResourceMask = ii->resourceMask;
     if (mv->permittedPipelineMask == 3)
         blk->vectorMoveCount++;
     else if (mv->permittedPipelineMask & 1)

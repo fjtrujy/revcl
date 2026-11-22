@@ -15,7 +15,7 @@ bool clearWatchdog();
 
 int func_0804ab6c(const char *name, char *pathOut);
 int OS_End();
-void func_0804ac44();
+void suppressFurtherErrors();
 char *func_0804aef0(const char *path, int *len, bool flag);
 char *func_0804aff0(int fd, int *len, bool nulTerm);
 int reportMessage(const char *fmt, ...);
@@ -25,7 +25,7 @@ int reportVerboseInfo(const char *fmt, ...);
 int reportError(const char *fmt, ...);
 int reportUserMessage(const char *fmt, ...);
 int formatIntoBuffer(char *buf, const char *fmt, ...);
-const char *func_0806c6a0(int dev);  // device name
+const char *deviceNameByIndex(int dev);  // device name
 int parseInteger(const char *s);
 void exitAfterCleanup(int status);
 void exitWithError(const char *fmt, ...);

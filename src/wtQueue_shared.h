@@ -40,7 +40,7 @@ workTable *makeForceTable(Program *p, instStream *s);
 void dumpProgramStreamsAndRegisters(Program *p, int a);
 const char *stallReasonStr(short why);
 bool sredTable(workTable *wt);
-bool func_0807e528(Program *p, instStream *s, workTable *wt);
+bool prepareReductionCandidates(Program *p, instStream *s, workTable *wt);
 bool func_0807e740(Program *p, workTable *wt, unsigned char a, unsigned char b);
 bool UnlinkFromDone(Block *blk, Instr *n);
 bool setRange(int s, int e, int lsz);

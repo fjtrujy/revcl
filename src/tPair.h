@@ -22,7 +22,7 @@ public:
     }
     ~tPair();
     void reset();
-    void func_08058ab0();
+    void noopThroughputPairHook();
 };
 
 #endif

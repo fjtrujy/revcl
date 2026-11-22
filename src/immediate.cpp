@@ -29,7 +29,7 @@ bool parseImmediate(const char *s, unsigned char type, mValue *v)
     if (!tree.evalExp(s)) {
         reportError(parseImmediateError, s);
     } else {
-        int n = tree.func_0804f8f0();
+        int n = tree.countUnknownExpressionSymbols();
         if (n < 0) {
             reportWarning(parseImmediateWarn, s);
         } else {

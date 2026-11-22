@@ -691,12 +691,12 @@ bool cls0805c244::isOk(cls0805bcc4 *lk, int type, bool inserted)
     return ok;
 }
 
-short cls0805bcc4::func_0805ccc8()
+short cls0805bcc4::maximumLockConstraint()
 {
     return unk_42;
 }
 
-short cls0805bcc4::func_0805ccd4()
+short cls0805bcc4::secondaryLockConstraint()
 {
     return unk_3e;
 }
@@ -837,9 +837,9 @@ void cls0805bcc4::resetCalculatedStats()
 
 void cls0805bcc4::setFrom(InstructionPosition *r)
 {
-    int rline = r->unk_00;
+    int rline = r->linearRow;
     unk_32 = rline;
-    int loop = r->unk_04;
+    int loop = r->loopRow;
     unk_30 = loop;
     int lsz = g_080b336c;
     if (lsz) {
@@ -981,7 +981,7 @@ Instr *cls0805c244::earliestExt()
                         reportError("not get in for earliest ext\n");
                         exitAfterCleanup(-1);
                     }
-                    if (in->position.unk_00 < best) {
+                    if (in->position.linearRow < best) {
                         best = in->insertionSerial;
                         res = in;
                     }

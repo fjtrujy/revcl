@@ -401,7 +401,7 @@ bool RegPool::markAllocatablePhysicalRegistersUsed()
     return true;
 }
 
-bool RegPool::func_08059c4c()
+bool RegPool::clearRegisterAssignmentsFirstPass()
 {
     if (registerEntries) {
         RegPoolEntry* e = registerEntries;
@@ -413,7 +413,7 @@ bool RegPool::func_08059c4c()
     return true;
 }
 
-bool RegPool::func_08059c94()
+bool RegPool::clearRegisterAssignmentsSecondPass()
 {
     if (registerEntries) {
         RegPoolEntry* e = registerEntries;

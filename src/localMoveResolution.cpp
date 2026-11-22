@@ -14,7 +14,7 @@ bool func_0807f2c4(Block *blk, Instr *mv)
         return false;
     if (mv->concreteMoveOpcode)
         unresolveMove(blk, mv);
-    mv->unk_2c = blk->moveListHead;
+    mv->nextMoveInstruction = blk->moveListHead;
     blk->unk_50++;
     blk->moveListHead = mv;
     return true;

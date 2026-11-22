@@ -9,7 +9,7 @@ static inline regUseSlot *registerPart(regUse *u, int part)
 
 bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int ofs, bool ext)
 {
-    regUse *tr = t->unk_234;
+    regUse *tr = t->backtraceRegisterUse;
     if (!tr) {
         reportError("no rfu ?\n");
         return false;
@@ -19,7 +19,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
             reportError("not end_match on the newmatchlist\n");
             return false;
         }
-        int minKey = func_08061cb0(p, s);
+        int minKey = buildMinimumPathKey(p, s);
         if (minKey <= 0) {
             reportError("minimal path key was bad\n");
             return false;
@@ -32,7 +32,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                 return false;
             }
         }
-        regUse *sr = s->unk_234;
+        regUse *sr = s->backtraceRegisterUse;
         if (!sr) {
             reportError("an entry on the new match list had no regref?\n");
             return false;
@@ -41,8 +41,8 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
             reportError("newmatchlist had non -end-match \n");
             return false;
         }
-        int len = ofs + s->unk_240;
-        int d = s->unk_230 - len;
+        int len = ofs + s->minimumPathLength;
+        int d = s->earliestOutputLocation - len;
         bool extended = false;
         if (d > 0) {
             if (ext) {
@@ -66,8 +66,8 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
             if (ext)
                 match = last;
             else {
-                int mn = s->unk_240;
-                int mx = s->unk_248;
+                int mn = s->minimumPathLength;
+                int mx = s->maximumPathLength;
                 if (mx < mn) {
                     reportError("max_ilen<min_ilen for a non-blocking instruction match.. %d < %d and logmax is %d\n",
                                   mx, mn, p->trackMaximumPathLength);

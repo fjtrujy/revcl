@@ -4,9 +4,9 @@
 #include "os.h"
 
 int mstrlen(const char *s);
-bool func_0804c03c(const char *a, const char *b);
+bool equalExactStrings(const char *a, const char *b);
 bool asciiCaseEqual(const char *a, const char *b);
-bool func_08050780(const char *s, const char *kw);
+bool matchesLeadingKeyword(const char *s, const char *kw);
 
 char *g_080b3144 = "0123456789.";    // gasp line-number chars
 char *g_080b3148 = "\"'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.:{}<>()[]+-*/\\$#@!~%^&_=|?;";    // token (non-whitespace) char set
@@ -157,7 +157,7 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
             process = false;
         }
         int checkBlock = process;
-        if ((char)checkBlock && func_08050780(line, g_080b314c)) {
+        if ((char)checkBlock && matchesLeadingKeyword(line, g_080b314c)) {
             char *q = next;
             t = &parsedLines[parsedLineCount++];
             t->sourceLineNumber = lineNo;
@@ -165,7 +165,7 @@ bool Parser::buildProcessedLines(bool gasp, bool cpp)
             for (;;) {
                 if (!rawHead)
                     break;
-                if (func_08050780(q, g_080b3150)) {
+                if (matchesLeadingKeyword(q, g_080b3150)) {
                     rawHead = *q;
                     break;
                 }
@@ -253,12 +253,12 @@ LocTag *Parser::getParsedLine(int i)
     return &parsedLines[i];
 }
 
-bool func_080501c0(const char *p)
+bool isLineFeedAt(const char *p)
 {
     return *p == '\n';
 }
 
-bool func_080501d4(char c)
+bool isLineEndingCharacter(char c)
 {
     return c == '\n' || c == '\r';
 }
@@ -293,7 +293,7 @@ int Parser::addLocationTag(const char *name, int n)
 {
     int idx;
     for (int i = 0; i < locationTagCount; i++) {
-        if (lines[i].locationKind == n && func_0804c03c(lines[i].locationName, name)) {
+        if (lines[i].locationKind == n && equalExactStrings(lines[i].locationName, name)) {
             idx = i;
             goto found;
         }
@@ -318,7 +318,7 @@ found:
 int Parser::FindLocTag(const char *name, int n)
 {
     for (int i = 0; i < locationTagCount; i++)
-        if (lines[i].locationKind == n && func_0804c03c(lines[i].locationName, name))
+        if (lines[i].locationKind == n && equalExactStrings(lines[i].locationName, name))
             return i;
     return -1;
 }
@@ -421,7 +421,7 @@ bool Parser::decodeGaspLine(char *line)
     return true;
 }
 
-bool func_080506e0(const char *s)
+bool hasTrailingLabelColon(const char *s)
 {
     if (!s || !*s)
         return false;
@@ -430,7 +430,7 @@ bool func_080506e0(const char *s)
     return s[-1] == ':';
 }
 
-bool func_08050708(char c)
+bool isTokenSeparatorCharacter(char c)
 {
     const char *q = g_080b3148;
     char ch;
@@ -451,7 +451,7 @@ bool Parser::isAssignmentLine(int i)
     return false;
 }
 
-bool func_08050780(const char *s, const char *kw)
+bool matchesLeadingKeyword(const char *s, const char *kw)
 {
     if (s) {
         while (*s && !isWhite(s) && *s != '\n')
@@ -466,14 +466,14 @@ bool func_08050780(const char *s, const char *kw)
     return false;
 }
 
-bool func_080507f4(const char *s)
+bool matchesFirstSpecialKeyword(const char *s)
 {
-    return func_08050780(s, g_080b314c);
+    return matchesLeadingKeyword(s, g_080b314c);
 }
 
-bool func_08050810(const char *s)
+bool matchesSecondSpecialKeyword(const char *s)
 {
-    return func_08050780(s, g_080b3150);
+    return matchesLeadingKeyword(s, g_080b3150);
 }
 
 extern const char locTagInvalidCommentError[] = "invalid comment mode at start of lineEntry::Tokenise\n";

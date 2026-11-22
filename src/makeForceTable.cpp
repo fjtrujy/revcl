@@ -40,13 +40,13 @@ workTable *makeForceTable(Program *p, instStream *s)
     int end = wt->getRangeEnd();
     nt->setRange(start, end);
     for (Instr *in = nt->pendingInstructions.head; in; in = nt->pendingInstructions.head) {
-        Instr *clone = in->unk_08;
+        Instr *clone = in->cloneImage;
         InstructionPosition pos;
         InstructionPosition *r = &clone->position;
-        pos.unk_00 = r->unk_00;
-        pos.unk_04 = r->unk_04;
-        pos.unk_03 = r->unk_03;
-        pos.unk_02 = r->unk_02;
+        pos.linearRow = r->linearRow;
+        pos.loopRow = r->loopRow;
+        pos.loopIteration = r->loopIteration;
+        pos.pipelineIndex = r->pipelineIndex;
         if (!nt->forceInsert(in, &pos)) {
             reportError("failed to force an insert into table\n");
             delete nt;

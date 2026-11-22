@@ -11,7 +11,7 @@ bool Instr::patchBranchLatencies()
         op->additionalLatency = 0;
         if (!(branchFlags & 4))
             continue;
-        for (ol_s *ol = op->parts[0].unk_54.head; ol; ol = ol->next) {
+        for (ol_s *ol = op->parts[0].operandLocations.head; ol; ol = ol->next) {
             Instr *in = ol->instruction;
             bool found = false;
             if (in->ramAccessType) {

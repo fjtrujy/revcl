@@ -31,9 +31,9 @@ bool resetBlockDynamicStats(Block *b)
 {
     b->unk_04 = -1;
     b->unk_06 = -1;
-    for (Instr *in = b->completedInstructions.head; in; in = in->unk_24.unk_00)
+    for (Instr *in = b->completedInstructions.head; in; in = in->pendingLink.nextInstruction)
         resetInstrDyn(in);
-    for (Instr *in = b->pendingInstructions.head; in; in = in->unk_24.unk_00)
+    for (Instr *in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction)
         resetInstrDyn(in);
     return true;
 }
@@ -56,15 +56,15 @@ bool dynCalcStats(workTable *wt)
     Instr *in;
     resetBlockDynamicStats(b);
 
-    for (in = b->completedInstructions.head; in; in = in->unk_24.unk_00) {
-        int v = in->position.unk_00;
+    for (in = b->completedInstructions.head; in; in = in->pendingLink.nextInstruction) {
+        int v = in->position.linearRow;
         in->dynamicReverseStart = v;
         in->dynamicEarliestStart = v;
         if (v > b->unk_04)
             b->unk_04 = v;
     }
 
-    for (in = b->pendingInstructions.head; in; in = in->unk_24.unk_00) {
+    for (in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
         Operand *op;
         int h = 0;
         for (i = 0; i != in->operandCount; i++) {
@@ -147,10 +147,10 @@ bool dynCalcStats(workTable *wt)
         }
     }
 
-    for (in = b->pendingInstructions.head; in; in = in->unk_24.unk_00)
+    for (in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction)
         in->dynamicReverseStart = b->unk_04;
 
-    for (in = b->pendingInstructions.tail; in; in = in->unk_24.unk_04) {
+    for (in = b->pendingInstructions.tail; in; in = in->pendingLink.previousInstruction) {
         for (i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *reg = registerOperand(op, 1);
@@ -180,7 +180,7 @@ bool dynCalcStats(workTable *wt)
         }
     }
 
-    for (in = b->pendingInstructions.head; in; in = in->unk_24.unk_00) {
+    for (in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
         for (i = 0; i != in->operandCount; i++) {
             Operand *op = &in->operands[i];
             RegPoolEntry *reg = registerOperand(op, 1);
@@ -210,9 +210,9 @@ bool dynCalcStats(workTable *wt)
         }
     }
 
-    for (in = b->pendingInstructions.head; in; in = in->unk_24.unk_00) {
-        in->unk_13f0.unk_04 = in->dynamicEarliestStart;
-        in->unk_13f0.unk_00 = b->unk_04 - in->dynamicReverseStart;
+    for (in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
+        in->schedulingStatistics.forwardLatencyDepth = in->dynamicEarliestStart;
+        in->schedulingStatistics.reverseLatencyDepth = b->unk_04 - in->dynamicReverseStart;
     }
     return true;
 }
@@ -223,15 +223,15 @@ void dynDumpStats(Block *b)
     errorOccurred = !quiet_080bbd98;
     reportInfo("dynDumpStats - start\n");
     int n = 0;
-    for (Instr *in = b->pendingInstructions.head; in; in = in->unk_24.unk_00) {
+    for (Instr *in = b->pendingInstructions.head; in; in = in->pendingLink.nextInstruction) {
         const char *mark = "    ";
         int s = in->dynamicEarliestStart;
         int e = in->dynamicUpperBound;
         int dep = b->loopSize;
         if (s - e > dep)
             mark = "****";
-        int ht = b->unk_04 - in->unk_13f0.unk_00;
-        dep = in->unk_13f0.unk_04;
+        int ht = b->unk_04 - in->schedulingStatistics.reverseLatencyDepth;
+        dep = in->schedulingStatistics.forwardLatencyDepth;
         reportInfo("[%3d]:%3d [%5d %5d %5d %5d ]%s dep=%2d ht=%2d  %s\n",
                       n, b->loopSize, e, s, in->dynamicReverseStart, in->dynamicReverseEnd, mark,
                       dep, ht, in->opcodeInfo->mnemonic);

@@ -73,24 +73,24 @@ bool workTable::prepRawTable()
             InstructionPosition *loc;
             if (loopSize) {
                 if (!in->isNop())
-                    lid = in->position.unk_03;
+                    lid = in->position.loopIteration;
                 if (lid < 0) {
                     reportError("lid was <0 during table setup\n");
                     in->leDump();
                     return 0;
                 }
                 loc = &in->position;
-                loc->unk_03 = lid;
+                loc->loopIteration = lid;
                 il = lid * loopSize + rl;
             } else {
                 loc = &in->position;
-                lid = loc->unk_03;
+                lid = loc->loopIteration;
                 if (lid) {
                     reportError("non zero lid for non-loop %d\n", lid);
                     dumpRawInstruction(in);
                     return 0;
                 }
-                loc->unk_03 = 0;
+                loc->loopIteration = 0;
                 il = rl;
             }
             if (lid > maxLid)
@@ -98,30 +98,30 @@ bool workTable::prepRawTable()
             InstructionPosition pos;
             pos.setFromLinearRow(il);
             pos.setInstructionPipe(p);
-            in->position.unk_00 = pos.unk_00;
-            signed char nl = pos.unk_03;
-            loc->unk_04 = pos.unk_04;
-            loc->unk_03 = nl;
-            loc->unk_02 = pos.unk_02;
+            in->position.linearRow = pos.linearRow;
+            signed char nl = pos.loopIteration;
+            loc->loopRow = pos.loopRow;
+            loc->loopIteration = nl;
+            loc->pipelineIndex = pos.pipelineIndex;
             if (nl != lid) {
                 reportError("iTable::initialSetup - lid was bad (%d!=%d) lsz=%d rl=%d il=%d\n",
                               nl, lid, loopSize, il, rl);
                 return 0;
             }
-            if (pos.unk_04 != rl) {
+            if (pos.loopRow != rl) {
                 reportError("iTable::initialSetup - iline was bad\n");
                 return 0;
             }
-            if (in->unk_30) {
-                if (in->unk_30 != (cls_unk30 *)this) {
+            if (in->ownerTable) {
+                if (in->ownerTable != (cls_unk30 *)this) {
                     reportError("iTable::prep - didn't own this instruction\n");
                     return 0;
                 }
-            } else if (!in->unk_1428) {
+            } else if (!in->moveRecordWord) {
                 reportError("iTable::prep - instruction not a move, but owner wasn't set\n");
                 return 0;
             }
-            in->unk_30 = 0;
+            in->ownerTable = 0;
             in->setOwner((cls_unk30 *)this);
             if (!logAddLinear_Tail(in)) {
                 extern const char prepRawAddInstrError[];

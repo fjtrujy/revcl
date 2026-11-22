@@ -9,8 +9,8 @@
 extern int errorOccurred;
 extern bool quiet_080bbd98;
 
-bool func_0804bf28(char a, char b);
-bool func_0804bf9c(char c);
+bool equalAsciiCaseInsensitive(char a, char b);
+bool isIdentifierAlphabetCharacter(char c);
 char *dupString(const char *s);
 
 Processor::Processor()
@@ -163,20 +163,20 @@ int Processor::gatherInflight(ol_s **out)
     return n;
 }
 
-bool Processor::func_0806bd40()
+bool Processor::clearAllRegisterAssignmentsFirstPass()
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->func_08059c4c()) {
+        if (g_080de6e0[i] && !g_080de6e0[i]->clearRegisterAssignmentsFirstPass()) {
             reportError("failed to alloc reset an rpool\n");
             return false;
         }
     return true;
 }
 
-bool Processor::func_0806bd88()
+bool Processor::clearAllRegisterAssignmentsSecondPass()
 {
     for (int i = 0; i != 12; i++)
-        if (g_080de6e0[i] && !g_080de6e0[i]->func_08059c94()) {
+        if (g_080de6e0[i] && !g_080de6e0[i]->clearRegisterAssignmentsSecondPass()) {
             reportError("failed to alloc reset an rpool\n");
             return false;
         }
@@ -193,7 +193,7 @@ void Processor::validateOpcodeTableCount()
     errorOccurred = !quiet_080bbd98;
     int n = 0;
     for (iInfo *p = g_080de6c0; p->mnemonic; p++) {
-        p->func_08070080();
+        p->scanOpcodeOperandDescriptors();
         n++;
     }
     if (n != 0xd6) {
@@ -261,7 +261,7 @@ iInfo *findOpcodeInfoByMnemonic(const char *tok, bool all)
     for (; p->mnemonic; p++) {
         const char *s = tok;
         const char *m = p->mnemonic;
-        while (*s && *m && func_0804bf28(*s, *m)) {
+        while (*s && *m && equalAsciiCaseInsensitive(*s, *m)) {
             s++;
             m++;
         }
@@ -293,7 +293,7 @@ bool optReset(Program *p)
 
 bool Cycle(Program *p, bool flag)
 {
-    p->unk_80++;
+    p->emulatedCycleCount++;
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->cycleRegisters(flag)) {
             reportError("Processor::Cycle() - failed to cycle %s\n",
@@ -303,9 +303,9 @@ bool Cycle(Program *p, bool flag)
     return true;
 }
 
-bool func_0806c0f8(Program *p)
+bool resetProcessorThroughput(Program *p)
 {
-    p->unk_80 = 0;
+    p->emulatedCycleCount = 0;
     for (int i = 0; i != 12; i++)
         if (g_080de6e0[i] && !g_080de6e0[i]->resetPoolThroughputState()) {
             reportError("Processor::emuReset() - failed to reset %s\n",
@@ -458,23 +458,23 @@ bool wouldPair(Instr **ie, Instr *in, unsigned p)
     int i;
     for (i = 0; i != 2; i++)
         if (ie[i] == in) {
-            ie[i] = (Instr *)in->unk_1398;
+            ie[i] = (Instr *)in->replacedInstructionWord;
             break;
         }
-    if (ie[p] != (Instr *)in->unk_1398) {
+    if (ie[p] != (Instr *)in->replacedInstructionWord) {
         if (i != 2)
             ie[i] = in;
         return false;
     }
     ie[p] = in;
     int r = checkDispatchEntry(ie);
-    ie[p] = (Instr *)in->unk_1398;
+    ie[p] = (Instr *)in->replacedInstructionWord;
     if (i != 2)
         ie[i] = in;
     return r == 0;
 }
 
-const char *func_0806c6a0(int dev)
+const char *deviceNameByIndex(int dev)
 {
     const char **tab = (const char **)g_080de720;
     if (!tab)
@@ -624,7 +624,7 @@ bool Processor::setUniqueName(const char *name)
     if (name) {
         uniqueName = dupString(name);
         for (char *s = uniqueName; *s; s++)
-            if (!func_0804bf9c(*s))
+            if (!isIdentifierAlphabetCharacter(*s))
                 *s = '_';
     }
     return true;

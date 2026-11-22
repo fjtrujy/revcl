@@ -8,20 +8,20 @@ instStream::instStream()
 {
     stats.clear();
     unk_2d8 = 0;
-    unk_144 = 0;
-    unk_140 = 0;
-    unk_2b8 = 0;
-    unk_2ba = 0;
+    appliedOptimizationMask = 0;
+    hasLoopOptimization = 0;
+    savedStallReason = 0;
+    currentStallReason = 0;
     dependencyLength = -1;
     logicalLength = -1;
-    unk_2bc = 0x4000;
-    unk_2dc = 0;
-    unk_268 = 0;
-    unk_26c = 0;
-    unk_2c4 = 0;
+    physicalInstructionBudget = 0x4000;
+    externalSchedulingPrepared = 0;
+    absoluteLoopCount = 0;
+    extraLoopCount = 0;
+    loopRegionRole = 0;
     knownMinimumLoopCount = 0;
     safeMinimumLoopCount = 0;
-    unk_2c8 = -1;
+    emissionStartIndex = -1;
     traceStore = 0;
     endDirectiveText = 0;
     nextStream = 0;
@@ -35,10 +35,10 @@ instStream::instStream()
     optimizedTable = 0;
     emissionTable = 0;
     passThroughText = 0;
-    unk_2d6 = 0;
-    unk_2d7 = 0;
-    unk_2d4 = 0;
-    unk_2d5 = 0;
+    containsBarrier = 0;
+    mergedBarrierFlag = 0;
+    leadingLabelFlags = 0;
+    trailingLabelFlags = 0;
     participatesInStall = 0;
     unk_261 = 0;
     unk_262 = 0;
@@ -47,7 +47,7 @@ instStream::instStream()
     branchType = 0;
     endType = 1;
     startType = 1;
-    unk_00 = 0;
+    optimizationRecordCount = 0;
 }
 
 instStream::~instStream()
@@ -57,8 +57,8 @@ instStream::~instStream()
 
 bool instStream::reset()
 {
-    unk_2b8 = 0;
-    unk_2ba = 0;
+    savedStallReason = 0;
+    currentStallReason = 0;
     labels.clearNodes();
     streamId = -1;
     owningProgram = 0;
@@ -79,7 +79,7 @@ bool instStream::reset()
 
 void instStream::dump(int)
 {
-    labels.func_0804b534();
+    labels.noopListTraversal();
     inputLinks.dump();
     canLoop();
     workTable *wt = workTablePtr;
@@ -102,9 +102,9 @@ void instStream::zeroStats()
         reportError("no work table set for zeroStats!\n");
         exitAfterCleanup(-1);
     }
-    for (Instr *i = workTablePtr->linearInstructions.head; i; i = i->unk_1c.unk_00)
-        i->unk_13f0.zeroAllCounters();
-    unk_278.zeroAllCounters();
+    for (Instr *i = workTablePtr->linearInstructions.head; i; i = i->linearLink.nextInstruction)
+        i->schedulingStatistics.zeroAllCounters();
+    schedulingStatistics.zeroAllCounters();
 }
 
 bool instStream::iOwn(Instr *i)
@@ -129,7 +129,7 @@ bool instStream::patchLatencies()
         reportError("iStream::PatchLatencies - no work table\n");
         return false;
     }
-    for (Instr *i = wt->linearInstructions.head; i; i = i->unk_1c.unk_00) {
+    for (Instr *i = wt->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
         i->linearOrderIndex = n;
         if (!i->patchBranchLatencies()) {
             reportError("failed to patch latencies for instruction\n");
@@ -233,13 +233,13 @@ bool instStream::canLoop()
             reportError("canLoop - bad return from outIST getFirst\n");
             exitAfterCleanup(-1);
         } else {
-            int sv = s->unk_00;
+            int sv = s->optimizationRecordCount;
             unsigned char z = s->branchType;
             z >>= 4;
             z >>= 4;
             if (z)
                 return false;
-            s->unk_00 = sv;
+            s->optimizationRecordCount = sv;
         }
         return s == this;
     }
@@ -309,7 +309,7 @@ bool instStream::flowReset()
         reportError("iStream::flowReset() - failed to dispose regrefs\n");
         return false;
     }
-    for (Instr *i = workTablePtr->linearInstructions.head; i; i = i->unk_1c.unk_00) {
+    for (Instr *i = workTablePtr->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
         if (!i->resetFlowDependencies()) {
             reportError("failed to init flow for isn\n");
             return false;
@@ -339,7 +339,7 @@ void instStream::dumpSynthetics()
 
 char *instStream::emitLabels(char *buf)
 {
-    if (unk_2c8 >= 0) {
+    if (emissionStartIndex >= 0) {
         for (mNode *n = labels.head; n; n = n->next) {
             if (n->name) {
                 const char *p = "__v_";
@@ -349,7 +349,7 @@ char *instStream::emitLabels(char *buf)
                     s++;
                 }
                 if (*p)
-                    buf += formatIntoBuffer(buf, "%-40s = %d\n", n->name, unk_2c8);
+                    buf += formatIntoBuffer(buf, "%-40s = %d\n", n->name, emissionStartIndex);
             }
         }
     }
@@ -527,14 +527,14 @@ bool instStream::processCmdSynth(Instr *i)
         }
         break;
     case 9:
-        if (!i->getImmediateOperand(0, &unk_26c) || unk_26c < 0) {
+        if (!i->getImmediateOperand(0, &extraLoopCount) || extraLoopCount < 0) {
             reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopExtra. value must be >=0\n");
             i->leDump();
             return false;
         }
         break;
     case 10:
-        if (unk_2d6) {
+        if (containsBarrier) {
             const char *s = labels.firstNodeName();
             const char *n = "UNNAMED_ISTREAM";
             if (s)
@@ -542,13 +542,13 @@ bool instStream::processCmdSynth(Instr *i)
             reportError("multiple barriers in one flow..%s?\n", n);
             return false;
         }
-        unk_2d6 = 1;
+        containsBarrier = 1;
         break;
     default:
         reportUserMessage("unexpected synthetic instruction encountered\n");
         break;
     case 12:
-        if (!i->getImmediateOperand(0, &unk_268) || unk_268 <= 2) {
+        if (!i->getImmediateOperand(0, &absoluteLoopCount) || absoluteLoopCount <= 2) {
             reportUserMessage("failed to get immediate field 0 (extra loop count) while processing --LoopAbs. value must be >=2\n");
             i->leDump();
             return false;
@@ -570,7 +570,7 @@ bool instStream::disposeInputTable()
 
 void instStream::copySourceRecordsFrom(instStream *src)
 {
-    unk_00 = src->unk_00;
-    for (int i = 0; i != unk_00; i++)
-        unk_04[i] = src->unk_04[i];
+    optimizationRecordCount = src->optimizationRecordCount;
+    for (int i = 0; i != optimizationRecordCount; i++)
+        optimizationRecords[i] = src->optimizationRecords[i];
 }

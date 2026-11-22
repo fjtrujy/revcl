@@ -45,12 +45,12 @@ inline void xpNode::clearValue()
 
 inline void xpNode::init()
 {
-    unk_01 = 0;
-    unk_02 = 0;
+    depth = 0;
+    operatorType = 0;
     unk_00 = 0;
-    unk_04 = 0;
-    unk_05 = 0;
-    unk_03 = 0;
+    operandArity = 0;
+    childCount = 0;
+    precedence = 0;
     val.clear();
     parent = 0;
     child[0] = 0;
@@ -82,13 +82,13 @@ xpNode::~xpNode()
     v->clear();
 }
 
-bool xpNode::func_0804e778()
+bool xpNode::clearExpressionNodeValue()
 {
     clearValue();
     return true;
 }
 
-void xpNode::func_0804e794()
+void xpNode::dumpExpressionNodeValue()
 {
     val.dump();
 }
@@ -98,10 +98,10 @@ void xpNode::reset()
     init();
 }
 
-static inline bool xpNodeIsFull(xpNode *n) { return n->unk_05 >= n->unk_04; }
+static inline bool xpNodeIsFull(xpNode *n) { return n->childCount >= n->operandArity; }
 static inline bool xpNodeDecode(xpNode *n)
 {
-    if (n->unk_02) {
+    if (n->operatorType) {
         printf("can't decode a non-literal\n");
         return false;
     }
@@ -114,12 +114,12 @@ static inline bool xpNodeDecode(xpNode *n)
 
 bool xpNode::isFull()
 {
-    return unk_05 >= unk_04;
+    return childCount >= operandArity;
 }
 
 bool xpNode::decode()
 {
-    if (unk_02) {
+    if (operatorType) {
         printf("can't decode a non-literal\n");
         return false;
     }
@@ -149,7 +149,7 @@ bool xpTree::dispose(xpNode *n)
 {
     if (!n)
         return true;
-    for (int i = 0; i != n->unk_05; i++)
+    for (int i = 0; i != n->childCount; i++)
         if (!dispose(n->child[i]))
             return false;
     delete (xpNodeDel *)n;
@@ -174,8 +174,8 @@ void xpTree::calcDepths()
     unk_0c = 0;
     xpNode *n = root;
     if (n) {
-        n->unk_01 = 0;
-        for (int i = 0; i != n->unk_05; i++)
+        n->depth = 0;
+        for (int i = 0; i != n->childCount; i++)
             setDepth(n->child[i], 1);
     }
 }
@@ -183,15 +183,15 @@ void xpTree::calcDepths()
 void xpTree::setDepth(xpNode *n, int depth)
 {
     if (n) {
-        n->unk_01 = depth;
+        n->depth = depth;
         const int &d = depth;
         int i = 0;
-        if (n->unk_05) {
+        if (n->childCount) {
             int childDepth = d + 1;
             do {
                 setDepth(n->child[i], childDepth);
                 i++;
-            } while (i != n->unk_05);
+            } while (i != n->childCount);
         }
     }
 }
@@ -199,46 +199,46 @@ void xpTree::setDepth(xpNode *n, int depth)
 static inline void setDepthInl(xpTree *t, xpNode *n, int depth)
 {
     if (n) {
-        n->unk_01 = depth;
+        n->depth = depth;
         const int &d = depth;
         int i = 0;
-        if (n->unk_05) {
+        if (n->childCount) {
             int childDepth = d + 1;
             do {
                 t->setDepth(n->child[i], childDepth);
                 i++;
-            } while (i != n->unk_05);
+            } while (i != n->childCount);
         }
     }
 }
 
-void xpTree::func_0804ea8c(xpNode *n)
+void xpTree::visitExpressionDescendants(xpNode *n)
 {
-    if (n && n->unk_04)
-        for (int i = 0; i != n->unk_04; i++)
-            func_0804ea8c(n->child[i]);
+    if (n && n->operandArity)
+        for (int i = 0; i != n->operandArity; i++)
+            visitExpressionDescendants(n->child[i]);
 }
 
-void xpTree::func_0804ead0()
+void xpTree::resetExpressionDepths()
 {
     unk_0c = 0;
     xpNode *n = root;
     if (n) {
-        n->unk_01 = 0;
-        for (int i = 0; i != n->unk_05; i++)
+        n->depth = 0;
+        for (int i = 0; i != n->childCount; i++)
             setDepthInl(this, n->child[i], 1);
     }
-    func_0804ea8c(root);
+    visitExpressionDescendants(root);
 }
 
 void xpTree::dumpNode(xpNode *n)
 {
     if (!n)
         return;
-    for (int i = 0; i != n->unk_01; i++)
+    for (int i = 0; i != n->depth; i++)
         ;
     n->val.dump();
-    for (int i = 0; i != n->unk_04; i++) {
+    for (int i = 0; i != n->operandArity; i++) {
         if (n->child[i])
             dumpNode(n->child[i]);
         else
@@ -251,8 +251,8 @@ void xpTree::dump()
     unk_0c = 0;
     xpNode *n = root;
     if (n) {
-        n->unk_01 = 0;
-        for (int i = 0; i != n->unk_05; i++)
+        n->depth = 0;
+        for (int i = 0; i != n->childCount; i++)
             setDepthInl(this, n->child[i], 1);
     }
     dumpNode(root);
@@ -326,9 +326,9 @@ const char *func_0804ec74(const char *s, xpNode *node, bool binary)
     }
     if (!node->val.setString(s, len))
         return 0;
-    node->unk_02 = found->type;
-    node->unk_03 = found->prec;
-    node->unk_04 = found->arity;
+    node->operatorType = found->type;
+    node->precedence = found->prec;
+    node->operandArity = found->arity;
     return p;
 }
 
@@ -362,9 +362,9 @@ bool xpTree::evalExp(const char *s)
         puts("no xor for equality");
         goto fail;
     }
-    root->unk_04 = op->arity;
-    root->unk_03 = op->prec;
-    root->unk_02 = op->type;
+    root->operandArity = op->arity;
+    root->precedence = op->prec;
+    root->operatorType = op->type;
     if (!root->val.setString("=")) {
         reportError("not set equ op\n");
         return false;
@@ -380,7 +380,7 @@ bool xpTree::evalExp(const char *s)
             cur->unk_00++;
             p++;
         } else if (*p == ')') {
-            if (cur->unk_05 < cur->unk_04) {
+            if (cur->childCount < cur->operandArity) {
                 reportError("unexpected close bracket\n");
                 return false;
             }
@@ -403,39 +403,39 @@ bool xpTree::evalExp(const char *s)
                 delete (xpNodeDel *)n;
                 goto fail;
             }
-            if (cur->unk_05 >= cur->unk_04) {
-                if (n->unk_04 <= 1) {
-                    reportError("evalExp: syntax error at : nArgs=%d\n", n->unk_04);
+            if (cur->childCount >= cur->operandArity) {
+                if (n->operandArity <= 1) {
+                    reportError("evalExp: syntax error at : nArgs=%d\n", n->operandArity);
                     n->val.dump();
                     delete (xpNodeDel *)n;
                     goto fail;
                 }
-                while (cur && n->unk_03 <= cur->unk_03 && cur->unk_00 == 0)
+                while (cur && n->precedence <= cur->precedence && cur->unk_00 == 0)
                     cur = cur->parent;
-                if (!cur || cur->unk_05 == 0) {
+                if (!cur || cur->childCount == 0) {
                     delete (xpNodeDel *)n;
                     goto fail;
                 }
-                xpNode *last = cur->child[cur->unk_05 - 1];
+                xpNode *last = cur->child[cur->childCount - 1];
                 if (last->parent != cur) {
                     delete (xpNodeDel *)n;
                     goto fail;
                 }
                 n->parent = cur;
                 n->child[0] = last;
-                n->unk_05 = 1;
+                n->childCount = 1;
                 last->parent = n;
-                cur->child[cur->unk_05 - 1] = n;
+                cur->child[cur->childCount - 1] = n;
                 cur = n;
             } else {
-                if (n->unk_04 > 1) {
+                if (n->operandArity > 1) {
                     delete (xpNodeDel *)n;
                     goto fail;
                 }
-                cur->child[cur->unk_05] = n;
-                cur->unk_05++;
+                cur->child[cur->childCount] = n;
+                cur->childCount++;
                 n->parent = cur;
-                if (n->unk_04)
+                if (n->operandArity)
                     cur = n;
             }
         }
@@ -525,39 +525,39 @@ bool xpTree::rec_Eval(xpNode *n)
         return false;
     }
     int i;
-    for (i = 0; i != n->unk_04; i++)
+    for (i = 0; i != n->operandArity; i++)
         if (!rec_Eval(n->child[i]))
             return false;
-    if (n->unk_05 != n->unk_04) {
+    if (n->childCount != n->operandArity) {
         printf("tree is incomplete\n");
         return false;
     }
-    for (i = 0; i != n->unk_04; i++) {
+    for (i = 0; i != n->operandArity; i++) {
         if (!n->child[i] || !n->child[i]->val.isNumeric()) {
             printf("invalid arg\n");
             return false;
         }
     }
-    switch (n->unk_04) {
+    switch (n->operandArity) {
     case 2: {
         mValue *a = &n->child[0]->val;
         mValue *b = &n->child[1]->val;
-        switch (n->unk_02) {
-        case 2:  return func_0804ca94(v, a, b);
-        case 3:  return func_0804cd68(v, a, b);
-        case 4:  return func_0804d040(v, a, b);
-        case 5:  return func_0804d314(v, a, b);
-        case 6:  return func_0804d5ec(v, a, b);
-        case 8:  return func_0804d9c0(v, a, b);
-        case 9:  return func_0804d7d4(v, a, b);
-        case 10: return func_0804dfd4(v, a, b);
-        case 11: return func_0804ddc0(v, a, b);
-        case 12: return func_0804e050(v, a, b);
-        case 13: return func_0804dbac(v, a, b);
+        switch (n->operatorType) {
+        case 2:  return addValues(v, a, b);
+        case 3:  return subtractValues(v, a, b);
+        case 4:  return multiplyValues(v, a, b);
+        case 5:  return divideValues(v, a, b);
+        case 6:  return moduloValues(v, a, b);
+        case 8:  return shiftValuesRight(v, a, b);
+        case 9:  return shiftValuesLeft(v, a, b);
+        case 10: return bitwiseAndValues(v, a, b);
+        case 11: return logicalAndValues(v, a, b);
+        case 12: return bitwiseOrValues(v, a, b);
+        case 13: return logicalOrValues(v, a, b);
         default:
             printf("unknown binary operation\n");
             return false;
-        case 16: return func_0804e0cc(v, a, b);
+        case 16: return bitwiseXorValues(v, a, b);
         }
     }
     case 0: {
@@ -567,7 +567,7 @@ bool xpTree::rec_Eval(xpNode *n)
     }
     case 1: {
         mValue *a = &n->child[0]->val;
-        switch (n->unk_02) {
+        switch (n->operatorType) {
         case 1:
         case 14: return v->set(a);
         case 7:  return v->bitNot(a);
@@ -592,7 +592,7 @@ xun *g_080bcda4;
 int g_080bcda8;
 int g_080b3140 = 0;
 
-xpOp *func_0804f6c0(int type)
+xpOp *findExpressionOperatorByType(int type)
 {
     for (int i = 0; i != 20; i++)
         if (opTable_080b30a0[i].type == type)
@@ -600,7 +600,7 @@ xpOp *func_0804f6c0(int type)
     return 0;
 }
 
-void func_0804f6ec()
+void clearUnknownSymbols()
 {
     while (g_080bcda4) {
         xun *p = g_080bcda4;
@@ -613,7 +613,7 @@ void func_0804f6ec()
 
 inline xun::xun(InitTag) { next = 0; name = 0; }
 
-bool func_0804f75c(const char *s)
+bool recordUnknownSymbol(const char *s)
 {
     if (!s) {
         reportError("passed a null string to add unknown\n");
@@ -639,7 +639,7 @@ bool func_0804f75c(const char *s)
     return true;
 }
 
-void func_0804f844()
+void visitUnknownSymbols()
 {
     for (xun *p = g_080bcda4; p; p = p->next)
         ;
@@ -658,23 +658,23 @@ xun::~xun()
     next = 0;
 }
 
-int xpTree::func_0804f8f0()
+int xpTree::countUnknownExpressionSymbols()
 {
     g_080b3140 = 0;
     xpNode *n = root;
     if (n)
-        func_0804f920(n);
+        countUnknownSymbolsInNode(n);
     return g_080b3140;
 }
 
-void xpTree::func_0804f920(xpNode *n)
+void xpTree::countUnknownSymbolsInNode(xpNode *n)
 {
     if (g_080b3140 < 0)
         return;
-    if (n->unk_04) {
-        for (int i = 0; i != n->unk_04; i++) {
+    if (n->operandArity) {
+        for (int i = 0; i != n->operandArity; i++) {
             if (n->child[i]) {
-                func_0804f920(n->child[i]);
+                countUnknownSymbolsInNode(n->child[i]);
                 if (g_080b3140 < 0)
                     return;
             }
@@ -685,7 +685,7 @@ void xpTree::func_0804f920(xpNode *n)
         const char *s = n->val.getString();
         if (!s)
             s = "<no_literal>";
-        if (s && !func_0804f75c(s)) {
+        if (s && !recordUnknownSymbol(s)) {
             reportError("failed to add an unknown\n");
             g_080b3140 = -1;
             return;

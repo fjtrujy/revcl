@@ -19,7 +19,7 @@ bool g_080bbd9a;
 char *outName_080b303c = 0;
 
 
-void func_0804ac44()
+void suppressFurtherErrors()
 {
     flag_080b3038 = 1;
 }

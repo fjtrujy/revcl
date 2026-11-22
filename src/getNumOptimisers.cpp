@@ -14,8 +14,8 @@ typedef bool (*wrangleFunc)(workTable *, int *);
 const char *g_080de730;
 
 struct wrangleCand;
-bool func_080817d4(workTable *wt, wrangleCand *c);
-bool func_0808184c(workTable *wt, wrangleCand *c);
+bool selectDumbSchedulingCandidate(workTable *wt, wrangleCand *c);
+bool selectLoopDumbSchedulingCandidate(workTable *wt, wrangleCand *c);
 bool optNormal1(workTable *wt, wrangleCand *c);
 bool optHDown(workTable *wt, wrangleCand *c);
 bool optVuta(workTable *wt, wrangleCand *c);
@@ -27,8 +27,8 @@ bool optNormal2(workTable *wt, wrangleCand *c);
 bool optDumb2(workTable *wt, wrangleCand *c);
 
 optimiser optTable[11] = {
-    {"dumb", 1, 3, (wrangleFunc)func_080817d4, 0},
-    {"ldumb", 1, 3, (wrangleFunc)func_0808184c, 0},
+    {"dumb", 1, 3, (wrangleFunc)selectDumbSchedulingCandidate, 0},
+    {"ldumb", 1, 3, (wrangleFunc)selectLoopDumbSchedulingCandidate, 0},
     {"normal1", 1, 1, (wrangleFunc)optNormal1, 0},
     {"hDown", 1, 1, (wrangleFunc)optHDown, 0},
     {"vuta", 1, 3, (wrangleFunc)optVuta, 0},
@@ -161,7 +161,7 @@ bool doLinear(Program *p, int smart)
 
 static inline const char *loopStallReason(instStream *s)
 {
-    return stallReasonStr(s->unk_2b8);
+    return stallReasonStr(s->savedStallReason);
 }
 
 bool doLoop(Program *p, int smart)
@@ -176,26 +176,26 @@ bool doLoop(Program *p, int smart)
             return false;
         }
         int size = s->getRecordedLogicalLength();
-        size += s->unk_26c;
-        if (s->unk_268 > 1) {
-            if (size > s->unk_268)
+        size += s->extraLoopCount;
+        if (s->absoluteLoopCount > 1) {
+            if (size > s->absoluteLoopCount)
                 reportWarning("the minimal possible loop size + --LoopExtra was greather than the --LoopAbs setting, so ignoring --LoopAbs\n");
             else
-                size = s->unk_268;
+                size = s->absoluteLoopCount;
         }
         bool found = false;
         do {
-            s->unk_00 = 11;
+            s->optimizationRecordCount = 11;
             if (!makeLpWork(s, size)) {
                 reportError("failed to generate a work table for loop size %d\n", size);
                 return false;
             }
             bool first = true;
             for (i = 10; i >= 0; i--) {
-                s->unk_04[i].unk_04 = -1;
-                s->unk_04[i].unk_00 = -1;
-                s->unk_04[i].unk_0c = -1;
-                s->unk_04[i].unk_08 = -1;
+                s->optimizationRecords[i].optimalLength = -1;
+                s->optimizationRecords[i].instructionCount = -1;
+                s->optimizationRecords[i].candidateLoopId = -1;
+                s->optimizationRecords[i].mainLoopId = -1;
                 g_080de730 = optTable[i].name;
                 if (optTable[i].flags & 1) {
                     const char *why = loopStallReason(s);
@@ -241,10 +241,10 @@ bool doLoop(Program *p, int smart)
                         if (!assignLocalRegisters(p, nt))
                             reportWarning("failed to assign reg size would be %d!\n", nt->getLoopSize());
                         else {
-                            s->unk_04[i].unk_04 = s->getRecordedLogicalLength();
-                            s->unk_04[i].unk_08 = nt->mainLoopId;
-                            s->unk_04[i].unk_0c = nt->getCondLid();
-                            s->unk_04[i].unk_00 = nt->getLoopSize();
+                            s->optimizationRecords[i].optimalLength = s->getRecordedLogicalLength();
+                            s->optimizationRecords[i].mainLoopId = nt->mainLoopId;
+                            s->optimizationRecords[i].candidateLoopId = nt->getCondLid();
+                            s->optimizationRecords[i].instructionCount = nt->getLoopSize();
                             if (best && best->mainLoopId < nt->mainLoopId) {
                                 delete nt;
                                 nt = 0;
@@ -364,9 +364,9 @@ bool relaxOpt(Program *p)
                 return false;
             }
             wt->dump();
-            for (Instr *i = s->getTable()->linearInstructions.head; i; i = i->unk_1c.unk_00) {
+            for (Instr *i = s->getTable()->linearInstructions.head; i; i = i->linearLink.nextInstruction) {
                 i->unk_00 = 0;
-                i->unk_08 = 0;
+                i->cloneImage = 0;
                 i->unk_04 = 0;
             }
             s->optimizedTable = 0;
@@ -385,7 +385,7 @@ bool relaxOpt(Program *p)
     return true;
 }
 
-bool func_08079fdc(Program *p, int smart, bool sizeReduce)
+bool optimizeProgramScheduling(Program *p, int smart, bool sizeReduce)
 {
     for (instStream *s = p->streamHead; s; s = s->nextStream) {
         if (s->getCodeMode() == 3) {
@@ -402,7 +402,7 @@ bool func_08079fdc(Program *p, int smart, bool sizeReduce)
                 reportError("failed to prepUta istream\n");
                 return false;
             }
-            if (!func_0807e528(p, s, wt)) {
+            if (!prepareReductionCandidates(p, s, wt)) {
                 reportError("failed to do initial reduction test\n");
                 return false;
             }

@@ -17,28 +17,28 @@ bool optNormal(workTable *wt, wrangleCand *c)
     Instr *best = 0;
     int bestA = 0x80000000, bestB = 0x80000000, bestC = 0x80000000;
     int bestD = 0x7fffffff;
-    for (; in; in = in->unk_2c) {
+    for (; in; in = in->nextMoveInstruction) {
         normalRegCost(in);
-        int d = in->unk_13f0.unk_00 - in->unk_1418;
+        int d = in->schedulingStatistics.reverseLatencyDepth - in->candidateAttemptCount;
         if (d > bestA) {
             best = in;
             bestA = d;
             bestB = -in->linearOrderIndex;
-            bestC = in->unk_13f0.unk_00;
+            bestC = in->schedulingStatistics.reverseLatencyDepth;
         } else if (d == bestA) {
             int e = -in->linearOrderIndex;
             if (e > bestB) {
                 bestB = e;
-                bestC = in->unk_13f0.unk_00;
+                bestC = in->schedulingStatistics.reverseLatencyDepth;
                 best = in;
             } else if (e == bestB) {
-                int f = in->unk_141e + in->unk_141c;
+                int f = in->candidateBaseRow + in->candidateCostOffset;
                 if (f < bestD) {
                     bestD = f;
-                    bestC = in->unk_13f0.unk_00;
+                    bestC = in->schedulingStatistics.reverseLatencyDepth;
                     best = in;
-                } else if (f == bestD && in->unk_13f0.unk_02 > bestC) {
-                    bestC = in->unk_13f0.unk_02;
+                } else if (f == bestD && in->schedulingStatistics.reverseDependencyHeight > bestC) {
+                    bestC = in->schedulingStatistics.reverseDependencyHeight;
                     best = in;
                 }
             }
@@ -47,8 +47,8 @@ bool optNormal(workTable *wt, wrangleCand *c)
     if (!best)
         return false;
     c->unk_00 = best;
-    c->unk_04 = best->unk_141e + best->unk_141c;
-    c->unk_06 = best->unk_1418 & 1;
+    c->unk_04 = best->candidateBaseRow + best->candidateCostOffset;
+    c->unk_06 = best->candidateAttemptCount & 1;
     return true;
 }
 

@@ -45,18 +45,18 @@ public:
     char *asChars();
 };
 
-bool func_0804ca94(mValue *dst, mValue *a, mValue *b);
-bool func_0804cd68(mValue *dst, mValue *a, mValue *b);
-bool func_0804d040(mValue *dst, mValue *a, mValue *b);
-bool func_0804d314(mValue *dst, mValue *a, mValue *b);
-bool func_0804d5ec(mValue *dst, mValue *a, mValue *b);
-bool func_0804d7d4(mValue *dst, mValue *a, mValue *b);
-bool func_0804d9c0(mValue *dst, mValue *a, mValue *b);
-bool func_0804dbac(mValue *dst, mValue *a, mValue *b);
-bool func_0804ddc0(mValue *dst, mValue *a, mValue *b);
-bool func_0804dfd4(mValue *dst, mValue *a, mValue *b);
-bool func_0804e050(mValue *dst, mValue *a, mValue *b);
-bool func_0804e0cc(mValue *dst, mValue *a, mValue *b);
-bool func_0804e5c0(mValue *a, mValue *b);
+bool addValues(mValue *dst, mValue *a, mValue *b);
+bool subtractValues(mValue *dst, mValue *a, mValue *b);
+bool multiplyValues(mValue *dst, mValue *a, mValue *b);
+bool divideValues(mValue *dst, mValue *a, mValue *b);
+bool moduloValues(mValue *dst, mValue *a, mValue *b);
+bool shiftValuesLeft(mValue *dst, mValue *a, mValue *b);
+bool shiftValuesRight(mValue *dst, mValue *a, mValue *b);
+bool logicalOrValues(mValue *dst, mValue *a, mValue *b);
+bool logicalAndValues(mValue *dst, mValue *a, mValue *b);
+bool bitwiseAndValues(mValue *dst, mValue *a, mValue *b);
+bool bitwiseOrValues(mValue *dst, mValue *a, mValue *b);
+bool bitwiseXorValues(mValue *dst, mValue *a, mValue *b);
+bool sameImmediateValue(mValue *a, mValue *b);
 
 #endif

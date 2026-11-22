@@ -39,7 +39,7 @@ Instr::Instr(iInfo *info)
     instructionModifierBits = 0;
     destinationMask = 0;
     previousThroughputWriter = 0;
-    unk_14 = 0;
+    sourceTag = 0;
     unk_18 = 0;
     unk_1a = 0;
     moveRowOffset = 0;
@@ -48,35 +48,35 @@ Instr::Instr(iInfo *info)
     concreteMoveOpcode = 0;
     parsedLoopId = -1;
     branchLabelTags = 0;
-    unk_1398 = 0;
-    unk_30 = 0;
-    unk_1428 = 0;
-    unk_13b0 = 0;
-    unk_13b2 = 0;
-    unk_13b4 = 0;
-    unk_13b6 = 0;
+    replacedInstructionWord = 0;
+    ownerTable = 0;
+    moveRecordWord = 0;
+    externalInputPairedConstraint = 0;
+    externalInputConstraint = 0;
+    externalOutputPairedConstraint = 0;
+    externalOutputConstraint = 0;
     linearOrderIndex = -1;
     instructionSerial = -1;
-    unk_1418 = 0;
-    unk_141a = 0;
+    candidateAttemptCount = 0;
+    candidateAttemptLimit = 0;
     opcodeInfo = info;
-    unk_141e = 0;
-    unk_08 = 0;
+    candidateBaseRow = 0;
+    cloneImage = 0;
     unk_00 = 0;
     unk_04 = 0;
     reverseBranchSense = 0;
     tildePrefix = 0;
     scheduledCycle = -1;
-    unk_141c = 0;
+    candidateCostOffset = 0;
     expectedAliasLoopId = -1;
     schedulerCategory = -1;
     resetImmFixup();
     opcodeInfo = info;
-    unk_13d7 = info->unk_0e;
-    permittedPipelineMask = info->unk_0e;
-    opcodeResourceMask = info->unk_10;
+    unk_13d7 = info->pipelineMask;
+    permittedPipelineMask = info->pipelineMask;
+    opcodeResourceMask = info->resourceMask;
     branchFlags = info->branchFlags();
-    baseIssueSpacing = info->unk_12;
+    baseIssueSpacing = info->minimumIssueSpacing;
     ramAccessType = info->ramType();
     opcodeFlags = info->kindAndFlags & ~7;
     rawOnly = info->isRawOnly();
@@ -150,7 +150,7 @@ void Instr::dumpOperandDiagnostics(int flags)
                 if (r && r->isVirtual)
                     for (int k = 0; k != r->partCount; k++)
                         if ((op->componentMask >> k) & 1)
-                            op->parts[k].unk_54.validateOperandLocations();
+                            op->parts[k].operandLocations.validateOperandLocations();
             }
         }
     }
@@ -165,7 +165,7 @@ bool Instr::isNop()
 
 instStream *Instr::getOwningStream()
 {
-    return unk_30 ? unk_30->unk_10 : 0;
+    return ownerTable ? ownerTable->ownerStream : 0;
 }
 
 bool Instr::resetFlowDependencies()
@@ -187,8 +187,8 @@ bool Instr::isNonSynthetic()
 
 bool Instr::clearTransientFlags()
 {
-    unk_1418 = 0;
-    unk_141c = 0;
+    candidateAttemptCount = 0;
+    candidateCostOffset = 0;
     for (int i = 0; i != operandCount; i++) {
         Operand *op = &operands[i];
         for (int k = 0; k != 4; k++)
@@ -215,11 +215,11 @@ void Instr::leDump(int opnd, int mask)
     }
     int saved = errorOccurred;
     errorOccurred = !quiet_080bbd98;
-    if (unk_14) {
+    if (sourceTag) {
         int idx = unk_18;
         if (opnd >= 0) {
             if (operands[opnd].assignedRegister && operands[opnd].assignedRegister->partCount != 1 && mask >= 0)
-                reportMessage("(field(s) : %s) ", func_08052064(mask));
+                reportMessage("(field(s) : %s) ", formatComponentMaskLetters(mask));
             if (operands[opnd].isImplicit) {
                 if (operands[opnd].assignedRegister)
                     reportMessage("implicit operand '%s'\n", operands[opnd].assignedRegister->registerName());
@@ -228,7 +228,7 @@ void Instr::leDump(int opnd, int mask)
             } else
                 idx = operands[opnd].unk_24;
         }
-        unk_14->dumpSourceLine(idx);
+        sourceTag->dumpSourceLine(idx);
     } else {
         reportMessage("operand %d modbits %x..\n", opnd, mask);
         dumpOperandDiagnostics(false);
@@ -247,7 +247,7 @@ bool hasDirectOperandDependency(Instr *a, Instr *b)
             int n = r->partCount;
             for (int k = 0; k != n; k++)
                 if (((op->componentMask & ~op->externalPartMask) >> k) & 1)
-                    for (ol_s *p = op->parts[k].unk_54.head; p; p = p->next)
+                    for (ol_s *p = op->parts[k].operandLocations.head; p; p = p->next)
                         if (p->instruction == a)
                             return true;
         }
@@ -296,19 +296,19 @@ Instr *Instr::clone()
     }
     c->destinationMask = destinationMask;
     c->rawOnly = rawOnly;
-    c->unk_1428 = 0;
+    c->moveRecordWord = 0;
     c->instructionModifierBits = instructionModifierBits;
     c->abstractMoveOpcode = abstractMoveOpcode;
     c->concreteMoveOpcode = concreteMoveOpcode;
     c->unk_13d7 = unk_13d7;
-    c->unk_13f0.copyCountersFrom(&unk_13f0);
+    c->schedulingStatistics.copyCountersFrom(&schedulingStatistics);
     c->linearOrderIndex = linearOrderIndex;
     c->instructionSerial = instructionSerial;
-    c->unk_141a = unk_141a;
+    c->candidateAttemptLimit = candidateAttemptLimit;
     c->parsedLoopId = parsedLoopId;
     c->tildePrefix = tildePrefix;
     c->reverseBranchSense = reverseBranchSense;
-    c->unk_14 = unk_14;
+    c->sourceTag = sourceTag;
     c->unk_18 = unk_18;
     c->unk_1a = unk_1a;
     c->addressAliasMode = addressAliasMode;
@@ -317,13 +317,13 @@ Instr *Instr::clone()
     if (addressImmediateValue.isValid())
         c->addressImmediateValue.set(&addressImmediateValue);
     c->expectedAliasLoopId = expectedAliasLoopId;
-    if (unk_08) {
+    if (cloneImage) {
         reportError("during instruction clone - tmpClone was already set!\n");
         delete c;
         return 0;
     }
-    unk_08 = c;
-    c->unk_08 = this;
+    cloneImage = c;
+    c->cloneImage = this;
     if (branchLabelTags)
         c->branchLabelTags = dupString(branchLabelTags);
     c->operandCount = operandCount;
@@ -414,12 +414,12 @@ int Instr::getRamBits()
 bool Instr::resetOptimizationState()
 {
     position.clearInstructionPosition();
-    unk_2c = 0;
-    unk_24.unk_04 = 0;
-    unk_24.unk_00 = 0;
-    unk_1418 = 0;
-    unk_1398 = 0;
-    unk_141c = 0;
+    nextMoveInstruction = 0;
+    pendingLink.previousInstruction = 0;
+    pendingLink.nextInstruction = 0;
+    candidateAttemptCount = 0;
+    replacedInstructionWord = 0;
+    candidateCostOffset = 0;
     for (int i = 0; i != operandCount; i++) {
         if (!operands[i].resetOptimizationSlots()) {
             reportError("failed to optReset operand  %d\n", i);
@@ -494,7 +494,7 @@ bool Instr::changeBranchImmediate(const char *s)
         reportError("changeBranchImmediate: target is register!\n");
         return false;
     }
-    int n = opcodeInfo->unk_1a;
+    int n = opcodeInfo->branchTargetOperandSelector;
     if (!n) {
         reportError("getBranchTargetImmediate - branch target operand not set\n");
         exitAfterCleanup(-1);
@@ -519,9 +519,9 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
     }
     OpSlot *sa = &a->operands[aOp].parts[slot];
     OpSlot *sb = &b->operands[bOp].parts[slot];
-    ol_s *oa = sa->unk_54.addOperandLocation(b, bOp, slot, false);
+    ol_s *oa = sa->operandLocations.addOperandLocation(b, bOp, slot, false);
     if (oa) {
-        olList *lb = &sb->unk_54;
+        olList *lb = &sb->operandLocations;
         ol_s *ob = lb->addOperandLocation(a, aOp, slot, false);
         if (!ob) {
             reportError("failed to add ol\n");
@@ -592,13 +592,13 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
     }
     OpSlot *so = out->parts + ti;
     OpSlot *si = in->parts + ti;
-    olList *lo = &so->unk_54;
+    olList *lo = &so->operandLocations;
     ol_s *a = lo->copyOperandLocation(i, true);
     if (!a) {
         reportError("failed to add ol_input to output\n");
         return false;
     }
-    olList *li = &si->unk_54;
+    olList *li = &si->operandLocations;
     ol_s *b = li->copyOperandLocation(o, true);
     if (!b) {
         reportError("failed to add ol_ouput to input\n");
@@ -618,11 +618,11 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
 
 bool Instr::setOwner(cls_unk30 *s)
 {
-    if (unk_30 && unk_30 != s) {
+    if (ownerTable && ownerTable != s) {
         reportError("in->setOwner - already owned..but by wrong stream!\n");
         exitAfterCleanup(-1);
     }
-    unk_30 = s;
+    ownerTable = s;
     return true;
 }
 
@@ -729,12 +729,12 @@ const char *syntheticTypeName(int t)
     return s;
 }
 
-bool Instr::func_08055548()
+bool Instr::hasRawTableOrImmediateToken()
 {
     if (unk_00)
         return true;
-    if (unk_30)
-        return unk_30->unk_09 == 3;
+    if (ownerTable)
+        return ownerTable->codeModeValue == 3;
     return false;
 }
 
@@ -747,7 +747,7 @@ char *Instr::getBranchTargetImmediate()
         reportError("branch type set - but no ii\n");
         exitAfterCleanup(-1);
     }
-    int n = ii->unk_1a;
+    int n = ii->branchTargetOperandSelector;
     if (!n) {
         reportError("getBranchTargetImmediate - branch target operand not set\n");
         exitAfterCleanup(-1);
@@ -771,7 +771,7 @@ RegPoolEntry *Instr::getBranchTargetRegister()
         reportError("branch type set - but no ii\n");
         exitAfterCleanup(-1);
     }
-    int n = ii->unk_1a;
+    int n = ii->branchTargetOperandSelector;
     if (!n) {
         reportError("getBranchTargetRegister - branch target operand not set\n");
         exitAfterCleanup(-1);
@@ -827,7 +827,7 @@ bool Instr::hasLinkedOutputFrom(unsigned int n)
             if (op->externalPartMask)
                 return true;
             for (int j = 0; j != r->partCount; j++)
-                if (((op->componentMask >> j) & 1) && op->parts[j].unk_54.count)
+                if (((op->componentMask >> j) & 1) && op->parts[j].operandLocations.count)
                     return true;
         }
     }
@@ -857,18 +857,18 @@ bool Instr::classifySchedulingCategory()
 
 Instr **Instr::getIE()
 {
-    cls_unk30 *table = unk_30;
+    cls_unk30 *table = ownerTable;
     if (!table) {
         reportError("failed to get itable from instruction\n");
         return 0;
     }
     InstructionPosition *pos = &position;
-    Instr **ie = table->getIE_ck(pos->unk_00);
+    Instr **ie = table->getIE_ck(pos->linearRow);
     if (!ie) {
         reportError("failed to get ie from table for in::getIE()\n");
         return 0;
     }
-    if (ie[pos->unk_02] != this) {
+    if (ie[pos->pipelineIndex] != this) {
         reportError("we aren't where we thought we were for in::getIE\n");
         return 0;
     }
@@ -885,14 +885,14 @@ int Instr::getFirstOutputLatency()
     return 0;
 }
 
-bool Instr::func_08055a88()
+bool Instr::markDependencyInputReachable()
 {
     bool r = !unk_0e_1;
     unk_0e_1 = 1;
     return r;
 }
 
-bool Instr::func_08055aa8()
+bool Instr::markDependencyOutputReachable()
 {
     bool r = !unk_0e_0;
     unk_0e_0 = 1;
@@ -1099,38 +1099,38 @@ bool Instr::expandVirtualStatOperand()
 
 void Instr::clearExternalTimingConstraints()
 {
-    unk_13b0 = 0;
-    unk_13b2 = 0;
-    unk_13b4 = 0;
-    unk_13b6 = 0;
+    externalInputPairedConstraint = 0;
+    externalInputConstraint = 0;
+    externalOutputPairedConstraint = 0;
+    externalOutputConstraint = 0;
 }
 
 void Instr::copyExternalTimingConstraints(Instr *src)
 {
-    unk_13b0 = src->unk_13b0;
-    unk_13b2 = src->unk_13b2;
-    unk_13b4 = src->unk_13b4;
-    unk_13b6 = src->unk_13b6;
+    externalInputPairedConstraint = src->externalInputPairedConstraint;
+    externalInputConstraint = src->externalInputConstraint;
+    externalOutputPairedConstraint = src->externalOutputPairedConstraint;
+    externalOutputConstraint = src->externalOutputConstraint;
 }
 
 void Instr::raiseExternalInputPairedConstraint(short v)
 {
-    unk_13b0 = unk_13b0 < v ? v : unk_13b0;
+    externalInputPairedConstraint = externalInputPairedConstraint < v ? v : externalInputPairedConstraint;
 }
 
 void Instr::raiseExternalInputConstraint(short v)
 {
-    unk_13b2 = unk_13b2 < v ? v : unk_13b2;
+    externalInputConstraint = externalInputConstraint < v ? v : externalInputConstraint;
 }
 
 void Instr::raiseExternalOutputPairedConstraint(short v)
 {
-    unk_13b4 = unk_13b4 < v ? v : unk_13b4;
+    externalOutputPairedConstraint = externalOutputPairedConstraint < v ? v : externalOutputPairedConstraint;
 }
 
 void Instr::raiseExternalOutputConstraint(short v)
 {
-    unk_13b6 = unk_13b6 < v ? v : unk_13b6;
+    externalOutputConstraint = externalOutputConstraint < v ? v : externalOutputConstraint;
 }
 
 OpSlot::OpSlot()
@@ -1141,7 +1141,7 @@ OpSlot::~OpSlot()
 {
 }
 
-void OpSlot::func_080560bc()
+void OpSlot::noopOperandSlotHook()
 {
 }
 
@@ -1156,5 +1156,5 @@ bool OpSlot::resetSlotLock()
 
 int OpSlot::clearSlotLocations()
 {
-    return unk_54.clear();
+    return operandLocations.clear();
 }

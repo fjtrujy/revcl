@@ -43,7 +43,7 @@ bool bindDependencies(Program *p)
     }
     for (s = p->streamHead; s; s = s->nextStream) {
         workTable *wt = s->getTable();
-        for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
             int bits = in->getRamBits();
             if (!in->branchLabelTags)
                 continue;

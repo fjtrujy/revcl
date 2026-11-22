@@ -71,7 +71,7 @@ bool checkOpt3(Program *p)
                 reportError("table set for abstract list\n");
                 return false;
             }
-            for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+            for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
                 if (in->position.getPipe() != -1) {
                     reportError("pipe is set for non-inserted instruction\n");
                     return false;
@@ -109,12 +109,12 @@ bool checkOpt3(Program *p)
                         reportError("found a key in an instruction slot\n");
                         return false;
                     }
-                    if (in->unk_1c.unk_04 != prev) {
+                    if (in->linearLink.previousInstruction != prev) {
                         const char *name = "NO_BASE_INST";
                         if (in->opcodeInfo)
                             name = in->opcodeInfo->mnemonic;
                         reportError("linear list isn't in order at guid=%d %s prev=%p\n",
-                                      in->instructionSerial, name, in->unk_1c.unk_04);
+                                      in->instructionSerial, name, in->linearLink.previousInstruction);
                         wt->dump();
                         return false;
                     }
@@ -143,7 +143,7 @@ bool checkOpt3(Program *p)
             }
         }
 
-        for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+        for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
             for (int k = 0; k != in->operandCount; k++) {
                 Operand *op = &in->operands[k];
                 RegPoolEntry *reg;
@@ -185,7 +185,7 @@ bool checkOpt3(Program *p)
                         OpSlot *slot = op->getPart(n);
                         if (!slot)
                             continue;
-                        ol_s *o = slot->unk_54.head;
+                        ol_s *o = slot->operandLocations.head;
                         bool seenExt = false;
                         int last = -1000;
                         for (; o; o = o->next) {

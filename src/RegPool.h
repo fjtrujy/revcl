@@ -26,8 +26,8 @@ struct rPart {
     bool cycle(bool flag);
     void resetPartTiming();
     void resetPartFlowState();
-    void func_0805a4d4();
-    void func_0805a4e4();
+    void resetPartPayloadFirstPass();
+    void resetPartPayloadSecondPass();
     rPart();
     VclPtrWord getPayload();
     bool setPayload(VclPtrWord v);
@@ -63,7 +63,7 @@ struct RegPoolEntry {
             return true;
         return false;
     }
-    void func_0805a340();
+    void noopRegisterFlowHook();
     VclPtrWord getPartPayload(int i);
     bool setPartPayload(int i, VclPtrWord v);
     void moveReset();
@@ -128,8 +128,8 @@ public:
     RegPoolEntry* findVirtualByName(const char* name);
     RegPoolEntry* createVirtualRegister(const char* name);
     bool markAllocatablePhysicalRegistersUsed();
-    bool func_08059c4c();
-    bool func_08059c94();
+    bool clearRegisterAssignmentsFirstPass();
+    bool clearRegisterAssignmentsSecondPass();
     bool resetPoolLocalAllocationState();
     RegPoolEntry* getMoveReg(Instr* move);
     bool ownsRegisterClass(RegPoolEntry* e);

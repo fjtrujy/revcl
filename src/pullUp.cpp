@@ -64,14 +64,14 @@ int pullUp(workTable *wt)
                     if (in->position.getRow() != rl)
                         moved++;
                 }
-                short mte = in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6;
+                short mte = in->externalOutputConstraint < in->externalOutputPairedConstraint ? in->externalOutputPairedConstraint : in->externalOutputConstraint;
                 int end = in->position.getRow() + mte;
                 if (end > mrl)
                     mrl = end;
                 if (mrl >= wt->rangeEnd) {
                     reportError("mRline would be pushed after m_iEnd..%d, %d\n", mrl, wt->rangeEnd);
                     wt->dump();
-                    int diagnosticMte = in->unk_13b6 < in->unk_13b4 ? in->unk_13b4 : in->unk_13b6;
+                    int diagnosticMte = in->externalOutputConstraint < in->externalOutputPairedConstraint ? in->externalOutputPairedConstraint : in->externalOutputConstraint;
                     reportError("faulting instruction is (mte=%d):\n", diagnosticMte);
                     in->leDump();
                     return -1;
@@ -95,7 +95,7 @@ int pullUp(workTable *wt)
                 return -1;
             }
             InstructionPosition pos;
-            pos.setInstructionPipe(br->position.unk_02);
+            pos.setInstructionPipe(br->position.pipelineIndex);
             pos.setFromLinearRow(l);
             if (func_0807dc44(wt, br, &pos)) {
                 l++;
@@ -117,7 +117,7 @@ int pullUp(workTable *wt)
                     mrl = l;
                 if (lbdli) {
                     pos.setFromLinearRow(l);
-                    pos.setInstructionPipe(lbdli->position.unk_02);
+                    pos.setInstructionPipe(lbdli->position.pipelineIndex);
                     if (l >= wt->rangeEnd) {
                         reportError("over run for bdli\n");
                         return -1;

@@ -41,14 +41,14 @@ char iInfo::isNop()
     return kind() == 0 && kindData == 0;
 }
 
-void iInfo::func_08070080()
+void iInfo::scanOpcodeOperandDescriptors()
 {
     int i;
     for (i = 0; i != operandDescriptors[i].operandKind; i++)
         ;
 }
 
-void iInfo::func_080700a4()
+void iInfo::noopOpcodeDescriptorHook()
 {
 }
 
@@ -109,19 +109,19 @@ bool checkTable(iInfo *tab, int count)
     return true;
 }
 
-int iInfo::func_080701f4()
+int iInfo::branchFlagBit1()
 {
     unsigned int v = kind() == 3 ? kindData : 0;
     return (v >> 1) & 1;
 }
 
-int iInfo::func_0807021c()
+int iInfo::branchFlagBit3()
 {
     unsigned int v = kind() == 3 ? kindData : 0;
     return (v >> 3) & 1;
 }
 
-int iInfo::func_08070244()
+int iInfo::branchFlagBit2()
 {
     unsigned int v = kind() == 3 ? kindData : 0;
     return (v >> 2) & 1;
@@ -166,7 +166,7 @@ int decodeImmediateCategory(unsigned char x)
     return r;
 }
 
-int func_0807031c(unsigned char)
+int defaultImmediateFlags(unsigned char)
 {
     return 0;
 }

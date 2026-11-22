@@ -87,7 +87,7 @@ bool initPrune(instStream *s)
         reportError("failed to get work table\n");
         return false;
     }
-    for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         if (!initPrune(in)) {
             reportError("init prune failed\n");
             return false;
@@ -146,7 +146,7 @@ int tryPrune(instStream *s)
     bool raw = false;
     if (t->codeModeValue == 4 || t->getTableRawMode() == 4)
         raw = true;
-    for (Instr *in = t->linearInstructions.head; in; in = in->unk_1c.unk_00) {
+    for (Instr *in = t->linearInstructions.head; in; in = in->linearLink.nextInstruction) {
         int r = tryPrune(in, raw);
         if (r < 0) {
             reportError("rec  prune failed for instruction\n");
@@ -186,7 +186,7 @@ int tryPrune(Instr *in, bool raw)
         int cnt = 0;
         for (int s = 0; s != reg->partCount; s++) {
             if ((out->componentMask >> s) & 1)
-            for (ol_s *ol = out->parts[s].unk_54.head; ol; ol = ol->next) {
+            for (ol_s *ol = out->parts[s].operandLocations.head; ol; ol = ol->next) {
                 Operand *src = operandAtLocation(ol);
                 if (!src) {
                     reportError("failed to get an operand from an oploc\n");
@@ -267,7 +267,7 @@ bool doPrune(instStream *s)
     Instr *in = first;
     Instr *next;
     if (first) do {
-        next = in->unk_1c.unk_00;
+        next = in->linearLink.nextInstruction;
         int r = doPrune(in);
         if (r < 0) {
             reportError("do  prune failed for instruction\n");
@@ -365,7 +365,7 @@ int doPrune(Instr *in)
             return -1;
         }
         if (m != in->destinationMask) {
-            reportVerboseInfo("PRUNE FIELD: [%s->%s]  ", func_08052064(in->destinationMask), func_08052064(m));
+            reportVerboseInfo("PRUNE FIELD: [%s->%s]  ", formatComponentMaskLetters(in->destinationMask), formatComponentMaskLetters(m));
             int saved = errorOccurred;
             errorOccurred = quiet_080bbd98;
             in->leDump();

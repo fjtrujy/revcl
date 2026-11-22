@@ -2,15 +2,15 @@
 #ifndef VUSTR_H
 #define VUSTR_H
 
-bool func_08051f08(const char *s, int *mask, bool *bad);
-bool func_08051f78(const char *s, int *mask);
-int func_08051ff0(const char *s);
-char *func_08052064(int mask);
-char *func_080520d4(int mask);
-int func_08052100(const char *s);
-int func_0805219c(const char *s);
-int func_080521f0(char *s);
-bool func_080522c4(int mods, unsigned char mode, bool flag);
-char *func_08052314(int mods);
+bool parseTrailingComponentMask(const char *s, int *mask, bool *bad);
+bool parseBracketedComponentMask(const char *s, int *mask);
+int decodeComponentMaskLetters(const char *s);
+char *formatComponentMaskLetters(int mask);
+char *formatDottedComponentMask(int mask);
+int readTrailingComponentMask(const char *s);
+int lastComponentBit(const char *s);
+int removeInstructionModifierGroups(char *s);
+bool areInstructionModifiersAllowed(int mods, unsigned char mode, bool flag);
+char *formatInstructionModifiers(int mods);
 
 #endif

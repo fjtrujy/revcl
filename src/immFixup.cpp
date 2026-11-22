@@ -26,7 +26,7 @@ static inline bool initStreamImm(instStream *s)
         return false;
     }
     s->streamSerial = 0;
-    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         initImm(in);
     return true;
 }
@@ -44,7 +44,7 @@ static inline bool do_immFixup(instStream *s)
     workTable *wt = s->getTable();
     if (!wt)
         return true;
-    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         fixInst(in);
     return true;
 }
@@ -55,7 +55,7 @@ static inline bool dumpFailed(instStream *s)
     return false;
 }
 
-bool func_08069324(Program *p, bool init)
+bool resolveProgramImmediateFixups(Program *p, bool init)
 {
     instStream *s;
     if (init) {
@@ -112,7 +112,7 @@ static inline Operand *instrRawOpS(Instr *in, signed char idx) { return &in->ope
 static inline RegPoolEntry *opRawReg(Operand *op) { return op->assignedRegister; }
 static inline unsigned char opSlotMask(Operand *op) { return op->componentMask; }
 static inline mValue *opImmVal(Operand *op) { return &op->immediateValue; }
-static inline olList *opSlotUses0(Operand *op) { return &op->parts[0].unk_54; }
+static inline olList *opSlotUses0(Operand *op) { return &op->parts[0].operandLocations; }
 static inline Instr *olInstr(ol_s *ol) { return ol->instruction; }
 static inline char olOpIndex(ol_s *ol) { return ol->operandIndex; }
 static inline mValue *instrAaImm(Instr *in) { return &in->addressImmediateValue; }
@@ -226,14 +226,14 @@ bool tidyStream(instStream *s)
     workTable *wt = s->getTable();
     if (!wt)
         return true;
-    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         fixInst(in);
     return true;
 }
 
 bool tidyTable(workTable *wt)
 {
-    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         fixInst(in);
     return true;
 }
@@ -293,7 +293,7 @@ bool getSrcEpLid(olList *oll, int luid, int epType, int *lid)
             reportError("getSrcEpLid- failed to get owner\n");
             return false;
         }
-        int type = s->unk_2c4;
+        int type = s->loopRegionRole;
         if (s->streamSerial != luid) {
             reportError("getSrcEpLid() - rather unlikely\n");
             return false;
@@ -432,8 +432,8 @@ bool func_08069e7c(Instr *in)
         ep--;
     int lid;
     if (s->streamSerial) {
-        olList *oll = &op->parts[0].unk_54;
-        if (!getSrcEpLid(oll, s->streamSerial, s->unk_2c4, &lid)) {
+        olList *oll = &op->parts[0].operandLocations;
+        if (!getSrcEpLid(oll, s->streamSerial, s->loopRegionRole, &lid)) {
             reportError("failed to determine actual loopid of setter.. we are:\n");
             in->leDump();
             if (in->getOwningStream())
@@ -492,7 +492,7 @@ bool Init_immFixup(instStream *s)
         return false;
     }
     s->streamSerial = 0;
-    for (Instr *in = wt->linearInstructions.head; in; in = in->unk_1c.unk_00)
+    for (Instr *in = wt->linearInstructions.head; in; in = in->linearLink.nextInstruction)
         initImm(in);
     return true;
 }
