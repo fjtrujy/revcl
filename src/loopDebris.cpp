@@ -571,11 +571,11 @@ static inline void initDebris(loopDebris *ld, const char *baseName, int a, bool 
 
 static inline const char *recName(epiRec *e)
 {
-    int name = (int)e->unk_14;
+    VclPtrWord name = (VclPtrWord)e->unk_14;
     if (!name)
-        name = (int)"!UNNAMED!";
+        name = (VclPtrWord)"!UNNAMED!";
     else
-        name = (int)((instStream *)name)->func_0806d674();
+        name = (VclPtrWord)((instStream *)name)->func_0806d674();
     return (const char *)name;
 }
 

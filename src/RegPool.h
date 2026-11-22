@@ -1,6 +1,8 @@
 #ifndef REGPOOL_H
 #define REGPOOL_H
 
+#include "vcl_portability.h"
+
 #include "mList.h"
 #include "os.h"
 
@@ -16,7 +18,7 @@ struct rPart {
     short unk_42;
     short unk_44;
     short unk_46;
-    int unk_48;
+    VclPtrWord unk_48;
     ol_s unk_4c[4];     // pending parts
 
     bool flushPending();
@@ -27,8 +29,8 @@ struct rPart {
     void func_0805a4d4();
     void func_0805a4e4();
     rPart();
-    int func_0805a948();
-    bool func_0805a954(int v);
+    VclPtrWord func_0805a948();
+    bool func_0805a954(VclPtrWord v);
     ol_s* func_0805a968(int i);
 };
 
@@ -63,8 +65,8 @@ struct RegPoolEntry {
         return false;
     }
     void func_0805a340();
-    int func_0805a908(int i);
-    bool func_0805a924(int i, int v);
+    VclPtrWord func_0805a908(int i);
+    bool func_0805a924(int i, VclPtrWord v);
     void moveReset();
     rPart* getRP(int i)
     {
@@ -111,7 +113,7 @@ public:
     virtual bool assignExt(instStream *s) = 0;                        // slot 2
     virtual bool func_08088e6c(instStream *s, RegPoolEntry *reg) = 0; // slot 3
     virtual bool func_08088e54(workTable *t) = 0;                     // slot 4
-    bool Init(int a, const char* name, int cls, int b);
+    bool Init(VclPtrWord a, const char* name, int cls, int b);
     void Dump();
     RegPoolEntry* func_080593e0(int index);
     RegPoolEntry* func_08059418(const char* name);
@@ -150,7 +152,7 @@ public:
     RegPoolEntry* unk_1c;
     RegPoolEntry* unk_20;
     int unk_24;
-    int unk_28;
+    VclPtrWord unk_28;
     const char* unk_2c;     // pool name
 };
 

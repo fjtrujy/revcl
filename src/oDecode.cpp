@@ -320,7 +320,7 @@ Instr *Processor::getNextInstruction(LocTag *t, int *pos)
                         }
                     }
                     if ((found && n->unk_18 == 0) || (!found && n->unk_18 == 1)) {
-                        s += func_0804adbc(s, "%d", (int)n->unk_10);
+                        s += func_0804adbc(s, "%d", (int)(VclPtrWord)n->unk_10);
                         break;
                     }
                 }

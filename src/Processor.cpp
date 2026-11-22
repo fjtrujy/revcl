@@ -89,7 +89,7 @@ bool Processor::Init(CpuDef *cpu)
         }
         if (!pool)
             func_0804ad38("Processor::Init  - failed to get a regpool '%s'\n", d->name);
-        if (!pool->Init((int)d->prefix, d->name, d->cls, d->unk_10)) {
+        if (!pool->Init((VclPtrWord)d->prefix, d->name, d->cls, d->unk_10)) {
             func_0804ad38("failed to init reg pool '%s'\n", d->name);
             delete pool;
             return false;
@@ -639,7 +639,7 @@ int g_080b33a8 = 1;
 bool stagger_080b33ac = false;
 iInfo *g_080de6c0;
 RegPool *g_080de6e0[13];
-int g_080de714[3];
+VclPtrWord g_080de714[3];
 void *g_080de720;
 void *g_080de724;
 void *g_080de728;

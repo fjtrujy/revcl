@@ -57,3 +57,45 @@ jobs:
           name: vcl-modern-${{ matrix.output }}-linux-i386
           path: tmp/cmake/${{ matrix.output }}/vcl
           if-no-files-found: error
+
+  macos-native:
+    name: macOS ${{ matrix.arch }} native + tests
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: python -m pip install -r scripts/requirements.txt
+
+      - name: Configure native macOS build
+        run: |
+          test "$(uname -m)" = "${{ matrix.arch }}"
+          cmake --preset macos
+
+      - name: Compile native Mach-O executable
+        run: |
+          cmake --build --preset macos
+          file tmp/cmake/macos/vcl
+
+      - name: Run Python unit suite and 11 VCL fixtures
+        run: ctest --preset macos
+
+      - name: Upload native macOS executable
+        uses: actions/upload-artifact@v7
+        with:
+          name: vcl-native-macos-${{ matrix.arch }}
+          path: tmp/cmake/macos/vcl
+          if-no-files-found: error

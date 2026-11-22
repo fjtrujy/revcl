@@ -84,12 +84,12 @@ bool workTable::qRegRef(regUse *ru)
             func_0804ad38("rll is already set in rrp\n");
             func_0804adf0(-1);
         }
-        c->unk_20[i].unk_58 = (int)ll;
+        c->unk_20[i].unk_58 = (VclPtrWord)ll;
         if (reg->func_0805a908(i)) {
             func_0804ad38("regref register part already had locklist\n");
             func_0804adf0(-1);
         }
-        if (!reg->func_0805a924(i, (int)ll)) {
+        if (!reg->func_0805a924(i, (VclPtrWord)ll)) {
             func_0804ad38("failed to set curr lock list pointer in rf register\n");
             func_0804adf0(-1);
         }

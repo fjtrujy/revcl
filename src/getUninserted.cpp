@@ -287,7 +287,7 @@ bool loadLocks(Program *p, workTable *wt)
             }
             cls0805c244 *cur = (cls0805c244 *)reg->func_0805a908(i);
             if (!cur)
-                reg->func_0805a924(i, (int)rll);
+                reg->func_0805a924(i, (VclPtrWord)rll);
             else if (rll != cur) {
                 func_0804ad38("rll mismatch\n");
                 func_0804adf0(-1);

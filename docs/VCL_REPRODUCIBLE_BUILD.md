@@ -151,6 +151,27 @@ unit tests (including CMake link-order/flag consistency), and runs all eleven
 self-contained VCL fixture cases **as individually reported CTest tests**.
 Its Ubuntu Linux setup uses `cmake --preset gcc` or `cmake --preset clang`,
 followed by `cmake --build --preset ...` and `ctest --preset ...`.
+The same workflow also builds native **macOS arm64 and x86_64 Mach-O**
+executables using Apple Clang and `cmake --preset macos`, with identical
+unit/fixture coverage. These native 64-bit binaries are functionally
+tested, but are not expected to match the SHA of Sony's 32-bit Linux ELF.
+The eleven standalone fixture outputs are verified against frozen SHA-256
+hashes of the generated VU text in
+`tests/oracle/expected_stdout_sha256.json`, so the same input must produce
+identical text and exit status on Linux and both macOS architectures.
+The legacy pointer-sized values and the i386 `Block`/`workTable` overlay
+are adapted for the 64-bit macOS ABI with compile-time offset checks;
+the historical i386 layout and original compiler output remain unchanged.
+
+Local native macOS setup (with CMake 3.23+ and the Xcode Command Line Tools):
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/requirements.txt
+cmake --preset macos -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --build --preset macos
+ctest --preset macos
+```
 The 12th historical oracle case
 `archived_basic` additionally requires the external MASP preprocessor,
 so it remains in the dedicated [oracle instructions](../reverse/oracle/README.md).

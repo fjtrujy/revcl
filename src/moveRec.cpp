@@ -26,13 +26,13 @@ Instr *getMove(int type, int)
 
     moveRec *mr = (moveRec *)g_080de714[type];
     if (mr) {
-        g_080de714[type] = (int)mr->unk_00;
+        g_080de714[type] = (VclPtrWord)mr->unk_00;
         Instr *in = mr->unk_08;
         if (!in) {
             func_0804ad38("getFreeMove - inst not set\n");
             func_0804adf0(-1);
         }
-        if (in->unk_1428 != (int)mr) {
+        if (in->unk_1428 != (VclPtrWord)mr) {
             func_0804ad38(moveRecMismatchError, in->unk_1428, mr);
             func_0804adf0(-1);
         }
@@ -51,7 +51,7 @@ Instr *getMove(int type, int)
             l->unk_08 = 0;
             l->reset();
             l->unk_29 = 0;
-            mr->unk_0c->func_0805a924(i, (int)l);
+            mr->unk_0c->func_0805a924(i, (VclPtrWord)l);
         }
         in->unk_2c = 0;
         in->unk_24.unk_04 = 0;
@@ -100,7 +100,7 @@ Instr *getMove(int type, int)
         func_0804ad38("failed to get move reg\n");
         func_0804adf0(-1);
     }
-    in->unk_1428 = (int)mr;
+    in->unk_1428 = (VclPtrWord)mr;
     Operand *op = in->getOp(0);
     if (!op) {
         func_0804ad38("failed to get move output!\n");
@@ -116,7 +116,7 @@ Instr *getMove(int type, int)
         l->unk_08 = 0;
         l->reset();
         l->unk_29 = 0;
-        reg->func_0805a924(i, (int)l);
+        reg->func_0805a924(i, (VclPtrWord)l);
     }
     mr->unk_08 = in;
     mr->unk_0c = reg;
@@ -166,7 +166,7 @@ bool addFreeMove(Instr *in)
     in->unk_138c = ii->unk_0e;
     in->unk_138d = ii->unk_10;
     mr->unk_00 = (moveRec *)g_080de714[mr->unk_04];
-    g_080de714[mr->unk_04] = (int)mr;
+    g_080de714[mr->unk_04] = (VclPtrWord)mr;
     return true;
 }
 

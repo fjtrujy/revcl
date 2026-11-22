@@ -38,9 +38,10 @@ Progress (matched bytes / file size):
 
 ### Build with CMake
 
-The repository uses one CMake project with three presets: `historical`
-(GCC 3.2.2 in Docker), `gcc` (modern Linux i386), and `clang` (modern
-Linux i386). CMake 3.23+ is required. For the byte-exact historical build,
+The repository uses one CMake project with four presets: `historical`
+(GCC 3.2.2 in Docker), `gcc` (modern Linux i386), `clang` (modern
+Linux i386), and `macos` (native arm64 or Intel x86_64).
+CMake 3.23+ is required. For the byte-exact historical build,
 first download the original, SHA-pinned Red Hat 9 compiler and libraries
 (Linux, or Ubuntu in a container for the extraction step on macOS):
 
@@ -69,6 +70,28 @@ cmake --preset clang -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
 cmake --build --preset clang
 ctest --preset clang
 ```
+
+For **native macOS** (no Docker required), install CMake and the Xcode
+Command Line Tools, then install the Python test dependencies:
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/requirements.txt
+
+cmake --preset macos -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --build --preset macos
+ctest --preset macos                    # 113 unit tests + 11 VCL fixtures
+./tmp/cmake/macos/vcl -h
+```
+
+The `macos` preset follows the machine architecture: Apple Silicon produces
+a native arm64 Mach-O executable; Intel Macs produce x86_64 Mach-O. This
+modern executable is **functionally tested**, not SHA-identical to the
+original 32-bit Linux ELF (which remains guaranteed by `historical`).
+For all eleven standalone oracle inputs, CTest additionally checks the
+complete generated output against SHA-256 baselines recorded in
+`tests/oracle/expected_stdout_sha256.json`, so native macOS and Linux
+must produce identical VU text, not merely exit successfully.
 
 ### Byte-exact CI
 
@@ -100,10 +123,11 @@ The full reproducibility report and verification procedure are in
 ### Developer tools
 
 The independent [modern compiler workflow](.github/workflows/vcl-modern.yml)
-builds all 131 C++ translation units with modern GCC and Clang, targets
-32-bit Linux (the original program's pointer layout), links runnable
-executables, and uses CTest to run the Python unit suite and all 11 standalone
-oracle fixture cases independently (including both expected invalid inputs). It does
+builds all 131 C++ translation units with modern GCC and Clang on 32-bit
+Linux, and with Apple Clang on 64-bit macOS arm64 and Intel x86_64. It
+produces runnable binaries and uses CTest to run the Python unit suite and
+all 11 standalone oracle fixture cases independently (including both
+expected invalid inputs). It does
 **not** require the historical toolchain and intentionally does not require
 a SHA match from the modern compilers. Modern Linux binaries are available
 as GitHub Actions artifacts.

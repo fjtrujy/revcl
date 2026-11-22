@@ -1,0 +1,46 @@
+{
+  "empty": {
+    "exit_status": 0,
+    "stdout_sha256": "710c70e86649dd30ce0a06b3616ba4369fb281a5163ca68b3e4450b113ab4a03"
+  },
+  "vector_store": {
+    "exit_status": 0,
+    "stdout_sha256": "ba9c8ddbfeee67a16c16055fdc035090e4e23a024045ac7d2a65ba387271c136"
+  },
+  "integer_literal": {
+    "exit_status": 0,
+    "stdout_sha256": "b578400828f1ded15ee7360b9083ca7305ab253a26557b0056a5e9ea3f53a6bd"
+  },
+  "virtual_vector": {
+    "exit_status": 0,
+    "stdout_sha256": "34ec6357cc0333eda54b4e47a714a66582e05c87b1c70d91d3f7f442aab2695e"
+  },
+  "virtual_renamed": {
+    "exit_status": 0,
+    "stdout_sha256": "d8b28adc47f26d8d3bb651ea235d2c555cfb83693477f07262676e4cef20ffc5"
+  },
+  "upper_lower_pair": {
+    "exit_status": 0,
+    "stdout_sha256": "eeb84dbd4c96727e63567943bc44f1b9632ff6b5256a2dc032d181427c547ff6"
+  },
+  "latency_chain": {
+    "exit_status": 0,
+    "stdout_sha256": "46a19fe03dae4f47a6fbbf82789c61484a4e0652bc8e15a3c5887762e4b0a4a8"
+  },
+  "component_mask": {
+    "exit_status": 0,
+    "stdout_sha256": "bcb900b20559f41f18adb25432a17688fde7d8b33d85bb11dc249adfcf4d597a"
+  },
+  "branch": {
+    "exit_status": 0,
+    "stdout_sha256": "92adecb63d4d1f7d6119bf40e2de0271cdf1eda1ab0558250523d8d0ed6cfe2c"
+  },
+  "bad_instruction": {
+    "exit_status": 255,
+    "stdout_sha256": "c7650eaaaa621b80c48197851423f5cce526925e64c726069779ea6f55c1b4f3"
+  },
+  "bad_operand": {
+    "exit_status": 255,
+    "stdout_sha256": "c7650eaaaa621b80c48197851423f5cce526925e64c726069779ea6f55c1b4f3"
+  }
+}

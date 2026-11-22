@@ -1019,7 +1019,7 @@ cls0805c244 *findLockList(cls0805c244 *p, RegPoolEntry *reg, int part)
 {
     for (; p; p = p->unk_08) {
         if (p->unk_04 == reg && p->unk_02 == part) {
-            if (reg->func_0805a908(part) && reg->func_0805a908(part) != (int)p) {
+            if (reg->func_0805a908(part) && reg->func_0805a908(part) != (VclPtrWord)p) {
                 func_0804ad38("rg points to rll, but rll list not it\n");
                 func_0804adf0(-1);
             }

@@ -4,6 +4,7 @@
 #define WTENTRY_H
 
 #include "Instr.h"
+#include "vcl_portability.h"
 
 bool addFreeMove(Instr *in);
 
@@ -22,7 +23,7 @@ struct wtEntryInl {
     wtEntryInl() { unk_00 = 0; }
     ~wtEntryInl()
     {
-        if (unk_00 && !((int)unk_00 & 1)) {
+        if (unk_00 && !((VclPtrWord)unk_00 & 1)) {
             if (unk_00->unk_1428)
                 addFreeMove(unk_00);
             else

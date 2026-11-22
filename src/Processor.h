@@ -2,6 +2,8 @@
 #ifndef PROCESSOR_H
 #define PROCESSOR_H
 
+#include "vcl_portability.h"
+
 #include "mList.h"
 #include "ubsList.h"
 
@@ -34,7 +36,7 @@ struct CpuDef {
 extern int g_080b33a8;
 extern iInfo *g_080de6c0;
 extern RegPool *g_080de6e0[13];
-extern int g_080de714[3];
+extern VclPtrWord g_080de714[3];
 extern void *g_080de720;    // device table
 extern void *g_080de724;    // srcSpecs
 extern void *g_080de728;    // dstSpecs

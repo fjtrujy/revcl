@@ -2,6 +2,8 @@
 #ifndef REGUSESLOT_H
 #define REGUSESLOT_H
 
+#include "vcl_portability.h"
+
 #include "Instr.h"
 #include "tPairList.h"
 
@@ -16,7 +18,7 @@ struct regUseSlot {
     short unk_32;
     short unk_34[4];
     short unk_3c[13];
-    int unk_58;
+    VclPtrWord unk_58;
     cls0805bcc4 unk_5c;
 
     regUseSlot();

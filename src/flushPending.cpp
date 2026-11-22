@@ -201,23 +201,23 @@ const char* RegPoolEntry::func_0805a8e0()
     return s;
 }
 
-int RegPoolEntry::func_0805a908(int i)
+VclPtrWord RegPoolEntry::func_0805a908(int i)
 {
     return unk_44[i].unk_48;
 }
 
-bool RegPoolEntry::func_0805a924(int i, int v)
+bool RegPoolEntry::func_0805a924(int i, VclPtrWord v)
 {
     unk_44[i].unk_48 = v;
     return true;
 }
 
-int rPart::func_0805a948()
+VclPtrWord rPart::func_0805a948()
 {
     return unk_48;
 }
 
-bool rPart::func_0805a954(int v)
+bool rPart::func_0805a954(VclPtrWord v)
 {
     unk_48 = v;
     return true;
