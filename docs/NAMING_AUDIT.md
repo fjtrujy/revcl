@@ -1001,6 +1001,58 @@ RH9/i686 GCC 3.2 rebuild, and stripped exact-sha256 gate confirm
 preserved behavior. The reference SHA-256 remains
 83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274.
 
+## Deeper scoped-index and text-role review
+
+After PR #13 merged, the next review expands to **105 VCL translation
+units** and directly renames **498 parameters and locals**, together
+with **2,353 use-site references**. The fixed AST review queue
+decreases by **119 parameter entries** (343 to 224) and **379 local
+entries** (1,350 to 971). The scanner treats these as declaration-level
+review items, not proof that every remaining short name is incorrect.
+
+### Verified roles
+
+- **Collection indices:** Short integer loop variables are renamed when
+  their actual subscripts identify a unique role: operand descriptors
+  and operand arrays use operandIndex, register parts and slots use
+  partIndex, work-table rows use rowIndex, processor register pools use
+  poolIndex, parsed lines use lineIndex and register entries use
+  entryIndex. If a variable indexes conflicting collection kinds, the
+  automated candidate is rejected rather than assigned a generic name.
+- **Instruction links and dependencies:** Instr::link_oParts now
+  distinguishes first/second operand slots, input/output operand
+  slots, paired locations and their component indices. The output
+  cycle offset is named clampedCycleOffset, matching its 0xff clamp.
+  The dependency builder's forceDependencyChecks flag follows its
+  call into BuildfDepList's force parameter; the unused second flag
+  remains untouched.
+- **Scheduling and output helpers:** workTable pointers with unambiguous
+  local roles are called scheduleTable. Related classes identify
+  candidate instructions, decoded lines, register references, and
+  operand slots by type and actual consumer. Source and destination
+  string cursors are distinguished in text copying, immediate parsing,
+  modifier formatting and label extraction.
+- **ABI-sensitive boundaries:** Class names, struct sizes, field
+  offsets, overloaded function spellings, external interfaces, and
+  source-file link order are not modified. This remains an
+  identifier-only pass.
+
+### Verification and skipped candidates
+
+Names were changed using Clang declaration IDs plus direct references,
+with exact source-position and source-token checks. Proposals were
+skipped when no concrete collection/text role was established, when
+the chosen name already appeared in a function, or when multiple
+declarations would receive the same name. Common short loop
+counters were retained when their domain was unclear.
+
+The macOS CMake build and **13/13 native CTests** passed. The
+historical RH9/i686 GCC 3.2 build and the exact-sha256 CTest also
+passed. The stripped VCL executable retains reference SHA-256
+83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274.
+There are still **64 unresolved owner-qualified offset fields**;
+none was renamed without owner-specific evidence.
+
 ## Rules for future iterations
 
 1. Resolve meaning from callers, strings, control flow, type and data-layout
