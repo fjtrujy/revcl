@@ -104,7 +104,7 @@ bool func_0806a74c(Program *p)
                 if (k < 0)
                     continue;
                 bool ok = true;
-                ol_s *list = in->operands[k].unk_2c[0].unk_54.unk_00;
+                ol_s *list = in->operands[k].unk_2c[0].unk_54.head;
                 for (ol_s *ol = list; ol && ok; ol = ol->unk_00) {
                     Instr *user = ol->unk_04;
                     Operand *op = func_0805802c(ol);
@@ -126,7 +126,7 @@ bool func_0806a74c(Program *p)
                         ok = false;
                         break;
                     }
-                    for (ol_s *u = op->unk_2c[0].unk_54.unk_00; u; u = u->unk_00)
+                    for (ol_s *u = op->unk_2c[0].unk_54.head; u; u = u->unk_00)
                         if (u->unk_04 != in) {
                             ok = false;
                             break;

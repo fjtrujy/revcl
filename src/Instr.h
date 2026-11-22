@@ -73,27 +73,36 @@ public:
     int func_0807026c();
 };
 
-// List of ol_s nodes returned to a free pool (class name guessed).
+// Operand-location list: list ownership and count checked by its dump helpers.
+// Source-level aliases retain the original linker symbols for byte matching.
+#define validateOperandLocations func_08057e9c
+#define dumpOperandLocations func_08057f2c
+#define addOperandLocation func_080580fc
+#define addInstructionLocation func_0805826c
+#define copyOperandLocation func_08058348
+#define firstInternalLocation func_08058370
+#define firstExternalLocation func_080583d8
+#define insertExternalLocation func_08058484
 class olList {
 public:
-    ol_s *unk_00;   // head
-    int unk_04;
+    ol_s *head;
+    int count;
 
     olList()
     {
-        unk_00 = 0;
-        unk_04 = 0;
+        head = 0;
+        count = 0;
     }
     ~olList() { clear(); }
     bool clear();
-    void func_08057e9c();
-    void func_08057f2c();
-    ol_s *func_080580fc(Instr *inst, int op, int slot, bool ext);
-    ol_s *func_0805826c(Instr *inst);
-    ol_s *func_08058348(ol_s *ol, bool ext);
-    ol_s *func_08058370();
-    ol_s *func_080583d8();
-    ol_s *func_08058484(ol_s *src);
+    void validateOperandLocations();
+    void dumpOperandLocations();
+    ol_s *addOperandLocation(Instr *inst, int op, int slot, bool ext);
+    ol_s *addInstructionLocation(Instr *inst);
+    ol_s *copyOperandLocation(ol_s *ol, bool ext);
+    ol_s *firstInternalLocation();
+    ol_s *firstExternalLocation();
+    ol_s *insertExternalLocation(ol_s *src);
 };
 
 // Base of OpSlot: fields 0x00..0x4f reset by func_0805bcc4 (class name guessed).

@@ -37,24 +37,24 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
             reportError("minimal path key was bad\n");
             return false;
         }
-        ol_s *ol = registerPart(sr, part)->unk_20.unk_00;
+        ol_s *ol = registerPart(sr, part)->unk_20.head;
         if (!ol)
             reportError("there's no local setters for thruput chase for ext setter\n");
         for (; ol; ol = ol->unk_00) {
-            ol_s *n = tr->unk_20[part].unk_18.func_08058348(ol, true);
+            ol_s *n = tr->unk_20[part].unk_18.copyOperandLocation(ol, true);
             if (!n) {
                 reportError("failed to add an external setter\n");
                 return false;
             }
             n->unk_08 = key;
         }
-        ol = registerPart(tr, part)->unk_20.unk_00;
+        ol = registerPart(tr, part)->unk_20.head;
         if (!ol) {
             reportError("there's no local setters.. for a thruput chase .. for target\n");
             return false;
         }
         for (; ol; ol = ol->unk_00) {
-            ol_s *n = sr->unk_20[part].unk_28.func_08058348(ol, true);
+            ol_s *n = sr->unk_20[part].unk_28.copyOperandLocation(ol, true);
             if (!n) {
                 reportError("failed to add post setter!\n");
                 return false;
@@ -78,7 +78,7 @@ bool addThruputStalls(Program *p, instStream *t, RegPoolEntry *reg, int part)
                 regUseSlot *slot = &sr->unk_20[part];
                 ol_s *setter = slot->func_0805ba2c(0, true);
                 int again = lastAddress[1];
-                if (!p->proc.unk_74.addStall(setter, tr->unk_20[part].unk_20.unk_00, 1,
+                if (!p->proc.unk_74.addStall(setter, tr->unk_20[part].unk_20.head, 1,
                                         again - dist)) {
                     reportError("failed to add an interstream latency stall\n");
                     return false;

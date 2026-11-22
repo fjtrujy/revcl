@@ -46,8 +46,8 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
         bool extended = false;
         if (d > 0) {
             if (ext) {
-                if (!p->proc.unk_74.addStall(registerPart(sr, part)->unk_08.unk_00,
-                                        registerPart(tr, part)->unk_00.unk_00, 0, d)) {
+                if (!p->proc.unk_74.addStall(registerPart(sr, part)->unk_08.head,
+                                        registerPart(tr, part)->unk_00.head, 0, d)) {
                     reportError("failed to add an external stall\n");
                     return false;
                 }
@@ -60,7 +60,7 @@ bool linkMatchList(Program *p, instStream *t, RegPoolEntry *reg, int part, int o
                 }
             }
         }
-        for (ol_s *ol = tr->unk_20[part].unk_00.unk_00; ol; ol = ol->unk_00) {
+        for (ol_s *ol = tr->unk_20[part].unk_00.head; ol; ol = ol->unk_00) {
             ol_s *last = sr->unk_20[part].func_0805ba2c(0, true);
             ol_s *match = 0;
             if (ext)

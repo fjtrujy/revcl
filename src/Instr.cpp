@@ -150,7 +150,7 @@ void Instr::func_08054008(int flags)
                 if (r && r->isVirtual)
                     for (int k = 0; k != r->partCount; k++)
                         if ((op->unk_07 >> k) & 1)
-                            op->unk_2c[k].unk_54.func_08057e9c();
+                            op->unk_2c[k].unk_54.validateOperandLocations();
             }
         }
     }
@@ -247,7 +247,7 @@ bool func_080543bc(Instr *a, Instr *b)
             int n = r->partCount;
             for (int k = 0; k != n; k++)
                 if (((op->unk_07 & ~op->unk_27) >> k) & 1)
-                    for (ol_s *p = op->unk_2c[k].unk_54.unk_00; p; p = p->unk_00)
+                    for (ol_s *p = op->unk_2c[k].unk_54.head; p; p = p->unk_00)
                         if (p->unk_04 == a)
                             return true;
         }
@@ -519,10 +519,10 @@ bool link_oParts(Instr *a, int aOp, int slot, Instr *b, int bOp, int bSlot)
     }
     OpSlot *sa = &a->operands[aOp].unk_2c[slot];
     OpSlot *sb = &b->operands[bOp].unk_2c[slot];
-    ol_s *oa = sa->unk_54.func_080580fc(b, bOp, slot, false);
+    ol_s *oa = sa->unk_54.addOperandLocation(b, bOp, slot, false);
     if (oa) {
         olList *lb = &sb->unk_54;
-        ol_s *ob = lb->func_080580fc(a, aOp, slot, false);
+        ol_s *ob = lb->addOperandLocation(a, aOp, slot, false);
         if (!ob) {
             reportError("failed to add ol\n");
             return false;
@@ -593,13 +593,13 @@ bool link_oParts(ol_s *o, ol_s *i, int x, int y)
     OpSlot *so = out->unk_2c + ti;
     OpSlot *si = in->unk_2c + ti;
     olList *lo = &so->unk_54;
-    ol_s *a = lo->func_08058348(i, true);
+    ol_s *a = lo->copyOperandLocation(i, true);
     if (!a) {
         reportError("failed to add ol_input to output\n");
         return false;
     }
     olList *li = &si->unk_54;
-    ol_s *b = li->func_08058348(o, true);
+    ol_s *b = li->copyOperandLocation(o, true);
     if (!b) {
         reportError("failed to add ol_ouput to input\n");
         return false;
@@ -827,7 +827,7 @@ bool Instr::func_08055828(unsigned int n)
             if (op->unk_27)
                 return true;
             for (int j = 0; j != r->partCount; j++)
-                if (((op->unk_07 >> j) & 1) && op->unk_2c[j].unk_54.unk_04)
+                if (((op->unk_07 >> j) & 1) && op->unk_2c[j].unk_54.count)
                     return true;
         }
     }

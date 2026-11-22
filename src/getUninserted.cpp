@@ -60,7 +60,7 @@ int instStream::getUninsertedxInputs()
                 continue;
             for (int k = 0; k != reg->partCount; k++) {
                 if ((op->unk_27 >> k) & 1) {
-                ol_s *ol = op->unk_2c[k].unk_54.unk_00;
+                ol_s *ol = op->unk_2c[k].unk_54.head;
                 if (!ol) {
                     reportError("no setter list found during getuninstxi!\n");
                     return -1;
@@ -110,7 +110,7 @@ int instStream::getUninsertedxOutputs()
                 continue;
             for (int k = 0; k != reg->partCount; k++) {
                 if ((op->unk_27 >> k) & 1) {
-                    for (ol_s *ol = op->unk_2c[k].unk_54.unk_00; ol; ol = ol->unk_00) {
+                    for (ol_s *ol = op->unk_2c[k].unk_54.head; ol; ol = ol->unk_00) {
                         Instr *user = ol->unk_04;
                         if (user->func_08054168() == this || user->unk_00)
                             continue;

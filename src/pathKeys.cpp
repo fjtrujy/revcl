@@ -26,9 +26,9 @@ bool func_08061ab0(instStream *n, RegPoolEntry *reg, int part)
             n->unk_230 = 0;
             n->unk_232 = 0;
         } else {
-            int count = u->unk_20[part].unk_08.unk_04;
+            int count = u->unk_20[part].unk_08.count;
             n->unk_224 = count;
-            ol_s *head = u->unk_20[part].unk_08.unk_00;
+            ol_s *head = u->unk_20[part].unk_08.head;
             if (!head) {
                 reportError("visible outputs has no head for l_init.. but it should!\n");
                 return 0;

@@ -72,7 +72,7 @@ bool sameEA(Instr *a, Instr *b)
             reportError("mod bits not 1 for an effective address specifier\n");
             exitAfterCleanup(-1);
         }
-        if (!func_080585d4(ea1->unk_2c[0].unk_54.unk_00, ea2->unk_2c[0].unk_54.unk_00))
+        if (!func_080585d4(ea1->unk_2c[0].unk_54.head, ea2->unk_2c[0].unk_54.head))
             return false;
     }
     return sameValue(ea1, ea2);

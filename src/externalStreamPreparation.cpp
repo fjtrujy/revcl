@@ -129,7 +129,7 @@ bool removeNops(Program *p, instStream *s)
                         l++;
                     }
                 }
-                for (ol_s *u = op->unk_2c[part].unk_54.func_08058370(); u && !u->isExt(); u = u->unk_00) {
+                for (ol_s *u = op->unk_2c[part].unk_54.firstInternalLocation(); u && !u->isExt(); u = u->unk_00) {
                     Instr *ui = u->unk_04;
                     if (func_0805802c(u)->unk_0b && op->unk_0a > 1) {
                         int ul = ui->unk_13e8.unk_00;
@@ -155,7 +155,7 @@ bool removeNops(Program *p, instStream *s)
                 Operand *op = func_0805802c(ol);
                 int part = ol->unk_11;
                 int lat = ol->unk_12;
-                ol_s *u = op->unk_2c[part].unk_54.func_08058370();
+                ol_s *u = op->unk_2c[part].unk_54.firstInternalLocation();
                 if (u) {
                     Instr *ui = u->unk_04;
                     Operand *uo = func_0805802c(u);

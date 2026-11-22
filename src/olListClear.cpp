@@ -13,7 +13,7 @@ int mstrlen(const char *s);
 
 bool olList::clear()
 {
-    ol_s *p = unk_00;
+    ol_s *p = head;
     if (p) {
         ol_s *f = olFreeList;
         do {
@@ -24,7 +24,7 @@ bool olList::clear()
         } while (p);
         olFreeList = f;
     }
-    unk_00 = 0;
-    unk_04 = 0;
+    head = 0;
+    count = 0;
     return true;
 }

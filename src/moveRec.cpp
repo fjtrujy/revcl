@@ -26,8 +26,8 @@ Instr *getMove(int type, int)
 
     moveRec *mr = (moveRec *)g_080de714[type];
     if (mr) {
-        g_080de714[type] = (VclPtrWord)mr->unk_00;
-        Instr *in = mr->unk_08;
+        g_080de714[type] = (VclPtrWord)mr->nextFree;
+        Instr *in = mr->instruction;
         if (!in) {
             reportError("getFreeMove - inst not set\n");
             exitAfterCleanup(-1);
@@ -36,14 +36,14 @@ Instr *getMove(int type, int)
             reportError(moveRecMismatchError, in->unk_1428, mr);
             exitAfterCleanup(-1);
         }
-        if (!mr->unk_0c) {
+        if (!mr->moveRegister) {
             reportError("getFreeMove: m_Reg not set\n");
             exitAfterCleanup(-1);
         }
-        in->operands[0].unk_18 = mr->unk_0c;
-        mr->unk_0c->moveReset();
-        for (int i = 0; i != mr->unk_0c->partCount; i++) {
-            RegisterPartLockList *l = &mr->unk_10[i];
+        in->operands[0].unk_18 = mr->moveRegister;
+        mr->moveRegister->moveReset();
+        for (int i = 0; i != mr->moveRegister->partCount; i++) {
+            RegisterPartLockList *l = &mr->partLocks[i];
             if (!l) {
                 reportError(moveRecNullRllError);
                 abortAfterError();
@@ -51,7 +51,7 @@ Instr *getMove(int type, int)
             l->unk_08 = 0;
             l->reset();
             l->unk_29 = 0;
-            mr->unk_0c->func_0805a924(i, (VclPtrWord)l);
+            mr->moveRegister->func_0805a924(i, (VclPtrWord)l);
         }
         in->unk_2c = 0;
         in->unk_24.unk_04 = 0;
@@ -112,14 +112,14 @@ Instr *getMove(int type, int)
         exitAfterCleanup(-1);
     }
     for (int i = 0; i != reg->partCount; i++) {
-        RegisterPartLockList *l = &mr->unk_10[i];
+        RegisterPartLockList *l = &mr->partLocks[i];
         l->unk_08 = 0;
         l->reset();
         l->unk_29 = 0;
         reg->func_0805a924(i, (VclPtrWord)l);
     }
-    mr->unk_08 = in;
-    mr->unk_0c = reg;
+    mr->instruction = in;
+    mr->moveRegister = reg;
     return in;
 }
 
@@ -134,18 +134,18 @@ bool addFreeMove(Instr *in)
         reportError("not a move to free\n");
         exitAfterCleanup(-1);
     }
-    RegPoolEntry *reg = mr->unk_0c;
+    RegPoolEntry *reg = mr->moveRegister;
     if (!reg) {
         reportError("m_Reg not set in mr\n");
         exitAfterCleanup(-1);
     }
     reg->moveReset();
     for (int i = 0; i != reg->partCount; i++) {
-        RegisterPartLockList *l = &mr->unk_10[i];
+        RegisterPartLockList *l = &mr->partLocks[i];
         l->unk_08 = 0;
         l->reset();
     }
-    if (in != mr->unk_08) {
+    if (in != mr->instruction) {
         reportError("no instruction set in mr\n");
         exitAfterCleanup(-1);
     }
@@ -165,8 +165,8 @@ bool addFreeMove(Instr *in)
     in->opcodeInfo = ii;
     in->unk_138c = ii->unk_0e;
     in->unk_138d = ii->unk_10;
-    mr->unk_00 = (moveRec *)g_080de714[mr->unk_04];
-    g_080de714[mr->unk_04] = (VclPtrWord)mr;
+    mr->nextFree = (moveRec *)g_080de714[mr->moveType];
+    g_080de714[mr->moveType] = (VclPtrWord)mr;
     return true;
 }
 

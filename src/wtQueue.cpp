@@ -224,7 +224,7 @@ bool workTable::qInstruction(Instr *in)
                     out = o->unk_20[k].func_0805b830();
                 } else {
                     olList *uses = &src->unk_2c[k].unk_54;
-                    ol_s *ol = uses->unk_00;
+                    ol_s *ol = uses->head;
                     if (!ol || ol->unk_00) {
                         reportError("more or less than one oploc for non-extern input\n");
                         exitAfterCleanup(-1);

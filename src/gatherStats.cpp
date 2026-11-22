@@ -149,7 +149,7 @@ bool instStream::gatherStats()
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
                     if ((op->unk_07 >> p) & 1) {
-                        for (ol_s *ol = op->unk_2c[p].unk_54.unk_00; ol; ol = ol->unk_00) {
+                        for (ol_s *ol = op->unk_2c[p].unk_54.head; ol; ol = ol->unk_00) {
                             if (!ol->unk_04) {
                                 reportError("failed to get setting instruction!\n");
                                 return false;
@@ -182,12 +182,12 @@ bool instStream::gatherStats()
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
                     if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
-                        if (op->unk_2c[p].unk_54.unk_04 != 1) {
+                        if (op->unk_2c[p].unk_54.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = op->unk_2c[p].unk_54.unk_00->unk_04;
-                        Operand *so = func_0805802c(op->unk_2c[p].unk_54.unk_00);
+                        Instr *src = op->unk_2c[p].unk_54.head->unk_04;
+                        Operand *so = func_0805802c(op->unk_2c[p].unk_54.head);
                         int d = src->unk_13f0.unk_04 + so->unk_0a + op->unk_29;
                         int h = src->unk_13f0.unk_06 + 1;
                         if (d > in->unk_13f0.unk_04)
@@ -207,12 +207,12 @@ bool instStream::gatherStats()
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
                     if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
-                        if (op->unk_2c[p].unk_54.unk_04 != 1) {
+                        if (op->unk_2c[p].unk_54.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = op->unk_2c[p].unk_54.unk_00->unk_04;
-                        Operand *so = func_0805802c(op->unk_2c[p].unk_54.unk_00);
+                        Instr *src = op->unk_2c[p].unk_54.head->unk_04;
+                        Operand *so = func_0805802c(op->unk_2c[p].unk_54.head);
                         int d = src->unk_13f0.unk_14 + so->unk_0a + op->unk_29;
                         if (d > in->unk_13f0.unk_14)
                             in->unk_13f0.unk_14 = d;
@@ -234,12 +234,12 @@ bool instStream::gatherStats()
             if (r) {
                 for (int p = 0; p != r->partCount; p++) {
                     if (((op->unk_07 & ~op->unk_27) >> p) & 1) {
-                        if (op->unk_2c[p].unk_54.unk_04 != 1) {
+                        if (op->unk_2c[p].unk_54.count != 1) {
                             reportError("found ol with!=1 entries\n");
                             return false;
                         }
-                        Instr *src = op->unk_2c[p].unk_54.unk_00->unk_04;
-                        Operand *so = func_0805802c(op->unk_2c[p].unk_54.unk_00);
+                        Instr *src = op->unk_2c[p].unk_54.head->unk_04;
+                        Operand *so = func_0805802c(op->unk_2c[p].unk_54.head);
                         int d = in->unk_13f0.unk_00 + so->unk_0a + op->unk_29;
                         int h = in->unk_13f0.unk_02 + 1;
                         if (d > src->unk_13f0.unk_00)
@@ -297,7 +297,7 @@ bool instStream::gatherStats()
                     int n1 = 0;
                     int nOther = 0;
                     if ((op->unk_07 >> p) & 1) {
-                        for (ol_s *ol = op->unk_2c[p].unk_54.func_08058370(); ol; ol = ol->func_080583ac()) {
+                        for (ol_s *ol = op->unk_2c[p].unk_54.firstInternalLocation(); ol; ol = ol->func_080583ac()) {
                             char c = ol->unk_04->unk_138c;
                             if (c == 3)
                                 nBoth++;

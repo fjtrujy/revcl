@@ -80,7 +80,7 @@ inline bool RegWeb::AddiInstr(Instr *in)
                 bool used = (op->unk_07 >> j) & 1;
                 if (!used)
                     continue;
-                ol_s *ol = op->unk_2c[j].unk_54.unk_00;
+                ol_s *ol = op->unk_2c[j].unk_54.head;
                 if (!ol) {
                     func_0804ad38("found input operand part with empty olList..\n");
                     func_0804ad38("this should have been caught by now..\n");
