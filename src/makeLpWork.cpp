@@ -293,11 +293,11 @@ bool modLsqq(Instr *in, int imm)
     in->operandCount = 2;
     in->operands[1].unk_27 = 1;
     Operand *op = &in->operands[1];
-    iOpDesc *d = &ii->unk_44[1];
-    op->unk_04 = d->unk_00;
-    op->unk_08 = d->unk_02 != 0;
+    iOpDesc *d = &ii->operandDescriptors[1];
+    op->unk_04 = d->operandKind;
+    op->unk_08 = d->isImplicit != 0;
     op->unk_05 = d->unk_05;
-    op->unk_0d = d->unk_06;
+    op->unk_0d = d->patchedOutputIndexPlusOne;
     if (op->unk_04 != 0x1d) {
         reportError("modded lqsq isn't ea_imm_reg\n");
         abortAfterError();

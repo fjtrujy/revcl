@@ -44,7 +44,7 @@ char iInfo::func_0807005c()
 void iInfo::func_08070080()
 {
     int i;
-    for (i = 0; i != unk_44[i].unk_00; i++)
+    for (i = 0; i != operandDescriptors[i].operandKind; i++)
         ;
 }
 
@@ -55,31 +55,31 @@ void iInfo::func_080700a4()
 bool iInfo::check()
 {
     bool noImplicitYet = true;
-    iOpDesc *d = unk_44;
-    for (int i = 0; d->unk_00; i++, d++) {
-        if (d->unk_06) {
-            if (!d->unk_02) {
+    iOpDesc *d = operandDescriptors;
+    for (int i = 0; d->operandKind; i++, d++) {
+        if (d->patchedOutputIndexPlusOne) {
+            if (!d->isImplicit) {
                 reportError("implicit web patch set on explicit operand\n");
                 return false;
             }
-            if (d->unk_01 != 1) {
-                reportError("iInfo: check - patch set on non-input (%d)\n", d->unk_00);
+            if (d->direction != 1) {
+                reportError("iInfo: check - patch set on non-input (%d)\n", d->operandKind);
                 return false;
             }
-            if (unk_44[d->unk_06 - 1].unk_01 != 2) {
+            if (operandDescriptors[d->patchedOutputIndexPlusOne - 1].direction != 2) {
                 reportError("iInfo: check patch not point to output\n");
                 return false;
             }
-            if (unk_44[d->unk_06 - 1].unk_02) {
+            if (operandDescriptors[d->patchedOutputIndexPlusOne - 1].isImplicit) {
                 reportError("implicit web patch links to implicit operand\n");
                 return false;
             }
-            if (d->unk_06 - 1 > i) {
+            if (d->patchedOutputIndexPlusOne - 1 > i) {
                 reportError(iInfoPatchedAfterPatchError);
                 return false;
             }
         }
-        if (d->unk_02)
+        if (d->isImplicit)
             noImplicitYet = false;
         else if (!noImplicitYet) {
             reportError(iInfoExplicitAfterImplicitError);

@@ -81,20 +81,20 @@ Instr::Instr(iInfo *info)
     unk_13d0 = info->unk_18 & ~7;
     unk_138a = info->func_08070044();
     unk_13cd = info->func_08070020();
-    for (int i = 0; info->unk_44[i].unk_00; i++) {
+    for (int i = 0; info->operandDescriptors[i].operandKind; i++) {
         operandCount++;
         Operand *op = &operands[i];
-        iOpDesc *d = &info->unk_44[i];
-        op->unk_04 = d->unk_00;
+        iOpDesc *d = &info->operandDescriptors[i];
+        op->unk_04 = d->operandKind;
         op->unk_26 = i;
         op->unk_0b = d->unk_04 != 0;
-        op->unk_09 = d->unk_01;
-        op->unk_08 = d->unk_02 != 0;
+        op->unk_09 = d->direction;
+        op->unk_08 = d->isImplicit != 0;
         op->unk_05 = d->unk_05;
-        op->unk_0d = d->unk_06;
+        op->unk_0d = d->patchedOutputIndexPlusOne;
         if (op->unk_0d)
             operands[op->unk_0d - 1].unk_0d = i + 1;
-        if (d->unk_01 == 2)
+        if (d->direction == 2)
             op->unk_0a = d->unk_03;
         else
             op->unk_0a = 0;
