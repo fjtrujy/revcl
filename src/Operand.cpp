@@ -1333,7 +1333,7 @@ Instr *Operand::getOwner()
 {
     Instr *owner = 0;
     if (unk_26 >= 0) {
-        int off = (int)&((Instr *)0)->unk_38[unk_26];
+        VclPtrWord off = (VclPtrWord)&((Instr *)0)->unk_38[unk_26];
         Instr *p = (Instr *)((char *)this - off);
         if (p->unk_138b < unk_26) {
             func_0804ad38("operand: getOwner - bad instruction?\n");

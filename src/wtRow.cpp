@@ -28,7 +28,7 @@ wtEntry::wtEntry()
 
 wtEntry::~wtEntry()
 {
-    if (unk_00 && !((int)unk_00 & 1)) {
+    if (unk_00 && !((VclPtrWord)unk_00 & 1)) {
         if (unk_00->unk_1428)
             addFreeMove(unk_00);
         else
@@ -59,7 +59,7 @@ void wtRow::func_0807222c(int)
         Instr *in = unk_00[i].unk_00;
         if (!in)
             continue;
-        if ((int)in & 1)
+        if ((VclPtrWord)in & 1)
             continue;
         in->func_08054008(false);
     }
@@ -93,7 +93,7 @@ Instr *GetI(Instr **ie, int p)
         return 0;
     }
     Instr *in = ie[p];
-    if ((int)in & 1)
+    if ((VclPtrWord)in & 1)
         return 0;
     return in;
 }

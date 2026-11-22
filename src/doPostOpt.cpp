@@ -333,8 +333,8 @@ bool instStream::setOptTable(workTable *nt)
                     in->unk_38[i].unk_09 = cio;
                 }
             }
-            in->unk_04 = (int)c;
-            c->unk_00 = (int)in;
+            in->unk_04 = (VclPtrWord)c;
+            c->unk_00 = (VclPtrWord)in;
         }
     }
     nt->clearClones();

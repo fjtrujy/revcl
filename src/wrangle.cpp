@@ -383,7 +383,11 @@ bool wrangleMode1Worker(workTable *wt, wrangleFunc f)
             else
                 g_080de72c = done->last();
             for (wtInstrList *tail = done;
+#if defined(__APPLE__) && defined(__LP64__)
+                 tail->unk_04 != g_080de72c;
+#else
                  (Instr *)*(int *)&tail->unk_04 != g_080de72c;
+#endif
                  tail = &wt->unk_a0) {
                 Instr *in = tail->last();
                 in->func_08054214();

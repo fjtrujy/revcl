@@ -261,7 +261,13 @@ bool instStream::gatherStats()
                 m->unk_13f0.unk_10 = in->unk_13f0.unk_10 + 1;
             }
         }
+#if defined(__APPLE__) && defined(__LP64__)
+        // The historical i386 alias reads only four pointer bytes. Follow
+        // the actual linked instruction on 64-bit macOS.
+        m = link->unk_04;
+#else
         m = (Instr *)*(int *)&link->unk_04;
+#endif
         in = m;
     }
 

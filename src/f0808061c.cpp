@@ -76,7 +76,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
     cls08058718 pos;
     for (;;) {
         Instr *pending;
-        int tmp;
+        VclPtrWord tmp;
         Instr *head;
         wrangleCand c;
         int minPos;
@@ -229,7 +229,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
                     if (z2)
                         *ps = 0;
                     if ((ret & 0x100) && !pending) {
-                        tmp = (int)c.unk_00;
+                        tmp = (VclPtrWord)c.unk_00;
                         pending = (Instr *)tmp;
                         mor = c;
                         goto check_pending;
@@ -252,7 +252,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
             {
                 Instr *prev = 0, *p;
                 for (p = wt->unk_4c; p; prev = p, p = p->unk_2c)
-                    if (p == (Instr *)(tmp = (int)c.unk_00))
+                    if (p == (Instr *)(tmp = (VclPtrWord)c.unk_00))
                         break;
                 if (p != c.unk_00) {
                     func_0804ad38("instruction wasn't on candidate list\n");
@@ -313,7 +313,7 @@ bool wrangleMode0Worker(workTable *wt, wrangleFunc f)
     undo:
         {
             Instr *fi;
-            if ((int)g_080de72c)
+            if (g_080de72c)
                 fi = g_080de72c;
             else
                 fi = g_080de72c = wt->unk_a0.last();

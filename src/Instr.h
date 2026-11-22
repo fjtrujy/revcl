@@ -1,6 +1,8 @@
 #ifndef INSTR_H
 #define INSTR_H
 
+#include "vcl_portability.h"
+
 #include "RegPool.h"
 #include "mValue.h"
 #include "mList.h"
@@ -629,8 +631,8 @@ struct cls_unk30 {
 
 class Instr {
 public:
-    int unk_00;
-    int unk_04;
+    VclPtrWord unk_00;
+    VclPtrWord unk_04;
     Instr *unk_08;  // tmpClone
     short unk_0c;   // id
     union {
@@ -701,7 +703,7 @@ public:
     short unk_141e;
     short unk_1420;
     char unk_1422[6];
-    int unk_1428;
+    VclPtrWord unk_1428;
     short unk_142c;
     short unk_142e;
     short unk_1430;

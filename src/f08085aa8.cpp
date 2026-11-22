@@ -24,7 +24,7 @@ bool splitParserStream(Program *p, flowBlock *blocks, int count)
     for (; i != count; i++) {
         flowBlock *b = &blocks[i];
         for (int k = 0; k != 2; k++) {
-            int in = (int)b->unk_0c[k];
+            VclPtrWord in = (VclPtrWord)b->unk_0c[k];
             if (!in || !((Instr *)in)->unk_1388)
                 continue;
             char *target = ((Instr *)in)->getBranchTargetImmediate();

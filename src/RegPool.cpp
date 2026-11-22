@@ -53,7 +53,7 @@ RegPool::~RegPool()
     delete[] unk_04;
 }
 
-bool RegPool::Init(int a, const char* name, int cls, int b)
+bool RegPool::Init(VclPtrWord a, const char* name, int cls, int b)
 {
     unk_28 = a;
     unk_18 = b;
