@@ -69,3 +69,14 @@ tools/rh9/rpms/
 tools/rh9/rootfs/
 
 .DS_Store
+
+# Historical binaries, extracted vendor archives and private research.
+archive/
+asm/
+vuc/
+.github/mcp.json
+config/matching-evidence/
+config/matching-evidence.json
+docs/matching-notes.md
+AGENTS.md
+*.mov
