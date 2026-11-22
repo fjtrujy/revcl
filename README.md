@@ -38,10 +38,9 @@ Progress (matched bytes / file size):
 
 ### Build with CMake
 
-The repository uses one CMake project with six presets: `historical`
-(GCC 3.2.2 in Docker), `gcc` and `clang` (modern Linux i386),
-`linux-gcc` and `linux-clang` (native Linux x86_64 or ARM64), and
-`macos` (native arm64 or Intel x86_64).
+The repository uses one CMake project with four presets: `historical`
+(GCC 3.2.2 in Docker), `linux-gcc` and `linux-clang`
+(native Linux x86_64 or ARM64), and `macos` (native arm64 or Intel x86_64).
 CMake 3.23+ is required. For the byte-exact historical build,
 first download the original, SHA-pinned Red Hat 9 compiler and libraries
 (Linux, or Ubuntu in a container for the extraction step on macOS):
@@ -71,18 +70,18 @@ cmake --build --preset linux-clang
 ctest --preset linux-clang
 ```
 
-The original modern **32-bit Linux** compatibility targets remain available
-on x86_64 machines with multilib packages installed:
+To build without selecting a preset, CMake also defaults to the host's
+native architecture:
 
 ```sh
-cmake --preset gcc -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
-cmake --build --preset gcc
-ctest --preset gcc
-
-cmake --preset clang -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
-cmake --build --preset clang
-ctest --preset clang
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
 ```
+
+The standard modern builds require a 64-bit target. The original 32-bit
+Linux executable is reproduced separately with the `historical` Docker
+toolchain; no modern 32-bit cross-build or multilib installation is needed.
 
 For **native macOS** (no Docker required), install CMake and the Xcode
 Command Line Tools, then install the Python test dependencies:
@@ -144,8 +143,8 @@ The full reproducibility report and verification procedure are in
 ### Developer tools
 
 The independent [modern compiler workflow](.github/workflows/vcl-modern.yml)
-builds all 131 C++ translation units with modern GCC and Clang for 32-bit
-Linux i386, native 64-bit Linux x86_64/ARM64, and with Apple Clang for
+builds all 131 C++ translation units with modern GCC and Clang for
+native 64-bit Linux x86_64/ARM64, and with Apple Clang for
 macOS arm64/Intel x86_64. For the private repository, Linux ARM64 CI uses
 an emulated ARM64 Linux userland on a standard GitHub runner. It
 produces runnable binaries and uses CTest to run the Python unit suite and

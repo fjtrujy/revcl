@@ -103,7 +103,7 @@ The build inputs are fixed and version-controlled:
 
 - `CMakeLists.txt`: native executable target, compile/link/strip rules,
   CTest registrations, and historical vs modern build modes
-- `CMakePresets.json`: `historical`, `gcc`, and `clang` configurations
+- `CMakePresets.json`: `historical`, `linux-gcc`, `linux-clang`, and `macos` configurations
 - `config/build.json`: recovered flags, including 20 owner-specific overrides;
   consumed directly by CMake for the historical build
 - `config/vcl-link-order.cmake`: exactly 131 source files in original link
@@ -145,13 +145,11 @@ The RPM download cache is keyed to the SHA-256 manifest; cached RPMs are
 **still checked before extraction**.
 
 The separate [modern compiler workflow](../.github/workflows/vcl-modern.yml)
-builds and links the full 131-source reconstruction using both GCC 13 and
-Clang 18 with a 32-bit Linux target and C++98 language mode, runs the Python
-unit tests (including CMake link-order/flag consistency), and runs all eleven
+builds and links the full 131-source reconstruction with modern GCC and
+Clang using native 64-bit architectures and C++98 language mode. It runs the
+Python unit tests (including CMake link-order/flag consistency), and all eleven
 self-contained VCL fixture cases **as individually reported CTest tests**.
-Its Ubuntu Linux setup uses `cmake --preset gcc` or `cmake --preset clang`,
-followed by `cmake --build --preset ...` and `ctest --preset ...`.
-The same workflow additionally builds **native Linux x86_64 and ARM64 ELF**
+The workflow builds **native Linux x86_64 and ARM64 ELF**
 executables with modern GCC and Clang using `linux-gcc` and
 `linux-clang` presets. The private repository checks Linux ARM64 in
 an ARM64 Ubuntu userland through QEMU on a regular GitHub runner.
@@ -169,6 +167,9 @@ integer-sized pointer handles across every platform. The historical
 its own ABI-specific field offsets. Neither requires platform-specific
 `#ifdef` branches. The original GCC 3.2.2 compilation still produces
 the same SHA-256, verified independently by the historical CTest job.
+Modern 32-bit cross-builds have been removed: only the historical Docker
+toolchain reproduces the original 32-bit binary. Normal builds require a
+64-bit target and work without a preset using `cmake -S . -B build`.
 
 Local native Linux setup (with CMake 3.23+, GCC/Clang and Python):
 
