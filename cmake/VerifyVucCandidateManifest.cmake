@@ -1,0 +1,32 @@
+# Ensure the accepted VUC function inventory references real sources without
+# requiring the proprietary original ELF, Python, or a historical compiler.
+cmake_minimum_required(VERSION 3.23)
+if(NOT IS_DIRECTORY "${REVCL_SOURCE_DIR}")
+  message(FATAL_ERROR "REVCL_SOURCE_DIR must be the repository root")
+endif()
+set(_manifest "${REVCL_SOURCE_DIR}/vuc/config/exact_candidates.json")
+file(READ "${_manifest}" _candidates)
+string(JSON _count LENGTH "${_candidates}")
+if(_count LESS 200)
+  message(FATAL_ERROR "VUC accepted function inventory unexpectedly shrank: ${_count}")
+endif()
+math(EXPR _last "${_count} - 1")
+set(_unique_sources)
+foreach(_index RANGE 0 ${_last})
+  string(JSON _entry GET "${_candidates}" ${_index})
+  if(NOT _entry MATCHES "^vuc/config/[A-Za-z0-9_.-]+[.]json$")
+    message(FATAL_ERROR "Invalid accepted VUC manifest path: ${_entry}")
+  endif()
+  file(READ "${REVCL_SOURCE_DIR}/${_entry}" _config)
+  string(JSON _source GET "${_config}" source)
+  if(NOT _source MATCHES "^vuc/src/[A-Za-z0-9_.-]+[.](cpp|c)$"
+      OR NOT EXISTS "${REVCL_SOURCE_DIR}/${_source}")
+    message(FATAL_ERROR "VUC accepted function references missing source: ${_entry}: ${_source}")
+  endif()
+  list(APPEND _unique_sources "${_source}")
+endforeach()
+list(REMOVE_DUPLICATES _unique_sources)
+list(LENGTH _unique_sources _unit_count)
+message(STATUS
+  "VUC candidate manifest verified: ${_count} accepted function entries "
+  "across ${_unit_count} tracked source files (not whole-binary equality)")

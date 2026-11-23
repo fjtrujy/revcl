@@ -1,8 +1,8 @@
 # Contributing to REVCL
 
 Thank you for helping reconstruct and test historical PlayStation 2 tools.
-REVCL's `main` branch contains the VCL reconstruction; `vuc` contains the
-separate, ongoing VUC reconstruction.
+REVCL contains the byte-exact VCL reconstruction in `src/` and the separate,
+ongoing VUC reconstruction in `vuc/` under a shared CMake project.
 
 ## Source provenance and licensing
 
@@ -28,7 +28,7 @@ source, verify modern native compiler checks and the historical byte-exact
 SHA-256 target whenever the historical environment is available. Describe
 whether a change preserves the exact binary or changes only modern behavior.
 
-## VUC development (`vuc`)
+## VUC development (`vuc/`)
 
 Follow `vuc/README.md` and its existing research/test workflows. Original
 VUC ZIPs must be obtained separately and verified against the recorded

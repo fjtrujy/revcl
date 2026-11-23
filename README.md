@@ -1,7 +1,10 @@
 # REVCL
 
-REVCL reconstructs Sony's historical PlayStation 2 **VCL 1.4 beta 7** Vector
-Unit optimizer/compiler as portable C++ source. The reconstruction reproduces
+REVCL develops two independent historical PlayStation 2 VU compiler
+reconstructions: **VCL 1.4 beta 7** (complete and byte-exact) and
+**VUC 2004.1** (ongoing, verified function-level reconstruction).
+
+The VCL reconstruction reproduces
 the SHA-256 of the original stripped Linux i386 executable when built with the
 period-correct Red Hat Linux 9 compiler and libraries.
 
@@ -32,7 +35,13 @@ its documentation, or other third-party materials.
 
 ## Build and test
 
-CMake 3.23+ and a native 64-bit C++ compiler are required. Python is not needed.
+CMake 3.23+ and a native 64-bit C++ compiler are required. Python is not needed
+for the default CMake build and tests. This builds both the executable `vcl`
+and the partial VUC object-library target `vuc`; it does not link a VUC
+executable. To build one product's source objects alone, use
+`cmake --build --preset macos --target vcl` or `--target vuc` (substitute your
+platform preset). See [VUC project notes](vuc/README.md) for the current
+state and historically byte-exact function verification process.
 
 ### Linux (x86_64 or ARM64)
 
@@ -119,13 +128,7 @@ what is excluded from this repository, and the limits of its MIT license.
 [CONTRIBUTING.md](CONTRIBUTING.md) describes how to submit code and tests
 without adding proprietary or unreviewed reference materials.
 
-The distinct VUC 2004.1 reconstruction is developed on the
-[`vuc` branch](https://github.com/fjtrujy/revcl/tree/vuc).
-
-## VUC reconstruction (in progress)
-
-The separate [VUC 2004.1 reconstruction](vuc/README.md) is maintained in
-`vuc/`. It contains accepted historical function-level matches and its own
-verification scripts. VUC is **not yet a complete, linked executable**, and
-its reference compiler, inputs and licensing differ from VCL. Third-party
-VUC binaries and extracted archives are not distributed with this project.
+The separate [VUC 2004.1 reconstruction](vuc/README.md) lives in `vuc/`.
+Its source fragments have independent historical compiler/ABI requirements
+and do not yet form a complete, linkable executable. No original VUC binaries
+or extracted vendor distributions are committed or released.

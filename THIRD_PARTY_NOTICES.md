@@ -24,8 +24,8 @@ https://ps2linux.no-ip.info/playstation2-linux.com/projects/vcl.html
 
 ## VUC 2004.1
 
-Work on the distinct VUC compiler is maintained on the `vuc` branch. Original
-VUC executables and archives are not included in either branch. The historical
+The distinct VUC compiler reconstruction lives under `vuc/`. Original
+VUC executables and archives are not included in the repository. The historical
 VUC distribution has its **own terms**, including restrictions on commercial
 use and redistribution of modified compiler versions. Those terms are not the
 Sony VCL license or the REVCL MIT license. Consult the original VUC license

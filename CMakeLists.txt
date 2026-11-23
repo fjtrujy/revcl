@@ -10,6 +10,24 @@ if(NOT VCL_SOURCE_COUNT EQUAL 131)
   message(FATAL_ERROR "Expected 131 VCL translation units, got ${VCL_SOURCE_COUNT}")
 endif()
 
+# VCL and VUC share one CMake project but NOT a compiler, ABI, or final link.
+# The VUC reconstruction is currently compilable only as independent source
+# fragments. Keep it out of VCL's historical GCC 3.2.2 byte-exact build.
+if(REVCL_HISTORICAL)
+  set(_revcl_vuc_default OFF)
+else()
+  set(_revcl_vuc_default ON)
+endif()
+option(REVCL_BUILD_VUC "Build portable VUC reconstruction objects" ${_revcl_vuc_default})
+if(REVCL_HISTORICAL AND REVCL_BUILD_VUC)
+  message(FATAL_ERROR
+    "VCL's GCC 3.2.2 historical toolchain cannot build VUC's GCC 3.3.3 sources. "
+    "Configure without REVCL_BUILD_VUC for historical VCL reproduction.")
+endif()
+if(REVCL_BUILD_VUC)
+  add_subdirectory(vuc)
+endif()
+
 add_executable(vcl ${VCL_SOURCES})
 target_include_directories(vcl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 target_link_libraries(vcl PRIVATE m)

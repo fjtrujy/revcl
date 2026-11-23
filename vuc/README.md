@@ -1,7 +1,53 @@
 # VUC 2004.1 byte-matching reconstruction
 
-This directory isolates the historical VUC reconstruction from the existing
-VCL byte-matching project at the repository root.
+This directory isolates the historical VUC reconstruction from VCL's source
+and compiler ABI, while both projects share the top-level CMake build.
+
+## Shared CMake build (VCL + VUC)
+
+Use the repository root rather than a second independent VUC build system:
+
+```sh
+cmake --preset macos             # or linux-gcc / linux-clang
+cmake --build --preset macos --parallel "$(sh scripts/ci/cpu-count.sh)"
+ctest --preset macos --output-on-failure
+cmake --build --preset macos --target vuc  # just VUC source objects
+```
+
+The native default builds two **separate CMake targets**: `vcl`, the complete
+executable, and `vuc`, an **object library containing 89 compilable source
+units**. VUC is not linked into VCL and is **not yet a runnable compiler**.
+The other five VUC C++ units require GCC 3.3's internal libstdc++ definitions
+and are explicitly retained as historical-only sources in `vuc/CMakeLists.txt`.
+No source is discarded, renamed, or silently rewritten to satisfy modern
+libstdc++. The native build checks object-level compilation, **not** exact
+historical code generation or whole-executable equivalence.
+
+`ctest` additionally checks that all 207 accepted function-manifest entries
+still reference tracked VUC sources; this test runs without the original
+VUC executable, historical GCC, or Python. Existing VCL tests are unchanged.
+
+For the historical **VCL** GCC 3.2.2 reproduction, `cmake --preset historical`
+builds only VCL (VUC uses a different historical compiler). To disable VUC
+in a modern build use `-DREVCL_BUILD_VUC=OFF` at configuration time.
+
+The independent VUC function-level exact gate can optionally be registered
+with CMake when both a historical GCC wrapper and the original, separately
+obtained ZIP are available on the same machine (typically the existing Linux
+VM):
+
+```sh
+cmake -S . -B tmp/cmake/vuc-check \
+  -DREVCL_VUC_MATCH_COMPILER=/tmp/vuc-binutils215/g++-jan25-as215
+cmake --build tmp/cmake/vuc-check --target vuc-exact-candidates
+# or: ctest --test-dir tmp/cmake/vuc-check -R '^vuc-exact-candidates$' --output-on-failure
+```
+
+This reuses the strict existing `vuc/scripts/match_candidates.py` with its
+per-function flags. Its results are **function-scoped**, never a claim that
+VUC is fully reconstructed or that the native objects match the original.
+It is deliberately **opt-in**: CMake does not download or redistribute the
+vendor ZIP or compiler, and it does not require Python for ordinary builds.
 
 ## Target and baseline
 
