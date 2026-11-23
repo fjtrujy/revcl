@@ -10,9 +10,9 @@ or complete byte-exact VUC executable has been reconstructed yet.
 ## Totals
 
 - Named text symbols: **298**.
-- **207** exact functions, **16,723** verified exact instruction bytes.
-- Exact functions occupy **16,723/163,241** original bytes across all named function extents (**10.2%**). This is a *strict accepted-function extent ratio*, NOT whole-ELF byte matching.
-- **37** selected experimental functions, **36** eligible original-length partials matching **7,183/11,134** bytes
+- **209** exact functions, **16,934** verified exact instruction bytes.
+- Exact functions occupy **16,934/163,241** original bytes across all named function extents (**10.4%**). This is a *strict accepted-function extent ratio*, NOT whole-ELF byte matching.
+- **35** selected experimental functions, **34** eligible original-length partials matching **6,990/10,923** bytes
   within those partial functions only.
 - **54** unresolved symbols, including **6** zero-sized symbols.
 - Whole executable: **not yet buildable; no overall byte-match score**.
@@ -24,10 +24,8 @@ or complete byte-exact VUC executable has been reconstructed yet.
 | 0x08051980 | `__tcf_1` | 46 | 45/46 | 1 |
 | 0x0805b770 | `Print(ASTFunCall*, std::ostream&)` | 98 | 96/98 | 2 |
 | 0x0806fa80 | `script_error(char const*)` | 161 | 155/161 | 6 |
-| 0x08071c20 | `MLTempString::MLTempString()` | 101 | 95/101 | 6 |
 | 0x08071d00 | `MLTempString::Set(char const*, ...)` | 117 | 111/117 | 6 |
 | 0x08049b40 | `AsmOutput_WritePrologue(std::basic_ofstream<char, std::char_traits<char>>&)` | 30 | 22/30 | 8 |
-| 0x08071b40 | `MLTempString::MLTempString(char const*, ...)` | 110 | 98/110 | 12 |
 | 0x0806a550 | `std::vector<MLHashTable<MLGameString, SymbolTableEntry*, MLHashFun<MLGameString>, 513>, std::allocator<MLHashTable<MLGameString, SymbolTableEntry*, MLHashFun<MLGameString>, 513>>>::_M_insert_aux(__gnu_cxx::__normal_iterator<MLHashTable<MLGameString, SymbolTableEntry*, MLHashFun<MLGameString>, 513>*, std::vector<MLHashTable<MLGameString, SymbolTableEntry*, MLHashFun<MLGameString>, 513>, std::allocator<MLHashTable<MLGameString, SymbolTableEntry*, MLHashFun<MLGameString>, 513>>>>, MLHashTable<MLGameString, SymbolTableEntry*, MLHashFun<MLGameString>, 513> const&)` | 746 | 733/746 | 13 |
 | 0x0806e9b0 | `Value::operator+(Value const&) const` | 219 | 203/219 | 16 |
 | 0x0805a3f0 | `AssembleBinOp(IR::Register const&, IR::Expr_Data*, InstructionList&)` | 193 | 162/193 | 31 |
@@ -318,7 +316,9 @@ or complete byte-exact VUC executable has been reconstructed yet.
 | 0x080719d0 | `MLTempStringData::Get()` | 77 | 77/77 |
 | 0x08071a20 | `MLTempStringData::FormatString(char const*, ...)` | 35 | 35/35 |
 | 0x08071a50 | `MLTempStringData::VFormatString(char const*, char*)` | 238 | 238/238 |
+| 0x08071b40 | `MLTempString::MLTempString(char const*, ...)` | 110 | 110/110 |
 | 0x08071bb0 | `MLTempString::MLTempString(char const*, ...)` | 110 | 110/110 |
+| 0x08071c20 | `MLTempString::MLTempString()` | 101 | 101/101 |
 | 0x08071c90 | `MLTempString::MLTempString()` | 102 | 102/102 |
 | 0x08071d80 | `MLTempString::operator+=(MLTempString const&)` | 53 | 53/53 |
 | 0x08071dc0 | `MLTempString::operator+(MLTempString const&)` | 58 | 58/58 |
