@@ -42,9 +42,13 @@ The stripped output lives at `tmp/cmake/historical/vcl.stripped` and must match:
 83bee75205b5b0f37dbefc2c2769eba2c353befa532472c49aedb2ebaf168274
 ```
 
-CTest runs `cmake/VerifySha.cmake` and checks the linked and stripped ELF
-without patching or replacing any bytes. The original ELF is neither bundled
-nor required during the build. The glibc i686 update matters: the original
+CTest checks both the linked-and-stripped ELF SHA-256 and whether each of the
+five per-source compiler exceptions remains necessary. The latter test
+recompiles one owner at a time without its special flag, substitutes only
+that object at its original link position, and compares the resulting
+stripped SHA. A newly redundant exception fails the test until removed.
+Neither test patches the reference output. The original ELF is neither
+bundled nor required during the build. The glibc i686 update matters: the original
 Red Hat base i386 library leads to mismatched imported-symbol sizes, whereas
 the verified i686 update reproduces them.
 
@@ -55,6 +59,9 @@ still change executable bytes.
 The [enum-type and compiler-flag follow-up](ENUM_TYPES_AND_COMPILER_FLAGS.md)
 documents the additional global-flag consolidation and recovered enum-typed
 fields without changing the i386 ABI.
+The [scheduler CSE investigation](SCHEDULER_CSE_RECONSTRUCTION.md)
+documents the exact four-byte optimization differences and source-level
+alternatives that have not yet eliminated the remaining scheduler exceptions.
 
 The historical process is independently repeated by
 [GitHub Actions](../.github/workflows/vcl-byte-exact.yml).
