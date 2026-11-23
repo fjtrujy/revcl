@@ -3,6 +3,14 @@
 This directory isolates the historical VUC reconstruction from VCL's source
 and compiler ABI, while both projects share the top-level CMake build.
 
+The current [full per-function byte-match inventory](docs/FUNCTION_BYTE_MATCH_STATUS.md)
+lists all 298 original symbols, including 207 byte-exact functions, 37
+experimental candidates and 54 unresolved symbols. The latest
+[VCL-inspired inline/source-unit experiments](docs/2026-11-23-vcl-inlining-tu-controls.md)
+record both successes and failed hypotheses. VUC still has **no complete
+linked ELF** and must not be merged into `main` before byte-for-byte identity
+with the historical VUC executable is independently demonstrated.
+
 ## Shared CMake build (VCL + VUC)
 
 Use the repository root rather than a second independent VUC build system:
