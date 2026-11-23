@@ -127,6 +127,7 @@ message(STATUS
 add_library(vuc OBJECT ${VUC_PORTABLE_SOURCES})
 target_include_directories(vuc PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_compile_options(vuc PRIVATE -std=gnu++98 -O2 -Wno-write-strings)
+target_compile_definitions(vuc PRIVATE REVCL_VUC_NATIVE_ABI)
 
 if(BUILD_TESTING)
   add_test(NAME vuc-candidate-manifest

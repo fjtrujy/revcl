@@ -11,7 +11,14 @@ char *MLTempStringData::FormatString(const char *format, ...)
 {
     va_list arguments;
     va_start(arguments, format);
+#ifdef REVCL_VUC_NATIVE_ABI
+    // On native 64-bit targets va_list may be an array, struct, or pointer.
+    // Pass its storage, not a cast of its ABI-specific value. The historical
+    // GCC 3.3 candidate below must remain untouched for byte-exact matching.
+    char *result = VFormatString(format, reinterpret_cast<char *>(&arguments));
+#else
     char *result = VFormatString(format, (char *)arguments);
+#endif
     va_end(arguments);
     return result;
 }

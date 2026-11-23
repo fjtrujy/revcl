@@ -41,11 +41,19 @@ char *MLTempStringData::VFormatString(const char *format, char *arguments)
 {
     int strLen = strlen(format);
     char *start = Reserve(strLen + 1);
+#ifdef REVCL_VUC_NATIVE_ABI
+    int numWritten = vsprintf(start, format, *reinterpret_cast<va_list *>(arguments));
+#else
     int numWritten = vsprintf(start, format, (va_list)arguments);
+#endif
     if (numWritten < 0) {
         used_ = 0;
         start = bytes_;
+#ifdef REVCL_VUC_NATIVE_ABI
+        numWritten = vsprintf(start, format, *reinterpret_cast<va_list *>(arguments));
+#else
         numWritten = vsprintf(start, format, (va_list)arguments);
+#endif
 #line 200 "../megalib/MLGameString.cpp"
         assert(numWritten >= 0);
     }
