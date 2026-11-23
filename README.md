@@ -9,6 +9,15 @@ The same C++ source builds natively on modern **Linux x86_64 / ARM64** and
 **macOS Intel / Apple Silicon**. Modern binaries are checked with standalone
 input fixtures, including exact generated-output hashes.
 
+## Releases
+
+Download native binaries for all six Linux/macOS builds and the original-
+compatible, byte-exact Linux i386 build from the
+[latest GitHub release](https://github.com/fjtrujy/revcl/releases/latest).
+Future releases are built, tested, packaged and published automatically on
+annotated version tags. See [release instructions](docs/RELEASING.md) for
+dry-run validation, checksums, licensing details, and the tag-push process.
+
 ## Provenance and third-party rights
 
 REVCL is an independent reverse-engineering project. It is not affiliated with,
