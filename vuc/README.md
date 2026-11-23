@@ -20,7 +20,7 @@ units**. VUC is not linked into VCL and is **not yet a runnable compiler**.
 The other five VUC C++ units require GCC 3.3's internal libstdc++ definitions
 and are explicitly retained as historical-only sources in `vuc/CMakeLists.txt`.
 No source is discarded, renamed, or silently rewritten to satisfy modern
-libstdc++. For the two variadic string units, native-only
+libstdc++. For the variadic string units, native-only
 `REVCL_VUC_NATIVE_ABI` selects an ABI-correct `va_list` representation;
 historical GCC candidate compilation retains the original source path.
 The native build checks object-level compilation, **not** exact

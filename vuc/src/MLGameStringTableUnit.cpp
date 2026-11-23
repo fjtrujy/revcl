@@ -11,7 +11,11 @@ char *MLTempStringData::FormatString(const char *format, ...)
 {
     va_list arguments;
     va_start(arguments, format);
+#ifdef REVCL_VUC_NATIVE_ABI
+    char *result = VFormatString(format, reinterpret_cast<char *>(&arguments));
+#else
     char *result = VFormatString(format, (char *)arguments);
+#endif
     va_end(arguments);
     return result;
 }

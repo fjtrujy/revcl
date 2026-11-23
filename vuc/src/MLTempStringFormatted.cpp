@@ -16,6 +16,11 @@ MLTempString::MLTempString(const char *format, ...)
 {
     va_list arguments;
     va_start(arguments, format);
+#ifdef REVCL_VUC_NATIVE_ABI
+    text = MLTempStringData::Get()->VFormatString(format,
+                                                  reinterpret_cast<char *>(&arguments));
+#else
     text = MLTempStringData::Get()->VFormatString(format, (char *)arguments);
+#endif
     va_end(arguments);
 }
