@@ -78,6 +78,10 @@ global `-fmerge-all-constants` still reproduces the original SHA.
 The other five per-TU exceptions have specific, experimentally observed
 effects:
 
+For a pass-by-pass analysis of the two scheduler exceptions, including
+the exact x86 argument sequence and failed source-level alternatives,
+see [Scheduler CSE reconstruction investigation](SCHEDULER_CSE_RECONSTRUCTION.md).
+
 | Source file | Flag | Difference without the flag |
 | --- | --- | --- |
 | `RegWeb.cpp` | `-fno-weak` | Deferred-inline pragma setup omits most RegWeb method definitions |
