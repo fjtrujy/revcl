@@ -2,9 +2,10 @@
   "function": "_ZN12MLTempString3SetEPKcz",
   "address": "0x08071d00",
   "size": 117,
-  "source": "vuc/probes/ml_temp_set_return.cpp",
+  "source": "vuc/src/MLTempStringSetExactOwner.cpp",
   "flags": [
-    "-O2"
+    "-O2",
+    "-frename-registers"
   ],
   "relocations": {
     "memset": "0x0804996c",

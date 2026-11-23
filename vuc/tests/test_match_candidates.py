@@ -91,7 +91,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 209)
+        self.assertEqual(len(exact_configs), 210)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -1061,14 +1061,21 @@ class CandidateSuiteTests(unittest.TestCase):
 
         set_probe = "vuc/config/ml_temp_set_probe.json"
         self.assertIn(set_probe, experimental)
-        self.assertNotIn(set_probe, accepted)
+        self.assertIn(set_probe, accepted)
         set_config = json.loads(suite.within_repo(set_probe).read_text())
         self.assertEqual(set_config["address"], "0x08071d00")
         self.assertEqual(set_config["size"], 117)
         self.assertEqual(set_config["source"],
-                         "vuc/probes/ml_temp_set_return.cpp")
-        self.assertEqual(set_config["flags"], ["-O2"])
+                         "vuc/src/MLTempStringSetExactOwner.cpp")
+        self.assertEqual(set_config["flags"], ["-O2", "-frename-registers"])
         self.assertEqual(len(set_config["relocations"]), 2)
+        owner = suite.within_repo(set_config["source"]).read_text()
+        self.assertLess(owner.index("MLTempString::operator+=("),
+                        owner.index("MLTempString::Set("))
+        self.assertLess(owner.index("MLTempString::MLTempString()"),
+                        owner.index("MLTempString::Set("))
+        self.assertLess(owner.index("MLTempString::Set("),
+                        owner.index("MLTempString::MLTempString(const char *format"))
 
     def test_asmoutput_tab_constants_is_exact_in_real_source_order(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

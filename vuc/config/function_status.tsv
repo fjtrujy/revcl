@@ -285,7 +285,7 @@ address	size	status	manifest	candidate_source	symbol
 0x08071bb0	110	EXACT	vuc/config/ml_temp_format_c1_probe.json	vuc/src/MLTempStringFormatted.cpp	_ZN12MLTempStringC1EPKcz
 0x08071c20	101	EXACT	vuc/config/ml_temp_default_C2_probe.json	vuc/src/MLTempStringDefaultC2Owner.cpp	_ZN12MLTempStringC2Ev
 0x08071c90	102	EXACT	vuc/config/ml_temp_default_C1_probe.json	vuc/src/MLTempStringDefault.cpp	_ZN12MLTempStringC1Ev
-0x08071d00	117	EXPERIMENTAL	vuc/config/ml_temp_set_probe.json	vuc/probes/ml_temp_set_return.cpp	_ZN12MLTempString3SetEPKcz
+0x08071d00	117	EXACT	vuc/config/ml_temp_set_probe.json	vuc/src/MLTempStringSetExactOwner.cpp	_ZN12MLTempString3SetEPKcz
 0x08071d80	53	EXACT	vuc/config/ml_temp_append_exact_probe.json	vuc/src/MLGameString.cpp	_ZN12MLTempStringpLERKS_
 0x08071dc0	58	EXACT	vuc/config/ml_temp_plus_exact_probe.json	vuc/src/MLGameString.cpp	_ZN12MLTempStringplERKS_
 0x08071e00	22	EXACT	vuc/config/ml_game_string_table_cleanup_probe.json	vuc/src/MLGameStringTableLifecycle.cpp	__tcf_0

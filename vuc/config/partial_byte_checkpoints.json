@@ -55,14 +55,6 @@
     "relocations": 4,
     "verified_literal_bytes": 152
   },
-  "vuc/config/ml_temp_set_probe.json": {
-    "function": "_ZN12MLTempString3SetEPKcz",
-    "address": "0x08071d00",
-    "original_size": 117,
-    "exact_bytes_floor": 111,
-    "relocations": 8,
-    "verified_literal_bytes": 0
-  },
   "vuc/config/script_error_probe.json": {
     "function": "_Z12script_errorPKc",
     "address": "0x0806fa80",

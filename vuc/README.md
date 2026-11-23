@@ -4,11 +4,11 @@ This directory isolates the historical VUC reconstruction from VCL's source
 and compiler ABI, while both projects share the top-level CMake build.
 
 The current [full per-function byte-match inventory](docs/FUNCTION_BYTE_MATCH_STATUS.md)
-lists all 298 original symbols, including 209 byte-exact functions, 35
+lists all 298 original symbols, including 210 byte-exact functions, 34
 experimental candidates and 54 unresolved symbols. The latest
-[dual MLTempString C2 byte-exact milestone](docs/2026-11-23-mltemp-dual-c2-byte-exact.md)
-recovered two previously partial constructors by changing genuine
-translation-unit method ordering. Earlier
+[MLTempString Set byte-exact milestone](docs/2026-11-23-mltemp-set-byte-exact.md)
+extends the earlier [dual C2 constructor discovery](docs/2026-11-23-mltemp-dual-c2-byte-exact.md)
+using genuine operator and constructor definition order. Earlier
 [VCL-inspired inline/source-unit experiments](docs/2026-11-23-vcl-inlining-tu-controls.md)
 record both successes and failed hypotheses. VUC still has **no complete
 linked ELF** and must not be merged into `main` before byte-for-byte identity
@@ -29,7 +29,7 @@ The native default builds two **separate CMake targets**: `vcl`, the complete
 executable, and `vuc`, an **object library containing 89 compilable source
 units**. VUC is not linked into VCL and is **not yet a runnable compiler**.
 Five other VUC C++ units require GCC 3.3's internal libstdc++ definitions
-and two additional constructor-owner units are retained as historical
+and three additional string-method owner units are retained as historical
 **match-only** sources in `vuc/CMakeLists.txt` (their overlapping definitions
 must not be linked into the native object target).
 No source is discarded, renamed, or silently rewritten to satisfy modern

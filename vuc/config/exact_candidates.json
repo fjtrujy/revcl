@@ -161,6 +161,7 @@
   "vuc/config/ml_temp_format_c1_probe.json",
   "vuc/config/check_ast_fun_call_probe.json",
   "vuc/config/ml_temp_default_C2_probe.json",
+  "vuc/config/ml_temp_set_probe.json",
   "vuc/config/stdafx_global_wrapper_probe.json",
   "vuc/config/value_comparison_eq_probe.json",
   "vuc/config/value_comparison_ne_probe.json",

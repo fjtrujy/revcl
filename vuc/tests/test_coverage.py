@@ -21,8 +21,8 @@ class CoverageTests(unittest.TestCase):
 
     def test_every_original_function_is_accounted_for(self):
         self.assertEqual(len(self.rows), 298)
-        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 209)
-        self.assertEqual(sum(r[2] == "EXPERIMENTAL" for r in self.rows), 35)
+        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 210)
+        self.assertEqual(sum(r[2] == "EXPERIMENTAL" for r in self.rows), 34)
         self.assertEqual(sum(r[2] == "UNRESOLVED" for r in self.rows), 54)
 
     def test_original_glibc_init_and_fini_are_both_exact(self):

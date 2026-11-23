@@ -112,6 +112,7 @@ set(VUC_GCC33_ONLY_SOURCES
 set(VUC_HISTORICAL_MATCH_SOURCES
   src/MLTempStringDefaultC2Owner.cpp
   src/MLTempStringFormattedC2Owner.cpp
+  src/MLTempStringSetExactOwner.cpp
 )
 
 # Detect any new or missing VUC sources rather than implicitly compiling new
