@@ -19,11 +19,18 @@ All temporary source probes were restored; no unsuccessful source changes
 should be merged. Experiment outputs/scripts are kept under ignored
 `tmp/` in the existing checkout for further investigation.
 
+The historical CTest now runs `cmake/AuditHistoricalCompilerOverrides.cmake`.
+It recompiles each of the **five** currently exceptional source files with
+only the common GCC flags, then links and strips a temporary executable
+while preserving every other object and link position. The test deliberately
+fails once any exception becomes individually redundant. It is independent
+of the regular exact-SHA test; both must pass.
+
 ## Exactly what differs
 
-The exceptional flag changes only **four instruction bytes in each
-translation unit**, excluding address/displacement shifts caused by that
-difference:
+Without the exceptional flag, the **`.text` section is four bytes shorter**
+in each translation unit. The instruction and control-flow changes also shift
+subsequent branch displacements and alignment padding:
 
 | Translation unit | Exact reference `.text` size | Without the flag | Origin |
 | --- | ---: | ---: | --- |

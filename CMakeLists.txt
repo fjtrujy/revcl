@@ -54,6 +54,15 @@ if(REVCL_HISTORICAL)
       "-DREVCL_BINARY=${CMAKE_CURRENT_BINARY_DIR}/vcl.stripped"
       "-DREVCL_SHA_FILE=${CMAKE_CURRENT_SOURCE_DIR}/tools/rh9/vcl.sha256"
       -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VerifySha.cmake")
+    # Historical per-file exceptions should disappear when equivalent C++
+    # reconstruction makes them unnecessary. Verify their necessity by
+    # substituting one plain-flag object at the same link position each time.
+    add_test(NAME historical-compiler-override-necessity
+      COMMAND "${CMAKE_COMMAND}"
+      "-DREVCL_HISTORICAL_BUILD=${CMAKE_CURRENT_BINARY_DIR}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AuditHistoricalCompilerOverrides.cmake")
+    set_tests_properties(historical-compiler-override-necessity
+      PROPERTIES TIMEOUT 180)
   endif()
 else()
   # Modern builds follow the native 64-bit host ABI. The sole 32-bit
