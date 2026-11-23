@@ -1,0 +1,204 @@
+name: VCL tagged release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # A release PR exercises the whole build/package workflow, but cannot publish.
+  pull_request:
+    paths:
+      - '.github/workflows/vcl-release.yml'
+      - 'scripts/ci/package-release.sh'
+      - 'tools/rh9/vcl-reference-archive.sha256'
+      - 'docs/RELEASING.md'
+      - 'README.md'
+  # Manual runs validate and upload packages as CI artifacts; they NEVER publish.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: revcl-tag-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  native:
+    name: Package input — ${{ matrix.platform }} ${{ matrix.arch }} ${{ matrix.compiler }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {platform: Linux, arch: x86_64, compiler: GCC, runner: ubuntu-24.04, preset: linux-gcc, artifact: revcl-release-native-linux-x86_64-gcc}
+          - {platform: Linux, arch: x86_64, compiler: Clang, runner: ubuntu-24.04, preset: linux-clang, artifact: revcl-release-native-linux-x86_64-clang}
+          - {platform: Linux, arch: aarch64, compiler: GCC, runner: ubuntu-24.04-arm, preset: linux-gcc, artifact: revcl-release-native-linux-arm64-gcc}
+          - {platform: Linux, arch: aarch64, compiler: Clang, runner: ubuntu-24.04-arm, preset: linux-clang, artifact: revcl-release-native-linux-arm64-clang}
+          - {platform: macOS, arch: arm64, compiler: Apple-Clang, runner: macos-15, preset: macos, artifact: revcl-release-native-macos-arm64}
+          - {platform: macOS, arch: x86_64, compiler: Apple-Clang, runner: macos-15-intel, preset: macos, artifact: revcl-release-native-macos-x86_64}
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Configure and build native executable
+        run: |
+          test "$(uname -m)" = "${{ matrix.arch }}"
+          cmake --preset ${{ matrix.preset }}
+          cmake --build --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)"
+          file tmp/cmake/${{ matrix.preset }}/vcl
+
+      - name: Run native CTests
+        run: ctest --preset ${{ matrix.preset }} --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
+
+      - name: Upload validated native executable
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: tmp/cmake/${{ matrix.preset }}/vcl
+          if-no-files-found: error
+          retention-days: 14
+
+  historical:
+    name: Package input — original byte-exact Linux i386
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install historical RPM extraction dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake rpm2cpio cpio curl ca-certificates
+
+      - name: Cache historical RPM downloads
+        uses: actions/cache@v6
+        with:
+          path: tools/rh9/rpms
+          key: rh9-rpms-${{ hashFiles('tools/rh9/rpms.sha256') }}
+
+      - name: Bootstrap pinned historical toolchain
+        run: |
+          bash scripts/ci/bootstrap_rh9.sh
+          docker build --platform linux/386 -t revcl-rh9 tools/rh9
+          docker run --rm --platform linux/386 revcl-rh9 g++ --version
+
+      - name: Compile, link and strip historical executable
+        run: |
+          cmake --preset historical
+          cmake --build --preset historical --parallel "$(sh scripts/ci/cpu-count.sh)"
+
+      - name: Verify exact original SHA and compiler override necessity
+        run: ctest --preset historical --parallel "$(sh scripts/ci/cpu-count.sh)" --output-on-failure
+
+      - name: Upload verified historical binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: revcl-release-original-i386
+          path: tmp/cmake/historical/vcl.stripped
+          if-no-files-found: error
+          retention-days: 14
+
+  package:
+    name: Verify and package seven release binaries
+    runs-on: ubuntu-24.04
+    needs: [native, historical]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download six validated native binaries
+        uses: actions/download-artifact@v7
+        with:
+          pattern: revcl-release-native-*
+          path: tmp/release-input/native
+
+      - name: Download byte-exact historical binary
+        uses: actions/download-artifact@v7
+        with:
+          name: revcl-release-original-i386
+          path: tmp/release-input/historical
+
+      - name: Download historical reference for licensing and independent byte comparison
+        run: |
+          mkdir -p tmp/release-input/vendor
+          curl --fail --location --show-error --silent \
+            --retry 5 --retry-all-errors --connect-timeout 20 --max-time 180 \
+            'https://downloads.sourceforge.net/project/kernelloader/Sony%20Linux%20Toolkit/Package%20Update%20Files/vcl/vcl.1.4.beta7.x86.tgz' \
+            --output tmp/release-input/vendor/vcl.1.4.beta7.x86.tgz
+          (cd tmp/release-input/vendor && shasum -a 256 -c ../../../tools/rh9/vcl-reference-archive.sha256)
+
+      - name: Build release packages and their checksum manifests
+        env:
+          RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || 'v0.0.0' }}
+        run: |
+          bash scripts/ci/package-release.sh \
+            "$RELEASE_VERSION" \
+            tmp/release-input/native \
+            tmp/release-input/historical/vcl.stripped \
+            tmp/release-input/vendor/vcl.1.4.beta7.x86.tgz \
+            tmp/release-assets
+          (cd tmp/release-assets && shasum -a 256 -c SHA256SUMS.txt)
+          test "$(find tmp/release-assets -maxdepth 1 -name '*.zip' | wc -l)" -eq 7
+
+      - name: Preserve release packages for review / publish
+        uses: actions/upload-artifact@v7
+        with:
+          name: revcl-release-packages
+          path: tmp/release-assets/*
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: Publish GitHub Release for annotated tag
+    needs: package
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Require annotated SemVer tag pointing to main history
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          [[ "$TAG_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || exit 1
+          test "$(git cat-file -t "refs/tags/$TAG_NAME")" = tag
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Download and check packaged release assets
+        uses: actions/download-artifact@v7
+        with:
+          name: revcl-release-packages
+          path: tmp/release-assets
+
+      - name: Verify all archives before publishing
+        run: |
+          (cd tmp/release-assets && shasum -a 256 -c SHA256SUMS.txt)
+          test "$(find tmp/release-assets -maxdepth 1 -name '*.zip' | wc -l)" -eq 7
+
+      - name: Publish draft only after checksums and build gates succeed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          existing_draft="$(gh release view "$TAG_NAME" --json isDraft --jq .isDraft 2>/dev/null || true)"
+          if [ "$existing_draft" = false ]; then
+            echo "Release $TAG_NAME is already published; refusing to overwrite it" >&2
+            exit 1
+          fi
+          if [ -z "$existing_draft" ]; then
+            gh release create "$TAG_NAME" --verify-tag --draft \
+              --title "REVCL $TAG_NAME — VCL 1.4 beta 7 byte-exact reconstruction" \
+              --notes-file tmp/release-assets/RELEASE_NOTES.md
+          fi
+          gh release upload "$TAG_NAME" tmp/release-assets/* --clobber
+          gh release edit "$TAG_NAME" --draft=false --latest \
+            --title "REVCL $TAG_NAME — VCL 1.4 beta 7 byte-exact reconstruction" \
+            --notes-file tmp/release-assets/RELEASE_NOTES.md
+          gh release view "$TAG_NAME" --json url --jq .url
