@@ -2,9 +2,13 @@
   "function": "_Z23AsmOutput_WritePrologueRSt14basic_ofstreamIcSt11char_traitsIcEE",
   "address": "0x08049b40",
   "size": 30,
-  "source": "vuc/probes/asm_output_hypothesis.cpp",
+  "source": "vuc/src/AsmOutputPrologueExactOwner.cpp",
   "relocations": {
     ".rodata": "0x080720a0",
     "_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc": "0x080497bc"
-  }
+  },
+  "flags": [
+    "-O2",
+    "-frename-registers"
+  ]
 }

@@ -62,7 +62,7 @@ class SmallestFirstTests(unittest.TestCase):
         rows = small.module("coverage").classify(original, exact, selected)
         result = small.make_queue(rows, {}, {}, max_size=64)
         self.assertTrue(result["pending"])
-        self.assertEqual(result["pending"][0]["size"], 30)
+        self.assertEqual(result["pending"][0]["size"], 46)
         self.assertTrue(all(row["size"] <= 64 for row in result["pending"]))
         self.assertTrue(all(row["status"] != "EXACT" for row in result["pending"]))
 

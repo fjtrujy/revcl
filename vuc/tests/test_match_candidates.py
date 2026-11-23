@@ -91,7 +91,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 210)
+        self.assertEqual(len(exact_configs), 211)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -629,6 +629,22 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("static char formatted[256];", source)
         self.assertIn("char *space = strchr(formatted, ' ');", source)
         self.assertNotIn("AsmOutput_WritePrologue", source)
+
+    def test_asmoutput_prologue_uses_real_exact_alignstring_predecessor(self):
+        path = "vuc/config/asm_output_jan25_probe.json"
+        accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertIn(path, accepted)
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x08049b40")
+        self.assertEqual(config["size"], 30)
+        self.assertEqual(config["source"], "vuc/src/AsmOutputPrologueExactOwner.cpp")
+        self.assertEqual(config["flags"], ["-O2", "-frename-registers"])
+        self.assertEqual(config["relocations"][".rodata"], "0x080720a0")
+        self.assertEqual(len(config["relocations"]), 2)
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertLess(source.index("char *AlignString("),
+                        source.index("void AsmOutput_WritePrologue("))
+        self.assertIn("static char formatted[256];", source)
 
     def test_currfile_wrapper_has_real_diagnostic_source_context(self):
         accepted = set(json.loads(suite.EXACT_MANIFEST.read_text()))

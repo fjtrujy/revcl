@@ -110,6 +110,7 @@ set(VUC_GCC33_ONLY_SOURCES
 # linked together or compiled as part of the portable object target until
 # the authentic single-link translation-unit boundaries are reconstructed.
 set(VUC_HISTORICAL_MATCH_SOURCES
+  src/AsmOutputPrologueExactOwner.cpp
   src/MLTempStringDefaultC2Owner.cpp
   src/MLTempStringFormattedC2Owner.cpp
   src/MLTempStringSetExactOwner.cpp

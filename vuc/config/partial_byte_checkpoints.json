@@ -1,12 +1,4 @@
 {
-  "vuc/config/asm_output_jan25_probe.json": {
-    "function": "_Z23AsmOutput_WritePrologueRSt14basic_ofstreamIcSt11char_traitsIcEE",
-    "address": "0x08049b40",
-    "original_size": 30,
-    "exact_bytes_floor": 22,
-    "relocations": 2,
-    "verified_literal_bytes": 92
-  },
   "vuc/config/print_ast_fun_context_oct14_probe.json": {
     "function": "_Z5PrintP10ASTFunCallRSo",
     "address": "0x0805b770",

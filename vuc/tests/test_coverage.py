@@ -21,8 +21,8 @@ class CoverageTests(unittest.TestCase):
 
     def test_every_original_function_is_accounted_for(self):
         self.assertEqual(len(self.rows), 298)
-        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 210)
-        self.assertEqual(sum(r[2] == "EXPERIMENTAL" for r in self.rows), 34)
+        self.assertEqual(sum(r[2] == "EXACT" for r in self.rows), 211)
+        self.assertEqual(sum(r[2] == "EXPERIMENTAL" for r in self.rows), 33)
         self.assertEqual(sum(r[2] == "UNRESOLVED" for r in self.rows), 54)
 
     def test_original_glibc_init_and_fini_are_both_exact(self):
@@ -42,9 +42,11 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(len(methods), 9)
         self.assertTrue(all(r[2] == "EXACT" for r in methods))
 
-    def test_partial_prologue_is_never_accepted(self):
+    def test_prologue_is_now_byte_exact(self):
         prologue = next(r for r in self.rows if r[0] == 0x08049b40)
-        self.assertEqual(prologue[2], "EXPERIMENTAL")
+        self.assertEqual(prologue[2], "EXACT")
+        self.assertEqual(prologue[1], 30)
+        self.assertEqual(prologue[4], "vuc/src/AsmOutputPrologueExactOwner.cpp")
 
     def test_duplicate_exact_manifest_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "duplicate"):
