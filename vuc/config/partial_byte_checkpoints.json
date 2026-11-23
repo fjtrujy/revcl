@@ -7,22 +7,6 @@
     "relocations": 2,
     "verified_literal_bytes": 92
   },
-  "vuc/config/ml_temp_format_c2_probe.json": {
-    "function": "_ZN12MLTempStringC2EPKcz",
-    "address": "0x08071b40",
-    "original_size": 110,
-    "exact_bytes_floor": 98,
-    "relocations": 8,
-    "verified_literal_bytes": 0
-  },
-  "vuc/config/ml_temp_default_C2_probe.json": {
-    "function": "_ZN12MLTempStringC2Ev",
-    "address": "0x08071c20",
-    "original_size": 101,
-    "exact_bytes_floor": 95,
-    "relocations": 9,
-    "verified_literal_bytes": 1
-  },
   "vuc/config/print_ast_fun_context_oct14_probe.json": {
     "function": "_Z5PrintP10ASTFunCallRSo",
     "address": "0x0805b770",

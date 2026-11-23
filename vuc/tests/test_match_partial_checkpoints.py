@@ -53,9 +53,9 @@ class PartialCheckpointTests(unittest.TestCase):
         accepted = set(partials.read_manifest(partials.EXACT))
         selected = partials.read_manifest(partials.SELECTED)
         open_entries = [path for path in selected if path not in accepted]
-        self.assertEqual(len(accepted), 207)
-        self.assertEqual(len(open_entries), 37)
-        self.assertEqual(len(json.loads(partials.DEFAULT_BASELINE.read_text())), 36)
+        self.assertEqual(len(accepted), 209)
+        self.assertEqual(len(open_entries), 35)
+        self.assertEqual(len(json.loads(partials.DEFAULT_BASELINE.read_text())), 34)
         for kind in ("unsigned", "signed"):
             self.assertNotIn("vuc/config/reduce_binop_"+kind+"_partial_oct15o.json",
                              open_entries)

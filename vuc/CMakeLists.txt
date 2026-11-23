@@ -104,23 +104,37 @@ set(VUC_GCC33_ONLY_SOURCES
   src/TypeUninitializedCopy.cpp
 )
 
+# Accepted historical C2 constructor owners require real preceding method
+# definitions to reproduce GCC 3.3 register selection. They intentionally
+# overlap existing C1/other provisional owner definitions; they must NOT be
+# linked together or compiled as part of the portable object target until
+# the authentic single-link translation-unit boundaries are reconstructed.
+set(VUC_HISTORICAL_MATCH_SOURCES
+  src/MLTempStringDefaultC2Owner.cpp
+  src/MLTempStringFormattedC2Owner.cpp
+)
+
 # Detect any new or missing VUC sources rather than implicitly compiling new
 # experiments or silently leaving accepted owners out of the CMake project.
 file(GLOB _vuc_actual_sources RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-set(_vuc_known_sources ${VUC_PORTABLE_SOURCES} ${VUC_GCC33_ONLY_SOURCES})
+set(_vuc_known_sources ${VUC_PORTABLE_SOURCES} ${VUC_GCC33_ONLY_SOURCES}
+  ${VUC_HISTORICAL_MATCH_SOURCES})
 list(SORT _vuc_actual_sources)
 list(SORT _vuc_known_sources)
 if(NOT _vuc_actual_sources STREQUAL _vuc_known_sources)
   message(FATAL_ERROR
     "VUC CMake source inventory differs from vuc/src/. Update both "
-    "VUC_PORTABLE_SOURCES and VUC_GCC33_ONLY_SOURCES deliberately.")
+    "VUC_PORTABLE_SOURCES, VUC_GCC33_ONLY_SOURCES, and "
+    "VUC_HISTORICAL_MATCH_SOURCES deliberately.")
 endif()
 list(LENGTH VUC_PORTABLE_SOURCES _vuc_portable_count)
 list(LENGTH VUC_GCC33_ONLY_SOURCES _vuc_gcc_only_count)
+list(LENGTH VUC_HISTORICAL_MATCH_SOURCES _vuc_owner_count)
 message(STATUS
   "VUC partial reconstruction: ${_vuc_portable_count} native object units "
-  "and ${_vuc_gcc_only_count} historical GCC 3.3-only units")
+  "plus ${_vuc_gcc_only_count} GCC 3.3-only units and "
+  "${_vuc_owner_count} historical match-only owners")
 
 # Separate from VCL: source-level naming/types may overlap but they are
 # unrelated projects with different historical compilers and link layouts.

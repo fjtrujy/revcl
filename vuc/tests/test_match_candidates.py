@@ -91,7 +91,7 @@ class CandidateSuiteTests(unittest.TestCase):
     def test_exact_regression_set_is_subset_of_diagnostics(self):
         all_configs = set(json.loads(suite.DEFAULT_MANIFEST.read_text()))
         exact_configs = json.loads(suite.EXACT_MANIFEST.read_text())
-        self.assertEqual(len(exact_configs), 207)
+        self.assertEqual(len(exact_configs), 209)
         self.assertTrue(set(exact_configs).issubset(all_configs))
         for manifest in exact_configs:
             source = json.loads(suite.within_repo(manifest).read_text())["source"]
@@ -314,21 +314,41 @@ class CandidateSuiteTests(unittest.TestCase):
         self.assertIn("std::strrchr", source)
 
     def test_mltemp_default_c2_selects_original_constructor_source_order(self):
-        """The genuine formatted predecessor yields a longer exact C2 prefix."""
+        """Real formatted/Set predecessors recover both default ABI constructors."""
         path = "vuc/config/ml_temp_default_C2_probe.json"
         self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
-        self.assertNotIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        self.assertIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
         config = json.loads(suite.within_repo(path).read_text())
         self.assertEqual(config["address"], "0x08071c20")
         self.assertEqual(config["size"], 101)
         self.assertEqual(config["source"],
-                         "vuc/probes/ml_temp_constructor_unit_oct12.cpp")
-        self.assertEqual(config["flags"], ["-O2"])
+                         "vuc/src/MLTempStringDefaultC2Owner.cpp")
+        self.assertEqual(config["flags"], ["-O2", "-frename-registers"])
         self.assertEqual(len(config["relocations"]), 3)
         self.assertEqual(len(config["relocation_objects"][".bss"]), 2)
         source = suite.within_repo(config["source"]).read_text()
         self.assertLess(source.index("MLTempString::MLTempString(const char *format"),
                         source.index("MLTempString::MLTempString()"))
+        self.assertLess(source.index("void MLTempString::Set("),
+                        source.index("MLTempString::MLTempString()"))
+
+    def test_mltemp_formatted_c2_becomes_exact_with_real_member_predecessors(self):
+        path = "vuc/config/ml_temp_format_c2_probe.json"
+        self.assertIn(path, json.loads(suite.DEFAULT_MANIFEST.read_text()))
+        self.assertIn(path, json.loads(suite.EXACT_MANIFEST.read_text()))
+        config = json.loads(suite.within_repo(path).read_text())
+        self.assertEqual(config["address"], "0x08071b40")
+        self.assertEqual(config["size"], 110)
+        self.assertEqual(config["source"],
+                         "vuc/src/MLTempStringFormattedC2Owner.cpp")
+        self.assertEqual(config["flags"],
+                         ["-O2", "-frename-registers", "-falign-jumps=1"])
+        self.assertEqual(len(config["relocation_objects"][".bss"]), 2)
+        source = suite.within_repo(config["source"]).read_text()
+        self.assertLess(source.index("MLTempString::MLTempString()"),
+                        source.index("MLTempString::MLTempString(const char *format"))
+        self.assertLess(source.index("void MLTempString::Set("),
+                        source.index("MLTempString::MLTempString(const char *format"))
 
     def test_hash_copy_node_arguments_are_experimental_only(self):
         path = "vuc/config/hash_copy_node_args_partial_oct14_probe.json"
