@@ -66,7 +66,7 @@ public:
     bool flowReset();
     const char *branchTypeName();
     const char *endTypeName();
-    unsigned char getEndType() { return endType; }
+    VclStreamEndByte getEndType() { return endType; }
     const char *startTypeName();
     char *emit(char *outputBuffer, int a, int *p1, int *p2);
     int checkStartEnd()
@@ -80,8 +80,8 @@ public:
         }
         return ok;
     }
-    unsigned char getCodeMode(); // code mode
-    unsigned char getRawSchedulingMode(); // work table mode
+    VclCodeModeByte getCodeMode(); // code mode
+    VclRawSchedulingModeByte getRawSchedulingMode(); // work table mode
     int countUnresolvedExternalInputs();
     int countUnresolvedExternalOutputs();
     const char *getCodeModeName();
@@ -100,7 +100,7 @@ public:
     bool canLoop();
     bool usesFreeRawLayout();         // raw-mode work table
     bool usesFixedRawLayout();
-    unsigned char getAllocMode();
+    VclAllocationModeByte getAllocMode();
     bool isOutsideRawMode();         // not raw mode
     bool hasSafeTrailingInstructions();
     int checkStartEndStatus();          // out-of-line checkStartEnd
@@ -169,8 +169,8 @@ public:
     short loopRegionRole;
     short resetOnlyStreamLoopShort;
     int emissionStartIndex;
-    unsigned char startType;  // start type (ISTST_*)
-    unsigned char endType;  // end type (ISTET_*; 2 adds 1000 to back trace dep length)
+    VclStreamStartByte startType;  // start type (ISTST_*)
+    VclStreamEndByte endType;  // end type (ISTET_*; 2 adds 1000 to back trace dep length)
     unsigned char branchType;  // branch type
     char reservedStreamDirectiveByte;
     char *endDirectiveText;

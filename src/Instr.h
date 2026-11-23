@@ -260,12 +260,12 @@ struct OpSlot : public OperandLock {
 
 struct Operand {
     RegWeb *registerWeb;
-    char operandKind;
+    VclOperandKindByte operandKind;
     char immediateDataType;
     char externalComponentMask;
     unsigned char componentMask;
     char isImplicit;
-    char direction;
+    VclOperandDirectionByte direction;
     char outputLatency;
     char externalBlockModeFlag;
     char addressComponentMask;

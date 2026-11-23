@@ -1,8 +1,9 @@
 #ifndef VCL_MODES_H
 #define VCL_MODES_H
 
-// Recovered numeric protocol values. Keep the storage fields as byte/char:
-// changing their types would change the historical i386 ABI and/or GCC code.
+// Recovered numeric protocol values. Byte-sized enum typedefs preserve the
+// historical i386 layout and signedness while allowing typed fields/getters.
+// The machine-mode attribute is supported by both GCC 3.2.2 and modern Clang.
 enum VclCodeMode {
     VCL_CODE_INVALID = 0,
     VCL_CODE_UTA = 1,
@@ -12,19 +13,24 @@ enum VclCodeMode {
     VCL_CODE_RAW_PREEXPANDED = 5,
     VCL_CODE_PASSTHROUGH = 6
 };
+typedef VclCodeMode VclCodeModeByte __attribute__((mode(QI)));
 
 // Operand descriptor/access direction; READ_WRITE is a combined bit mask.
 enum VclOperandDirection {
+    VCL_OPERAND_NEGATIVE_SENTINEL = -1, // Keep the original signed-char domain.
     VCL_OPERAND_NONE = 0,
     VCL_OPERAND_READ = 1,
     VCL_OPERAND_WRITE = 2,
     VCL_OPERAND_READ_WRITE = 3
 };
+typedef VclOperandDirection VclOperandDirectionByte __attribute__((mode(QI)));
 
 enum VclStreamStartKind {
     VCL_STREAM_START_NULL = 1,
     VCL_STREAM_START_ENTRY = 2
 };
+// GCC 3.2/modern Clang: a one-byte enum typedef preserves the i386 field ABI.
+typedef VclStreamStartKind VclStreamStartByte __attribute__((mode(QI)));
 
 enum VclStreamEndKind {
     VCL_STREAM_END_NULL = 1,
@@ -32,6 +38,7 @@ enum VclStreamEndKind {
     VCL_STREAM_END_FINAL = 3,
     VCL_STREAM_END_MACRO = 4
 };
+typedef VclStreamEndKind VclStreamEndByte __attribute__((mode(QI)));
 
 // Raw table scheduling modes, as identified by rawModeName().
 enum VclRawSchedulingMode {
@@ -41,6 +48,7 @@ enum VclRawSchedulingMode {
     VCL_RAW_USER_FREE = 3,
     VCL_RAW_USER_FIXED = 4
 };
+typedef VclRawSchedulingMode VclRawSchedulingModeByte __attribute__((mode(QI)));
 
 // Register allocation states, as identified by allocModeName().
 enum VclAllocationMode {
@@ -49,6 +57,7 @@ enum VclAllocationMode {
     VCL_ALLOC_X = 2,
     VCL_ALLOC_DONE = 3
 };
+typedef VclAllocationMode VclAllocationModeByte __attribute__((mode(QI)));
 
 // VU vector component mask. The register data remains byte-sized.
 enum VclComponentMask {
@@ -62,6 +71,7 @@ enum VclComponentMask {
 
 // Operand kinds follow the opcode-descriptor table and opKindName().
 enum VclOperandKind {
+    VCL_OP_NEGATIVE_SENTINEL = -1, // Preserve the original signed-char domain.
     VCL_OP_NULL = 0,
     VCL_OP_V_FL4 = 1,
     VCL_OP_V_INT = 2,
@@ -118,6 +128,17 @@ enum VclOperandKind {
     VCL_OP_C_GPR64_31_RA = 54,
     VCL_OP_EXT_DEP = 55,
 };
+typedef VclOperandKind VclOperandKindByte __attribute__((mode(QI)));
+
+// C++98 layout assertions: never silently widen an ABI-visible mode field.
+typedef char VclEnumByteLayoutMustRemainOneByte[
+    sizeof(VclCodeModeByte) == 1 &&
+    sizeof(VclOperandDirectionByte) == 1 &&
+    sizeof(VclStreamStartByte) == 1 &&
+    sizeof(VclStreamEndByte) == 1 &&
+    sizeof(VclRawSchedulingModeByte) == 1 &&
+    sizeof(VclAllocationModeByte) == 1 &&
+    sizeof(VclOperandKindByte) == 1 ? 1 : -1];
 
 // Low byte of InstructionStream's packed stall reason. Resource slot 0..8
 // is encoded in the high byte when the low byte is RESOURCE_PRESSURE.
@@ -133,6 +154,15 @@ enum VclStallReason {
     VCL_STALL_BRANCH_CHAIN_HEIGHT = 8,
     VCL_STALL_RESOURCE_PRESSURE = 9,
     VCL_STALL_CIRCULAR_DEPENDENCY = 10
+};
+
+// The three emitted stall labels are indexed by a distinct category domain.
+// Keep the string literals in stallTypeNames to preserve the historical ELF.
+enum VclStallType {
+    VCL_STALL_TYPE_LATENCY = 0,
+    VCL_STALL_TYPE_THROUGHPUT = 1,
+    VCL_STALL_TYPE_REGISTER_WRITE = 2,
+    VCL_STALL_TYPE_COUNT = 3
 };
 
 enum {

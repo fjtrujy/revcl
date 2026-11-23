@@ -83,8 +83,9 @@ verified directly by `cmake/VerifySha.cmake`; the SHA value is stored in
 `tools/rh9/vcl.sha256`. No post-link binary patching is performed. See
 [historical reproducible build details](docs/VCL_REPRODUCIBLE_BUILD.md).
 The [magic-number and build-configuration audit](docs/MAGIC_NUMBERS_AND_BUILD_AUDIT.md)
-documents recovered enum domains, the ten still-required per-unit compiler
-options, and why the recovered linker input order remains explicit.
+documents recovered numeric domains and why link input order stays explicit.
+The [enum-typed fields and compiler-flag follow-up](docs/ENUM_TYPES_AND_COMPILER_FLAGS.md)
+explains the five remaining per-file compiler options and recovered typed fields.
 
 ## Development
 

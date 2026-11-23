@@ -7,9 +7,9 @@ static inline const char *lineTypeNameInl(int kind)
 {
     const char *name = "LOCTAG_BAD??";
     switch (kind) {
-    case 0: name = "NULL "; break;
-    case 1: name = "FILE "; break;
-    case 2: name = "MACRO"; break;
+    case VCL_SOURCE_LOCATION_NONE: name = "NULL "; break;
+    case VCL_SOURCE_LOCATION_FILE: name = "FILE "; break;
+    case VCL_SOURCE_LOCATION_MACRO: name = "MACRO"; break;
     }
     return name;
 }
@@ -17,7 +17,7 @@ static inline const char *lineTypeNameInl(int kind)
 SourceLocationEntry::SourceLocationEntry()
 {
     locationName = 0;
-    locationKind = 0;
+    locationKind = VCL_SOURCE_LOCATION_NONE;
 }
 
 SourceLocationEntry::~SourceLocationEntry()
@@ -25,7 +25,7 @@ SourceLocationEntry::~SourceLocationEntry()
     if (locationName)
         delete[] locationName;
     locationName = 0;
-    locationKind = 0;
+    locationKind = VCL_SOURCE_LOCATION_NONE;
 }
 
 bool SourceLocationEntry::setLocation(const char *name, int kind)
@@ -33,9 +33,9 @@ bool SourceLocationEntry::setLocation(const char *name, int kind)
     if (locationName)
         delete[] locationName;
     locationName = 0;
-    locationKind = 0;
+    locationKind = VCL_SOURCE_LOCATION_NONE;
     locationName = dupString(name);
-    locationKind = kind;
+    locationKind = (VclSourceLocationKind)kind;
     return true;
 }
 
@@ -44,7 +44,7 @@ void SourceLocationEntry::clearLocation()
     if (locationName)
         delete[] locationName;
     locationName = 0;
-    locationKind = 0;
+    locationKind = VCL_SOURCE_LOCATION_NONE;
 }
 
 void SourceLocationEntry::dumpLocation()

@@ -9,7 +9,7 @@
 #include "ubsList.h"
 #include "os.h"
 
-extern char *stallTypeNames[3];
+extern char *stallTypeNames[VCL_STALL_TYPE_COUNT];
 int getOpcodeId(OpcodeDescriptor *ii);
 OpcodeDescriptor *findOpcodeInfoByMnemonic(const char *name, bool exact);
 
